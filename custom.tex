@@ -1,0 +1,70 @@
+% package titlesec -- formatting of section headers
+%\titleformat{\subsection}[runin / hang / wtf]{format whole}{label}{separation}{before}[after]
+\titleformat{\section}[hang]{\centering\Huge}{}{0pt}{}
+\titleformat{\subsection}[hang]{\large}{\bfseries\arabic{taskNumber}.}{0pt}{}[]
+\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+\titlespacing{\subsection}{0pt}{12pt}{0pt}
+\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+
+% paragraph settings -- formatting paragraphs and list environments
+\linespread{1.0}
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{6pt}
+\setlength{\abovedisplayskip}{0mm}
+\setlength{\belowdisplayskip}{0mm}
+\setlength{\abovedisplayshortskip}{0mm}
+\setlength{\belowdisplayshortskip}{0mm}
+\setlength{\itemindent}{0pt}
+\setlength{\textfloatsep}{0mm}
+
+\setlist[description]{
+    style           = multiline,
+    labelindent     =   8mm,
+    leftmargin      =  28mm,
+    itemsep         =   0mm    
+}
+\setlist[enumerate]{
+    itemsep         =   0mm
+}
+\setlist[itemize]{
+    itemsep         =  -2pt,
+    nolistsep
+}
+
+\renewcommand{\arraystretch}{1.4}
+\renewcommand{\textfloatsep}{3mm}
+
+% fancyhdr -- fancy pagestyle
+\fancypagestyle{tasks}{%
+    \fancyhf{}
+    \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
+    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID-minilogo.pdf}}
+    \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
+    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+    \fancyhead[L]{    
+        \begin{minipage}{0.3\textwidth}
+            \includegraphics[width = \linewidth]{logo/\seminarID-logo.pdf}\\[-10pt]
+        \end{minipage}
+    }
+    
+    \fancyhead[R]{
+        \begin{minipage}{0.7\textwidth}                    
+            \centering
+            {\Large \seminarFull}\\[2pt]
+            {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[6pt]            
+            {\seminarShort,\ \seminarDepartmentShort\ FMFI~UK, Mlynská dolina, 842 48 Bratislava}\\[0pt]
+            {web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
+            \vspace{0pt}
+        \end{minipage}        
+    }            
+    
+    \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
+    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[LE,RO]{\texttt{\seminarURL}} 
+}
+    

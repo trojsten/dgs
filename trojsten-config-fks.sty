@@ -1,0 +1,25 @@
+\NeedsTeXFormat{LaTeX2e}[2015/01/01]
+\ProvidesPackage{trojsten-config-fks}[2015/09/08 Trojsten unified TeX -- configuration file for FKS]
+
+\RenewDocumentCommand{\seminarID}{}{fks}
+\RenewDocumentCommand{\seminarShort}{}{FKS}
+\RenewDocumentCommand{\seminarFull}{}{Fyzikálny korešpondenčný seminár}
+\RenewDocumentCommand{\seminarURL}{}{http://fks.sk/}
+\RenewDocumentCommand{\seminarDepartmentShort}{}{KTFDF}
+\RenewDocumentCommand{\seminarDepartmentFull}{}{Katedra teoretickej fyziky a didaktiky fyziky}
+\RenewDocumentCommand{\seminarEmail}{}{otazky@fks.sk}
+\RenewDocumentCommand{\seminarFounded}{}{1985}
+\RenewDocumentCommand{\seminarTaskCount}{}{7}
+
+\RenewDocumentCommand{\getTaskCategories}{m}{%
+    \switch[\number#1=]%
+        \case{1}\formatTaskCategories[B0]%
+        \case{2}\formatTaskCategories[B]%
+        \case{3}\formatTaskCategories[B]%
+        \case{4}\formatTaskCategories[A][B]%
+        \case{5}\formatTaskCategories[A][B]%
+        \case{6}\formatTaskCategories[A]%
+        \case{7}\formatTaskCategories[A]%
+        \otherwise\formatTaskCategories[\errorMessage{<FKS> task number cannot be "#1"! Must be between 1 and \seminarTaskCount.}]%
+    \endswitch%
+}
