@@ -1,0 +1,61 @@
+\createTaskHeader[Zúfalo málo miesta][3][7]
+Matúš má problém s nedostatkom miesta na svojom počítači. Jeho uši sú ochotné počúvať len najkvalitnejšiu
+hudbu v~bezstratovom formáte, oči mu krvácajú, ak uzrú video v kvalite horšej od Blu-ray a~so svojim
+fotoaparátom spravil obrovské množstvo fotiek vo vysokom rozlíšení, ktoré odmieta zmazať. Zábavný priemysel
+je neúprosný a~chudák Matúš už nemá svoje dáta kam uložiť.
+
+Nezostáva mu teda nič iné, len sa opäť raz ponoriť do divokých vôd e-shopov a~rozšíriť pamäťovú kapacitu svojho počítača.
+Stiahol si preto celú ponuku diskov z~najväčších internetových obchodov do jediného prehľadného súboru
+a~teraz rozmýšľa, ktorý disk kúpiť. Matúš je ekonomicky cítiaci človek, a~tak by rád zistil, ktorý z diskov má najlepší pomer ceny ku kapacite.
+Pomôžete mu s~tým? Najlepšie bude, ak pri tom použijete len celé čísla, pretože ostatným Matúš veľmi neverí.
+
+\subsubsection{Úloha}
+
+Na vstupe máte zoznam dostupných diskov v~obchodoch. Vašou úlohou je nájsť disk, ktorý je najvýhodnejší -- teda taký,
+ktorý má najnižšiu jednotkovú cenu za gigabajt (teda spomínaný pomer ceny a kapacity).
+Ak je najlepších diskov viacero, vypíšte ľubovoľný z~nich. Snažte sa vymyslieť taký algoritmus, ktorý pri výpočtoch
+používa len celé čísla. Najlepšie bude, ak nebudete vôbec nikde deliť.
+
+\subsubsection{Formát vstupu}
+
+V~prvom riadku vstupu je kladné číslo $n$ udávajúce počet diskov.
+Vkaždom znasledujúcich $n$ riadkov sú celé čísla $c$ a~$k$ udávajúce cenu (v~eurách)
+a~kapacitu (v~gigabajtoch) daného disku.
+
+\subsubsection{Formát výstupu}
+
+Vypíšte dve medzerami oddelené čísla -- cenu a~kapacitu hociktorého najvýhodnejšieho disku v~zozname.
+Nezabudnite za nimi vypísať koniec riadku.
+
+\subsubsection{Hodnotenie}
+
+Za popis riešenia, ktoré používa aj iné ako celé čísla sa dajú získať najviac 3 body zo 7.
+Počet bodov za program závisí len od toho, ktoré vstupy váš program vyrieši správne.
+Vstupy sú rozdelené do sád podľa obtiažnosti, za každú sadu sa dá získať pol boda, ale celkový počet bodov za program sa zaokrúhľuje nadol.
+
+\begin{table}[ht]
+    \begin{center}
+        \begin{tabular}{@{\extracolsep{\fill} } l *{6}{r} @{}}
+            \toprule
+                \textbf{Sada} & 1 & 2 & 3 & 4 & 5 & 6 \\
+            \midrule
+                \textbf{Maximálny počet}     &   2 &   3 &    10 & 1 000 & 10 000 & 100 000 \\
+                \textbf{Maximálna cena}      & 100 & 100 & 1 000 & 1 000 & 10 000 &  10 000 \\
+                \textbf{Maximálna kapacita}  & 100 & 100 & 1 000 & 1 000 & 10 000 &  10 000 \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsubsection{Príklad}
+
+\exampleIO{
+5
+500 100
+750 130
+1500 200
+250 60
+1000 147
+}{
+4
+}

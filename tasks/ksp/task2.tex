@@ -1,0 +1,51 @@
+\createTaskHeader[Zázračné platenie][5][5]
+Zygrov dlhoročný sen je navštíviť Švédsko. Dôkladne sa na to pripravuje: študuje históriu, učí sa jazyk%
+\footnote{Vedeli ste, že švédčina má dva stredné rody?} a~počúva škandinávske pesničky.
+Popri tom samozrejme pracuje (vo firme ,,Vysávače a špagety, s.r.o.``), aby si zarobil peniaze na výlet. 
+
+Práca je ale náročná, a~tak raz večer zaspal nad poviedkami o Pipi Dlhej Pančuche
+a~ocitol sa v zázračnej švédskej dedinke s~ešte zázračnejším spôsobom platenia.
+
+Platenie sa líšilo tým, že ak máte za zmrzlinu zaplatiť napríklad $512$ eur, tak najprv podáte pokladníkovi $5$ eur,
+potom $1$ euro a~nakoniec $2$ eurá (pozor na poradie!).
+Zygro bol samozrejme veľmi nadšený. Veď na kúpenie zmrzliny mu stačilo iba $8$ eur, čím ušetril
+$504$ eur. Celú noc preto behal po dedinke a~zisťoval ceny jednotlivých výrobkov, aby zrátal, koľko
+peňazí dokáže ušetriť. Aj vo svojom sne je však veľmi unavený, a tak už nezvláda ani obyčajné
+odčítavanie. Keby tak na to mal program...
+
+Pomôžete mu?
+
+\subsubsection{Úloha}
+
+Máte dané celé nezáporné číslo $n$ -- cenu výrobku. Vašou úlohou je zistiť, koľko
+peňazí Zygro ušetrí, ak za výrobok zaplatí vyššie popísaným spôsobom.
+
+\subsubsection{Formát vstupu}
+
+V prvom riadku vstupu je jediné číslo $n$ ($0 \leq n \leq 10^{18}$) udávajúce cenu. 
+Všimnite si, že $n$ sa nezmestí do bežnej (32-bitovej) celočíselnej premennej.
+Pokiaľ programujete v Pascale, odporúčame vám použiť typ `int64`, v C++ typ `long
+long`.
+
+\subsubsection{Formát výstupu}
+
+Vypíšte jeden riadok, na ktorom bude jediné číslo: množstvo peňazí, ktoré Zygro
+ušetrí.
+
+\subsubsection{Príklady}
+
+\exampleIO{
+512
+}{
+504
+}
+
+$512 - (5 + 1 + 2) = 512 - 8 = 504$
+
+\exampleIO{
+1000
+}{
+999
+}
+
+$1000 - (1 + 0 + 0 + 0) = 1000 - 1 = 999$

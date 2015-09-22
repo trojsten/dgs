@@ -1,0 +1,54 @@
+\NewDocumentCommand{\seminarID}{}{<undefined>}
+\NewDocumentCommand{\seminarShort}{}{<undefined>}
+\NewDocumentCommand{\seminarFull}{}{<undefined seminar name>}
+\NewDocumentCommand{\seminarURL}{}{\texttt{\lstinline{<undefined url>}}}
+\NewDocumentCommand{\seminarDepartmentShort}{}{<undefined department>}
+\NewDocumentCommand{\seminarDepartmentFull}{}{<undefined department>}
+\NewDocumentCommand{\seminarEmail}{}{<undefined email>}
+\NewDocumentCommand{\seminarFounded}{}{<undefined>}
+\NewDocumentCommand{\seminarTaskCount}{}{<undefined>}
+
+\NewDocumentCommand{\currentYear}{}{<void year>}
+\NewDocumentCommand{\currentPart}{}{<void part>}
+\NewDocumentCommand{\currentSeries}{}{<void series>}
+\NewDocumentCommand{\currentDeadline}{}{<void deadline>}
+\NewDocumentCommand{\currentPartGenitive}{}{%
+    \switch[\number\currentPart=]%
+        \case{1}zimnej%
+        \case{2}letnej%
+        \otherwise\errorMessage{<currentPartGenitive misconfigured: currentPart is "\currentPart">}%
+    \endswitch%
+}
+
+\NewDocumentCommand{\taskName}{}{<undefined>}
+\NewDocumentCommand{\taskPointsDescription}{}{<undefined>}
+\NewDocumentCommand{\taskPointsCode}{}{<undefined>}
+
+\NewDocumentCommand{\currentAcademicYear}{}{\currentYear/\the\numexpr\currentYear+1\relax}
+\NewDocumentCommand{\currentContestYear}{}{\the\numexpr\currentYear-\seminarFounded+1\relax}
+
+\NewDocumentCommand{\getTaskCategories}{m}{%
+    \errorMessage{<undefined categories> Please override \backslash getTaskCategories macro in your seminar’s config file}%
+}
+
+\NewDocumentCommand{\formatTaskPoints}{O{9} O{}}{}
+\NewDocumentCommand{\formatTaskCategories}{O{} O{}}{%
+    \ifstrequal{#1}{}{}{%
+        \ifstrequal{#2}{}{%
+            kategória {\large\textbf{#1}}%
+        }{%
+            kategórie {\large\textbf{#1}} a {\large\textbf{#2}}%
+        }%
+    }%
+}
+
+\NewDocumentCommand{\formatPointsWord}{m}{%
+    \switch[\number#1=]%
+        \case{1}bod%
+        \case{2}body%
+        \case{3}body%
+        \case{4}body%
+        \otherwise bodov%
+    \endswitch%
+}
+

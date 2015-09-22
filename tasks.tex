@@ -1,0 +1,21 @@
+\documentclass[12pt, twoside]{article}
+
+\usepackage{trojsten}
+
+\input{config}
+\input{current}
+\input{custom}
+
+\begin{document}            
+    \thispagestyle{first} 
+    
+    \vspace*{3.5 \baselineskip}
+    {
+        \centering
+        {\Huge Zadania \currentSeries. série \currentPartGenitive\ časti}\\[0pt]
+        {\footnotesize Termín odoslania \currentDeadline}\\[-2pt]
+    } 
+        
+    \pagestyle{tasks}    
+    \addTasks                 
+\end{document}
