@@ -32,7 +32,7 @@
     group-separator         = {\,},
     group-minimum-digits    = 3,
     inter-unit-product      = {\kern 0.10em},
-    exponent-product        = \cdot,                        % \times for 5 × 10^7, \cdot for 5 . 1O^7    
+    exponent-product        = \cdot,                        % \times for 5×10^7, \cdot for 5.1O^7    
     number-unit-product     = {\ },
     output-decimal-marker   = {,}
     %number-math-rm          = \ensuremath
@@ -66,8 +66,6 @@
 
 \RequirePackage[all]{nowidow}
 
-
-
 % Setup XeLaTeX-specific options
 
 \RequirePackage{mathspec}                                   % includes fontspec
@@ -76,13 +74,8 @@
 \setdefaultlanguage{slovak}
 
 
-\defaultfontfeatures{
-    Mapping         = tex-text,
-    Scale           = MatchLowercase,
-    Ligatures       = TeX
-}
-
-% Setup fonts -- see mathspec documentation
+% Setup fonts -- see fontspec/mathspec documentation.
+% Fonts are loaded from .ttf and .otf files (instead of using system fonts)
 \setallmainfonts[
     Path            = fonts/ ,
     Extension       = .otf ,
@@ -91,14 +84,15 @@
     ItalicFont      = *-it ,
     BoldItalicFont  = *-boldit    
 ]{minionpro}
-\setmathsfont{Minion Math}
+\setmathsfont{Minion Math}                                  % change this
 \setmonofont[
     Path            = fonts/ ,
     Extension       = .ttf ,
     UprightFont     = * ,
     BoldFont        = *b ,
     ItalicFont      = *i ,
-    BoldItalicFont  = *z    
+    BoldItalicFont  = *z ,      
+    Scale           = MatchLowercase,
 ]{consola}
 \setsansfont[
     Path            = fonts/ ,
@@ -109,7 +103,11 @@
     BoldItalicFont  = *z    
 ]{verdana}
 
-
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Scale           = MatchLowercase,
+    Ligatures       = TeX
+}
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 
