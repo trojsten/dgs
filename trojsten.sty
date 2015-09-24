@@ -76,18 +76,40 @@
 \setdefaultlanguage{slovak}
 
 
-
-% Setup fonts -- see mathspec documentation
-\setallmainfonts{Minion Pro}
-\setmathsfont{Minion Math}
-\setmonofont[Scale = MatchLowercase]{Consolas}
-%\setsansfont[Scale = MatchLowercase]{Verdana}
-
 \defaultfontfeatures{
     Mapping         = tex-text,
     Scale           = MatchLowercase,
     Ligatures       = TeX
 }
+
+% Setup fonts -- see mathspec documentation
+\setallmainfonts[
+    Path            = fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-regular ,
+    BoldFont        = *-bold ,
+    ItalicFont      = *-it ,
+    BoldItalicFont  = *-boldit    
+]{minionpro}
+\setmathsfont{Minion Math}
+\setmonofont[
+    Path            = fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = * ,
+    BoldFont        = *b ,
+    ItalicFont      = *i ,
+    BoldItalicFont  = *z    
+]{consola}
+\setsansfont[
+    Path            = fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = * ,
+    BoldFont        = *b ,
+    ItalicFont      = *i ,
+    BoldItalicFont  = *z    
+]{verdana}
+
+
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 
