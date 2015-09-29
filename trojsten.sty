@@ -76,6 +76,12 @@
 
 % Setup fonts -- see fontspec/mathspec documentation.
 % Fonts are loaded from .ttf and .otf files (instead of using system fonts)
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Scale           = MatchLowercase,
+    Ligatures       = TeX
+}
+
 \setallmainfonts[
     Path            = fonts/ ,
     Extension       = .otf ,
@@ -102,12 +108,6 @@
     ItalicFont      = *i ,
     BoldItalicFont  = *z    
 ]{verdana}
-
-\defaultfontfeatures{
-    Mapping         = tex-text,
-    Scale           = MatchLowercase,
-    Ligatures       = TeX
-}
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 
