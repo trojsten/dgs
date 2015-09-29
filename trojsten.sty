@@ -111,28 +111,7 @@
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 
-
-
-% Tabular environments
-\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
-\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
-\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
-
-
-
-% Math shorthands
-\DeclareMathOperator{\diff}{d\!}
-\DeclareMathOperator{\pdiff}{\partial\!}
-
-\NewDocumentCommand{\slashfrac}{m m}{\left.#1\middle/#2\right.}
-\NewDocumentCommand{\derive}{O{} m m}{\frac{\diff^{#1}#2}{\diff#3^{#1}}}
-\NewDocumentCommand{\pderive}{O{} m m}{\frac{\partial^{#1} #2}{\partial #3^{#1}}}
-
-\NewDocumentCommand{\integrate}{O{} O{} m m}{\int\limits_{#1}^{#2} \! #3 \, \diff#4}
-\NewDocumentCommand{\iintegrate}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\!\diff#5}
-\NewDocumentCommand{\iiintegrate}{O{} O{} m m m m}{\iiint\limits_{#1}^{\quad#2} #3 \diff#4\!\diff#5\!\diff#6}
-
-
+\input{trojsten-utils.sty}
 
 % Miscellaneous formatting macros
 \NewDocumentCommand{\uv}{+m}{\quotedblbase#1\textquotedblleft}
