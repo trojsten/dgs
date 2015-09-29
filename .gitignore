@@ -1,8 +1,7 @@
 *.*~
 *.tps
 *.tcp
-*.pdf
 *.log
 *.out
 *.aux
-
+./*.pdf
