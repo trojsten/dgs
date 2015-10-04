@@ -33,7 +33,7 @@
     group-minimum-digits    = 3,
     inter-unit-product      = {\kern 0.10em},
     exponent-product        = \cdot,                        % \times for 5×10^7, \cdot for 5.1O^7    
-    number-unit-product     = {\ },
+    number-unit-product     = {\,},
     output-decimal-marker   = {,}
     %number-math-rm          = \ensuremath
 ]{siunitx}
@@ -82,6 +82,14 @@
     Ligatures       = TeX
 }
 
+%\setallmainfonts[
+%    Path            = fonts/ ,
+%    Extension       = .otf ,
+%    UprightFont     = *-regular ,
+%    BoldFont        = *-bold ,
+%    ItalicFont      = *-italic ,
+%    BoldItalicFont  = *-bolditalic    
+%]{agaramondpro}
 \setallmainfonts[
     Path            = fonts/ ,
     Extension       = .otf ,
@@ -151,7 +159,27 @@
             \formatTaskPoints[#2][#3]
             \quad
             \formatTaskCategories{\getTaskCategories{\value{taskNumber}}}%
-        }{\arabic{taskNumber}}}
+        }{%
+            \arabic{taskNumber}%
+        }%
+    }
+}
+
+%\createSolutionHeader{name, author, evaluator}
+\NewDocumentCommand{\createSolutionHeader}{O{} O{} O{}}{
+    \subsection{
+        \texorpdfstring{%
+            \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
+            \hfill\normalsize%
+            \ifstrequal{#2}{}{%
+                \ifstrequal{#3}{}{}{opravovalo \textbf{#3}}%
+            }{%
+                \ifstrequal{#3}{}{vzorák \textbf{#2}}{vzorák \textbf{#2}, opravovalo \textbf{#3}}%
+            }%
+        }{%
+            \arabic{taskNumber}%
+        }%
+    }
 }
 
 \NewDocumentCommand{\addTasks}{}{%

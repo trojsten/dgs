@@ -38,7 +38,7 @@
 \fancypagestyle{tasks}{%
     \fancyhf{}
     \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
-    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID-minilogo.pdf}}
+    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/logo.pdf}}
     \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
     \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
@@ -47,14 +47,14 @@
 \fancypagestyle{first}{%
     \fancyhf{}
     \fancyhead[L]{    
-        \begin{minipage}{0.3\textwidth}
+        \begin{minipage}{0.2\textwidth}
             \centering
-            \includegraphics[height = 22mm]{logo/\seminarID-logo.pdf}\\[0pt]
+            \includegraphics[height = 22mm]{logo/trojsten/large.pdf}\\[0pt]
         \end{minipage}
     }
     
-    \fancyhead[R]{
-        \begin{minipage}{0.7\textwidth}                    
+    \fancyhead[C]{
+        \begin{minipage}{0.6\textwidth}                    
             \centering
             {\Large \seminarFull}\\[2pt]
             {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[6pt]            
@@ -62,7 +62,14 @@
             {web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
             \vspace{0pt}
         \end{minipage}        
-    }            
+    }           
+
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \centering
+            \includegraphics[width = 0.66\linewidth, keepaspectratio = true]{logo/\seminarID/logo.pdf}\\[0pt]
+        \end{minipage}
+    } 
     
     \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
