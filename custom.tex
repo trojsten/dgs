@@ -45,6 +45,15 @@
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
     \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
 }
+
+\fancypagestyle{solutions}{%
+    \fancyhf{}
+    \fancyhead[LE,RO]{\textit{Riešenia \currentSeries. série \currentPartGenitive\ časti}}
+    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
+    \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
+    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
+}
     
 \fancypagestyle{first}{%
     \fancyhf{}
@@ -62,7 +71,7 @@
             \vspace{4pt}
             {\Large \seminarFull}\\[4pt]
             {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[8pt]            
-            {\seminarShort,\ \seminarDepartmentShort\ FMFI~UK, Mlynská dolina, 842~48 Bratislava}\\[2pt]
+            {\footnotesize \seminarShort,\ \seminarDepartmentShort\ FMFI~UK, Mlynská dolina, 842~48 Bratislava}\\[2pt]
             %{web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
             \vspace{6pt}
         \end{minipage}        
@@ -71,7 +80,7 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \centering
-            \includegraphics[width = 0.66\linewidth, keepaspectratio = true]{logo/\seminarID/logo.pdf}\\[0pt]
+            \includegraphics[width = 0.66\linewidth, keepaspectratio = true]{logo/\seminarID/large.pdf}\\[0pt]
         \end{minipage}
     } 
     

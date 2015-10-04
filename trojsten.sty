@@ -68,16 +68,15 @@
 
 \RequirePackage{mathspec}                                   % includes fontspec
 \RequirePackage{polyglossia}                                % multi-language support
-\RequirePackage{xunicode}                       
+\RequirePackage{xunicode}
 \setdefaultlanguage{slovak}
-
 
 % Setup fonts -- see fontspec/mathspec documentation.
 % Fonts are loaded from .ttf and .otf files (instead of using system fonts)
 \defaultfontfeatures{
     Mapping         = tex-text,
     Scale           = MatchLowercase,
-    Ligatures       = TeX
+    Ligatures       = Common
 }
 
 %\setallmainfonts[
@@ -142,7 +141,7 @@
 \NewDocumentCommand{\Picture}{m m O{} O{}}{
     \begin{figure}[H]
         \centering
-        \includegraphics[keepaspectratio = true, height = #2]{tasks/\seminarID/#1}
+        \includegraphics[keepaspectratio = true, height = #2]{files/\seminarID/tasks/#1}
         \ifstrempty{#3}{}{\caption{\emph{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
     \end{figure}
@@ -180,17 +179,31 @@
     }
 }
 
-\NewDocumentCommand{\addTasks}{}{%
+\NewDocumentCommand{\addTasks}{}{%    
+    \newcounter{taskNumber}
     \Repeat{\seminarTaskCount}{\tryAddTask}%
 }
 
-\newcounter{taskNumber}
+\NewDocumentCommand{\addSolutions}{}{%
+    \newcounter{taskNumber}%
+    \Repeat{\seminarTaskCount}{\tryAddSolution}%
+}
+
 \NewDocumentCommand{\tryAddTask}{}{
     \stepcounter{taskNumber}    
-    \IfFileExists{tasks/\seminarID/task\arabic{taskNumber}}{
-        \input{tasks/\seminarID/task\arabic{taskNumber}}
-    }{
-        \errorMessage{<MISSING FILE \texttt{task\arabic{taskNumber}}!>}
+    \IfFileExists{files/\seminarID/tasks/task\arabic{taskNumber}}{%
+        \input{files/\seminarID/tasks/task\arabic{taskNumber}}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{task\arabic{taskNumber}}!>}\\
+    }    
+}
+
+\NewDocumentCommand{\tryAddSolution}{}{
+    \stepcounter{taskNumber}
+    \IfFileExists{files/\seminarID/solutions/task\arabic{taskNumber}}{%
+        \input{files/\seminarID/solutions/task\arabic{taskNumber}}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{task\arabic{taskNumber}}!>}\\
     }    
 }
 

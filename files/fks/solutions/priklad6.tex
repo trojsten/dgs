@@ -1,0 +1,63 @@
+%Niekto by si to mohol pozorne prečítať a zhodnotiť potrebnosť/pridanú hodnotu insightov vo footnotoch, či ich netreba viac alebo naopak nie sú zbytočné ...
+Najprv si pripomeňme, čo je to vlastne \emph{tepelná kapacita}. Tá nám hovorí, koľko energie vo forme tepla musíme
+\lq\lq{zaplatiť}\rq\rq{} za to, aby sme ohriali systém o~jednotku teploty (napríklad jeden stupeň Celzia).\footnote{Zdôrazňujeme však, že formálne nie je $\Delta$ pri $Q$ to isté ako $\Delta$ pri $T$, keďže teplo nie je \textbf{stavová veličina}!
+A~preto by sme ich mali po správnosti rozlišovať.}
+$$
+  C \equiv \frac{\Delta Q}{\Delta T} \text{.}
+$$
+% Tu som si nie istý, či nechceme zdôrazniť, že nie je Delta ako Delta, no keďže je to prvá séria, tak to asi nechceme siliť ...
+% Predsa len som sa teda rozhodol čosi napísať.
+%Takto vo footnote to stačí. Teda ja pochybujem, že väčšina deciek si neuvedomuje, že čo sú stavové veličiny...Dušan
+
+Teplo sa môže uložiť do vnútornej energie plynu alebo použiť na vykonanie práce. V~našom prípade môže plyn tlačiť na piest,
+čím vykoná stlačením pružinky piestu prácu. Dôležité ale je, aby sme si uvedomili, že práca, ktorú vykoná plyn tlačením na
+piest, je rovnaká ako nárast potenciálnej energie pružinky. Preto tento príspevok energie môžeme započítať iba raz!\footnote{Keďže táto energia je uložená v~systéme \lq\lq{iba raz}\rq\rq{} v~podobe potenciálnej energie pružinky.}
+Teplo by sa mohlo ešte teoreticky použiť na ohriatie materiálu stien nádoby, piestu a pružinky, no v~zadaní sme povedali,
+že ich tepelné kapacity sú zanedbateľné. Každopádne, energia sa musí zachovať, čo môžeme zhrnúť \emph{zákonom zachovania
+energie}, v~termodynamike taktiež nazývaným aj ako \emph{prvá veta termodynamická}, ktorý môžeme následne dosadiť do definície
+tepelnej kapacity:
+  $$ \Delta Q = \Delta U_{\text{plyn}} + \Delta W $$
+  $$C = \frac{\Delta U_{\text{plyn}}}{\Delta T} + \frac{\Delta W}{\Delta T} \text{.}$$
+
+Zo zadania ďalej vieme, že piest (pružinka) sa nachádza v~pokojovom stave, keď sa dotýka pravej steny nádoby. Ak si označíme 
+plochu piestu $S$, objem plynu v~pravej časti piestu $V$ a dĺžku pravej časti s~plynom $x$, čo je zároveň stlačenie pružinky, tak 
+vieme, že sila, ktorou pôsobí plyn na piest $F_{\text{plyn}}=pS$, musí byť rovnaká ako sila, ktorou pôsobí pružinka na piest 
+$F_{\text{pruž}} = kx$. Odtiaľ
+$$F_{\text{pruž}} = F_{\text{plyn}}$$
+$$kx = pS$$
+$$kx^2 = pSx = pV\text{.}$$
+
+Keďže vieme, že plyn je jednoatómový a môžeme ho považovať za ideálny, môžeme rovno pre vnútornú energiu plynu 
+napísať známy vzťah $\Delta U = (3/2)nR\Delta T$.\footnote{Konštnata tri súvisí s~\emph{počtom stupňov voľnosti} molekúl plynu.
+Jednoatómový plyn má iba tri, keďže každý atóm sa môže pohybovať v~troch smeroch a pri ľubovoľnej rotácii okolo svojho stredu
+je nerozoznateľný. Na stupeň voľnosti sa môžete pozerať ako na počet parametrov, ktoré potrebujeme poznať na to, aby sme
+presne určili pozíciu a natočenie molekuly plynu. Skúste si teda premyslieť, koľko stupňov voľnosti majú dvojatómové molekuly.}
+
+Zostáva nám teda zistiť, akú nekonečne malú prácu $\Delta W$ vykoná plyn, keď sa zväčší teplota plynu o~nekonečne malý 
+prírastok $\Delta T$. Práca $\Delta W$ je rovná $p\Delta V = pS\Delta x = kx\Delta x$. Vložením zatiaľ všetkého, čo sme zistili, do 
+\emph{prvej vety termodynamickej} dostaneme:
+$$C = \frac{\Delta U_{\text{plyn}}}{\Delta T} + \frac{\Delta W}{\Delta T} \hspace{3.5cm}
+C = \frac{3}{2}nR + kx\frac{\Delta x}{\Delta T} \,\text{.}$$
+
+Mali by sme taktiež vedieť, ako súvisí $\Delta x$ s~$\Delta T$. Na to si pomôžeme stavovou rovnicou ideálneho plynu. Označme $n$ počet 
+mólov plynu. Ďalej vieme, že v~každom okamihu musí platiť rovnica ideálneho plynu, t.j. aj po ohriatí o~$\Delta T$.\footnote{Na 
+systém sa pozeráme po ohriatí o~$\Delta T$ vždy, keď sa ustáli v~stave termodynamickej rovnováhy, pre ktorý stavová rovnica
+v~prípade ideálneho plynu platí.}
+$$kx^2  = pV = nRT $$
+$$k{\left(x+\Delta x\right)}^2 = nR\left(T+\Delta T\right)\text{.}$$
+
+Odčítaním týchto dvoch rovníc a zanedbaním členu $k{\Delta x}^2$\footnote{Keďže vo fyzike nás často zaujíma ako sa veci majú 
+do \emph{prvého rádu}, tak si to môžeme dovoliť. Intuitívne si to môžete predstaviť, že ak je $\Delta x$ malé, tak ${\Delta x}^2$ 
+je o~niekoľko rádov menšie
+ a teda oproti $\Delta x$ zanedbateľné.}, šikovne zistíme ako súvisí $\Delta x$ s~$\Delta T$.
+$$k{\left(x+\Delta x\right)}^2 - kx^2 \approx 2kx\Delta x = nR\Delta T \hspace{3cm}
+\frac{\Delta x}{\Delta T} = \frac{nR}{2kx}\text{.}$$
+
+Pokročilejší z~vás sa mohli vyhnúť tejto obskúrnosti vyjadrením $\Delta T$ a $\Delta x$, diferencovaním výrazu $kx^2 = nRT$,
+čím by sme ale dostali rovnaký výsledok.
+
+Dosadením všetkého, čo sme sa dozvedeli, do definície tepelnej kapacity dostaneme celkom milý výsledok:
+$$
+C = \frac{3}{2}nR + \frac{1}{2}nR = 2nR = 2\frac{p_0 V_0}{T_0} \text{,}
+$$
+kde sme nakoniec vyjadrili výraz $nR$ na základe veličín zo zadania, keďže počet častíc plynu sa v~pieste nemení.

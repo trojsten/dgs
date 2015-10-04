@@ -10,6 +10,10 @@ make-tasks:
 	xelatex -jobname=output/tasks -halt-on-error tasks.tex
 	evince output/tasks.pdf &
 
+make-solutions:
+	xelatex -jobname=output/solutions -halt-on-error solutions.tex
+	evince output/solutions.pdf &
+
 svgs = $(wildcard tasks/fks/*.svg)
 svg-to-pdf: $(patsubst %.pdf, %.svg, $(svgs))
 
@@ -20,6 +24,6 @@ tasks/fks/%.pdf: tasks/fks/%.svg
 clean:
 	@echo Clean:
 	rm -rf input
-	find -name "*.log" -or -name "*.aux" -or -name "*.out" -delete	
+	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*.out" -or -name "*.*~" \) -delete	
 
 #	rm -rf output
