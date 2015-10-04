@@ -1,0 +1,232 @@
+%Nastavte si prosím kódovanie UTF-8 NOBOMB a unixové konce riadkov
+%doplniť include obrázkov
+
+Zrejme je každému jasné, že na vyriešenie úlohy je potrebné pochopenie
+činnosti elektrického zdroja.\footnote{Alebo možno aj nie, ale sme tu preto, aby sme sa niečo naučili. :)}
+
+Elektrický zdroj je súčiastka, ktorá koná prácu proti elektrickému
+poľu, čím udržuje potenciálový rozdiel medzi svorkami, a tým umožňuje
+prúdu tiecť obvodom. Bežne sa na výpočty používajú dva abstraktné
+modely zdroja, a to ideálny zdroj napätia a ideálny zdroj prúdu. Oba
+sa vyznačujú tým, že v~obvode udržujú konštantné napätie, resp. prúd,
+bez ohľadu na to, čo na svorky zdroja pripojíme. Ak by sme použili
+jeden z~týchto modelov, veľa by sme sa nenapočítali. V~prípade použitia
+ideálneho zdroja napätia by sme len do série zapojili dostatočne veľa
+zdrojov a obvodom by tiekol ľubovoľne veľký prúd, ľahko vypočítateľný
+z~Ohmovho zákona. V~prípade použitia ideálneho zdroja prúdu by sme
+to mali ešte jednoduchšie. Obvodom by tiekol taký prúd, na aký je
+stavaný zdroj. Lenže reálny zdroj sa správa inak. Už v~samotnom zdroji
+dochádza k~istým stratám, ktoré v~tomto prípade nemožno zanedbať,
+ako sa to vo väčšine prípadov robí.
+
+Problémom je, že nevieme, čo presne sa v~takom zdroji deje a ako presne
+tie straty vyzerajú. Našťastie nás to ale nemusí ani zaujímať. Teória
+elektrických obvodov obsahuje dve veľmi užitočné vety, Theveninovu
+a Nortonovu teorému\footnote{https://en.wikipedia.org/wiki/Th\%C3\%A9venin\%27s\_theorem, resp.
+https://en.wikipedia.org/wiki/Norton\newline\%27s\_theorem}. 
+
+V~jednoduchosti, Theveninova teoréma nám hovorí, že keď máme ľubovoľne
+zložitý lineárny obvod a zaujíma nás prúd tečúci len jednou jeho vetvou,
+tak zvyšok obvodu možno nahradiť ideálnym zdrojom napätia s~napätím rovným 
+napätiu medzi svorkami nahradenej časti, zapojeným s~odporom do série,
+ktorého veľkosť je rovná odporu nahradenej časti.
+\footnote{Nortonova teoréma je jej analógiou, keď ľubovoľnú časť obvodu nahradíme 
+ideálnym zdrojom prúdu s~paralelne zapojeným vnútorným odporom. Obe
+vety sú si rovnocenné a dá sa medzi nimi jednoducho prechádzať.} 
+
+A~to je presne náš prípad. Reálny zdroj možno považovať za zložitú
+časť obvodu, pričom nás zaujíma len prúd tečúci jedinou vetvou (cez
+poistku), preto reálny zdroj nahradíme podľa Theveninovej vety ideálnym
+zdrojom a k~nemu do série zapojeným vnútorným odporom.\footnote{Použijeme Theveninovu vetu a nie Nortonovu, pretože v~zadaní sa hovorí o~zdroji s~elektromotorickým napätím a nie o~zdroji prúdu.} V~celom príklade bude Li-Ion článok nahradený ideálnym zdrojom napätia
+$U=\SI{3.3}{\volt}$ a k~nemu do série pripojeným odporom $R_{i}=\SI{10}{\milli\ohm}$.
+Najjednoduchší obvod s~jedným článkom preto bude vyzerať takto:
+
+%\begin{figure}[H]
+%\includegraphics[]{}\protect\caption{Náhradné zapojenie s~jedným článkom}
+%\end{figure}
+\obrazok{0.4}{o.eps}{Náhradné zapojenie s~jedným článkom}{zapojenie1}{H}
+
+
+Prúd tečúci týmto obvodom bude jednoducho podľa Ohmovho zákona $I=(U/R_{i}+R)=\SI{165}{\ampere}$.
+Vidíme, že jediný článok ani zďaleka nestačí na prepálenie poistky.
+Budeme preto musieť zapájať zložitejšie obvody.
+
+Zrejme najistejší spôsob, ako analyzovať zložitejšie obvody, sú Kirchhoffove
+zákony. Všetky výpočty budú založené práve na nich, a tak by bolo
+na mieste si ich pripomenúť. 
+
+\emph{Prvý Kirchhoffov zákon} hovorí, že súčet
+prúdov, ktoré do uzla vtekajú, sa rovná súčtu prúdov, ktoré z~neho
+vytekajú. Podľa \emph{druhého Kirchhoffovho zákona} zase algebraický súčet
+úbytkov napätí zdrojov v~uzavretej slučke je rovný súčtu napätí na
+jednotlivých spotrebičoch danej slučky. 
+
+Priamym dôsledkom Kirchhoffových
+zákonov je skutočnosť, že ak nerozvetvenou časťou obvodu tečie prúd
+$I$ a v~nejakom mieste sa obvod vetví na $k$ zhodných vetiev, tak
+každou z~nich preteká rovnaký prúd $I/k$, čo budeme výhodne
+využívať na zníženie počtu rovníc. Viac o~Kirchhoffových zákonoch
+tu písať nebudeme, nakoľko všetky návody, ako zostavovať rovnice,
+sa dajú ľahko nájsť na webe alebo v~starých príkladoch FKS.
+
+Teraz, keď vieme, ako na to, môžeme sa pustiť do analyzovania jednotlivých
+zapojení. Na začiatok preverme dve najbežnejšie zapojenia, sériové
+a paralelné.
+
+%\begin{figure}[h]
+%\includegraphics[]{}\protect\caption{Obvod s~$n$ článkami zapojenými v~sérii}
+%\end{figure}
+\obrazok{0.5}{o2.eps}{Obvod s~$n$ článkami zapojenými v~sérii}{zapojenie1}{H}
+
+
+
+Najskôr zapojme do série $n$ článkov. Podľa druhého Kirchhoffovho zákona napíšeme rovnicu
+pre zapojenie $nU=\left(nR_{i}+R\right)I$, odkiaľ 
+\[
+I=\frac{nU}{nR_{i}+R}=\left.\frac{U}{R_{i}+\frac{R}{n}}\right|_{n\rightarrow\infty}=\frac{U}{R_{i}}\textrm{.}
+\]
+
+Tento zápis znamená, že ak $n$ budeme zvyšovať nad všetky medze,
+tak prúd sa bude tým viac k~danej hodnote približovať. To preto, lebo
+ak $R$ je nejaké reálne číslo a $n$ rastie až do nekonečna, tak
+podiel $R/n$ je prakticky rovný nule (presnejšie povedané --
+blíži sa k~nule). Pre číselné hodnoty $\underset{n\rightarrow\infty}{\lim}I\left(n\right)=\SI{330}{\ampere}$\footnote{lim je limita a vyjadruje presne to, čo sme popísali; ak $n$ ide
+do nekonečna, tak udáva, k~čomu sa blíži $I$}. Vidíme, že maximálny prúd, ktorý možno dosiahnuť sériovým zapojením
+článkov, naozaj prepáli poistku. Zistime, kedy sa tak stane. Označme
+$I_{max}$ prúd, pri ktorom sa poistka prepáli. Zrejme musí platiť
+nerovnosť $I_{max}\leq I\left(n\right)$, kde $I\left(n\right)=nU/(nR_{i}+R)$.
+Odtiaľ dostávame, že 
+\[
+n\geq\frac{I_{max}R}{U-I_{max}R_{i}}=10\textrm{.}
+\]
+
+Na záver ešte poznamenajme, že pri dostatočne veľkom počte článkov
+zapojených do série je prúd v~obvode určený predovšetkým vnútorným
+odporom článkov, keďže v~zadaní stojí, že vonkajší odpor obvodu je
+rovnaký ako vnútorný odpor jedného článku. Zdroj s~takouto vlastnosťou
+sa nazýva mäkký.
+
+%\begin{figure}[h]
+%\includegraphics[]{}\protect\caption{Obvod s~$n$ článkami zapojenými paralelne}
+%\end{figure}
+\obrazok{0.5}{o3.eps}{Obvod s~$n$ článkami zapojenými paralelne}{zapojenie1}{H}
+
+
+Pozrime sa teraz na paralelné zapojenie $n$ článkov. Podľa 2.KZ
+s~využitím poznámky o~identických vetvách dostávame rovnicu $U=R_{i}I/n+RI$,
+odkiaľ 
+\[
+I=\left.\frac{U}{\frac{R_{i}}{n}+R}\right|_{n\rightarrow\infty}=\frac{U}{R}\textrm{.}
+\]
+Prúd v~obvode je tentokrát pre dostatočne veľké $n$ určený predovšetkým
+vonkajším odporom zapojenia. Takýto zdroj sa nazýva tvrdý. Pre konkrétne
+číselné hodnoty zo zadania $\underset{n\rightarrow\infty}{\lim}I\left(n\right)=\SI{330}{\ampere}$.
+Aj v~tomto prípade dokážeme prepáliť poistku. Stane sa tak, ak počet
+zapojených zdrojov spĺňa nerovnosť $I_{max}\leq I\left(n\right)$,
+kde $I\left(n\right)=nU/(R_{i}+nR)$. Odtiaľ dostaneme, že 
+\[
+n\geq\frac{I_{max}R_{i}}{U-I_{max}R}=10\textrm{.}
+\]
+
+Sériové i paralelné zapojenie nám dáva rovnaké číselné výsledky.
+V~oboch prípadoch sa poistka prepáli pri aspoň 10 článkoch. Rovnaký
+výsledok pre oba zapojenia však nie je pravidlo. Vďačíme za to tomu,
+že vnútorný odpor článku a odpor záťaže sú rovnaké. Ak by tomu tak
+nebolo, tak by sme dostávali rôzne výsledky.
+
+Snáď ešte jedna poznámka. Paralelné zapojenie má tú nevýhodu, že ak
+je náhodou niektorý zo zdrojov \uv{slabší}, tak touto vetvou začne
+tiecť elektrický prúd proti smeru polarity slabšieho zdroja, čím sa
+výrazne znižuje efektivita takéhoto zapojenia, nehovoriac o~tom, že
+by mohlo dôjsť k~poškodeniu zdroja.
+
+%\begin{figure}[h]
+%\includegraphics[]{}\protect\caption{Najjednoduchšie ,,hybridné`` zapojenie pozostávajúce z~3 komponentov}
+%\end{figure}
+\obrazok{0.6}{o4.eps}{Najjednoduchšie \uv{hybridné} zapojenie pozostávajúce z~3 zdrojov\label{obr}}{zapojenie1}{H}
+% \obrazok{0.35}{o1.eps}{Najjednoduchšie \uv{hybridné} zapojenie pozostávajúce z~3 zdrojov}{zapojenie1}{H}
+
+
+Už sme zistili, kedy sa poistka prepáli pri sériovom a paralelnom
+zapojení. Zostáva už len zistiť, či neexistuje nejaké hybridné zapojenie,
+ktoré bude fungovať aj pre menší počet zdrojov. Napovedať by nám mohlo
+najjednoduchšie takéto zapojenie pozostávajúce z~troch zdrojov (viď
+Obr. \ref{obr}). Podľa druhého Kirchhoffovho zákona dostávame rovnicu $2U=\left(R_{i}+R\right)I+R_{i}I/2$,
+odkiaľ $I=4U/(3R_{i}+2R)=\SI{264}{\ampere}$. Pre porovnanie, sériovým
+a paralelným zapojením troch článkov dostaneme prúd len $\SI{247,8}{\ampere}$.
+To je pre nás zlá správa, pretože sme ukázali, že hybridné zapojenie
+vážne dokáže vyprodukovať väčší prúd než obyčajné sériové alebo paralelné,
+a tak musíme skúšať ďalej.
+
+Preskúmajme teraz všetky zapojenia štyroch článkov. Je ich až 10 a
+každé z~nich treba preveriť.\footnote{Ak by sme prihliadali na polaritu zapojenia zdrojov, tak ich je ďaleko
+viac, no predpokladáme, že netreba nikoho presviedčať o~tom, že zapojenie
+zdrojov s~opačnou polaritou bude výrazne neefektívnejšie než s~polaritou
+súhlasnou.} Všetky sú zobrazené na nasledujúcom obrázku.
+
+%\begin{figure}[H]
+%\includegraphics[]{}\protect\caption{Prehľad všetkých zapojení 4 zdrojov}
+%\end{figure}
+\obrazok{0.7}{o5.eps}{Prehľad všetkých zapojení 4 zdrojov}{zapojenie1}{H}
+
+
+Teraz už len zostáva dopočítať prúd v~jednotlivých obvodoch. Naznačili
+sme, ako treba postupovať pri zostavovaní rovníc pomocou Kirchhoffových
+zákonov, a tak tu uvedieme už iba výsledky. Pre väčšiu prehľadnosť
+ich zapíšme do tabuľky.
+
+\begin{table}[H]
+
+
+\begin{center}
+\begin{tabular}{ccc}
+\addlinespace
+Číslo obvodu & Algebraický výsledok & Numerický výsledok\tabularnewline\addlinespace
+\midrule
+\midrule 
+\addlinespace
+1) & $I=\frac{4U}{4R_{i}+R}$ & \SI{264}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+2) & $I=\frac{6U}{5R_{i}+2R}$ & $\sim$\SI{283}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+3) & $I=\frac{2U}{R_{i}+R}$ & \textbf{\SI{330}{\ampere}}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+4) & $I=\frac{7U}{5R_{i}+3R}$ & \SI{288.75}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+5) & $I=\frac{2U}{R_{i}+R}$ & \textbf{\SI{330}{\ampere}}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+6) & $I=\frac{6U}{3R_{i}+4R}$ & $\sim$\SI{283}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+7) & $I=\frac{7U}{3R_{i}+5R}$ & \SI{288.75}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+8) & $I=\frac{6U}{4R_{i}+3R}$ & $\sim$\SI{283}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+9) & $I=\frac{6U}{2R_{i}+5R}$ & $\sim$\SI{283}{\ampere}\tabularnewline\addlinespace
+\midrule 
+\addlinespace
+10) & $I=\frac{4U}{R_{i}+4R}$ & \SI{264}{\ampere}\tabularnewline\addlinespace
+\end{tabular}
+\end{center}
+\protect\caption{Prúdy pretekajúce poistkou pre jednotlivé zapojenia štyroch zdrojov}
+\end{table}
+
+
+Podarilo sa nám nájsť dve také zapojenia (3 a 5) pozostávajúce zo
+štyroch článkov, ktoré prepália poistku.\footnote{To, že zapojenia 3 a 5 dávajú rovnaké výsledky, nie je náhoda. Sú
+to ekvivalentné zapojenia. Vodič medzi vetveniami obvodu 3 nekladie
+žiaden odpor, t.j. oba uzly majú rovnaký potenciál, a teda ich možno
+stiahnuť do jedného. Navyše zapojenie je symetrické, teda cez uzol
+neprechádza medzi hornou a dolnou vetvou prúd, teda ho možno rozpojiť
+a dostaneme zapojenie 5.} Zároveň sme ukázali, že žiadne zapojenie pozostávajúce z~menšieho
+alebo nanajvýš rovnakého počtu článkov nedokáže poistku prepáliť.
+Tým je úloha vyriešená.
+
+%asi by bolo fajn doplniť do vzoráku, za čo sa udeľujú body; navrhoval by som 2 body za nejaké zapojenie, ktoré prepáli poistku, +2 za každé optimálne zapojenie a +3 za ukázanie, že sú to všetky optimálne zapojenia

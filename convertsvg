@@ -1,0 +1,19 @@
+#!/bin/bash
+
+case $1 in
+	png)
+		FORMAT="png"
+		EXTRAS="-w 1000"
+		;;
+	pdf)
+		FORMAT="pdf"
+		EXTRAS=""
+		;;
+	*)
+		echo "Format must be either png or pdf"
+		exit 1
+		;;
+esac
+
+OUTPUT=`echo $2 | sed "s/svg$/$FORMAT/"`
+rsvg-convert -f $1 -w 1000 -a -o $OUTPUT $2

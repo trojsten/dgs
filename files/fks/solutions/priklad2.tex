@@ -1,0 +1,25 @@
+\createSolutionHeader[Vážna úvaha][Vladko][Vladko]
+Aby sme rozhodli, ktorá z~navrhovaných taktík je lepšia, vypočítame si, aký čas $t$ by trvalo prejdenie celej trate $s$ aplikovaním jednotlivých taktík.
+Ak Enka bicykluje rýchlosťou $v_{\mathrm{E}}$, tak za čas $t_{\mathrm{E}} = t/2$ prejde úsek dlhý $s_{\mathrm{E}}$.
+Analogicky platí pre Kvíkovo $v_{\mathrm{K}}$, $t_{\mathrm{K}}$ a $s_{\mathrm{K}}$ to isté. Môžeme teda napísať:
+$$s=s_{\mathrm{E}} + s_{\mathrm{K}}$$
+$$s=\frac{v_{\mathrm{E}} t}{2} + \frac{v_{\mathrm{K}} t}{2}$$
+$$t=\frac{2s}{v_{\mathrm{E}} + v_{\mathrm{K}}} \approx \SI{1.45}{\hour} \text{.}$$
+
+Pre druhú taktiku platí $s_{\mathrm{E}}=s_{\mathrm{K}}= s/2$, z~čoho vyplýva:
+$$t=t_{\mathrm{E}}+t_{\mathrm{K}}$$
+$$t=\frac{s_{\mathrm{E}}}{v_{\mathrm{E}}}+\frac{s_{\mathrm{K}}}{v_{\mathrm{K}}}$$
+$$t=\frac{s}{2v_{\mathrm{E}}}+\frac{s}{2v_{\mathrm{K}}}  \approx \SI{1.47}{\hour} \text{.}$$
+
+Teda prvá taktika je rýchlejšia o~vyše jednu minútu.
+Lenže ako nájdeme najlepšiu taktiku? Napríklad tak, že vyjadríme čas prejdenia dráhy $t$ pomocou dráhy, ktorú prejde Enka $s_{\mathrm{E}}$.
+Keďže Kvík prejde vzdialenosť $s_{\mathrm{K}}=s - s_{\mathrm{E}}$, tak pomocou už vyššie spomenutej rovnosti napíšeme:
+$$t=\frac{s_{\mathrm{E}}}{v_{\mathrm{E}}}+\frac{s - s_{\mathrm{E}}}{v_{\mathrm{K}}}$$
+$$t=\frac{s_{\mathrm{E}}}{v_{\mathrm{E}}}+\frac{s}{v_{\mathrm{K}}}-\frac{s_{\mathrm{E}}}{v_{\mathrm{K}}}$$
+$$t=\left(\frac{1}{v_{\mathrm{E}}}-\frac{1}{v_{\mathrm{K}}}\right)s_{\mathrm{E}}+\frac{s}{v_{\mathrm{K}}} \approx 0.0085s_{\mathrm{E}}+1.29  \text{.}$$
+
+Ako vidíme, závislosť je lineárna a keďže koeficient pri $s_{\mathrm{E}}$ je kladný, musí byť rastúca.
+Čo z~toho vyplýva? Čím väčšiu časť pretekov prejde Enka, tým väčší čas vo výsledku bude naša dvojica mať.
+Najlepší čas dosiahnu, keď celé preteky bude bicyklovať len Kvík a Enka ho radšej zostane celý čas povzbudzovať v~sprievodnom vozidle.
+Tento čas pre $s_{\mathrm{E}}=0$ bude približne jedna hodina a sedemnásť minút.
+Výsledná taktika by nás nemala prekvapiť. Nakoľko obaja cyklisti majú konštantnú rýchlosť (neunavujú sa) a~Kvík je rýchlejší, mali by sme ho nasadiť na celú dĺžku pretekov.
