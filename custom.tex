@@ -33,12 +33,14 @@
 
 \renewcommand{\arraystretch}{1.2}
 \renewcommand{\textfloatsep}{3mm}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
 
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{tasks}{%
     \fancyhf{}
     \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
-    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/logo.pdf}}
+    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
     \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
     \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
@@ -49,18 +51,20 @@
     \fancyhead[L]{    
         \begin{minipage}{0.2\textwidth}
             \centering
-            \includegraphics[height = 22mm]{logo/trojsten/large.pdf}\\[0pt]
+            \includegraphics[height = 18mm]{logo/trojsten/large.pdf}\\[0pt]
+            \vspace{2pt}
         \end{minipage}
     }
     
     \fancyhead[C]{
         \begin{minipage}{0.6\textwidth}                    
             \centering
-            {\Large \seminarFull}\\[2pt]
-            {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[6pt]            
-            {\seminarShort,\ \seminarDepartmentShort\ FMFI~UK, Mlynská dolina, 842~48 Bratislava}\\[0pt]
-            {web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
-            \vspace{0pt}
+            \vspace{4pt}
+            {\Large \seminarFull}\\[4pt]
+            {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[8pt]            
+            {\seminarShort,\ \seminarDepartmentShort\ FMFI~UK, Mlynská dolina, 842~48 Bratislava}\\[2pt]
+            %{web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
+            \vspace{6pt}
         \end{minipage}        
     }           
 

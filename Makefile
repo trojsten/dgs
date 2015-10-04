@@ -20,4 +20,6 @@ tasks/fks/%.pdf: tasks/fks/%.svg
 clean:
 	@echo Clean:
 	rm -rf input
+	find -name "*.log" -or -name "*.aux" -or -name "*.out" -delete	
+
 #	rm -rf output
