@@ -11,6 +11,7 @@ make-tasks:
 	evince output/tasks.pdf &
 
 make-solutions:
+	$(makedirs)
 	xelatex -jobname=output/solutions -halt-on-error solutions.tex
 	evince output/solutions.pdf &
 
@@ -26,4 +27,6 @@ clean:
 	rm -rf input
 	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*.out" -or -name "*.*~" \) -delete	
 
-#	rm -rf output
+distclean: clean
+	@echo Dist clean:
+	rm -rf output/
