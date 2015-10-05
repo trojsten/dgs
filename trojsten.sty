@@ -27,6 +27,8 @@
 
 \RequirePackage[
     separate-uncertainty,                                   % 7.2 ± 0.5
+    detect-weight,
+    detect-family,
     multi-part-units        = single,
     per-mode                = reciprocal,                   % symbol for "m/s", reciprocal for "ms^{-1}"
     group-separator         = {\,},
@@ -38,7 +40,8 @@
     range-units             = single,
     range-phrase            = {\ --\ },
     list-units              = single,
-    list-final-separator    = {\ a\ }
+    list-final-separator    = {\ a\ },
+    text-celsius            = {°C}    
     %number-math-rm          = \ensuremath
 ]{siunitx}
 

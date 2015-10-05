@@ -138,8 +138,7 @@ by mohlo dôjsť k~poškodeniu zdroja.
 Už sme zistili, kedy sa poistka prepáli pri sériovom a paralelnom
 zapojení. Zostáva už len zistiť, či neexistuje nejaké hybridné zapojenie,
 ktoré bude fungovať aj pre menší počet zdrojov. Napovedať by nám mohlo
-najjednoduchšie takéto zapojenie pozostávajúce z~troch zdrojov (viď
-Obr. \ref{obr}). Podľa druhého Kirchhoffovho zákona dostávame rovnicu $2U=\left(R_{i}+R\right)I+R_{i}I/2$,
+najjednoduchšie takéto zapojenie pozostávajúce z~troch zdrojov (viz obrázok \ref{zapojenie1}). Podľa druhého Kirchhoffovho zákona dostávame rovnicu $2U=\left(R_{i}+R\right)I+R_{i}I/2$,
 odkiaľ $I=4U/(3R_{i}+2R)=\SI{264}{\ampere}$. Pre porovnanie, sériovým
 a paralelným zapojením troch článkov dostaneme prúd len $\SI{247,8}{\ampere}$.
 To je pre nás zlá správa, pretože sme ukázali, že hybridné zapojenie
@@ -165,21 +164,21 @@ ich zapíšme do tabuľky.
 
 \renewcommand{\arraystretch}{1.6}
 \begin{longtable}{@{\extracolsep{\fill}} c c r}
-        \toprule
-            Číslo obvodu & Algebrický výsledok & Numerický výsledok \\
-        \midrule
-        \endhead
-            1) & $I=\frac{4U}{4R_{i}+R}$ & \SI{264}{\ampere} \\
-            2) & $I=\frac{6U}{5R_{i}+2R}$ & $\sim$\SI{283}{\ampere} \\
-            3) & $I=\frac{2U}{R_{i}+R}$ & \textbf{\SI{330}{\ampere}} \\
-            4) & $I=\frac{7U}{5R_{i}+3R}$ & \SI{288.75}{\ampere} \\
-            5) & $I=\frac{2U}{R_{i}+R}$ & \textbf{\SI{330}{\ampere}} \\
-            6) & $I=\frac{6U}{3R_{i}+4R}$ & $\sim$\SI{283}{\ampere} \\
-            7) & $I=\frac{7U}{3R_{i}+5R}$ & \SI{288.75}{\ampere} \\
-            8) & $I=\frac{6U}{4R_{i}+3R}$ & $\sim$\SI{283}{\ampere} \\
-            9) & $I=\frac{6U}{2R_{i}+5R}$ & $\sim$\SI{283}{\ampere} \\
-            10) & $I=\frac{4U}{R_{i}+4R}$ & \SI{264}{\ampere} \\
-        \bottomrule
+    \toprule
+        Číslo obvodu & Algebrický výsledok & Numerický výsledok \\
+    \midrule
+    \endhead
+        1) & $I=\frac{4U}{4R_{i}+R}$ & \SI{264}{\ampere} \\
+        2) & $I=\frac{6U}{5R_{i}+2R}$ & $\sim$\SI{283}{\ampere} \\
+        3) & $I=\frac{2U}{R_{i}+R}$ & \bfseries{\SI{330}{\ampere}} \\
+        4) & $I=\frac{7U}{5R_{i}+3R}$ & \SI{288.75}{\ampere} \\
+        5) & $I=\frac{2U}{R_{i}+R}$ & \textbf{\SI{330}{\ampere}} \\
+        6) & $I=\frac{6U}{3R_{i}+4R}$ & $\sim$\SI{283}{\ampere} \\
+        7) & $I=\frac{7U}{3R_{i}+5R}$ & \SI{288.75}{\ampere} \\
+        8) & $I=\frac{6U}{4R_{i}+3R}$ & $\sim$\SI{283}{\ampere} \\
+        9) & $I=\frac{6U}{2R_{i}+5R}$ & $\sim$\SI{283}{\ampere} \\
+        10) & $I=\frac{4U}{R_{i}+4R}$ & \SI{264}{\ampere} \\
+    \bottomrule
     \caption{Prúdy pretekajúce poistkou pre jednotlivé zapojenia štyroch zdrojov}
 \end{longtable}
 
