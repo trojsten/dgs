@@ -34,9 +34,15 @@
     inter-unit-product      = {\kern 0.10em},
     exponent-product        = \cdot,                        % \times for 5×10^7, \cdot for 5.1O^7    
     number-unit-product     = {\,},
-    output-decimal-marker   = {,}
+    output-decimal-marker   = {,},
+    range-units             = single,
+    range-phrase            = {\ --\ },
+    list-units              = single,
+    list-final-separator    = {\ a\ }
     %number-math-rm          = \ensuremath
 ]{siunitx}
+
+\DeclareSIUnit{\gforce}{g}
 
 \RequirePackage{
     amsmath,
@@ -57,6 +63,7 @@
     titlesec,
     afterpage,
     pgffor,
+    longtable,
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
@@ -141,7 +148,7 @@
 \NewDocumentCommand{\Picture}{m m O{} O{}}{
     \begin{figure}[H]
         \centering
-        \includegraphics[keepaspectratio = true, height = #2]{files/\seminarID/tasks/#1}
+        \includegraphics[keepaspectratio = true, height = #2]{files/\seminarID/solutions/#1}
         \ifstrempty{#3}{}{\caption{\emph{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
     \end{figure}
