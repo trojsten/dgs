@@ -1,19 +1,22 @@
-all: make-tasks
+all: tasks solutions view
 
 define makedirs
 	mkdir -p output
 	mkdir -p temp
 endef
 
-make-tasks:    
+tasks:    
 	$(makedirs)
 	xelatex -jobname=output/tasks -halt-on-error tasks.tex
-	evince output/tasks.pdf &
+	#xelatex -jobname=output/tasks -halt-on-error tasks.tex
 
-make-solutions:
+solutions:
 	$(makedirs)
 	xelatex -jobname=output/solutions -halt-on-error solutions.tex
-	evince output/solutions.pdf &
+	#xelatex -jobname=output/solutions -halt-on-error solutions.tex
+
+view:
+	evince output/solutions.pdf 2>/dev/null 1>/dev/null &
 
 svgs = $(wildcard tasks/fks/*.svg)
 svg-to-pdf: $(patsubst %.pdf, %.svg, $(svgs))
@@ -30,3 +33,5 @@ clean:
 distclean: clean
 	@echo Dist clean:
 	rm -rf output/
+
+.PHONY: tasks solutions	
