@@ -2,7 +2,7 @@
 Predtým, než si zodpovieme otázku zo zadania, si vyjasnime, čo je to vlastne \emph{farba}. 
 
 \emph{Farba} je čisto subjektívny pocit a interpretácia svetla istej vlnovej dĺžky našim okom a mozgom.
-Naše oči sa skladajú z~troch druhov čapíkov, tzv. S, M a L čapíky, ktoré sú rozdielne citlivé na svetlá rôznych vlnových dĺžok.
+Naše oči sa skladajú z~troch druhov čapíkov, tzv. S, M a~L čapíky, ktoré sú rozdielne citlivé na svetlá rôznych vlnových dĺžok.
 Pozor, tieto čapíky nie sú citlivé na svetlo iba jednej vlnovej dĺžky, ale reagujú na pomerne široký rozsah vlnových dĺžok.
 Pri veľmi letmom pohľade tieto čapíky korelujú s~voľbou troch základných farieb, ktoré sa používajú na monitoroch a displejoch -- RGB\footnote{Red, green, blue, teda červená, zelená a modrá.}.
 To, akú farbu vidíme, teda záleží od dvoch vecí: citlivosti nášho oka na svetlo rôznych vlnových dĺžok a samotného spektra svetla,
@@ -19,12 +19,12 @@ Hviezda by totiž musela mať naozaj \emph{veľmi exotické} zloženie, aby to b
 %\footnote{Obrázok je prepožičaný z~\url{https://upload.wikimedia.org/wikipedia/commons/2/2f/Fraunhofer_lines.svg}.}
 ][fraunhofer]
 
-Žiarenie absolútne čierneho telesa sa riadi tzv. \emph{Planckovým vyžarovacím zákonom}\footnote{\url{https://en.wikipedia.org/wiki/Planck\%27s_law}}.
+Žiarenie absolútne čierneho telesa sa riadi tzv. \emph{Planckovým vyžarovacím zákonom}\footnote{\url{https://en.wikipedia.org/wiki/Planck's_law}}.
 Ten nám hovorí, koľko elektromagnetického žiarenia vyžaruje absolútne čierne teleso pri určitej teplote. 
 $$
 I(\lambda) = \frac{2hc^2}{\lambda^5}\frac{1}{e^{\frac{hc}{\lambda k T}}-1}\text{,}
 $$
-kde $I$ označuje vyžiarený výkon na jednotku plochy, priestorový uhol a vlnovú dĺžku $\lambda$, $h$ je Planckova konštanta, $k$ je Boltzmanova konštanta, $c$ je rýchlosť svetla a $T$ je teplota absolútne čierneho telesa.
+kde $I$ označuje vyžiarený výkon na jednotku plochy, priestorový uhol a vlnovú dĺžku $\lambda$, $h$ je Planckova konštanta, $k$ je Boltzmannova konštanta, $c$ je rýchlosť svetla a $T$ je teplota absolútne čierneho telesa.
 
 \emph{Wienov posuvný zákon},
 $$
@@ -44,10 +44,11 @@ Toto je dôvod, prečo astronómovia nepozorujú zelené hviezdy.\footnote{V sku
 Už vieme, prečo nie sú hviezdy zelené, no musíme ešte zistiť, akú farbu majú vlastne hviezdy, ktoré by \uv{mali byť zelené}.
 Môžeme použiť buď tento obrázok\footnote{\url{https://upload.wikimedia.org/wikipedia/commons/b/ba/PlanckianLocus.png}}
 
-\Picture{planck.png}{6cm}[Na obrázku môžeme vidieť krivku, na ktorej je znázornená teplota v~Kelvinoch. A~príslušné farby, ktoré zodpovedajú príslušnej teplote absolútne čierneho telesa.][planck]
+\Picture{planck.png}{8cm}[Na obrázku môžeme vidieť krivku, na ktorej je znázornená teplota v~Kelvinoch. A~príslušné farby, ktoré zodpovedajú príslušnej teplote absolútne čierneho telesa.][planck]
 
 alebo si to skúsime sami vypočítať. Na to, aby sme to vypočítali, však musíme vedieť, ako presne sú naše čapíky citlivé na svetlo rôznych vlnových dĺžok.
-Našťastie nemusíme dlho hladať, pretože ak sa trošku posnažíme, dopátrame sa k~tzv. \emph{CIE color matching functions}\footnote{\url{https://en.wikipedia.org/wiki/CIE_1931_color_space(MRIEŽKA) Color_matching_functions}},
+Našťastie nemusíme dlho hladať, pretože ak sa trošku posnažíme, dopátrame sa k~tzv.
+\emph{CIE color matching functions}\footnote{\url{https://en.wikipedia.org/wiki/CIE_1931_color_space\#Color_matching_functions}},
 čo sú štandardizované citlivosti čapíkov na rôzne vlnové dlžky. Samotné tabuľky $x$, $y$ a $z$ funkcií možno nájsť napríklad tu\footnote{\url{http://cvrl.ioo.ucl.ac.uk/cmfs.htm}}.
 
 Stačí si teda otvoriť tabuľkový procesor, nakopírovať si tabuľky $x$, $y$ a $z$ funkcií (napr. po $\SI{0.1}{\nano\metre}$), prenásobiť vo viditeľnom spektre spektrom
@@ -55,7 +56,7 @@ absolútne čierneho telesa teploty $T \approx \SI{5470}{\kelvin}$ a následne s
 (viď článok o~\emph{Color matching functions}).\footnote{Ak vám táto myšlienka sčitovania po malých kúskoch nie je jasná,
 odporúčame si prečítať v~Archive FKS vzorák k~úlohe Vlnitá panoráma z~29. ročníka.} Nakoniec už len nájsť spôsob ako čísla \emph{color functions} $X$, $Y$ a $Z$ prepočítať na RGB farbu. 
 
-Iný spôsob bol priamo nájsť približné vzťahy\footnote{\url{https://en.wikipedia.org/wiki/Planckian_locus(MRIEŽKA)Approximation}} na výpočet $X$ a $Y$ súradníc v~$CEI$ farebnom spektre priamo z~teploty a potom prepočítať na RGB farbu.
+Iný spôsob bol priamo nájsť približné vzťahy\footnote{\url{https://en.wikipedia.org/wiki/Planckian_locus\#Approximation}} na výpočet $X$ a $Y$ súradníc v~$CEI$ farebnom spektre priamo z~teploty a potom prepočítať na RGB farbu.
 
-Či už zvolíme prvý alebo druhý spôsob, dopátrame sa k~skoro čisto bielej farbe\footnote{[0.333,0.342] v~CEI 1931 Color space}.
-\uv{Zelené hviezdy} sú teda v~skutočnosti biele. Pravdou je, že v~tom obrovskom množstve hviezd sa môže nachádzať zopár hviezd s~takým exotickým zložením,že vďaka absorbčnému a emisnému spektru prvkov, z~ktorých sa bude skladať, sa nám bude zdať zelená, no žiadnu sme doteraz nenašli. Ak len predsa len narazíte na nejaký obrázok či fotku v~hviezdy v~zelenej farbe, napr. na stránke NASA, ide o~počítačovo upravenú fotku s~umelými farbami.
+Či už zvolíme prvý alebo druhý spôsob, dopátrame sa k~skoro čisto bielej farbe\footnote{[0.333, 0.342] v~CEI 1931 Color space}.
+\uv{Zelené hviezdy} sú teda v~skutočnosti biele. Pravdou je, že v~tom obrovskom množstve hviezd sa môže nachádzať zopár hviezd s~takým exotickým zložením, že vďaka absorbčnému a emisnému spektru prvkov, z~ktorých sa bude skladať, sa nám bude zdať zelená, no žiadnu sme doteraz nenašli. Ak len predsa len narazíte na nejaký obrázok či fotku v~hviezdy v~zelenej farbe, napr. na stránke NASA, ide o~počítačovo upravenú fotku s~umelými farbami.
