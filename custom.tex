@@ -17,6 +17,7 @@
 \setlength{\itemindent}{0pt}
 \setlength{\textfloatsep}{0mm}
 \setlength{\LTcapwidth}{0.8\textwidth}
+\captionsetup{width=0.8\textwidth}
 
 \setlist[description]{
     style           = multiline,
@@ -42,26 +43,26 @@
     \fancyhf{}
     \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
     \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
-    \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
+    \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
-    \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
+    \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
 
 \fancypagestyle{solutions}{%
     \fancyhf{}
     \fancyhead[LE,RO]{\textit{Riešenia \currentSeries. série \currentPartGenitive\ časti}}
     \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
-    \fancyfoot[LO,RE]{\texttt{\seminarEmail}}
+    \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
-    \fancyfoot[LE,RO]{\texttt{\seminarURL}}                                                         % make this URL
+    \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
     
 \fancypagestyle{first}{%
     \fancyhf{}
     \fancyhead[L]{    
         \begin{minipage}{0.2\textwidth}
-            \centering
-            \includegraphics[height = 18mm]{logo/trojsten/large.pdf}\\[0pt]
+            \flushleft
+            \includegraphics[height = 20mm]{logo/trojsten/large.pdf}\\[0pt]
             \vspace{2pt}
         \end{minipage}
     }
@@ -80,8 +81,8 @@
 
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
-            \centering
-            \includegraphics[width = 0.66\linewidth, keepaspectratio = true]{logo/\seminarID/large.pdf}\\[0pt]
+            \flushright
+            \includegraphics[width = 0.7\linewidth, keepaspectratio = true]{logo/\seminarID/large.pdf}\\[0pt]
         \end{minipage}
     } 
     

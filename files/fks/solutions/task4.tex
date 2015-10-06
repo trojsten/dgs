@@ -1,4 +1,4 @@
-\createSolutionHeader[Ako špagety sajú][Zuzka][Zuzka]
+\createSolutionHeader[Ako špagety sajú][Zuzka][Zuzka][a]
 Máme zmerať množstvo vody nasaté špagetami za nejaký čas pri nejakej teplote.
 To znie ako niečo, čo bude trochu náročné na aparatúru, preto si treba najprv dobre premyslieť,
 akým spôsobom to chceme merať a~či na to máme doma všetky potrebné veci.
@@ -32,46 +32,37 @@ historický teplomer s~najmenším dielikom $\SI{2}{\celsius}$,
 digitálnu váhu merajúcu s~presnosťou na jeden gram a~bezvaječné špagety Clever.
 Pri prvom experimente bola počiatočná hmotnosť špagiet $\SI{19}{\gram}$, pri druhom $\SI{30}{\gram}$. Tu sú výsledky môjho merania:
 
-\begin{center}
-\begin{tabular}{r r r}
-\toprule
-  & $T$ \lbrack\si{\celsius}\rbrack & $\Delta m$ \lbrack\si{\gram}\rbrack \\
-\midrule
-1. & 60   & 7   \\
-2. & 70   & 11  \\
-3. & 80   & 14  \\
-4. & 90   & 19  \\
-5. & 100  & 19  \\
-\bottomrule
-\end{tabular}
+\begin{longtable}{@{\extracolsep{\fill}} r r r}
+    \toprule
+        Meranie & $T$ \lbrack\si{\celsius}\rbrack & $\Delta m$ \lbrack\si{\gram}\rbrack \\
+    \midrule
+        1. & 60   & 7   \\
+        2. & 70   & 11  \\
+        3. & 80   & 14  \\
+        4. & 90   & 19  \\
+        5. & 100  & 19  \\
+    \bottomrule \\[4mm]
+    \caption{\textit{Prírastky hmotnosti špagiet po desiatich minútach v~rôznych teplotách vody}}
+\end{longtable}
 
-\medskip
-
-Tabuľka 1: Prírastky hmotnosti špagiet po desiatich minútach v~rôznych teplotách vody
-
-\medskip
-
-\begin{tabular}{|c|c|c|}
-\hline
- & $t$ \lbrack\si{\second}\rbrack & $\Delta m$ \lbrack\si{\gram}\rbrack \\
-\hline
-1. & 120 & 15 \\ \hline
-2. & 240 & 18 \\ \hline
-3. & 360 & 22 \\ \hline
-4. & 480 & 26 \\ \hline
-5. & 600 & 30 \\ \hline
-6. & 720 & 33 \\ \hline
-7. & 840 & 36 \\ \hline
-8. & 960 & 38 \\ \hline
-9. & 1080 & 41 \\ \hline
-10. & 1200 & 44 \\ \hline
-\end{tabular}
-
-\medskip
-
-Tabuľka 2: Prírastky hmotnosti špagiet v~rôznom čase pri teplote $T = \SI{80}{\celsius}$
-
-\end{center}
+\begin{longtable}{@{\extracolsep{\fill}} r r r}
+    \toprule
+        Meranie & $t$ \lbrack\si{\second}\rbrack & $\Delta m$ \lbrack\si{\gram}\rbrack \\
+    \midrule
+    \endhead
+        1. & 120 & 15 \\
+        2. & 240 & 18 \\
+        3. & 360 & 22 \\
+        4. & 480 & 26 \\
+        5. & 600 & 30 \\
+        6. & 720 & 33 \\
+        7. & 840 & 36 \\
+        8. & 960 & 38 \\
+        9. & 1080 & 41 \\
+        10. & 1200 & 44 \\
+    \bottomrule \\
+    \caption{\textit{Prírastky hmotnosti špagiet v~rôznom čase pri teplote $T = \SI{80}{\celsius}$}}
+\end{longtable}
 
 Odmerané máme, môžeme pristúpiť k~interpretácii údajov. Tu sa ujíma slova ľubovoľný tabuľkový editor. Mohli ste použiť {\it Excel}, {\it LibreOffice Calc}, \dots. Na vykreslenie grafov sme sa však rozhodli použiť \textit{Gnuplot}.
 

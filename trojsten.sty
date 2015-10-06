@@ -62,6 +62,7 @@
     verbatim,
     color,
     float,
+    caption,
     booktabs,
     titlesec,
     afterpage,
@@ -86,7 +87,7 @@
 \defaultfontfeatures{
     Mapping         = tex-text,
     Scale           = MatchLowercase,
-    Ligatures       = Common
+    Ligatures       = TeX
 }
 
 %\setallmainfonts[
@@ -152,12 +153,16 @@
     \begin{figure}[H]
         \centering
         \includegraphics[keepaspectratio = true, height = #2]{files/\seminarID/solutions/#1}
-        \ifstrempty{#3}{}{\caption{\emph{#3}}}
+        \ifstrempty{#3}{}{\caption{\textit{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
     \end{figure}
 }
 
-%\createTaskHeader{name, pointsDescription, pointsCode}
+% \createTaskHeader{name, pointsDescription, pointsCode}
+% Vytvorí novú hlavičku zadania úlohy
+%   - názov úlohy
+%   - počet bodov za popis (iba KSP)
+%   - počet bodov za kód (iba KSP)
 \NewDocumentCommand{\createTaskHeader}{O{} O{} O{}}{
     \subsection{
         \texorpdfstring{%
@@ -172,16 +177,21 @@
     }
 }
 
-%\createSolutionHeader{name, author, evaluator}
-\NewDocumentCommand{\createSolutionHeader}{O{} O{} O{}}{
+% \createSolutionHeader[name][author][evaluator][gender]
+% Vytvorí novú hlavičku vzorového riešenia
+%   - názov úlohy
+%   - meno autora vzorového riešenia
+%   - meno opravovateľa
+%   - gramatický rod opravovateľa
+\NewDocumentCommand{\createSolutionHeader}{O{} O{} O{} O{}}{
     \subsection{
         \texorpdfstring{%
-            \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
+            \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
             \hfill\normalsize%
-            \ifstrequal{#2}{}{%
-                \ifstrequal{#3}{}{}{opravovalo \textbf{#3}}%
+            \ifstrempty{#2}{%
+                \ifstrempty{#3}{}{opravovalo \textbf{#3}}%
             }{%
-                \ifstrequal{#3}{}{vzorák \textbf{#2}}{vzorák \textbf{#2}, opravovalo \textbf{#3}}%
+                \ifstrempty{#3}{vzorák \textbf{#2}}{vzorák \textbf{#2}, opravoval\ifstrempty{#4}{}{#4} \textbf{#3}}%
             }%
         }{%
             \arabic{taskNumber}%
@@ -190,7 +200,7 @@
 }
 
 \NewDocumentCommand{\addTasks}{}{%    
-    \newcounter{taskNumber}
+    \newcounter{taskNumber}%
     \Repeat{\seminarTaskCount}{\tryAddTask}%
 }
 
@@ -199,6 +209,8 @@
     \Repeat{\seminarTaskCount}{\tryAddSolution}%
 }
 
+% \tryAddTask
+% Pridá ďalšie zadanie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddTask}{}{
     \stepcounter{taskNumber}    
     \IfFileExists{files/\seminarID/tasks/task\arabic{taskNumber}}{%
@@ -208,6 +220,8 @@
     }    
 }
 
+% \tryAddSolution
+% Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
     \stepcounter{taskNumber}
     \IfFileExists{files/\seminarID/solutions/task\arabic{taskNumber}}{%
@@ -217,10 +231,11 @@
     }    
 }
 
-% \exampleIO{verbatim input, verbatim output}
-% this macro takes two verbatim 
-% uses ExplSyntax (LaTeX3)
-% primarily intended for KSP input and output examples
+% \exampleIO[verbatim input][verbatim output]
+% Príklad vstupu/výstupu (KSP)
+%   - verbatim vstup
+%   ₋ verbatim výstup
+% Používa ExplSyntax z LaTeX3
 \ExplSyntaxOn
 \char_set_catcode_other:n {`\^^M}
 \NewDocumentCommand{\exampleIO}{+v +v}{
@@ -264,9 +279,5 @@
 
 
 \endinput                                                           % everything below is safely ignored
-
-KNOWN ISSUES:
-\num{0.5} typesets an ugly tall comma
-
 
 
