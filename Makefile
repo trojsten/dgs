@@ -5,12 +5,16 @@ define makedirs
 	mkdir -p temp
 endef
 
-tasks:    
+tasks: tasks.pdf
+
+tasks.pdf:
 	$(makedirs)
 	xelatex -jobname=output/tasks -halt-on-error tasks.tex
 	#xelatex -jobname=output/tasks -halt-on-error tasks.tex
 
-solutions:
+solutions: solutions.pdf
+
+solutions.pdf:
 	$(makedirs)
 	xelatex -jobname=output/solutions -halt-on-error solutions.tex
 	#xelatex -jobname=output/solutions -halt-on-error solutions.tex
@@ -34,4 +38,4 @@ distclean: clean
 	@echo Dist clean:
 	rm -rf output/
 
-.PHONY: tasks solutions	
+.PHONY: tasks solutions tasks.pdf solutions.pdf	
