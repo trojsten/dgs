@@ -1,4 +1,10 @@
-- comma in \num decimal numbers is ugly
-- sponsors!
-- fine tune header positions
-- multiple authors should be separated by "a", not bold
+# Known issues
+
+- v \num sa typesetuje hnusná čiarka
+- pridať sponzorov
+- finetunovať polohy vecí v headeri
+- viacero autorov vzoráku (xkeyval alebo oddeliť bodkočiarkami, potom typeset čiarok a "a" bez boldu)
+
+# Style guide
+
+- Kam chceme písať 
