@@ -19,7 +19,10 @@ solutions.pdf:
 	xelatex -jobname=output/solutions -halt-on-error solutions.tex
 	#xelatex -jobname=output/solutions -halt-on-error solutions.tex
 
-view:
+view-tasks:
+	evince output/tasks.pdf 2>/dev/null 1>/dev/null &
+
+view-solutions:
 	evince output/solutions.pdf 2>/dev/null 1>/dev/null &
 
 svgs = $(wildcard tasks/fks/*.svg)
