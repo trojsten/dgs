@@ -4,5 +4,6 @@
 *.log
 *.out
 *.aux
+*.synctex
 /*.pdf
 output/
