@@ -1,7 +1,7 @@
 \NewDocumentCommand{\seminarID}{}{<undefined>}
 \NewDocumentCommand{\seminarShort}{}{<undefined>}
 \NewDocumentCommand{\seminarFull}{}{<undefined seminar name>}
-\NewDocumentCommand{\seminarURL}{}{\texttt{\lstinline{<undefined url>}}}
+\NewDocumentCommand{\seminarURL}{}{\texttt{<undefined url>}}
 \NewDocumentCommand{\seminarDepartmentShort}{}{<undefined department>}
 \NewDocumentCommand{\seminarDepartmentFull}{}{<undefined department>}
 \NewDocumentCommand{\seminarEmail}{}{<undefined email>}
@@ -26,6 +26,8 @@
 
 \NewDocumentCommand{\currentAcademicYear}{}{\currentYear/\the\numexpr\currentYear+1\relax}
 \NewDocumentCommand{\currentContestYear}{}{\the\numexpr\currentYear-\seminarFounded+1\relax}
+
+\NewDocumentCommand{\currentFolder}{}{<undefined folder>}
 
 \NewDocumentCommand{\getTaskCategories}{m}{%
     \errorMessage{<undefined categories> Please override \backslash getTaskCategories macro in your seminar’s config file}%

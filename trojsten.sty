@@ -27,22 +27,20 @@
 
 \RequirePackage[
     separate-uncertainty,                                   % 7.2 ± 0.5
-    detect-weight,
-    detect-family,
-    multi-part-units        = single,
-    per-mode                = reciprocal,                   % symbol for "m/s", reciprocal for "ms^{-1}"
+    detect-all,                                             % chceme zachovávať formátovanie prostredia
+    multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
+    per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
     group-separator         = {\,},
     group-minimum-digits    = 3,
-    inter-unit-product      = {\kern 0.10em},
-    exponent-product        = \cdot,                        % \times for 5×10^7, \cdot for 5.1O^7    
-    number-unit-product     = {\,},
-    output-decimal-marker   = {,},
+    inter-unit-product      = {\kern 0.10em},               % veľmi tenká medzera medzi jednotkami
+    exponent-product        = \cdot,                        % \times pre 5×10^7, \cdot pre 5.1O^7    
+    number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
+    output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
     range-phrase            = {\ --\ },
-    list-units              = single,
-    list-final-separator    = {\ a\ },
-    text-celsius            = {°C}    
-    %number-math-rm          = \ensuremath
+    list-units              = single,                       %
+    list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
+    text-celsius            = {°C}                          % použiť dva znaky pre stupeň Celzia, miesto ligatúry
 ]{siunitx}
 
 \DeclareSIUnit{\gforce}{g}
@@ -83,7 +81,7 @@
 \setdefaultlanguage{slovak}
 
 % Setup fonts -- see fontspec/mathspec documentation.
-% Fonts are loaded from .ttf and .otf files (instead of using system fonts)
+% Fonty sa načítavajú zo súborov .ttf a .otf (v žiadnom prípade nepoužívame systémové fonty)
 \defaultfontfeatures{
     Mapping         = tex-text,
     Scale           = MatchLowercase,
@@ -129,8 +127,14 @@
 
 \input{trojsten-utils.sty}
 
-% Miscellaneous formatting macros
+% \uv{text}
+% Skratka pre slovenské úvodzovky
+%   - text, ktorý má byť v úvodzovkách (môže presahovať odsek)
 \NewDocumentCommand{\uv}{+m}{\quotedblbase#1\textquotedblleft}
+
+% \romanNumeral{number}
+% Rímske číslo
+%   - číslo
 \NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
 \NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
 
@@ -149,16 +153,22 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
-\NewDocumentCommand{\Picture}{m m O{} O{}}{
+% \Picture{filename}{height}[caption][label]
+% Vloží obrázok s určenou výškou
+%   - meno súboru, hľadá v aktuálnom priečinku
+%   - výška obrázka (napríklad v mm)
+%   - popis pod obrázkom
+%   - label pre odkázanie sa na obrázok
+\NewDocumentCommand{\insertPicture}{m m O{} O{}}{
     \begin{figure}[H]
         \centering
-        \includegraphics[keepaspectratio = true, height = #2]{files/\seminarID/solutions/#1}
+        \includegraphics[keepaspectratio = true, height = #2]{\currentFolder/#1}
         \ifstrempty{#3}{}{\caption{\textit{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
     \end{figure}
 }
 
-% \createTaskHeader{name, pointsDescription, pointsCode}
+% \createTaskHeader[name][pointsDescription][pointsCode]
 % Vytvorí novú hlavičku zadania úlohy
 %   - názov úlohy
 %   - počet bodov za popis (iba KSP)
@@ -213,10 +223,10 @@
 % Pridá ďalšie zadanie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddTask}{}{
     \stepcounter{taskNumber}    
-    \IfFileExists{files/\seminarID/tasks/task\arabic{taskNumber}}{%
-        \input{files/\seminarID/tasks/task\arabic{taskNumber}}%
+    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
+        \input{\currentFolder/task\arabic{taskNumber}}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{task\arabic{taskNumber}}!>}\\
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
     }    
 }
 
@@ -224,10 +234,10 @@
 % Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
     \stepcounter{taskNumber}
-    \IfFileExists{files/\seminarID/solutions/task\arabic{taskNumber}}{%
-        \input{files/\seminarID/solutions/task\arabic{taskNumber}}%
+    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
+        \input{\currentFolder/task\arabic{taskNumber}}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{task\arabic{taskNumber}}!>}\\
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
     }    
 }
 
