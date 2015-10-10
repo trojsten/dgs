@@ -28,16 +28,14 @@ view-solutions: solutions
 svgs = $(wildcard tasks/fks/*.svg)
 svg-to-pdf: $(patsubst %.pdf, %.svg, $(svgs))
 
-pictures: files/fks/tasks/3.pdf files/fks/tasks/6.pdf files/fks/tasks/7.pdf
-
 files/fks/tasks/%.pdf: files/fks/tasks/%.svg
 	@echo Converting $< to PDF:
 	rsvg-convert --format pdf --keep-aspect-ratio --output temp/$*.pdf $<
 
 clean:
 	@echo Clean:
-	rm -rf input
-	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*.out" -or -name "*.*~" \) -delete	
+	rm -rf input/
+	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.*~" \) -delete	
 
 distclean: clean
 	@echo Dist clean:

@@ -23,15 +23,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
-     inkscape:cx="155.72493"
+     inkscape:cx="157.74524"
      inkscape:cy="330.25878"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1366"
-     inkscape:window-height="706"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-width="1920"
+     inkscape:window-height="1147"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:snap-grids="false"
      inkscape:object-paths="true"
@@ -592,7 +592,7 @@
          id="g3130"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132"
-           points="469.27,418.4 456.07,418.4 456.07,415.51 469.27,415.51 "
+           points="469.27,415.51 469.27,418.4 456.07,418.4 456.07,415.51 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
@@ -706,7 +706,7 @@
          id="g3130-4"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132-5"
-           points="456.07,418.4 456.07,415.51 469.27,415.51 469.27,418.4 "
+           points="469.27,418.4 456.07,418.4 456.07,415.51 469.27,415.51 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
@@ -826,7 +826,7 @@
          id="g3130-8"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132-6"
-           points="469.27,418.4 456.07,418.4 456.07,415.51 469.27,415.51 "
+           points="469.27,415.51 469.27,418.4 456.07,418.4 456.07,415.51 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
@@ -940,7 +940,7 @@
          id="g3130-4-8"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132-5-9"
-           points="456.07,418.4 456.07,415.51 469.27,415.51 469.27,418.4 "
+           points="469.27,418.4 456.07,418.4 456.07,415.51 469.27,415.51 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
@@ -1070,7 +1070,7 @@
          id="g3130-8-4"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132-6-2"
-           points="469.27,415.51 469.27,418.4 456.07,418.4 456.07,415.51 "
+           points="456.07,415.51 469.27,415.51 469.27,418.4 456.07,418.4 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
@@ -1184,7 +1184,7 @@
          id="g3130-4-8-2"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"><polygon
            id="polygon3132-5-9-0"
-           points="469.27,418.4 456.07,418.4 456.07,415.51 469.27,415.51 "
+           points="469.27,415.51 469.27,418.4 456.07,418.4 456.07,415.51 "
            style="fill:#000000;stroke-width:0" /></g>    </g>
     <path
        sodipodi:type="arc"
