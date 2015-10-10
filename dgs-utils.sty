@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{trojsten}[2015/09/29 Trojsten utilities pack]
+\ProvidesPackage{dgs-utils}[2015/09/29 Trojsten utilities pack]
 
 % Tabular environments
 \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
@@ -7,10 +7,12 @@
 \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
 % package siunitx -- custom units
-\DeclareSIUnit\au{AU}
-\DeclareSIUnit\pixel{px}
-\DeclareSIUnit\year{y}
-\DeclareSIUnit\eur{€}
+\DeclareSIUnit{\gforce}{g}
+\DeclareSIUnit{\year}{y}
+\DeclareSIUnit{\au}{AU}
+\DeclareSIUnit{\pixel}{px}
+\DeclareSIUnit{\year}{y}
+\DeclareSIUnit{\eur}{€}
 
 % Math shorthands
 \DeclareMathOperator{\diff}{d\!}
