@@ -1,13 +1,21 @@
 \NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{trojsten}[2015/09/07 Trojsten unified TeX]
+\ProvidesPackage{dgs}[2015/10/09 Trojsten Document Generation System - DeGeŠ]
 
-% Banish cslatex to eternal voids
-% This package is currently only compatible with XeLaTeX
+% Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
+% spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
+%
 
-% Please use
-% \SI{<how many>}{<what units>}, not \unit nor \mathrm and who knows what.
-% \ang{10}, not 10^{\mathrm{\circ}} or whatever the hell you might have seen. It’s no longer 1997.
-% \ang{1;2;3} for degrees, minutes, seconds: 1° 2’ 3”
+% Prosíme o dodržiavanie nasledovných zásad.
+
+% SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
+% Ak nepotrebuješ číslo, tak \si{jednotka}.
+% Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
+% Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
+%	stará o slovenskú desatinnú čiarku miesto bodky.
+%
+
+% NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD NIE JE JEDNORAZOVÝ.
+% Aj keď je TeX miestami nechutný, zatiaľ sa všetko podarilo spraviť +- čisto.
 
 % DO NOT COME UP WITH YOUR OWN HACKS.
 % If anything does not work as you wish, feel free to contact me at kvik@fks.sk and we’ll find a solution.
@@ -125,7 +133,7 @@
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 
-\input{trojsten-utils.sty}
+\input{dgs-utils.sty}
 
 % \uv{text}
 % Skratka pre slovenské úvodzovky
@@ -141,10 +149,10 @@
 
 % Internal commands
 \NewDocumentCommand{\loadSeminar}{m}{
-    \IfFileExists{trojsten-config-#1.sty}{
-        \usepackage{trojsten-config-#1}                   
+    \IfFileExists{dgs-config-#1.sty}{
+        \RequirePackage{dgs-config-#1}                   
     }{
-        \PackageError{trojsten}{Cannot load seminar #1}{File "trojsten-config-#1.sty" does not exist}
+        \PackageError{dgs}{Cannot load seminar #1}{File "dgs-config-#1.sty" does not exist}
     }
 }
 
@@ -153,7 +161,7 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
-% \Picture{filename}{height}[caption][label]
+% \insertPicture{filename}{height}[caption][label]
 % Vloží obrázok s určenou výškou
 %   - meno súboru, hľadá v aktuálnom priečinku
 %   - výška obrázka (napríklad v mm)

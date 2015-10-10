@@ -1,0 +1,304 @@
+\NeedsTeXFormat{LaTeX2e}[2011/01/01]
+\ProvidesPackage{dgs}[2015/10/09 Trojsten Document Generation System - DeGeŠ]
+
+% Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
+% spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
+%
+
+% Prosíme o dodržiavanie nasledovných zásad.
+
+% SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
+% Ak nepotrebuješ číslo, tak \si{jednotka}.
+% Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
+% Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
+%	stará o slovenskú desatinnú čiarku miesto bodky.
+%
+
+% NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD NIE JE JEDNORAZOVÝ.
+% Aj keď je TeX miestami nechutný, zatiaľ sa všetko podarilo spraviť +- čisto.
+
+\RequirePackage[
+    paper                   = a4paper,
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 16pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % include header and footer dimensions in body
+    %showframe                                               % uncomment this to see geometry frame
+]{geometry}
+
+\RequirePackage[
+    separate-uncertainty,                                   % 7.2 ± 0.5
+    detect-all,                                             % chceme zachovávať formátovanie prostredia
+    multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
+    per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
+    group-separator         = {\,},
+    group-minimum-digits    = 3,
+    inter-unit-product      = {\kern 0.10em},               % veľmi tenká medzera medzi jednotkami
+    exponent-product        = \cdot,                        % \times pre 5×10^7, \cdot pre 5.1O^7    
+    number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
+    output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
+    range-units             = single,
+    range-phrase            = {\ --\ },
+    list-units              = single,                       %
+    list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
+%    text-celsius            = {°C}                          % použiť dva znaky pre stupeň Celzia, miesto ligatúry
+]{siunitx}
+\DeclareSIUnit{\gforce}{g}
+
+\RequirePackage{
+    amsmath,
+    amssymb,
+    xparse,
+    enumitem,
+    graphicx,
+    listings,
+    lastpage,
+    calc,
+    pdftexcmds,
+    xifthen,
+    verbatim,
+    color,
+    float,
+    caption,
+    booktabs,
+    titlesec,
+    afterpage,
+    pgffor,
+    longtable,
+    fancyvrb                                                % fancy verbatim (currently unused)
+}
+
+\definecolor{color-link}{rgb}{0.1, 0.1, 0.5}
+
+\RequirePackage[
+	colorlinks				= true,
+	urlcolor				= color-link,
+]{hyperref}
+
+
+\RequirePackage{fancyhdr}                                   % fancy header
+
+\RequirePackage[all]{nowidow}
+
+% Setup XeLaTeX-specific options
+
+\RequirePackage{mathspec}                                   % includes fontspec
+\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage{xunicode}
+\setdefaultlanguage{slovak}
+
+% Setup fonts -- see fontspec/mathspec documentation.
+% Fonty sa načítavajú zo súborov .ttf a .otf (v žiadnom prípade nepoužívame systémové fonty)
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Scale           = MatchLowercase,
+    Ligatures       = TeX
+}
+
+%\setallmainfonts[
+%    Path            = fonts/ ,
+%    Extension       = .otf ,
+%    UprightFont     = *-regular ,
+%    BoldFont        = *-bold ,
+%    ItalicFont      = *-italic ,
+%    BoldItalicFont  = *-bolditalic    
+%]{agaramondpro}
+\setallmainfonts[
+    Path            = fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-regular ,
+    BoldFont        = *-bold ,
+    ItalicFont      = *-it ,
+    BoldItalicFont  = *-boldit    
+]{minionpro}
+\setmathsfont{Minion Math}                                  % change this
+\setmonofont[
+    Path            = fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-regular ,
+    BoldFont        = *-bold ,
+    ItalicFont      = *-it ,
+    BoldItalicFont  = *-boldit ,      
+    Scale           = MatchLowercase,
+]{sourcecodepro}
+\setsansfont[
+    Path            = fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = * ,
+    BoldFont        = *b ,
+    ItalicFont      = *i ,
+    BoldItalicFont  = *z    
+]{verdana}
+
+\RequirePackage{boolexpr}                                   % boolean expressions, switch
+
+\input{dgs-utils.sty}
+
+% \uv{text}
+% Skratka pre slovenské úvodzovky
+%   - text, ktorý má byť v úvodzovkách (môže presahovať odsek)
+\NewDocumentCommand{\uv}{+m}{\quotedblbase#1\textquotedblleft}
+
+% \romanNumeral{number}
+% Rímske číslo
+%   - číslo
+\NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
+\NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
+
+
+% Internal commands
+\NewDocumentCommand{\loadSeminar}{m}{
+    \IfFileExists{dgs-config-#1.sty}{
+        \RequirePackage{dgs-config-#1}                   
+    }{
+        \PackageError{dgs}{Cannot load seminar #1}{File "dgs-config-#1.sty" does not exist}
+    }
+}
+
+% \Repeat
+\ExplSyntaxOn
+\cs_new_eq:NN \Repeat \prg_replicate:nn
+\ExplSyntaxOff
+
+% \insertPicture{filename}{height}[caption][label]
+% Vloží obrázok s určenou výškou
+%   - meno súboru, hľadá v aktuálnom priečinku
+%   - výška obrázka (napríklad v mm)
+%   - popis pod obrázkom
+%   - label pre odkázanie sa na obrázok
+\NewDocumentCommand{\insertPicture}{m m O{} O{}}{
+    \begin{figure}[H]
+        \centering
+        \includegraphics[keepaspectratio = true, height = #2]{\currentFolder/#1}
+        \ifstrempty{#3}{}{\caption{\textit{#3}}}
+        \ifstrempty{#4}{}{\label{#4}}
+    \end{figure}
+}
+
+% \createTaskHeader[name][pointsDescription][pointsCode]
+% Vytvorí novú hlavičku zadania úlohy
+%   - názov úlohy
+%   - počet bodov za popis (iba KSP)
+%   - počet bodov za kód (iba KSP)
+\NewDocumentCommand{\createTaskHeader}{O{} O{} O{}}{
+    \subsection{
+        \texorpdfstring{%
+            \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
+            \hfill\normalsize%
+            \formatTaskPoints[#2][#3]
+            \quad
+            \formatTaskCategories{\getTaskCategories{\value{taskNumber}}}%
+        }{%
+            \arabic{taskNumber}%
+        }%
+    }
+}
+
+% \createSolutionHeader[name][author][evaluator][gender]
+% Vytvorí novú hlavičku vzorového riešenia
+%   - názov úlohy
+%   - meno autora vzorového riešenia
+%   - meno opravovateľa
+%   - gramatický rod opravovateľa
+\NewDocumentCommand{\createSolutionHeader}{O{} O{} O{} O{}}{
+    \subsection{
+        \texorpdfstring{%
+            \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
+            \hfill\normalsize%
+            \ifstrempty{#2}{%
+                \ifstrempty{#3}{}{opravovalo \textbf{#3}}%
+            }{%
+                \ifstrempty{#3}{vzorák \textbf{#2}}{vzorák \textbf{#2}, opravoval\ifstrempty{#4}{}{#4} \textbf{#3}}%
+            }%
+        }{%
+            \arabic{taskNumber}%
+        }%
+    }
+}
+
+\NewDocumentCommand{\addTasks}{}{%    
+    \newcounter{taskNumber}%
+    \Repeat{\seminarTaskCount}{\tryAddTask}%
+}
+
+\NewDocumentCommand{\addSolutions}{}{%
+    \newcounter{taskNumber}%
+    \Repeat{\seminarTaskCount}{\tryAddSolution}%
+}
+
+% \tryAddTask
+% Pridá ďalšie zadanie zo súboru solution<číslo>.tex
+\NewDocumentCommand{\tryAddTask}{}{
+    \stepcounter{taskNumber}    
+    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
+        \input{\currentFolder/task\arabic{taskNumber}}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
+    }    
+}
+
+% \tryAddSolution
+% Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
+\NewDocumentCommand{\tryAddSolution}{}{
+    \stepcounter{taskNumber}
+    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
+        \input{\currentFolder/task\arabic{taskNumber}}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
+    }    
+}
+
+% \exampleIO[verbatim input][verbatim output]
+% Príklad vstupu/výstupu (KSP)
+%   - verbatim vstup
+%   ₋ verbatim výstup
+% Používa ExplSyntax z LaTeX3
+\ExplSyntaxOn
+\char_set_catcode_other:n {`\^^M}
+\NewDocumentCommand{\exampleIO}{+v +v}{
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_set:Nn \l_tmpb_tl {#2}
+    \tl_replace_all:Nnn \l_tmpa_tl {^^M} {\par}
+    \tl_replace_all:Nnn \l_tmpb_tl {^^M} {\par}
+    
+    \begin{minipage}[t]{0.48\linewidth}     
+        \begin{center}vstup\end{center}
+        \vspace{-15pt}                                              % one nasty hack here       
+        \fbox{
+            \begin{minipage}[t]{\linewidth}
+                \mbox{}\\[-1.5\baselineskip]                        % another nasty hack here
+                \ttfamily
+                \l_tmpa_tl
+            \end{minipage}
+        }
+    \end{minipage}
+    
+    \begin{minipage}[t]{0.0393\linewidth}
+        \mbox{}
+    \end{minipage}
+    
+    \begin{minipage}[t]{0.48\linewidth}
+        \begin{center}výstup\end{center}
+        \vspace{-15pt}                                              % guess what here
+        \fbox{
+            \begin{minipage}[t]{0.975\linewidth}
+                \mbox{}\\[-1.5\baselineskip]                        % and one nasty hack here
+                \ttfamily
+                \l_tmpb_tl
+            \end{minipage}
+        }
+    \end{minipage}
+    \\[1ex]
+}
+\char_set_catcode_end_line:n{`\^^M}
+\ExplSyntaxOff
+
+
+
+\endinput                                                           % everything below is safely ignored
+
+
