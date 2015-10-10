@@ -1,11 +1,12 @@
 # Known issues
-
 - v \num sa typesetuje hnusná čiarka
-- pridať sponzorov
-- finetunovať polohy vecí v headeri
+ finetunovať polohy vecí v headeri
+
+# Feature requests
 - viacero autorov vzoráku (xkeyval alebo oddeliť bodkočiarkami, potom typeset čiarok a "a" bez boldu)
+- pridať sponzorov
 
-# Štýly
-
+# Style
 - Kam chceme písať footnote (pred vs za bodku)?
-- obrázky po novom treba trimovať. A basta
+- Obrázky po novom treba trimovať. A basta.
+- Chceme arabské alebo rímske číslice v ročníku?
