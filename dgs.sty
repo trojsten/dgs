@@ -188,9 +188,8 @@
         \texorpdfstring{%
             \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
             \hfill\normalsize%
-            \formatTaskPoints[#2][#3]
-            \quad
-            \formatTaskCategories{\getTaskCategories{\value{taskNumber}}}%
+            \formatTaskPoints[#2][#3]%
+            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{taskNumber}}}}%
         }{%
             \arabic{taskNumber}%
         }%
