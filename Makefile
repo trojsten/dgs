@@ -1,5 +1,9 @@
 all: tasks solutions
 
+install:
+	mkdir -p ~/texmf/tex/latex/local/dgs/
+	cp *.sty ~/texmf/tex/latex/local/dgs/
+
 define makedirs
 	mkdir -p output
 	mkdir -p temp
@@ -17,7 +21,7 @@ solutions: solutions.pdf
 solutions.pdf:
 	$(makedirs)
 	xelatex -jobname=output/solutions -halt-on-error solutions.tex
-	@#xelatex -jobname=output/solutions -halt-on-error solutions.tex
+	@#xelatex --shell-escape -jobname=output/solutions -halt-on-error solutions.tex
 
 view-tasks: tasks
 	evince output/tasks.pdf 2>/dev/null 1>/dev/null &
@@ -35,7 +39,7 @@ files/fks/tasks/%.pdf: files/fks/tasks/%.svg
 clean:
 	@echo Clean:
 	rm -rf input/
-	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.*~" \) -delete	
+	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.swp" \) -delete	
 
 distclean: clean
 	@echo Dist clean:

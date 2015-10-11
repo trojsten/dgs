@@ -135,8 +135,11 @@
 ]{verdana}
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
+\RequirePackage{dgs-utils}
 
-\input{dgs-utils.sty}
+\NewDocumentCommand{\lang}{+m O{en}}{%
+	\ifstrequals{#2}{\currentLanguage}{#1}{}%
+}
 
 % \uv{text}
 % Skratka pre slovenské úvodzovky
