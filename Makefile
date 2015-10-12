@@ -11,7 +11,7 @@ solutions:      pictures solutions-pdf solutions-html
 pictures:       pictures-png pictures-pdf
 svgs			= $(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
 texs			= $(wildcard input/tasks/*.tex) $(wildcard input/solutions/*.tex)
-pictures-pdf:	$(patsubst %.svg, %.pdf, $(patsubst source, input, $(svgs)))
+pictures-pdf:   $(patsubst source/%, input/%, $(patsubst %.svg, %.pdf, $(svgs)))
 
 graphs:			graphs-pdf graphs-png
 graphs-pdf:
@@ -35,7 +35,7 @@ create-directories:
 	mkdir -p input input/tasks/ input/solutions/
 	mkdir -p output
 
-gnuplot-pdf:i	
+gnuplot-pdf:	
 	@echo '\e[32mConverting all gnuplot (.gp) files to .pdf\e[0m'
 
 
@@ -88,4 +88,4 @@ distclean: clean
 	@echo Dist clean:
 	rm -rf output/
 
-.PHONY: clean distclean tasks solutions tasks.pdf solutions.pdf create-directories pictures-pdf all
+.PHONY: clean distclean tasks solutions tasks.pdf solutions.pdf pictures-pdf all
