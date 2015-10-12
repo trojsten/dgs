@@ -14,7 +14,8 @@
 %	stará o slovenskú desatinnú čiarku miesto bodky.
 %
 
-% NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD NIE JE JEDNORAZOVÝ.
+
+% NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD BUDE POUŽÍVAŤ AJ NIEKTO INÝ.
 % Aj keď je TeX miestami nechutný, zatiaľ sa všetko podarilo spraviť +- čisto.
 
 \RequirePackage[
@@ -137,8 +138,8 @@
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 \RequirePackage{dgs-utils}
 
-\NewDocumentCommand{\lang}{+m O{en}}{%
-	\ifstrequals{#2}{\currentLanguage}{#1}{}%
+\NewDocumentCommand{\lang}{O{en} +m}{%
+	\ifstrequals{#1}{\currentLanguage}{#2}{}%
 }
 
 % \uv{text}
