@@ -1,0 +1,79 @@
+\createSolutionHeader[Surfovanie v~MHD][Paťo][Marco]
+Zrýchľujúce alebo spomaľujúce metro je z~Maťovho pohľadu tzv. neinerciálna vzťažná sústava.
+To je sústava, ktorá sa voči inerciálnej sústave (napríklad voči nástupišťu) pohybuje s~nejakým zrýchlením.
+
+V~neinerciálnych sústavach platí, že okrem síl, ktorých pôvod dôverne poznáme,
+bude na Maťa pôsobiť ešte ďalšia, tzv. fiktívna sila. V~našom prípade sa sila, ktorá
+na Maťa pôsobí v~zrýchľujúcom metre, nazýva \emph{zotrvačná} sila. Jej veľkosť
+je $F_{\mathrm{z}} = ma$, kde $a$ je veľkosť zrýchlenia metra. Smer zotrvačnej sily je
+presne opačný ako smer zrýchlenia vzťažnej sústavy.
+
+Aby sme mohli vypočítať maximálne možné $a$, musíme si -- najlepšie do obrázku -- zakresliť
+všetky sily, ktoré na Maťa pôsobia. Predpokladajme, že metro zrýchľuje smerom
+doprava, takže zotrvačná sila musí pôsobiť doľava. Aby Maťo rovno nespadol,
+váhu (ťažisko) preniesol na svoju pravú nohu (viď obrázok \ref{sily}).
+
+Ďalej na Maťa pôsobí tiažová sila (v~ťažisku, smerom kolmo
+nadol). Na chodidlá naňho pôsobí podlaha metra silami $F_1$ a $F_2$ (ich veľkosť
+nepoznáme, vieme iba, že pôsobia kolmo na podlahu metra, tzn. kolmo nahor).
+
+Úplne nakoniec na Maťa pôsobia trecie sily $T_1$ a $T_2$. Keďže sila $F_{\mathrm{z}}$ chce
+Maťa \uv{ťahať} doľava, trecie sily sa budú snažiť tomuto pohybu brániť a pôsobiť
+smerom doprava (viď obrázok \ref{sily}). Veľkosť trecích síl je
+z~definície $T_1 = f F_1$ a $T_2 = f F_2$, kde $f$ je trecí koeficient.
+
+\insertPicture{task3-mato.pdf}{3cm}[Sily pôsobiace na Maťa][sily]
+
+Situácia na obrázku vyzerá optimisticky -- všetky zakreslené sily pôsobia
+buď vo vodorovnom alebo v~zvislom smere. Okamžite preto môžeme napísať
+rovnice pre rovnováhy síl v~týchto smeroch:
+$$F_1 + F_2 = mg$$
+$$T_1 + T_2 = F_{\mathrm{z}}\text{.}$$
+
+Ak do rovníc dosadíme $F_{\mathrm{z}} = ma$ a vyjadrenia pre trecie sily, z~rovníc
+rýchlo dostávame podmienku
+$$
+  f mg = ma \qquad\Rightarrow\qquad a = fg \text{.}
+$$
+To znamená, že ak bude zrýchlenie metra väčšie ako $\SI{0.5}{\gforce} \approx \SI{5}{\meter\per\second\squared}$, Maťo,
+nech sa akokoľvek snaží nespadnúť, sa začne na podlahe metra šmýkať v~protismere
+jeho jazdy.
+
+Vyzerá to tak, že sme úlohu vyriešili. Bohužiaľ, stále Maťovi nevieme zaručiť
+bezpečnú cestu. Musíme sa ešte pozrieť na to, či náhodou Maťo pôsobením
+zotrvačnej sily nespadne skôr, ako príde k~scenáru popísanému vyššie.
+
+Pozrime sa preto ešte na momenty síl, ktoré sú úzko spojené s~otáčaním telies.
+Aby Maťo nepadal ($=$ neotáčal sa), musia byť v~rovnováhe aj momenty síl,
+a to okolo \emph{ľubovoľnej} osi. To nám poskytuje obrovskú výhodu -- os otáčania
+si môžeme zvoliť tak, aby rovnica rovnováhy momentov síl bola čo najjednoduchšia, tzn. obsahovala
+čo najmenej neznámych síl. V~našom prípade sú neznáme sily $F_1$ a $F_2$ (a sily
+$T_1$ a $T_2$). \uv{Zbavíme sa} ich tak, že os otáčania zvolíme do takého bodu, že
+tieto sily, resp. ich väčščina bude mať nulový moment.
+
+Ideálni kandidáti na tieto body sú Maťove chodidlá. Pozrite sa na obrázok
+\ref{sily}. Ak zvolíme os otáčania v~Maťovej pravej nohe, len dve sily
+majú nenulový moment (sily $F_2$ a $F_{\mathrm{z}}$). Platí teda
+$$
+  F_2 x = F_{\mathrm{z}} y\text{.}
+$$
+Ak si predstavíme os otáčania v~ľavej Maťovej nohe, rovnakou úvahou dospejeme
+k~rovnováhe momentov
+$$
+  F_1 x + mg x = F_{\mathrm{z}} y\text{.}
+$$
+Ak rovnice sčítame, dostaneme (po úprave a dosadení z~rovnováhy síl $F_1 + F_2 = mg$)
+rovnicu
+$$
+   a = \frac{y}{x} g\text{.}
+$$
+Po dosadení za $y = (3/5) \cdot \SI{185}{\cm} = \SI{111}{\cm}$ a $x = \SI{40}{\cm}$
+dostaneme $a \approx \SI{0.36}{\gforce} = \SI{3.6}{\meter\per\second\squared}$, čo je menej, ako predošlý výsledok.
+
+Metro teda nemôže zrýchľovať viac, ako zrýchlením $\SI{3.6}{\meter\per\second\squared}$.
+Po prekročení tejto hranice Maťo pôsobením príliš veľkého momentu zotrvačnej
+sily spadne skôr, ako sa jeho topánky začnú šmýkať po podlahe.
+
+Všimnite si, že v~celom riešení sme nepotrebovali vedieť, aké veľké sú sily
+$F_1$ a $F_2$. Tento poznatok sme obišli dôsledným zápisom rovnováhy síl
+a~prefíkanou voľbou osí otáčania. 
