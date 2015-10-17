@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "This is DGS gnuplot convertor"
+touch .dgs-gp
+echo 
+
+
+
+rm .dgs-gp
+echo "Done"

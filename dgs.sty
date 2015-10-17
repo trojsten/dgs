@@ -8,11 +8,11 @@
 % Prosíme o dodržiavanie nasledovných zásad.
 
 % SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
-% Ak nepotrebuješ číslo, tak \si{jednotka}.
+% Ak nepotrebuješ jednotku bez čísla, tak \si{jednotka}.
 % Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
 % Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
 %	stará o slovenskú desatinnú čiarku miesto bodky.
-%
+% 
 
 
 % NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD BUDE POUŽÍVAŤ AJ NIEKTO INÝ.
@@ -153,6 +153,14 @@
 \NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
 \NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
 
+\NewDocumentCommand{\loadDocumentSettings}{}{
+	\IfFileExists{input/current.tex}{
+        \input{input/current.tex}                   
+    }{
+        \PackageError{dgs}{Cannot load document settings}{File "input/current.tex" does not exist}
+    }
+
+}
 
 % Internal commands
 \NewDocumentCommand{\loadSeminar}{m}{
