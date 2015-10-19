@@ -57,7 +57,7 @@ input/tasks/%.pdf: source/tasks/%.svg
 
 input/tasks/%.pdf: source/tasks/%.gp
 	cd source/solutions/ ; gnuplot $(notdir $<)
-	mv $@ $(patsubst source%, input%, $@)	
+	mv $(patsubst input%, source%, $@) $@	
 
 input/tasks/%.pdf: source/tasks/%.pdf
 	cp $< $@
@@ -76,7 +76,7 @@ input/solutions/%.pdf: source/solutions/%.svg
 
 input/solutions/%.pdf: source/solutions/%.gp
 	cd source/solutions/ ; gnuplot $(notdir $<)
-	mv $@ $(patsubst source%, input%, $@)
+	mv $(patsubst input%, source%, $@) $@
 	
 input/solutions/%.pdf: source/solutions/%.pdf
 	cp $< $@
