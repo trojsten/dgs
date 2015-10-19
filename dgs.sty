@@ -73,10 +73,16 @@
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
+\captionsetup[figure]{
+	format					= hang,
+	width					= 0.9\textwidth
+}
+
 \definecolor{color-link}{rgb}{0.1, 0.1, 0.5}
 
 \RequirePackage[
 	colorlinks				= true,
+	linkcolor				= black,
 	urlcolor				= color-link,
 ]{hyperref}
 
@@ -233,34 +239,36 @@
 
 \NewDocumentCommand{\addTasks}{}{%    
     \newcounter{taskNumber}%
+	\setcounter{taskNumber}{1}
     \Repeat{\seminarTaskCount}{\tryAddTask}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
     \newcounter{taskNumber}%
+	\setcounter{taskNumber}{1}
     \Repeat{\seminarTaskCount}{\tryAddSolution}%
 }
 
 % \tryAddTask
 % Pridá ďalšie zadanie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddTask}{}{
-    \stepcounter{taskNumber}    
-    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
+   \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
         \input{\currentFolder/task\arabic{taskNumber}}%
     }{%
         \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
-    }    
+    }
+    \stepcounter{taskNumber}    
 }
 
 % \tryAddSolution
 % Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
-    \stepcounter{taskNumber}
     \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
         \input{\currentFolder/task\arabic{taskNumber}}%
     }{%
         \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
-    }    
+    }
+    \stepcounter{taskNumber} 
 }
 
 % \exampleIO[verbatim input][verbatim output]
