@@ -76,7 +76,7 @@ input/solutions/%.pdf: source/solutions/%.svg
 
 input/solutions/%.pdf: source/solutions/%.gp
 	cd source/solutions/ ; gnuplot $(notdir $<)
-	mv $< $(patsubst source%, input%, $<)
+	mv $@ $(patsubst source%, input%, $@)
 	
 input/solutions/%.pdf: source/solutions/%.pdf
 	cp $< $@
