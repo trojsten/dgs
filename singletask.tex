@@ -3,21 +3,13 @@
 \usepackage{dgs}
 \usepackage{dgs-config}
 
-\input{current}
+\loadDocumentSettings
 \input{custom}
 
 \RenewDocumentCommand{\currentFolder}{}{input/tasks}
-
+\newcounter{taskNumber}
+\setcounter{taskNumber}{@tasknumber@}
 \begin{document}            
-    \thispagestyle{first} 
-    
-    \vspace*{3.0 \baselineskip}
-    {
-        \centering
-        {\Huge Zadania \currentSeries. série \currentPartGenitive\ časti}\\[0pt]
-        {Termín odoslania \currentDeadline}\\[2pt]
-    } 
-        
-    \pagestyle{tasks}    
-    \addTasks                 
+    \thispagestyle{empty}
+	\input{@filename@}
 \end{document}
