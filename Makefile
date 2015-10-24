@@ -8,7 +8,7 @@ tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
 texs =				$(wildcard source/*.tex)
-copy-tex:			$(patsubst source%, input% $(texs))
+copy-tex:			$(patsubst source%, input%, $(texs))
 
 svgs =				$(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
 svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
@@ -40,7 +40,7 @@ collect:
 tasks-html:	
 	@echo HTML not yet implemented
 
-solutions-html: ;
+solutions-html: 
 	@echo -e '\e[33mWarning: HTML output is currently not implemented\e[0m'
 
 input/%.tex: source/%.tex
@@ -54,8 +54,9 @@ input/%.pdf: source/%.svg
 	mv $@-crop $@
 
 input/%.pdf: source/%.gp
-	cd source/solutions/ ; gnuplot $(notdir $<)
-	mv $(patsubst input%, source%, $@) $@	
+	@echo -e '\e[32mConverting gnuplot file $< to PDF:\e[0m'
+	cd $(<D) ; gnuplot $(notdir $<);
+	mv $(<D)/$(notdir $@) $@
 
 input/%.pdf: source/%.pdf
 	cp $< $@
@@ -91,10 +92,10 @@ view-solutions: solutions
 	evince output/solutions.pdf 2>/dev/null 1>/dev/null &
 
 clean:
-	@echo Clean:
+	@echo -e '\e[32mClean:\e[0m'
 	rm -rf input/ temp/
 	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.swp" \) -delete	
 
 distclean: clean
-	@echo Dist clean:
+	@echo -e '\e[32mDist clean:\e[0m'
 	rm -rf output/
