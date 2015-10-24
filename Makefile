@@ -7,11 +7,8 @@ html:				collect
 tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
-textasks =			$(wildcard source/tasks/*.tex)
-texsolutions =		$(wildcard source/solutions/*.tex)
-tex-tasks:			$(patsubst source%, input%, $(textasks))
-tex-solutions:		$(patsubst source%, input%, $(texsolutions))
-texs:				tex-tasks tex-solutions
+texs =				$(wildcard source/*.tex)
+copy-tex:			$(patsubst source%, input% $(texs))
 
 svgs =				$(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
 svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
@@ -27,7 +24,7 @@ copy-pdf:			$(patsubst source%, input%, $(pdfs))
 pngs =				$(wildcard source/tasks/*.png) $(wildcard source/solutions/*.png)
 copy-png:			$(patsubst source%, input%, $(pngs))
 
-
+.SECONDEXPANSION:
 
 install:
 	mkdir -p ~/texmf/tex/latex/local/dgs/
@@ -46,69 +43,46 @@ tasks-html:
 solutions-html: ;
 	@echo -e '\e[33mWarning: HTML output is currently not implemented\e[0m'
 
-input/tasks/%.tex: source/tasks/%.tex
+input/%.tex: source/%.tex
+	@echo -e '\e[32mCopying TeX source file $<:\e[0m'
 	cp $< $@
 
-input/tasks/%.pdf: source/tasks/%.svg
+input/%.pdf: source/%.svg
 	@echo -e '\e[32mConverting $< to PDF:\e[0m'
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
-input/tasks/%.pdf: source/tasks/%.gp
+input/%.pdf: source/%.gp
 	cd source/solutions/ ; gnuplot $(notdir $<)
 	mv $(patsubst input%, source%, $@) $@	
 
-input/tasks/%.pdf: source/tasks/%.pdf
+input/%.pdf: source/%.pdf
 	cp $< $@
 
-input/tasks/%.png: source/tasks/%.png
+input/%.png: source/%.png
+	@echo -e '\e[32mCopying PNG image $<:\e[0m'
 	cp $< $@
 
-input/solutions/%.tex: source/solutions/%.tex
-	cp $< $@
+input/%.png: source/%.svg
+	@echo -e '\e[31mSVG to PNG conversion is currently not implemented\e[0m'
 
-input/solutions/%.pdf: source/solutions/%.svg
-	@echo -e '\e[32mConverting $< to PDF:\e[0m'
-	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
-	pdfcrop $@ $@-crop
-	mv $@-crop $@
-
-input/solutions/%.pdf: source/solutions/%.gp
-	cd source/solutions/ ; gnuplot $(notdir $<)
-	mv $(patsubst input%, source%, $@) $@
-	
-input/solutions/%.pdf: source/solutions/%.pdf
-	cp $< $@
-
-input/solutions/%.png: source/solutions/%.png
-	cp $< $@
-
-input/tasks/%.png: source/tasks/%.svg
-	@echo -e '\e[31mPNG output is currently not implemented\e[0m'
-
-output/tasks.pdf: svg-to-pdf gp-to-pdf copy-png tasks.tex tex-tasks
+output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png copy-tex $(subst output/,,$(subst pdf,tex,$@)) 
 	@echo -e '\e[32m$@: XeLaTeX primary run\e[0m'
-	xelatex -jobname=output/tasks -halt-on-error tasks.tex 
+	xelatex -jobname=$(subst .pdf,,$@) -halt-on-error $*.tex 
 	@echo -e '\e[32m$@: XeLaTeX secondary run (to get the cross-references right)\e[0m'
-	xelatex -jobname=output/tasks -halt-on-error tasks.tex
+	xelatex -jobname=$(subst .pdf,,$@) -halt-on-error $*.tex
 
-output/solutions.pdf: svg-to-pdf gp-to-pdf copy-png solutions.tex tex-solutions
-	@echo -e '\e[32m$@: XeLaTeX primary run\e[0m'
-	xelatex -jobname=output/solutions -halt-on-error solutions.tex
-	@echo -e '\e[32m$@: XeLaTeX secondary run (to get the cross-references right)\e[0m'
-	xelatex -jobname=output/solutions -halt-on-error solutions.tex
-
-output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
-	@echo -e '\e[32mRendering single task $@\e[0m'
-	cp singletask.tex temp/singletask.tex
-	sed -i 's#@filename@#$<#g' temp/singletask.tex
-	TASK=`echo '$(notdir $@)' | tr -cd 0-9` ; sed -i "s#@tasknumber@#$$TASK#g" temp/singletask.tex
-	xelatex -jobname=$(basename $@) -halt-on-error temp/singletask.tex
-	xelatex -jobname=$(basename $@) -halt-on-error temp/singletask.tex
-	pdfcrop $@ $@-crop
-	mv $@-crop $@
-	rm temp/singletask.tex
+#output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
+#	@echo -e '\e[32mRendering single task $@\e[0m'
+#	cp singletask.tex temp/singletask.tex
+#	sed -i 's#@filename@#$<#g' temp/singletask.tex
+#	TASK=`echo '$(notdir $@)' | tr -cd 0-9` ; sed -i "s#@tasknumber@#$$TASK#g" temp/singletask.tex
+#	xelatex -jobname=$(basename $@) -halt-on-error temp/singletask.tex
+#	xelatex -jobname=$(basename $@) -halt-on-error temp/singletask.tex
+#	pdfcrop $@ $@-crop
+#	mv $@-crop $@
+#	rm temp/singletask.tex
 
 view-tasks: tasks
 	evince output/tasks.pdf 2>/dev/null 1>/dev/null &
@@ -124,5 +98,3 @@ clean:
 distclean: clean
 	@echo Dist clean:
 	rm -rf output/
-
-.PHONY:
