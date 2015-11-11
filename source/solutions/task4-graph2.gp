@@ -1,8 +1,6 @@
-set terminal pdf font "Verdana, 12"
 set datafile separator ","
 set key off
 set grid
-set output "task4-graph2.pdf"
 set yrange[40:80]
 set xrange[0:1400]
 set xlabel "t / s"

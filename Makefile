@@ -7,7 +7,7 @@ html:				collect
 tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
-texs =				$(wildcard source/*.tex)
+texs =				$(wildcard source/tasks/*.tex) $(wildcard source/solutions/*.tex)
 copy-tex:			$(patsubst source%, input%, $(texs))
 
 svgs =				$(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
@@ -24,16 +24,13 @@ copy-pdf:			$(patsubst source%, input%, $(pdfs))
 pngs =				$(wildcard source/tasks/*.png) $(wildcard source/solutions/*.png)
 copy-png:			$(patsubst source%, input%, $(pngs))
 
-.SECONDEXPANSION:
-
 install:
 	mkdir -p ~/texmf/tex/latex/local/dgs/
 	cp *.sty ~/texmf/tex/latex/local/dgs/
 
 collect:
-	@echo -e '\e[32mCreating input folder hierarchy\e[0m'
+	@echo -e '\e[32mCreating input folders\e[0m'
 	mkdir -p input/ input/tasks/ input/solutions/
-	mkdir -p temp/
 	mkdir -p output/
 	cp source/current.tex input/current.tex
 
@@ -44,35 +41,34 @@ solutions-html:
 	@echo -e '\e[33mWarning: HTML output is currently not implemented\e[0m'
 
 input/%.tex: source/%.tex
-	@echo -e '\e[32mCopying TeX source file $<:\e[0m'
+	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
 input/%.pdf: source/%.svg
-	@echo -e '\e[32mConverting $< to PDF:\e[0m'
+	@echo -e '\e[32mConverting \e[96m$<\e[32m to PDF:\e[0m'
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
 input/%.pdf: source/%.gp
-	@echo -e '\e[32mConverting gnuplot file $< to PDF:\e[0m'
-	cd $(<D) ; gnuplot $(notdir $<);
-	mv $(<D)/$(notdir $@) $@
+	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PDF:\e[0m'
+	cd $(<D) ; gnuplot -e "set terminal pdf font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
 
 input/%.pdf: source/%.pdf
 	cp $< $@
 
 input/%.png: source/%.png
-	@echo -e '\e[32mCopying PNG image $<:\e[0m'
+	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
 input/%.png: source/%.svg
 	@echo -e '\e[31mSVG to PNG conversion is currently not implemented\e[0m'
 
 output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png copy-tex $(subst output/,,$(subst pdf,tex,$@)) 
-	@echo -e '\e[32m$@: XeLaTeX primary run\e[0m'
-	xelatex -jobname=$(subst .pdf,,$@) -halt-on-error $*.tex 
-	@echo -e '\e[32m$@: XeLaTeX secondary run (to get the cross-references right)\e[0m'
-	xelatex -jobname=$(subst .pdf,,$@) -halt-on-error $*.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $*.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $*.tex
 
 #output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
 #	@echo -e '\e[32mRendering single task $@\e[0m'
