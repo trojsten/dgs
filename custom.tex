@@ -25,11 +25,11 @@
     itemsep         =   0mm    
 }
 \setlist[enumerate]{
-    itemsep         =   0mm
+	topsep			=	0mm,
+    itemsep         =   0mm,
 }
 \setlist[itemize]{
-    itemsep         =  -2pt,
-    nolistsep
+    itemsep         =   0mm,
 }
 
 \renewcommand{\arraystretch}{1.2}
@@ -43,7 +43,7 @@
     \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
     \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
-    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
 
@@ -52,7 +52,7 @@
     \fancyhead[LE,RO]{\textit{Riešenia \currentSeries. série \currentPartGenitive\ časti}}
     \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
-    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[C]{\small \thepage~z~\pageref*i{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
     
@@ -85,6 +85,6 @@
         \end{minipage}
     }
 	\fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
-    \fancyfoot[C]{\small \thepage~z~\pageref{LastPage}}
+    \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }    

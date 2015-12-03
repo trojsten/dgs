@@ -1,0 +1,122 @@
+\createTaskHeader[Asteroid a jadro]
+\emph{Táto úloha je o~deformovaní telies zložených z~izotropného materiálu (t.j. takého, ktorého vlastnosti sú
+vo všetkých smeroch rovnaké). Keďže potrebné znalosti fyziky sú nad rámec stredoškolských osnov,
+uvádzame aj stručný sumár potrebnej teórie a~niekoľko predúloh na precvičenie používaných konceptov.
+Tá ťažká a~naozaj zaujímavá úloha je predmetom častí ($c$) a~($d$) zadania.
+Ako doplnok odporúčame aj 38. kapitolu druhého dielu Feynmanových prednášok z fyziky.}
+
+Makroskopické teleso možno deformovať, pričom sa jeho časť umiestnená v~nedeformovanom stave v~mieste
+$\mathbf{r}$ presunie vplyvom deformácie do bodu $\mathbf{r}+\mathbf{u}(\mathbf{r})$.
+Deformácia je tak úplne určená vektorovým poľom $\mathbf{u}(\mathbf{r})$. Pre jej určenie
+v~danom fyzikálnom probléme je však obvykle výhodné prejsť k~tenzoru deformácie a~tenzoru napätia.
+
+Tenzor deformácie $\varepsilon_{ij}$ je symetrický tenzor \emph{definovaný} ako
+
+\labeleqn{
+	\varepsilon_{ij}(\mathbf{r}) = \frac{1}{2} \left(\pderive{u_i(\mathbf{r})}{x_j} +
+	\pderive{u_j(\mathbf{r})}{x_i} \right)\text{,}
+}
+
+kde $x_i$ sú zložky polohového vektora $\mathbf{r}$.
+Diagonálne členy $\varepsilon_{xx},\varepsilon_{yy},\varepsilon_{zz}$ zodpovedajú lokálnemu relatívnemu
+predĺženiu v~smere osí $x, y, z$ a~mimodiagonálne členy $\varepsilon_{xy}=\varepsilon_{yx}$,
+$\varepsilon_{xz}=\varepsilon_{zx}$ a~$\varepsilon_{yz}=\varepsilon_{zy}$ zodpovedajú sklzným deformáciám
+v~rovinách $xy$, $xz$ a~$yz$, ktoré pre malé deformácie nevedú k~zmene objemu.
+Lokálna kompresia materiálu sa dá pre dostatočne malé deformácie určiť ako 
+
+\labeleqn{
+	\frac{\Delta V}{V} = \sum_{i=1}^{3} \varepsilon_{ii} =
+	\boldsymbol{\nabla}\cdot\mathbf{u} \equiv \kappa\text{.}
+}
+
+Deformácia daného telesa je sprevádzaná existenciou vnútorného napätia, ktoré sa prejavuje v~podobe síl
+pôsobiacich na povrch myslených objemových elementov. Ak uvážime kúsok vnútra telesa v~tvare kocky
+so stranou $\diff a$ s~hranami orientovanými v~smere osí $x,y,z$, tak zložka tenzora napätia
+$\sigma_{ij}$ je definovaná ako $j$-ta zložka povrchovej sily pôsobiacej na stenu kocky kolmú na $i$-tu os,
+vydelená plochou steny $\mathrm{d} a^2$.
+
+Tieto sily možno chápať ako spôsobené susednými objemovými elementami.
+Z~rovnováhy momentov síl pôsobiacich na skúmanú kocku vyplýva symetria tenzora napätia $\sigma_{ij} = \sigma_{ji}$.
+Nenulový tenzor napätia môže byť dôsledkom síl pôsobiacich na povrch skúmeného telesa,
+alebo dôsledkom kompenzácie objemových síl ako napríklad gravitácie alebo odstredivej sily.
+
+Pre malé deformácie je závislosť medzi tenzorom napätia (podnet) a~tenzorom deformácie (dôsledok) \emph{lineárna}
+a~nazýva sa Hookov zákon. Zatiaľ čo pre veľmi anizotropné kryštalické materiály môže byť potrebných
+na úplný popis elastických vlastností až 21 elastických konštánt, pre izotropné médium stačia dve.
+Častou voľbou sú tzv. Lamého koeficienty $\lambda,\mu$, pomocou ktorých
+
+\labeleqn[eqn:2:hooke1]{
+	\sigma_{ij}=\lambda \kappa \delta_{ij} + 2\mu\varepsilon_{ij}
+}
+
+kde $\kappa$ je lokálna kompresia definovaná vyššie a~$\delta_{ij}=1$ pre $i=j$ a $0$ pre $i\neq j$
+je tzv. Kroneckerov symbol. Inverznou rovnicou je 
+
+\labeleqn{
+	\varepsilon_{ij} = \frac{1}{2\mu} \sigma_{ij} - \frac{\lambda}{2\mu(2\mu+3\lambda)}\delta_{ij}
+	\left(\sum_{k=1}^3 \sigma_{kk}\right)\text{.}
+}
+
+V~súradniciach, v~ktorých sú oba tenzory diagonálne, možno skrátene písať $\varepsilon_{ii}\equiv \varepsilon_{i}$
+a~$\sigma_{ii}\equiv \sigma_{i}$. V~takých súradniciach zodpovedá deformácia zloženej kompresii v~smeroch
+$x$, $y$ a~$z$ a~nedochádza k~žiadnej sklznej deformácii ani sklznému napätiu.
+Vtedy možno Hookov zákon zjednodušiť na 
+
+\labeleqn{
+	\sigma_{i}= \lambda \kappa + 2\mu \varepsilon_{i}
+}
+
+a~inverznú rovnicu
+
+\labeleqn{
+	\varepsilon_{i} =  \frac{1}{2\mu} \sigma_{i} - \frac{\lambda}{2\mu(2\mu+3\lambda)}
+	\left(\sum_{k=1}^3 \sigma_{k}\right)\text{.}
+}
+
+Pre lepšie pochopenie používaných konceptov najprv vyriešte nasledovné dve jednoduché úlohy:
+\begin{enumerate}[label=\alph*)]
+	\item Uvažujte voľný hranol dĺžky $L$ so základňou tvaru štvorca so stranou $a$, ktorý je naťahovaný silou $F$.
+	Vplyvom pôsobiacej sily sa hranol predĺži o~$\Delta L$ a~stenčí o~$\Delta a$. Závislosť medzi
+	relatívnym predĺžením $\varepsilon_z=\Delta L / L$, relatívnym zúžením
+	$\varepsilon_x = \varepsilon_y = -\Delta a/a $ a~napätím v~ťahu $\sigma_z = F/S$ je lineárna
+	\begin{eqnarray}
+		\varepsilon_z = \frac{1}{E} \sigma_z = -\frac{1}{\nu} \varepsilon_x = -\frac{1}{\nu} \varepsilon_y\text{,}
+	\end{eqnarray}
+	kde $E$ sa nazýva Youngov modul a~$\nu$ Poissonov pomer. Vyjadrite elastické konštanty
+	$E,\nu$ pomocou Lamého koeficientov $\lambda,\mu$.
+
+	\item Uvažujte hranol rovnakých rozmerov, ktorý je vstavaný do veľmi pevnej steny a~nemôže meniť priečne
+		rozmery. Inými slovami, stena pôsobí na bočné steny hranola takými napätiami v~ťahu $\sigma_x=\sigma_y$,
+		aby priečna deformácia $\varepsilon_x = 0 = \varepsilon_y$. Nájdite závislosť medzi relatívnym predlžením
+		$\varepsilon_z$ a~napätím v~ťahu $\sigma_z$ v~takomto prípade.
+\end{enumerate}
+
+Napokon sa dostávame k~tej naozajstnej úlohe:
+\begin{enumerate}[label=\alph*)]
+	\setcounter{enumi}{2}
+	\item Uvažujte asteroid, ktorý má v~nedeformovanom tvare (vo vesmíre bez gravitácie) tvar gule
+	s~polomerom $R$ a~hustotou $\rho$. Potom magickým kolieskom zvýšime hodnotu gravitačnej konštanty
+	z~nulovej hodnoty na $G$. Určte zmenu polomeru asteroidu $\Delta R$ v~dôsledku gravitačnej interakcie
+	so sebou samým. Pri výpočte môžete predpokladať, že $\Delta R$ je dostatočne malé v~porovnaní $R$.
+
+	\emph{Hint: Odvoďte, že kvôli guľovej symetrii problému $\varepsilon_r = \derive{u_r}{r}$
+	a~pre zložky rovnobežné s~povrchom $\varepsilon_x = \varepsilon_y = u_r$.
+	Pre radiálne posunutie $u_r$ by vám mala vyjsť diferenciálna rovnica
+	\labeleqn{
+%		\der{}{r}\left[\frac{1}{r^2}\der{}{r}\left(r^2 u_r(r)\right)\right] =
+%%		\frac{4\pi G \rho_0^2 r}{3(2\mu + \lambda)}\text{.}
+		\derive{}{r} \left[ \frac{1}{r^2} \derive{}{r} \left( r^2 u_r(r) \right) \right] =
+		\frac{4 \pi G \rho_0^2 r}{3 (2\mu + \lambda)}\text{.}
+	}}
+
+	Výsledok pre $\Delta R$ vyjadrite pomocou dvojice Lamého koeficientov $\lambda,\mu$
+	ako aj pomocou dvojice elastických konštánt $E,\nu$.
+
+	\item O~koľko sa v~dôsledku tejto deformácie asteroid zohreje, pokiaľ je merná tepelná kapacita
+	asteroidu (na jednotku hmotnosti) $c$? Vypočítajte výslednú teplotu pre parametre Zeme a~výsledok
+	porovnajte so súčasnou teplotou v Zemskom jadre!
+
+	\emph{Poznámka: Deformácia pre Zem vyjde príliš veľká, teda v~praxi sa už na jej opis lineárna
+	elastická teória nevzťahuje. Situáciu tiež komplikuje jej nehomogénne zloženie a~kvapalnosť
+	vonkajšieho jadra. Rádová veľkosť výsledku je však napriek týmto problémom zmysluplná a jeho hodnota zaujímavá.}
+\end{enumerate}

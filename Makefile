@@ -34,12 +34,6 @@ collect:
 	mkdir -p output/
 	cp source/current.tex input/current.tex
 
-tasks-html:	
-	@echo HTML not yet implemented
-
-solutions-html: 
-	@echo -e '\e[33mWarning: HTML output is currently not implemented\e[0m'
-
 input/%.tex: source/%.tex
 	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
