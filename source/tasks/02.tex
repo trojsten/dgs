@@ -1,0 +1,42 @@
+\createTaskHeader[Kondenzácia tuhých gulí]
+Predstavme si krabicu, pre jednoduchosť dvojrozmernú. V~nej majme tuhé disky,
+ktoré sa pohybujú ako molekuly plynu -- vždy keď na seba narazia, pružne sa od seba odrazia,
+inak si voľne cestujú po krabici. 
+
+Intuitívne sa takéto disky, ak ich je len málo, správajú ako plyn (takýto systém sa nazýva \emph{plyn tuhých sfér}). 
+Ak však zvýšime hustotu diskov, začnú sa diať veci nevídané -- až tak, že komunita chemikov sa v~50. rokoch
+nevedela dohodnúť, čo presne, a~tak sa na jednom kongrese rozhodla ustanoviť pravdu hlasovaním.
+To bolo však ešte pred príchodom počítačov. Dnes má každý z~nás k~dispozícii výkonné stroje,
+takže si tento problém vieme vyriešiť sami.
+
+\insertPicture{02-hardspheres.png}{6cm}[Plyn tuhých sfér][]
+
+Pri určitej kritickej hustote sa plyn tuhých diskov začne správať kvalitatívne inak -- skondenzuje.
+Čo to presne znamená a~pri akej hustote sa to udeje?
+
+Numericky nasimulujte\footnote{Vo svojom obľúbenom jazyku, my odporúčame Python alebo niečo podobne príjemné.}
+systém pružne sa zrážajúcich diskov v~krabici (so stenami, alebo ideálne periodickými okrajovými podmienkami)
+s~určenou hustotou (definovanou ako podiel plochy zaberanej $N$ diskami o~polomere $R$ v~krabici so stenou dĺžky $L$,
+teda  $\rho = N\pi R^2/L^2$). Pomocou vykresľovania grafov polôh diskov možno prísť na to,
+ako sa takýto systém správa v závislosti od hustoty. Rozmyslite si,
+ako možno fyzikálne vyjadriť (kvantifikovať) \uv{kondenzáciu}.
+
+\subsubsection{Ako na to}
+Simulácia sa skladá z nasledujúcich krokov:
+\begin{enumerate}[label=\alph*)]
+	\item \textbf{Inicializácia}: Vyberte veľkosť krabice $L$, polomer diskov $R$.
+		Náhodne umiestnite disky do krabice tak, aby sa neprekrývali (nie vždy to vyjde na prvýkrát).
+		Potom každému disku udeľte rýchlosť na základe gaussovského rozdelenia s~hodnotami $\mu=0$ a~$\sigma = T$,
+		teda rozumne zvolenou teplotou.
+	\item \textbf{Časový vývoj}: Vymyslite, ako navzájom disky pružne zrážať.
+		Uistite sa, že to celé fyzikálne dáva zmysel!
+	\item \textbf{Vyhodnotenie dát}: Pre každý časový krok zaznamenajte polohu diskov s~časom,
+		na základe ktorej možno spočítať priemernú polohu jedného disku a~rozptyl (odchýlku).
+		Ako budete postupne zvyšovať hustotu diskov, pri prekročení určite kritickej hodnoty sa
+		rozptyl spriemerovaný cez všetky disky výrazne zmení. Čo presne sa stane a pri ktorej hodnote to nastane?
+		Ako výsledok simulácie vykreslite závislosť rozptylu od hustoty.
+\end{enumerate}
+
+Na Coursere je vynikajúci \href{https://www.coursera.org/course/smac}{kurz Štatistickej mechaniky}
+od Wernera Krautha. Odporúčame vám pozrieť si prvé dve-tri časti na zoznámenie sa s~problematikou.
+V~prípade nejasností neváhajte napísať na \url{fx@fks.sk}.

@@ -1,3 +1,0 @@
-#!/bin/bash
-
-inkscape --verb=FitCanvasToDrawing --verb=FileSave --verb=FileClose $1

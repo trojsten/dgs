@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{dgs}[2015/10/09 Trojsten Document Generation System - DeGeŠ]
+\ProvidesPackage{dgs}[2015/10/09 Trojsten Document Generation System -- DeGeŠ]
 
 % Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
 % spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
@@ -27,8 +27,8 @@
     headheight              = 16pt,
     headsep                 = 16pt,
     footskip                = 32pt,
-    includeheadfoot,                                        % include header and footer dimensions in body
-    %showframe                                               % uncomment this to see geometry frame
+    includeheadfoot,                                        % započítať header a footer do rozmerov strany
+    %showframe                                               % zobraziť frame
 ]{geometry}
 
 \RequirePackage[
@@ -43,7 +43,7 @@
     number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
-    range-phrase            = {\ --\ },
+    range-phrase            = {\ --\ },						% 5 -- 10 m/s
     list-units              = single,                       %
     list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
 ]{siunitx}
@@ -51,7 +51,7 @@
 \RequirePackage{
     amsmath,
     amssymb,
-    xparse,
+	xparse,
     enumitem,
     graphicx,
     listings,
@@ -70,6 +70,7 @@
     pgffor,
     longtable,
 	csvsimple,
+	animate,
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
@@ -118,33 +119,27 @@
 \setallmainfonts[
     Path            = fonts/ ,
     Extension       = .otf ,
-    UprightFont     = *-regular ,
-    BoldFont        = *-bold ,
-    ItalicFont      = *-it ,
-    BoldItalicFont  = *-boldit    
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
 ]{minionpro}
 \setmathsfont{Minion Math}                                  % change this
-%\setmonofont[
-%    Path            = fonts/ ,
-%    Extension       = .otf ,
-%    UprightFont     = *-regular ,
-%    BoldFont        = *-bold ,
-%    ItalicFont      = *-it ,
-%    BoldItalicFont  = *-boldit ,      
-%    Scale           = MatchLowercase,
-%]{sourcecodepro}
 \setmonofont[
 	Path			= fonts/ ,
-	Extension		= .otf ,
-	UprightFont		= *
-]{inconsolata}
+	Extension		= .ttf ,
+	UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{ubuntumono}
 \setsansfont[
     Path            = fonts/ ,
     Extension       = .ttf ,
-    UprightFont     = * ,
-    BoldFont        = *b ,
-    ItalicFont      = *i ,
-    BoldItalicFont  = *z    
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
 ]{verdana}
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
@@ -153,6 +148,10 @@
 \NewDocumentCommand{\lang}{O{en} +m}{%
 	\ifstrequals{#1}{\currentLanguage}{#2}{}%
 }
+
+\makeatletter
+\NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
+\makeatother
 
 % \uv{text}
 % Skratka pre slovenské úvodzovky
@@ -258,10 +257,10 @@
 % \tryAddTask
 % Pridá ďalšie zadanie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddTask}{}{
-   \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
-        \input{\currentFolder/task\arabic{taskNumber}}%
+    \IfFileExists{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}{%
+        \input{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}!>}\\
     }
     \stepcounter{taskNumber}    
 }
@@ -269,12 +268,12 @@
 % \tryAddSolution
 % Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
-    \IfFileExists{\currentFolder/task\arabic{taskNumber}}{%
-        \input{\currentFolder/task\arabic{taskNumber}}%
+	\IfFileExists{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}{%
+        \input{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/task\arabic{taskNumber}}!>}\\
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex!>}}\\
     }
-    \stepcounter{taskNumber} 
+    \stepcounter{taskNumber}    
 }
 
 % \exampleIO[verbatim input][verbatim output]

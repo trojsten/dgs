@@ -25,3 +25,10 @@
 \NewDocumentCommand{\integrate}{O{} O{} m m}{\int\limits_{#1}^{#2} \! #3 \, \diff#4}
 \NewDocumentCommand{\iintegrate}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\!\diff#5}
 \NewDocumentCommand{\iiintegrate}{O{} O{} m m m m}{\iiint\limits_{#1}^{\quad#2} #3 \diff#4\!\diff#5\!\diff#6}
+
+\NewDocumentCommand{\labelmath}{O{} +m}{
+	\begin{equation}%
+		#2%
+		\ifstrempty{#1}{}{\label{#1}}%
+	\end{equation}%
+}
