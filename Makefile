@@ -1,5 +1,5 @@
-all:				pdf html
-debug:				pdf html
+all:				hello pdf html
+debug:				hello pdf html
 
 pdf:				collect output/tasks.pdf output/solutions.pdf
 html:				collect
@@ -7,6 +7,8 @@ html:				collect
 tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
+version	=			'0.32'
+date =				'2015-12-12'
 texs =				$(wildcard source/tasks/*.tex) $(wildcard source/solutions/*.tex)
 copy-tex:			$(patsubst source%, input%, $(texs))
 
@@ -23,6 +25,9 @@ copy-pdf:			$(patsubst source%, input%, $(pdfs))
 
 pngs =				$(wildcard source/tasks/*.png) $(wildcard source/solutions/*.png)
 copy-png:			$(patsubst source%, input%, $(pngs))
+
+hello:
+	@echo -e '\e[32mThis is DeGeŠ, version \e[95m$(version)\e[32m (\e[95m$(date)\e[32m)\e[0m'
 
 install:
 	mkdir -p ~/texmf/tex/latex/local/dgs/

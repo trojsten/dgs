@@ -108,14 +108,6 @@
     Ligatures       = TeX
 }
 %\setallmainfonts{Gentium Book Basic}
-%\setallmainfonts[
-%    Path            = fonts/ ,
-%    Extension       = .otf ,
-%    UprightFont     = *-regular ,
-%    BoldFont        = *-bold ,
-%    ItalicFont      = *-italic ,
-%    BoldItalicFont  = *-bolditalic    
-%]{agaramondpro}
 \setallmainfonts[
     Path            = fonts/ ,
     Extension       = .otf ,
@@ -196,7 +188,11 @@
 \NewDocumentCommand{\insertPicture}{m m O{} O{}}{
     \begin{figure}[H]
         \centering
-        \includegraphics[keepaspectratio = true, height = #2]{\currentFolder/#1}
+        \IfFileExists{\currentFolder/#1}{
+			\includegraphics[keepaspectratio = true, height = #2]{\currentFolder/#1}
+		}{
+			\includegraphics[width = 50mm, height = #2]{example-image-a}
+		}
         \ifstrempty{#3}{}{\caption{\textit{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
     \end{figure}
