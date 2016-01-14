@@ -1,17 +1,22 @@
 \documentclass[12pt, twoside]{article}
 
-\usepackage{dgs}
-\usepackage{dgs-config}
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
 
 \loadDocumentSettings
-\input{custom}
+\usepackage{core/dgs-custom}
 
 \RenewDocumentCommand{\currentFolder}{}{input/tasks}
 
 \begin{document}            
-    \thispagestyle{first} 
-    
-    \vspace*{3.0 \baselineskip}
+    \loadRegularHeaders
+	\thispagestyle{first}
+	\vspace*{3em}
+    \input{core/templates/intro.tex}
+	\newpage
+	\input{core/templates/rules.tex}
+	\newpage
+   
     {
         \centering
         {\Huge Zadania \currentSeries. série \currentPartGenitive\ časti}\\[0pt]
@@ -19,5 +24,6 @@
     } 
         
     \pagestyle{tasks}    
+	\loadTaskHeaders
     \addTasks                 
 \end{document}

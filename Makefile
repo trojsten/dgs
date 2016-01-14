@@ -2,15 +2,16 @@ all:				hello pdf html
 debug:				hello pdf html
 
 pdf:				collect output/tasks.pdf output/solutions.pdf
-html:				collect
-	@echo -e '\e[33mWarning: HTML not yet implemented\e[0m'
+html:				collect md-to-html
 tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
-version	=			'0.32'
-date =				'2015-12-12'
-texs =				$(wildcard source/tasks/*.tex) $(wildcard source/solutions/*.tex)
-copy-tex:			$(patsubst source%, input%, $(texs))
+version	=			'0.37'
+date =				'2016-01-05'
+
+mds =				$(wildcard source/tasks/*.md) $(wildcard source/solutions/*.md)
+md-to-tex:			$(patsubst %.md, %.tex, $(patsubst source%, input%, $(mds)))
+md-to-html:			$(patsubst %.md, %.html, $(patsubst source%, output%, $(mds)))
 
 svgs =				$(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
 svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
@@ -36,8 +37,15 @@ install:
 collect:
 	@echo -e '\e[32mCreating input folders\e[0m'
 	mkdir -p input/ input/tasks/ input/solutions/
-	mkdir -p output/
+	mkdir -p output/ output/tasks/ output/solutions/
 	cp source/current.tex input/current.tex
+	export TEXMFHOME=./core//
+
+
+input/%.tex: source/%.md
+	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
+	./core/dgs-convert.sh $< $@
+	vlna -l -r $@
 
 input/%.tex: source/%.tex
 	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
@@ -54,6 +62,7 @@ input/%.pdf: source/%.gp
 	cd $(<D) ; gnuplot -e "set terminal pdf font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
 
 input/%.pdf: source/%.pdf
+	@echo -e '\e[32mCopying PDF file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
 input/%.png: source/%.png
@@ -63,11 +72,15 @@ input/%.png: source/%.png
 input/%.png: source/%.svg
 	@echo -e '\e[31mSVG to PNG conversion is currently not implemented\e[0m'
 
-output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png copy-tex $(subst output/,,$(subst pdf,tex,$@)) 
+output/%.html: source/%.md
+	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
+	./core/dgs-convert.sh $< $@
+
+output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png md-to-tex $(subst output/,,$(subst pdf,tex,$@)) 
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $*.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $*.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 
 #output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
 #	@echo -e '\e[32mRendering single task $@\e[0m'

@@ -1,14 +1,13 @@
 \NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{dgs}[2015/10/09 Trojsten Document Generation System -- DeGeŠ]
+\ProvidesPackage{dgs}[2016/01/06 Trojsten Document Generation System -- DeGeŠ]
 
 % Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
 % spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
-%
 
 % Prosíme o dodržiavanie nasledovných zásad.
 
 % SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
-% Ak nepotrebuješ jednotku bez čísla, tak \si{jednotka}.
+% Ak ti stačí jednotka bez čísla, tak \si{jednotka}.
 % Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
 % Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
 %	stará o slovenskú desatinnú čiarku miesto bodky.
@@ -71,12 +70,13 @@
     longtable,
 	csvsimple,
 	animate,
+	skull,
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
 \captionsetup[figure]{
 	format					= hang,
-	width					= 0.9\textwidth
+	width					= 0.9\textwidth,
 }
 
 \definecolor{colour-url}{rgb}{0.0, 0.0, 0.5}
@@ -109,7 +109,7 @@
 }
 %\setallmainfonts{Gentium Book Basic}
 \setallmainfonts[
-    Path            = fonts/ ,
+    Path            = core/fonts/ ,
     Extension       = .otf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
@@ -118,7 +118,7 @@
 ]{minionpro}
 \setmathsfont{Minion Math}                                  % change this
 \setmonofont[
-	Path			= fonts/ ,
+	Path			= core/fonts/ ,
 	Extension		= .ttf ,
 	UprightFont     = *-r ,
     BoldFont        = *-b ,
@@ -126,7 +126,7 @@
     BoldItalicFont  = *-bi    
 ]{ubuntumono}
 \setsansfont[
-    Path            = fonts/ ,
+    Path            = core/fonts/ ,
     Extension       = .ttf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
@@ -135,7 +135,7 @@
 ]{verdana}
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
-\RequirePackage{dgs-utils}
+\RequirePackage{core/dgs-utils}
 
 \NewDocumentCommand{\lang}{O{en} +m}{%
 	\ifstrequals{#1}{\currentLanguage}{#2}{}%
@@ -167,8 +167,8 @@
 
 % Internal commands
 \NewDocumentCommand{\loadSeminar}{m}{
-    \IfFileExists{dgs-config-#1.sty}{
-        \RequirePackage{dgs-config-#1}                   
+    \IfFileExists{core/config/dgs-config-#1.sty}{
+        \RequirePackage{core/config/dgs-config-#1}                   
     }{
         \PackageError{dgs}{Cannot load seminar #1}{File "dgs-config-#1.sty" does not exist}
     }
@@ -185,7 +185,7 @@
 %   - výška obrázka (napríklad v mm)
 %   - popis pod obrázkom
 %   - label pre odkázanie sa na obrázok
-\NewDocumentCommand{\insertPicture}{m m O{} O{}}{
+\NewDocumentCommand{\insertPicture}{m m m m}{
     \begin{figure}[H]
         \centering
         \IfFileExists{\currentFolder/#1}{
@@ -209,9 +209,9 @@
             \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
             \hfill\normalsize%
             \formatTaskPoints[#2][#3]%
-            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{taskNumber}}}}%
+            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{task}}}}
         }{%
-            \arabic{taskNumber}%
+            \arabic{task}%
         }%
     }
 }
@@ -228,48 +228,45 @@
             \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
             \hfill\normalsize%
             \ifstrempty{#2}{%
-                \ifstrempty{#3}{}{opravovalo \textbf{#3}}%
+                \ifstrempty{#3}{}{opravoval#4 \textbf{#3}}%
             }{%
-                \ifstrempty{#3}{vzorák \textbf{#2}}{vzorák \textbf{#2}, opravoval\ifstrempty{#4}{}{#4} \textbf{#3}}%
+                vzorák #2\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
             }%
         }{%
-            \arabic{taskNumber}%
+            \arabic{task}%
         }%
     }
 }
 
-\NewDocumentCommand{\addTasks}{}{%    
-    \newcounter{taskNumber}%
-	\setcounter{taskNumber}{1}
+\NewDocumentCommand{\addTasks}{}{%   
+	\newcounter{task} 
     \Repeat{\seminarTaskCount}{\tryAddTask}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-    \newcounter{taskNumber}%
-	\setcounter{taskNumber}{1}
+	\newcounter{task}
     \Repeat{\seminarTaskCount}{\tryAddSolution}%
 }
 
 % \tryAddTask
-% Pridá ďalšie zadanie zo súboru solution<číslo>.tex
-\NewDocumentCommand{\tryAddTask}{}{
-    \IfFileExists{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}{%
-        \input{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}%
+% Pridá ďalšie zadanie zo súboru tasks/<číslo>.tex
+\NewDocumentCommand{\tryAddTask}{O{} O{} O{}}{
+	\stepcounter{task}
+    \IfFileExists{\currentFolder/\padzero{00}{\arabic{task}}.tex}{%
+        \input{\currentFolder/\padzero{00}{\arabic{task}}.tex}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}!>}\\
-    }
-    \stepcounter{taskNumber}    
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{task}}.tex}!>}\\
+    }	
 }
 
 % \tryAddSolution
-% Pridá ďalšie vzorové riešenie zo súboru solution<číslo>.tex
+% Pridá ďalšie vzorové riešenie zo súboru solutions/<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
-	\IfFileExists{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}{%
-        \input{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex}%
+	\IfFileExists{\currentFolder/\padzero{00}{\arabic{task}}.tex}{%
+        \input{\currentFolder/\padzero{00}{\arabic{task}}.tex}%
     }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{taskNumber}}.tex!>}}\\
+        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{task}}.tex!>}}\\
     }
-    \stepcounter{taskNumber}    
 }
 
 % \exampleIO[verbatim input][verbatim output]
