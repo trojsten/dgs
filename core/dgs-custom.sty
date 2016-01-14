@@ -1,10 +1,21 @@
 % package titlesec -- formatting of section headers
 %\titleformat{\subsection}[runin / hang / wtf]{format whole}{label}{separation}{before}[after]
-\titleformat{\section}[hang]{\centering\Huge}{}{0pt}{}
-\titleformat{\subsection}[hang]{\large}{\bfseries\arabic{taskNumber}.}{0pt}{}[]
-\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-\titlespacing{\subsection}{0pt}{12pt}{0pt}
-\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+\NewDocumentCommand{\loadRegularHeaders}{}{
+	\titleformat{\section}[hang]{\centering\bfseries\Large}{}{0pt}{}
+	\titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+	\titlespacing{\subsection}{0pt}{8pt}{4pt}
+	\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+}
+
+\NewDocumentCommand{\loadTaskHeaders}{}{
+	\titleformat{\chapter}[hang]{\centering\Huge}{}{0pt}{}
+	\titleformat{\section}[hang]{\centering\Large}{}{0pt}{}
+	\titleformat{\subsection}[hang]{\large}{\bfseries\arabic{task}.}{0pt}{}[]
+	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+	\titlespacing{\subsection}{0pt}{12pt}{0pt}
+	\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+}
 
 % paragraph settings -- formatting paragraphs and list environments
 \linespread{1.0}
@@ -19,17 +30,17 @@
 \setlength{\LTcapwidth}{0.8\textwidth}
 
 \setlist[description]{
-    style           = multiline,
-    labelindent     =   8mm,
-    leftmargin      =  28mm,
-    itemsep         =   0mm    
+	style           = multiline,
+	labelindent     =   8mm,
+	leftmargin      =  28mm,
+	itemsep         =   0mm    
 }
 \setlist[enumerate]{
 	topsep			=	0mm,
-    itemsep         =   0mm,
+	itemsep         =   0mm,
 }
 \setlist[itemize]{
-    itemsep         =   0mm,
+	itemsep         =   0mm,
 }
 
 \renewcommand{\arraystretch}{1.2}
@@ -38,22 +49,26 @@
 \renewcommand{\footrulewidth}{0.4pt}
 
 % fancyhdr -- fancy pagestyle
-\fancypagestyle{tasks}{%
-    \fancyhf{}
-    \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
-    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
+\fancypagestyle{main}{
+    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{core/logo/\seminarID/mini.pdf}}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
 
+\fancypagestyle{tasks}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
+}
+
 \fancypagestyle{solutions}{%
-    \fancyhf{}
+    \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Riešenia \currentSeries. série \currentPartGenitive\ časti}}
-    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{logo/\seminarID/mini.pdf}}
-    \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
-    \fancyfoot[C]{\small \thepage~z~\pageref*i{LastPage}}
-    \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
+}
+
+\fancypagestyle{rules}{%
+	\pagestyle{main}
+	\fancyhead[LE,RO]{\textit{Pravidlá}}
 }
     
 \fancypagestyle{first}{%
@@ -61,7 +76,7 @@
     \fancyhead[L]{    
         \begin{minipage}{0.15\textwidth}
             \flushleft
-            \includegraphics[height = 20mm]{logo/trojsten/large.pdf}\\[0pt]
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
             \vspace{2pt}
         \end{minipage}
     }
@@ -71,7 +86,7 @@
             \centering
             \vspace{4pt}
             {\Large \seminarFull}\\[4pt]
-            {\large \romanNumeral{\currentContestYear}. ročník, \currentAcademicYear}\\[8pt]            
+            {\large \romanNumeral{\currentVolume}. ročník, \currentAcademicYear}\\[8pt]            
             {\footnotesize \seminarShort,\ \seminarDepartmentShort\ FMFI~UK,
 				Mlynská dolina, 842~48 Bratislava}\\[2pt]
             %{web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
@@ -82,10 +97,10 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 0.7\linewidth, keepaspectratio = true]{logo/\seminarID/large.pdf}\\[0pt]
+            \includegraphics[width = 0.7\linewidth, keepaspectratio = true]{core/logo/\seminarID/large.pdf}\\[0pt]
         \end{minipage}
     }
 	\fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
-    \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
+    \fancyfoot[LE,RO]{\URL{\seminarURL}}
 }    
