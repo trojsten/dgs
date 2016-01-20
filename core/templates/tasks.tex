@@ -7,23 +7,21 @@
 \usepackage{core/dgs-custom}
 
 \RenewDocumentCommand{\currentFolder}{}{input/tasks}
-
+\newcounter{task}
+ 
 \begin{document}            
-    \loadRegularHeaders
+    \loadRegularStyle
 	\thispagestyle{first}
-	\vspace*{3em}
-    \input{core/templates/intro.tex}
-	\newpage
-	\input{core/templates/rules.tex}
-	\newpage
+	\vspace*{2em}
    
     {
-        \centering
-        {\Huge Zadania \currentSeries. série \currentPartGenitive\ časti}\\[0pt]
+        \section{Zadania \currentSeries. série \currentPartGenitive\ časti}
+		\centering
+		\vspace{-1.3em}
         {Termín odoslania \currentDeadline}\\[2pt]
     } 
         
     \pagestyle{tasks}    
-	\loadTaskHeaders
+	\loadTasksStyle
     \addTasks                 
 \end{document}

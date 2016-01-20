@@ -39,13 +39,11 @@ collect:
 	mkdir -p input/ input/tasks/ input/solutions/
 	mkdir -p output/ output/tasks/ output/solutions/
 	cp source/current.tex input/current.tex
-	export TEXMFHOME=./core//
-
 
 input/%.tex: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
 	./core/dgs-convert.sh $< $@
-	vlna -l -r $@
+	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 input/%.tex: source/%.tex
 	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
@@ -76,11 +74,17 @@ output/%.html: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
 	./core/dgs-convert.sh $< $@
 
-output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png md-to-tex $(subst output/,,$(subst pdf,tex,$@)) 
+
+# source/fks/31/spring/1/output/tasks/01.html
+# source/fks/31/spring/1/source/tasks/01.md
+
+output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png md-to-tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
+
+
 
 #output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
 #	@echo -e '\e[32mRendering single task $@\e[0m'
@@ -107,3 +111,4 @@ clean:
 distclean: clean
 	@echo -e '\e[32mDist clean:\e[0m'
 	rm -rf output/
+
