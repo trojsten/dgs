@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{dgs}[2016/01/06 Trojsten Document Generation System -- DeGeŠ]
+\ProvidesPackage{dgs}[2016/01/16 Trojsten Document Generation System -- DeGeŠ]
 
 % Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
 % spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
@@ -71,6 +71,7 @@
 	csvsimple,
 	animate,
 	skull,
+	hyphenat,
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
@@ -79,15 +80,14 @@
 	width					= 0.9\textwidth,
 }
 
-\definecolor{colour-url}{rgb}{0.0, 0.0, 0.5}
-\definecolor{colour-link}{rgb}{0.0, 0.0, 0.5}
+\definecolor{colour-url}{RGB}{0, 137, 162}
+\definecolor{colour-link}{RGB}{0, 137, 162}
 
 \RequirePackage[
 	colorlinks				= true,
 	linkcolor				= colour-link,
 	urlcolor				= colour-url,
 ]{hyperref}
-
 
 \RequirePackage{fancyhdr}                                   % fancy header
 
@@ -209,7 +209,7 @@
             \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
             \hfill\normalsize%
             \formatTaskPoints[#2][#3]%
-            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{task}}}}
+            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{task}}}}%
         }{%
             \arabic{task}%
         }%
@@ -239,12 +239,12 @@
 }
 
 \NewDocumentCommand{\addTasks}{}{%   
-	\newcounter{task} 
+	\setcounter{task}{0}
     \Repeat{\seminarTaskCount}{\tryAddTask}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-	\newcounter{task}
+	\setcounter{task}{0}
     \Repeat{\seminarTaskCount}{\tryAddSolution}%
 }
 

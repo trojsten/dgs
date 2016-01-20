@@ -1,0 +1,26 @@
+\loadRegularStyle
+\insertIntro
+\insertSponsors
+\newpage
+\insertRules
+\newpage
+\loadTasksStyle
+\tasksHeader{\currentSeries}{\currentPartGenitive}{\currentDeadline}
+\addTasks{1}
+\tasksHeader{\currentSeries}{\currentPartGenitive}{\currentDeadline}
+\addTasks{2}
+
+\begin{document}            
+    \loadRegularHeaders
+	\thispagestyle{first}
+	\vspace*{3em}
+        \section{Zadania \currentSeries. série \currentPartGenitive\ časti}
+		\centering
+		\vspace{-1.7em}
+        {Termín odoslania \currentDeadline}\\[2pt]
+    } 
+        
+    \pagestyle{tasks}    
+	\loadTaskHeaders
+    \addTasks                 
+\end{document}

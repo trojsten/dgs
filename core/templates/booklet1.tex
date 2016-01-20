@@ -1,0 +1,42 @@
+\documentclass[12pt, twoside]{article}
+
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
+
+\loadDocumentSettings
+\usepackage{core/dgs-custom}
+
+\RenewDocumentCommand{\currentFolder}{}{input/tasks1}
+\newcounter{task}
+
+\begin{document}            
+    \loadRegularStyle
+	\thispagestyle{first}
+	\vspace*{3em}
+    \input{core/templates/intro.tex}
+	\newpage
+	\input{core/templates/rules.tex}
+	\newpage
+   
+    {
+        \section{Zadania \currentSeries. série \currentPartGenitive\ časti}
+		\centering
+		\vspace{-1.3em}
+        {Termín odoslania \currentDeadline}\\[2pt]
+    } 
+        
+    \pagestyle{tasks}    
+	\loadTasksStyle
+    \addTasks                
+	\newpage	
+	\RenewDocumentCommand{\currentFolder}{}{input/tasks2}
+	\RenewDocumentCommand{\currentSeries}{}{2}
+	\RenewDocumentCommand{\currentDeadline}{}{27. 03. 2016}
+	{
+        \section{Zadania \currentSeries. série \currentPartGenitive\ časti}
+		\centering
+		\vspace{-1.3em}
+        {Termín odoslania \currentDeadline}\\[2pt]
+    }
+    \addTasks 
+\end{document}
