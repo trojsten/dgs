@@ -2,81 +2,77 @@ all:				hello pdf html
 debug:				hello pdf html
 
 pdf:				collect output/tasks.pdf output/solutions.pdf
-html:				collect md-to-html
+html:				collect md-to-html svg-to-png
 tasks:				output/tasks.pdf
 solutions:			output/solutions.pdf	
 
-version	=			'0.37'
-date =				'2016-01-05'
+version	=			'0.39'
+date =				'2016-02-11'
 
-mds =				$(wildcard source/tasks/*.md) $(wildcard source/solutions/*.md)
-md-to-tex:			$(patsubst %.md, %.tex, $(patsubst source%, input%, $(mds)))
-md-to-html:			$(patsubst %.md, %.html, $(patsubst source%, output%, $(mds)))
+mds =				$(wildcard temp/tasks/*.md) $(wildcard temp/solutions/*.md)
+md-to-tex:			$(patsubst %.md, %.tex, $(patsubst temp%, input%, $(mds)))
+md-to-html:			$(patsubst %.md, %.html, $(patsubst temp%, output%, $(mds)))
 
-svgs =				$(wildcard source/tasks/*.svg) $(wildcard source/solutions/*.svg)
-svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
-svg-to-png:			$(patsubst %.svg, %.png, $(patsubst source%, input%, $(svgs)))
+svgs =				$(wildcard temp/tasks/*.svg) $(wildcard temp/solutions/*.svg)
+svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst temp%, input%, $(svgs)))
+svg-to-png:			$(patsubst %.svg, %.png, $(patsubst temp%, output%, $(svgs)))
 
-gps =				$(wildcard source/tasks/*.gp) $(wildcard source/solutions/*.gp)
-gp-to-pdf:			$(patsubst %.gp, %.pdf, $(patsubst source%, input%, $(gps)))
-gp-to-png:			$(patsubst %.gp, %.png, $(patsubst source%, input%, $(gps)))
+gps =				$(wildcard temp/tasks/*.gp) $(wildcard temp/solutions/*.gp)
+gp-to-pdf:			$(patsubst %.gp, %.pdf, $(patsubst temp%, input%, $(gps)))
+gp-to-png:			$(patsubst %.gp, %.png, $(patsubst temp%, input%, $(gps)))
 
-pdfs =				$(wildcard source/tasks/*.pdf) $(wildcard source/solutions/*.pdf)
-copy-pdf:			$(patsubst source%, input%, $(pdfs))
+pdfs =				$(wildcard temp/tasks/*.pdf) $(wildcard temp/solutions/*.pdf)
+copy-pdf:			$(patsubst temp%, input%, $(pdfs))
 
-pngs =				$(wildcard source/tasks/*.png) $(wildcard source/solutions/*.png)
-copy-png:			$(patsubst source%, input%, $(pngs))
+pngs =				$(wildcard temp/tasks/*.png) $(wildcard temp/solutions/*.png)
+copy-png:			$(patsubst temp%, input%, $(pngs))
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ, version \e[95m$(version)\e[32m (\e[95m$(date)\e[32m)\e[0m'
 
-install:
-	mkdir -p ~/texmf/tex/latex/local/dgs/
-	cp *.sty ~/texmf/tex/latex/local/dgs/
-
 collect:
-	@echo -e '\e[32mCreating input folders\e[0m'
+	@echo -e '\e[32mCreating input folders (unless they are already present)\e[0m'
 	mkdir -p input/ input/tasks/ input/solutions/
 	mkdir -p output/ output/tasks/ output/solutions/
-	cp source/current.tex input/current.tex
+	./core/dgs-prepare.py temp/settings.json input/
 
-input/%.tex: source/%.md
+input/%.tex: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
 	./core/dgs-convert.sh $< $@
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
-input/%.tex: source/%.tex
+input/%.tex: temp/%.tex
 	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
-input/%.pdf: source/%.svg
+input/%.pdf: temp/%.svg
 	@echo -e '\e[32mConverting \e[96m$<\e[32m to PDF:\e[0m'
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
-input/%.pdf: source/%.gp
+input/%.pdf: temp/%.gp
 	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PDF:\e[0m'
 	cd $(<D) ; gnuplot -e "set terminal pdf font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
 
-input/%.pdf: source/%.pdf
+input/%.pdf: temp/%.pdf
 	@echo -e '\e[32mCopying PDF file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
-input/%.png: source/%.png
+input/%.png: temp/%.png
 	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
-input/%.png: source/%.svg
-	@echo -e '\e[31mSVG to PNG conversion is currently not implemented\e[0m'
+output/%.png: temp/%.svg
+	@echo -e '\e[32mConverting SVG file \e[96m$<\e[32m to PNG\e[0m'
+	rsvg-convert -f png -h 250 -a -o $@ $<
 
-output/%.html: source/%.md
+output/%.html: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
 	./core/dgs-convert.sh $< $@
 
-
-# source/fks/31/spring/1/output/tasks/01.html
-# source/fks/31/spring/1/source/tasks/01.md
+# temp/fks/31/spring/1/output/tasks/01.html
+# temp/fks/31/spring/1/temp/tasks/01.md
 
 output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png md-to-tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -105,7 +101,7 @@ view-solutions: solutions
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'
-	rm -rf input/ temp/
+	rm -rf input/
 	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.swp" \) -delete	
 
 distclean: clean

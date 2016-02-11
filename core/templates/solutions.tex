@@ -6,19 +6,17 @@
 \loadDocumentSettings
 \usepackage{core/dgs-custom}
 
-\RenewDocumentCommand{\currentFolder}{}{input/solutions}
+\RenewDocumentCommand{\currentFolder}{}{input}
+\newcounter{task}
 
 \begin{document}            
-    \thispagestyle{first} 
-    
-    \vspace*{3.0 \baselineskip}
-    {
-        \centering
-        {\Huge Vzorové riešenia \currentSeries. série \currentPartGenitive\ časti}\\[0pt]
-    }
-
-    \vspace{0.5\baselineskip}
+    \loadRegularStyle
+	\thispagestyle{first}
+	\vspace*{2em}
+   
+    \section{\texorpdfstring{Riešenia \currentSeries. série \currentPartGenitive\ časti}{}}
         
-    \pagestyle{solutions}
-    \addSolutions    
+    \pagestyle{tasks}    
+	\loadSolutionsStyle
+    \addSolutions                 
 \end{document}

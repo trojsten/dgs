@@ -15,6 +15,11 @@
 	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{task}}{2pt}{}[]
 }
 
+\NewDocumentCommand{\loadSolutionsStyle}{}{
+	\pagestyle{solutions}
+	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{task}}{2pt}{}[]
+}
+
 % paragraph settings -- formatting paragraphs and list environments
 \linespread{1.0}
 \setlength{\parindent}{0cm}

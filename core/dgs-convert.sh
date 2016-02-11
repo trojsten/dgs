@@ -7,10 +7,11 @@
 # - _filter.py zabezpeci specialnu syntax ako napr. ```vstup a ```vystup
 
 if [ "$#" != 2 ]; then
-  echo "usage:
-  $0 x.md x.tex
-  $0 x.md x.html"
-  exit 1
+	echo "DeGeŠ Markdown to HTML/TeX convertor"
+	echo "Usage:"
+	echo "$0 x.md x.tex"
+	echo "$0 x.md x.html"
+	exit 1
 fi
 
 if ! pandoc --version 2>/dev/null | grep -Eq 'pandoc 1\.(12\.[3-9]|1[3-9])'; then

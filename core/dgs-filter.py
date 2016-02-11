@@ -103,7 +103,7 @@ def latex_filter(obj, items):
         def tex(s): return [vyrob("RawInline", ["latex", s])]
 
         if level != 1:
-            vystup += tex(r'\nadpis{') + content + tex(r'}')
+			vystup += tex(r'\subsubsection{') + content + tex(r'}')
         else:
             vystup += tex(r'\pocetbodovpopis{' + options['bodypopis'] + r'}')
             vystup += tex(r'\pocetbodovprog{' + options['bodyprogram'] + r'}')

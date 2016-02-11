@@ -203,12 +203,12 @@
 %   - názov úlohy
 %   - počet bodov za popis (iba KSP)
 %   - počet bodov za kód (iba KSP)
-\NewDocumentCommand{\createTaskHeader}{O{} O{} O{}}{
+\NewDocumentCommand{\createTaskHeader}{m m m}{
     \subsection{
         \texorpdfstring{%
             \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
             \hfill\normalsize%
-            \formatTaskPoints[#2][#3]%
+            \formatTaskPoints{#2}{#3}%
             \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{task}}}}%
         }{%
             \arabic{task}%
@@ -222,7 +222,7 @@
 %   - meno autora vzorového riešenia
 %   - meno opravovateľa
 %   - gramatický rod opravovateľa
-\NewDocumentCommand{\createSolutionHeader}{O{} O{} O{} O{}}{
+\NewDocumentCommand{\createSolutionHeader}{m m m m}{
     \subsection{
         \texorpdfstring{%
             \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
@@ -230,7 +230,7 @@
             \ifstrempty{#2}{%
                 \ifstrempty{#3}{}{opravoval#4 \textbf{#3}}%
             }{%
-                vzorák #2\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
+                vzorák \textbf{#2}\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
             }%
         }{%
             \arabic{task}%
@@ -238,35 +238,49 @@
     }
 }
 
+\NewDocumentCommand{\protectedInput}{m}{
+	\IfFileExists{#1}{%
+        \input{#1}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{#1}!>}\\%
+    }	
+}
+
 \NewDocumentCommand{\addTasks}{}{%   
-	\setcounter{task}{0}
-    \Repeat{\seminarTaskCount}{\tryAddTask}%
+	\setcounter{task}{0}%
+	\input{\currentFolder/recipe.tex}%
+}
+
+\NewDocumentCommand{\addTask}{m m m}{%
+	\stepcounter{task}%
+	\createTaskHeader{#1}{#2}{#3}%
+	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-	\setcounter{task}{0}
-    \Repeat{\seminarTaskCount}{\tryAddSolution}%
+	\setcounter{task}{0}%
+    \input{\currentFolder/recipe.tex}%
+}
+
+\NewDocumentCommand{\addSolution}{m m m m}{%
+	\stepcounter{task}%
+	\createSolutionHeader{#1}{#2}{#3}{#4}
+	\protectedInput{\currentFolder/solutions/\padzero{00}{\arabic{task}}.tex}%
 }
 
 % \tryAddTask
 % Pridá ďalšie zadanie zo súboru tasks/<číslo>.tex
-\NewDocumentCommand{\tryAddTask}{O{} O{} O{}}{
+\NewDocumentCommand{\tryAddTask}{}{
 	\stepcounter{task}
-    \IfFileExists{\currentFolder/\padzero{00}{\arabic{task}}.tex}{%
-        \input{\currentFolder/\padzero{00}{\arabic{task}}.tex}%
-    }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{task}}.tex}!>}\\
-    }	
+	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}
 }
 
 % \tryAddSolution
 % Pridá ďalšie vzorové riešenie zo súboru solutions/<číslo>.tex
 \NewDocumentCommand{\tryAddSolution}{}{
-	\IfFileExists{\currentFolder/\padzero{00}{\arabic{task}}.tex}{%
-        \input{\currentFolder/\padzero{00}{\arabic{task}}.tex}%
-    }{%
-        \errorMessage{<MISSING FILE \texttt{\currentFolder/\padzero{00}{\arabic{task}}.tex!>}}\\
-    }
+	\stepcounter{task}		
+	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}
+	\protectedInput{\currentFolder/solutions/\padzero{00}{\arabic{task}}.tex}
 }
 
 % \exampleIO[verbatim input][verbatim output]
