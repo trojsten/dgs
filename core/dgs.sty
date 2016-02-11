@@ -157,10 +157,10 @@
 \NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
 
 \NewDocumentCommand{\loadDocumentSettings}{}{
-	\IfFileExists{input/current.tex}{
-        \input{input/current.tex}                   
+	\IfFileExists{input/settings.tex}{
+        \input{input/settings.tex}                   
     }{
-        \PackageError{dgs}{Cannot load document settings}{File "input/current.tex" does not exist}
+        \PackageError{dgs}{Cannot load document settings}{File "input/settings.tex" does not exist}
     }
 
 }
@@ -248,7 +248,7 @@
 
 \NewDocumentCommand{\addTasks}{}{%   
 	\setcounter{task}{0}%
-	\input{\currentFolder/recipe.tex}%
+	\input{\currentFolder/tasks/recipe.tex}%
 }
 
 \NewDocumentCommand{\addTask}{m m m}{%
@@ -259,7 +259,7 @@
 
 \NewDocumentCommand{\addSolutions}{}{%
 	\setcounter{task}{0}%
-    \input{\currentFolder/recipe.tex}%
+    \input{\currentFolder/solutions/recipe.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m m m}{%
