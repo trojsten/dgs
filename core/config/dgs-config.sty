@@ -35,7 +35,7 @@
 
 \NewDocumentCommand{\getTaskCategories}{m}{}
 
-\NewDocumentCommand{\formatTaskPoints}{O{9} O{}}{}
+\NewDocumentCommand{\formatTaskPoints}{m m}{}
 \NewDocumentCommand{\formatTaskCategories}{O{} O{}}{%
     \ifstrequal{#1}{}{}{%
         \ifstrequal{#2}{}{%
