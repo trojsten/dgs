@@ -13,27 +13,30 @@ mds =				$(wildcard temp/tasks/*.md) $(wildcard temp/solutions/*.md)
 md-to-tex:			$(patsubst %.md, %.tex, $(patsubst temp%, input%, $(mds)))
 md-to-html:			$(patsubst %.md, %.html, $(patsubst temp%, output%, $(mds)))
 
-svgs =				$(wildcard temp/tasks/*.svg) $(wildcard temp/solutions/*.svg)
+svgs =				$(wildcard temp/graphics/*.svg)
 svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst temp%, input%, $(svgs)))
 svg-to-png:			$(patsubst %.svg, %.png, $(patsubst temp%, output%, $(svgs)))
 
-gps =				$(wildcard temp/tasks/*.gp) $(wildcard temp/solutions/*.gp)
+gps =				$(wildcard temp/graphics/*.gp)
 gp-to-pdf:			$(patsubst %.gp, %.pdf, $(patsubst temp%, input%, $(gps)))
 gp-to-png:			$(patsubst %.gp, %.png, $(patsubst temp%, input%, $(gps)))
 
-pdfs =				$(wildcard temp/tasks/*.pdf) $(wildcard temp/solutions/*.pdf)
+pdfs =				$(wildcard temp/graphics/*.pdf)
 copy-pdf:			$(patsubst temp%, input%, $(pdfs))
 
-pngs =				$(wildcard temp/tasks/*.png) $(wildcard temp/solutions/*.png)
+pngs =				$(wildcard temp/graphics/*.png)
 copy-png:			$(patsubst temp%, input%, $(pngs))
+
+jpgs =				$(wildcard temp/graphics/*.jpg)
+copy-jpg:			$(patsubst temp%, input%, $(jpgs))
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ, version \e[95m$(version)\e[32m (\e[95m$(date)\e[32m)\e[0m'
 
 collect:
 	@echo -e '\e[32mCreating input folders (unless they are already present)\e[0m'
-	mkdir -p input/ input/tasks/ input/solutions/
-	mkdir -p output/ output/tasks/ output/solutions/
+	mkdir -p input/ input/tasks/ input/solutions/ input/graphics/
+	mkdir -p output/ output/tasks/ output/solutions/ output/graphics/
 	./core/dgs-prepare.py temp/settings.json input/
 
 input/%.tex: temp/%.md
@@ -63,9 +66,22 @@ input/%.png: temp/%.png
 	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
+input/%.jpg: temp/%.jpg
+	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
+	cp $< $@
+
 output/%.png: temp/%.svg
 	@echo -e '\e[32mConverting SVG file \e[96m$<\e[32m to PNG\e[0m'
 	rsvg-convert -f png -h 250 -a -o $@ $<
+
+output/%.png: temp/%.png
+	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
+	cp $< $@
+
+output/%.jpg: temp/%.jpg
+	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
+	cp $< $@
+
 
 output/%.html: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
@@ -74,7 +90,7 @@ output/%.html: temp/%.md
 # temp/fks/31/spring/1/output/tasks/01.html
 # temp/fks/31/spring/1/temp/tasks/01.md
 
-output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png md-to-tex
+output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png copy-jpg md-to-tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'

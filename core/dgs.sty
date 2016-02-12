@@ -179,7 +179,7 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
-% \insertPicture{filename}{height}[caption][label]
+% \insertPicture{filename}{height}{caption}{label}
 % Vloží obrázok s určenou výškou
 %   - meno súboru, hľadá v aktuálnom priečinku
 %   - výška obrázka (napríklad v mm)
@@ -188,10 +188,10 @@
 \NewDocumentCommand{\insertPicture}{m m m m}{
     \begin{figure}[H]
         \centering
-        \IfFileExists{\currentFolder/#1}{
-			\includegraphics[keepaspectratio = true, height = #2]{\currentFolder/#1}
+        \IfFileExists{\currentFolder/graphics/#1}{
+			\includegraphics[keepaspectratio = true, height = #2]{\currentFolder/graphics/#1}
 		}{
-			\includegraphics[width = 50mm, height = #2]{example-image-a}
+			\includegraphics[keepaspectratio = true, height = #2]{example-image-a}
 		}
         \ifstrempty{#3}{}{\caption{\textit{#3}}}
         \ifstrempty{#4}{}{\label{#4}}
@@ -265,22 +265,11 @@
 \NewDocumentCommand{\addSolution}{m m m m}{%
 	\stepcounter{task}%
 	\createSolutionHeader{#1}{#2}{#3}{#4}
+	{
+		\small\it
+		\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}\par
+	}
 	\protectedInput{\currentFolder/solutions/\padzero{00}{\arabic{task}}.tex}%
-}
-
-% \tryAddTask
-% Pridá ďalšie zadanie zo súboru tasks/<číslo>.tex
-\NewDocumentCommand{\tryAddTask}{}{
-	\stepcounter{task}
-	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}
-}
-
-% \tryAddSolution
-% Pridá ďalšie vzorové riešenie zo súboru solutions/<číslo>.tex
-\NewDocumentCommand{\tryAddSolution}{}{
-	\stepcounter{task}		
-	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}
-	\protectedInput{\currentFolder/solutions/\padzero{00}{\arabic{task}}.tex}
 }
 
 % \exampleIO[verbatim input][verbatim output]
