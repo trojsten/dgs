@@ -37,7 +37,6 @@ collect:
 	@echo -e '\e[32mCreating input folders (unless they are already present)\e[0m'
 	mkdir -p input/ input/tasks/ input/solutions/ input/graphics/
 	mkdir -p output/ output/tasks/ output/solutions/ output/graphics/
-	./core/dgs-prepare.py temp/settings.json input/
 
 input/%.tex: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
