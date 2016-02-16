@@ -11,16 +11,18 @@ def readableDir(prospectiveDir):
 		raise Exception("readableDir: {0} is not a readable dir".format(prospectiveDir))
 
 def init():
+	print("This is DeGeŠ, 0.40 [2016-02-15]")
 	print("Initializing")
-	os.system('make collect')
 	shutil.rmtree('temp/', True)	
 	shutil.copytree('{0}/source/'.format(root), 'temp/')
+	os.system("make collect")
 
 def clean():
-	print("Cleaning up...")
+	print("\033[32mCleaning up\033[0m")
 	os.system('make distclean')
 
 def copyBack():
+	print("\033[32mCopying back\033[0m")
 	shutil.rmtree('{0}/output/'.format(root), True)
 	shutil.copytree('output/', '{0}/output/'.format(root), ignore = shutil.ignore_patterns('*.aux', '*.log', '*.out'))
 
@@ -36,13 +38,13 @@ def processJson():
 			(datetime.datetime.strptime(settings['deadline'], '%Y-%m-%d').strftime('%d. %m. %Y'))
 		))
 
-	with open('input/tasks/recipe.tex', 'w+') as output:
-		for task in settings['tasks']:
-			output.write("\\addTask{{{0}}}{{{1}}}{{{2}}}\n".format(task['name'], task['pointsDescription'], task['pointsCode']))
+	with open('input/recipe-problems.tex', 'w+') as output:
+		for problem in settings['problems']:
+			output.write("\\addProblem{{{0}}}{{{1}}}{{{2}}}\n".format(problem['name'], problem['pointsDescription'], problem['pointsCode']))
 
-	with open('input/solutions/recipe.tex', 'w+') as output:
-		for task in settings['tasks']:
-			output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(task['name'], task['solutionBy'], task['evaluationBy'], task['genderSuffix']))
+	with open('input/recipe-solutions.tex', 'w+') as output:
+		for problem in settings['problems']:
+			output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['name'], problem['solutionBy'], problem['evaluationBy'], problem['genderSuffix']))
 
 
 
@@ -55,6 +57,7 @@ parser.add_argument('volume', type = int)
 parser.add_argument('part', choices = ['autumn', 'spring'])
 parser.add_argument('series', type = int, choices = [1, 2, 3]) 
 parser.add_argument('-c', '--clean', action = 'store_true', help = 'call \'make distclean\' first')
+parser.add_argument('-y', '--copy', action = 'store_true', help = 'copy output back to the repository')
 args = parser.parse_args()
 root = 'source/{0}/{1}/{2}/{3}/'.format(args.seminar, args.volume, args.part, args.series)
 
@@ -67,4 +70,5 @@ processJson()
 if os.system('make') != 0:
 	raise Exception("make did not return 0, aborting")
 
-copyBack()
+if args.copy:
+	copyBack()

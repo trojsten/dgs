@@ -179,39 +179,44 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
+\NewDocumentCommand{\currentProblem}{}{%
+	\padzero{00}{\arabic{problem}}%
+}
+
 % \insertPicture{filename}{height}{caption}{label}
 % Vloží obrázok s určenou výškou
 %   - meno súboru, hľadá v aktuálnom priečinku
 %   - výška obrázka (napríklad v mm)
 %   - popis pod obrázkom
 %   - label pre odkázanie sa na obrázok
-\NewDocumentCommand{\insertPicture}{m m m m}{
-    \begin{figure}[H]
-        \centering
-        \IfFileExists{\currentFolder/graphics/#1}{
-			\includegraphics[keepaspectratio = true, height = #2]{\currentFolder/graphics/#1}
-		}{
-			\includegraphics[keepaspectratio = true, height = #2]{example-image-a}
-		}
-        \ifstrempty{#3}{}{\caption{\textit{#3}}}
-        \ifstrempty{#4}{}{\label{#4}}
-    \end{figure}
+\NewDocumentCommand{\insertPicture}{m m m m}{%
+    \begin{figure}[H]%
+        \centering%
+		#1%
+        \IfFileExists{#1}{%
+			\includegraphics[keepaspectratio = true, height = #2]{#1}%
+		}{%
+			\includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+		}%
+        \ifstrempty{#3}{}{\caption{\textit{#3}}}%
+        \ifstrempty{#4}{}{\label{#4}}%
+    \end{figure}%
 }
 
-% \createTaskHeader[name][pointsDescription][pointsCode]
+% \createProblemHeader[name][pointsDescription][pointsCode]
 % Vytvorí novú hlavičku zadania úlohy
 %   - názov úlohy
 %   - počet bodov za popis (iba KSP)
 %   - počet bodov za kód (iba KSP)
-\NewDocumentCommand{\createTaskHeader}{m m m}{
+\NewDocumentCommand{\createProblemHeader}{m m m}{
     \subsection{
         \texorpdfstring{%
             \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
             \hfill\normalsize%
-            \formatTaskPoints{#2}{#3}%
-            \ifstrempty{#1}{}{\quad\formatTaskCategories{\getTaskCategories{\value{task}}}}%
+            \formatProblemPoints{#2}{#3}%
+            \ifstrempty{#1}{}{\quad\formatProblemCategories{\getProblemCategories{\value{problem}}}}%
         }{%
-            \arabic{task}%
+            \arabic{problem}%
         }%
     }
 }
@@ -233,7 +238,7 @@
                 vzorák \textbf{#2}\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
             }%
         }{%
-            \arabic{task}%
+            \arabic{problem}%
         }%
     }
 }
@@ -246,30 +251,30 @@
     }	
 }
 
-\NewDocumentCommand{\addTasks}{}{%   
-	\setcounter{task}{0}%
-	\input{\currentFolder/tasks/recipe.tex}%
+\NewDocumentCommand{\addProblems}{}{%   
+	\setcounter{problem}{0}%
+	\input{\currentDir/recipe-problems.tex}%
 }
 
-\NewDocumentCommand{\addTask}{m m m}{%
-	\stepcounter{task}%
-	\createTaskHeader{#1}{#2}{#3}%
-	\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}%
+\NewDocumentCommand{\addProblem}{m m m}{%
+	\stepcounter{problem}%
+	\createProblemHeader{#1}{#2}{#3}%
+	\protectedInput{\currentDir/\currentProblem/problem.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-	\setcounter{task}{0}%
-    \input{\currentFolder/solutions/recipe.tex}%
+	\setcounter{problem}{0}%
+    \input{\currentDir/recipe-solutions.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m m m}{%
-	\stepcounter{task}%
+	\stepcounter{problem}%
 	\createSolutionHeader{#1}{#2}{#3}{#4}
 	{
 		\small\it
-		\protectedInput{\currentFolder/tasks/\padzero{00}{\arabic{task}}.tex}\par
+		\protectedInput{\currentDir/\currentProblem/problem.tex}\par
 	}
-	\protectedInput{\currentFolder/solutions/\padzero{00}{\arabic{task}}.tex}%
+	\protectedInput{\currentDir/\currentProblem/solution.tex}%
 }
 
 % \exampleIO[verbatim input][verbatim output]

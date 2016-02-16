@@ -6,8 +6,8 @@
 \loadDocumentSettings
 \usepackage{core/dgs-custom}
 
-\RenewDocumentCommand{\currentFolder}{}{input}
-\newcounter{task}
+\RenewDocumentCommand{\currentDir}{}{input}
+\newcounter{problem}
  
 \begin{document}            
     \loadRegularStyle
@@ -21,7 +21,7 @@
         {Termín odoslania \currentDeadline}\\[2pt]
     } 
         
-	\pagestyle{tasks}    
-	\loadTasksStyle
-	\addTasks                 
+	\pagestyle{problems}    
+	\loadProblemsStyle
+	\addProblems                 
 \end{document}
