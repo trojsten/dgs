@@ -10,20 +10,20 @@
 \RenewDocumentCommand{\seminarDepartmentFull}{}{Katedra teoretickej fyziky a didaktiky fyziky}
 \RenewDocumentCommand{\seminarEmail}{}{otazky@fks.sk}
 \RenewDocumentCommand{\seminarFounded}{}{1985}
-\RenewDocumentCommand{\seminarTaskCount}{}{7}
+\RenewDocumentCommand{\seminarProblemCount}{}{7}
 
 % hyperref URL link colour
 \definecolor{colour-url}{RGB}{0, 137, 162}
 
-\RenewDocumentCommand{\getTaskCategories}{m}{%
+\RenewDocumentCommand{\getProblemCategories}{m}{%
     \switch[\number#1=]%
-        \case{1}\formatTaskCategories[B0]%
-        \case{2}\formatTaskCategories[B]%
-        \case{3}\formatTaskCategories[B]%
-        \case{4}\formatTaskCategories[A][B]%
-        \case{5}\formatTaskCategories[A][B]%
-        \case{6}\formatTaskCategories[A]%
-        \case{7}\formatTaskCategories[A]%
-        \otherwise\formatTaskCategories[\errorMessage{<FKS> task number cannot be "#1"! Must be between 1 and \seminarTaskCount.}]%
+        \case{1}\formatProblemCategories[B0]%
+        \case{2}\formatProblemCategories[B]%
+        \case{3}\formatProblemCategories[B]%
+        \case{4}\formatProblemCategories[A][B]%
+        \case{5}\formatProblemCategories[A][B]%
+        \case{6}\formatProblemCategories[A]%
+        \case{7}\formatProblemCategories[A]%
+        \otherwise\formatProblemCategories[\errorMessage{<FKS> problem number cannot be "#1"! Must be between 1 and \seminarProblemCount.}]%
     \endswitch%
 }

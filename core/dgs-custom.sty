@@ -1,7 +1,7 @@
 % package titlesec -- formatting of section headers
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
 \NewDocumentCommand{\loadRegularStyle}{}{	
-	\pagestyle{tasks}
+	\pagestyle{problems}
 	\titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
 	\titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
 	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
@@ -10,14 +10,14 @@
 	\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
 }
 
-\NewDocumentCommand{\loadTasksStyle}{}{
-	\pagestyle{tasks}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{task}}{2pt}{}[]
+\NewDocumentCommand{\loadProblemsStyle}{}{
+	\pagestyle{problems}
+	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{problem}}{2pt}{}[]
 }
 
 \NewDocumentCommand{\loadSolutionsStyle}{}{
 	\pagestyle{solutions}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{task}}{2pt}{}[]
+	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{problem}}{2pt}{}[]
 }
 
 % paragraph settings -- formatting paragraphs and list environments
@@ -60,7 +60,7 @@
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
 }
 
-\fancypagestyle{tasks}{%
+\fancypagestyle{problems}{%
     \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
 }

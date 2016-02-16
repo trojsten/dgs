@@ -6,8 +6,8 @@
 \loadDocumentSettings
 \usepackage{core/dgs-custom}
 
-\RenewDocumentCommand{\currentFolder}{}{input}
-\newcounter{task}
+\RenewDocumentCommand{\currentDir}{}{input}
+\newcounter{problem}
 
 \begin{document}            
     \loadRegularStyle
@@ -16,7 +16,7 @@
    
     \section{\texorpdfstring{Riešenia \currentSeries. série \currentPartGenitive\ časti}{}}
         
-    \pagestyle{tasks}    
+    \pagestyle{problems}    
 	\loadSolutionsStyle
     \addSolutions                 
 \end{document}

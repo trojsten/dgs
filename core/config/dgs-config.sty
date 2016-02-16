@@ -10,7 +10,7 @@
 \NewDocumentCommand{\seminarDepartmentFull}{}{<undefined department>}
 \NewDocumentCommand{\seminarEmail}{}{<undefined email>}
 \NewDocumentCommand{\seminarFounded}{}{<undefined>}
-\NewDocumentCommand{\seminarTaskCount}{}{<undefined>}
+\NewDocumentCommand{\seminarProblemCount}{}{<undefined>}
 
 \NewDocumentCommand{\currentVolume}{}{<void year>}
 \NewDocumentCommand{\currentPart}{}{<void part>}
@@ -24,19 +24,19 @@
     \endswitch%
 }
 
-\NewDocumentCommand{\taskName}{}{<undefined>}
-\NewDocumentCommand{\taskPointsDescription}{}{<undefined>}
-\NewDocumentCommand{\taskPointsCode}{}{<undefined>}
+\NewDocumentCommand{\problemName}{}{<undefined>}
+\NewDocumentCommand{\problemPointsDescription}{}{<undefined>}
+\NewDocumentCommand{\problemPointsCode}{}{<undefined>}
 
 \NewDocumentCommand{\currentYear}{}{\the\numexpr\seminarFounded+\currentVolume\relax}
 \NewDocumentCommand{\currentAcademicYear}{}{\the\numexpr\currentYear-1\relax/\currentYear}
 
-\NewDocumentCommand{\currentFolder}{}{<undefined folder>}
+\NewDocumentCommand{\currentDir}{}{<undefined directory>}
 
-\NewDocumentCommand{\getTaskCategories}{m}{}
+\NewDocumentCommand{\getProblemCategories}{m}{}
 
-\NewDocumentCommand{\formatTaskPoints}{m m}{}
-\NewDocumentCommand{\formatTaskCategories}{O{} O{}}{%
+\NewDocumentCommand{\formatProblemPoints}{m m}{}
+\NewDocumentCommand{\formatProblemCategories}{O{} O{}}{%
     \ifstrequal{#1}{}{}{%
         \ifstrequal{#2}{}{%
             kategória {\large\textbf{#1}}%
