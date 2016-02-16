@@ -31,7 +31,7 @@ jpgs =				$(wildcard temp/**/*.jpg)
 copy-jpg:			$(patsubst temp%, input%, $(jpgs))
 
 hello:
-	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m (\e[95m$(date)\e[32m)\e[0m'
+	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
 
 collect:
 	@echo -e '\e[32mCreating input folders (unless they are already present)\e[0m'
