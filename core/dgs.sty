@@ -192,9 +192,8 @@
 \NewDocumentCommand{\insertPicture}{m m m m}{%
     \begin{figure}[H]%
         \centering%
-		#1%
-        \IfFileExists{#1}{%
-			\includegraphics[keepaspectratio = true, height = #2]{#1}%
+        \IfFileExists{\currentDir/\currentProblem/#1}{%
+			\includegraphics[keepaspectratio = true, height = #2]{\currentDir/\currentProblem/#1}%
 		}{%
 			\includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
 		}%

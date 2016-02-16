@@ -11,7 +11,7 @@ def readableDir(prospectiveDir):
 		raise Exception("readableDir: {0} is not a readable dir".format(prospectiveDir))
 
 def init():
-	print("This is DeGeŠ, 0.40 [2016-02-15]")
+	print("\033[32mThis is DeGeŠ, version \033[95m0.41\033[32m [\033[95m2016-02-16\033[32m]\033[0m")
 	print("Initializing")
 	shutil.rmtree('temp/', True)	
 	shutil.copytree('{0}/source/'.format(root), 'temp/')
@@ -22,9 +22,12 @@ def clean():
 	os.system('make distclean')
 
 def copyBack():
-	print("\033[32mCopying back\033[0m")
+	print("\033[32mCopying output back to the repository\033[0m")
 	shutil.rmtree('{0}/output/'.format(root), True)
 	shutil.copytree('output/', '{0}/output/'.format(root), ignore = shutil.ignore_patterns('*.aux', '*.log', '*.out'))
+
+def bye():
+	print("\033[32mFinished successfully, bye\033[0m")
 
 def processJson():
 	settings = json.load(open('{0}/source/settings.json'.format(root), 'r+'))
@@ -50,7 +53,7 @@ def processJson():
 
 
 parser = argparse.ArgumentParser(
-	description				= "Prepare DeGeŠ series from repository",
+	description				= "Prepare and compile a DeGeŠ series from repository",
 )
 parser.add_argument('seminar', choices = ['fks', 'kms', 'ksp', 'ufo', 'prask', 'fx'])
 parser.add_argument('volume', type = int)
@@ -68,7 +71,12 @@ init()
 processJson()
 
 if os.system('make') != 0:
-	raise Exception("make did not return 0, aborting")
+	print("\033[31mmake failed, aborting operation\033[0m")
+	exit(1)
+else:
+	print("\033[32mmake finished successfully\033[0m")	
 
 if args.copy:
 	copyBack()
+
+bye()
