@@ -40,7 +40,7 @@ collect:
 
 input/%.tex: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
-	./core/dgs-convert.sh $< $@
+	./core/dgs-convert.py latex $< $@
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 input/%.tex: temp/%.tex
@@ -84,7 +84,7 @@ output/%.jpg: temp/%.jpg
 
 output/%.html: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
-	./core/dgs-convert.sh $< $@
+	./core/dgs-convert.py html $< $@
 
 output/%.pdf: collect svg-to-pdf gp-to-pdf copy-png copy-jpg md-to-tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
