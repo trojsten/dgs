@@ -5,22 +5,32 @@ import os, sys, re, argparse
 parser = argparse.ArgumentParser(
 	description				= "DeGeŠ Markdown conversion utility",
 )
-parser.add_argument('format',	choices = ['tex', 'html'])
-parser.add_argument('infile',	nargs = '?', type = argparse.FileType('r'),	default = sys.stdin)
+parser.add_argument('format',	choices = ['latex', 'html'])
+parser.add_argument('infile',	nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
 parser.add_argument('outfile',	nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
 args = parser.parse_args()
 
+tempfile = open('.convert-temp', 'w')
+
 for line in args.infile:
-	line = re.sub(r'^\%', '', line)
+	line = re.sub(r'^%(.*)$', '', line)
 	line = re.sub(r'(\s)"', '\g<1>„', line)
 	line = re.sub(r'"', '“', line)
-	if format == 'tex':
-		line = re.sub(r'^\@H', '', line)	
-	if format == 'html':
-		line = re.sub(r'^\@L', '', line)
-	args.outfile.write(line)
+	if args.format == 'latex':
+		line = re.sub(r'^@H(.*)$', '', line)
+		line = re.sub(r'^@L(.*)$', '\g<1>', line) 
+	if args.format == 'html':
+		line = re.sub(r'^@L(.*)$', '', line)
+		line = re.sub(r'^@H(.*)$', '\g<1>', line) 
+	tempfile.write(line)
 
-exit(0)
+tempfile.close()
+
+os.system('pandoc -R -S --mathjax --from markdown --latex-engine=xelatex --to {0} -F {3}/core/dgs-filter.py --output="{2}" {1}'.format(args.format, tempfile.name, args.outfile.name, os.getcwd()))
+
+os.remove(tempfile.name)
+
+print("dgs-convert.py: success")
 
 '''
 if ! pandoc --version 2>/dev/null | grep -Eq 'pandoc 1\.(12\.[3-9]|1[3-9])'; then
