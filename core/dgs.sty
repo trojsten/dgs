@@ -37,12 +37,12 @@
     per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
     group-separator         = {\,},
     group-minimum-digits    = 3,
-    inter-unit-product      = {\kern 0.10em},               % veľmi tenká medzera medzi jednotkami
+    inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami
     exponent-product        = \cdot,                        % \times pre 5×10^7, \cdot pre 5.1O^7    
     number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
-    range-phrase            = {\ --\ },						% 5 -- 10 m/s
+    range-phrase            = {~--~},						% 5 -- 10 m/s
     list-units              = single,                       %
     list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
 ]{siunitx}
@@ -145,11 +145,6 @@
 \NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
 \makeatother
 
-% \uv{text}
-% Skratka pre slovenské úvodzovky
-%   - text, ktorý má byť v úvodzovkách (môže presahovať odsek)
-\NewDocumentCommand{\uv}{+m}{\quotedblbase#1\textquotedblleft}
-
 % \romanNumeral{number}
 % Rímske číslo
 %   - číslo
@@ -179,6 +174,10 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
+\NewDocumentCommand{\genderSwitch}{m m}{%
+    \ifstrequal{\recipientGender}{male}{#1}{#2}%
+}
+
 \NewDocumentCommand{\currentProblem}{}{%
 	\padzero{00}{\arabic{problem}}%
 }
@@ -186,19 +185,21 @@
 % \insertPicture{filename}{height}{caption}{label}
 % Vloží obrázok s určenou výškou
 %   - meno súboru, hľadá v aktuálnom priečinku
+%   - prípona súboru
+%   - prípona súboru pre HTML (ignoruje sa)
 %   - výška obrázka (napríklad v mm)
 %   - popis pod obrázkom
 %   - label pre odkázanie sa na obrázok
-\NewDocumentCommand{\insertPicture}{m m m m}{%
+\NewDocumentCommand{\insertPicture}{m m m m m m}{%
     \begin{figure}[H]%
         \centering%
-        \IfFileExists{\currentDir/\currentProblem/#1}{%
-			\includegraphics[keepaspectratio = true, height = #2]{\currentDir/\currentProblem/#1}%
+        \IfFileExists{\currentDir/\currentProblem/#1.#2}{%
+			\includegraphics[keepaspectratio = true, height = #4]{\currentDir/\currentProblem/#1}%
 		}{%
-			\includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+			\includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
 		}%
-        \ifstrempty{#3}{}{\caption{\textit{#3}}}%
-        \ifstrempty{#4}{}{\label{#4}}%
+        \ifstrempty{#5}{}{\caption{\textit{#5}}}%
+        \ifstrempty{#6}{}{\label{#6}}%
     \end{figure}%
 }
 

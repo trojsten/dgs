@@ -1,8 +1,8 @@
 all:				hello pdf html
 debug:				hello pdf html
 
-pdf:				collect tasks solutions
-html:				collect md-to-html svg-to-png
+pdf:			    tasks solutions
+html:				collect md-to-html svg-to-png gp-to-png copy-pdf-out copy-png-out copy-jpg-out
 tasks:				output/problems.pdf 
 solutions:			output/solutions.pdf	
 
@@ -19,25 +19,27 @@ svg-to-png:			$(patsubst %.svg, %.png, $(patsubst temp%, output%, $(svgs)))
 
 gps =				$(wildcard temp/**/*.gp)
 gp-to-pdf:			$(patsubst %.gp, %.pdf, $(patsubst temp%, input%, $(gps)))
-gp-to-png:			$(patsubst %.gp, %.png, $(patsubst temp%, input%, $(gps)))
+gp-to-png:			$(patsubst %.gp, %.png, $(patsubst temp%, output%, $(gps)))
 
 pdfs =				$(wildcard temp/**/*.pdf)
 copy-pdf:			$(patsubst temp%, input%, $(pdfs))
+copy-pdf-out:       $(patsubst temp%, output%, $(pdfs))
 
 pngs =				$(wildcard temp/**/*.png)
 copy-png:			$(patsubst temp%, input%, $(pngs))
+copy-png-out:       $(patsubst temp%, output%, $(pngs))
 
 jpgs =				$(wildcard temp/**/*.jpg)
 copy-jpg:			$(patsubst temp%, input%, $(jpgs))
+copy-jpg-out:       $(patsubst temp%, output%, $(jpgs))
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
 
 collect:
-	@echo -e '\e[32mCreating input folders (unless they are already present)\e[0m'
-	mkdir -p input/ input/01 input/02 input/03 input/04 input/05 input/06 input/07
-	mkdir -p output/ output/01 output/02 output/03 output/04 output/05 output/06 output/07
-
+	mkdir -p output/
+	mkdir -p input/
+    
 input/%.tex: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
 	./core/dgs-convert.py latex $< $@
@@ -80,7 +82,6 @@ output/%.png: temp/%.png
 output/%.jpg: temp/%.jpg
 	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
-
 
 output/%.html: temp/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
