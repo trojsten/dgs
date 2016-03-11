@@ -14,8 +14,6 @@ tempfile = open('.convert-temp', 'w')
 
 for line in args.infile:
     line = re.sub(r'^%(.*)$', '', line)
-    line = re.sub(r'(\s)"', '\g<1>„', line)
-    line = re.sub(r'"', '“', line)
     if args.format == 'latex':
         line = re.sub(r'^@H(.*)$', '', line)
         line = re.sub(r'^@L(.*)$', '\g<1>', line)
