@@ -25,7 +25,7 @@
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{6pt}
 \setlength{\abovedisplayskip}{0pt plus 2pt minus 2pt}
-\setlength{\belowdisplayskip}{0pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{-6pt plus 2pt minus 2pt}
 \setlength{\abovedisplayshortskip}{0pt plus 2pt minus 2pt}
 \setlength{\belowdisplayshortskip}{0pt plus 2pt minus 2pt}
 \setlength{\itemindent}{0pt}
@@ -54,7 +54,7 @@
 
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{main}{
-    \fancyhead[LO,RE]{\includegraphics[keepaspectratio = true, height = 4mm]{core/logo/\seminarID/mini.pdf}}
+    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/mini.pdf}}}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
@@ -89,11 +89,10 @@
         \begin{minipage}{0.7\textwidth}
             \centering
             \vspace{4pt}
-            {\LARGE \seminarFull}\\[4pt]
+            {\Large \seminarFull}\\[4pt]
             {\large \romanNumeral{\currentVolume}. ročník, \currentAcademicYear}\\[8pt]            
             {\footnotesize \seminarShort,\ \seminarDepartmentShort\ FMFI~UK,
 				Mlynská dolina, 842~48 Bratislava}\\[2pt]
-            %{web:\quad\texttt{\seminarURL} \hspace{40pt} e-mail:\quad\texttt{\seminarEmail}}\\[8pt]
             \vspace{6pt}
         \end{minipage}        
     }           
