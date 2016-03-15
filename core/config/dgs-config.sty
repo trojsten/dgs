@@ -23,6 +23,19 @@
         \otherwise\errorMessage{<currentPartGenitive misconfigured: currentPart is "\currentPart">}%
     \endswitch%
 }
+\NewDocumentCommand{\currentPartNominative}{}{%
+    \switch[\number\currentPart=]%
+        \case{1}zimná%
+        \case{2}letná/
+        \otherwise\errorMessage{<currentPartNominative misconfigured: currentPart is "\currentPart">}%
+    \endswitch
+}
+\NewDocumentCommand{\participantTypeAccusative}{}{%
+    \switch[\participantProper=]%
+        \case{True}účastník
+        \case{False}náhradník
+    \endswitch
+}
 
 \NewDocumentCommand{\problemName}{}{<undefined>}
 \NewDocumentCommand{\problemPointsDescription}{}{<undefined>}

@@ -21,7 +21,7 @@ for line in args.infile:
     if args.format == 'html':
         line = re.sub(r'^@L(.*)$', '', line)
         line = re.sub(r'^@H(.*)$', '\g<1>', line) 
-        line = re.sub(r'^@P{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}', '<img src="\g<1>.\g<3>" width="500px" alt="\g<5>" /><span>\g<5></span>', line)
+        line = re.sub(r'^@P{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}', '<figure><img src="\g<1>.\g<3>" width="500px" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
     tempfile.write(line)
 
 tempfile.close()
