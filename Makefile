@@ -79,6 +79,10 @@ output/%.png: temp/%.png
 	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
 
+output/%.png: temp/%.gp
+	@echo -e '\e[32mConverting gnuplot file \e[96mô<\e[32m to PNG:\e[0m'
+	cd $(<D) ; gnuplot -e "set terminal png transparent truecolor font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
+
 output/%.jpg: temp/%.jpg
 	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
 	cp $< $@
