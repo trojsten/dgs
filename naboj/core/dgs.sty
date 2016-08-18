@@ -187,8 +187,8 @@
 \NewDocumentCommand{\insertPicture}{m m}{%
     \begin{figure}[H]%
         \centering%
-        \IfFileExists{\currentDir/problems/\currentLanguage/\currentProblemName/#1}{%
-            \includegraphics[keepaspectratio = true, height = #2]{\currentDir/problems/\currentLanguage/\currentProblemName/#1}%
+        \IfFileExists{\currentDir/\currentProblemName/#1}{%
+            \includegraphics[keepaspectratio = true, height = #2]{\currentDir/\currentProblemName/#1}%
         }{%
             \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
         }%
@@ -214,7 +214,7 @@
 \NewDocumentCommand{\addProblem}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
     \createProblemHeader{#1}%
-	\protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/problem.tex}%
+	\protectedInput{\currentDir/\currentProblemName/problem.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
@@ -224,7 +224,7 @@
 \NewDocumentCommand{\addSolution}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
     \createProblemHeader{#1}%
-	\protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/solution.tex}%
+	\protectedInput{\currentDir/\currentProblemName/solution.tex}%
 }
 
 \NewDocumentCommand{\addAnswers}{}{%
@@ -234,7 +234,7 @@
 \NewDocumentCommand{\addAnswer}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2} 
     \createProblemHeader{#1}%
-    \protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/answer.tex}%
+    \protectedInput{\currentDir/\currentProblemName/answer.tex}%
 }
 
 \endinput                                                           % everything below is safely ignored

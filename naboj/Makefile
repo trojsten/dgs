@@ -3,22 +3,22 @@ all:                hello output/booklet.pdf output/answers.pdf
 version =           '0.0.1'
 date =              '2016-08-15'
 
-texs =				$(wildcard temp/*/*/*/*.tex)
+texs =				$(wildcard temp/**/*.tex)
 tex-to-tex:			$(patsubst temp%, input%, $(texs))
 
-svgs =              $(wildcard temp/*/*/*/*.svg)
+svgs =              $(wildcard temp/**/*.svg)
 svg-to-pdf:         $(patsubst %.svg, %.pdf, $(patsubst temp%, input%, $(svgs)))
 svg-to-png:         $(patsubst %.svg, %.png, $(patsubst temp%, output%, $(svgs)))
 
-pdfs =              $(wildcard temp/*/*/*/*.pdf)
+pdfs =              $(wildcard temp/**/*.pdf)
 copy-pdf:           $(patsubst temp%, input%, $(pdfs))
 copy-pdf-out:       $(patsubst temp%, output%, $(pdfs))
 
-pngs =              $(wildcard temp/*/*/*/*.png)
+pngs =              $(wildcard temp/**/*.png)
 copy-png:           $(patsubst temp%, input%, $(pngs))
 copy-png-out:       $(patsubst temp%, output%, $(pngs))
 
-jpgs =              $(wildcard temp/*/*/*/*.jpg)
+jpgs =              $(wildcard temp/**/*.jpg)
 copy-jpg:           $(patsubst temp%, input%, $(jpgs))
 copy-jpg-out:       $(patsubst temp%, output%, $(jpgs))
 

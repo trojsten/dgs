@@ -33,8 +33,8 @@ def clean():
 
 def copyBack():
     print("\033[32mCopying output back to the repository\033[0m")
-    shutil.rmtree('{0}/output/'.format(root), True)
-    shutil.copytree('output/', '{0}/output/'.format(root), ignore = shutil.ignore_patterns('*.aux', '*.log', '*.out'))
+    shutil.rmtree('source/{0}/output/'.format(args.volume), True)
+    shutil.copytree('output/', 'source/{0}/output/'.format(args.volume), ignore = shutil.ignore_patterns('*.aux', '*.log', '*.out'))
 
 def abort(message):
     print("\033[31m{0}\033[0m".format(message))
@@ -46,7 +46,7 @@ def bye():
 
 def processJSON():
     try:
-        configFile = '{0}/problems/settings.json'.format(root)
+        configFile = 'source/{0}/problems/settings.json'.format(args.volume)
         settings = json.load(open(configFile, 'r+'))
     except FileNotFoundError as e:
         abort("Series configuration file \033[96m{0}\033[31m could not be found".format(configFile))
@@ -87,7 +87,7 @@ parser.add_argument('language', choices = ['english', 'slovak', 'czech', 'hungar
 parser.add_argument('-c', '--clean', action = 'store_true', help = 'call \'make distclean\' first')
 parser.add_argument('-y', '--copy', action = 'store_true', help = 'copy output back to the repository')
 args = parser.parse_args()
-root = 'source/{0}'.format(args.volume)
+root = 'source/{0}/problems/{1}'.format(args.volume, args.language)
 
 if args.clean:
     clean()
