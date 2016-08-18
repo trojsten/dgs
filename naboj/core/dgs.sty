@@ -1,0 +1,241 @@
+\NeedsTeXFormat{LaTeX2e}[2011/01/01]
+\ProvidesPackage{dgs}[2016/01/16 Trojsten Document Generation System -- DeGeŠ]
+
+% Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
+% spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
+
+% Prosíme o dodržiavanie nasledovných zásad.
+
+% SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
+% Ak ti stačí jednotka bez čísla, tak \si{jednotka}.
+% Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
+% Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
+%	stará o slovenskú desatinnú čiarku miesto bodky.
+% 
+
+
+% NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD BUDE POUŽÍVAŤ AJ NIEKTO INÝ.
+% Aj keď je TeX miestami nechutný, zatiaľ sa všetko podarilo spraviť +- čisto.
+
+\RequirePackage[
+    paper                   = a4paper,
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 16pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % započítať header a footer do rozmerov strany
+    %showframe                                              % zobraziť frame
+]{geometry}
+
+\RequirePackage[
+    separate-uncertainty,                                   % 7.2 ± 0.5
+    detect-all,                                             % chceme zachovávať formátovanie prostredia
+    multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
+    per-mode                = symbol,                       % symbol pre "m/s", reciprocal pre "ms^{-1}"
+    group-separator         = {\,},
+    group-minimum-digits    = 3,
+    inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami
+    exponent-product        = \cdot,                        % \times pre 5×10^7, \cdot pre 5.1O^7    
+    number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
+    output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
+    range-units             = single,
+    range-phrase            = {~--~},						% 5 -- 10 m/s
+    list-units              = single,                       %
+    list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
+    group-minimum-digits    = 5,
+]{siunitx}
+
+\RequirePackage{
+    amsmath,
+    amssymb,
+	xparse,
+    enumitem,
+    graphicx,
+    listings,
+    lastpage,
+	marvosym,
+    calc,
+    pdftexcmds,
+    xifthen,
+    verbatim,
+    color,
+    float,
+    caption,
+    booktabs,
+    titlesec,
+    afterpage,
+    pgffor,
+    longtable,
+	csvsimple,
+	animate,
+	skull,
+	hyphenat,
+    fancyvrb                                                % fancy verbatim (currently unused)
+}
+
+\captionsetup[figure]{
+	format					= hang,
+	width					= 0.9\textwidth,
+}
+
+\definecolor{colour-url}{RGB}{0, 137, 162}
+\definecolor{colour-link}{RGB}{0, 137, 162}
+
+\RequirePackage[
+	colorlinks				= true,
+	linkcolor				= colour-link,
+	urlcolor				= colour-url,
+]{hyperref}
+
+\RequirePackage{fancyhdr}                                   % fancy header
+
+\RequirePackage[all]{nowidow}
+
+% Setup XeLaTeX-specific options
+
+\RequirePackage{mathspec}                                   % includes fontspec
+\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage{xunicode}
+\setdefaultlanguage{slovak}
+
+% Setup fonts -- see fontspec/mathspec documentation.
+% Fonty sa načítavajú zo súborov .ttf a .otf (v žiadnom prípade nepoužívame systémové fonty)
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Scale           = MatchLowercase,
+    Ligatures       = TeX
+}
+\setallmainfonts[
+    Path            = core/fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{minionpro}
+\setmonofont[
+	Path			= core/fonts/ ,
+	Extension		= .ttf ,
+	UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{ubuntumono}
+\setsansfont[
+    Path            = core/fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{verdana}
+
+\RequirePackage{boolexpr}                                   % boolean expressions, switch
+\RequirePackage{core/dgs-utils}
+
+\makeatletter
+\NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
+\makeatother
+
+% \romanNumeral{number}
+% Rímske číslo
+%   - číslo
+\NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
+\NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
+
+\NewDocumentCommand{\loadLanguage}{m}{%
+    \input{core/templates/i18n/defaults.tex}%
+    \IfFileExists{core/templates/i18n/#1.tex}{%
+        \input{core/templates/i18n/#1.tex}%
+        \RenewDocumentCommand{\currentLanguage}{}{#1}
+    }{%
+        \PackageError{dgs-naboj}{Cannot load language #1}{File core/templates/i18n/#1.tex does not exist}%
+    }
+}
+
+\NewDocumentCommand{\loadDocumentSettings}{}{
+	\IfFileExists{input/settings.tex}{
+        \input{input/settings.tex}                   
+    }{
+        \PackageError{dgs}{Cannot load document settings}{File "input/settings.tex" does not exist}
+    }
+
+}
+
+% Internal commands
+\NewDocumentCommand{\loadSeminar}{m}{
+    \IfFileExists{core/config/dgs-config-#1.sty}{
+        \RequirePackage{core/config/dgs-config-#1}                   
+    }{
+        \PackageError{dgs}{Cannot load seminar #1}{File "dgs-config-#1.sty" does not exist}
+    }
+}
+
+% \Repeat
+\ExplSyntaxOn
+\cs_new_eq:NN \Repeat \prg_replicate:nn
+\ExplSyntaxOff
+
+\NewDocumentCommand{\genderSwitch}{m m}{%
+    \ifstrequal{\recipientGender}{male}{#1}{#2}%
+}
+
+\NewDocumentCommand{\insertPicture}{m m}{%
+    \begin{figure}[H]%
+        \centering%
+        \IfFileExists{\currentDir/problems/\currentLanguage/\currentProblemName/#1}{%
+            \includegraphics[keepaspectratio = true, height = #2]{\currentDir/problems/\currentLanguage/\currentProblemName/#1}%
+        }{%
+            \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+        }%
+    \end{figure}%
+}
+
+\NewDocumentCommand{\createProblemHeader}{m}{
+    \subsection{#1}
+}
+
+\NewDocumentCommand{\protectedInput}{m}{
+	\IfFileExists{#1}{%
+        \input{#1}%
+    }{%
+        \errorMessage{<MISSING FILE \texttt{#1}!>}\\%
+    }	
+}
+
+\NewDocumentCommand{\addProblems}{}{%   
+	\input{\currentDir/recipe-booklet-problems.tex}%
+}
+
+\NewDocumentCommand{\addProblem}{m m}{%
+    \RenewDocumentCommand{\currentProblemName}{}{#2}%
+    \createProblemHeader{#1}%
+	\protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/problem.tex}%
+}
+
+\NewDocumentCommand{\addSolutions}{}{%
+    \input{\currentDir/recipe-booklet-solutions.tex}%
+}
+
+\NewDocumentCommand{\addSolution}{m m}{%
+    \RenewDocumentCommand{\currentProblemName}{}{#2}%
+    \createProblemHeader{#1}%
+	\protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/solution.tex}%
+}
+
+\NewDocumentCommand{\addAnswers}{}{%
+    \input{\currentDir/recipe-answers.tex}%
+}
+
+\NewDocumentCommand{\addAnswer}{m m}{%
+    \RenewDocumentCommand{\currentProblemName}{}{#2} 
+    \createProblemHeader{#1}%
+    \protectedInput{\currentDir/problems/\currentLanguage/\currentProblemName/answer.tex}%
+}
+
+\endinput                                                           % everything below is safely ignored
+
+

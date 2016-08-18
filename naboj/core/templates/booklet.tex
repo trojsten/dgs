@@ -1,0 +1,26 @@
+\documentclass[12pt, twoside]{article}
+
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
+
+\loadDocumentSettings
+\usepackage{core/dgs-custom}
+
+\newcounter{problem}
+
+\begin{document}            
+    \loadRegularStyle
+%    \thispagestyle{first}
+%    \vspace*{2em}
+   
+    \section{\texorpdfstring{\sectionProblems}{}}
+     
+    \pagestyle{problems}    
+    \loadProblemsStyle
+    \addProblems
+
+    \newpage
+    \section{\texorpdfstring{\sectionSolutions}{}}                 
+
+    \addSolutions
+\end{document}
