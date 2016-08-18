@@ -51,11 +51,13 @@
 \renewcommand{\textfloatsep}{3mm}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
+\numberwithin{equation}{subsection}
+\renewcommand{\theequation}{\arabic{equation}}
 
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{main}{
     \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/mini.pdf}}}
-    \fancyhead[C]{\textit{\currentVolume. Fyzikálny Náboj}}
+    \fancyhead[C]{\textit{\currentVolume. Fyzikálny Náboj, \currentYear}}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
@@ -63,17 +65,14 @@
 
 \fancypagestyle{problems}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Zadania}}
+    \RenewDocumentCommand{\sectionmark}{m}{\markright{##1}}
+    \RenewDocumentCommand{\subsectionmark}{m}{}
+    \fancyhead[LE,RO]{\textit{\rightmark}}
 }
 
-\fancypagestyle{solutions}{%
-    \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Vzorové riešenia}}
-}
-
-\fancypagestyle{rules}{%
+\fancypagestyle{answers}{%
 	\pagestyle{main}
-	\fancyhead[LE,RO]{\textit{Pravidlá}}
+	\fancyhead[LE,RO]{\textit{\thesection}}
 }
     
 \fancypagestyle{first}{%
