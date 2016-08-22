@@ -2,10 +2,10 @@
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
 \NewDocumentCommand{\loadRegularStyle}{}{	
 	\pagestyle{problems}
-	\titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\section}[hang]{\vspace*{-5mm}\centering\huge}{}{0pt}{}
 	\titleformat{\subsection}[runin]{\bfseries\large}{}{0pt}{}[]
 	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-	\titlespacing*{\section}{40pt}{24pt}{12pt}
+    \titlespacing*{\section}{0pt}{0pt}{12pt}
 	\titlespacing*{\subsection}{0pt}{8pt}{10pt}
 	\titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
 }

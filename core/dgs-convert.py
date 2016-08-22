@@ -29,7 +29,7 @@ for line in args.infile:
 
 tempfile.close()
 
-os.system('pandoc -R -S --mathjax --from markdown --latex-engine=xelatex --to {0} -F {3}/core/dgs-filter.py --output="{2}" {1}'.format(args.format, tempfile.name, args.outfile.name, os.getcwd()))
+os.system('pandoc -R -S --no-tex-ligatures --mathjax --from markdown --latex-engine=xelatex --to {0} -F {3}/core/dgs-filter.py --output="{2}" {1}'.format(args.format, tempfile.name, args.outfile.name, os.getcwd()))
 
 os.remove(tempfile.name)
 
