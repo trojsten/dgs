@@ -32,7 +32,7 @@ collect:
 input/%.tex: temp/%.tex
 	@echo -e '\e[32mCopying TeX file \e[96m$<\e[0m'
 	mkdir -p $(dir $@)
-	./core/dgs-convert.py $< $@
+	./core/dgs-convert.py ${language} $< $@
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 input/%.pdf: temp/%.svg
