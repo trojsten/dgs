@@ -95,7 +95,7 @@ if args.clean:
 init()
 processJSON()
 
-if os.system('make') != 0:
+if os.system('make language={}'.format(args.language)) != 0:
     abort("make failed")
     exit(1)
 else:

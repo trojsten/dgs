@@ -1,0 +1,16 @@
+\documentclass[12pt, twoside]{article}
+
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
+
+\loadDocumentSettings
+\usepackage{core/dgs-custom}
+
+\RenewDocumentCommand{\currentDir}{}{input}
+ 
+\begin{document}            
+    \loadRegularStyle
+    \protectedInput{core/templates/\seminarID/intro.tex}
+    \newpage
+    \protectedInput{core/templates/\seminarID/rules.tex}
+\end{document}
