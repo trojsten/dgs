@@ -10,7 +10,10 @@
  
 \begin{document}            
     \loadRegularStyle
-    \protectedInput{core/templates/\seminarID/intro.tex}
+    \thispagestyle{first}
+    \pagestyle{rules}
+    \vspace*{2em}
+    \protectedInput{core/templates/\seminarID/intro.tex}%
     \newpage
-    \protectedInput{core/templates/\seminarID/rules.tex}
+    \protectedInput{core/templates/\seminarID/rules.tex}%
 \end{document}

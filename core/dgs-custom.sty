@@ -1,13 +1,17 @@
 % package titlesec -- formatting of section headers
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
 \NewDocumentCommand{\loadRegularStyle}{}{	
-	\pagestyle{problems}
+	\pagestyle{main}
 	\titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
 	\titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
 	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
 	\titlespacing{\section}{0pt}{8pt}{8pt}
 	\titlespacing{\subsection}{0pt}{8pt}{0pt}
 	\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+}
+
+\NewDocumentCommand{\loadRulesStyle}{}{
+    \loadRegularStyle
 }
 
 \NewDocumentCommand{\loadProblemsStyle}{}{
@@ -55,6 +59,7 @@
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{main}{
     \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/logo.pdf}}}
+    \fancyhead[LE,RO]{(main style)}
     \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage~z~\pageref*{LastPage}}
     \fancyfoot[LE,RO]{\href{\seminarURL}{\texttt{\seminarURL}}}
