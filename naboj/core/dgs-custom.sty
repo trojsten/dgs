@@ -10,14 +10,9 @@
 	\titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
 }
 
-\NewDocumentCommand{\loadProblemsStyle}{}{
-	\pagestyle{problems}
+\NewDocumentCommand{\loadBookletStyle}{}{
+    \loadRegularStyle
     \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\framebox[7mm]}[]
-}
-
-\NewDocumentCommand{\loadSolutionsStyle}{}{
-	\pagestyle{solutions}
-	\titleformat{\subsection}[runin]{\large}{\bfseries}{2pt}{}[]
 }
 
 % paragraph settings -- formatting paragraphs and list environments
