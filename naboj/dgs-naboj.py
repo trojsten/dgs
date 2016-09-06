@@ -11,7 +11,7 @@ def readableDir(prospectiveDir):
         raise Exception("readableDir: {0} is not a readable dir".format(prospectiveDir))
 
 def init():
-    print("\033[32mThis is DeGeŠ for Náboj, version \033[95m0.01\033[32m [\033[95m2016-08-15\033[32m]\033[0m")
+    print("\033[32mThis is DeGeŠ for Náboj, version \033[95m0.27\033[32m [\033[95m2016-09-06\033[32m]\033[0m")
     print("\033[32mInitializing\033[0m")
 
     try:
