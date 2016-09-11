@@ -38,7 +38,7 @@ hello:
     
 input/%.tex: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
-	./core/dgs-convert.py latex $< $@
+	@(./core/dgs-convert.py latex $< $@) || exit 1;
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 input/%.tex: source/%.tex
@@ -85,7 +85,7 @@ output/%.jpg: source/%.jpg
 
 output/%.html: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
-	./core/dgs-convert.py html $< $@
+	@(./core/dgs-convert.py html $< $@) || exit 1;
 
 output/%.pdf: svg-to-pdf gp-to-pdf copy-png copy-jpg md-to-tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -120,4 +120,4 @@ distclean: clean
 	@echo -e '\e[32mDist clean:\e[0m'
 	rm -rf output/
 
-.PHONY: clean distclean
+.PHONY: clean distclean hello
