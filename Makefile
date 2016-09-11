@@ -2,7 +2,6 @@ all:				hello pdf html
 debug:				hello pdf html
 
 pdf:				problems solutions
-html:				$(md-to-html) $(svg-to-png) $(gp-to-png) $(copy-pdf-out) $(copy-png-out) $(copy-jpg-out)
 problems:			output/problems.pdf 
 solutions:			output/solutions.pdf	
 
@@ -32,6 +31,8 @@ copy-png-out =		$(patsubst source%, output%, $(pngs))
 jpgs =				$(wildcard source/**/*.jpg)
 copy-jpg =			$(patsubst source%, input%, $(jpgs))
 copy-jpg-out =		$(patsubst source%, output%, $(jpgs))
+
+html:				$(md-to-html) $(svg-to-png) $(gp-to-png) $(copy-pdf-out) $(copy-png-out) $(copy-jpg-out)
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
