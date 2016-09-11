@@ -16,12 +16,12 @@
 
 \NewDocumentCommand{\loadProblemsStyle}{}{
 	\pagestyle{problems}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{problem}}{2pt}{}[]
+	\titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
 }
 
 \NewDocumentCommand{\loadSolutionsStyle}{}{
 	\pagestyle{solutions}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentSeries.\arabic{problem}}{2pt}{}[]
+	\titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
 }
 
 % paragraph settings -- formatting paragraphs and list environments
@@ -67,12 +67,12 @@
 
 \fancypagestyle{problems}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Zadania \currentSeries. série \currentPartGenitive\ časti -- \currentDeadline}}
+    \fancyhead[LE,RO]{\textit{Zadania \currentRound. kola \currentPartGenitive\ časti -- \currentDeadline}}
 }
 
 \fancypagestyle{solutions}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Riešenia \currentSeries. série \currentPartGenitive\ časti}}
+    \fancyhead[LE,RO]{\textit{Riešenia \currentRound. kola \currentPartGenitive\ časti}}
 }
 
 \fancypagestyle{rules}{%

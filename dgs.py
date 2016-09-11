@@ -11,30 +11,35 @@ def readableDir(prospectiveDir):
         raise Exception("readableDir: {0} is not a readable dir".format(prospectiveDir))
 
 def init():
-    print("\033[32mThis is DeGeŠ, version \033[95m0.41\033[32m [\033[95m2016-02-16\033[32m]\033[0m")
+    print("\033[32mThis is DeGeŠ, version \033[95m1.00\033[32m [\033[95m2016-09-08\033[32m]\033[0m")
     print("\033[32mInitializing\033[0m")
 
     try:
-        shutil.rmtree('temp/', True)
-        shutil.copytree('{0}/source/'.format(root), 'temp/')
+        os.makedirs('{root}/input'.format(root = root))
+        os.makedirs('{root}/output'.format(root = root))
+    except os.error as e:
+        print("Directories already present")
 
-        if not os.path.exists('input'):
-            os.makedirs('input')
+    try:
+        os.symlink('{here}/core/'.format(here = os.path.dirname(os.path.realpath(__file__))), '{root}/core'.format(root = root))
+    except FileExistsError as e:
+        print("Core already linked")
 
-        if not os.path.exists('output'):
-            os.makedirs('output')
+    try:
+        os.symlink('{here}/Makefile'.format(here = os.path.dirname(os.path.realpath(__file__))), '{root}/Makefile'.format(root = root))
+    except FileExistsError as e:
+        print("Makefile already linked")
 
-    except FileNotFoundError as e:
-        abort("File not found: \033[94m{0}\033[0m".format(e))
+    print("\033[32mDirectories have been created\033[0m")
 
 def clean():
     print("\033[32mCleaning up\033[0m")
-    os.system('make distclean')
 
-def copyBack():
-    print("\033[32mCopying output back to the repository\033[0m")
-    shutil.rmtree('{0}/output/'.format(root), True)
-    shutil.copytree('output/', '{0}/output/'.format(root), ignore = shutil.ignore_patterns('*.aux', '*.log', '*.out'))
+    shutil.rmtree('{root}/input/'.format(root = root), True)
+    shutil.rmtree('{root}/output/'.format(root = root), True)
+
+    os.unlink('{root}/Makefile'.format(root = root))
+    os.unlink('{root}/core'.format(root = root))
 
 def abort(message):
     print("\033[31m{0}\033[0m".format(message))
@@ -46,7 +51,7 @@ def bye():
 
 def processJson():
     try:
-        configFile = '{0}/source/settings.json'.format(root)
+        configFile = '{root}/source/settings.json'.format(root = root)
         settings = json.load(open(configFile, 'r+'))
     except FileNotFoundError as e:
         abort("Series configuration file \033[96m{0}\033[31m could not be found".format(configFile))
@@ -54,25 +59,25 @@ def processJson():
     
     for number, problem in enumerate(settings['problems']):
        for inout in ['in', 'out']:
-            directory = '{0}put/{1:02d}'.format(inout, number + 1)
+            directory = '{root}/{prefix}put/{problem:02d}'.format(root = root, prefix = inout, problem = number + 1)
             if not os.path.exists(directory):
                os.makedirs(directory)
 
     try:
-        with open('input/settings.tex', 'w+') as output:
+        with open('{root}/input/settings.tex'.format(root = root), 'w+') as output:
             output.write('\\loadSeminar{{{0}}}\n'.format(settings['seminar']))
             output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(settings['volume']))
             output.write('\\RenewDocumentCommand{{\\currentPart}}{{}}{{{0}}}\n'.format(settings['part']))
-            output.write('\\RenewDocumentCommand{{\\currentSeries}}{{}}{{{0}}}\n'.format(settings['series']))
+            output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(settings['round']))
             output.write('\\RenewDocumentCommand{{\\currentDeadline}}{{}}{{{0}}}\n'.format(
                 (datetime.datetime.strptime(settings['deadline'], '%Y-%m-%d').strftime('%d. %m. %Y'))
             ))
 
-        with open('input/recipe-problems.tex', 'w+') as output:
+        with open('{root}/input/recipe-problems.tex'.format(root = root), 'w+') as output:
             for problem in settings['problems']:
                 output.write("\\addProblem{{{0}}}{{{1}}}{{{2}}}\n".format(problem['name'], problem['pointsDescription'], problem['pointsCode']))
 
-        with open('input/recipe-solutions.tex', 'w+') as output:
+        with open('{root}/input/recipe-solutions.tex'.format(root = root), 'w+') as output:
             for problem in settings['problems']:
                 output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['name'], problem['solutionBy'], problem['evaluationBy'], problem['genderSuffix']))
     except FileNotFoundError as e:
@@ -81,30 +86,32 @@ def processJson():
 
 
 parser = argparse.ArgumentParser(
-    description             = "Prepare and compile a DeGeŠ series from repository",
+    description             = "Prepare and compile a DeGeŠ round from repository",
 )
 parser.add_argument('seminar', choices = ['fks', 'kms', 'ksp', 'ufo', 'prask', 'fx'])
 parser.add_argument('volume', type = int)
-parser.add_argument('part', choices = ['autumn', 'spring'])
-parser.add_argument('series', type = int, choices = [1, 2, 3]) 
-parser.add_argument('-c', '--clean', action = 'store_true', help = 'call \'make distclean\' first')
-parser.add_argument('-y', '--copy', action = 'store_true', help = 'copy output back to the repository')
+parser.add_argument('part', type = int, choices = [1, 2])
+parser.add_argument('round', type = int, choices = [1, 2, 3]) 
+parser.add_argument('-c', '--clean', action = 'store_true', help = 'Recreate all temporary input files first')
+parser.add_argument('-p', '--purge', action = 'store_true', help = 'Purge all temporary files')
+
 args = parser.parse_args()
-root = 'source/{0}/{1:02d}/{2}/{3}'.format(args.seminar, args.volume, args.part, args.series)
+root = 'source/{0}/{1:02d}/{2}/{3}'.format(args.seminar, args.volume, args.part, args.round)
 
 if args.clean:
     clean()
 
+if args.purge:
+    clean()
+    exit(0)
+
 init()
 processJson()
 
-if os.system('make') != 0:
+if os.system('make -C {root}'.format(root = root)) != 0:
     abort("make failed")
     exit(1)
 else:
     print("\033[32mmake returned 0\033[0m") 
-
-if args.copy:
-    copyBack()
 
 bye()
