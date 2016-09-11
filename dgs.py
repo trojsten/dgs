@@ -1,6 +1,12 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3
 
-import os, re, datetime, argparse, shutil, json
+import os, re, datetime, argparse, shutil, json, colorama
+from colorama import Fore as cf
+
+colorama.init()
+
+VERSION = "1.00"
+DATE = "2016-09-11"
 
 def readableDir(prospectiveDir):
     if not os.path.isdir(prospectiveDir):
@@ -11,39 +17,42 @@ def readableDir(prospectiveDir):
         raise Exception("readableDir: {0} is not a readable dir".format(prospectiveDir))
 
 def init():
-    print("\033[32mThis is DeGeŠ, version \033[95m1.00\033[32m [\033[95m2016-09-08\033[32m]\033[0m")
-    print("\033[32mInitializing\033[0m")
+    print(cf.BLUE + "This is DeGeŠ, version " + cf.MAGENTA + VERSION + cf.BLUE + " [" + cf.MAGENTA + DATE + cf.BLUE + "]")
+    print(cf.BLUE + "Initializing")
 
     try:
         os.makedirs('{root}/input'.format(root = root))
         os.makedirs('{root}/output'.format(root = root))
     except os.error as e:
-        print("Directories already present")
+        print(cf.YELLOW + "Directories already present")
 
     try:
         os.symlink('{here}/core/'.format(here = os.path.dirname(os.path.realpath(__file__))), '{root}/core'.format(root = root))
     except FileExistsError as e:
-        print("Core already linked")
+        print(cf.YELLOW + "Core already linked")
 
     try:
         os.symlink('{here}/Makefile'.format(here = os.path.dirname(os.path.realpath(__file__))), '{root}/Makefile'.format(root = root))
     except FileExistsError as e:
-        print("Makefile already linked")
+        print(cf.YELLOW + "Makefile already linked")
 
-    print("\033[32mDirectories have been created\033[0m")
+    print(cf.GREEN + "Directories have been created")
 
 def clean():
-    print("\033[32mCleaning up\033[0m")
+    print(cf.MAGENTA + "Cleaning up")
 
     shutil.rmtree('{root}/input/'.format(root = root), True)
     shutil.rmtree('{root}/output/'.format(root = root), True)
 
-    os.unlink('{root}/Makefile'.format(root = root))
-    os.unlink('{root}/core'.format(root = root))
+    try:
+        os.unlink('{root}/Makefile'.format(root = root))
+        os.unlink('{root}/core'.format(root = root))
+    except FileNotFoundError as e:
+        pass
 
 def abort(message):
-    print("\033[31m{0}\033[0m".format(message))
-    print("\033[31mAborting operation\033[0m")
+    print(cf.RED + message)
+    print(cf.RED + "Aborting operation")
     exit(1)
 
 def bye():
@@ -54,7 +63,7 @@ def processJson():
         configFile = '{root}/source/settings.json'.format(root = root)
         settings = json.load(open(configFile, 'r+'))
     except FileNotFoundError as e:
-        abort("Series configuration file \033[96m{0}\033[31m could not be found".format(configFile))
+        abort("Series configuration file " + cf.CYAN + configFile + cf.RED + " could not be found")
 
     
     for number, problem in enumerate(settings['problems']):
@@ -81,7 +90,7 @@ def processJson():
             for problem in settings['problems']:
                 output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['name'], problem['solutionBy'], problem['evaluationBy'], problem['genderSuffix']))
     except FileNotFoundError as e:
-        abort("Could not write to file: \033[94m{0}\033[0m".format(e))
+        abort("Could not write to file: " + cf.CYAN + e)
 
 
 
@@ -112,6 +121,6 @@ if os.system('make -C {root}'.format(root = root)) != 0:
     abort("make failed")
     exit(1)
 else:
-    print("\033[32mmake returned 0\033[0m") 
+    print(colorama.Fore.GREEN + "make returned 0") 
 
 bye()
