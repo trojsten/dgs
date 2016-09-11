@@ -1,37 +1,37 @@
 all:				hello pdf html
 debug:				hello pdf html
 
-pdf:				tasks solutions
-html:				md-to-html svg-to-png gp-to-png copy-pdf-out copy-png-out copy-jpg-out
-tasks:				output/problems.pdf 
+pdf:				problems solutions
+html:				$(md-to-html) $(svg-to-png) $(gp-to-png) $(copy-pdf-out) $(copy-png-out) $(copy-jpg-out)
+problems:			output/problems.pdf 
 solutions:			output/solutions.pdf	
 
 version	=			'1.00'
 date =				'2016-09-08'
 
 mds =				$(wildcard source/**/*.md)
-md-to-tex:			$(patsubst %.md, %.tex, $(patsubst source%, input%, $(mds)))
-md-to-html:			$(patsubst %.md, %.html, $(patsubst source%, output%, $(mds)))
+md-to-tex =			$(patsubst %.md, %.tex, $(patsubst source%, input%, $(mds)))
+md-to-html = 		$(patsubst %.md, %.html, $(patsubst source%, output%, $(mds)))
 
 svgs =				$(wildcard source/**/*.svg)
-svg-to-pdf:			$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
-svg-to-png:			$(patsubst %.svg, %.png, $(patsubst source%, output%, $(svgs)))
+svg-to-pdf =		$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
+svg-to-png =		$(patsubst %.svg, %.png, $(patsubst source%, output%, $(svgs)))
 
 gps =				$(wildcard source/**/*.gp)
-gp-to-pdf:			$(patsubst %.gp, %.pdf, $(patsubst source%, input%, $(gps)))
-gp-to-png:			$(patsubst %.gp, %.png, $(patsubst source%, output%, $(gps)))
+gp-to-pdf =			$(patsubst %.gp, %.pdf, $(patsubst source%, input%, $(gps)))
+gp-to-png =			$(patsubst %.gp, %.png, $(patsubst source%, output%, $(gps)))
 
 pdfs =				$(wildcard source/**/*.pdf)
-copy-pdf:			$(patsubst source%, input%, $(pdfs))
-copy-pdf-out:		$(patsubst source%, output%, $(pdfs))
+copy-pdf =			$(patsubst source%, input%, $(pdfs))
+copy-pdf-out =		$(patsubst source%, output%, $(pdfs))
 
 pngs =				$(wildcard source/**/*.png)
-copy-png:			$(patsubst source%, input%, $(pngs))
-copy-png-out:		$(patsubst source%, output%, $(pngs))
+copy-png =			$(patsubst source%, input%, $(pngs))
+copy-png-out =		$(patsubst source%, output%, $(pngs))
 
 jpgs =				$(wildcard source/**/*.jpg)
-copy-jpg:			$(patsubst source%, input%, $(jpgs))
-copy-jpg-out:		$(patsubst source%, output%, $(jpgs))
+copy-jpg =			$(patsubst source%, input%, $(jpgs))
+copy-jpg-out =		$(patsubst source%, output%, $(jpgs))
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
@@ -87,15 +87,14 @@ output/%.html: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
 	@(./core/dgs-convert.py html $< $@) || exit 1;
 
-output/%.pdf: svg-to-pdf gp-to-pdf copy-png copy-jpg md-to-tex
+output/%.pdf: $(svg-to-pdf) $(gp-to-pdf) $(copy-png) $(copy-jpg) $(md-to-tex)
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
 
-
-#output/tasks/%.pdf: input/tasks/%.tex svg-to-pdf
-#	@echo -e '\e[32mRendering single task $@\e[0m'
+#output/problems/%.pdf: input/problems/%.tex svg-to-pdf
+#	@echo -e '\e[32mRendering single problem $@\e[0m'
 #	cp singletask.tex source/singletask.tex
 #	sed -i 's#@filename@#$<#g' source/singletask.tex
 #	TASK=`echo '$(notdir $@)' | tr -cd 0-9` ; sed -i "s#@tasknumber@#$$TASK#g" source/singletask.tex
@@ -105,8 +104,8 @@ output/%.pdf: svg-to-pdf gp-to-pdf copy-png copy-jpg md-to-tex
 #	mv $@-crop $@
 #	rm source/singletask.tex
 
-view-tasks: tasks
-	evince output/tasks.pdf 2>/dev/null 1>/dev/null &
+view-problems: problems
+	evince output/problems.pdf 2>/dev/null 1>/dev/null &
 
 view-solutions: solutions
 	evince output/solutions.pdf 2>/dev/null 1>/dev/null &
