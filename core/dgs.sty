@@ -262,12 +262,12 @@
     }
 }
 
-\NewDocumentCommand{\protectedInput}{m}{
+\NewDocumentCommand{\protectedInput}{m}{%
 	\IfFileExists{#1}{%
         \input{#1}%
     }{%
         \errorMessage{<MISSING FILE \texttt{#1}!>}\\%
-    }	
+    }%
 }
 
 \NewDocumentCommand{\addProblems}{}{%   
