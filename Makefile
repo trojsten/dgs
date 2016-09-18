@@ -36,24 +36,28 @@ html:				$(md-to-html) $(svg-to-png) $(gp-to-png) $(copy-pdf-out) $(copy-png-out
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
-    
+
 input/%.tex: source/%.md
-	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX:\e[0m'
-	@(./core/dgs-convert.py latex $< $@) || exit 1;
+	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX file \e[96m$@\e[32m:\e[0m'
+	mkdir -p $(dir $@)
+	./core/dgs-convert.py latex $< $@ || exit 1;
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 input/%.tex: source/%.tex
 	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
+	mkdir -p $(dir $@)
 	cp $< $@
 
-input/%.pdf: source/%.svg
+source/%.pdf: source/%.svg
 	@echo -e '\e[32mConverting \e[96m$<\e[32m to PDF:\e[0m'
+	mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
 input/%.pdf: source/%.gp
 	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PDF:\e[0m'
+	mkdir -p $(dir $@)
 	cd $(<D) ; gnuplot -e "set terminal pdf font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
 
 input/%.pdf: source/%.pdf
@@ -86,35 +90,27 @@ output/%.jpg: source/%.jpg
 
 output/%.html: source/%.md
 	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
-	@(./core/dgs-convert.py html $< $@) || exit 1;
+	mkdir -p $(dir $@)
+	./core/dgs-convert.py html $< $@ || exit 1;
 
-output/%.pdf: $(svg-to-pdf) $(gp-to-pdf) $(copy-png) $(copy-jpg) $(md-to-tex)
+.SECONDEXPANSION:
+
+output/%/problems.pdf:\
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
+	$$(wildcard input/$$*/*/*.jpg)\
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(wildcard input/$$*/*/*.pdf)
+	mkdir -p $(dir $@)
+	@echo $+
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
-	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/$*.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
+#	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
+#	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
 
-#output/problems/%.pdf: input/problems/%.tex svg-to-pdf
-#	@echo -e '\e[32mRendering single problem $@\e[0m'
-#	cp singletask.tex source/singletask.tex
-#	sed -i 's#@filename@#$<#g' source/singletask.tex
-#	TASK=`echo '$(notdir $@)' | tr -cd 0-9` ; sed -i "s#@tasknumber@#$$TASK#g" source/singletask.tex
-#	xelatex -jobname=$(basename $@) -halt-on-error source/singletask.tex
-#	xelatex -jobname=$(basename $@) -halt-on-error source/singletask.tex
-#	pdfcrop $@ $@-crop
-#	mv $@-crop $@
-#	rm source/singletask.tex
-
-view-problems: problems
-	evince output/problems.pdf 2>/dev/null 1>/dev/null &
-
-view-solutions: solutions
-	evince output/solutions.pdf 2>/dev/null 1>/dev/null &
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'
 	rm -rf input/
-	find . -type f \( -name "*.log" -or -name "*.aux" -or -name "*~" -or -name "*.out" -or -name "*.swp" \) -delete	
 
 distclean: clean
 	@echo -e '\e[32mDist clean:\e[0m'
