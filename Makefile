@@ -1,38 +1,9 @@
-all:				hello pdf html
-debug:				hello pdf html
+all:				hello
 
-pdf:				problems solutions
-problems:			output/problems.pdf 
-solutions:			output/solutions.pdf	
+.SECONDARY:
 
-version	=			'1.00'
-date =				'2016-09-08'
-
-mds =				$(wildcard source/**/*.md)
-md-to-tex =			$(patsubst %.md, %.tex, $(patsubst source%, input%, $(mds)))
-md-to-html = 		$(patsubst %.md, %.html, $(patsubst source%, output%, $(mds)))
-
-svgs =				$(wildcard source/**/*.svg)
-svg-to-pdf =		$(patsubst %.svg, %.pdf, $(patsubst source%, input%, $(svgs)))
-svg-to-png =		$(patsubst %.svg, %.png, $(patsubst source%, output%, $(svgs)))
-
-gps =				$(wildcard source/**/*.gp)
-gp-to-pdf =			$(patsubst %.gp, %.pdf, $(patsubst source%, input%, $(gps)))
-gp-to-png =			$(patsubst %.gp, %.png, $(patsubst source%, output%, $(gps)))
-
-pdfs =				$(wildcard source/**/*.pdf)
-copy-pdf =			$(patsubst source%, input%, $(pdfs))
-copy-pdf-out =		$(patsubst source%, output%, $(pdfs))
-
-pngs =				$(wildcard source/**/*.png)
-copy-png =			$(patsubst source%, input%, $(pngs))
-copy-png-out =		$(patsubst source%, output%, $(pngs))
-
-jpgs =				$(wildcard source/**/*.jpg)
-copy-jpg =			$(patsubst source%, input%, $(jpgs))
-copy-jpg-out =		$(patsubst source%, output%, $(jpgs))
-
-html:				$(md-to-html) $(svg-to-png) $(gp-to-png) $(copy-pdf-out) $(copy-png-out) $(copy-jpg-out)
+version	=			'1.05'
+date =				'2016-09-24'
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
@@ -89,7 +60,7 @@ output/%.jpg: source/%.jpg
 	cp $< $@
 
 output/%.html: source/%.md
-	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML:\e[0m'
+	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML file \e[96m$@\e[32m:\e[0m'
 	mkdir -p $(dir $@)
 	./core/dgs-convert.py html $< $@ || exit 1;
 
@@ -97,16 +68,42 @@ output/%.html: source/%.md
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
-	$$(wildcard input/$$*/*/*.jpg)\
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard input/$$*/*/*.pdf)
 	mkdir -p $(dir $@)
-	@echo $+
+	./core/dgs-prepare.py ./source/$*/settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
-#	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
-#	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
 
+output/%/solutions.pdf:\
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/solution.md)))\
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(wildcard input/$$*/*/*.pdf)
+	mkdir -p $(dir $@)
+	./core/dgs-prepare.py ./source/$*/settings.json
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run (to get the cross-references right)\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
+
+output/%/html-problems: $$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md))) ;
+
+output/%/html-solutions: $$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md))) ;
+
+output/%/pdf: output/%/problems.pdf output/%/solutions.pdf ;
+
+output/%/html: output/%/html-problems output/%/html-solutions ;
+
+output/%/problems: output/%/problems.pdf output/%/html-problems ;
+
+output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
+
+output/%/all: output/%/pdf output/%/html ;
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'

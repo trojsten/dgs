@@ -141,7 +141,6 @@
     \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
     \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
     \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
-
     \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
     \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
     \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
@@ -212,8 +211,8 @@
 \NewDocumentCommand{\insertPicture}{m m m m m m}{%
     \begin{figure}[H]%
         \centering%
-        \IfFileExists{\currentDir/\currentProblem/#1.#2}{%
-            \includegraphics[keepaspectratio = true, height = #4]{\currentDir/\currentProblem/#1}%
+        \IfFileExists{\rootDirectory/\currentProblem/#1.#2}{%
+            \includegraphics[keepaspectratio = true, height = #4]{\rootDirectory/\currentProblem/#1}%
         }{%
             \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
         }%
@@ -272,18 +271,18 @@
 
 \NewDocumentCommand{\addProblems}{}{%   
 	\setcounter{problem}{0}%
-	\input{\currentDir/recipe-problems.tex}%
+	\input{\rootDirectory/recipe-problems.tex}%
 }
 
 \NewDocumentCommand{\addProblem}{m m m}{%
 	\stepcounter{problem}%
 	\createProblemHeader{#1}{#2}{#3}%
-	\protectedInput{\currentDir/\currentProblem/problem.tex}%
+	\protectedInput{\rootDirectory/\currentProblem/problem.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
 	\setcounter{problem}{0}%
-    \input{\currentDir/recipe-solutions.tex}%
+    \input{\rootDirectory/recipe-solutions.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m m m}{%
@@ -291,9 +290,9 @@
 	\createSolutionHeader{#1}{#2}{#3}{#4}
 	{
 		\small\it
-		\protectedInput{\currentDir/\currentProblem/problem.tex}\par
+		\protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
 	}
-	\protectedInput{\currentDir/\currentProblem/solution.tex}%
+	\protectedInput{\rootDirectory/\currentProblem/solution.tex}%
 }
 
 % \exampleIO[verbatim input][verbatim output]
