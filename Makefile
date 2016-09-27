@@ -19,7 +19,7 @@ input/%.tex: source/%.tex
 	mkdir -p $(dir $@)
 	cp $< $@
 
-source/%.pdf: source/%.svg
+input/%.pdf: source/%.svg
 	@echo -e '\e[32mConverting \e[96m$<\e[32m to PDF:\e[0m'
 	mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
@@ -68,9 +68,9 @@ output/%.html: source/%.md
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(wildcard input/$$*/*/*.pdf)
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -81,9 +81,9 @@ output/%/problems.pdf:\
 output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/solution.md)))\
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(wildcard input/$$*/*/*.pdf)
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
