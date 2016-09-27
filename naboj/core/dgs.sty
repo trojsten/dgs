@@ -181,17 +181,14 @@
 \cs_new_eq:NN \Repeat \prg_replicate:nn
 \ExplSyntaxOff
 
-\NewDocumentCommand{\genderSwitch}{m m}{%
-    \ifstrequal{\recipientGender}{male}{#1}{#2}%
-}
-
 \NewDocumentCommand{\insertPicture}{m m}{%
     \begin{figure}[H]%
         \centering%
-        \IfFileExists{\currentDir/\currentProblemName/#1}{%
-            \includegraphics[keepaspectratio = true, height = #2]{\currentDir/\currentProblemName/#1}%
+        \IfFileExists{\rootDirectory/\currentLanguage/\currentProblemName/#1}{%
+            \includegraphics[keepaspectratio = true, height = #2]{\rootDirectory/\currentLanguage/\currentProblemName/#1}%
         }{%
             \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+            Ta asi \rootDirectory/\currentLanguage/\currentProblemName/#1
         }%
     \end{figure}%
 }
@@ -209,33 +206,33 @@
 }
 
 \NewDocumentCommand{\addProblems}{}{%   
-	\input{\currentDir/recipe-booklet-problems.tex}%
+	\input{\rootDirectory/recipe-booklet-problems.tex}%
 }
 
 \NewDocumentCommand{\addProblem}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
     \createProblemHeader{#1}%
-	\protectedInput{\currentDir/\currentProblemName/problem.tex}%
+	\protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/problem.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-    \input{\currentDir/recipe-booklet-solutions.tex}%
+    \input{\rootDirectory/recipe-booklet-solutions.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
     \createProblemHeader{#1}%
-	\protectedInput{\currentDir/\currentProblemName/solution.tex}%
+	\protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/solution.tex}%
 }
 
 \NewDocumentCommand{\addAnswers}{}{%
-    \input{\currentDir/recipe-answers.tex}%
+    \input{\rootDirectory/recipe-answers.tex}%
 }
 
 \NewDocumentCommand{\addAnswer}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2} 
     \createProblemHeader{#1}%
-    \protectedInput{\currentDir/\currentProblemName/answer.tex}%
+    \protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/answer.tex}%
 }
 
 \endinput                                                           % everything below is safely ignored

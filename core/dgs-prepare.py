@@ -20,8 +20,8 @@ def processJSON(fileJSON):
 
     try:
         with open('input/settings.tex', 'w+') as output:
-            output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(settings['volume']))
             output.write('\\RenewDocumentCommand{{\\rootDirectory}}{{}}{{{0}}}\n'.format(root))
+            output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(settings['volume']))
             output.write('\\RenewDocumentCommand{{\\currentPart}}{{}}{{{0}}}\n'.format(settings['part']))
             output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(settings['round']))
             output.write('\\RenewDocumentCommand{{\\currentDeadline}}{{}}{{{0}}}\n'.format(
@@ -48,8 +48,6 @@ parser = argparse.ArgumentParser(
     description             = "Prepare and compile a DeGeŠ round from repository",
 )
 parser.add_argument('file', type = argparse.FileType('r'))
-#parser.add_argument('-c', '--clean', action = 'store_true', help = 'Recreate all temporary input files first')
-#parser.add_argument('-p', '--purge', action = 'store_true', help = 'Purge all temporary files')
 args = parser.parse_args()
 
 fileJSON = args.file.name
