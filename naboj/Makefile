@@ -39,7 +39,8 @@ output/%/answers.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/answer.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
+	core/dgs-prepare.py
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -52,7 +53,8 @@ output/%/booklet.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/solution.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
+	core/dgs-prepare.py
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -61,16 +63,20 @@ output/%/booklet.pdf:\
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
 
 output/%/tearoff.pdf:\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/problem.tex)))\
+	$$(subst source/,input/,$$(wildcard source/$$*/*/problem.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
+	core/dgs-prepare.py
 	mkdir -p $(dir $@)
+	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/tearoff.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/tearoff.tex
-    
+   
+output/%/all: output/%/booklet.pdf output/%/answers.pdf output/%/tearoff.pdf ;
+
 clean:
 	@echo -e '\e[32mClean:\e[0m'
 	rm -rf input/

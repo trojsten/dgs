@@ -188,7 +188,6 @@
             \includegraphics[keepaspectratio = true, height = #2]{\rootDirectory/\currentLanguage/\currentProblemName/#1}%
         }{%
             \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
-            Ta asi \rootDirectory/\currentLanguage/\currentProblemName/#1
         }%
     \end{figure}%
 }
@@ -233,6 +232,19 @@
     \RenewDocumentCommand{\currentProblemName}{}{#2} 
     \createProblemHeader{#1}%
     \protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/answer.tex}%
+}
+
+\NewDocumentCommand{\addTearoffs}{}{%
+    \input{\rootDirectory/recipe-tearoff.tex}%
+}
+
+\NewDocumentCommand{\addTearoff}{m m m m}{
+    \RenewDocumentCommand{\currentProblemName}{}{#2}
+    \createProblemHeader{#1}%
+    %{\parbox[t][80mm][t]{0.95\textwidth}{%
+        \protectedInput{\rootDirectory/#4/\currentProblemName/problem.tex}%
+        \vfill
+    %}}
 }
 
 \endinput                                                           % everything below is safely ignored

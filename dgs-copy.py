@@ -18,8 +18,8 @@ parser.add_argument('round', type = int, choices = [1, 2, 3])
 
 args = parser.parse_args()
 
-for problem in range(1, 7):
-    os.system("scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/zadania/html/prikl{problem}.html".format(
+for problem in range(1, 8):
+    query = "scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/zadania/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -27,10 +27,12 @@ for problem in range(1, 7):
         problem = problem,
         Seminar = args.seminar.upper(),
         pr = (args.part - 1) * 3 + args.round
-    ))
+    )
+    print(query)
+    os.system(query)
 
-for problem in range(1, 7):
-    os.system("scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/vzoraky/html/prikl{problem}.html".format(
+for problem in range(1, 8):
+    query = "scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/vzoraky/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -38,33 +40,41 @@ for problem in range(1, 7):
         problem = problem,
         Seminar = args.seminar.upper(),
         pr = (args.part - 1) * 3 + args.round
-    ))
+    )   
+    print(query)
+    os.system(query)
 
-os.system("scp ./output/{seminar}/{volume}/{part}/{round}/problems.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/zadania/zadania.pdf".format(
-        seminar = args.seminar,
-        volume = args.volume,
-        part = args.part,
-        round = args.round,
-        Seminar = args.seminar.upper(),
-        pr = (args.part - 1) * 3 + args.round
-    ))
+query = "scp ./output/{seminar}/{volume}/{part}/{round}/problems.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/zadania/zadania.pdf".format(
+    seminar = args.seminar,
+    volume = args.volume,
+    part = args.part,
+    round = args.round,
+    Seminar = args.seminar.upper(),
+    pr = (args.part - 1) * 3 + args.round
+)
+print(query)
+os.system(query)
 
-os.system("scp ./output/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/vzoraky/vzoraky.pdf".format(
-        seminar = args.seminar,
-        volume = args.volume,
-        part = args.part,
-        round = args.round,
-        Seminar = args.seminar.upper(),
-        pr = (args.part - 1) * 3 + args.round
-    ))
+query = "scp ./output/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/vzoraky/vzoraky.pdf".format(
+    seminar = args.seminar,
+    volume = args.volume,
+    part = args.part,
+    round = args.round,
+    Seminar = args.seminar.upper(),
+    pr = (args.part - 1) * 3 + args.round
+)
+print(query)
+os.system(query)
 
-os.system("find ./source/{seminar}/{volume}/{part}/{round}/ -name '*.jpg' -o -name '*.png' -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/obrazky/ \;".format(
-        seminar = args.seminar,
-        volume = args.volume,
-        part = args.part,
-        round = args.round,
-        Seminar = args.seminar.upper(),
-        pr = (args.part - 1) * 3 + args.round
-    ))
+query = "find ./source/{seminar}/{volume}/{part}/{round}/ -name '*.jpg' -o -name '*.png' -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{Seminar}/{volume}rocnik/{pr}kolo/obrazky/ \;".format(
+    seminar = args.seminar,
+    volume = args.volume,
+    part = args.part,
+    round = args.round,
+    Seminar = args.seminar.upper(),
+    pr = (args.part - 1) * 3 + args.round
+)
+print(query)
+os.system(query)
 
 
