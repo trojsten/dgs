@@ -2,6 +2,7 @@
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
 \NewDocumentCommand{\loadRegularStyle}{}{	
 	\pagestyle{problems}
+    
     \titleformat{\section}[hang]{\vspace*{-5mm}\centering\huge}{}{0pt}{}
 	\titleformat{\subsection}[runin]{\bfseries\large}{}{0pt}{}[]
 	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
@@ -13,6 +14,13 @@
 \NewDocumentCommand{\loadBookletStyle}{}{
     \loadRegularStyle
     \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\framebox[7mm]}[]
+}
+
+\NewDocumentCommand{\loadTearoffStyle}{}{
+    \loadBookletStyle
+    \pagestyle{empty}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
 }
 
 % paragraph settings -- formatting paragraphs and list environments
@@ -28,18 +36,18 @@
 \setlength{\LTcapwidth}{0.8\textwidth}
 
 \setlist[description]{
-	style           = multiline,
-	labelindent     =   8mm,
-	leftmargin      =  28mm,
-	itemsep         =   0mm    
+    style           = multiline,
+    labelindent     =   8mm,
+    leftmargin      =  28mm,
+    itemsep         =   0mm    
 }
 \setlist[enumerate]{
-	topsep			=	0mm,
-	itemsep         =   0mm,
+    topsep			=	0mm,
+    itemsep         =   0mm,
 }
 \setlist[itemize]{
-	topsep			=   0mm,
-	itemsep         =   0mm,
+    topsep			=   0mm,
+    itemsep         =   0mm,
 }
 
 \renewcommand{\arraystretch}{1.0}
@@ -50,6 +58,10 @@
 \renewcommand{\theequation}{\arabic{equation}}
 
 % fancyhdr -- fancy pagestyle
+\fancypagestyle{empty}{
+    \fancyhf{}
+}
+
 \fancypagestyle{main}{
     \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/mini.pdf}}}
     \fancyhead[C]{\textit{\currentVolume. Fyzikálny Náboj, \currentYear}}

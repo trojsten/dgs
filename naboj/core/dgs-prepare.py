@@ -38,6 +38,15 @@ def processJSON(fileJSON):
                     output.write("\\addAnswer{{{0}}}{{{1}}}\n".format(number, problem))
                 output.write("\\newpage\n")
 
+        with open('{root}/recipe-tearoff.tex'.format(root = root), 'w+') as output:
+            teams = [settings['teams'][i*3 : i*3 + 3] for i in range((len(settings['teams']) + 2) // 3)]
+
+            for triplet in teams:
+                for number, problem in enumerate(settings['problems']):
+                    for team in triplet:
+                        output.write("\\addTearoff{{{number}}}{{{problem}}}{{{team}}}{{{language}}}\n".format(number = number + 1, problem = problem, team = team['id'], language = team['language']))
+                    output.write("\\newpage\n")
+
     except FileNotFoundError as e:
         abort("Could not write to file " + cf.CYAN + e)
 

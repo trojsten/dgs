@@ -70,7 +70,8 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	source/%/settings.json
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
@@ -83,7 +84,8 @@ output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/solution.md)))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))
+	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	source/%/settings.json
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
