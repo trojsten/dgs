@@ -1,9 +1,7 @@
-all:                hello output/booklet.pdf output/answers.pdf output/tearoff.pdf
-
 .SECONDARY:
 
-version =           '1.00'
-date =              '2016-09-13'
+version =           '1.14'
+date =              '2016-10-14'
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
@@ -35,14 +33,27 @@ input/%.jpg: source/%.jpg
 
 .SECONDEXPANSION:
 
+input/%/prepare: core/dgs-prepare.py
+	mkdir -p $(dir $@)
+	@echo -e '\e[32mPreparing recipes\e[0m'
+	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
+
+input/%/barcodes.txt: input/%/prepare ;
+
+input/%/barcodes.pdf: input/%/barcodes.txt
+	@echo -e '\e[32mCreating barcode PDF file\e[0m'
+	barcode -e "39" -i input/$*/barcodes.txt -g "100x25" -p "100x25mm" -o input/$*/barcodes.ps
+	ps2pdf input/$*/barcodes.ps input/$*/barcodes-big.pdf
+	pdfcrop input/$*/barcodes-big.pdf $@
+
 output/%/answers.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/answer.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
-	core/dgs-prepare.py
+	core/dgs.sty\
+	input/$$*/prepare
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/answers.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
@@ -54,9 +65,9 @@ output/%/booklet.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
-	core/dgs-prepare.py
+	core/dgs.sty\
+	input/$$*/prepare
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
@@ -67,7 +78,9 @@ output/%/tearoff.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
-	core/dgs-prepare.py
+	core/dgs.sty\
+	input/$$*/prepare\
+	input/$$*/barcodes.pdf	
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
