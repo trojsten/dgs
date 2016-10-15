@@ -61,9 +61,9 @@
     pdftexcmds,
     xifthen,
     verbatim,
-    color,
     cancel,
     float,
+    color,
     caption,
     booktabs,
     titlesec,
@@ -83,9 +83,6 @@
 	width					= 0.9\textwidth,
 }
 
-\definecolor{colour-url}{RGB}{0, 137, 162}
-\definecolor{colour-link}{RGB}{0, 137, 162}
-
 \RequirePackage[
 	colorlinks				= true,
 	linkcolor				= colour-link,
@@ -93,8 +90,11 @@
 ]{hyperref}
 
 \RequirePackage{fancyhdr}                                   % fancy header
-
 \RequirePackage[all]{nowidow}
+
+\definecolor{colour-url}{RGB}{0, 137, 162}
+\definecolor{colour-link}{RGB}{0, 137, 162}
+
 
 % Setup XeLaTeX-specific options
 
@@ -140,6 +140,7 @@
 
 \makeatletter
 \NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
+\newcommand{\@minipagerestore}{\setlength{\parskip}{6pt}}
 \makeatother
 
 % \romanNumeral{number}
@@ -238,13 +239,25 @@
     \input{\rootDirectory/recipe-tearoff.tex}%
 }
 
-\NewDocumentCommand{\addTearoff}{m m m m}{
-    \RenewDocumentCommand{\currentProblemName}{}{#2}
-    \createProblemHeader{#1}%
-    %{\parbox[t][80mm][t]{0.95\textwidth}{%
-        \protectedInput{\rootDirectory/#4/\currentProblemName/problem.tex}%
-        \vfill
-    %}}
+\NewDocumentCommand{\addTearoff}{m m m m m}{%
+    \RenewDocumentCommand{\currentProblemName}{}{#2}%
+%    \colorbox{red}{
+        
+    \begin{minipage}[t][84mm][t]{\textwidth}%
+       % \colorbox{yellow}{
+            \begin{minipage}[t][80mm][t]{0.08\linewidth}\vspace{0pt}%
+                \rotatebox{270}{\makebox[25mm]{\raisebox{10pt}{\sffamily \fontsize{40}{30}\selectfont #3}}
+                \includegraphics[width = 50mm, height = 15mm, page = #5]{\rootDirectory/\currentLanguage/barcodes.pdf}}
+            \end{minipage}
+       % }%
+       % \colorbox{green}{
+            \begin{minipage}[t][84mm][t]{0.90\linewidth}\vspace{0pt}%
+                \createProblemHeader{#1}%
+                \protectedInput{\rootDirectory/#4/\currentProblemName/problem.tex}%
+            \end{minipage}%
+       % }%
+    \end{minipage}%
+%    }
 }
 
 \endinput                                                           % everything below is safely ignored

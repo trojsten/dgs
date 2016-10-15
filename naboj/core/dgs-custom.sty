@@ -13,7 +13,7 @@
 
 \NewDocumentCommand{\loadBookletStyle}{}{
     \loadRegularStyle
-    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\framebox[7mm]}[]
+    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
 }
 
 \NewDocumentCommand{\loadTearoffStyle}{}{
@@ -27,6 +27,7 @@
 \linespread{1.0}
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{6pt}
+\setlength{\fboxsep}{0mm}
 \setlength{\abovedisplayskip}{0pt plus 2pt minus 2pt}
 \setlength{\belowdisplayskip}{-6pt plus 2pt minus 2pt}
 \setlength{\abovedisplayshortskip}{0pt plus 2pt minus 2pt}
