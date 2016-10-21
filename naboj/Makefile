@@ -79,10 +79,8 @@ output/%/tearoff.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	core/dgs.sty\
-	input/$$*/prepare\
 	input/$$*/barcodes.pdf	
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/tearoff.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
