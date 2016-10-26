@@ -33,7 +33,8 @@ input/%.jpg: source/%.jpg
 
 .SECONDEXPANSION:
 
-input/%/prepare: core/dgs-prepare.py
+input/%/prepare: core/dgs-prepare.py\
+	source/$$(dir $$*)settings.json
 	mkdir -p $(dir $@)
 	@echo -e '\e[32mPreparing recipes\e[0m'
 	./core/dgs-prepare.py $(language) ./source/$(dir $*)settings.json
