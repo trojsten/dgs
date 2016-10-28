@@ -205,8 +205,12 @@
     }	
 }
 
+\NewDocumentCommand{\addIntro}{}{%
+    \protectedInput{\rootDirectory/\currentLanguage/intro.tex}%
+}
+
 \NewDocumentCommand{\addProblems}{}{%   
-	\input{\rootDirectory/recipe-booklet-problems.tex}%
+	\protectedInput{\rootDirectory/\currentLanguage/recipe-booklet-problems.tex}%
 }
 
 \NewDocumentCommand{\addProblem}{m m}{%
@@ -216,7 +220,7 @@
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-    \input{\rootDirectory/recipe-booklet-solutions.tex}%
+    \protectedInput{\rootDirectory/\currentLanguage/recipe-booklet-solutions.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m}{%
@@ -226,7 +230,7 @@
 }
 
 \NewDocumentCommand{\addAnswers}{}{%
-    \input{\rootDirectory/recipe-answers.tex}%
+    \protectedInput{\rootDirectory/\currentLanguage/recipe-answers.tex}%
 }
 
 \NewDocumentCommand{\addAnswer}{m m}{%
@@ -236,7 +240,7 @@
 }
 
 \NewDocumentCommand{\addTearoffs}{}{%
-    \input{\rootDirectory/recipe-tearoff.tex}%
+    \protectedInput{\rootDirectory/\currentLanguage/recipe-tearoff.tex}%
 }
 
 \NewDocumentCommand{\addTearoff}{m m m m m}{%
@@ -252,6 +256,10 @@
             \protectedInput{\rootDirectory/#4/\currentProblemName/problem.tex}%
         \end{minipage}%
     \end{minipage}%
+}
+
+\NewDocumentCommand{\addConstants}{}{
+    \input{\rootDirectory/\currentLanguage/constants.tex}
 }
 
 \endinput                                                           % everything below is safely ignored

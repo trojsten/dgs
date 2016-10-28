@@ -1,0 +1,41 @@
+\documentclass[12pt, oneside]{article}
+
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
+\loadDocumentSettings
+\usepackage{core/dgs-custom}
+
+\newcounter{problem}
+
+\newgeometry{
+    left = 20mm,
+    right = 20mm,
+    bottom = 20mm,
+    top = 20mm
+}
+
+\begin{document}            
+    \loadTearoffStyle
+    
+    \section{Tabuľka konštánt na Fyzikálny Náboj 2016}
+    \begin{center}
+    
+        \small
+        \textit{%
+			Počas Náboja odporúčame používať hodnoty konštánt z~tejto tabuľky, pretože sme pomocou nich počítali vzorové riešenia.
+            Výsledok výpočtu s presnejšími hodnotami konštánt bude určite uznaný.
+		}
+        \normalsize
+    \end{center}
+
+    \begin{table}[h]
+        \begin{center}
+            \begin{tabular*}{0.92\textwidth}{@{\extracolsep{\fill} } l c r @{}}
+                \textbf{Konštanta} & \textbf{Symbol} & \textbf{Hodnota}\\
+                \toprule
+                \addConstants
+                \bottomrule
+            \end{tabular*}
+        \end{center}
+    \end{table}
+\end{document}

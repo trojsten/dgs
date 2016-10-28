@@ -2,13 +2,20 @@
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
 \NewDocumentCommand{\loadRegularStyle}{}{	
 	\pagestyle{problems}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0.4pt}
     
     \titleformat{\section}[hang]{\vspace*{-5mm}\centering\huge}{}{0pt}{}
-	\titleformat{\subsection}[runin]{\bfseries\large}{}{0pt}{}[]
+	\titleformat{\subsection}[hang]{\bfseries}{}{0pt}{}[]
 	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
     \titlespacing*{\section}{0pt}{0pt}{12pt}
 	\titlespacing*{\subsection}{0pt}{8pt}{10pt}
 	\titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
+}
+
+\NewDocumentCommand{\loadIntroStyle}{}{
+    \loadTearoffStyle
+	\titleformat{\subsection}[hang]{\bfseries}{}{0pt}{}[]
 }
 
 \NewDocumentCommand{\loadBookletStyle}{}{
@@ -51,10 +58,8 @@
     itemsep         =   0mm,
 }
 
-\renewcommand{\arraystretch}{1.0}
+\renewcommand{\arraystretch}{1.4}
 \renewcommand{\textfloatsep}{3mm}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\footrulewidth}{0.4pt}
 \numberwithin{equation}{subsection}
 \renewcommand{\theequation}{\arabic{equation}}
 
