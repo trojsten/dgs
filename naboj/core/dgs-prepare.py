@@ -22,15 +22,15 @@ def processJSON(fileJSON):
             output.write('\\RenewDocumentCommand{{\\teamCount}}{{}}{{{0}}}\n'.format(len(settings['teams'])))
             output.write('\\RenewDocumentCommand{{\\problemCount}}{{}}{{{0}}}\n'.format(len(settings['problems'])))
                        
-        with open('{root}/recipe-booklet-problems.tex'.format(root = root), 'w+') as output:
+        with open('{root}/{language}/recipe-booklet-problems.tex'.format(root = root, language = args.language), 'w+') as output:
             for number, problem in enumerate(settings['problems']):
                 output.write("\\addProblem{{{0}}}{{{1}}}\n".format(number + 1, problem))
 
-        with open('{root}/recipe-booklet-solutions.tex'.format(root = root), 'w+') as output:
+        with open('{root}/{language}/recipe-booklet-solutions.tex'.format(root = root, language = args.language), 'w+') as output:
             for number, problem in enumerate(settings['problems']):
                 output.write("\\addSolution{{{0}}}{{{1}}}\n".format(number + 1, problem))
         
-        with open('{root}/recipe-answers.tex'.format(root = root), 'w+') as output:
+        with open('{root}/{language}/recipe-answers.tex'.format(root = root, language = args.language), 'w+') as output:
             papers = [[], [], [], [], []]
             for number, problem in enumerate(settings['problems']):
                 papers[(number + 1) % 5].append((number + 1, problem))
@@ -40,7 +40,7 @@ def processJSON(fileJSON):
                     output.write("\\addAnswer{{{0}}}{{{1}}}\n".format(number, problem))
                 output.write("\\newpage\n")
 
-        with open('{root}/recipe-tearoff.tex'.format(root = root), 'w+') as output:
+        with open('{root}/{language}/recipe-tearoff.tex'.format(root = root, language = args.language), 'w+') as output:
             teams = [settings['teams'][i*3 : i*3 + 3] for i in range((len(settings['teams']) + 2) // 3)]
 
             for triplet in teams:
