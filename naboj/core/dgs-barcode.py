@@ -16,5 +16,5 @@ args = parser.parse_args()
 code = "47{:03d}{:03d}".format(args.team, args.problem)
 filename = "input/barcodes/barcode-{:03d}{:03d}.pdf".format(args.team, args.problem)
 
-string = """barcode -e "39" -b "{code}" -g "100x25" -o barcode.ps && ps2pdf barcode.ps barcode1.pdf && pdfcrop barcode1.pdf {outfile}""".format(code = code, outfile = filename)
+string = """barcode -e "128" -b "{code}" -g "100x25" -o barcode.ps && ps2pdf barcode.ps barcode1.pdf && pdfcrop barcode1.pdf {outfile}""".format(code = code, outfile = filename)
 os.system(string)

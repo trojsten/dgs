@@ -5,16 +5,18 @@ import os, sys, re, argparse
 parser = argparse.ArgumentParser(
     description             = "DeGeŠ Náboj conversion utility",
 )
-parser.add_argument('language', choices = ['slovak', 'english', 'czech'])
+parser.add_argument('language', choices = ['slovak', 'english', 'czech', 'hungarian', 'polish', 'test'])
 parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
 parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
 args = parser.parse_args()
 
 quotes = {
     'slovak': ('„', '“'),
+    'test': ('„', '“'),
     'czech': ('„', '“'),
     'english': ('“', '”'),
     'hungarian': ('„', '”'),
+    'polish': ('„', '”'),
 }
 
 tempfile = open('.convert-temp', 'w')
