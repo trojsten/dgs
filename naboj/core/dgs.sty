@@ -215,7 +215,7 @@
 
 \NewDocumentCommand{\addProblem}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
-    \createProblemHeader{#1}%
+    \subsection{#1}%
 	\protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/problem.tex}%
 }
 
@@ -225,7 +225,7 @@
 
 \NewDocumentCommand{\addSolution}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
-    \createProblemHeader{#1}%
+    \subsection{#1}%
 	\protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/solution.tex}%
 }
 
@@ -235,7 +235,7 @@
 
 \NewDocumentCommand{\addAnswer}{m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2} 
-    \createProblemHeader{#1}%
+    \subsection{#1}%
     \protectedInput{\rootDirectory/\currentLanguage/\currentProblemName/answer.tex}%
 }
 
@@ -243,25 +243,46 @@
     \protectedInput{\rootDirectory/\currentLanguage/recipe-tearoff.tex}%
 }
 
-\NewDocumentCommand{\addTearoff}{m m m m m}{%
+% addTearoff
+%   language
+%   venue id
+%   team category
+%   team id
+%   problem id
+%   problem name
+%   barcode page
+\NewDocumentCommand{\addTearoff}{m m m m m m m}{%
     \RenewDocumentCommand{\currentProblemName}{}{#2}%
         
     \begin{minipage}[t][88mm][t]{\textwidth}%
-        \begin{minipage}[t][80mm][t]{0.08\linewidth}\vspace{0pt}%
-            \rotatebox{270}{\makebox[25mm]{\raisebox{10pt}{\sffamily \fontsize{40}{30}\selectfont #3}}
-            \includegraphics[width = 50mm, height = 15mm, page = #5]{\rootDirectory/\currentLanguage/barcodes.pdf}}
-        \end{minipage}
-        \begin{minipage}[t][84mm][t]{0.90\linewidth}\vspace{0pt}%
-            \createProblemHeader{#1}%
+        \begin{minipage}[t][82mm][t]{0.875\linewidth}\vspace{0pt}%
+            \subsection{#1}%
             \protectedInput{\rootDirectory/#4/\currentProblemName/problem.tex}%
         \end{minipage}%
+        \begin{minipage}[t][82mm][t]{0.125\linewidth}\vspace{0pt}%
+            \hspace{1mm}
+            \rotatebox{90}{%
+                \fontsize{30}{0}\selectfont
+                \hspace{10mm}
+                \textsf{#2:#3:#4:#5}
+            }%
+            \hspace{1mm}
+            \rotatebox{90}{%
+                \includegraphics[width = 70mm, height = 15mm, page = #6]{\rootDirectory/#1/barcodes.pdf}
+                \hspace{5mm}
+            }%
+        \end{minipage}
+        {\small \stringTeam\ \textbf{#3}: #5}
     \end{minipage}%
+}
+
+\NewDocumentCommand{\addInstructions}{}{
+    \input{\rootDirectory/\currentLanguage/instructions.tex}
 }
 
 \NewDocumentCommand{\addConstants}{}{
     \input{\rootDirectory/\currentLanguage/constants.tex}
 }
-
 \endinput                                                           % everything below is safely ignored
 
 

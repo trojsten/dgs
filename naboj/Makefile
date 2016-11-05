@@ -1,7 +1,7 @@
 .SECONDARY:
 
-version =           '1.14'
-date =              '2016-10-14'
+version =           '1.26'
+date =              '2016-11-01'
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
@@ -34,8 +34,8 @@ input/%.jpg: source/%.jpg
 .SECONDEXPANSION:
 
 corefiles:\
-	core/dgs.sty\
-	core/dgs-custom.sty ;
+	core/*\
+	core/config/*
 
 input/%/prepare: core/dgs-prepare.py\
 	source/$$(dir $$*)settings.json
@@ -46,13 +46,13 @@ input/%/prepare: core/dgs-prepare.py\
 input/%/barcodes.txt: input/%/prepare ;
 
 input/%/barcodes.pdf: input/%/barcodes.txt
-	@echo -e '\e[32mCreating barcode PDF file\e[0m'
-	barcode -e "39" -i input/$*/barcodes.txt -g "100x25" -p "100x25mm" -o input/$*/barcodes.ps
+	@echo -e '\e[32mCreating barcode PDF file \e[96m$@\e[32m:\e[0m'
+	barcode -e "128" -i input/$*/barcodes.txt -g "120x30" -p "120x30mm" -n -o input/$*/barcodes.ps
 	ps2pdf input/$*/barcodes.ps input/$*/barcodes-big.pdf
 	pdfcrop input/$*/barcodes-big.pdf $@
 
 output/%/answers.pdf:\
-	corefiles
+	corefiles\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/answer.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
@@ -75,12 +75,13 @@ output/%/booklet.pdf:\
 	input/$$*/prepare
 	mkdir -p $(dir $@)
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
+	@texfot xelatex -file-line-error -jobname=output/$*/booklet-single -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
+	@texfot xelatex -file-line-error -jobname=output/$*/booklet-single -halt-on-error -interaction=nonstopmode core/templates/booklet.tex
+	pdfbook --short-edge --outfile $@ output/$*/booklet-single.pdf
 
 output/%/tearoff.pdf:\
-	core/dgs.sty\
+	corefiles\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/problem.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
@@ -92,13 +93,24 @@ output/%/tearoff.pdf:\
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/tearoff.tex
 
-output/%/constants.pdf:\
-	core/dgs.sty\
-	core/templates/constants.tex\
+output/%/instructions.pdf:\
+	corefiles\
+	input/$$*/instructions.tex\
 	input/$$*/constants.tex
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/constants.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/instructions.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/instructions.tex
+
+output/%/cover.pdf:\
+	corefiles
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/cover.tex
+	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/cover.tex
+
    
-output/%/all: output/%/booklet.pdf output/%/answers.pdf output/%/tearoff.pdf ;
+output/%/all: output/%/booklet.pdf output/%/answers.pdf output/%/tearoff.pdf output/%/instructions.pdf output/%/cover.pdf ;
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'

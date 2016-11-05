@@ -1,0 +1,44 @@
+\documentclass[12pt, oneside]{article}
+
+\usepackage{core/dgs}
+\usepackage{core/config/dgs-config}
+\loadDocumentSettings
+\usepackage{core/dgs-custom}
+
+\newcounter{problem}
+
+\newgeometry{
+    left = 20mm,
+    right = 20mm,
+    bottom = 20mm,
+    top = 20mm,
+    headheight = 0pt,
+    footskip = 0pt
+}
+
+%\setallmainfonts[
+%    Path            = core/fonts/ ,
+%    Extension       = .ttf ,
+%    UprightFont     = *-r,
+%    ItalicFont      = *-r
+%]{tempussans}
+
+\begin{document}            
+    \loadTearoffStyle
+    \begin{center}
+        %\fontsize{100}{70}\selectfont
+        %Fyzikálny\\Náboj
+        
+        \vspace*{20mm}
+        \includegraphics[keepaspectratio = true, height = 80mm]{core/logo/\seminarID/logo.pdf}
+        \vfill
+        \fontsize{60}{25}\selectfont
+        \currentYear
+    \end{center}
+    \newpage        
+    \begin{center}
+        \null
+        \vfill
+        \includegraphics[keepaspectratio = true, height = 40mm]{core/logo/\seminarID/barcode.pdf}
+    \end{center}
+\end{document}

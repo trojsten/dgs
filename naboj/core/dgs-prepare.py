@@ -19,7 +19,7 @@ def processJSON(fileJSON):
             output.write('\\loadLanguage{{{0}}}\n'.format(args.language))
             output.write('\\loadSeminar{fks}\n')
             output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(settings['volume']))
-            output.write('\\RenewDocumentCommand{{\\teamCount}}{{}}{{{0}}}\n'.format(len(settings['teams'])))
+            output.write('\\RenewDocumentCommand{{\\teamCount}}{{}}{{{0}}}\n'.format(len(settings['teams'][args.language])))
             output.write('\\RenewDocumentCommand{{\\problemCount}}{{}}{{{0}}}\n'.format(len(settings['problems'])))
                        
         with open('{root}/{language}/recipe-booklet-problems.tex'.format(root = root, language = args.language), 'w+') as output:
@@ -30,7 +30,7 @@ def processJSON(fileJSON):
             for number, problem in enumerate(settings['problems']):
                 output.write("\\addSolution{{{0}}}{{{1}}}\n".format(number + 1, problem))
         
-        with open('{root}/{language}/recipe-answers.tex'.format(root = root, language = args.language), 'w+') as output:
+        with open('{root}/{language}/recipe-answers-mod5.tex'.format(root = root, language = args.language), 'w+') as output:
             papers = [[], [], [], [], []]
             for number, problem in enumerate(settings['problems']):
                 papers[(number + 1) % 5].append((number + 1, problem))
@@ -39,23 +39,37 @@ def processJSON(fileJSON):
                 for number, problem in paper:
                     output.write("\\addAnswer{{{0}}}{{{1}}}\n".format(number, problem))
                 output.write("\\newpage\n")
+        
+        with open('{root}/{language}/recipe-answers.tex'.format(root = root, language = args.language), 'w+') as output:
+            for number, problem in enumerate(settings['problems']):
+                output.write("\\addAnswer{{{0}}}{{{1}}}\n".format(number + 1, problem))
+                if (number % 15 == 14):
+                    output.write("\\newpage\n")
 
         with open('{root}/{language}/recipe-tearoff.tex'.format(root = root, language = args.language), 'w+') as output:
-            teams = [settings['teams'][i*3 : i*3 + 3] for i in range((len(settings['teams']) + 2) // 3)]
+            for number, team in enumerate(settings['teams'][args.language]):
+                team['pageorder'] = number + 1
+
+            teams = [settings['teams'][args.language][i*3 : i*3 + 3] for i in range((len(settings['teams'][args.language]) + 2) // 3)]
 
             for triplet in teams:
                 for number, problem in enumerate(settings['problems']):
                     strs = []
                     for team in triplet:
-                        strs.append("\\addTearoff{{{number}}}{{{problem}}}{{{team}}}{{{language}}}{{{page}}}\n".format(
-                            number = number + 1, problem = problem, team = team['id'], language = team['language'], page = (team['id'] - 1) * len(settings['problems']) + number + 1
-                        ))
+                        strs.append("\\addTearoff{{{number}}}{{{problem}}}{{{team}}}{{{language}}}{{{name}}}{{{page}}}{{{team:06d}{number:03d}}}\n".format(
+                            number = number + 1,
+                            problem = problem,
+                            team = team['id'],
+                            name = team['name'],
+                            language = args.language, 
+                            page = (team['pageorder'] - 1) * len(settings['problems']) + number + 1,
+                                                    ))
                     output.write("\hrule\n".join(strs) + "\\newpage\n")
     
         with open('{root}/{language}/barcodes.txt'.format(root = root, language = args.language), 'w+') as output:
-            for team in settings['teams']:
+            for team in settings['teams'][args.language]:
                for number, problem in enumerate(settings['problems']):
-                   output.write("47{:03d}{:03d}\n".format(team['id'], number + 1))
+                   output.write("{:06d}{:03d}\n".format(team['id'], number + 1))
                 
     except FileNotFoundError as e:
         abort("Could not write to file " + cf.CYAN + e)
@@ -67,7 +81,7 @@ def bye():
 parser = argparse.ArgumentParser(
     description             = "Prepare and compile a Náboj volume from repository",
 )
-parser.add_argument('language', choices = ['english', 'slovak', 'czech', 'hungarian', 'polish'])
+parser.add_argument('language', choices = ['english', 'slovak', 'czech', 'hungarian', 'polish', 'test'])
 parser.add_argument('file', type = argparse.FileType('r'))
 args = parser.parse_args()
 
