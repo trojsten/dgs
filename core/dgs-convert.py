@@ -26,6 +26,7 @@ try:
         line = re.sub(r'"', '“', line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
+            line = re.sub(r'^@E(.*)$', '\\errorMessage{\g<1>}', line)
             line = re.sub(r'^@L(.*)$', '\g<1>', line)
             line = re.sub(r'^@P', '\insertPicture', line)
         if args.format == 'html':
