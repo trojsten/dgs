@@ -32,7 +32,7 @@
 
 \RequirePackage[
     separate-uncertainty,                                   % 7.2 ± 0.5
-    detect-all,                                             % chceme zachovávať formátovanie prostredia
+    detect-all              = true,                         % chceme zachovávať formátovanie prostredia
     multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
     per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
     group-separator         = {\,},
@@ -42,7 +42,7 @@
     number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {,},                          % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
-    range-phrase            = {~--~},						% 5 -- 10 m/s
+    range-phrase            = { -- },						% 5 -- 10 m/s
     list-units              = single,                       %
     list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
 ]{siunitx}

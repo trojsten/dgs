@@ -2,8 +2,8 @@ all:				hello
 
 .SECONDARY:
 
-version	=			'1.47'
-date =				'2016-11-10'
+version	=			'1.53'
+date =				'2016-11-29'
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
