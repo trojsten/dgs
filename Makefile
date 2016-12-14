@@ -29,7 +29,7 @@ input/%.pdf: source/%.svg
 input/%.pdf: input/%.gp
 	@echo -e '\e[32mBuilding gnuplot file \e[96m$<\e[32m to PDF file \e[96m$@\e[32m:\e[0m'
 	mkdir -p $(dir $@)
-	cd $(dir $@); gnuplot -e "set terminal pdf font 'Verdana, 12'; set output '$(notdir $@)'" $(notdir $<)
+	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" $(notdir $<)
 
 input/%.pdf: source/%.pdf
 	@echo -e '\e[32mCopying PDF file \e[96m$<\e[32m:\e[0m'
@@ -52,7 +52,7 @@ input/%.dat: source/%.dat
 	cp $< $@
 
 output/%.png: source/%.svg
-	@echo -e '\e[32mConverting SVG file \e[96m$<\e[32m to PNG file\e[96m$@\e32[m:\e[0m'
+	@echo -e '\e[32mConverting SVG file \e[96m$<\e[32m to PNG file \e[96m$@\e[32m:\e[0m'
 	mkdir -p $(dir $@)
 	rsvg-convert -f png -h 300 -a -o $@ $<
 
@@ -64,7 +64,7 @@ output/%.png: source/%.png
 output/%.png: source/%.gp
 	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PNG:\e[0m'
 	mkdir -p $(dir $@)
-	cd $(<D) ; gnuplot -e "set terminal png transparent truecolor font 'Verdana, 12'; set output '../../$@'" $(notdir $<)
+	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" "../../../../../../"$<
 
 output/%.jpg: source/%.jpg
 	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
@@ -112,9 +112,14 @@ output/%/solutions.pdf:\
 	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
 
-output/%/html-problems: $$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md))) ;
+output/%/html-problems:\
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\
+	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) ;
 
-output/%/html-solutions: $$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md))) ;
+output/%/html-solutions:\
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md)))\
+	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg)))\
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
 output/%/pdf: output/%/problems.pdf output/%/solutions.pdf ;
 
