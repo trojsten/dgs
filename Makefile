@@ -64,7 +64,7 @@ output/%.png: source/%.png
 output/%.png: source/%.gp
 	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PNG:\e[0m'
 	mkdir -p $(dir $@)
-	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" "../../../../../../"$<
+	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" $(notdir $<)
 
 output/%.jpg: source/%.jpg
 	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'

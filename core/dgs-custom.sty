@@ -1,13 +1,13 @@
 % package titlesec -- formatting of section headers
 %\titleformat{\subsection}[runin / hang]{format whole}{label}{separation}{before}[after]
-\NewDocumentCommand{\loadRegularStyle}{}{	
-	\pagestyle{main}
-	\titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
-	\titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
-	\titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-	\titlespacing{\section}{0pt}{8pt}{8pt}
-	\titlespacing{\subsection}{0pt}{8pt}{0pt}
-	\titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+\NewDocumentCommand{\loadRegularStyle}{}{   
+    \pagestyle{main}
+    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
 }
 
 \NewDocumentCommand{\loadRulesStyle}{}{
@@ -15,13 +15,13 @@
 }
 
 \NewDocumentCommand{\loadProblemsStyle}{}{
-	\pagestyle{problems}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
+    \pagestyle{problems}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
 }
 
 \NewDocumentCommand{\loadSolutionsStyle}{}{
-	\pagestyle{solutions}
-	\titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
+    \pagestyle{solutions}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
 }
 
 % paragraph settings -- formatting paragraphs and list environments
@@ -37,18 +37,18 @@
 \setlength{\LTcapwidth}{0.8\textwidth}
 
 \setlist[description]{
-	style           = multiline,
-	labelindent     =   8mm,
-	leftmargin      =  28mm,
-	itemsep         =   0mm    
+    style           = multiline,
+    labelindent     =       8mm,
+    leftmargin      =      28mm,
+    itemsep         =       0mm,
 }
 \setlist[enumerate]{
-	topsep			=	0mm,
-	itemsep         =   0mm,
+    topsep          =   0mm,
+    itemsep         =   0mm,
 }
 \setlist[itemize]{
-	topsep			=   0mm,
-	itemsep         =   0mm,
+    topsep          =   0mm,
+    itemsep         =   0mm,
 }
 
 \renewcommand{\arraystretch}{1.0}
@@ -76,8 +76,8 @@
 }
 
 \fancypagestyle{rules}{%
-	\pagestyle{main}
-	\fancyhead[LE,RO]{\textit{Pravidlá}}
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
 }
     
 \fancypagestyle{first}{%
@@ -97,7 +97,7 @@
             {\Large \seminarFull}\\[4pt]
             {\large \romanNumeral{\currentVolume}. ročník, \currentAcademicYear}\\[8pt]            
             {\footnotesize \seminarShort,\ \seminarDepartmentShort\ FMFI~UK,
-				Mlynská dolina, 842~48 Bratislava}\\[2pt]
+                Mlynská dolina, 842~48 Bratislava}\\[2pt]
             \vspace{6pt}
         \end{minipage}        
     }           
@@ -105,10 +105,10 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 0.7\linewidth, keepaspectratio = true]{core/logo/\seminarID/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{core/logo/\seminarID/logo.pdf}\\[0pt]
         \end{minipage}
     }
-	\fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
+    \fancyfoot[LO,RE]{\href{mailto:\seminarEmail}{\texttt{\seminarEmail}}}
     \fancyfoot[C]{\small \thepage}
     \fancyfoot[LE,RO]{\URL{\seminarURL}}
 }    
