@@ -114,7 +114,8 @@ output/%/solutions.pdf:\
 
 output/%/html-problems:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) ;
+	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
 output/%/html-solutions:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md)))\
@@ -129,7 +130,7 @@ output/%/problems: output/%/problems.pdf output/%/html-problems ;
 
 output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 
-output/%/all: output/%/pdf output/%/html ;
+output/%/all: output/%/problems output/%/solutions ;
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'

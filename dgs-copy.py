@@ -58,7 +58,7 @@ query = "scp ./output/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/va
 print(query)
 os.system(query)
 
-query = "find ./source/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
+query = "find ./output/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
