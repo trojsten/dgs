@@ -132,6 +132,8 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 
 output/%/all: output/%/problems output/%/solutions ;
 
+output/%/all: output/%/*/all ;
+
 clean:
 	@echo -e '\e[32mClean:\e[0m'
 	rm -rf input/
