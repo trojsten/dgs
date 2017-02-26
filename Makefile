@@ -2,8 +2,8 @@ all:				hello
 
 .SECONDARY:
 
-version	=			'1.53'
-date =				'2016-11-29'
+version	=			'1.73'
+date =				'2017-02-26'
 
 hello:
 	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
@@ -61,10 +61,11 @@ output/%.png: source/%.png
 	mkdir -p $(dir $@)
 	cp $< $@
 
-output/%.png: source/%.gp
+output/%.png: input/%.gp
 	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PNG:\e[0m'
 	mkdir -p $(dir $@)
 	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" $(notdir $<)
+	cp $(subst output/,input/,$@) $@
 
 output/%.jpg: source/%.jpg
 	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
@@ -83,6 +84,10 @@ input/%.gp:\
 	@mkdir -p $(dir $@)
 	@echo -e '\e[32mCopying gnuplot file \e[96m$<\e[32m:\e[0m'
 	cp $< $@
+
+
+
+### Booklet definitions
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
@@ -132,7 +137,9 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 
 output/%/all: output/%/problems output/%/solutions ;
 
-output/%/all: output/%/*/all ;
+output/%/all: output/%/**/all ;
+
+output/%/all: output/%/*/**/all ;
 
 clean:
 	@echo -e '\e[32mClean:\e[0m'

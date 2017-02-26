@@ -288,10 +288,10 @@
 \NewDocumentCommand{\addSolution}{m m m m}{%
 	\stepcounter{problem}%
 	\createSolutionHeader{#1}{#2}{#3}{#4}
-	{
-		\small\it
-		\protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
-	}
+%	{
+%		\small\it
+%		\protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
+%	}
 	\protectedInput{\rootDirectory/\currentProblem/solution.tex}%
 }
 
