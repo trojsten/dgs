@@ -4,10 +4,10 @@ version	=			'1.73'
 date =				'2017-02-26'
 
 cred := $(shell tput setaf 1)
-c_action := $(shell tput setaf 4)
-c_filename := $(shell tput setaf 3)
-c_special := $(shell tput setaf 3)
-c_default := $(shell tput setaf 7)
+c_action := $(shell tput setaf 4; tput bold)
+c_filename := $(shell tput sgr0; tput setaf 5)
+c_special := $(shell tput sgr0; tput setaf 3)
+c_default := $(shell tput sgr0; tput setaf 7)
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
