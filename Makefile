@@ -1,91 +1,105 @@
-all:				hello
-
 .SECONDARY:
 
 version	=			'1.73'
 date =				'2017-02-26'
 
-hello:
-	@echo -e '\e[32mThis is DeGeŠ Makefile, version \e[95m$(version)\e[32m [\e[95m$(date)\e[32m]\e[0m'
+cred := $(shell tput setaf 1)
+c_action := $(shell tput setaf 4)
+c_filename := $(shell tput setaf 3)
+c_special := $(shell tput setaf 3)
+c_default := $(shell tput setaf 7)
 
+# DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
-	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to TeX file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	./core/dgs-convert.py latex $< $@ || exit 1;
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
+# Copy TeX for (to input)
 input/%.tex: source/%.tex
-	@echo -e '\e[32mCopying TeX source file \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Convert SVG image to PDF (for XeLaTeX)
 input/%.pdf: source/%.svg
-	@echo -e '\e[32mConverting \e[96m$<\e[32m to PDF file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
+# Convert gnuplot file to PDF (for XeLaTeX)
 input/%.pdf: input/%.gp
-	@echo -e '\e[32mBuilding gnuplot file \e[96m$<\e[32m to PDF file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Building gnuplot file $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
-	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" $(notdir $<)
+	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 
+# Copy PDF file (for XeLaTeX)
 input/%.pdf: source/%.pdf
-	@echo -e '\e[32mCopying PDF file \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying PDF file $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Copy PNG file (to input)
 input/%.png: source/%.png
-	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Copy JPG file (to input)
 input/%.jpg: source/%.jpg
-	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Copy DAT file (to input)
 input/%.dat: source/%.dat
-	@echo -e '\e[32mCopying data file \e[96m$<\e[32m to file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying data file $(c_filename)$<$(c_action) to file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Output PNG from SVG (for HTML)
 output/%.png: source/%.svg
-	@echo -e '\e[32mConverting SVG file \e[96m$<\e[32m to PNG file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	rsvg-convert -f png -h 300 -a -o $@ $<
 
+# Copy PNG (for HTML)
 output/%.png: source/%.png
-	@echo -e '\e[32mCopying PNG image \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# Gnuplot to PNG (for HTML)
 output/%.png: input/%.gp
-	@echo -e '\e[32mConverting gnuplot file \e[96m$<\e[32m to PNG:\e[0m'
+	@echo -e '$(c_action)Converting gnuplot file $(c_filename)$<$(c_action) to PNG:$(c_default)'
 	mkdir -p $(dir $@)
-	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'" $(notdir $<)
+	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 	cp $(subst output/,input/,$@) $@
 
+# Copy JPG (for HTML)
 output/%.jpg: source/%.jpg
-	@echo -e '\e[32mCopying JPG image \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	cp $< $@
 
+# DeGeŠ convert Markdown to HTML (for HTML)
 output/%.html: source/%.md
-	@echo -e '\e[32mConverting Markdown file \e[96m$<\e[32m to HTML file \e[96m$@\e[32m:\e[0m'
+	@echo -e '$(c_action)Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	mkdir -p $(dir $@)
 	./core/dgs-convert.py html $< $@ || exit 1;
 
 .SECONDEXPANSION:
+
+# Copy Gnuplot file to input, along with all its possible prerequisites
 input/%.gp:\
 	source/%.gp\
 	$$(subst source/,input/,$$(wildcard $$(dir source/%.gp)*.dat))
 	@mkdir -p $(dir $@)
-	@echo -e '\e[32mCopying gnuplot file \e[96m$<\e[32m:\e[0m'
+	@echo -e '$(c_action)Copying gnuplot file $(c_filename)$<$(c_action):$(c_default)'
 	cp $< $@
-
-
 
 ### Booklet definitions
 
@@ -97,9 +111,9 @@ output/%/problems.pdf:\
 	source/%/settings.json
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
-	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
-	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
 
 output/%/solutions.pdf:\
@@ -112,9 +126,9 @@ output/%/solutions.pdf:\
 	source/%/settings.json
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/settings.json
-	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: primary run\e[0m'
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
-	@echo -e '\e[32mCompiling XeLaTeX file \e[96m$@\e[32m: secondary run\e[0m'
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
 
 output/%/html-problems:\
@@ -137,16 +151,16 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 
 output/%/all: output/%/problems output/%/solutions ;
 
-output/%/all: output/%/**/all ;
+output/%/all: output/%/*/all ;
 
-output/%/all: output/%/*/**/all ;
+output/%/all: output/%/*/*/all ;
 
 clean:
-	@echo -e '\e[32mClean:\e[0m'
+	@echo -e '$(c_action)Clean:$(c_default)'
 	rm -rf input/
 
 distclean: clean
-	@echo -e '\e[32mDist clean:\e[0m'
+	@echo -e '$(c_action)Dist clean:$(c_default)'
 	rm -rf output/
 
 .PHONY: clean distclean hello
