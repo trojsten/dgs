@@ -13,21 +13,21 @@
 \NewDocumentCommand{\seminarProblemCount}{}{<undefined>}
 
 \NewDocumentCommand{\currentVolume}{}{<void year>}
-\NewDocumentCommand{\currentPart}{}{<void part>}
+\NewDocumentCommand{\currentSemester}{}{<void semester>}
 \NewDocumentCommand{\currentRound}{}{<void series>}
 \NewDocumentCommand{\currentDeadline}{}{<void deadline>}
-\NewDocumentCommand{\currentPartGenitive}{}{%
-    \switch[\number\currentPart=]%
+\NewDocumentCommand{\currentSemesterGenitive}{}{%
+    \switch[\number\currentSemester=]%
         \case{1}zimnej%
         \case{2}letnej%
-        \otherwise\errorMessage{<currentPartGenitive misconfigured: currentPart is "\currentPart">}%
+        \otherwise\errorMessage{<currentSemesterGenitive misconfigured: currentSemester is "\currentSemester">}%
     \endswitch%
 }
-\NewDocumentCommand{\currentPartNominative}{}{%
-    \switch[\number\currentPart=]%
+\NewDocumentCommand{\currentSemesterNominative}{}{%
+    \switch[\number\currentSemester=]%
         \case{1}zimná%
         \case{2}letná/
-        \otherwise\errorMessage{<currentPartNominative misconfigured: currentPart is "\currentPart">}%
+        \otherwise\errorMessage{<currentSemesterNominative misconfigured: currentSemester is "\currentSemester">}%
     \endswitch
 }
 \NewDocumentCommand{\participantTypeAccusative}{}{%
