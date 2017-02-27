@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
 import os, sys, re, argparse, colorama
+from colorama import Fore as cf
     
 def fail():
-    print(colorama.Fore.RED + "dgs-convert: failure")
+    print(cf.RED + "dgs-convert: failure")
     sys.exit(1)
 
 colorama.init()
@@ -41,12 +42,12 @@ try:
     
     os.remove(tempfile.name)
 except IOError as e:
-    print(colorama.Fore.RED + __file__ + ": Could not create temporary file")
+    print(cf.RED + __file__ + ": Could not create temporary file")
     fail()
 except AssertionError as e:
-    print(colorama.Fore.RED + __file__ + ": Calling pandoc failed")
+    print(cf.RED + __file__ + ": Calling pandoc failed")
     fail()
 else:
-    print(colorama.Fore.GREEN + "dgs-convert: success")
+    print(cf.GREEN + "dgs-convert: success")
     sys.exit(0)
 
