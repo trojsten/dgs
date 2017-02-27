@@ -10,12 +10,10 @@ DATE = "2017-02-26"
 
 def init():
     print(cf.BLUE + "This is DeGeŠ-prepare, version " + cf.MAGENTA + VERSION + cf.BLUE + " [" + cf.MAGENTA + DATE + cf.BLUE + "]")
-    print(cf.BLUE + "Invoked on file " + cf.CYAN + args.file.name + cf.WHITE)
-
-
+    print(cf.BLUE + "Invoked on file " + cf.MAGENTA + args.file.name + cf.RESET)
 
 def abortError(e):
-    print("{}: {}".format(cf.RED + e.strerror + cf.WHITE))
+    print(cf.RED + e.strerror + cf.WHITE)
     sys.exit(3)
 
 def climbUp(level):
@@ -40,11 +38,11 @@ def superstructure(level, fileName):
     return (name, content) 
 
 def processMetadata():
-    module, moduleConf      = superstructure(3, 'module.yaml')
-    volume, volumeConf      = superstructure(2, 'volume.yaml')
-    semester, semesterConf  = superstructure(1, 'semester.yaml')
-    round, roundConf        = superstructure(0, 'round.yaml')
-    problems                = []
+    moduleName, moduleConf      = superstructure(3, 'module.yaml')
+    volumeName, volumeConf      = superstructure(2, 'volume.yaml')
+    semesterName, semesterConf  = superstructure(1, 'semester.yaml')
+    roundName, roundConf        = superstructure(0, 'round.yaml')
+    problems                    = []
 
 
     for directory in sorted(os.listdir(rootDir)):
@@ -59,19 +57,19 @@ def processMetadata():
     try:
         with open('input/settings.tex', 'w+') as output:
             output.write('\\RenewDocumentCommand{{\\rootDirectory}}{{}}{{{0}}}\n'.format(inputRootDir))
-            output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(volume))
-            output.write('\\RenewDocumentCommand{{\\currentSemester}}{{}}{{{0}}}\n'.format(semester))
-            output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(round))
+            output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(volumeName))
+            output.write('\\RenewDocumentCommand{{\\currentSemester}}{{}}{{{0}}}\n'.format(semesterName))
+            output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(roundName))
             output.write('\\RenewDocumentCommand{{\\currentDeadline}}{{}}{{{0}}}\n'.format(roundConf['deadline'].strftime('%d. %m. %Y')))
-            output.write('\\loadSeminar{{{0}}}\n'.format(module))
+            output.write('\\loadSeminar{{{0}}}\n'.format(moduleName))
              
         with open('{root}/recipe-problems.tex'.format(root = inputRootDir), 'w+') as output:
             for problem in problems:
-                output.write("\\addProblem{{{0}}}{{{1}}}{{{2}}}\n".format(problem['name'], problem['pointsDescription'], problem['pointsCode']))
+                output.write("\\addProblem{{{0}}}{{{1}}}{{{2}}}\n".format(problem['title'], problem['pointsDescription'], problem['pointsCode']))
 
         with open('{root}/recipe-solutions.tex'.format(root = inputRootDir), 'w+') as output:
             for problem in problems:
-                output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['name'], problem['solutionBy'], problem['evaluation'], problem['genderSuffix']))
+                output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['title'], problem['solutionBy'], problem['evaluation'], problem['genderSuffix']))
     except FileNotFoundError as e:
         abort("Could not write to file: " + cf.CYAN + e)
 
@@ -92,5 +90,4 @@ inputRootDir = re.sub('source/', 'input/', os.path.dirname(rootFile))
 
 init()
 processMetadata()
-
 bye()

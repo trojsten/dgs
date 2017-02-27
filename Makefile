@@ -3,11 +3,11 @@
 version	=			'1.73'
 date =				'2017-02-26'
 
-cred := $(shell tput setaf 1)
-c_action := $(shell tput setaf 4; tput bold)
-c_filename := $(shell tput sgr0; tput setaf 5)
-c_special := $(shell tput sgr0; tput setaf 3)
-c_default := $(shell tput sgr0; tput setaf 7)
+c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
+c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
+c_filename	:= $(shell tput sgr0; tput setaf 5)
+c_special	:= $(shell tput sgr0; tput setaf 3)
+c_default	:= $(shell tput sgr0; tput setaf 7)
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
@@ -152,8 +152,6 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 output/%/all: output/%/problems output/%/solutions ;
 
 output/%/all: output/%/*/all ;
-
-output/%/all: output/%/*/*/all ;
 
 clean:
 	@echo -e '$(c_action)Clean:$(c_default)'
