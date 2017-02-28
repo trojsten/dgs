@@ -232,7 +232,7 @@
 \NewDocumentCommand{\createProblemHeader}{m m m}{
     \subsection{
         \texorpdfstring{%
-            \large \textbf{\ifstrequal{#1}{}{úloha}{#1}}%
+            \large \textbf{\ifstrequal{#1}{}{}{#1}}%
             \hfill\normalsize%
             \formatProblemPoints{#2}{#3}%
             \ifstrempty{#1}{}{\quad\formatProblemCategories{\getProblemCategories{\value{problem}}}}%
