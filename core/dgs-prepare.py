@@ -19,8 +19,8 @@ def abortError(e):
 def climbUp(level):
     return os.path.abspath(os.path.join(os.path.dirname(rootFile), *(['..'] * level)))
 
-def metadataFile(level, fileName):
-    return os.path.abspath(os.path.join(os.path.join(climbUp(level)), fileName))
+def metadataFile(level):
+    return os.path.abspath(os.path.join(os.path.join(climbUp(level)), 'meta.yaml'))
 
 def protectedLoad(fileName):
     try:
@@ -32,16 +32,16 @@ def protectedLoad(fileName):
         print(cf.RED + "Could not parse YAML file {}".format(fileName) + cf.WHITE)
         sys.exit(3)
 
-def superstructure(level, fileName):
+def superstructure(level):
     name = os.path.basename(os.path.normpath(climbUp(level)))
-    content = protectedLoad(metadataFile(level, fileName))
+    content = protectedLoad(metadataFile(level))
     return (name, content) 
 
 def processMetadata():
-    moduleName, moduleConf      = superstructure(3, 'module.yaml')
-    volumeName, volumeConf      = superstructure(2, 'volume.yaml')
-    semesterName, semesterConf  = superstructure(1, 'semester.yaml')
-    roundName, roundConf        = superstructure(0, 'round.yaml')
+    moduleName, moduleConf      = superstructure(3)
+    volumeName, volumeConf      = superstructure(2)
+    semesterName, semesterConf  = superstructure(1)
+    roundName, roundConf        = superstructure(0)
     problems                    = []
 
 

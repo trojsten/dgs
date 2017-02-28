@@ -168,6 +168,7 @@
 %   - číslo
 \NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
 \NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
+\NewDocumentCommand{\todoMessage}{+m}{\colorbox{cyan}{#1}}
 
 \NewDocumentCommand{\loadDocumentSettings}{}{
 	\IfFileExists{input/settings.tex}{

@@ -1,3 +1,6 @@
+.SUFFIXES:
+	MAKEFLAGS += -r
+
 .SECONDARY:
 
 version	=			'1.73'
@@ -108,9 +111,9 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	source/%/round.yaml
+	source/%/meta.yaml
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py ./source/$*/round.yaml
+	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
@@ -123,9 +126,9 @@ output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/$$*/*/*.gp)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	source/%/round.yaml
+	source/%/meta.yaml
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py ./source/$*/round.yaml
+	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
@@ -134,11 +137,13 @@ output/%/solutions.pdf:\
 output/%/html-problems:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\
 	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
+	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
 output/%/html-solutions:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md)))\
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg)))\
+	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
+	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
 output/%/pdf: output/%/problems.pdf output/%/solutions.pdf ;
