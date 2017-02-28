@@ -1,10 +1,13 @@
 # Known issues
 - v \num sa typesetuje hnusná čiarka
 - finetunovať polohy vecí v headeri
+- @P má problém s nested svorkami
 
 # Feature requests
 - viacero autorov vzoráku (xkeyval alebo oddeliť bodkočiarkami, potom typeset čiarok a "a" bez boldu)
 - pridať sponzorov
+- --default-image-extensions
+
 
 # Style
 - Kam chceme písať footnote (pred vs za bodku)?

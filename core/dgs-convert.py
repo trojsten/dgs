@@ -34,7 +34,7 @@ try:
         if args.format == 'html':
             line = re.sub(r'^@L(.*)$', '', line)
             line = re.sub(r'^@H(.*)$', '\g<1>', line) 
-            line = re.sub(r'^@P{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}', '<figure><img src="obrazky/\g<1>.\g<3>" width="500px" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
+            line = re.sub(r'^@P{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}', '<figure><img src="obrazky/\g<1>.\g<3>" style="height: \g<4>" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
         tempfile.write(line)
     
     tempfile.close()
