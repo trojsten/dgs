@@ -18,6 +18,18 @@ parser.add_argument('round', type = int, choices = [1, 2, 3])
 
 args = parser.parse_args()
 
+query = "ssh ksp.sk 'mkdir -p \
+/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/ \
+/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/ \
+/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/'".format(
+    seminar = args.seminar,
+    volume = args.volume,
+    part = args.part,
+    round = args.round,
+)
+print(query)
+os.system(query)
+
 for problem in range(1, 8):
     query = "scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
         seminar = args.seminar,

@@ -111,6 +111,7 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(wildcard source/$$*/*/meta.yaml)\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml
@@ -126,6 +127,7 @@ output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/$$*/*/*.gp)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(wildcard source/$$*/*/meta.yaml)\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml

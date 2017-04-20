@@ -1,0 +1,73 @@
+\NeedsTeXFormat{LaTeX2e}[2011/01/01]
+\ProvidesPackage{dgs-config}[2015/10/10 Trojsten DGS config defaults file]
+
+\NewDocumentCommand{\seminarID}{}{<undefined>}
+\NewDocumentCommand{\seminarShort}{}{<undefined>}
+\NewDocumentCommand{\seminarFull}{}{<undefined seminar name>}
+\NewDocumentCommand{\seminarURL}{}{\texttt{<undefined url>}}
+\NewDocumentCommand{\seminarSubmitURL}{}{\texttt{<undefined url>}}
+\NewDocumentCommand{\seminarDepartmentShort}{}{<undefined department>}
+\NewDocumentCommand{\seminarDepartmentFull}{}{<undefined department>}
+\NewDocumentCommand{\seminarEmail}{}{<undefined email>}
+\NewDocumentCommand{\seminarFounded}{}{<undefined>}
+\NewDocumentCommand{\seminarProblemCount}{}{<undefined>}
+
+\NewDocumentCommand{\currentVolume}{}{<void year>}
+\NewDocumentCommand{\currentSemester}{}{<void semester>}
+\NewDocumentCommand{\currentRound}{}{<void series>}
+\NewDocumentCommand{\currentDeadline}{}{<void deadline>}
+\NewDocumentCommand{\currentSemesterGenitive}{}{%
+    \switch[\number\currentSemester=]%
+        \case{1}zimnej%
+        \case{2}letnej%
+        \otherwise\errorMessage{<currentSemesterGenitive misconfigured: currentSemester is "\currentSemester">}%
+    \endswitch%
+}
+\NewDocumentCommand{\currentSemesterNominative}{}{%
+    \switch[\number\currentSemester=]%
+        \case{1}zimná%
+        \case{2}letná/
+        \otherwise\errorMessage{<currentSemesterNominative misconfigured: currentSemester is "\currentSemester">}%
+    \endswitch
+}
+\NewDocumentCommand{\participantTypeAccusative}{}{%
+    \switch[\participantProper=]%
+        \case{True}účastník
+        \case{False}náhradník
+    \endswitch
+}
+
+\NewDocumentCommand{\problemName}{}{<undefined>}
+\NewDocumentCommand{\problemPointsDescription}{}{<undefined>}
+\NewDocumentCommand{\problemPointsCode}{}{<undefined>}
+
+\NewDocumentCommand{\currentYear}{}{\the\numexpr\seminarFounded+\currentVolume\relax}
+\NewDocumentCommand{\currentAcademicYear}{}{\the\numexpr\currentYear-1\relax/\currentYear}
+
+\NewDocumentCommand{\rootDirectory}{}{<undefined directory>}
+
+\NewDocumentCommand{\getProblemCategories}{m}{}
+
+\NewDocumentCommand{\formatProblemPoints}{m m}{}
+\NewDocumentCommand{\formatProblemCategories}{O{} O{}}{%
+    \ifstrequal{#1}{}{}{%
+        \ifstrequal{#2}{}{%
+            kategória {\large\textbf{#1}}%
+        }{%
+            kategórie {\large\textbf{#1}} a {\large\textbf{#2}}%
+        }%
+    }%
+}
+
+\NewDocumentCommand{\formatPointsWord}{m}{%
+    \switch[\number#1=]%
+        \case{1}bod%
+        \case{2}body%
+        \case{3}body%
+        \case{4}body%
+        \otherwise bodov%
+    \endswitch%
+}
+
+\NewDocumentCommand{\smallLogoRaise}{}{0pt}
+\NewDocumentCommand{\repeatProblemStatement}{}{no}
