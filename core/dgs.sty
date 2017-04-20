@@ -92,6 +92,7 @@
 	urlcolor				= colour-url,
 ]{hyperref}
 
+\RequirePackage[e]{esvect}
 \RequirePackage[all]{nowidow}
 
 % Setup XeLaTeX-specific options
@@ -235,7 +236,7 @@
             \large \textbf{\ifstrequal{#1}{}{}{#1}}%
             \hfill\normalsize%
             \formatProblemPoints{#2}{#3}%
-            \ifstrempty{#1}{}{\quad\formatProblemCategories{\getProblemCategories{\value{problem}}}}%
+            \quad\formatProblemCategories{\getProblemCategories{\value{problem}}}%
         }{%
             \arabic{problem}%
         }%
