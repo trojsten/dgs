@@ -10,7 +10,7 @@
 % Ak ti stačí jednotka bez čísla, tak \si{jednotka}.
 % Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
 % Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
-%	stará o slovenskú desatinnú čiarku miesto bodky.
+%   stará o slovenskú desatinnú čiarku miesto bodky.
 % 
 
 
@@ -34,7 +34,7 @@
 \RequirePackage{
     amsmath,
     siunitx,
-	xparse,
+    xparse,
     enumitem,
     graphicx,
     listings,
@@ -52,19 +52,19 @@
     afterpage,
     pgffor,
     longtable,
-	csvsimple,
-	animate,
-	skull,
+    csvsimple,
+    animate,
+    skull,
     etoolbox,
     MnSymbol,
     fancyhdr,
-	hyphenat,
+    hyphenat,
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
 \captionsetup[figure]{
-	format					= hang,
-	width					= 0.9\textwidth,
+    format                  = hang,
+    width                   = 0.9\textwidth,
 }
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
@@ -81,15 +81,15 @@
     number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {\text{,}},                   % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
-    range-phrase            = {\text{--}},					% 5 -- 10 m/s
+    range-phrase            = {\text{--}},                  % 5 -- 10 m/s
     list-units              = single,                       %
     list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
 }
 
 \RequirePackage[
-	colorlinks				= true,
-	linkcolor				= colour-link,
-	urlcolor				= colour-url,
+    colorlinks              = true,
+    linkcolor               = colour-link,
+    urlcolor                = colour-url,
 ]{hyperref}
 
 \RequirePackage[e]{esvect}
@@ -130,9 +130,9 @@
     BoldItalicFont  = *-bi    
 ]{minionpro}
 \setmonofont[
-	Path			= core/fonts/ ,
-	Extension		= .ttf ,
-	UprightFont     = *-r ,
+    Path            = core/fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
     BoldItalicFont  = *-bi    
@@ -163,7 +163,7 @@
 \RequirePackage{core/dgs-utils}
 
 \NewDocumentCommand{\lang}{O{en} +m}{%
-	\ifstrequals{#1}{\currentLanguage}{#2}{}%
+    \ifstrequals{#1}{\currentLanguage}{#2}{}%
 }
 
 % \romanNumeral{number}
@@ -174,7 +174,7 @@
 \NewDocumentCommand{\todoMessage}{+m}{\colorbox{cyan}{#1}}
 
 \NewDocumentCommand{\loadDocumentSettings}{}{
-	\IfFileExists{input/settings.tex}{
+    \IfFileExists{input/settings.tex}{
         \input{input/settings.tex}                   
     }{
         \PackageError{dgs}{Cannot load document settings}{File "input/settings.tex" does not exist}
@@ -201,7 +201,7 @@
 }
 
 \NewDocumentCommand{\currentProblem}{}{%
-	\padzero{00}{\arabic{problem}}%
+    \padzero{00}{\arabic{problem}}%
 }
 
 % \insertPicture{filename}{height}{caption}{label}
@@ -266,7 +266,7 @@
 }
 
 \NewDocumentCommand{\protectedInput}{m}{%
-	\IfFileExists{#1}{%
+    \IfFileExists{#1}{%
         \input{#1}%
     }{%
         \errorMessage{<MISSING FILE \texttt{#1}!>}\\%
@@ -274,29 +274,29 @@
 }
 
 \NewDocumentCommand{\addProblems}{}{%   
-	\setcounter{problem}{0}%
-	\input{\rootDirectory/recipe-problems.tex}%
+    \setcounter{problem}{0}%
+    \input{\rootDirectory/recipe-problems.tex}%
 }
 
 \NewDocumentCommand{\addProblem}{m m m}{%
-	\stepcounter{problem}%
-	\createProblemHeader{#1}{#2}{#3}%
-	\protectedInput{\rootDirectory/\currentProblem/problem.tex}%
+    \stepcounter{problem}%
+    \createProblemHeader{#1}{#2}{#3}%
+    \protectedInput{\rootDirectory/\currentProblem/problem.tex}%
 }
 
 \NewDocumentCommand{\addSolutions}{}{%
-	\setcounter{problem}{0}%
+    \setcounter{problem}{0}%
     \input{\rootDirectory/recipe-solutions.tex}%
 }
 
 \NewDocumentCommand{\addSolution}{m m m m}{%
-	\stepcounter{problem}%
-	\createSolutionHeader{#1}{#2}{#3}{#4}
-%	{
-%		\small\it
-%		\protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
-%	}
-	\protectedInput{\rootDirectory/\currentProblem/solution.tex}%
+    \stepcounter{problem}%
+    \createSolutionHeader{#1}{#2}{#3}{#4}
+%   {
+%       \small\it
+%       \protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
+%   }
+    \protectedInput{\rootDirectory/\currentProblem/solution.tex}%
 }
 
 % \exampleIO[verbatim input][verbatim output]
