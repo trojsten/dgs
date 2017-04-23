@@ -39,7 +39,9 @@ try:
     
     tempfile.close()
     
-    assert os.system('pandoc -R -S --no-tex-ligatures --mathjax --from markdown --latex-engine=xelatex --to {0} -F {3}/core/dgs-filter.py --output="{2}" {1}'.format(args.format, tempfile.name, args.outfile.name, os.getcwd())) == 0
+    assert os.system('pandoc -R -S --no-tex-ligatures --mathjax --from markdown --latex-engine=xelatex --to {0} --filter {3}/core/pandoc_crossref.py --output="{2}" {1}'.format(
+        args.format, tempfile.name, args.outfile.name, os.getcwd())
+    ) == 0
     
     os.remove(tempfile.name)
 except IOError as e:
