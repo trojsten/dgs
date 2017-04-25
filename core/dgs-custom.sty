@@ -3,7 +3,7 @@
 \NewDocumentCommand{\loadRegularStyle}{}{   
     \pagestyle{main}
     \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
-    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{\quad}[]
     \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
     \titlespacing{\section}{0pt}{8pt}{8pt}
     \titlespacing{\subsection}{0pt}{8pt}{0pt}
@@ -16,12 +16,12 @@
 
 \NewDocumentCommand{\loadProblemsStyle}{}{
     \pagestyle{problems}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
+    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{4pt}{}[]
 }
 
 \NewDocumentCommand{\loadSolutionsStyle}{}{
     \pagestyle{solutions}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{2pt}{}[]
+    \titleformat{\subsection}[hang]{\large}{\bfseries\currentRound.\arabic{problem}}{4pt}{}[]
 }
 
 % paragraph settings -- formatting paragraphs and list environments

@@ -70,7 +70,7 @@
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
 \sisetup{
-    separate-uncertainty,                                   % 7.2 ± 0.5
+    separate-uncertainty    = true,                         % 7.2 ± 0.5
     detect-all              = true,                         % chceme zachovávať formátovanie prostredia
     multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
     per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
@@ -97,69 +97,10 @@
 
 % Setup XeLaTeX-specific options
 
-\RequirePackage{mathspec}                                   % includes fontspec
-\RequirePackage{polyglossia}                                % multi-language support
-\RequirePackage{xunicode}
-\setdefaultlanguage{slovak}
-
-% Disgusting hacks to bypass idiotic limitations of LaTeX -- 16 alphabets per document
-\makeatletter
-\NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
-
-\def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
-\patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
-\patchcmd{\select@group}{\sixt@@n}{\@cclvi}{}{}
-
-\mathcode`\%="7025
-
-\makeatother
-
-% Setup fonts -- see fontspec/mathspec documentation.
-% Fonty sa načítavajú zo súborov .ttf a .otf (v žiadnom prípade nepoužívame systémové fonty)
-\defaultfontfeatures{
-    Mapping         = tex-text,
-    Scale           = MatchLowercase,
-    Ligatures       = TeX
-}
-\setallmainfonts[
-    Path            = core/fonts/ ,
-    Extension       = .otf ,
-    UprightFont     = *-r ,
-    BoldFont        = *-b ,
-    ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
-]{minionpro}
-\setmonofont[
-    Path            = core/fonts/ ,
-    Extension       = .ttf ,
-    UprightFont     = *-r ,
-    BoldFont        = *-b ,
-    ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
-]{ubuntumono}
-\setsansfont[
-    Path            = core/fonts/ ,
-    Extension       = .ttf ,
-    UprightFont     = *-r ,
-    BoldFont        = *-b ,
-    ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
-]{verdana}
-
-\makeatletter                                               % handler na chybu v mathspec, aby fonty v URL obsahovali monospace čísla
-    \DeclareMathSymbol{0}{\mathalpha}{\eu@DigitsArabic@symfont}{`0}
-    \DeclareMathSymbol{1}{\mathalpha}{\eu@DigitsArabic@symfont}{`1}
-    \DeclareMathSymbol{2}{\mathalpha}{\eu@DigitsArabic@symfont}{`2}
-    \DeclareMathSymbol{3}{\mathalpha}{\eu@DigitsArabic@symfont}{`3}
-    \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
-    \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
-    \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
-    \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
-    \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
-    \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
-\makeatother
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
+\RequirePackage{core/dgs-fonts}
+\RequirePackage{core/dgs-hacks}
 \RequirePackage{core/dgs-utils}
 
 \NewDocumentCommand{\lang}{O{en} +m}{%
@@ -191,11 +132,6 @@
     }
 }
 
-% \Repeat
-\ExplSyntaxOn
-\cs_new_eq:NN \Repeat \prg_replicate:nn
-\ExplSyntaxOff
-
 \NewDocumentCommand{\genderSwitch}{m m}{%
     \ifstrequal{\recipientGender}{male}{#1}{#2}%
 }
@@ -204,8 +140,8 @@
     \padzero{00}{\arabic{problem}}%
 }
 
-% \insertPicture{filename}{height}{caption}{label}
-% Vloží obrázok s určenou výškou
+% \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
+% Insert a picture, protected against nonexistent files
 %   - meno súboru, hľadá v aktuálnom priečinku
 %   - prípona súboru
 %   - prípona súboru pre HTML (ignoruje sa)
@@ -231,7 +167,7 @@
 %   - počet bodov za popis (iba KSP)
 %   - počet bodov za kód (iba KSP)
 \NewDocumentCommand{\createProblemHeader}{m m m}{
-    \subsection{
+    \subsection{%
         \texorpdfstring{%
             \large \textbf{\ifstrequal{#1}{}{}{#1}}%
             \hfill\normalsize%
@@ -250,7 +186,7 @@
 %   - meno opravovateľa
 %   - gramatický rod opravovateľa
 \NewDocumentCommand{\createSolutionHeader}{m m m m}{
-    \subsection{
+    \subsection{%
         \texorpdfstring{%
             \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
             \hfill\normalsize%
