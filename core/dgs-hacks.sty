@@ -1,0 +1,28 @@
+\makeatletter
+
+% Fixes mathspec bug -- URL numbers are rendered with wrong font
+    \DeclareMathSymbol{0}{\mathalpha}{\eu@DigitsArabic@symfont}{`0}
+    \DeclareMathSymbol{1}{\mathalpha}{\eu@DigitsArabic@symfont}{`1}
+    \DeclareMathSymbol{2}{\mathalpha}{\eu@DigitsArabic@symfont}{`2}
+    \DeclareMathSymbol{3}{\mathalpha}{\eu@DigitsArabic@symfont}{`3}
+    \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
+    \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
+    \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
+    \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
+    \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
+    \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
+
+    \NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
+
+% Disgusting hacks to bypass idiotic limitations of LaTeX -- 16 alphabets per document
+    \def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
+    \patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
+    \patchcmd{\select@group}{\sixt@@n}{\@cclvi}{}{}
+
+% Render percent sign with nice font, not ugly Computer modern
+    \mathcode`\%="7025
+
+\makeatother
+
+% Fix Pandoc's tightlist problem
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}

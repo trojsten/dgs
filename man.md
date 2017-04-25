@@ -1,7 +1,16 @@
 # Štruktúra
 
 ## Moduly
-Rôzne dokumenty sa musia buildovať podľa rozličných templatov.
+Rôzne dokumenty sa musia buildovať podľa rozličných templatov. Zatiaľ by sme mali mať
+
+- semináre (spoločné pre všetky, líšia sa iba štýlom), momentálne iba dve knižky
+    - problems
+    - solutions
+
+- Náboj
+    - booklet (teda veľká knižka)
+    - tearoff (trhacie zadania s čiarovými kódmi)
+    - answers (výsledky pre opravovateľov, grupované modulo 5)
 
 ## Štýly
 
@@ -35,7 +44,7 @@ Momentálne používame mierne nešťastnú custom syntax:
 
 Časom by z toho chcelo byť niečo štandardné.
 
-### Odkazy
+### Odkazy na URL
 Klasická markdownová syntax:
 
     [odkaz](http://odkaz.com/)
@@ -44,4 +53,5 @@ alebo ak sa má zobraziť skutočná URL:
     
     <http://odkaz.com/>
 
-### 
+### Cross-referencie
+Rozšírenie pandoc-crossref

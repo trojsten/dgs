@@ -1,0 +1,37 @@
+\RequirePackage{mathspec}                                   % includes fontspec
+\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage{xunicode}
+\setdefaultlanguage{slovak}
+
+% Setup fonts -- see fontspec/mathspec documentation.
+% Fonts are loaded from .ttf and .otf files in the core/fonts/ directory. We NEVER use system fonts.
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Scale           = MatchLowercase,
+    Ligatures       = TeX
+}
+\setallmainfonts[
+    Path            = core/fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{minionpro}
+\setmonofont[
+    Path            = core/fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{ubuntumono}
+\setsansfont[
+    Path            = core/fonts/ ,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{verdana}
+
