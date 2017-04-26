@@ -14,13 +14,15 @@
 	\vspace*{2em}
 
     {
-        \section{\texorpdfstring{Zadania \currentRound. kola \currentSemesterGenitive\ časti}{}}
+        \section{\texorpdfstring{Zadania (* booklet.round.id *). kola (* booklet.part.genitive *) časti}{}}
 		\centering
 		\vspace{-1.3em}
-        {Termín odoslania \currentDeadline}\\[2pt]
+        Termín odoslania (* booklet.round.deadline *)\\[2pt]
     } 
         
 	\pagestyle{problems}    
 	\loadProblemsStyle
-	\addProblems                 
+    %% for problem in round.problems
+        \addProblem{(* problem.name *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
+    %% endfor
 \end{document}

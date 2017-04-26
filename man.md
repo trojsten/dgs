@@ -12,6 +12,10 @@ Rôzne dokumenty sa musia buildovať podľa rozličných templatov. Zatiaľ by s
     - tearoff (trhacie zadania s čiarovými kódmi)
     - answers (výsledky pre opravovateľov, grupované modulo 5)
 
+- pozvánka na sústredenie
+
+- potvrdenie o účasti / bezinfekčnosti / whatever
+
 ## Štýly
 
 ### Semináre
@@ -37,12 +41,15 @@ Na všetky fyzikálne jednotky používame package `siunitx`. Všetky fyzikálne
 - `\ang{1;24;30}` pre uhly (desatinné číslo, alebo minúty a sekundy)
 
 ### Obrázky
-
 Momentálne používame mierne nešťastnú custom syntax:
 
 `@P{názov bez prípony}{prípona pre PDF}{prípona pre web}{výška obrázka pre PDF}{popis}{label}`
 
-Časom by z toho chcelo byť niečo štandardné.
+Časom by z toho chcelo byť niečo štandardné. Problémy však sú s viacerými vecami, kvôli ktorým to asi nepôjde:
+
+- *musí* sa dať nastaviť výška pre PDF
+- *musia* byť podporované rôzne typy súborov pre rôzne targety
+- možno custom filter, uvidíme
 
 ### Odkazy na URL
 Klasická markdownová syntax:
@@ -51,7 +58,7 @@ Klasická markdownová syntax:
 
 alebo ak sa má zobraziť skutočná URL:
     
-    <http://odkaz.com/>
+    <http://www.odkaz.com/>
 
 ### Cross-referencie
-Rozšírenie pandoc-crossref
+Rozšírenie pandoc-crossref: label {#eq:rovnica} a ref {@eq:rovnica}
