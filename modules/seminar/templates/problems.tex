@@ -2,6 +2,7 @@
 
 \usepackage{core/dgs}
 \usepackage{core/config/dgs-config}
+\RequirePackage{modules/seminar/seminar}
 
 \loadDocumentSettings
 \usepackage{core/dgs-custom}
@@ -14,15 +15,15 @@
     \vspace*{2em}
 
     {
-        \section{\texorpdfstring{Zadania (* round.id *). kola (* part.genitive *) časti}{}}
+        \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
         \centering
         \vspace{-1.3em}
-        Termín odoslania (* round.deadline.strftime('%Y--%m--%d') *)\\[2pt]
+        Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
     } 
         
     \pagestyle{problems}    
     \loadProblemsStyle
     %% for problem in round.problems
-        \addProblem{(* problem.name *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
+    \addSeminarProblem{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
     %% endfor
 \end{document}

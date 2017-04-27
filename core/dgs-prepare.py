@@ -56,7 +56,6 @@ def processMetadata():
 
     try:
         with open('input/settings.tex', 'w+') as output:
-            output.write('\\RenewDocumentCommand{{\\rootDirectory}}{{}}{{{0}}}\n'.format(inputRootDir))
             output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(volumeName))
             output.write('\\RenewDocumentCommand{{\\currentSemester}}{{}}{{{0}}}\n'.format(semesterName))
             output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(roundName))

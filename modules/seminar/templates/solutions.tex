@@ -2,6 +2,7 @@
 
 \usepackage{core/dgs}
 \usepackage{core/config/dgs-config}
+\RequirePackage{modules/seminar/seminar}
 
 \loadDocumentSettings
 \usepackage{core/dgs-custom}
@@ -13,9 +14,11 @@
 	\thispagestyle{first}
 	\vspace*{2em}
    
-    \section{\texorpdfstring{Riešenia \currentRound. kola \currentSemesterGenitive\ časti}{}}
+    \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
         
     \pagestyle{problems}    
 	\loadSolutionsStyle
-    \addSolutions                 
+    %% for problem in round.problems
+    \addSeminarSolution{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.solutionBy *)}{(* problem.evaluation *)}{(* problem.genderSuffix *)}
+    %% endfor
 \end{document}

@@ -1,59 +1,69 @@
 #!/usr/bin/python3
 
 import argparse, yaml, os, jinja2, sys
-from utils import jinjaEnv, mergeIntoDict
+from utils import jinjaEnv, mergeIntoDict, renderList
 
 parser = argparse.ArgumentParser(
     description             = "Prepare and compile a DeGeŠ round from repository",
 )
 parser.add_argument('seminar', choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX'])
 parser.add_argument('volume', type = int)
-parser.add_argument('part', type = int, choices = [1, 2])
+parser.add_argument('semester', type = int, choices = [1, 2])
 parser.add_argument('round', type = int, choices = [1, 2, 3])
 args = parser.parse_args()
 
+thisdir = os.path.dirname(os.path.realpath(__file__))
+
 try:
-    seminarMeta = yaml.load(open('../../source/{seminar}/meta.yaml'.format(seminar = args.seminar), 'r'))
-    volumeMeta = yaml.load(open('../../source/{seminar}/{volume}/meta.yaml'.format(seminar = args.seminar, volume = args.volume), 'r'))
-    partMeta = yaml.load(open('../../source/{seminar}/{volume}/{part}/meta.yaml'.format(seminar = args.seminar, volume = args.volume, part = args.part), 'r'))
-    roundMeta = yaml.load(open('../../source/{seminar}/{volume}/{part}/{round}/meta.yaml'.format(seminar = args.seminar, volume = args.volume, part = args.part, round = args.part), 'r'))
+    os.chdir('../../')
+    roundDirectory = 'source/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
+
+    seminarMeta     = yaml.load(open(os.path.join(roundDirectory, '..', '..', '..', 'meta.yaml'), 'r'))
+    volumeMeta      = yaml.load(open(os.path.join(roundDirectory, '..', '..', 'meta.yaml'), 'r'))
+    semesterMeta    = yaml.load(open(os.path.join(roundDirectory, '..', 'meta.yaml'), 'r'))
+    roundMeta       = yaml.load(open(os.path.join(roundDirectory, 'meta.yaml'), 'r'))
+
+    problemsMetas   = []
+    for name in sorted(os.listdir(roundDirectory)):
+        if os.path.isdir(os.path.join(roundDirectory, name)) and os.path.isfile(os.path.join(roundDirectory, name, 'meta.yaml')):
+            problemMeta = yaml.load(open(os.path.join(roundDirectory, name, 'meta.yaml')))
+            problemMeta['id'] = name
+            problemMeta['solutionBy'] = renderList(problemMeta['solutionBy'], textbf = True)
+            problemMeta['evaluation'] = renderList(problemMeta['evaluation'], textbf = True)
+            problemsMetas.append(problemMeta)
+
 except FileNotFoundError as e:
-    print("Could not open file {}".format(e))
+    print("Fatal: could not open file {}".format(e))
     sys.exit(-1)
 
 context = {
     'seminar': seminarMeta,
-    'part': partMeta,
+    'semester': semesterMeta,
     'round': roundMeta,
 }
 
 update = {
     'seminar': {
-        'id': args.seminar,
+        'id':   args.seminar,
+    },
+    'volume': {
+        'id':   '{:02d}'.format(args.volume),
+    },
+    'semester': {
+        'id': args.semester,
+        'nominative': ['zimná', 'letná'][args.semester - 1],
+        'genitive': ['zimnej', 'letnej'][args.semester - 1],
     },
     'round': {
         'id': args.round,
-    },
-    'part': {
-        'id': args.part,
-        'genitive': ['zimnej', 'letnej'][args.part - 1],
+        'problems': problemsMetas,
     },
 }
 
 context = mergeIntoDict(context, update)
 
-latex_jinja_env = jinja2.Environment(
-	block_start_string = '(@',
-	block_end_string = '@)',
-	variable_start_string = '(*',
-	variable_end_string = '*)',
-	comment_start_string = '\#{',
-	comment_end_string = '}',
-	line_statement_prefix = '%%',
-	line_comment_prefix = '%#',
-	trim_blocks = True,
-	autoescape = False,
-	loader = jinja2.FileSystemLoader('templates')
-)
+outputDir = 'input/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
-print(jinjaEnv('templates').get_template('problems.tex').render(context))
+print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template('problems.tex').render(context), file = open(os.path.join(outputDir, 'problems.tex'), 'w'))
+print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template('solutions.tex').render(context), file = open(os.path.join(outputDir, 'solutions.tex'), 'w'))
+
