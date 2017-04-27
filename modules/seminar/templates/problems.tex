@@ -10,18 +10,18 @@
  
 \begin{document}
     \loadRegularStyle
-	\thispagestyle{first}
-	\vspace*{2em}
+    \thispagestyle{first}
+    \vspace*{2em}
 
     {
-        \section{\texorpdfstring{Zadania (* booklet.round.id *). kola (* booklet.part.genitive *) časti}{}}
-		\centering
-		\vspace{-1.3em}
-        Termín odoslania (* booklet.round.deadline *)\\[2pt]
+        \section{\texorpdfstring{Zadania (* round.id *). kola (* part.genitive *) časti}{}}
+        \centering
+        \vspace{-1.3em}
+        Termín odoslania (* round.deadline.strftime('%Y--%m--%d') *)\\[2pt]
     } 
         
-	\pagestyle{problems}    
-	\loadProblemsStyle
+    \pagestyle{problems}    
+    \loadProblemsStyle
     %% for problem in round.problems
         \addProblem{(* problem.name *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
     %% endfor
