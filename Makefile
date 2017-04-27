@@ -106,6 +106,9 @@ input/%.gp:\
 
 ### Booklet rules
 
+input/%/problems.tex:
+	./modules/seminar/build.py FKS 32 2 3
+
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
@@ -116,9 +119,9 @@ output/%/problems.pdf:\
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/problems.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
 
 output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
@@ -132,9 +135,9 @@ output/%/solutions.pdf:\
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode modules/seminar/templates/solutionsa.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode core/templates/solutions.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode modules/seminar/templates/solutionsa.tex
 
 output/%/html-problems:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\

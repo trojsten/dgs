@@ -27,3 +27,17 @@ def jinjaEnv(directory):
 	autoescape = False,
 	loader = jinja2.FileSystemLoader(directory)
     )
+
+def renderList(what, **kwargs):
+    textbf = kwargs.get('textbf', False)
+
+    if textbf:
+        what = ['\\textbf{{{}}}'.format(x) for x in what]
+
+    for i, item in enumerate(what[:-2]):
+        what[i] = '{},'.format(item)
+
+    if len(what) > 1:
+        what[-2] = '{} a'.format(what[-2])
+    
+    return ' '.join(what)

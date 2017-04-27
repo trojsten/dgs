@@ -1,17 +1,36 @@
-\NewDocumentCommand{\addSeminarProblem}{m m m}{%
+% Add seminar problem
+%   seminar             -
+%   volume              -
+%   semester            -
+%   round               -
+%   problem             - all five identify the file to include
+%   title               the title of the problem
+%   pointsText          points to be awarded for text
+%   pointsCode          points to be awarded for description
+\NewDocumentCommand{\addSeminarProblem}{m m m m m m m m}{%
     \stepcounter{problem}%
-    \createProblemHeader{#1}{#2}{#3}%
-    \protectedInput{\rootDirectory/\currentProblem/problem.tex}%
+    \createProblemHeader{#6}{#7}{#8}%
+    \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/problem.tex}%
 }
 
-\NewDocumentCommand{\addSeminarSolution}{m m m m}{%
+% Add seminar solution
+%   seminar             -
+%   volume              -
+%   semester            -
+%   round               -
+%   problem             - all five identify the file to include
+%   title               the title of the problem
+%   authors             formatted list of authors
+%   evaluator           formatted list of evaluators
+%   genderSuffix        gender suffix (opravoval(|a|i|o)
+\NewDocumentCommand{\addSeminarSolution}{m m m m m m m m m}{%
     \stepcounter{problem}%
-    \createSolutionHeader{#1}{#2}{#3}{#4}
+    \createSolutionHeader{#6}{#7}{#8}{#9}
 %   {
 %       \small\it
 %       \protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
 %   }
-    \protectedInput{\rootDirectory/\currentProblem/solution.tex}%
+    \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/solution.tex}%
 }
 
 % \createProblemHeader{name}{pointsDescription}{pointsCode}
@@ -27,7 +46,7 @@
             \formatProblemPoints{#2}{#3}%
             \quad\formatProblemCategories{\getProblemCategories{\value{problem}}}%
         }{%
-            \arabic{problem} \ifstrequal{#1}{}{}{#1}%
+            #1
         }%
     }
 }
@@ -44,14 +63,69 @@
             \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
             \hfill\normalsize%
             \ifstrempty{#2}{%
-                \ifstrempty{#3}{}{opravoval#4 \textbf{#3}}%
+                \ifstrempty{#3}{}{opravoval#4 #3}%
             }{%
-                vzorák \textbf{#2}\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
+                vzorák #2\ifstrempty{#3}{}{, opravoval#4 #3}%
             }%
         }{%
-            \arabic{problem}%
+            #1
         }%
     }
 }
 
+% fancyhdr -- fancy pagestyle
+\fancypagestyle{main}{
+    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/logo.pdf}}}
+    \fancyhead[LE,RO]{(* seminar.fullName *)}
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.url *)}}
+}
 
+\fancypagestyle{problems}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Zadania \currentRound. kola \currentSemesterGenitive\ časti -- \currentDeadline}}
+}
+
+\fancypagestyle{solutions}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Riešenia \currentRound. kola \currentSemesterGenitive\ časti}}
+}
+
+\fancypagestyle{rules}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+    \fancyhead[L]{    
+        \begin{minipage}{0.15\textwidth}
+            \flushleft
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+            \vspace{16pt}
+        \end{minipage}
+    }
+    
+    \fancyhead[C]{
+        \begin{minipage}{0.7\textwidth}
+            \centering
+            \vspace{4pt}
+            {\Large (* seminar.fullName *)}\\[4pt]
+            {\large (* volume.id|roman *). ročník, (* volume.academicYear *)}\\[8pt]            
+            {\footnotesize (* seminar.short *),\ (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
+            \vspace{6pt}
+        \end{minipage}        
+    }           
+
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \flushright
+            \includegraphics[width = 30mm, keepaspectratio = true]{core/logo/\seminarID/logo.pdf}\\[0pt]
+            \vspace{4pt}
+        \end{minipage}
+    }
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.url *)}}
+}    

@@ -125,10 +125,6 @@
     }
 }
 
-\NewDocumentCommand{\genderSwitch}{m m}{%
-    \ifstrequal{\recipientGender}{male}{#1}{#2}%
-}
-
 \NewDocumentCommand{\currentProblem}{}{%
     \padzero{00}{\arabic{problem}}%
 }
