@@ -1,0 +1,15 @@
+texts:
+    short:              "KMS"
+    full:               "Korešpondenčný seminár z matematiky"
+    URL:                "https://www.kms.sk/"
+    submitURL:          "https://submit.kms.sk/"
+    departmentShort:    "KMANM"
+    departmentFull:     "Katedra teoretickej fyziky a didaktiky fyziky"
+    email:              "otazky@kms.sk"
+
+headers:
+    categories:         [["B0"], ["B"], ["B"], ["A", "B"], ["A", "B"], ["A"], ["A"]]
+    kappaLimit:         [1, 2, 3, 4, 7, -1, -1, -1, -1, -1]
+
+hacks:
+    smallLogoRaise:     "-2pt"

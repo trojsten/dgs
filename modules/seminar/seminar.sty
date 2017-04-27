@@ -1,0 +1,57 @@
+\NewDocumentCommand{\addSeminarProblem}{m m m}{%
+    \stepcounter{problem}%
+    \createProblemHeader{#1}{#2}{#3}%
+    \protectedInput{\rootDirectory/\currentProblem/problem.tex}%
+}
+
+\NewDocumentCommand{\addSeminarSolution}{m m m m}{%
+    \stepcounter{problem}%
+    \createSolutionHeader{#1}{#2}{#3}{#4}
+%   {
+%       \small\it
+%       \protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
+%   }
+    \protectedInput{\rootDirectory/\currentProblem/solution.tex}%
+}
+
+% \createProblemHeader{name}{pointsDescription}{pointsCode}
+% Create a new problem header
+%     title               problem title
+%     pointsText          points for text description
+%     pointsCode          points for code (KSP and Prask only)
+\NewDocumentCommand{\createProblemHeader}{m m m}{
+    \subsection{%
+        \texorpdfstring{%
+            \large \textbf{\ifstrequal{#1}{}{}{#1}}%
+            \hfill\normalsize%
+            \formatProblemPoints{#2}{#3}%
+            \quad\formatProblemCategories{\getProblemCategories{\value{problem}}}%
+        }{%
+            \arabic{problem} \ifstrequal{#1}{}{}{#1}%
+        }%
+    }
+}
+
+% \createSolutionHeader[name][author][evaluator][gender]
+% Vytvorí novú hlavičku vzorového riešenia
+%   - názov úlohy
+%   - meno autora vzorového riešenia
+%   - meno opravovateľa
+%   - gramatický rod opravovateľa
+\NewDocumentCommand{\createSolutionHeader}{m m m m}{
+    \subsection{%
+        \texorpdfstring{%
+            \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
+            \hfill\normalsize%
+            \ifstrempty{#2}{%
+                \ifstrempty{#3}{}{opravoval#4 \textbf{#3}}%
+            }{%
+                vzorák \textbf{#2}\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
+            }%
+        }{%
+            \arabic{problem}%
+        }%
+    }
+}
+
+

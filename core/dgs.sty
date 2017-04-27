@@ -86,17 +86,17 @@
     list-final-separator    = {\ a\ },                      % 5, 7 a 10 m/s
 }
 
+%
 \RequirePackage[
     colorlinks              = true,
-    linkcolor               = colour-link,
-    urlcolor                = colour-url,
+    linkcolor               = colour-link,                  % custom Trojsten link colour
+    urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
 
-\RequirePackage[e]{esvect}
+\RequirePackage[e]{esvect}                                  % nicer vector overset
 \RequirePackage[all]{nowidow}
 
 % Setup XeLaTeX-specific options
-
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 \RequirePackage{core/dgs-fonts}
@@ -106,13 +106,6 @@
 \NewDocumentCommand{\lang}{O{en} +m}{%
     \ifstrequals{#1}{\currentLanguage}{#2}{}%
 }
-
-% \romanNumeral{number}
-% Rímske číslo
-%   - číslo
-\NewDocumentCommand{\romanNumeral}{m}{\uppercase\expandafter{\romannumeral#1\relax}}
-\NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
-\NewDocumentCommand{\todoMessage}{+m}{\colorbox{cyan}{#1}}
 
 \NewDocumentCommand{\loadDocumentSettings}{}{
     \IfFileExists{input/settings.tex}{
@@ -161,80 +154,6 @@
     \end{figure}%
 }
 
-% \createProblemHeader[name][pointsDescription][pointsCode]
-% Vytvorí novú hlavičku zadania úlohy
-%   - názov úlohy
-%   - počet bodov za popis (iba KSP)
-%   - počet bodov za kód (iba KSP)
-\NewDocumentCommand{\createProblemHeader}{m m m}{
-    \subsection{%
-        \texorpdfstring{%
-            \large \textbf{\ifstrequal{#1}{}{}{#1}}%
-            \hfill\normalsize%
-            \formatProblemPoints{#2}{#3}%
-            \quad\formatProblemCategories{\getProblemCategories{\value{problem}}}%
-        }{%
-            \arabic{problem}%
-        }%
-    }
-}
-
-% \createSolutionHeader[name][author][evaluator][gender]
-% Vytvorí novú hlavičku vzorového riešenia
-%   - názov úlohy
-%   - meno autora vzorového riešenia
-%   - meno opravovateľa
-%   - gramatický rod opravovateľa
-\NewDocumentCommand{\createSolutionHeader}{m m m m}{
-    \subsection{%
-        \texorpdfstring{%
-            \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
-            \hfill\normalsize%
-            \ifstrempty{#2}{%
-                \ifstrempty{#3}{}{opravoval#4 \textbf{#3}}%
-            }{%
-                vzorák \textbf{#2}\ifstrempty{#3}{}{, opravoval#4 \textbf{#3}}%
-            }%
-        }{%
-            \arabic{problem}%
-        }%
-    }
-}
-
-\NewDocumentCommand{\protectedInput}{m}{%
-    \IfFileExists{#1}{%
-        \input{#1}%
-    }{%
-        \errorMessage{<MISSING FILE \texttt{#1}!>}\\%
-    }%
-}
-
-\NewDocumentCommand{\addProblems}{}{%   
-    \setcounter{problem}{0}%
-    \input{\rootDirectory/recipe-problems.tex}%
-}
-
-\NewDocumentCommand{\addProblem}{m m m}{%
-    \stepcounter{problem}%
-    \createProblemHeader{#1}{#2}{#3}%
-    \protectedInput{\rootDirectory/\currentProblem/problem.tex}%
-}
-
-\NewDocumentCommand{\addSolutions}{}{%
-    \setcounter{problem}{0}%
-    \input{\rootDirectory/recipe-solutions.tex}%
-}
-
-\NewDocumentCommand{\addSolution}{m m m m}{%
-    \stepcounter{problem}%
-    \createSolutionHeader{#1}{#2}{#3}{#4}
-%   {
-%       \small\it
-%       \protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
-%   }
-    \protectedInput{\rootDirectory/\currentProblem/solution.tex}%
-}
-
 % \exampleIO[verbatim input][verbatim output]
 % Príklad vstupu/výstupu (KSP)
 %   - verbatim vstup
@@ -279,8 +198,6 @@
 }
 \char_set_catcode_end_line:n{`\^^M}
 \ExplSyntaxOff
-
-
 
 \endinput                                                           % everything below is safely ignored
 

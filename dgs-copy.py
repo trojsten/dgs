@@ -9,7 +9,7 @@ VERSION = "1.00"
 DATE = "2016-09-11"
 
 parser = argparse.ArgumentParser(
-    description             = "Prepare and compile a DeGeŠ round from repository",
+    description             = "Copy a DeGeŠ round to www-archiv",
 )
 parser.add_argument('seminar', choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX'])
 parser.add_argument('volume', type = int)
