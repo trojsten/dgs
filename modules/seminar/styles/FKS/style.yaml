@@ -1,12 +1,13 @@
 seminar:
     id:                 "FKS"
     shortName:          "FKS"
-    founded:            1981
+    founded:            1984
     fullName:           "Fyzikálny korešpondenčný seminár"
     URL:                "https://www.fks.sk/"
     submitURL:          "https://submit.fks.sk/"
     departmentShort:    "KTFDF"
     departmentFull:     "Katedra teoretickej fyziky a didaktiky fyziky"
+    fullAddress:        "Mlynská doline, 842 48 Bratislava"
     email:              "otazky@fks.sk"
 
 problems:

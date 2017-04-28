@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse, yaml, os, jinja2, sys
-from utils import jinjaEnv, mergeIntoDict, renderList
+from utils import jinjaEnv, mergeInto, renderList
 
 parser = argparse.ArgumentParser(
     description             = "Prepare and compile a DeGeŠ round from repository",
@@ -41,6 +41,8 @@ context = {
     'round': roundMeta,
 }
 
+style = yaml.load(open(os.path.join('modules', 'seminar', 'styles', args.seminar, 'style.yaml'), 'r'))
+
 update = {
     'seminar': {
         'id':   args.seminar,
@@ -59,12 +61,13 @@ update = {
     },
 }
 
-context = mergeIntoDict(context, update)
+
+context = mergeInto(mergeInto(context, style), update)
 
 outputDir = 'input/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
-print(outputDir)
-
-for template in ['problems.tex', 'solutions.tex', 'style.tex'] :
+for template in ['problems.tex', 'solutions.tex']:
     print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template(template).render(context), file = open(os.path.join(outputDir, template), 'w'))
 
+for template in ['root.sty']:
+    print(jinjaEnv(os.path.join(thisdir, 'styles')).get_template(template).render(context), file = open(os.path.join(outputDir, template), 'w'))
