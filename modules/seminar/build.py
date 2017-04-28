@@ -15,7 +15,6 @@ args = parser.parse_args()
 thisdir = os.path.dirname(os.path.realpath(__file__))
 
 try:
-    os.chdir('../../')
     roundDirectory = 'source/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
     seminarMeta     = yaml.load(open(os.path.join(roundDirectory, '..', '..', '..', 'meta.yaml'), 'r'))
@@ -64,6 +63,8 @@ context = mergeIntoDict(context, update)
 
 outputDir = 'input/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
-print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template('problems.tex').render(context), file = open(os.path.join(outputDir, 'problems.tex'), 'w'))
-print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template('solutions.tex').render(context), file = open(os.path.join(outputDir, 'solutions.tex'), 'w'))
+print(outputDir)
+
+for template in ['problems.tex', 'solutions.tex', 'style.tex'] :
+    print(jinjaEnv(os.path.join(thisdir, 'templates')).get_template(template).render(context), file = open(os.path.join(outputDir, template), 'w'))
 

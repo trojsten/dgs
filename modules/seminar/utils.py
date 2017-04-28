@@ -29,10 +29,13 @@ def jinjaEnv(directory):
     )
 
 def renderList(what, **kwargs):
+    if (type(what) == str):
+        what = [what]
+
     textbf = kwargs.get('textbf', False)
 
     if textbf:
-        what = ['\\textbf{{{}}}'.format(x) for x in what]
+        what = ['\\textbf{{{}}}'.format(x) for x in what if x != '']
 
     for i, item in enumerate(what[:-2]):
         what[i] = '{},'.format(item)

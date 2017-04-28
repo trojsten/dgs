@@ -107,7 +107,14 @@ input/%.gp:\
 ### Booklet rules
 
 input/%/problems.tex:
-	./modules/seminar/build.py FKS 32 2 3
+	$(eval words := $(subst /, ,$*))
+	mkdir -p $(dir $@)
+	./modules/seminar/build.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
+
+input/%/solutions.tex:
+	$(eval words := $(subst /, ,$*))
+	mkdir -p $(dir $@)
+	./modules/seminar/build.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
@@ -115,6 +122,7 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
+	input/$$*/problems.tex\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml
@@ -131,13 +139,14 @@ output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
+	input/$$*/solutions.tex\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
 	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode modules/seminar/templates/solutionsa.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode modules/seminar/templates/solutionsa.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex
 
 output/%/html-problems:\
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\
