@@ -2,11 +2,11 @@
 
 import argparse, yaml, os, jinja2
 
-def mergeIntoDict(a, b):
+def mergeInto(a, b):
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                mergeIntoDict(a[key], b[key])
+                mergeInto(a[key], b[key])
             else:
                 a[key] = b[key]
         else:
@@ -14,7 +14,7 @@ def mergeIntoDict(a, b):
     return a
 
 def jinjaEnv(directory):
-    return jinja2.Environment(
+    env = jinja2.Environment(
 	block_start_string = '(@',
 	block_end_string = '@)',
 	variable_start_string = '(*',
@@ -25,8 +25,27 @@ def jinjaEnv(directory):
 	line_comment_prefix = '%#',
 	trim_blocks = True,
 	autoescape = False,
-	loader = jinja2.FileSystemLoader(directory)
+	loader = jinja2.FileSystemLoader(directory),
     )
+
+    env.filters['roman'] = roman
+    return env
+
+def roman(what):
+    what = int(what)
+    if what == 0:
+        return '0'
+    if what > 4000:
+        raise ValueError("Argument must be between 1 and 3999")
+
+    ints = (1000, 900,  500, 400, 100,  90, 50,  40, 10,  9,   5,  4,   1)
+    nums = ('M',  'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
+    result = ""
+    for i in range(len(ints)):
+        count = int(what / ints[i])
+        result += nums[i] * count
+        what -= ints[i] * count
+    return result
 
 def renderList(what, **kwargs):
     if (type(what) == str):

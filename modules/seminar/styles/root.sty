@@ -1,0 +1,56 @@
+% fancyhdr -- fancy pagestyle
+\fancypagestyle{main}{
+    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/logo.pdf}}}
+    \fancyhead[LE,RO]{(* seminar.fullName *)}
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.url *)}}
+}
+
+\fancypagestyle{problems}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Zadania (* round.id *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+}
+
+\fancypagestyle{solutions}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Riešenia (* round.id *). kola (* semester.genitive *) časti}}
+}
+
+\fancypagestyle{rules}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+    \fancyhead[L]{    
+        \begin{minipage}{0.15\textwidth}
+            \flushleft
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+            \vspace{16pt}
+        \end{minipage}
+    }
+    
+    \fancyhead[C]{
+        \begin{minipage}{0.7\textwidth}
+            \centering
+            \vspace{4pt}
+            {\Large (* seminar.fullName *)}\\[4pt]
+            {\large (* volume.id|roman *). ročník, (* volume.id|int + seminar.founded *)/(* volume.id|int + seminar.founded + 1 *)}\\[8pt]            
+            {\footnotesize (* seminar.shortName *), (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
+            \vspace{6pt}
+        \end{minipage}        
+    }           
+
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \flushright
+            \includegraphics[width = 30mm, keepaspectratio = true]{core/logo/\seminarID/logo.pdf}\\[0pt]
+            \vspace{4pt}
+        \end{minipage}
+    }
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+}  
