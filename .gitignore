@@ -8,6 +8,7 @@
 *.aux
 *.synctex
 *.pyc
+*__pycache__*
 input/
 output/
 source
