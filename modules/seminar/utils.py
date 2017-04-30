@@ -29,7 +29,7 @@ def jinjaEnv(directory):
     )
 
     env.filters['roman'] = roman
-    env.filters['formatCategories'] = formatCategories
+    env.filters['formatList'] = formatList
     return env
 
 def roman(what):
@@ -48,8 +48,8 @@ def roman(what):
         what -= ints[i] * count
     return result
 
-def formatCategories(categories):
-    return "kategóri{} {}".format('a' if len(categories) == 1 else 'e', renderList(categories, textbf = True))
+def formatList(list):
+    return renderList(list, textbf = True)
 
 def renderList(what, **kwargs):
     if (type(what) == str):

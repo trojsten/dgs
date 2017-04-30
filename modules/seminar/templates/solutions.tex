@@ -5,6 +5,8 @@
 \RequirePackage{core/dgs-custom}
 \input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.sty}
 
+\newcounter{volume}
+\newcounter{semester}
 \newcounter{round}
 \newcounter{problem}
 
@@ -17,7 +19,26 @@
         
     \pagestyle{problems}    
     \loadSolutionsStyle
-    %% for problem in round.problems
-    \addSeminarSolution{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.solutionBy *)}{(* problem.evaluation *)}{(* problem.genderSuffix *)}
-    %% endfor
+
+    (@ for problem in round.problems @)
+    \setcounter{volume}{(* volume.id *)}%
+    \setcounter{semester}{(* semester.id *)}%
+    \setcounter{round}{(* round.id *)}%
+    \setcounter{problem}{(* problem.id *)}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+
+    \subsection{%
+        \texorpdfstring{%
+            \large \textbf{(* problem.title *)} \hfill \normalsize%
+            (@ if problem.solutionBy @)
+                vzorák (* problem.solutionBy|formatList *)%
+            (@ endif @)
+            (@ if problem.solutionBy and problem.evaluation @), (@ endif @)
+            (@ if problem.evaluation @)
+                opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
+            (@ endif @)
+        }{(* problem.title *)}%
+    }
+    \protectedInput{\problemDirectory/problem.tex}%
+    (@ endfor @)
 \end{document}
