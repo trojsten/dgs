@@ -107,24 +107,6 @@
     \ifstrequals{#1}{\currentLanguage}{#2}{}%
 }
 
-\NewDocumentCommand{\loadDocumentSettings}{}{
-    \IfFileExists{input/settings.tex}{
-        \input{input/settings.tex}                   
-    }{
-        \PackageError{dgs}{Cannot load document settings}{File "input/settings.tex" does not exist}
-    }
-
-}
-
-% Internal commands
-\NewDocumentCommand{\loadSeminar}{m}{
-    \IfFileExists{core/config/dgs-config-#1.sty}{
-        \RequirePackage{core/config/dgs-config-#1}                   
-    }{
-        \PackageError{dgs}{Cannot load seminar #1}{File "dgs-config-#1.sty" does not exist}
-    }
-}
-
 \NewDocumentCommand{\currentProblem}{}{%
     \padzero{00}{\arabic{problem}}%
 }
@@ -140,8 +122,8 @@
 \NewDocumentCommand{\insertPicture}{m m m m m m}{%
     \begin{figure}[H]%
         \centering%
-        \IfFileExists{\rootDirectory/\currentProblem/#1.#2}{%
-            \includegraphics[keepaspectratio = true, height = #4]{\rootDirectory/\currentProblem/#1}%
+        \IfFileExists{\problemDirectory/#1.#2}{%
+            \includegraphics[keepaspectratio = true, height = #4]{\problemDirectory/#1}%
         }{%
             \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
         }%

@@ -12,31 +12,6 @@
 \NewDocumentCommand{\seminarFounded}{}{<undefined>}
 \NewDocumentCommand{\seminarProblemCount}{}{<undefined>}
 
-\NewDocumentCommand{\currentVolume}{}{<void year>}
-\NewDocumentCommand{\currentSemester}{}{<void semester>}
-\NewDocumentCommand{\currentRound}{}{<void series>}
-\NewDocumentCommand{\currentDeadline}{}{<void deadline>}
-\NewDocumentCommand{\currentSemesterGenitive}{}{%
-    \switch[\number\currentSemester=]%
-        \case{1}zimnej%
-        \case{2}letnej%
-        \otherwise\errorMessage{<currentSemesterGenitive misconfigured: currentSemester is "\currentSemester">}%
-    \endswitch%
-}
-\NewDocumentCommand{\currentSemesterNominative}{}{%
-    \switch[\number\currentSemester=]%
-        \case{1}zimná%
-        \case{2}letná/
-        \otherwise\errorMessage{<currentSemesterNominative misconfigured: currentSemester is "\currentSemester">}%
-    \endswitch
-}
-\NewDocumentCommand{\participantTypeAccusative}{}{%
-    \switch[\participantProper=]%
-        \case{True}účastník
-        \case{False}náhradník
-    \endswitch
-}
-
 \NewDocumentCommand{\problemName}{}{<undefined>}
 \NewDocumentCommand{\problemPointsDescription}{}{<undefined>}
 \NewDocumentCommand{\problemPointsCode}{}{<undefined>}

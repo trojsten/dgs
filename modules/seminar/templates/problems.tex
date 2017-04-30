@@ -2,12 +2,10 @@
 
 \RequirePackage{core/dgs}
 \RequirePackage{core/config/dgs-config}
-\RequirePackage{modules/seminar/seminar}
-\input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/root.sty}
+\RequirePackage{core/dgs-custom}
+\input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.sty}
 
-\loadDocumentSettings
-\usepackage{core/dgs-custom}
-
+\newcounter{round}
 \newcounter{problem}
  
 \begin{document}
@@ -25,6 +23,6 @@
     \pagestyle{problems}    
     \loadProblemsStyle
     %% for problem in round.problems
-    \addSeminarProblem{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
+    \addSeminarProblem{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.categories *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
     %% endfor
 \end{document}

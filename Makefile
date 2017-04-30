@@ -125,7 +125,6 @@ output/%/problems.pdf:\
 	input/$$*/problems.tex\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
@@ -142,7 +141,6 @@ output/%/solutions.pdf:\
 	input/$$*/solutions.tex\
 	source/%/meta.yaml
 	mkdir -p $(dir $@)
-	./core/dgs-prepare.py ./source/$*/meta.yaml
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'

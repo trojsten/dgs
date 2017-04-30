@@ -5,11 +5,14 @@
 %   round               -
 %   problem             - all five identify the file to include
 %   title               the title of the problem
+%   categories          problem categories
 %   pointsText          points to be awarded for text
 %   pointsCode          points to be awarded for description
-\NewDocumentCommand{\addSeminarProblem}{m m m m m m m m}{%
-    \stepcounter{problem}%
-    \createProblemHeader{#6}{#7}{#8}%
+\NewDocumentCommand{\addSeminarProblem}{m m m m m m m m m}{%
+    \setcounter{round}{#4}%
+    \setcounter{problem}{#5}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/#1/#2/#3/#4/#5}
+    \createProblemHeader{#6}{#7}{#8}{#9}%
     \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/problem.tex}%
 }
 
@@ -24,27 +27,26 @@
 %   evaluator           formatted list of evaluators
 %   genderSuffix        gender suffix (opravoval(|a|i|o)
 \NewDocumentCommand{\addSeminarSolution}{m m m m m m m m m}{%
-    \stepcounter{problem}%
+    \setcounter{round}{#4}%
+    \setcounter{problem}{#5}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/#1/#2/#3/#4/#5}
     \createSolutionHeader{#6}{#7}{#8}{#9}
-%   {
-%       \small\it
-%       \protectedInput{\rootDirectory/\currentProblem/problem.tex}\par
-%   }
     \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/solution.tex}%
 }
 
 % \createProblemHeader{name}{pointsDescription}{pointsCode}
 % Create a new problem header
-%     title               problem title
-%     pointsText          points for text description
-%     pointsCode          points for code (KSP and Prask only)
-\NewDocumentCommand{\createProblemHeader}{m m m}{
+%   title               problem title
+%   categories          formatted problem categories
+%   pointsText          points for text description
+%   pointsCode          points for code (KSP and Prask only)
+\NewDocumentCommand{\createProblemHeader}{m m m m}{
     \subsection{%
         \texorpdfstring{%
             \large \textbf{\ifstrequal{#1}{}{}{#1}}%
             \hfill\normalsize%
-            \formatProblemPoints{#2}{#3}%
-            \quad\formatProblemCategories{\getProblemCategories{\value{problem}}}%
+            \formatProblemPoints{#3}{#4}%
+            \quad{#2}%
         }{%
             #1
         }%
@@ -75,21 +77,23 @@
 
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{main}{
-    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{core/logo/\seminarID/logo.pdf}}}
+    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
     \fancyhead[LE,RO]{(* seminar.fullName *)}
     \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* seminar.url *)}}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
 }
 
 \fancypagestyle{problems}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Zadania \currentRound. kola \currentSemesterGenitive\ časti -- \currentDeadline}}
+    \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{4pt}{}[]
 }
 
 \fancypagestyle{solutions}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Riešenia \currentRound. kola \currentSemesterGenitive\ časti}}
+    \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.genitive *) časti}}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{4pt}{}[]
 }
 
 \fancypagestyle{rules}{%
@@ -112,8 +116,8 @@
             \centering
             \vspace{4pt}
             {\Large (* seminar.fullName *)}\\[4pt]
-            {\large (* volume.id|roman *). ročník, (* volume.academicYear *)}\\[8pt]            
-            {\footnotesize (* seminar.short *),\ (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
+            {\large (* volume.number|roman *). ročník, (* volume.number + seminar.founded *)/(* volume.number + seminar.founded + 1 *)}\\[8pt]            
+            {\footnotesize (* seminar.shortName *), (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
             \vspace{6pt}
         \end{minipage}        
     }           
@@ -121,11 +125,13 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{core/logo/\seminarID/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}\\[0pt]
             \vspace{4pt}
         \end{minipage}
     }
     \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* seminar.url *)}}
-}    
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+}  
+
+\NewDocumentCommand{\problemDirectory}{}{<undefined>}
