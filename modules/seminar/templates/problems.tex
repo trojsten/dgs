@@ -5,6 +5,8 @@
 \RequirePackage{core/dgs-custom}
 \input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.sty}
 
+\newcounter{volume}
+\newcounter{semester}
 \newcounter{round}
 \newcounter{problem}
  
@@ -22,7 +24,16 @@
         
     \pagestyle{problems}    
     \loadProblemsStyle
+
     %% for problem in round.problems
-    \addSeminarProblem{(* seminar.id *)}{(* volume.id *)}{(* semester.id *)}{(* round.id *)}{(* problem.id *)}{(* problem.title *)}{(* problem.categories *)}{(* problem.pointsDescription *)}{(* problem.pointsCode *)}
+    \setcounter{volume}{(* volume.id *)}%
+    \setcounter{semester}{(* semester.id *)}%
+    \setcounter{round}{(* round.id *)}%
+    \setcounter{problem}{(* problem.id *)}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+    \subsection{%
+        \texorpdfstring{\large \textbf{(* problem.title *)} \normalsize\hfill\quad{(* problem.categories|formatCategories *)}}{(* problem.title *)}%
+    }%
+    \protectedInput{\problemDirectory/problem.tex}%
     %% endfor
 \end{document}
