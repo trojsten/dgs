@@ -1,21 +1,3 @@
-% Add seminar problem
-%   seminar             -
-%   volume              -
-%   semester            -
-%   round               -
-%   problem             - all five identify the file to include
-%   title               the title of the problem
-%   categories          problem categories
-%   pointsText          points to be awarded for text
-%   pointsCode          points to be awarded for description
-\NewDocumentCommand{\addSeminarProblem}{m m m m m m m m m}{%
-    \setcounter{round}{#4}%
-    \setcounter{problem}{#5}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/#1/#2/#3/#4/#5}
-    \createProblemHeader{#6}{#7}{#8}{#9}%
-    \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/problem.tex}%
-}
-
 % Add seminar solution
 %   seminar             -
 %   volume              -
@@ -32,25 +14,6 @@
     \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/#1/#2/#3/#4/#5}
     \createSolutionHeader{#6}{#7}{#8}{#9}
     \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/solution.tex}%
-}
-
-% \createProblemHeader{name}{pointsDescription}{pointsCode}
-% Create a new problem header
-%   title               problem title
-%   categories          formatted problem categories
-%   pointsText          points for text description
-%   pointsCode          points for code (KSP and Prask only)
-\NewDocumentCommand{\createProblemHeader}{m m m m}{
-    \subsection{%
-        \texorpdfstring{%
-            \large \textbf{\ifstrequal{#1}{}{}{#1}}%
-            \hfill\normalsize%
-            \formatProblemPoints{#3}{#4}%
-            \quad{#2}%
-        }{%
-            #1
-        }%
-    }
 }
 
 % \createSolutionHeader[name][author][evaluator][gender]
@@ -87,13 +50,13 @@
 \fancypagestyle{problems}{%
     \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{4pt}{}[]
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
 }
 
 \fancypagestyle{solutions}{%
     \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.genitive *) časti}}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{4pt}{}[]
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
 }
 
 \fancypagestyle{rules}{%

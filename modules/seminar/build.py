@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import argparse, yaml, os, jinja2, sys
+import argparse, yaml, os, jinja2, sys, pprint
 from utils import jinjaEnv, mergeInto, renderList
 
 parser = argparse.ArgumentParser(
@@ -30,9 +30,7 @@ try:
             problemMeta['number'] = int(name)
             problemMeta['solutionBy'] = renderList(problemMeta['solutionBy'], textbf = True)
             problemMeta['evaluation'] = renderList(problemMeta['evaluation'], textbf = True)
-
-            categories = seminarMeta['categories'][int(name) - 1]
-            problemMeta['categories'] = 'kategóri{} {}'.format('a' if len(categories) == 1 else 'e', renderList(categories, textbf = True))
+            problemMeta['categories'] = seminarMeta['categories'][int(name) - 1]
             problemsMetas.append(problemMeta)
 
 except FileNotFoundError as e:
@@ -67,7 +65,7 @@ update = {
 }
 
 context = mergeInto(context, update)
-print(context)
+pprint.pprint(context)
 
 outputDir = 'input/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
