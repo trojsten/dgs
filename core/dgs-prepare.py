@@ -54,24 +54,6 @@ def processMetadata():
     print(rootDir)
     print(inputRootDir)
 
-    try:
-        with open('input/settings.tex', 'w+') as output:
-            output.write('\\RenewDocumentCommand{{\\currentVolume}}{{}}{{{0}}}\n'.format(volumeName))
-            output.write('\\RenewDocumentCommand{{\\currentSemester}}{{}}{{{0}}}\n'.format(semesterName))
-            output.write('\\RenewDocumentCommand{{\\currentRound}}{{}}{{{0}}}\n'.format(roundName))
-            output.write('\\RenewDocumentCommand{{\\currentDeadline}}{{}}{{{0}}}\n'.format(roundConf['deadline'].strftime('%d. %m. %Y')))
-            output.write('\\loadSeminar{{{0}}}\n'.format(moduleName))
-             
-        with open('{root}/recipe-problems.tex'.format(root = inputRootDir), 'w+') as output:
-            for problem in problems:
-                output.write("\\addProblem{{{0}}}{{{1}}}{{{2}}}\n".format(problem['title'], problem['pointsDescription'], problem['pointsCode']))
-
-        with open('{root}/recipe-solutions.tex'.format(root = inputRootDir), 'w+') as output:
-            for problem in problems:
-                output.write("\\addSolution{{{0}}}{{{1}}}{{{2}}}{{{3}}}\n".format(problem['title'], problem['solutionBy'], problem['evaluation'], problem['genderSuffix']))
-    except FileNotFoundError as e:
-        abort("Could not write to file: " + cf.CYAN + e)
-
 def bye():
     print(cf.GREEN + "Everything finished successfully, bye")
 
