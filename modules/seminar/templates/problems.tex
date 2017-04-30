@@ -25,15 +25,21 @@
     \pagestyle{problems}    
     \loadProblemsStyle
 
-    %% for problem in round.problems
+    (@ for problem in round.problems @)
     \setcounter{volume}{(* volume.id *)}%
     \setcounter{semester}{(* semester.id *)}%
     \setcounter{round}{(* round.id *)}%
     \setcounter{problem}{(* problem.id *)}%
     \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+
     \subsection{%
-        \texorpdfstring{\large \textbf{(* problem.title *)} \normalsize\hfill\quad{(* problem.categories|formatCategories *)}}{(* problem.title *)}%
+        \texorpdfstring{%
+            \large \textbf{(* problem.title *)}%
+            \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|formatList *)%
+        }{%
+            (* problem.title *)%
+        }%
     }%
     \protectedInput{\problemDirectory/problem.tex}%
-    %% endfor
+    (@ endfor @)
 \end{document}
