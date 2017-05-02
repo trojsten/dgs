@@ -18,9 +18,9 @@
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
         
     \pagestyle{problems}    
-    \loadSolutionsStyle
+    \loadSolutionsStyle%
 
-    (@ for problem in round.problems @)
+    (@ for problem in round.problems @)%
     \setcounter{volume}{(* volume.id *)}%
     \setcounter{semester}{(* semester.id *)}%
     \setcounter{round}{(* round.id *)}%
@@ -30,15 +30,15 @@
     \subsection{%
         \texorpdfstring{%
             \large \textbf{(* problem.title *)} \hfill \normalsize%
-            (@ if problem.solutionBy @)
+            (@ if problem.solutionBy @)%
                 vzorák (* problem.solutionBy|formatList *)%
-            (@ endif @)
-            (@ if problem.solutionBy and problem.evaluation @), (@ endif @)
-            (@ if problem.evaluation @)
+            (@ endif @)%
+            (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
+            (@ if problem.evaluation @)%
                 opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
-            (@ endif @)
+            (@ endif @)%
         }{(* problem.title *)}%
     }
-    \protectedInput{\problemDirectory/problem.tex}%
+    \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
 \end{document}

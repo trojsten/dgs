@@ -23,9 +23,9 @@
     } 
         
     \pagestyle{problems}    
-    \loadProblemsStyle
+    \loadProblemsStyle%
 
-    (@ for problem in round.problems @)
+    (@ for problem in round.problems @)%
     \setcounter{volume}{(* volume.id *)}%
     \setcounter{semester}{(* semester.id *)}%
     \setcounter{round}{(* round.id *)}%
