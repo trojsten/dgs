@@ -1,50 +1,16 @@
-% Add seminar solution
-%   seminar             -
-%   volume              -
-%   semester            -
-%   round               -
-%   problem             - all five identify the file to include
-%   title               the title of the problem
-%   authors             formatted list of authors
-%   evaluator           formatted list of evaluators
-%   genderSuffix        gender suffix (opravoval(|a|i|o)
-\NewDocumentCommand{\addSeminarSolution}{m m m m m m m m m}{%
-    \setcounter{round}{#4}%
-    \setcounter{problem}{#5}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/#1/#2/#3/#4/#5}
-    \createSolutionHeader{#6}{#7}{#8}{#9}
-    \protectedInput{\rootDirectory/#1/#2/#3/#4/#5/solution.tex}%
-}
-
-% \createSolutionHeader[name][author][evaluator][gender]
-% Vytvorí novú hlavičku vzorového riešenia
-%   - názov úlohy
-%   - meno autora vzorového riešenia
-%   - meno opravovateľa
-%   - gramatický rod opravovateľa
-\NewDocumentCommand{\createSolutionHeader}{m m m m}{
-    \subsection{%
-        \texorpdfstring{%
-            \large \textbf{\ifstrempty{#1}{úloha}{#1}}%
-            \hfill\normalsize%
-            \ifstrempty{#2}{%
-                \ifstrempty{#3}{}{opravoval#4 #3}%
-            }{%
-                vzorák #2\ifstrempty{#3}{}{, opravoval#4 #3}%
-            }%
-        }{%
-            #1
-        }%
-    }
-}
-
 % fancyhdr -- fancy pagestyle
 \fancypagestyle{main}{
-    \fancyhead[LO,RE]{\raisebox{\smallLogoRaise}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
+    \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
     \fancyhead[LE,RO]{(* seminar.fullName *)}
     \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
     \fancyfoot[C]{\small \thepage}
     \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{\quad}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
 }
 
 \fancypagestyle{problems}{%

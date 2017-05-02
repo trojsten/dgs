@@ -6,11 +6,6 @@
 
 % Prosíme o dodržiavanie nasledovných zásad.
 
-% SI jednotky sa píšu pomocou balíčka siunitx. \SI{koľko}{čoho}. Žiadne \unit, \mathrm ani nič podobné.
-% Ak ti stačí jednotka bez čísla, tak \si{jednotka}.
-% Uhly sa takisto nepíšu ako v~roku 1997, ale používame makro \ang{90} alebo \ang{48;9;5}.
-% Desatinné čísla sa dajú písať ako \num{4.7}, napríklad sa to automaticky
-%   stará o slovenskú desatinnú čiarku miesto bodky.
 % 
 
 
@@ -26,8 +21,8 @@
     headheight              = 16pt,
     headsep                 = 16pt,
     footskip                = 32pt,
-    includeheadfoot,                                        % započítať header a footer do rozmerov strany
-    %showframe                                              % zobraziť frame
+    includeheadfoot,                                        % we wish to include header and footer into page dimensions
+    %showframe                                              % display visual frame (must be turned off for production)
 ]{geometry}
 
 
@@ -103,14 +98,6 @@
 \RequirePackage{core/dgs-hacks}
 \RequirePackage{core/dgs-utils}
 
-\NewDocumentCommand{\lang}{O{en} +m}{%
-    \ifstrequals{#1}{\currentLanguage}{#2}{}%
-}
-
-\NewDocumentCommand{\currentProblem}{}{%
-    \padzero{00}{\arabic{problem}}%
-}
-
 % \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
 % Insert a picture, protected against nonexistent files
 %   - meno súboru, hľadá v aktuálnom priečinku
@@ -128,7 +115,6 @@
             \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
         }%
         \ifstrempty{#5}{}{\caption{\textit{#5}}}%
-        \ifstrempty{#6}{}{\label{#6}}%
     \end{figure}%
 }
 
