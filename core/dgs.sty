@@ -57,11 +57,6 @@
     fancyvrb                                                % fancy verbatim (currently unused)
 }
 
-\captionsetup[figure]{
-    format                  = hang,
-    width                   = 0.9\textwidth,
-}
-
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
 \sisetup{
@@ -73,7 +68,7 @@
     group-minimum-digits    = 5,
     inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami
     exponent-product        = \cdot,                        % \times pre 5×10^7, \cdot pre 5.1O^7    
-    number-unit-product     = {\,},                         % medzera medzi číslom a jednotkou
+    number-unit-product     = {\ },                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {\text{,}},                   % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
     range-phrase            = {\text{--}},                  % 5 -- 10 m/s

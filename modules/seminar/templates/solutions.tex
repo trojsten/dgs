@@ -11,14 +11,13 @@
 \newcounter{problem}
 
 \begin{document}            
-    \loadRegularStyle
+    \pagestyle{main}
     \thispagestyle{first}
     \vspace*{2em}
    
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
         
-    \pagestyle{problems}    
-    \loadSolutionsStyle%
+    \pagestyle{solutions}    
 
     (@ for problem in round.problems @)%
     \setcounter{volume}{(* volume.id *)}%

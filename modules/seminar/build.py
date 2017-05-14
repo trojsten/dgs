@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
-import argparse, yaml, os, jinja2, sys, pprint
+import argparse, yaml, os, jinja2, sys, pprint, colorama
 from utils import jinjaEnv, mergeInto, renderList
+from colorama import Fore, Style
 
 parser = argparse.ArgumentParser(
     description             = "Prepare and compile a DeGeŠ round from repository",
@@ -14,6 +15,8 @@ args = parser.parse_args()
 
 thisdir = os.path.dirname(os.path.realpath(__file__))
 
+print(Fore.CYAN + Style.DIM + "Invoking seminar template builder on {}/{}/{}/{}".format(args.seminar, args.volume, args.semester, args.round) + Style.RESET_ALL)
+
 try:
     roundDirectory = 'source/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
@@ -24,17 +27,21 @@ try:
 
     problemsMetas   = []
     for name in sorted(os.listdir(roundDirectory)):
-        if os.path.isdir(os.path.join(roundDirectory, name)) and os.path.isfile(os.path.join(roundDirectory, name, 'meta.yaml')):
-            problemMeta = yaml.load(open(os.path.join(roundDirectory, name, 'meta.yaml')))
-            problemMeta['id'] = name
-            problemMeta['number'] = int(name)
-            problemMeta['solutionBy'] = renderList(problemMeta['solutionBy'], textbf = True)
-            problemMeta['evaluation'] = renderList(problemMeta['evaluation'], textbf = True)
-            problemMeta['categories'] = seminarMeta['categories'][int(name) - 1]
-            problemsMetas.append(problemMeta)
+        if not os.path.isdir(os.path.join(roundDirectory, name)):
+            continue
+        if not os.path.isfile(os.path.join(roundDirectory, name, 'meta.yaml')):
+            raise FileNotFoundError("Directory '{}' is present but there is no 'meta.yaml' in it".format(name))
+
+        problemMeta = yaml.load(open(os.path.join(roundDirectory, name, 'meta.yaml')))
+        problemMeta['id'] = name
+        problemMeta['number'] = int(name)
+        problemMeta['solutionBy'] = renderList(problemMeta['solutionBy'], textbf = True)
+        problemMeta['evaluation'] = renderList(problemMeta['evaluation'], textbf = True)
+        problemMeta['categories'] = seminarMeta['categories'][int(name) - 1]
+        problemsMetas.append(problemMeta)
 
 except FileNotFoundError as e:
-    print("Fatal: could not open file {}".format(e))
+    print("[FATAL] Could not open file: {}".format(e))
     sys.exit(-1)
 
 context = {
@@ -65,7 +72,7 @@ update = {
 }
 
 context = mergeInto(context, update)
-pprint.pprint(context)
+#pprint.pprint(context)
 
 outputDir = 'input/{seminar}/{volume:02d}/{semester}/{round}/'.format(seminar = args.seminar, volume = args.volume, semester = args.semester, round = args.round)
 
@@ -74,3 +81,5 @@ for template in ['problems.tex', 'solutions.tex']:
 
 for template in ['seminar.sty']:
     print(jinjaEnv(os.path.join(thisdir, '.')).get_template(template).render(context), file = open(os.path.join(outputDir, template), 'w'))
+
+print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
