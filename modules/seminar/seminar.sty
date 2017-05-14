@@ -1,4 +1,5 @@
-% fancyhdr -- fancy pagestyle
+% DeGeŠ seminar style file
+
 \fancypagestyle{main}{
     \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
     \fancyhead[LE,RO]{(* seminar.fullName *)}
@@ -45,7 +46,7 @@
             \centering
             \vspace{4pt}
             {\Large (* seminar.fullName *)}\\[4pt]
-            {\large (* volume.number|roman *). ročník, (* volume.number + seminar.founded *)/(* volume.number + seminar.founded + 1 *)}\\[8pt]            
+            {\large (* volume.number|roman *). ročník, (* volume.number + seminar.founded - 1 *)/(* volume.number + seminar.founded *)}\\[8pt]            
             {\footnotesize (* seminar.shortName *), (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
             \vspace{6pt}
         \end{minipage}        

@@ -11,7 +11,7 @@
 \newcounter{problem}
  
 \begin{document}
-    \loadRegularStyle
+    \pagestyle{main}
     \thispagestyle{first}
     \vspace*{2em}
 
@@ -23,7 +23,6 @@
     } 
         
     \pagestyle{problems}    
-    \loadProblemsStyle%
 
     (@ for problem in round.problems @)%
     \setcounter{volume}{(* volume.id *)}%
@@ -35,7 +34,9 @@
     \subsection{%
         \texorpdfstring{%
             \large \textbf{(* problem.title *)}%
+            (@ if problem.categories @)%
             \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|formatList *)%
+            (@ endif @)
         }{%
             (* problem.title *)%
         }%

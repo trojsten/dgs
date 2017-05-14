@@ -1,22 +1,24 @@
 Mil(@ if child.male @)ý(@ else @)á(@ endif @) riešiteľ(@ if child.male @)(@ else @)ka(@ endif @),
 
-v~korešpondenčnej časti si dosiah\genderSwitch{ol}{la} výborné výsledky, gratulujeme a~týmto Ťa pozývame ako
-\participantTypeAccusative na \currentVolume . sústredenie \currentSeminar. Prosím, pošli návratku čo najrýchlejšie \emph{a to aj v~prípade, že na sústredenie neprídeš}.
+v~korešpondenčnej časti si dosiah(@ if child.male @)ol(@ else @)la(@ endif @) výborné výsledky,
+gratulujeme a~týmto Ťa pozývame ako (@ if child.regular @) (@ else @) (@ endif @)
+
+na sústredenie (* seminar.short *). Prosím, pošli návratku čo najrýchlejšie, \emph{a to aj v~prípade, že na sústredenie neprídeš}.
 
 \section{Informácie}
 
 \begin{itemize}
-    \item Prihlasovací formulár nájdeš na stránke \hyperref{http://goo.gl/forms/z91tYWlOuP}. Prípadne pošli údaje \emph{e-mailom} na \URL{\emailContact}.
-    \item Prihlasovať sa môžeš do \emph{\deadlineReturn}. 
-    \item Sústredenie sa bude konať v~\accomodation (\URL{\accomodationURL}).
-    \item Cena sústredenia nepresiahne \emph{\cena}\ (v~cene je zarátaná strava, ubytovanie, doprava z~mesta \mestoZraz\ do \accomodation\ a späť do mesta \mestoRozchod), platí sa na mieste.
+    \item Prihlasovací formulár nájdeš na stránke (* camp.application.URL *).
+    \item Prihlasovať sa môžeš do \emph{(* camp.application.deadline *)}. 
+    \item Sústredenie sa bude konať v~(* camp.accomodation.name *) (\URL{(* camp.accomodation.URL *)}).
+    \item Cena sústredenia nepresiahne \emph{(* camp.price *)} (v~cene je zarátaná strava, ubytovanie, doprava z~mesta \mestoZraz\ do \accomodation\ a späť do mesta \mestoRozchod), platí sa na mieste.
     \item Stretneme sa na železničnej stanici v~meste \emph{\mestoZraz\ \prichod\ \rok}, odkiaľ pôjdeme spolu autobusom o~\emph{\prichodCas} do miesta konania sústredenia.
     \item Ak sa inak nedá, na sústredenie sa môžeš dopraviť aj samostatne, odporúčame však príchod na miesto (\svp) pred \emph{\prichodSvp}.
     \item Z~\accomodation\ odídeme dňa \emph{\odchod\ \rok} o~\emph{\odchodSvp} a do mesta \mestoRozchod\ spoločne zo sústredenia dorazíme autobusom o~\emph{\odchodCas}.
     \item Nezabudni si so sebou priniesť \stuffToBring.
     \item Je zakázané priniesť si a požívať alkoholické a tabakové výrobky. Pri porušení zákazu si vyhradzujeme právo poslať účastníka zo sústredenia domov.
-    \item Prípadné otázky zasielajte e-mailom na \URL{\emailContact}, \web{cajka@fks.sk} alebo \web{\seminarHeadEmail}.
-        V~núdzových prípadoch na otázky odpovie telefonicky \kontaktOsoba\ na čísle \kontaktMobil\ alebo \sef\ na čísle \sefMobil.
+    \item Prípadné otázky zasielajte e-mailom na (* camp.contact.email *). V~núdzových prípadoch na otázky odpovie
+        telefonicky (* camp.contact.name *) na čísle (* camp.contact.phone *).
 \end{itemize}
 
 \section{Odporúčaná doprava}

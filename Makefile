@@ -120,7 +120,9 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
+	$$(subst source/,output/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
 	input/$$*/problems.tex\
 	source/%/meta.yaml
@@ -136,7 +138,9 @@ output/%/solutions.pdf:\
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/$$*/*/*.gp)))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
+	$$(subst source/,output/,$$(wildcard source/$$*/*/*.jpg))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
+	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
 	input/$$*/solutions.tex\
 	source/%/meta.yaml
