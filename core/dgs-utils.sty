@@ -24,4 +24,8 @@
     }%
 }
 
-
+\NewDocumentCommand{\cutHere}{}{%
+    \noindent%
+    \raisebox{-2.8pt}[0pt][0.75\baselineskip]{\small\ding{34}}%
+    \unskip{\tiny\dotfill}
+}
