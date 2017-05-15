@@ -109,12 +109,17 @@ input/%.gp:\
 input/%/problems.tex:
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
-	./modules/seminar/build.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
+	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o 'input/'
 
 input/%/solutions.tex:
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
-	./modules/seminar/build.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
+	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o 'input/'
+
+input/%/invite.tex: 
+	$(eval words := $(subst /, ,$*))
+	mkdir -p $(dir $@)
+	./modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o 'input/'
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
@@ -173,6 +178,16 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 output/%/all: output/%/problems output/%/solutions ;
 
 output/%/all: output/%/*/all ;
+
+output/%/invite.pdf:\
+	input/$$*/invite.tex\
+	source/%/meta.yaml
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
+
 
 clean:
 	@echo -e '$(c_action)Clean:$(c_default)'

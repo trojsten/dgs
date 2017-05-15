@@ -1,0 +1,55 @@
+% DeGeŠ seminar style file
+
+\fancypagestyle{main}{
+    \fancyhead[LO,RE]{}
+    \fancyhead[LE,RO]{}
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+    \titleformat{\section}[hang]{\centering\Huge}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+    \fancyhead[L]{    
+        \begin{minipage}{0.15\textwidth}
+            \flushleft
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+            \vspace{16pt}
+        \end{minipage}
+    }
+    
+    \fancyhead[C]{
+        \begin{minipage}{0.7\textwidth}
+            \centering
+            \vspace{4pt}
+            {\Large (* seminar.full.nominative *)}\\[4pt]
+            {\large (* volume.number|roman *). ročník, (* volume.number + seminar.founded - 1 *)/(* volume.number + seminar.founded *)}\\[8pt]            
+            {\footnotesize (* seminar.short *), (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
+            \vspace{6pt}
+        \end{minipage}        
+    }           
+
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \flushright
+            \includegraphics[width = 30mm, keepaspectratio = true]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}\\[0pt]
+            \vspace{4pt}
+        \end{minipage}
+    }
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \setlength{\headsep}{20pt} 
+    \setlength{\headheight}{74pt} 
+}  
+
+\NewDocumentCommand{\problemDirectory}{}{<undefined>}
