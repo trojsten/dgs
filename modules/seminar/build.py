@@ -23,8 +23,8 @@ def getRoundMetadata(root, seminar, volume, semester, round):
             problemMeta = yaml.load(open(os.path.join(roundDirectory, name, 'meta.yaml')))
             problemMeta['id'] = name
             problemMeta['number'] = int(name)
-            problemMeta['solutionBy'] = renderList(problemMeta['solutionBy'], textbf = True)
-            problemMeta['evaluation'] = renderList(problemMeta['evaluation'], textbf = True)
+            problemMeta['solutionBy'] = problemMeta['solutionBy']
+            problemMeta['evaluation'] = problemMeta['evaluation']
             problemMeta['categories'] = seminarMeta['categories'][int(name) - 1]
             problemsMetas.append(problemMeta)
             
@@ -76,12 +76,11 @@ seminarId           = '{}'.format(args.seminar)
 volumeId            = '{:02d}'.format(args.volume)
 semesterId          = '{}'.format(args.semester)
 roundId             = '{}'.format(args.round)
-launchDirectory     = os.path.realpath(os.path.dirname(args.launch))
+launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(os.path.dirname(args.output)) if args.output else None
+outputDirectory     = os.path.realpath(args.output) if args.output else None
 
 print(Fore.CYAN + Style.DIM + "Invoking seminar template builder on {}".format(os.path.realpath(os.path.join(launchDirectory, seminarId, volumeId, semesterId, roundId))) + Style.RESET_ALL)
-
 context = getRoundMetadata(launchDirectory, seminarId, volumeId, semesterId, roundId)
 
 if (args.verbose):
