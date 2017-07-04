@@ -10,12 +10,14 @@ def getSemesterMetadata(root, seminar, volume, semester):
         volumeMeta          = yaml.load(open(os.path.join(root, seminarId, volumeId, 'meta.yaml'), 'r'))
         semesterMeta        = yaml.load(open(os.path.join(root, seminarId, volumeId, semesterId, 'meta.yaml'), 'r'))
         campMeta            = yaml.load(open(os.path.join(root, seminarId, volumeId, semesterId, 'camp.yaml'), 'r'))
+        childrenMeta        = yaml.load(open(os.path.join(root, seminarId, volumeId, semesterId, 'children.yaml'), 'r'))
 
         context = {
             'seminar': seminarMeta,
             'semester': semesterMeta,
             'camp': campMeta,
         }
+        mergeInto(context, childrenMeta) 
         update = {
             'seminar': {
                 'id':           args.seminar,
@@ -40,7 +42,7 @@ def getSemesterMetadata(root, seminar, volume, semester):
         sys.exit(-1)
     
 parser = argparse.ArgumentParser(
-    description             = "Prepare and compile a DeGeŠ round from repository",
+    description             = "Prepare and compile a DeGeŠ invite from repository",
 )
 parser.add_argument('launch',           action = readableDir) 
 parser.add_argument('seminar',          choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX'])
@@ -55,10 +57,11 @@ volumeId            = '{:02d}'.format(args.volume)
 semesterId          = '{}'.format(args.semester)
 launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(os.path.join(args.output, seminarId, volumeId, semesterId)) if args.output else None
+outputDirectory     = os.path.realpath(args.output) if args.output else None
 
 print(Fore.CYAN + Style.DIM + "Invoking invite template builder on {}".format(os.path.realpath(os.path.join(launchDirectory, seminarId, volumeId, semesterId))) + Style.RESET_ALL)
 
+print(outputDirectory)
 context = getSemesterMetadata(launchDirectory, seminarId, volumeId, semesterId)
 
 if (args.verbose):

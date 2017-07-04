@@ -3,8 +3,8 @@
 
 .SECONDARY:
 
-version	=			'1.73'
-date =				'2017-02-26'
+version	=			'1.78'
+date =				'2017-06-04'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
@@ -106,20 +106,24 @@ input/%.gp:\
 
 ### Booklet rules
 
-input/%/problems.tex:
+input/%/problems.tex:\
+	$$(wildcard source/$$*/*/meta.yaml)\
+	source/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
-	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o 'input/'
+	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/%/solutions.tex:
-	$(eval words := $(subst /, ,$*))
+input/%/solutions.tex:\
+	$$(wildcard source/$$*/*/meta.yaml)\
+	source/$$*/meta.yaml
+	$(eval words := $(subst /, ,$*))	
 	mkdir -p $(dir $@)
-	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o 'input/'
+	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/%/invite.tex: 
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
-	./modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o 'input/'
+	./modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 output/%/problems.pdf:\
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
@@ -129,8 +133,7 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
-	input/$$*/problems.tex\
-	source/%/meta.yaml
+	input/$$*/problems.tex
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
@@ -148,7 +151,7 @@ output/%/solutions.pdf:\
 	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
 	input/$$*/solutions.tex\
-	source/%/meta.yaml
+	source/$$*/meta.yaml
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex

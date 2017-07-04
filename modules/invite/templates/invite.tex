@@ -15,34 +15,37 @@
     footskip                = 32pt,
     includeheadfoot,                 
 }
+\hyphenpenalty=1000
+\exhyphenpenalty=1000
 
 \begin{document}
     \pagestyle{main}
     
-    (@ for child in camp.children @)
+    (@ for child in children @)
     \thispagestyle{first}
     \section{Pozvánka na sústredenie}
-    Mil(* 'ý' if child.male else 'á'*) riešiteľ(* '' if child.male else 'ka' *) (* child.name *) (* child.surname *),
+        Mil(* 'ý' if child.male else 'á'*) riešiteľ(* '' if child.male else 'ka' *) (* child.name *) (* child.surname *),
 
-    v~korešpondenčnej časti si dosiah(* 'ol' if child.male else 'la' *) výborné výsledky,
-    gratulujeme a~týmto Ťa pozývame ako \textbf{(* 'náhradní' if child.substitute else 'účastní' *)(* 'ka' if child.male else 'čku' *)}
-    na (* semester.nominativeNeuter *) sústredenie (* volume.number *). ročníka (* seminar.short *).
-    Prosím, pošli návratku čo najrýchlejšie, \textbf{a to aj v~prípade, že na sústredenie neprídeš}.
+        v~korešpondenčnej časti si dosiah(* 'ol' if child.male else 'la' *) výborné výsledky,
+        gratulujeme a~týmto Ťa pozývame ako \textbf{(* 'náhradní' if child.substitute else 'účastní' *)(* 'ka' if child.male else 'čku' *)}
+        na (* semester.nominativeNeuter *) sústredenie (* volume.number *). ročníka (* seminar.short *).
+        Prosím, vyplň prihlášku čo najrýchlejšie, \textbf{a to aj v~prípade, že na sústredenie neprídeš}.
 
     \subsection{Informácie}
 
         \begin{itemize}
             \item Prihlasovací formulár nájdeš na stránke \URL{(* camp.application.URL *)}.
             \item Prihlasovať sa môžeš najneskôr do \textbf{(* camp.application.deadline.strftime('%d.~%m.~%Y') *)}. 
-            \item Sústredenie sa bude konať v~\textbf{(* camp.accomodation.name *)} (\URL{(* camp.accomodation.URL *)}).
-            \item Cena sústredenia nepresiahne \textbf{(* camp.accomodation.price *) €} (v~cene je zarátaná strava, ubytovanie,
-                doprava z~mesta \textbf{(* camp.transport.gather.place *)} do \textbf{(* camp.accomodation.name *)} a~späť do mesta \textbf{(* camp.transport.disband.place *)}), platí sa na mieste.
-            \item Stretneme sa \textbf{(* camp.dates.begin.strftime('%d.~%m.~%Y') *)} na železničnej stanici v~meste \textbf{(* camp.transport.gather.place *)},
+            \item Sústredenie sa bude konať v(@ if camp.accomodation.name|first|lower in ['f', 'v'] @)o(@ endif @)~\textbf{(* camp.accomodation.name *)} (\URL{(* camp.accomodation.URL *)}).
+            \item Cena sústredenia nepresiahne \textbf{\SI{(* camp.accomodation.price *)}{\eur}} (v~cene je zarátaná strava, ubytovanie,
+                doprava z~\textbf{(* camp.transport.gather.place.genitive *)} do \textbf{(* camp.accomodation.name *)} a~späť do~\textbf{(* camp.transport.disband.place.genitive *)}), platí sa na mieste.
+            \item Stretneme sa \textbf{(* camp.dates.begin.strftime('%d.~%m.~%Y') *)} na železničnej stanici v~\textbf{(* camp.transport.gather.place.locative *)},
                 odkiaľ spolu pôjdeme autobusom o~\textbf{(* camp.transport.gather.time *)} do miesta konania sústredenia.
             \item Ak sa inak nedá, na sústredenie sa môžeš dopraviť aj samostatne, odporúčame však príchod na miesto (* camp.accomodation.name *) pred \textbf{(* camp.transport.arrive.time *)}.
-            \item Z~(* camp.accomodation.name *) odídeme dňa \textbf{(* camp.dates.end.strftime('%d.~%m.~%Y') *)}
-                o~\textbf{(* camp.transport.depart.time *)} a do mesta (* camp.transport.disband.place *) spoločne zo sústredenia dorazíme autobusom o~\textbf{(* camp.transport.disband.time *)}.
-            \item Nezabudni si so sebou priniesť (* camp.stuff|formatList *).
+            \item Z(@ if camp.accomodation.name|first|lower in ['z', 'ž', 's', 'š'] @)o(@ endif @)~(* camp.accomodation.name *) odídeme dňa \textbf{(* camp.dates.end.strftime('%d.~%m.~%Y') *)}
+                o~\textbf{(* camp.transport.depart.time *)} a do (* camp.transport.disband.place.genitive *) spoločne zo sústredenia dorazíme autobusom o~\textbf{(* camp.transport.disband.time *)}.
+            \item Nezabudni si so sebou priniesť (* camp.stuff.all|formatList *). Okrem toho budeš potrebovať
+                (@ if child.male @)(* camp.stuff.boys|formatList *)(@ else @)(* camp.stuff.girls|formatList *)(@ endif @).
             \item Je zakázané priniesť si a požívať alkoholické a tabakové výrobky. Pri porušení zákazu si vyhradzujeme právo poslať účastníka zo sústredenia domov.
             \item Prípadné otázky zasielajte e-mailom na \href{mailto:(* camp.contact.email *)}{\texttt{(* camp.contact.email *)}}. V~núdzových prípadoch na otázky odpovie
                 telefonicky (* camp.contact.name *) na čísle (* camp.contact.phone *).
@@ -54,18 +57,22 @@
         \subsection{Tam}
         (@ for chain in camp.transport.there @)
             (@ for transport in chain @)
-            (* transport.place *) ((* transport.time *)) (@ if transport.vehicle @) \quad$\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ \quad(@ endif @)
+                \makebox[50mm][c]{(* transport.place.nominative *) ((* transport.time *))}%
+                (@ if transport.vehicle @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
             (@ endfor @)%
             (@ if not loop.last @)\\(@ endif @)
         (@ endfor @)
         \subsection{Späť}
         (@ for chain in camp.transport.back @)
             (@ for transport in chain @)
-            (* transport.place *) ((* transport.time *)) (@ if transport.vehicle @) \quad$\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ \quad(@ endif @)
-            (@ endfor @)\\
+                \makebox[50mm][c]{(* transport.place.nominative *) ((* transport.time *))}%
+                (@ if transport.vehicle @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
+            (@ endfor @)%
+            (@ if not loop.last @)\\(@ endif @)
         (@ endfor @)
 
     \cutHere
+
     \section{Ospravedlnenie}
         (* 'Váš žiak' if child.male else 'Vaša žiačka' *) \textbf{(* child.name *) (* child.surname *)} sa na základe výborných výsledkov vo (* seminar.full.locative *)
         zúčastní na sústredení jeho najlepších riešiteľov. To sa uskutoční v~dňoch (* camp.dates.begin.strftime('%d.~%m.') *) až (* camp.dates.end.strftime('%d.~%m.~%Y') *)
@@ -76,8 +83,9 @@
         \hfill (* seminar.head.name *), hlavný vedúci (* seminar.short *)
     
     \cutHere
+
     \section{Potvrdenie o~bezinfekčnosti}
-    Vyhlasujem, že moje dieťa, (* child.name *) (* child.surname *), bytom v~\makebox[30mm]{\dotfill} neprejavuje príznaky akútneho ochorenia a že
+        Vyhlasujem, že moje dieťa, (* child.name *) (* child.surname *), bytom v~\makebox[30mm]{\dotfill} neprejavuje príznaky akútneho ochorenia a že
         príslušný orgán verejného zdravotníctva ani ošetrujúci lekár menovanému dieťaťu nenariadil
         karanténne opatrenie (karanténu, zvýšený zdravotný dozor alebo lekársky dohľad). Nie je mi známe, že
         by dieťa, jeho rodičia alebo iné osoby, ktoré s~ním žijú v~spoločnej domácnosti, prišli v~priebehu
