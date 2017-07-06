@@ -181,6 +181,9 @@ output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
 
 output/%/all: output/%/problems output/%/solutions ;
 
+output/%/clean:
+	rm -rf output/$*/
+
 output/%/all: output/%/*/all ;
 
 output/%/invite.pdf:\
