@@ -133,7 +133,8 @@ output/%/problems.pdf:\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
 	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
 	$$(wildcard source/$$*/*/meta.yaml)\
-	input/$$*/problems.tex
+	input/$$*/problems.tex\
+	source/$$*/meta.yaml
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex

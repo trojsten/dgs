@@ -1,10 +1,9 @@
 \documentclass[12pt, twoside]{article}
 
-\RequirePackage{core/dgs}
-\RequirePackage{core/config/dgs-config}
-\RequirePackage{core/dgs-custom}
-\input{modules/seminar/styles/(* seminar.id *)/custom.sty}
-\input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.sty}
+\input{core/core.tex}
+\input{core/format.tex}
+\input{modules/seminar/styles/(* seminar.id *)/format.tex}
+\input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.tex}
 
 \newcounter{volume}
 \newcounter{semester}
@@ -21,10 +20,10 @@
     \pagestyle{solutions}    
 
     (@ for problem in round.problems @)%
-    \setcounter{volume}{(* volume.id *)}%
-    \setcounter{semester}{(* semester.id *)}%
-    \setcounter{round}{(* round.id *)}%
-    \setcounter{problem}{(* problem.id *)}%
+    \setcounter{volume}{(* volume.number *)}%
+    \setcounter{semester}{(* semester.number *)}%
+    \setcounter{round}{(* round.number *)}%
+    \setcounter{problem}{(* problem.number *)}%
     \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
     \subsection{%
