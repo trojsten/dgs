@@ -1,6 +1,3 @@
-\NeedsTeXFormat{LaTeX2e}[2011/01/01]
-\ProvidesPackage{dgs}[2016/11/10 Trojsten Document Generation System -- DeGeŠ]
-
 % Document Generation System - skrátene DGS, čítaj DeGeŠ, chce nahradiť všetky existujúce
 % spôsoby sádzania trojstenových zadaní, vzorákov a ostatných dokumentov.
 
@@ -90,9 +87,10 @@
 % Setup XeLaTeX-specific options
 
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
-\RequirePackage{core/dgs-fonts}
-\RequirePackage{core/dgs-hacks}
-\RequirePackage{core/dgs-utils}
+
+\input{core/fonts.tex}
+\input{core/hacks.tex}
+\input{core/utilities.tex}
 
 % \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
 % Insert a picture, protected against nonexistent files
@@ -159,6 +157,7 @@
 \char_set_catcode_end_line:n{`\^^M}
 \ExplSyntaxOff
 
+\NewDocumentCommand{\rootDirectory}{}{input}
+\NewDocumentCommand{\problemDirectory}{}{<undefined>}
+
 \endinput                                                           % everything below is safely ignored
-
-
