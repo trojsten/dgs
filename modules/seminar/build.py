@@ -34,6 +34,9 @@ def getRoundMetadata(root, seminar, volume, semester, round):
             'round': roundMeta,
         }
         update = {
+            'module': {
+                'id':           'seminar',
+            },
             'seminar': {
                 'id':           args.seminar,
             },
@@ -93,5 +96,4 @@ for template in ['seminar.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, '.')).get_template(template).render(context), file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 
 print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
-
 
