@@ -1,8 +1,11 @@
 MAKEFLAGS += --no-builtin-rules
 
-module = textbook
+.SUFFIXES:
+	
+module = naboj
 
 output/$(module)/%/booklet.pdf:\
+	corefiles\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/problem.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/solution.tex))\
 	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\

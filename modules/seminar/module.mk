@@ -1,7 +1,5 @@
 MAKEFLAGS += --no-builtin-rules
 
-.SUFFIXES:
-	
 module = seminar
 
 .SECONDEXPANSION:
@@ -10,11 +8,10 @@ input/$(module)/%/problems.tex input/$(module)/%/solutions.tex:\
 	$$(wildcard source/$(module)/$$*/*/meta.yaml)\
 	source/$(module)/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	./modules/$(module)/build.py 'source/$(module)/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/$(module)/%/pdf-prerequisites: \
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$(module)/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.png)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$(module)/$$*/*/*.svg))) \
@@ -22,16 +19,17 @@ input/$(module)/%/pdf-prerequisites: \
 	$$(wildcard source/$(module)/$$*/*/meta.yaml) \
 	source/$(module)/$$*/meta.yaml ;
 
-output/$(module)/%/copy-images: \
+output/$(module)/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.jpg)) \
-	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.png)) ;
+	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.png)) \
+	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
 output/$(module)/%/problems.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/problem.md))) \
 	input/$(module)/%/pdf-prerequisites \
-	output/$(module)/%/copy-images \
 	input/$(module)/%/problems.tex
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/problems.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
@@ -40,25 +38,20 @@ output/$(module)/%/problems.pdf: \
 output/$(module)/%/solutions.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/solution.md))) \
 	input/$(module)/%/pdf-prerequisites \
-	output/$(module)/%/copy-images \
 	input/$(module)/%/solutions.tex
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/solutions.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/solutions.tex
 
 output/$(module)/%/html-problems: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md))) \
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
-	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
-
+	output/$(module)/%/html-prerequisites \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$(module)/$$*/*/problem.md))) ;
+	
 output/$(module)/%/html-solutions:\
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md))) \
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
-	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
+	output/$(module)/%/html-prerequisites \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$(module)/$$*/*/solution.md))) ;
 
 output/$(module)/%/pdf: output/$(module)/%/problems.pdf output/$(module)/%/solutions.pdf ;
 
