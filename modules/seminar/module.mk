@@ -1,64 +1,62 @@
 MAKEFLAGS += --no-builtin-rules
 
-module = seminar
-
 .SECONDEXPANSION:
 
-input/$(module)/%/problems.tex input/$(module)/%/solutions.tex:\
-	$$(wildcard source/$(module)/$$*/*/meta.yaml)\
-	source/$(module)/$$*/meta.yaml
+input/seminar/%/problems.tex input/seminar/%/solutions.tex:\
+	$$(wildcard source/seminar/$$*/*/meta.yaml)\
+	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/$(module)/build.py 'source/$(module)/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	./modules/seminar/build.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/$(module)/%/pdf-prerequisites: \
-	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.jpg)) \
-	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.png)) \
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$(module)/$$*/*/*.svg))) \
-	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/$(module)/$$*/*/*.gp))) \
-	$$(wildcard source/$(module)/$$*/*/meta.yaml) \
-	source/$(module)/$$*/meta.yaml ;
+input/seminar/%/pdf-prerequisites: \
+	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
+	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
+	$$(wildcard source/seminar/$$*/*/meta.yaml) \
+	source/seminar/$$*/meta.yaml ;
 
-output/$(module)/%/html-prerequisites: \
-	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.jpg)) \
-	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.png)) \
+output/seminar/%/html-prerequisites: \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
 
-output/$(module)/%/problems.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/problem.md))) \
-	input/$(module)/%/pdf-prerequisites \
-	input/$(module)/%/problems.tex
+output/seminar/%/problems.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	input/seminar/%/pdf-prerequisites \
+	input/seminar/%/problems.tex
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/problems.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/problems.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/problems.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/problems.tex
 
-output/$(module)/%/solutions.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/solution.md))) \
-	input/$(module)/%/pdf-prerequisites \
-	input/$(module)/%/solutions.tex
+output/seminar/%/solutions.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
+	input/seminar/%/pdf-prerequisites \
+	input/seminar/%/solutions.tex
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/solutions.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/solutions.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/solutions.tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/solutions.tex
 
-output/$(module)/%/html-problems: \
-	output/$(module)/%/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$(module)/$$*/*/problem.md))) ;
+output/seminar/%/html-problems: \
+	output/seminar/%/html-prerequisites \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md))) ;
 	
-output/$(module)/%/html-solutions:\
-	output/$(module)/%/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$(module)/$$*/*/solution.md))) ;
+output/seminar/%/html-solutions:\
+	output/seminar/%/html-prerequisites \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md))) ;
 
-output/$(module)/%/pdf: output/$(module)/%/problems.pdf output/$(module)/%/solutions.pdf ;
+output/seminar/%/pdf: output/seminar/%/problems.pdf output/seminar/%/solutions.pdf ;
 
-output/$(module)/%/html: output/$(module)/%/html-problems output/$(module)/%/html-solutions ;
+output/seminar/%/html: output/seminar/%/html-problems output/seminar/%/html-solutions ;
 
-output/$(module)/%/problems: output/$(module)/%/problems.pdf output/$(module)/%/html-problems ;
+output/seminar/%/problems: output/seminar/%/problems.pdf output/seminar/%/html-problems ;
 
-output/$(module)/%/solutions: output/$(module)/%/solutions.pdf output/$(module)/%/html-solutions ;
+output/seminar/%/solutions: output/seminar/%/solutions.pdf output/seminar/%/html-solutions ;
 
-output/$(module)/%/all: output/$(module)/%/problems output/$(module)/%/solutions ;
+output/seminar/%/all: output/seminar/%/problems output/seminar/%/solutions ;
