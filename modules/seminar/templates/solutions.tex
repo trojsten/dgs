@@ -2,8 +2,8 @@
 
 \input{core/core.tex}
 \input{core/format.tex}
-\input{modules/seminar/styles/(* seminar.id *)/format.tex}
-\input{input/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.tex}
+\input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
+\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/seminar.tex}
 
 \newcounter{volume}
 \newcounter{semester}
@@ -24,7 +24,7 @@
     \setcounter{semester}{(* semester.number *)}%
     \setcounter{round}{(* round.number *)}%
     \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
     \subsection{%
         \texorpdfstring{%

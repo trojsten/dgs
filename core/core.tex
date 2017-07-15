@@ -3,9 +3,6 @@
 
 % Prosíme o dodržiavanie nasledovných zásad.
 
-% 
-
-
 % NEVYMÝŠĽAJ VLASTNÉ HACKY, ŠPECIÁLNE NIE V PRÍPADE, ŽE TVOJ KÓD BUDE POUŽÍVAŤ AJ NIEKTO INÝ.
 % Aj keď je TeX miestami nechutný, zatiaľ sa všetko podarilo spraviť +- čisto.
 
@@ -58,10 +55,10 @@
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
 \sisetup{
-    separate-uncertainty    = true,                         % 7.2 ± 0.5
     detect-all              = true,                         % chceme zachovávať formátovanie prostredia
+    separate-uncertainty    = true,                         % 7.2 ± 0.5
     multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
-    per-mode                = reciprocal,                   % symbol pre "m/s", reciprocal pre "ms^{-1}"
+    per-mode                = reciprocal,                   % `symbol` pre "m/s", `reciprocal` pre "ms^{-1}"
     group-separator         = {\,},
     group-minimum-digits    = 5,
     inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami

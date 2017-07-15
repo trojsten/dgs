@@ -1,5 +1,6 @@
+MAKEFLAGS += --no-builtin-rules
+
 .SUFFIXES:
-	MAKEFLAGS += -r
 
 .SECONDARY:
 
@@ -11,6 +12,8 @@ c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
 c_filename	:= $(shell tput sgr0; tput setaf 5)
 c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 7)
+
+include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
@@ -96,7 +99,7 @@ output/%.html: source/%.md
 
 .SECONDEXPANSION:
 
-# Copy Gnuplot file to input, along with all its possible prerequisites
+# Copy Gnuplot file to input, along with all of its possible prerequisites
 input/%.gp:\
 	source/%.gp\
 	$$(subst source/,input/,$$(wildcard $$(dir source/%.gp)*.dat))
@@ -106,85 +109,14 @@ input/%.gp:\
 
 ### Booklet rules
 
-input/%/problems.tex:\
-	$$(wildcard source/$$*/*/meta.yaml)\
-	source/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))
-	mkdir -p $(dir $@)
-	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-
-input/%/solutions.tex:\
-	$$(wildcard source/$$*/*/meta.yaml)\
-	source/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))	
-	mkdir -p $(dir $@)
-	./modules/seminar/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/%/invite.tex: 
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
 	./modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
-output/%/problems.pdf:\
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,output/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
-	$$(wildcard source/$$*/*/meta.yaml)\
-	input/$$*/problems.tex\
-	source/$$*/meta.yaml
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/problems.tex
-
-output/%/solutions.pdf:\
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/problem.md)))\
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$$*/*/solution.md)))\
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$$*/*/*.svg)))\
-	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/$$*/*/*.gp)))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,output/,$$(wildcard source/$$*/*/*.jpg))\
-	$$(subst source/,input/,$$(wildcard source/$$*/*/*.png))\
-	$$(subst source/,output/,$$(wildcard source/$$*/*/*.png))\
-	$$(wildcard source/$$*/*/meta.yaml)\
-	input/$$*/solutions.tex\
-	source/$$*/meta.yaml
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/solutions.tex
-
-output/%/html-problems:\
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/problem.md)))\
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
-	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
-
-output/%/html-solutions:\
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/$$*/*/solution.md)))\
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/$$*/*/*.svg))) \
-	$$(subst source/,output/,$$(subst .png,.png,$$(wildcard source/$$*/*/*.png))) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/$$*/*/*.gp))) ;
-
-output/%/pdf: output/%/problems.pdf output/%/solutions.pdf ;
-
-output/%/html: output/%/html-problems output/%/html-solutions ;
-
-output/%/problems: output/%/problems.pdf output/%/html-problems ;
-
-output/%/solutions: output/%/solutions.pdf output/%/html-solutions ;
-
-output/%/all: output/%/problems output/%/solutions ;
-
 output/%/clean:
 	rm -rf output/$*/
-
-output/%/all: output/%/*/all ;
 
 output/%/invite.pdf:\
 	input/$$*/invite.tex\
