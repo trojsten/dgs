@@ -6,22 +6,14 @@ module = seminar
 
 .SECONDEXPANSION:
 
-input/$(module)/%/problems.tex:\
+input/$(module)/%/problems.tex input/$(module)/%/solutions.tex:\
 	$$(wildcard source/$(module)/$$*/*/meta.yaml)\
 	source/$(module)/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	mkdir -p $(dir $@)
 	./modules/$(module)/build.py 'source/$(module)/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/$(module)/%/solutions.tex:\
-	$$(wildcard source/$(module)/$$*/*/meta.yaml)\
-	source/$(module)/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))	
-	mkdir -p $(dir $@)
-	./modules/$(module)/build.py 'source/$(module)/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-
 input/$(module)/%/pdf-prerequisites: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/problem.md))) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/$(module)/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/$(module)/$$*/*/*.png)) \
@@ -35,6 +27,7 @@ output/$(module)/%/copy-images: \
 	$$(subst source/,output/,$$(wildcard source/$(module)/$$*/*/*.png)) ;
 
 output/$(module)/%/problems.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/problem.md))) \
 	input/$(module)/%/pdf-prerequisites \
 	output/$(module)/%/copy-images \
 	input/$(module)/%/problems.tex
@@ -45,6 +38,7 @@ output/$(module)/%/problems.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(module)/$*/problems.tex
 
 output/$(module)/%/solutions.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/$(module)/$$*/*/solution.md))) \
 	input/$(module)/%/pdf-prerequisites \
 	output/$(module)/%/copy-images \
 	input/$(module)/%/solutions.tex
