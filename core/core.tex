@@ -101,11 +101,23 @@
     \begin{figure}[H]%
         \centering%
         \IfFileExists{\problemDirectory/#1.#2}{%
-            \includegraphics[keepaspectratio = true, height = #4]{\problemDirectory/#1}%
+            \includegraphics[keepaspectratio = true, height = #4]{\problemDirectory/#1.#2}%
         }{%
             \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
         }%
         \ifstrempty{#5}{}{\caption{\textit{#5}}}%
+    \end{figure}%
+}
+
+\NewDocumentCommand{\insertPicture}{m m m m}{%
+    \begin{figure}[H]%
+        \centering%
+        \IfFileExists{\problemDirectory/#1}{%
+            \includegraphics[keepaspectratio = true, height = #2]{\problemDirectory/#1}%
+        }{%
+            \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+        }%
+        \ifstrempty{#3}{}{\caption{\textit{#3}}}%
     \end{figure}%
 }
 

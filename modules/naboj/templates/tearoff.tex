@@ -3,11 +3,9 @@
 \input{core/core.tex}
 \input{core/format.tex}
 \input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
-\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format.tex}
+\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/format.tex}
 
 \newcounter{volume}
-\newcounter{semester}
-\newcounter{round}
 \newcounter{problem}
  
 \begin{document}
@@ -15,19 +13,12 @@
     \thispagestyle{first}
     \vspace*{2em}
 
-    {
-        \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
-        \centering
-        \vspace{-1.3em}
-        Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
-    } 
-        
     \pagestyle{problems}    
 
     (@ for problem in volume.problems @)%
     \setcounter{volume}{(* volume.number *)}%
     \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
     
     \subsection{%
         \texorpdfstring{%

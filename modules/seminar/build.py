@@ -6,11 +6,11 @@ from colorama import Fore, Style
 
 def getRoundMetadata(root, seminar, volume, semester, round):
     try:
-        seminarMeta         = yaml.load(open(os.path.join(root, seminarId, 'meta.yaml'), 'r'))
-        volumeMeta          = yaml.load(open(os.path.join(root, seminarId, volumeId, 'meta.yaml'), 'r'))
-        semesterMeta        = yaml.load(open(os.path.join(root, seminarId, volumeId, semesterId, 'meta.yaml'), 'r'))
-        roundMeta           = yaml.load(open(os.path.join(root, seminarId, volumeId, semesterId, roundId, 'meta.yaml'), 'r'))
-        roundDirectory      = os.path.join(root, seminarId, volumeId, semesterId, roundId)
+        seminarMeta         = yaml.load(open(os.path.join(root, seminar, 'meta.yaml'), 'r'))
+        volumeMeta          = yaml.load(open(os.path.join(root, seminar, volume, 'meta.yaml'), 'r'))
+        semesterMeta        = yaml.load(open(os.path.join(root, seminar, volume, semester, 'meta.yaml'), 'r'))
+        roundMeta           = yaml.load(open(os.path.join(root, seminar, volume, semester, round, 'meta.yaml'), 'r'))
+        roundDirectory      = os.path.join(root, seminar, volume, semester, round)
 
         problemsMetas       = []
 

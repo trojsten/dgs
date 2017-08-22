@@ -1,20 +1,30 @@
 \documentclass[12pt, twoside]{article}
 
-\input{core/core.xelatex}
-\input{core/config/common.xelatex}
+\input{core/core.tex}
+\input{core/format.tex}
+\input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
+\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/format.tex}
 
-\loadDocumentSettings
-\usepackage{core/format.xelatex}
-
-\RenewDocumentCommand{\currentDir}{}{input}
+\newcounter{volume}
+\newcounter{semester}
+\newcounter{round}
+\newcounter{problem}
  
-\begin{document}            
-    \loadRegularStyle
+\begin{document}
+    \pagestyle{main}
     \thispagestyle{first}
-    \pagestyle{rules}
     \vspace*{2em}
-    \protectedInput{core/templates/\seminarID/intro.tex}%
-    \newpage%
-    \protectedInput{core/templates/\seminarID/rules.tex}%
-    \newpage%
+
+    \section{Zadania}
+            
+    \pagestyle{problems}    
+
+    (@ for problem in volume.problems @)%
+    \setcounter{volume}{(* volume.number *)}%
+    \setcounter{problem}{(* problem.number *)}%
+    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+    
+    \subsection{(* problem.number *)}%
+    \protectedInput{\problemDirectory/problem.tex}%
+    (@ endfor @)
 \end{document}
