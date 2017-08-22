@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
-from utils import jinjaEnv, mergeInto, renderList, readableDir
+from utils import jinjaEnv, mergeInto, renderList, readableDir, splitBy
 from colorama import Fore, Style
 
 def getVolumeMetadata(root, seminar, volume, language):
@@ -9,6 +9,7 @@ def getVolumeMetadata(root, seminar, volume, language):
         seminarMeta         = yaml.load(open(os.path.join(root, seminar, 'meta.yaml'), 'r'))
         volumeMeta          = yaml.load(open(os.path.join(root, seminar, volume, 'meta.yaml'), 'r'))
         languageMeta        = yaml.load(open(os.path.join(root, seminar, volume, language, 'meta.yaml'), 'r'))
+        i18nMeta            = yaml.load(open(os.path.join(thisDirectory, 'templates', 'i18n', language + '.yaml'), 'r'))
 
         problemMetas        = []
         problemNum          = 1
@@ -18,12 +19,13 @@ def getVolumeMetadata(root, seminar, volume, language):
                 'id':       problem,
             }
             problemNum += 1
-            problemMetas.append(problemMeta)            
-
+            problemMetas.append(problemMeta)
+        
         context = {
             'seminar': seminarMeta,
         }
         update = {
+            'i18n':             i18nMeta,
             'module': {
                 'id':           'naboj',
             },
@@ -34,6 +36,7 @@ def getVolumeMetadata(root, seminar, volume, language):
                 'id':           '{:02d}'.format(args.volume),
                 'number':       args.volume,
                 'problems':     problemMetas,
+                'problemsMod':  splitBy(problemMetas, 5),
             },
             'language': {
                 'id':           args.language,
@@ -70,7 +73,7 @@ if (args.verbose):
     pprint.pprint(context)
 
 #for template in ['booklet.tex', 'tearoff.tex', 'answers.tex']:
-for template in ['booklet.tex']:
+for template in ['booklet.tex', 'answers.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(template).render(context), file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 
 for template in ['format.tex']:

@@ -6,8 +6,6 @@
 \input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/format.tex}
 
 \newcounter{volume}
-\newcounter{semester}
-\newcounter{round}
 \newcounter{problem}
  
 \begin{document}
@@ -15,16 +13,35 @@
     \thispagestyle{first}
     \vspace*{2em}
 
-    \section{Zadania}
-            
+    \section{(* i18n.section.problems *)}
     \pagestyle{problems}    
-
     (@ for problem in volume.problems @)%
-    \setcounter{volume}{(* volume.number *)}%
-    \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
-    
-    \subsection{(* problem.number *)}%
-    \protectedInput{\problemDirectory/problem.tex}%
+        \setcounter{volume}{(* volume.number *)}%
+        \setcounter{problem}{(* problem.number *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \subsection{(* problem.number *)}%
+        \protectedInput{\problemDirectory/problem.tex}%
+    (@ endfor @)
+
+    \newpage    
+    \section{(* i18n.section.solutions *)}
+    \pagestyle{solutions}    
+    (@ for problem in volume.problems @)%
+        \setcounter{volume}{(* volume.number *)}%
+        \setcounter{problem}{(* problem.number *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \subsection{(* problem.number *)}%
+        \protectedInput{\problemDirectory/solution.tex}%
+    (@ endfor @)
+
+    \newpage
+    \section{(* i18n.section.answers *)}
+    \pagestyle{answers}
+    (@ for problem in volume.problems @)%
+        \setcounter{volume}{(* volume.number *)}%
+        \setcounter{problem}{(* problem.number *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \subsection{(* problem.number *)}%
+        \protectedInput{\problemDirectory/answer.tex}%
     (@ endfor @)
 \end{document}

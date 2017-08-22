@@ -2,7 +2,10 @@ section:
     problems:       'Zadania'
     solutions:      'Vzorové riešenia'
     answers:        'Výsledky'
-name:               'Fyzikálny Náboj'
+competition:
+    name:
+        nominative:     'Fyzikálny Náboj'
+        genitive:       'Fyzikálneho Náboja'
+    email:              'info-sk@physics.naboj.org'
+    website:            'https://physics.naboj.org/'
 team:               'Tím'
-email:              'info-sk@physics.naboj.org'
-website:            'https://physics.naboj.org/'

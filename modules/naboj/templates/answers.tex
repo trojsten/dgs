@@ -3,7 +3,7 @@
 \input{core/core.tex}
 \input{core/format.tex}
 \input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
-\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format.tex}
+\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/format.tex}
 
 \newcounter{volume}
 \newcounter{problem}
@@ -13,27 +13,16 @@
     \thispagestyle{first}
     \vspace*{2em}
    
-    \section{\texorpdfstring{Riešenia (* volume.id *). ročníka (* competition.genitive *) časti}{Riešenia}}
-        
-    \pagestyle{solutions}
-
-    (@ for problem in volume.problems @)%
-    \setcounter{volume}{(* volume.number *)}%
-    \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* problem.id *)}%
-
-    \subsection{%
-        \texorpdfstring{%
-            \large \textbf{(* problem.title *)} \hfill \normalsize%
-            (@ if problem.solutionBy @)%
-                vzorák (* problem.solutionBy|formatList *)%
-            (@ endif @)%
-            (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
-            (@ if problem.evaluation @)%
-                opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
-            (@ endif @)%
-        }{(* problem.title *)}%
-    }
-    \protectedInput{\problemDirectory/solution.tex}%
+    \section{(* i18n.section.answers *)}
+    \pagestyle{answers}
+    (@ for modulo in volume.problemsMod @)
+        \newpage%
+        (@ for problem in modulo @)%
+            \setcounter{volume}{(* volume.number *)}%
+            \setcounter{problem}{(* problem.number *)}%
+            \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+            \subsection{(* problem.number *)}%
+            \protectedInput{\problemDirectory/answer.tex}%
+        (@ endfor @)
     (@ endfor @)
 \end{document}
