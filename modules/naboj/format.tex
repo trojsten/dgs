@@ -1,0 +1,61 @@
+% DeGeŠ seminar style file
+
+\fancypagestyle{main}{
+    \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
+    \fancyhead[LE,RO]{(* seminar.full.nominative *)}
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\quad\setlength{\fboxsep}{0pt}]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+}
+
+\fancypagestyle{problems}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Zadania (* volume.id *). ročníka (* volume.id *)}}
+}
+
+\fancypagestyle{solutions}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Riešenia (* volume.id *). ročníka (* volume.id *)}}
+}
+
+\fancypagestyle{rules}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+    \fancyhead[L]{    
+        \begin{minipage}{0.15\textwidth}
+            \flushleft
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+            \vspace{16pt}
+        \end{minipage}
+    }
+    \fancyhead[C]{
+        \begin{minipage}{0.7\textwidth}
+            \centering
+            \vspace{4pt}
+            {\Large (* seminar.full.nominative *)}\\[4pt]
+            {\large (* volume.number|roman *). ročník, (* volume.number + seminar.founded - 1 *)}\\[8pt]            
+            {\footnotesize (* seminar.short *), (* seminar.departmentShort *), (* seminar.fullAddress *)}\\[2pt]
+            \vspace{6pt}
+        \end{minipage}        
+    }           
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \flushright
+            \includegraphics[width = 30mm, keepaspectratio = true]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}\\[0pt]
+            \vspace{4pt}
+        \end{minipage}
+    }
+    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyfoot[C]{\small \thepage}
+    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
+}  
