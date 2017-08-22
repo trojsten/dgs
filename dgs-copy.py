@@ -31,7 +31,7 @@ print(query)
 os.system(query)
 
 for problem in range(1, 8):
-    query = "scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
+    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -42,7 +42,7 @@ for problem in range(1, 8):
     os.system(query)
 
 for problem in range(1, 8):
-    query = "scp ./output/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/prikl{problem}.html".format(
+    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -52,7 +52,7 @@ for problem in range(1, 8):
     print(query)
     os.system(query)
 
-query = "scp ./output/{seminar}/{volume}/{part}/{round}/problems.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/zadania.pdf".format(
+query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/problems.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/zadania.pdf".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
@@ -61,7 +61,7 @@ query = "scp ./output/{seminar}/{volume}/{part}/{round}/problems.pdf ksp.sk:/var
 print(query)
 os.system(query)
 
-query = "scp ./output/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/vzoraky.pdf".format(
+query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/vzoraky.pdf".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
@@ -70,7 +70,7 @@ query = "scp ./output/{seminar}/{volume}/{part}/{round}/solutions.pdf ksp.sk:/va
 print(query)
 os.system(query)
 
-query = "find ./output/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
+query = "find ./output/seminar/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
