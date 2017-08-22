@@ -68,6 +68,12 @@ def renderList(what, **kwargs):
     
     return ' '.join(what)
 
+def splitBy(what, step):
+    result = [[] for i in range(0, step)]
+    for i, item in enumerate(what):
+        result[(i + 1) % step].append(item)
+    return result
+
 class readableDir(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         tryDir = values

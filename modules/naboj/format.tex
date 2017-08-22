@@ -1,27 +1,32 @@
 % DeGeŠ seminar style file
 
 \fancypagestyle{main}{
-    \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* seminar.id *)/logo/logo.pdf}}}
-    \fancyhead[LE,RO]{(* seminar.full.nominative *)}
-    \fancyfoot[LO,RE]{\href{mailto:(* seminar.email *)}{\texttt{(* seminar.email *)}}}
+    \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/(* module.id *)/styles/(* seminar.id *)/logo/logo.pdf}}}
+    \fancyhead[C]{\textit{(* volume.number *). (* i18n.competition.name.nominative *), (* volume.number + seminar.founded - 1 *)}}
+    \fancyfoot[LO,RE]{\href{mailto:(* i18n.competition.email *)}{\texttt{(* i18n.competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* seminar.URL *)}}
-    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
-    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\quad\setlength{\fboxsep}{0pt}]
+    \fancyfoot[LE,RO]{\URL{(* i18n.competition.website *)}}
+    \titleformat{\section}[hang]{\centering\huge}{}{0pt}{}
+    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
     \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
     \titlespacing{\section}{0pt}{8pt}{8pt}
-    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsection}{0pt}{8pt}{8pt}
     \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
 }
 
 \fancypagestyle{problems}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Zadania (* volume.id *). ročníka (* volume.id *)}}
+    \fancyhead[LE,RO]{\textit{(* i18n.section.problems *)}}
 }
 
 \fancypagestyle{solutions}{%
     \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Riešenia (* volume.id *). ročníka (* volume.id *)}}
+    \fancyhead[LE,RO]{\textit{(* i18n.section.solutions *)}}
+}
+
+\fancypagestyle{answers}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{(* i18n.section.answers *)}}
 }
 
 \fancypagestyle{rules}{%
