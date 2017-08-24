@@ -3,15 +3,15 @@ MAKEFLAGS += --no-builtin-rules
 .SECONDEXPANSION:
 
 input/naboj/%/format.tex: \
-	modules/naboj/$$(notdir $@) \
-	source/naboj/$$*/meta.yaml 
+	modules/naboj/format.tex \
+	source/naboj/$$*/../meta.yaml 
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	./modules/naboj/build.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/$$(notdir $@) \
-	source/naboj/$$*/meta.yaml 
+	source/naboj/$$*/../meta.yaml 
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	./modules/naboj/build.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
@@ -23,8 +23,7 @@ input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
-	source/naboj/$$*/../meta.yaml \
-	source/naboj/$$*/meta.yaml  ;
+	source/naboj/$$*/../meta.yaml ;
 	
 output/naboj/%/booklet.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) \
@@ -44,8 +43,6 @@ output/naboj/%/booklet-print.pdf: \
 	pdfbook --short-edge --quiet --outfile $@ $<
 
 output/naboj/%/answers.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/solution.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/answers.tex 

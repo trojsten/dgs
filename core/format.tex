@@ -1,11 +1,23 @@
 % paragraph settings -- formatting paragraphs and list environments
 \linespread{1.0}
+
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{6pt}
-\setlength{\abovedisplayskip}{0pt plus 2pt minus 2pt}
-\setlength{\belowdisplayskip}{-6pt plus 2pt minus 2pt}
-\setlength{\abovedisplayshortskip}{0pt plus 2pt minus 2pt}
-\setlength{\belowdisplayshortskip}{0pt plus 2pt minus 2pt}
+
+\usepackage[nodisplayskipstretch]{setspace}
+\setstretch{1.0}
+
+\NewDocumentCommand{\setDisplaySkips}{}{%
+    \setlength{\abovedisplayskip}{10pt}%
+    \setlength{\belowdisplayskip}{10pt}%
+    \setlength{\abovedisplayshortskip}{4pt}%
+    \setlength{\belowdisplayshortskip}{4pt}%
+}
+\appto{\normalsize}{\setDisplaySkips}%
+\appto{\small}{\setDisplaySkips}%
+\appto{\footnotesize}{\setDisplaySkips}%
+\setDisplaySkips
+
 \setlength{\itemindent}{0pt}
 \setlength{\textfloatsep}{3mm}
 \setlength{\LTcapwidth}{0.8\textwidth}

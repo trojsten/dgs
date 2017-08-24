@@ -17,7 +17,7 @@
     \pagestyle{answers}
     (@ for modulo in volume.problemsMod @)
         \newpage%
-        \section{Modulo (* loop.index - 1 *)}
+        \section{Modulo (* loop.index0 *)}
         (@ for problem in modulo @)%
             \setcounter{volume}{(* volume.number *)}%
             \setcounter{problem}{(* problem.number *)}%
