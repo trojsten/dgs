@@ -20,7 +20,6 @@
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/problem.tex}%
-        \textcolor{red}{\texttt{(* problem.id *)}}%
     (@ endfor @)
 
     \newpage    
@@ -33,7 +32,6 @@
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/solution.tex}%
-        \textcolor{red}{\texttt{(* problem.id *)}}%
     (@ endfor @)
 
     \newpage
@@ -46,6 +44,6 @@
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/answer.tex}%
-        \textcolor{red}{\texttt{(* problem.id *)}}%
+       % \textcolor{red}{\texttt{(* problem.id *)}}%
     (@ endfor @)
 \end{document}
