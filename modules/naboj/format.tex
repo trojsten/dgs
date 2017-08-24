@@ -1,5 +1,8 @@
 % DeGeŠ seminar style file
 
+\numberwithin{equation}{subsection}
+\renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
+
 \fancypagestyle{main}{
     \fancyhead[LO,RE]{\raisebox{(* seminar.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/(* module.id *)/styles/(* seminar.id *)/logo/logo.pdf}}}
     \fancyhead[C]{\textit{(* volume.number *). (* i18n.competition.name.nominative *), (* volume.number + seminar.founded - 1 *)}}
@@ -9,7 +12,7 @@
     \titleformat{\section}[hang]{\centering\huge}{}{0pt}{}
     \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
     \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\section}{0pt}{0pt}{8pt}
     \titlespacing{\subsection}{0pt}{8pt}{8pt}
     \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
 }
