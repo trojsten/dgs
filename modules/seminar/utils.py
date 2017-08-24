@@ -2,16 +2,21 @@
 
 import argparse, yaml, os, jinja2
 
-def mergeInto(a, b):
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                mergeInto(a[key], b[key])
+def mergeDicts(parent, *children):
+    for child in children:
+        mergeDict(parent, child)
+    return parent
+
+def mergeDict(parent, child):
+    for key in child:
+        if key in parent:
+            if isinstance(parent[key], dict) and isinstance(parent[key], dict):
+                mergeDict(parent[key], child[key])
             else:
-                a[key] = b[key]
+                parent[key] = child[key]
         else:
-            a[key] = b[key]
-    return a
+            parent[key] = child[key]
+    return parent
 
 def jinjaEnv(directory):
     env = jinja2.Environment(
@@ -68,10 +73,32 @@ def renderList(what, **kwargs):
     
     return ' '.join(what)
 
-def splitBy(what, step):
+def splitMod(what, step, first = 0):
     result = [[] for i in range(0, step)]
     for i, item in enumerate(what):
-        result[(i + 1) % step].append(item)
+        result[(i + first) % step].append(item)
+    return result
+
+def splitDiv(what, step):
+    return [] if what == [] else [what[0:step]] + splitDiv(what[step:], step)
+
+def loadYaml(*args):
+    try:
+        result = yaml.load(open(os.path.join(*args), 'r'))
+    except FileNotFoundError as e:
+        print(Fore.RED + "[FATAL] {}".format(e) + Style.RESET_ALL)
+        sys.exit(-1)
+    return result
+
+def addNumbers(what, start = 0):
+    result = []
+    num = start
+    for item in what:
+        result.append({
+            'number': num,
+            'id': item,
+        })
+        num += 1
     return result
 
 class readableDir(argparse.Action):
