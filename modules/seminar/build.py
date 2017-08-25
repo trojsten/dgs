@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
-from utils import jinjaEnv, mergeInto, renderList, readableDir
+from utils import jinjaEnv, mergeDicts, renderList, readableDir
 from colorama import Fore, Style
 
 def getRoundMetadata(root, seminar, volume, semester, round):
@@ -57,7 +57,7 @@ def getRoundMetadata(root, seminar, volume, semester, round):
             },
         }
 
-        return mergeInto(context, update)
+        return mergeDicts(context, update)
     
     except FileNotFoundError as e:
         print(Fore.RED + "[FATAL] {}".format(e) + Style.RESET_ALL)

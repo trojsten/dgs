@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import argparse, yaml, os, jinja2
+import argparse, yaml, os, jinja2, sys
+from colorama import Fore, Style
 
 def mergeDicts(parent, *children):
     for child in children:
@@ -83,11 +84,11 @@ def splitDiv(what, step):
     return [] if what == [] else [what[0:step]] + splitDiv(what[step:], step)
 
 def loadYaml(*args):
-    try:
-        result = yaml.load(open(os.path.join(*args), 'r'))
-    except FileNotFoundError as e:
-        print(Fore.RED + "[FATAL] {}".format(e) + Style.RESET_ALL)
-        sys.exit(-1)
+ #   try:
+    result = yaml.load(open(os.path.join(*args), 'r'))
+ #   except FileNotFoundError as e:
+ #       print(Fore.RED + "[FATAL] Could not load YAML file: {}".format(e) + Style.RESET_ALL)
+ #       sys.exit(-1)
     return result
 
 def addNumbers(what, start = 0):
@@ -100,6 +101,15 @@ def addNumbers(what, start = 0):
         })
         num += 1
     return result
+
+def numerate(objects, start = 0):
+    num = start
+    for item in objects:
+        mergeDicts(item, {
+            'number': num
+        })
+        num += 1
+    return objects
 
 class readableDir(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
