@@ -3,7 +3,7 @@
 \input{core/core.tex}
 \input{core/format.tex}
 \input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
-\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/format.tex}
+\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
 
 \newcounter{volume}
 \newcounter{problem}
@@ -17,7 +17,7 @@
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/problem.tex}%
     (@ endfor @)
@@ -29,7 +29,7 @@
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
@@ -41,7 +41,7 @@
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/answer.tex}%
        % \textcolor{red}{\texttt{(* problem.id *)}}%

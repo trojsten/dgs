@@ -1,4 +1,6 @@
 MAKEFLAGS += --no-builtin-rules
+path		:= $(abspath $(lastword $(MAKEFILE_LIST)))
+cdir 		:= $(dir $(path))
 
 .SUFFIXES:
 
@@ -15,9 +17,10 @@ c_default	:= $(shell tput sgr0; tput setaf 15)
 
 include modules/*/module.mk
 
+
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
-	@echo -e '$(c_action)Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	./core/dgs-convert.py latex $< $@ || exit 1;
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
@@ -93,7 +96,7 @@ output/%.jpg: source/%.jpg
 
 # DeGeŠ convert Markdown to HTML (for HTML)
 output/%.html: source/%.md
-	@echo -e '$(c_action)Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	./core/dgs-convert.py html $< $@ || exit 1;
 
