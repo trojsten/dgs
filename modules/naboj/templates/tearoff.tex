@@ -29,7 +29,7 @@
                 \setcounter{volume}{(* volume.number *)}%
                 \setcounter{problem}{(* problem.number *)}%
                 \setcounter{team}{(* team.id *)}%
-                \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* team.language *)/(* problem.id *)}%
+                \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
                 \begin{minipage}[t][90mm][t]{\textwidth}%
                     \begin{minipage}[t][82mm][t]{0.875\linewidth}\vspace{0pt}%
                         \subsection{(* problem.number *)}%
@@ -46,7 +46,7 @@
                         \hspace{1mm}
                         \rotatebox{90}{%
                             \includegraphics[%
-                                width = 70mm, height = 15mm, page = (* team.number * volume.problems|length + problem.number *)]{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/(* venue.id *)/barcodes.pdf}%
+                                width = 70mm, height = 15mm, page = (* team.number * volume.problems|length + problem.number *)]{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf}%
                             \hspace{5mm}%
                         }%
                     \end{minipage}
