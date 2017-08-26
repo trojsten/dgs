@@ -2,8 +2,8 @@
 
 \input{core/core.tex}
 \input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
-\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
 
 \newcounter{volume}
 \newcounter{problem}
@@ -11,37 +11,34 @@
 \begin{document}
     \pagestyle{main}
 
-    \vspace*{-1.5em}
     \section{(* i18n.section.problems *)}
     \pagestyle{problems}    
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/problem.tex}%
     (@ endfor @)
 
     \newpage    
-    \vspace*{-1.5em}
     \section{(* i18n.section.solutions *)}
     \pagestyle{solutions}    
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
 
     \newpage
-    \vspace*{-1.5em}
     \section{(* i18n.section.answers *)}
     \pagestyle{answers}
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/answer.tex}%
        % \textcolor{red}{\texttt{(* problem.id *)}}%
