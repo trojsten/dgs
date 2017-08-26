@@ -72,7 +72,7 @@ output/naboj/%/answers.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers.tex
 
 output/naboj/%/tearoff.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/*.md))))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/problem.md))))) \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.png)) \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)) \
@@ -85,3 +85,10 @@ output/naboj/%/tearoff.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
+
+%/all: \
+	$$*/booklet.pdf \
+	$$*/answers.pdf ;
+
+%/all: \
+	$$*/tearoff.pdf ;
