@@ -2,8 +2,8 @@
 
 \input{core/core.tex}
 \input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* seminar.id *)/format.tex}
-\input{input/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
 
 \newcounter{volume}
 \newcounter{problem}
@@ -11,7 +11,7 @@
 \begin{document}            
     \pagestyle{main}
     \thispagestyle{first}
-    \vspace*{2em}
+    \vspace*{19mm}
    
     \section{(* i18n.section.answers *)}
     \pagestyle{answers}
@@ -21,7 +21,7 @@
         (@ for problem in modulo @)%
             \setcounter{volume}{(* volume.number *)}%
             \setcounter{problem}{(* problem.number *)}%
-            \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* seminar.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{(* problem.number *)}%
             \protectedInput{\problemDirectory/answer.tex}%
         (@ endfor @)
