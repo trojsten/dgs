@@ -30,7 +30,7 @@ input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
-	$$(abspath source/naboj/$$*/../meta.yaml) ;
+	$$(subst $(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
 input/naboj/%/barcodes.txt: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
@@ -72,8 +72,13 @@ output/naboj/%/answers.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers.tex
 
 output/naboj/%/tearoff.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/*.md))))) \
+	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)) \
+	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.png)) \
+	$$(subst source/,input/,$$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)) \
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))) \
+	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))) \
 	input/naboj/%/barcodes.pdf \
-	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/tearoff.tex 
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
