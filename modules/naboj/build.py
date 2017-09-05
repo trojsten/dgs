@@ -16,9 +16,10 @@ def buildCompetitionContext(root, competition):
 
 def buildVolumeContext(root, competition, volume):
     vol = loadYaml(root, competition, volume, 'languages', 'meta.yaml')
+    date = loadYaml(root, competition, volume, 'meta.yaml')
     vol['problems'] = addNumbers(vol['problems'], 1)
     vol['problemsMod'] = splitMod(vol['problems'], 5, 1)
-    return mergeDicts(vol, {
+    return mergeDicts(vol, date, {
         'id': volume,
         'number': int(volume),
     })

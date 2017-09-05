@@ -2,7 +2,9 @@ section:
     problems:       'Problems'
     solutions:      'Solutions'
     answers:        'Answers'
-name:               'Physics Náboj'
-team:               'Team'
-email:              'info-en@physics.naboj.org'
-website:            'https://physics.naboj.org/'
+competition:
+    name:
+        nominative:     'Physics Náboj'
+        genitive:       'Physics Náboj'
+    email:              'info-en@physics.naboj.org'
+    website:            'https://physics.naboj.org/'
