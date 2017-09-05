@@ -41,8 +41,8 @@ try:
     tempfile.close()
     
     assert os.system('pandoc -R -S --no-tex-ligatures --mathjax --from markdown --latex-engine=xelatex --to {0} --filter pandoc-eqnos --output="{2}" {1}'.format(
-        args.format, tempfile.name, args.outfile.name, os.getcwd())
-    ) == 0
+        args.format, tempfile.name, args.outfile.name, os.getcwd()
+    )) == 0
     
     os.remove(tempfile.name)
 except IOError as e:
