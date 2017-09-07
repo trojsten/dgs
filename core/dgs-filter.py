@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 # Skript co sa spusta v prostriedku pandoc konverzie a robi veci specificke
 # pre nas. Konkretne:
 #

@@ -17,12 +17,11 @@ c_default	:= $(shell tput sgr0; tput setaf 15)
 
 include modules/*/module.mk
 
-
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
 	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	./core/dgs-convert.py latex $< $@ || exit 1;
+	python3 core/dgs-convert.py latex $< $@ || exit 1;
 	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 # Copy TeX for (to input)
@@ -98,7 +97,7 @@ output/%.jpg: source/%.jpg
 output/%.html: source/%.md
 	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	./core/dgs-convert.py html $< $@ || exit 1;
+	python3 core/dgs-convert.py html $< $@ || exit 1;
 
 .SECONDEXPANSION:
 
@@ -113,22 +112,9 @@ input/%.gp:\
 ### Booklet rules
 
 
-input/%/invite.tex: 
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	./modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 output/%/clean:
 	rm -rf output/$*/
-
-output/%/invite.pdf:\
-	input/$$*/invite.tex\
-	source/%/meta.yaml
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
 
 
 clean:
