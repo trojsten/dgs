@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import os, re, datetime, argparse, shutil, json, colorama
 from colorama import Fore as cf

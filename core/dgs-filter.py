@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Skript co sa spusta v prostriedku pandoc konverzie a robi veci specificke
 # pre nas. Konkretne:
 #

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse, yaml, os, jinja2, sys, pprint, colorama
 from build import *
 from colorama import Fore, Style

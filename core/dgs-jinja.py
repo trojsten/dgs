@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse, yaml, os, jinja2
 
 parser = argparse.ArgumentParser(
