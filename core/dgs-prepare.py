@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import sys, os, re, datetime, argparse, shutil, yaml, fnmatch, colorama
 from colorama import Fore as cf
 

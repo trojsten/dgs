@@ -7,21 +7,21 @@ input/naboj/%/tearoff.tex: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/naboj/build-tearoff.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build-tearoff.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/format.tex: \
 	modules/naboj/format.tex \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/naboj/build-booklet.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
+	python3 modules/naboj/build-booklet.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
 
 input/naboj/%/booklet.tex input/naboj/%/answers.tex: \
 	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/naboj/build-booklet.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build-booklet.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
@@ -36,7 +36,7 @@ input/naboj/%/barcodes.txt: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/naboj/build-barcodes.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build-barcodes.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/barcodes.pdf: input/naboj/%/barcodes.txt
 	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'

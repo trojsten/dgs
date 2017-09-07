@@ -7,7 +7,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex:\
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	./modules/seminar/build.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/seminar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \

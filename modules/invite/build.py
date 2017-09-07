@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import argparse, yaml, os, jinja2, sys, pprint, colorama
 from utils import jinjaEnv, mergeInto, renderList, readableDir
 from colorama import Fore, Style
