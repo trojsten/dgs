@@ -12,9 +12,8 @@
     \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
     \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
 
-    \NewDocumentCommand{\padzero}{m m}{\@anim@pad{#1}{#2}}
-
 % Disgusting hacks to bypass idiotic limitations of LaTeX -- 16 alphabets per document
+
     \def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
     \patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
     \patchcmd{\select@group}{\sixt@@n}{\@cclvi}{}{}

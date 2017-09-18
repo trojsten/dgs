@@ -19,38 +19,38 @@
     %showframe                                              % display visual frame (must be turned off for production)
 ]{geometry}
 
+\newcommand\hmmax{0}
+\newcommand\bmmax{0}
 
-\RequirePackage{
-    amsmath,
-    siunitx,
-    xparse,
-    enumitem,
-    graphicx,
-    listings,
-    lastpage,
-    marvosym,
-    calc,
-    pdftexcmds,
-    xifthen,
-    verbatim,
-    color,
-    float,
-    caption,
-    booktabs,
-    titlesec,
-    afterpage,
-    pifont,
-    pgffor,
-    longtable,
-    csvsimple,
-    animate,
-    skull,
-    etoolbox,
-    MnSymbol,
-    fancyhdr,
-    hyphenat,
-    fancyvrb                                                % fancy verbatim (currently unused)
-}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{siunitx}
+\RequirePackage{xparse}
+\RequirePackage{enumitem}
+\RequirePackage{listings}
+\RequirePackage{lastpage}
+\RequirePackage{marvosym}
+\RequirePackage{pdftexcmds}
+\RequirePackage{xifthen}
+\RequirePackage{verbatim}
+\RequirePackage{color}
+\RequirePackage{float}
+\RequirePackage{caption}
+\RequirePackage{booktabs}
+\RequirePackage{titlesec}
+\RequirePackage{afterpage}
+\RequirePackage{longtable}
+\RequirePackage{etoolbox}
+\RequirePackage{MnSymbol}
+\RequirePackage{fancyhdr}
+\RequirePackage{hyphenat}
+\RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
+
+\RequirePackage[f]{esvect}                                  % nicer vector overset
+\RequirePackage[all]{nowidow}
+\RequirePackage{boolexpr}                                   % boolean expressions, switch
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
@@ -78,13 +78,6 @@
     linkcolor               = colour-link,                  % custom Trojsten link colour
     urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
-
-\RequirePackage[f]{esvect}                                  % nicer vector overset
-\RequirePackage[all]{nowidow}
-
-% Setup XeLaTeX-specific options
-
-\RequirePackage{boolexpr}                                   % boolean expressions, switch
 
 \input{core/fonts.tex}
 \input{core/hacks.tex}
@@ -128,7 +121,7 @@
 %   ₋ verbatim výstup
 % Používa ExplSyntax z LaTeX3
 \ExplSyntaxOn
-\char_set_catcode_other:n {`\^^M}
+\char_set_catcode_other:n{`\^^M}
 \NewDocumentCommand{\exampleIO}{+v +v}{
     \tl_set:Nn \l_tmpa_tl {#1}
     \tl_set:Nn \l_tmpb_tl {#2}
@@ -169,5 +162,3 @@
 
 \NewDocumentCommand{\rootDirectory}{}{input}
 \NewDocumentCommand{\problemDirectory}{}{<undefined>}
-
-\endinput                                                           % everything below is safely ignored
