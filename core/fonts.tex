@@ -1,7 +1,3 @@
-\RequirePackage{polyglossia}                                % multi-language support
-\RequirePackage{xunicode}
-\setdefaultlanguage{slovak}
-
 % Setup fonts -- see fontspec/mathspec documentation.
 % Fonts are loaded from .ttf and .otf files in the core/fonts/ directory. We NEVER use system fonts.
 \defaultfontfeatures{
@@ -34,3 +30,16 @@
     BoldItalicFont  = *-bi    
 ]{verdana}
 
+% Fixes mathspec bug -- URL numbers are normally rendered with upright font
+\makeatletter
+    \DeclareMathSymbol{0}{\mathalpha}{\eu@DigitsArabic@symfont}{`0}
+    \DeclareMathSymbol{1}{\mathalpha}{\eu@DigitsArabic@symfont}{`1}
+    \DeclareMathSymbol{2}{\mathalpha}{\eu@DigitsArabic@symfont}{`2}
+    \DeclareMathSymbol{3}{\mathalpha}{\eu@DigitsArabic@symfont}{`3}
+    \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
+    \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
+    \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
+    \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
+    \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
+    \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
+\makeatother

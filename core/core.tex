@@ -72,16 +72,34 @@
     retain-explicit-plus    = true,                         % zachovávame explicitné +
 }
 
-%
 \RequirePackage[
     colorlinks              = true,
     linkcolor               = colour-link,                  % custom Trojsten link colour
     urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
 
-\input{core/fonts.tex}
+\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage{xunicode}
+\setdefaultlanguage{slovak}
+
 \input{core/hacks.tex}
+\input{core/fonts.tex}
 \input{core/utilities.tex}
+
+\makeatletter
+% Fixes mathspec bug -- URL numbers are rendered with wrong font
+    \DeclareMathSymbol{0}{\mathalpha}{\eu@DigitsArabic@symfont}{`0}
+    \DeclareMathSymbol{1}{\mathalpha}{\eu@DigitsArabic@symfont}{`1}
+    \DeclareMathSymbol{2}{\mathalpha}{\eu@DigitsArabic@symfont}{`2}
+    \DeclareMathSymbol{3}{\mathalpha}{\eu@DigitsArabic@symfont}{`3}
+    \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
+    \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
+    \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
+    \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
+    \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
+    \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
+\makeatother
+
 
 % \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
 % Insert a picture, protected against nonexistent files
