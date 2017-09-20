@@ -1,99 +1,82 @@
 #!/usr/bin/env python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
-from utils import jinjaEnv, mergeDicts, renderList, readableDir
+from utils import *
 from colorama import Fore, Style
 
-def getRoundMetadata(root, seminar, volume, semester, round):
-    try:
-        seminarMeta         = yaml.load(open(os.path.join(root, seminar, 'meta.yaml'), 'r'))
-        volumeMeta          = yaml.load(open(os.path.join(root, seminar, volume, 'meta.yaml'), 'r'))
-        semesterMeta        = yaml.load(open(os.path.join(root, seminar, volume, semester, 'meta.yaml'), 'r'))
-        roundMeta           = yaml.load(open(os.path.join(root, seminar, volume, semester, round, 'meta.yaml'), 'r'))
-        roundDirectory      = os.path.join(root, seminar, volume, semester, round)
+def isNode(path):
+    return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
 
-        problemsMetas       = []
+def listChildNodes(node):
+    return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
 
-        for name in sorted(os.listdir(roundDirectory)):
-            if not os.path.isdir(os.path.join(roundDirectory, name)):
-                continue
-            if not os.path.isfile(os.path.join(roundDirectory, name, 'meta.yaml')):
-                raise FileNotFoundError("Directory '{}' is present but there is no 'meta.yaml' in it".format(name))
-    
-            problemMeta = yaml.load(open(os.path.join(roundDirectory, name, 'meta.yaml')))
-            problemMeta['id'] = name
-            problemMeta['number'] = int(name)
-            problemMeta['solutionBy'] = problemMeta['solutionBy']
-            problemMeta['evaluation'] = problemMeta['evaluation']
-            problemMeta['categories'] = seminarMeta['categories'][int(name) - 1]
-            problemsMetas.append(problemMeta)
-            
-        context = {
-            'seminar': seminarMeta,
-            'semester': semesterMeta,
-            'round': roundMeta,
-        }
-        update = {
-            'module': {
-                'id':           'seminar',
-            },
-            'seminar': {
-                'id':           args.seminar,
-            },
-            'volume': {
-                'id':           '{:02d}'.format(args.volume),
-                'number':       args.volume
-            },
-            'semester': {
-                'id':           str(args.semester),
-                'number':       args.semester,
-                'nominative':   ['zimná', 'letná'][args.semester - 1],
-                'genitive':     ['zimnej', 'letnej'][args.semester - 1],
-            },
-            'round': {
-                'id':           str(args.round),
-                'number':       args.round,
-                'problems':     problemsMetas,
-            },
-        }
+def buildModuleContext():
+    return {
+        'id': 'seminar',
+    }
 
-        return mergeDicts(context, update)
-    
-    except FileNotFoundError as e:
-        print(Fore.RED + "[FATAL] {}".format(e) + Style.RESET_ALL)
-        sys.exit(-1)
-    
-parser = argparse.ArgumentParser(
-    description             = "Prepare and compile a DeGeŠ round from repository",
-)
-parser.add_argument('launch',           action = readableDir) 
-parser.add_argument('seminar',          choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX'])
-parser.add_argument('volume',           type = int)
-parser.add_argument('semester',         type = int, choices = [1, 2])
-parser.add_argument('round',            type = int, choices = [1, 2, 3])
-parser.add_argument('-o', '--output',   action = readableDir) 
-parser.add_argument('-v', '--verbose',  action = 'store_true')
-args = parser.parse_args()
+def buildCompetitionContext(root, competition):
+    return mergeDicts(loadMeta(root, competition), {
+        'id': competition,
+    })
 
-seminarId           = '{}'.format(args.seminar)
-volumeId            = '{:02d}'.format(args.volume)
-semesterId          = '{}'.format(args.semester)
-roundId             = '{}'.format(args.round)
-launchDirectory     = os.path.realpath(args.launch)
-thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(args.output) if args.output else None
+def buildVolumeContext(root, competition, volume):
+    vol = loadMeta(root, competition, volume)
+    return mergeDicts(vol, {
+        'id': volume,
+        'number': int(volume),
+    })
 
-print(Fore.CYAN + Style.DIM + "Invoking seminar template builder on {}".format(os.path.realpath(os.path.join(launchDirectory, seminarId, volumeId, semesterId, roundId))) + Style.RESET_ALL)
-context = getRoundMetadata(launchDirectory, seminarId, volumeId, semesterId, roundId)
+def buildSemesterContext(root, competition, volume, semester):
+    directory = nodePath(root, competition, volume, semester)
+    rounds = {}
+    for child in listChildNodes(directory):
+        rounds[child] = buildRoundContext(root, competition, volume, semester, child)
 
-if (args.verbose):
-    pprint.pprint(context)
+    return mergeDicts(loadMeta(root, competition, volume, semester), {
+        'id': str(semester),
+        'number': semester,
+        'nominative':   'zimná' if semester == 1 else 'letná',
+        'genitive':     'zimnej' if semester == 1 else 'letnej',
+        'rounds': rounds,
+    })
 
-for template in ['problems.tex', 'solutions.tex']:
-    print(jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(template).render(context), file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
+def buildRoundContext(root, competition, volume, semester, round):
+    comp = loadMeta(root, competition)
+    problems = {}
+    for p in range(0, len(comp['categories'])):
+        pn = '{:02d}'.format(p + 1)
+        problems[pn] = buildProblemContext(root, competition, volume, semester, round, p + 1)
 
-for template in ['format.tex']:
-    print(jinjaEnv(os.path.join(thisDirectory, '.')).get_template(template).render(context), file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
+    return mergeDicts(loadMeta(root, competition, volume, semester, round), {
+        'id': round,
+        'number': round,
+        'problems': problems,
+    })
 
-print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
+def buildProblemContext(root, competition, volume, semester, round, problem):
+    comp = loadMeta(root, competition)
 
+    return mergeDicts(loadMeta(root, competition, volume, semester, round, problem), {
+        'id': '{:02d}'.format(problem),
+        'number': problem,
+        'categories': comp['categories'][problem - 1],
+    })
+
+def buildRoundBookletContext(root, competition, volume, semester, round):
+    return {
+        'module':           buildModuleContext      (),
+        'competition':      buildCompetitionContext (root, competition),
+        'volume':           buildVolumeContext      (root, competition, volume),
+        'semester':         buildSemesterContext    (root, competition, volume, semester),
+        'round':            buildRoundContext       (root, competition, volume, semester, round),
+    }
+
+def buildSemesterBookletContext(root, competition, volume, semester):
+    return {
+        'module':           buildModuleContext      (),
+        'competition':      buildCompetitionContext (root, competition),
+        'volume':           buildVolumeContext      (root, competition, volume),
+        'semester':         buildSemesterContext    (root, competition, volume, semester),
+        'round':            buildRoundContext       (root, competition, volume, semester, 1),
+    }

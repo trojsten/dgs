@@ -3,7 +3,7 @@
 \input{core/core.tex}
 \input{core/format.tex}
 \input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/1/format.tex}
 
 \newcounter{volume}
 \newcounter{semester}
@@ -13,18 +13,23 @@
 \begin{document}
     \pagestyle{main}
     \thispagestyle{first}
-    \vspace*{2em}
+    \vspace*{4em}
+    \input{modules/(* module.id *)/styles/(* competition.id *)/templates/intro.tex}
+    \newpage
+    \input{modules/(* module.id *)/styles/(* competition.id *)/templates/rules.tex}
 
-    {
-        \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
-        \centering
-        \vspace{-1.3em}
-        Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
-    } 
-        
-    \pagestyle{problems}    
+    (@ for rid, round in semester.rounds.items() @)
+        \newpage
+        \pagestyle{problems}    
+        \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+        {
+            \section{Zadania (* round.number *). kola}
+            \centering
+            \vspace{-1.3em}
+            Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
+        } 
 
-    (@ for pid, problem in round.problems.items() @)%
+        (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
@@ -42,5 +47,6 @@
             }%
         }%
         \protectedInput{\problemDirectory/problem.tex}%
+        (@ endfor @)
     (@ endfor @)
 \end{document}
