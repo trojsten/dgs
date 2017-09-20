@@ -6,7 +6,7 @@ from build import buildTearoffContext
 from colorama import Fore, Style
 
 parser = argparse.ArgumentParser(
-    description             = "Prepare and compile a DeGeŠ Náboj venue-specific documents from repository",
+    description             = "Prepare and compile a DeGeŠ Náboj barcodes for a venue from repository",
 )
 parser.add_argument('launch',           action = readableDir) 
 parser.add_argument('seminar',          choices = ['FKS', 'KMS'])
@@ -23,11 +23,12 @@ root                = os.path.realpath(args.launch)
 thisDirectory       = os.path.dirname(os.path.realpath(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(os.path.realpath(os.path.join(root, seminarId, volumeId)) + Style.RESET_ALL))
-print(
-    jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template('barcodes.txt').render(
-        buildTearoffContext(root, seminarId, volumeId, venueId)
-    ),
-    file = open(os.path.join(outputDirectory, 'barcodes.txt'), 'w') if outputDirectory else sys.stdout
-)
+print(Fore.CYAN + Style.DIM + "Invoking Náboj venue template builder on {}".format(os.path.realpath(os.path.join(root, seminarId, volumeId)) + Style.RESET_ALL))
+for target in ['barcodes.txt', 'tearoff.tex']:
+    print(
+        jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(target).render(
+            buildTearoffContext(root, seminarId, volumeId, venueId)
+        ),
+        file = open(os.path.join(outputDirectory, target), 'w') if outputDirectory else sys.stdout
+    )
 print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)

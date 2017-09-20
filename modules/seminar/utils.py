@@ -5,10 +5,12 @@ from colorama import Fore, Style
 
 def mergeDicts(parent, *children):
     for child in children:
-        mergeDict(parent, child)
+        parent = mergeDict(parent, child)
     return parent
 
 def mergeDict(parent, child):
+    if parent is None:
+        return child
     for key in child:
         if key in parent:
             if isinstance(parent[key], dict) and isinstance(parent[key], dict):
@@ -18,6 +20,25 @@ def mergeDict(parent, child):
         else:
             parent[key] = child[key]
     return parent
+
+def nodePath(root, competition = None, volume = None, semester = None, round = None, problem = None):
+    return os.path.join(
+        root,
+        '' if competition is None else  competition,
+        '' if volume is None else       '{:02d}'.format(volume),
+        '' if semester is None else     str(semester),
+        '' if round is None else        str(round),
+        '' if problem is None else      '{:02d}'.format(problem),
+    )
+
+def loadMeta(*args):
+    try:
+       result = yaml.load(open(os.path.join(nodePath(*args), 'meta.yaml'), 'r'))
+       if result is None:
+           result = {}
+    except FileNotFoundError as e:
+        print(Fore.RED + "[FATAL] Could not load metadata file: {}".format(e) + Style.RESET_ALL)
+    return result
 
 def jinjaEnv(directory):
     env = jinja2.Environment(
@@ -82,14 +103,6 @@ def splitMod(what, step, first = 0):
 
 def splitDiv(what, step):
     return [] if what == [] else [what[0:step]] + splitDiv(what[step:], step)
-
-def loadYaml(*args):
- #   try:
-    result = yaml.load(open(os.path.join(*args), 'r'))
- #   except FileNotFoundError as e:
- #       print(Fore.RED + "[FATAL] Could not load YAML file: {}".format(e) + Style.RESET_ALL)
- #       sys.exit(-1)
-    return result
 
 def addNumbers(what, start = 0):
     result = []
