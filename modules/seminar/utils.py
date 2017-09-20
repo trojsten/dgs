@@ -31,6 +31,12 @@ def nodePath(root, competition = None, volume = None, semester = None, round = N
         '' if problem is None else      '{:02d}'.format(problem),
     )
 
+def isNode(path):
+    return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
+
+def listChildNodes(node):
+    return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
+
 def loadMeta(*args):
     try:
        result = yaml.load(open(os.path.join(nodePath(*args), 'meta.yaml'), 'r'))
@@ -38,6 +44,7 @@ def loadMeta(*args):
            result = {}
     except FileNotFoundError as e:
         print(Fore.RED + "[FATAL] Could not load metadata file: {}".format(e) + Style.RESET_ALL)
+        raise e
     return result
 
 def jinjaEnv(directory):
@@ -125,7 +132,7 @@ def numerate(objects, start = 0):
     return objects
 
 class readableDir(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string = None):
         tryDir = values
         if not os.path.isdir(tryDir):
             raise argparse.ArgumentTypeError("readableDir: {0} is not a valid path".format(tryDir))
@@ -134,3 +141,12 @@ class readableDir(argparse.Action):
         else:
             raise argparse.ArgumentTypeError("readableDir: {0} is not a readable directory".format(tryDir))
 
+class writeableDir(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string = None):
+        tryDir = values
+        if not os.path.isdir(tryDir):
+            raise argparse.ArgumentTypeError("readableDir: {0} is not a valid path".format(tryDir))
+        if os.access(tryDir, os.W_OK):
+            setattr(namespace, self.dest, tryDir)
+        else:
+            raise argparse.ArgumentTypeError("readableDir: {0} is not a writeable directory".format(tryDir))

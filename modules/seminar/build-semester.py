@@ -11,7 +11,7 @@ parser.add_argument('launch',           action = readableDir)
 parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask'])
 parser.add_argument('volume',           type = int)
 parser.add_argument('semester',         type = int)
-parser.add_argument('-o', '--output',   action = readableDir) 
+parser.add_argument('-o', '--output',   action = writeableDir) 
 parser.add_argument('-v', '--verbose',  action = 'store_true')
 args = parser.parse_args()
 
@@ -20,7 +20,8 @@ thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
 context = buildSemesterBookletContext(launchDirectory, args.competition, args.volume, args.semester)
-pprint.pprint(context)
+if args.verbose:
+    pprint.pprint(context)
 
 print(Fore.CYAN + Style.DIM + "Invoking template builder on semester {competition}/{volume}/{semester}".format(
     competition = args.competition,
