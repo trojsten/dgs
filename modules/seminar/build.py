@@ -4,12 +4,6 @@ import argparse, yaml, os, jinja2, sys, pprint, colorama
 from utils import *
 from colorama import Fore, Style
 
-def isNode(path):
-    return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
-
-def listChildNodes(node):
-    return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
-
 def buildModuleContext():
     return {
         'id': 'seminar',
