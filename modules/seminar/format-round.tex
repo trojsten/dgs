@@ -1,0 +1,12 @@
+% DeGeŠ style file
+% module: seminar
+
+\fancypagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
+    \pagestyle{main-(* competition.id *)}
+    \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+}
+
+\fancypagestyle{solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
+    \pagestyle{main-(* competition.id *)}
+    \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.genitive *) časti}}
+}

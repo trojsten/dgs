@@ -2,8 +2,12 @@
 
 \input{core/core.tex}
 \input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/settings.tex}
+
+\input{input/(* module.id *)/format-root.tex}
+\input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
 
 \newcounter{volume}
 \newcounter{semester}
@@ -11,7 +15,7 @@
 \newcounter{problem}
  
 \begin{document}
-    \pagestyle{main}
+    \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
     \thispagestyle{first}
     \vspace*{8mm}
 
@@ -22,8 +26,6 @@
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
     } 
         
-    \pagestyle{problems}    
-
     (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{semester}{(* semester.number *)}%

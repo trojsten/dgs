@@ -2,8 +2,12 @@
 
 \input{core/core.tex}
 \input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/1/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/settings.tex}
+
+\input{input/(* module.id *)/format-root.tex}
+\input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/format-semester.tex}
 
 \newcounter{volume}
 \newcounter{semester}
@@ -11,21 +15,21 @@
 \newcounter{problem}
  
 \begin{document}
-    \pagestyle{main}
-    \thispagestyle{first}
+    \pagestyle{main-(* competition.id *)}
+    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     \vspace*{15mm}
     \input{modules/(* module.id *)/styles/(* competition.id *)/templates/intro.tex}
     \newpage
     \input{modules/(* module.id *)/styles/(* competition.id *)/templates/rules.tex}
 
-    (@ for rid, round in semester.rounds.items() @)
+    (@ for rid, round in semester.rounds.items() @)%
         \newpage
-        \pagestyle{problems}    
-        \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex} 
+        \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
         {
-            \section{Zadania (* round.number *). kola}
-            \centering
-            \vspace*{-5mm}
+            \section{Zadania (* round.number *). kola}%
+            \centering%
+            \vspace*{-5mm}%
             Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
         } 
 

@@ -4,6 +4,42 @@ import argparse, yaml, os, jinja2, sys, pprint, colorama
 from utils import *
 from colorama import Fore, Style
 
+def createXParser():
+    parser = argparse.ArgumentParser(
+        description             = "Prepare and compile a DeGeŠ seminar competition from repository",
+    )
+    parser.add_argument('launch',              action = readableDir) 
+    parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask'])
+    parser.add_argument('-v', '--volume',      type = int)
+    parser.add_argument('-s', '--semester',    type = int)
+    parser.add_argument('-r', '--round',       type = int)
+    parser.add_argument('-o', '--output',      action = writeableDir) 
+    parser.add_argument('-d', '--debug',       action = 'store_true')
+    return parser
+
+def createParser(level):
+    parser = argparse.ArgumentParser(
+        description             = "Prepare and compile a DeGeŠ seminar competition from repository",
+    )
+    parser.add_argument('launch',           action = readableDir) 
+    if level >= 1:
+        parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask'])
+    if level >= 2:
+        parser.add_argument('volume',           type = int)
+    if level >= 3:
+        parser.add_argument('semester',         type = int)
+    if level >= 4:
+        parser.add_argument('round',            type = int)
+    parser.add_argument('-o', '--output',   action = writeableDir) 
+    parser.add_argument('-v', '--verbose',  action = 'store_true')
+    return parser
+
+def buildFormatTemplate(templateRoot, template, context, outputDirectory = None):
+    print(
+        jinjaEnv(templateRoot).get_template(template).render(context),
+        file = sys.stdout if outputDirectory is None else open(os.path.join(outputDirectory, template), 'w')
+    )
+
 def buildModuleContext():
     return {
         'id': 'seminar',
@@ -57,20 +93,17 @@ def buildProblemContext(root, competition, volume, semester, round, problem):
         'categories': comp['categories'][problem - 1],
     })
 
-def buildRoundBookletContext(root, competition, volume, semester, round):
-    return {
-        'module':           buildModuleContext      (),
-        'competition':      buildCompetitionContext (root, competition),
-        'volume':           buildVolumeContext      (root, competition, volume),
-        'semester':         buildSemesterContext    (root, competition, volume, semester),
-        'round':            buildRoundContext       (root, competition, volume, semester, round),
+def buildBookletContext(root, competition = None, volume = None, semester = None, round = None):
+    context = {
+        'module': buildModuleContext()
     }
+    if competition  is not None:
+        context['competition']  = buildCompetitionContext   (root, competition)
+    if volume       is not None:
+        context['volume']       = buildVolumeContext        (root, competition, volume)
+    if semester     is not None:
+        context['semester']     = buildSemesterContext      (root, competition, volume, semester)
+    if round        is not None:
+        context['round']        = buildRoundContext        (root, competition, volume, semester, round)
 
-def buildSemesterBookletContext(root, competition, volume, semester):
-    return {
-        'module':           buildModuleContext      (),
-        'competition':      buildCompetitionContext (root, competition),
-        'volume':           buildVolumeContext      (root, competition, volume),
-        'semester':         buildSemesterContext    (root, competition, volume, semester),
-        'round':            buildRoundContext       (root, competition, volume, semester, 1),
-    }
+    return context

@@ -1,0 +1,21 @@
+% DeGeŠ style file
+% module: seminar
+
+\fancypagestyle{main}{
+    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+}
+
+\fancypagestyle{rules}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
+    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+}
+    
+\fancypagestyle{first}{%
+    \fancyhf{}
+}  
