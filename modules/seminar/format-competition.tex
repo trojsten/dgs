@@ -1,37 +1,17 @@
 % DeGeŠ style file
 % module: seminar
 
-\fancypagestyle{main}{
+rfancypagestyle{main_(* competition.id *)}{
+    \pagestyle{main}
     \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}}}
     \fancyhead[LE,RO]{(* competition.full.nominative *)}
     \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
     \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
-    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
-    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
-    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-    \titlespacing{\section}{0pt}{8pt}{8pt}
-    \titlespacing{\subsection}{0pt}{8pt}{0pt}
-    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
-}
-
-\fancypagestyle{problems}{%
-    \pagestyle{main}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
-}
-
-\fancypagestyle{solutions}{%
-    \pagestyle{main}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
-}
-
-\fancypagestyle{rules}{%
-    \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Pravidlá}}
 }
     
-\fancypagestyle{first}{%
-    \fancyhf{}
+\fancypagestyle{first_(* competition.id *)}{%
+    \pagestyle{first}
     \fancyhead[L]{    
         \begin{minipage}{0.15\textwidth}
             \flushleft
