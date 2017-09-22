@@ -18,9 +18,9 @@
     \pagestyle{main-(* competition.id *)}
     \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     \vspace*{15mm}
-    \input{modules/(* module.id *)/styles/(* competition.id *)/templates/intro.tex}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/intro.tex}
     \newpage
-    \input{modules/(* module.id *)/styles/(* competition.id *)/templates/rules.tex}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/rules.tex}
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage

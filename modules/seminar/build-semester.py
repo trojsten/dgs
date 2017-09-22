@@ -24,5 +24,9 @@ for template in ['semester.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(template).render(context),
         file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 
+for template in ['intro.tex', 'rules.tex']:
+    print(jinjaEnv(os.path.join(thisDirectory, 'styles', args.competition, 'templates')).get_template(template).render(context),
+        file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
+
 print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
 

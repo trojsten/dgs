@@ -40,6 +40,12 @@ input/seminar/%/format-round.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-format.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
+input/seminar/%/intro.tex input/seminar/%/rules.tex: \
+	$$(subst $(cdir),,$$(abspath modules/seminar/styles/$$*/../../templates/$$(notdir $$@)))
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+
 input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 	input/seminar/$$*/format-round.tex \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
@@ -50,6 +56,8 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 
 input/seminar/%/semester.tex: \
 	input/seminar/$$*/format-semester.tex \
+	input/seminar/$$*/intro.tex \
+	input/seminar/$$*/rules.tex \
 	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/seminar/$$*/*/meta.yaml))), $$(dir)format-round.tex) \
