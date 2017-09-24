@@ -7,6 +7,7 @@
 \input{input/(* module.id *)/format-root.tex}
 \input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
 \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/format-semester.tex}
 \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
 
 \newcounter{volume}
@@ -16,8 +17,8 @@
 
 \begin{document}            
     \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
-    \thispagestyle{first}
-    \vspace*{2em}
+    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+    \vspace*{8mm}
    
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
         
