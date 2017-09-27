@@ -1,6 +1,6 @@
 (@ for team in venue.teams -@)
 (@ set ol = loop @)
 (@ for problem in volume.problems -@)
-(* '%06d'|format(team.id) *)(* '%03d'|format(problem.number) *)(@ if not ol.last or not loop.last @)(* '\n' *)(@ endif @)
+(* '%03d'|format(venue.number) *)(* '%03d'|format(team.id) *)(* '%03d'|format(problem.number) *)(@ if not ol.last or not loop.last @)(* '\n' *)(@ endif @)
 (@- endfor @)
 (@- endfor @)

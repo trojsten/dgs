@@ -16,17 +16,18 @@ parser.add_argument('-v', '--verbose',  action = 'store_true')
 args = parser.parse_args()
 
 seminarId           = args.seminar
-volumeId            = '{:02d}'.format(args.volume)
+volumeId            = args.volume
 languageId          = args.language
 launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-pprint.pprint(buildBookletContext(launchDirectory, seminarId, volumeId, languageId))
+if args.verbose:
+    pprint.pprint(buildBookletContext(launchDirectory, seminarId, volumeId, languageId))
 
-print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(os.path.realpath(os.path.join(launchDirectory, seminarId, volumeId)) + Style.RESET_ALL))
+print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(os.path.realpath(nodePath(launchDirectory, seminarId, volumeId)) + Style.RESET_ALL))
 
-for template in ['booklet.tex', 'answers.tex']:
+for template in ['booklet.tex', 'answers.tex', 'constants.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(template).render(buildBookletContext(launchDirectory, seminarId, volumeId, languageId)),
         file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 

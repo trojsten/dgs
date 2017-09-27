@@ -37,6 +37,17 @@ def isNode(path):
 def listChildNodes(node):
     return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
 
+def loadYaml(*args):
+    nargs = [x if type(x) is str else '{:02d}'.format(x) for x in args]
+    try:
+       result = yaml.load(open(os.path.join(*nargs), 'r'))
+       if result is None:
+           result = {}
+    except FileNotFoundError as e:
+        print(Fore.RED + "[FATAL] Could not load YAML file: {}".format(e) + Style.RESET_ALL)
+        raise e
+    return result
+
 def loadMeta(*args):
     try:
        result = yaml.load(open(os.path.join(nodePath(*args), 'meta.yaml'), 'r'))

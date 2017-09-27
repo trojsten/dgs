@@ -22,6 +22,13 @@ input/naboj/%/booklet.tex input/naboj/%/answers.tex: \
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	
+input/naboj/%/constants.tex: \
+	modules/naboj/templates/constants.tex \
+	source/naboj/%/constants-table.tex
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
@@ -85,6 +92,15 @@ output/naboj/%/tearoff.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
+
+output/naboj/%/constants.pdf: \
+	input/naboj/%/constants.tex \
+	input/naboj/%/constants-table.tex
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
 
 %/all: \
 	$$*/booklet.pdf \

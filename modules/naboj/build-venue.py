@@ -23,6 +23,9 @@ root                = os.path.realpath(args.launch)
 thisDirectory       = os.path.dirname(os.path.realpath(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
+#if args.verbose:
+pprint.pprint(buildTearoffContext(root, seminarId, volumeId, venueId))
+
 print(Fore.CYAN + Style.DIM + "Invoking Náboj venue template builder on {}".format(os.path.realpath(os.path.join(root, seminarId, volumeId)) + Style.RESET_ALL))
 for target in ['barcodes.txt', 'tearoff.tex']:
     print(
