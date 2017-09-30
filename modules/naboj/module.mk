@@ -102,9 +102,15 @@ output/naboj/%/constants.pdf: \
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
 
-%/all: \
-	$$*/booklet.pdf \
-	$$*/answers.pdf ;
+output/naboj/%/all: \
+	output/naboj/$$*/booklet.pdf \
+	output/naboj/$$*/answers.pdf ;
 
-%/all: \
-	$$*/tearoff.pdf ;
+output/naboj/%/all: \
+	output/naboj/$$*/tearoff.pdf ;
+
+output/naboj/%/languages/all: \
+	$$(foreach dir,$$(dir $$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/meta.yaml))), $$(dir)all) ; 
+
+output/naboj/%/venues/all: \
+	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/naboj/$$*/venues/*/meta.yaml))), $$(dir)all) ; 

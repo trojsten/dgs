@@ -1,11 +1,28 @@
 % Setup fonts -- see fontspec/mathspec documentation.
 % Fonts are loaded from .ttf and .otf files in the core/fonts/ directory. We NEVER use system fonts.
+
+% Change allocator to allow more than 16 alphabets per document
+
+\makeatletter
+    \def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
+    \patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
+    \patchcmd{\select@group}{\sixt@@n}{\@cclvi}{}{}
+\makeatother
+
 \defaultfontfeatures{
     Mapping         = tex-text,
     Scale           = MatchLowercase,
     Ligatures       = TeX
 }
 \setallmainfonts[
+    Path            = core/fonts/ ,
+    Extension       = .otf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi    
+]{minionpro}
+\setmathfont(Digits,Latin,Greek)[
     Path            = core/fonts/ ,
     Extension       = .otf ,
     UprightFont     = *-r ,
