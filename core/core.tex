@@ -101,6 +101,7 @@
             \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
         }%
         \ifstrempty{#5}{}{\caption{\textit{#5}}}%
+        \ifstrempty{#6}{}{\label{#6}}%
     \end{figure}%
 }
 
