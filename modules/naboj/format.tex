@@ -32,6 +32,11 @@
     \fancyhead[LE,RO]{\textit{(* i18n.section.answers *)}}
 }
 
+\fancypagestyle{constants}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{(* i18n.section.constants *)}}
+}
+
 \fancypagestyle{rules}{%
     \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Pravidlá}}
@@ -50,8 +55,8 @@
         \begin{minipage}{0.7\textwidth}
             \centering
             \vspace{4pt}
-            {\Large (* competition.full.nominative *)}\\[4pt]
-            {\large (* volume.number|roman *). ročník, (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]            
+            {\Large (* volume.number*). (* i18n.competition.name.nominative *)}\\[4pt]
+            {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]            
             {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *) (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
             \vspace{6pt}
         \end{minipage}        
@@ -63,7 +68,9 @@
             \vspace{4pt}
         \end{minipage}
     }
-    \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
+    \fancyfoot[LO,RE]{\href{mailto:(* i18n.competition.email *)}{\texttt{(* i18n.competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
-}  
+    \fancyfoot[LE,RO]{\URL{(* i18n.competition.website *)}}
+    \titleformat{\subsection}[hang]{\bfseries}{}{0pt}{}[]
+}
+\setcounter{secnumdepth}{0}

@@ -1,8 +1,18 @@
 section:
-    problems:       'Zadaní'
-    solutions:      'Vzorová řešení'
-    answers:        'Výsledky'
-name:               'Fyzikální Náboj'
-team:               'Tým'
-email:              'info-cz@physics.naboj.org'
-website:            'https://physics.naboj.org/'
+    problems:           'Zadání'
+    solutions:          'Vzorová řešení'
+    answers:            'Výsledky'
+    constants:          'Tabulka konstant'
+competition:
+    name:
+        nominative:     'Fyzikální Náboj'
+        genitive:       'Fyzikálního Náboje'
+    email:              'info-cz@physics.naboj.org'
+    website:            'https://physics.naboj.org/'
+team:                   'Tým'
+constants:
+    title:              'Tabulka konstant'
+    instruction:        'Během soutěže doporučujeme používat hodnoty konstant z~této tabulky. Výsledek získaný s použitím přesnějších hodnot Vám určitě \textbf{bude} uznán.'
+    constant:           'Konstanta'
+    symbol:             'Značka'
+    value:              'Hodnota'

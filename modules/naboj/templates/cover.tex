@@ -1,0 +1,32 @@
+\documentclass[12pt, oneside]{article}
+
+\input{core/core.tex}
+\input{core/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
+
+\newgeometry{
+    left = 20mm,
+    right = 20mm,
+    bottom = 20mm,
+    top = 20mm,
+    headheight = 0pt,
+    footskip = 0pt
+}
+
+\begin{document}            
+    \pagestyle{empty}
+    \begin{center}
+        \null
+        \vfill
+        \includegraphics[keepaspectratio = true, height = 40mm]{modules/(* module.id *)/styles/(* competition.id *)/logo/barcode.pdf}
+    \end{center}
+    \newpage        
+    \begin{center}
+        \vspace*{20mm}
+        \includegraphics[keepaspectratio = true, height = 80mm]{modules/(* module.id *)/styles/(* competition.id *)/logo/logo.pdf}
+        \vfill
+        \fontsize{60}{25}\selectfont
+        (* volume.number + competition.founded - 1 *)
+    \end{center}
+\end{document}
