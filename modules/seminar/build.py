@@ -59,7 +59,7 @@ def buildVolumeContext(root, competition, volume):
 
 def buildSemesterContext(root, competition, volume, semester):
     directory = nodePath(root, competition, volume, semester)
-    rounds = {}
+    rounds = OrderedDict()
     for child in listChildNodes(directory):
         rounds[child] = buildRoundContext(root, competition, volume, semester, child)
 
@@ -104,6 +104,6 @@ def buildBookletContext(root, competition = None, volume = None, semester = None
     if semester     is not None:
         context['semester']     = buildSemesterContext      (root, competition, volume, semester)
     if round        is not None:
-        context['round']        = buildRoundContext        (root, competition, volume, semester, round)
+        context['round']        = buildRoundContext         (root, competition, volume, semester, round)
 
     return context

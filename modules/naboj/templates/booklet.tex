@@ -9,8 +9,12 @@
 \newcounter{problem}
  
 \begin{document}
-    \pagestyle{main}
+    \thispagestyle{first}
+    \vspace*{15mm}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
+    \newpage
 
+    \pagestyle{main}
     \section{(* i18n.section.problems *)}
     \pagestyle{problems}    
     (@ for problem in volume.problems @)%
@@ -32,7 +36,7 @@
         \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
 
-    \newpage
+    \vspace*{15mm}
     \section{(* i18n.section.answers *)}
     \pagestyle{answers}
     (@ for problem in volume.problems @)%

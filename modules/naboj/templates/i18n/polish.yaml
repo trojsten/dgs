@@ -1,8 +1,18 @@
 section:
-    problems:       'Problemy'
-    solutions:      'Rozwiązania'
-    answers:        'Odpowiedzi'
-name:               'Nabój Fizyczny'
-team:               'Zespół'
-email:              'info-pl@physics.naboj.org'
-website:            'https://physics.naboj.org/'
+    problems:           'Problemy'
+    solutions:          'Rozwiązania'
+    answers:            'Odpowiedzi'
+    constants:          'Tabela stałych'
+competition:
+    name:
+        nominative:     'Nabój Fizyczny'
+        genitive:       'Nabója Fizycznego'
+    email:              'info-pl@physics.naboj.org'
+    website:            'https://physics.naboj.org/'
+team:                   'Zespół'
+constants:
+    title:              'Tabela stałych'
+    instruction:        'We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted.'
+    constant:           'Stała'
+    symbol:             'Oznaczenie'
+    value:              'Wartość'

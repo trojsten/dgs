@@ -16,13 +16,19 @@ input/naboj/%/format.tex: \
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
 
-input/naboj/%/booklet.tex input/naboj/%/answers.tex: \
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/cover.tex: \
 	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-	
+
+input/naboj/%/intro.tex: \
+	source/naboj/%/intro.tex
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+
 input/naboj/%/constants.tex: \
 	modules/naboj/templates/constants.tex \
 	source/naboj/%/constants-table.tex
@@ -45,18 +51,20 @@ input/naboj/%/barcodes.txt: \
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-venue.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/naboj/%/barcodes.pdf: input/naboj/%/barcodes.txt
+input/naboj/%/barcodes.pdf: \
+	input/naboj/%/barcodes.txt
 	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
 	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .txt,.ps,$<)
 	ps2pdf $(subst .txt,.ps,$<) $@.big
 	pdfcrop $@.big $@
-	
+
 output/naboj/%/booklet.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/solution.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/format.tex \
+	input/naboj/%/intro.tex \
 	input/naboj/%/booklet.tex 
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
@@ -67,6 +75,10 @@ output/naboj/%/booklet.pdf: \
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf
 	pdfbook --short-edge --quiet --outfile $@ $<
+
+output/naboj/%/cover-print.pdf: \
+	output/naboj/%/cover.pdf
+	pdfnup --nup 2x1 $< --outfile $@
 
 output/naboj/%/answers.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
@@ -95,16 +107,25 @@ output/naboj/%/tearoff.pdf: \
 
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
-	input/naboj/%/constants-table.tex
+	input/naboj/%/constants-table.tex \
+	$$(wildcard modules/naboj/templates/i18n/*.yaml)
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
 
+output/naboj/%/cover.pdf: \
+	input/naboj/%/cover.tex
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex
+
 output/naboj/%/all: \
 	output/naboj/$$*/booklet.pdf \
-	output/naboj/$$*/answers.pdf ;
+	output/naboj/$$*/answers.pdf \
+	output/naboj/$$*/constants.pdf \
+	output/naboj/$$*/cover.pdf ;
 
 output/naboj/%/all: \
 	output/naboj/$$*/tearoff.pdf ;

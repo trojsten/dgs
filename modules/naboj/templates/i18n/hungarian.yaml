@@ -1,8 +1,18 @@
 section:
-    problems:       'Feladatok'
-    solutions:      'Megoldások'
-    answers:        'Válaszok'
-name:               'Náboj Fizika'
-team:               'Csapat'
-email:              'info-hu@physics.naboj.org'
-website:            'https://physics.naboj.org/'
+    problems:           'Feladatok'
+    solutions:          'Megoldások'
+    answers:            'Válaszok'
+    constants:          'Konstansok táblázata'
+competition:
+    name:
+        nominative:     'Náboj Fizika'
+        genitive:       'Náboj Fizika'
+    email:              'info-hu@physics.naboj.org'
+    website:            'https://physics.naboj.org/'
+team:                   'Csapat'
+constants:
+    title:              'Konstansok táblázata'
+    instruction:        'We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted.'
+    constant:           'Constant'
+    symbol:             'Symbol'
+    value:              'Value'
