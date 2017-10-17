@@ -78,7 +78,7 @@ output/naboj/%/booklet-print.pdf: \
 
 output/naboj/%/cover-print.pdf: \
 	output/naboj/%/cover.pdf
-	pdfnup --nup 2x1 $< --outfile $@
+	pdfnup --quiet --nup 2x1 $< --outfile $@
 
 output/naboj/%/answers.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
@@ -125,7 +125,7 @@ output/naboj/%/all: \
 	output/naboj/$$*/booklet.pdf \
 	output/naboj/$$*/answers.pdf \
 	output/naboj/$$*/constants.pdf \
-	output/naboj/$$*/cover.pdf ;
+	output/naboj/$$*/cover-print.pdf ;
 
 output/naboj/%/all: \
 	output/naboj/$$*/tearoff.pdf ;
