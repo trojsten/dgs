@@ -3,6 +3,9 @@ section:
     solutions:          'Solutions'
     answers:            'Answers'
     constants:          'Table of constants'
+caption:
+    table:              'Table'
+    figure:             'Figure'
 competition:
     name:
         nominative:     'Physics Náboj'

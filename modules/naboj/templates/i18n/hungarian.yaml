@@ -3,6 +3,9 @@ section:
     solutions:          'Megoldások'
     answers:            'Válaszok'
     constants:          'Konstansok táblázata'
+caption:
+    table:              'Táblázat'
+    figure:             'Ábra'
 competition:
     name:
         nominative:     'Náboj Fizika'
