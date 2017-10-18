@@ -3,6 +3,9 @@ section:
     solutions:          'Vzorová řešení'
     answers:            'Výsledky'
     constants:          'Tabulka konstant'
+caption:
+    table:              'Tabulka'
+    figure:             'Obrázek'
 competition:
     name:
         nominative:     'Fyzikální Náboj'

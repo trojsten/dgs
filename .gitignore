@@ -7,7 +7,6 @@
 *.out
 *.aux
 *.synctex
-*.pdf
 *.pyc
 *__pycache__*
 input/

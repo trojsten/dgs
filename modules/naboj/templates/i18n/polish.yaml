@@ -3,6 +3,9 @@ section:
     solutions:          'Rozwiązania'
     answers:            'Odpowiedzi'
     constants:          'Tabela stałych'
+caption:
+    table:              'Tabela'
+    figure:             'Figura'
 competition:
     name:
         nominative:     'Nabój Fizyczny'
