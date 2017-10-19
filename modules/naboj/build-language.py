@@ -27,7 +27,7 @@ if args.verbose:
 
 print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(os.path.realpath(nodePath(launchDirectory, seminarId, volumeId)) + Style.RESET_ALL))
 
-for template in ['booklet.tex', 'answers.tex', 'constants.tex', 'cover.tex']:
+for template in ['booklet.tex', 'answers.tex', 'answers-mod5.tex', 'constants.tex', 'cover.tex', 'instructions.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, 'templates')).get_template(template).render(buildBookletContext(launchDirectory, seminarId, volumeId, languageId)),
         file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 
@@ -35,7 +35,7 @@ for template in ['format.tex']:
     print(jinjaEnv(os.path.join(thisDirectory, '.')).get_template(template).render(buildBookletContext(launchDirectory, seminarId, volumeId, languageId)),
         file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)
 
-for template in ['intro.tex']:
+for template in ['intro.tex', 'instructions-text.tex']:
     print(os.path.join(launchDirectory, args.seminar, '{:02d}'.format(args.volume), 'languages', args.language))
     print(jinjaEnv(os.path.join(launchDirectory, args.seminar, '{:02d}'.format(args.volume), 'languages', args.language)).get_template(template).render(buildBookletContext(launchDirectory, seminarId, volumeId, languageId)),
         file = open(os.path.join(outputDirectory, template), 'w') if outputDirectory else sys.stdout)

@@ -16,7 +16,7 @@ input/naboj/%/format.tex: \
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
 
-input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/cover.tex: \
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
 	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
 	$(eval words := $(subst /, ,$*))
@@ -32,6 +32,19 @@ input/naboj/%/intro.tex: \
 input/naboj/%/constants.tex: \
 	modules/naboj/templates/constants.tex \
 	source/naboj/%/constants-table.tex
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+
+input/naboj/%/instructions-text.tex: \
+	source/naboj/%/instructions-text.tex
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+
+input/naboj/%/instructions.tex: \
+	modules/naboj/templates/instructions.tex \
+	source/naboj/%/instructions-text.tex
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
@@ -90,6 +103,16 @@ output/naboj/%/answers.pdf: \
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers.tex
 
+output/naboj/%/answers-mod5.pdf: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
+	input/naboj/%/pdf-prerequisites \
+	input/naboj/%/answers-mod5.tex 
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers-mod5.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers-mod5.tex
+
 output/naboj/%/tearoff.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/problem.md))))) \
 	$$(subst source/,input/,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg))) \
@@ -115,6 +138,16 @@ output/naboj/%/constants.pdf: \
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
 
+output/naboj/%/instructions.pdf: \
+	input/naboj/%/instructions.tex \
+	input/naboj/%/instructions-text.tex \
+	$$(wildcard modules/naboj/templates/i18n/*.yaml)
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
+
 output/naboj/%/cover.pdf: \
 	input/naboj/%/cover.tex
 	mkdir -p $(dir $@)
@@ -124,8 +157,10 @@ output/naboj/%/cover.pdf: \
 output/naboj/%/all: \
 	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/answers.pdf \
+	output/naboj/$$*/answers-mod5.pdf \
 	output/naboj/$$*/constants.pdf \
-	output/naboj/$$*/cover-print.pdf ;
+	output/naboj/$$*/cover-print.pdf \
+	output/naboj/$$*/instructions.pdf ;
 
 output/naboj/%/all: \
 	output/naboj/$$*/tearoff.pdf ;

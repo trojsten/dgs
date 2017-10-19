@@ -3,6 +3,7 @@ section:
     solutions:          'Megoldások'
     answers:            'Válaszok'
     constants:          'Konstansok táblázata'
+    instructions:       'Utasítás'
 caption:
     table:              'Táblázat'
     figure:             'Ábra'
@@ -19,3 +20,5 @@ constants:
     constant:           'Constant'
     symbol:             'Symbol'
     value:              'Value'
+instructions:
+    title:              'Utasítás' 

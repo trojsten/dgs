@@ -3,6 +3,7 @@ section:
     solutions:          'Vzorová řešení'
     answers:            'Výsledky'
     constants:          'Tabulka konstant'
+    instructions:       'Pokyny'
 caption:
     table:              'Tabulka'
     figure:             'Obrázek'
@@ -19,3 +20,5 @@ constants:
     constant:           'Konstanta'
     symbol:             'Značka'
     value:              'Hodnota'
+instructions:
+    title:              'Pokyny' 

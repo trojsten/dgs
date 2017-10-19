@@ -1,0 +1,12 @@
+\documentclass[12pt, twoside]{article}
+
+\input{core/core.tex}
+\input{core/format.tex}
+\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
+\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
+
+\begin{document}
+    \pagestyle{instructions}
+    \section{(* i18n.instructions.title *)}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/instructions-text.tex}
+\end{document}
