@@ -3,6 +3,7 @@ section:
     solutions:          'Rozwiązania'
     answers:            'Odpowiedzi'
     constants:          'Tabela stałych'
+    instructions:       'Instrukcje'
 caption:
     table:              'Tabela'
     figure:             'Figura'
@@ -19,3 +20,5 @@ constants:
     constant:           'Stała'
     symbol:             'Oznaczenie'
     value:              'Wartość'
+instructions:
+    title:              'Instrukcje' 

@@ -3,6 +3,7 @@ section:
     solutions:          'Solutions'
     answers:            'Answers'
     constants:          'Table of constants'
+    instructions:       'Instructions'
 caption:
     table:              'Table'
     figure:             'Figure'
@@ -18,3 +19,5 @@ constants:
     constant:           'Constant'
     symbol:             'Symbol'
     value:              'Value'
+instructions:
+    title:              'Instructions' 

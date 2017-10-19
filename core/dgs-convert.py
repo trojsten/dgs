@@ -35,7 +35,7 @@ try:
         if args.format == 'html':
             line = re.sub(r'^@L(.*)$', '', line)
             line = re.sub(r'^@H(.*)$', '\g<1>', line) 
-            line = re.sub(r'^@P{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}{([^}]*)}', '<figure><img src="obrazky/\g<1>.\g<3>" style="height: \g<4>" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
+            line = re.sub(r'^@P{(.*?)}{(.*?)}{(.*?)}{(.*?)}{(.*)}{(.*?)}$', '<figure><img src="obrazky/\g<1>.\g<3>" style="height: \g<4>" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
         tempfile.write(line)
     
     tempfile.close()
@@ -44,7 +44,7 @@ try:
         args.format, tempfile.name, args.outfile.name, os.getcwd()
     )) == 0
     
-    os.remove(tempfile.name)
+#    os.remove(tempfile.name)
 except IOError as e:
     print(Fore.RED + __file__ + ": Could not create temporary file" + Style.RESET_ALL)
     fail()
