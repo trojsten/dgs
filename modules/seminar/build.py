@@ -74,7 +74,7 @@ def buildSemesterContext(root, competition, volume, semester):
 
 def buildRoundContext(root, competition, volume, semester, round):
     comp = loadMeta(root, competition)
-    problems = {}
+    problems = OrderedDict()
     for p in range(0, len(comp['categories'])):
         pn = '{:02d}'.format(p + 1)
         problems[pn] = buildProblemContext(root, competition, volume, semester, round, p + 1)
