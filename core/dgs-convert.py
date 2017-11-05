@@ -24,6 +24,7 @@ try:
         line = re.sub(r'^%(.*)$', '', line)
         line = re.sub(r'^"', '„', line)
         line = re.sub(r' "', ' „', line)
+        line = re.sub(r'\("', '(„', line)
         line = re.sub(r'"', '“', line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
