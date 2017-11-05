@@ -144,3 +144,10 @@ output/seminar/%/solutions: \
 output/seminar/%/all: \
 	output/seminar/%/problems \
 	output/seminar/%/solutions ;
+
+.PHONY:
+
+output/seminar/%/copy: \
+	output/seminar/%/all
+	$(eval words := $(subst /, ,$*))
+	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))

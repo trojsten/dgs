@@ -10,7 +10,7 @@ def createXParser():
         description             = "Prepare and compile a DeGeŠ seminar competition from repository",
     )
     parser.add_argument('launch',              action = readableDir) 
-    parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask'])
+    parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
     parser.add_argument('-v', '--volume',      type = int)
     parser.add_argument('-s', '--semester',    type = int)
     parser.add_argument('-r', '--round',       type = int)
@@ -24,7 +24,7 @@ def createParser(level):
     )
     parser.add_argument('launch',           action = readableDir) 
     if level >= 1:
-        parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask'])
+        parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
     if level >= 2:
         parser.add_argument('volume',           type = int)
     if level >= 3:
