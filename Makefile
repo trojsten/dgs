@@ -22,7 +22,6 @@ input/%.tex: source/%.md
 	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	python3 core/dgs-convert.py latex $< $@ || exit 1;
-	vlna -l -r -v KkSsVvZzOoUuAaIi $@
 
 # Copy TeX for (to input)
 input/%.tex: source/%.tex
