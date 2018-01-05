@@ -18,6 +18,23 @@ def createXParser():
     parser.add_argument('-d', '--debug',       action = 'store_true')
     return parser
 
+def createParser(level):
+    parser = argparse.ArgumentParser(
+        description             = "Prepare and compile a DeGeŠ seminar competition from repository",
+    )
+    parser.add_argument('launch',           action = readableDir) 
+    if level >= 1:
+        parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
+    if level >= 2:
+        parser.add_argument('volume',           type = int)
+    if level >= 3:
+        parser.add_argument('semester',         type = int)
+    if level >= 4:
+        parser.add_argument('round',            type = int)
+    parser.add_argument('-o', '--output',   action = writeableDir) 
+    parser.add_argument('-v', '--verbose',  action = 'store_true')
+    return parser
+
 def buildFormatTemplate(templateRoot, template, context, outputDirectory = None):
     print(
         jinjaEnv(templateRoot).get_template(template).render(context),
@@ -44,15 +61,16 @@ def buildVolumeContext(root, competition, volume):
 def buildSemesterContext(root, competition, volume, semester):
     directory = nodePath(root, competition, volume, semester)
     rounds = OrderedDict()
+
     for child in listChildNodes(directory):
         rounds[child] = buildRoundContext(root, competition, volume, semester, child)
 
     return mergeDicts(loadMeta(root, competition, volume, semester), {
         'id': str(semester),
-        'number': semester,
+        'number':       semester,
         'nominative':   'zimná' if semester == 1 else 'letná',
         'genitive':     'zimnej' if semester == 1 else 'letnej',
-        'rounds': rounds,
+        'rounds':       rounds,
     })
 
 def buildRoundContext(root, competition, volume, semester, round):
@@ -91,3 +109,17 @@ def buildBookletContext(root, competition = None, volume = None, semester = None
         context['round']        = buildRoundContext         (root, competition, volume, semester, round)
 
     return context
+
+def buildInviteContext(root, competition = None, volume = None, semester = None):
+    context = {
+        'module': buildModuleContext()
+    }
+    if competition  is not None:
+        context['competition']  = buildCompetitionContext   (root, competition)
+    if volume       is not None:
+        context['volume']       = buildVolumeContext        (root, competition, volume)
+    if semester     is not None:
+        context['semester']     = buildSemesterContext      (root, competition, volume, semester)
+
+    return context
+

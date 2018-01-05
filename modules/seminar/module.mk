@@ -68,12 +68,13 @@ input/seminar/%/semester.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
-input/%/invite.tex: \
+input/seminar/%/invite.tex: \
+	modules/seminar/templates/invite.tex \
 	input/seminar/$$*/format-semester.tex \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+	python3 modules/seminar/build-invite.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
