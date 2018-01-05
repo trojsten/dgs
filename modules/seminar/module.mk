@@ -68,6 +68,13 @@ input/seminar/%/semester.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
+input/%/invite.tex: \
+	input/seminar/$$*/format-semester.tex \
+	source/seminar/$$*/meta.yaml
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 modules/invite/build.py 'source/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+
 input/seminar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
@@ -144,6 +151,16 @@ output/seminar/%/solutions: \
 output/seminar/%/all: \
 	output/seminar/%/problems \
 	output/seminar/%/solutions ;
+
+
+output/%/invite.pdf:\
+	input/$$*/invite.tex\
+	source/%/meta.yaml
+	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
 
 .PHONY:
 

@@ -18,23 +18,6 @@ def createXParser():
     parser.add_argument('-d', '--debug',       action = 'store_true')
     return parser
 
-def createParser(level):
-    parser = argparse.ArgumentParser(
-        description             = "Prepare and compile a DeGeŠ seminar competition from repository",
-    )
-    parser.add_argument('launch',           action = readableDir) 
-    if level >= 1:
-        parser.add_argument('competition',      choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
-    if level >= 2:
-        parser.add_argument('volume',           type = int)
-    if level >= 3:
-        parser.add_argument('semester',         type = int)
-    if level >= 4:
-        parser.add_argument('round',            type = int)
-    parser.add_argument('-o', '--output',   action = writeableDir) 
-    parser.add_argument('-v', '--verbose',  action = 'store_true')
-    return parser
-
 def buildFormatTemplate(templateRoot, template, context, outputDirectory = None):
     print(
         jinjaEnv(templateRoot).get_template(template).render(context),
