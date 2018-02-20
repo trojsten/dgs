@@ -6,19 +6,11 @@
     \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}}}
     \fancyhead[LE,RO]{\textit{(* competition.full.nominative *)}}
     \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
-    \fancyfoot[C]{\small \thepage}
     \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
 }
     
 \fancypagestyle{first-(* competition.id *)}{%
     \pagestyle{first}
-    \fancyhead[L]{    
-        \begin{minipage}{0.15\textwidth}
-            \flushleft
-            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
-            \vspace{16pt}
-        \end{minipage}
-    }
     \fancyhead[C]{
         \begin{minipage}{0.7\textwidth}
             \centering
@@ -36,6 +28,5 @@
         \end{minipage}
     }
     \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
-    \fancyfoot[C]{\small \thepage}
     \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
 }  
