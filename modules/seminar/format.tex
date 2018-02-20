@@ -2,27 +2,13 @@
 % module: seminar
 
 \fancypagestyle{main}{
-    \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}}}
-    \fancyhead[LE,RO]{\textit{(* competition.full.nominative *)}}
-    \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
     \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
     \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
     \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
     \titlespacing{\section}{0pt}{8pt}{8pt}
     \titlespacing{\subsection}{0pt}{8pt}{0pt}
     \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
-}
-
-\fancypagestyle{problems}{%
-    \pagestyle{main}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
-}
-
-\fancypagestyle{solutions}{%
-    \pagestyle{main}
-    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
 }
 
 \fancypagestyle{rules}{%
@@ -39,23 +25,5 @@
             \vspace{16pt}
         \end{minipage}
     }
-    \fancyhead[C]{
-        \begin{minipage}{0.7\textwidth}
-            \centering
-            \vspace{4pt}
-            {\Large (* competition.full.nominative *)}\\[4pt]
-            {\footnotesize (* competition.short *), (* competition.organisation.department.short *) (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
-            \vspace{6pt}
-        \end{minipage}        
-    }           
-    \fancyhead[R]{
-        \begin{minipage}{0.2\textwidth}
-            \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}\\[0pt]
-            \vspace{4pt}
-        \end{minipage}
-    }
-    \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
-    \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
 }  
