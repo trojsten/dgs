@@ -69,6 +69,7 @@ def buildSemesterContext(root, competition, volume, semester):
         'id': str(semester),
         'number':       semester,
         'nominative':   'zimná' if semester == 1 else 'letná',
+        'nominativeNeuter':   'zimné' if semester == 1 else 'letné',
         'genitive':     'zimnej' if semester == 1 else 'letnej',
         'rounds':       rounds,
     })
