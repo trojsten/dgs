@@ -111,16 +111,14 @@ def buildBookletContext(root, competition = None, volume = None, semester = None
 
     return context
 
-def buildInviteContext(root, competition = None, volume = None, semester = None):
+def buildInviteContext(root, competition, volume, semester):
     context = {
         'module': buildModuleContext()
     }
-    if competition  is not None:
-        context['competition']  = buildCompetitionContext   (root, competition)
-    if volume       is not None:
-        context['volume']       = buildVolumeContext        (root, competition, volume)
-    if semester     is not None:
-        context['semester']     = buildSemesterContext      (root, competition, volume, semester)
-
+    context['competition']  = buildCompetitionContext   (root, competition)
+    context['volume']       = buildVolumeContext        (root, competition, volume)
+    context['semester']     = buildSemesterContext      (root, competition, volume, semester)
+    context['semester']['camp'] = loadYaml                  (root, competition, volume, str(semester), 'camp.yaml')
+    
     return context
 
