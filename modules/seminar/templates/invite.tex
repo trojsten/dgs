@@ -28,15 +28,15 @@
         \begin{itemize}
             \item Prihlasovací formulár nájdeš na stránke \URL{(* semester.camp.application.URL *)}.
             \item Prihlasovať sa môžeš najneskôr do \textbf{(* semester.camp.application.deadline.strftime('%d.~%m.~%Y') *)}. 
-            \item Sústredenie sa bude konať v(@ if semester.camp.accomodation.name|first|lower in ['f', 'v'] @)o(@ endif @)~\textbf{(* semester.camp.accomodation.name.locative *)}%
-                (@ if semester.camp.accomodation.URL @) (\URL{(* semester.camp.accomodation.URL *)})(@ endif @).
+            \item Sústredenie sa bude konať v(@ if semester.camp.accomodation.name.locative|first|lower in ['f', 'v'] @)o(@ endif @)~\textbf{(* semester.camp.accomodation.name.locative *)},
+                (* semester.camp.accomodation.location.nominative *) (@ if semester.camp.accomodation.URL @) (\URL{(* semester.camp.accomodation.URL *)})(@ endif @).
             \item Cena sústredenia nepresiahne \textbf{\SI{(* semester.camp.accomodation.price *)}{\eur}} (v~cene je zarátaná strava, ubytovanie,
-                doprava z~\textbf{(* semester.camp.transport.gather.place.genitive *)} do \textbf{(* semester.camp.accomodation.name.genitive *)}
+                doprava z~\textbf{(* semester.camp.transport.gather.place.genitive *)} do \textbf{(* semester.camp.accomodation.location.genitive *)}
                 a~späť do~\textbf{(* semester.camp.transport.disband.place.genitive *)}), platí sa na mieste.
             \item Stretneme sa \textbf{(* semester.camp.dates.begin.strftime('%d.~%m.~%Y') *)} na železničnej stanici v~\textbf{(* semester.camp.transport.gather.place.locative *)},
                 odkiaľ spolu pôjdeme autobusom o~\textbf{(* semester.camp.transport.gather.time *)} do miesta konania sústredenia.
-            \item Ak sa inak nedá, na sústredenie sa môžeš dopraviť aj samostatne, odporúčame však príchod do (* semester.camp.accomodation.name.genitive *) pred \textbf{(* semester.camp.transport.arrive.time *)}.
-            \item Z(@ if semester.camp.accomodation.name.genitive|first|lower in ['z', 'ž', 's', 'š'] @)o(@ endif @)~(* semester.camp.accomodation.name.genitive *)
+            \item Ak sa inak nedá, na sústredenie sa môžeš dopraviť aj samostatne, odporúčame však príchod do (* semester.camp.accomodation.location.genitive *) pred \textbf{(* semester.camp.transport.arrive.time *)}.
+            \item Z(@ if semester.camp.accomodation.location.genitive|first|lower in ['z', 'ž', 's', 'š'] @)o(@ endif @)~(* semester.camp.accomodation.location.genitive *)
                 odídeme dňa \textbf{(* semester.camp.dates.end.strftime('%d.~%m.~%Y') *)}
                 o~\textbf{(* semester.camp.transport.depart.time *)} a do (* semester.camp.transport.disband.place.genitive *)
                 spoločne zo sústredenia dorazíme autobusom o~\textbf{(* semester.camp.transport.disband.time *)}.
