@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
-from utils import jinjaEnv, mergeInto, renderList, readableDir
+from utils import jinjaEnv, renderList, readableDir
 from colorama import Fore, Style
 
 parser = argparse.ArgumentParser(
@@ -15,7 +15,6 @@ args = parser.parse_args()
 
 if (args.verbose):
     pprint.pprint(context)
-print(args.metafile)
 
 childrenMeta        = yaml.load(args.metafile)
 
