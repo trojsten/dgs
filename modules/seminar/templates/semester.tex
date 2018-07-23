@@ -38,7 +38,7 @@
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+        \RenewExpandableDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
         
         \subsection{%
             \texorpdfstring{%
