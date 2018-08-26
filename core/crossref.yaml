@@ -1,5 +1,5 @@
 figureTitle: "Obrázok"
 tableTitle: "Tabuľka"
-figPrefix: ""
-eqnPrefix: ""
-tblPrefix: ""
+figPrefix: "Obrázok"
+eqnPrefix: "Rovnica"
+tblPrefix: "Tabuľka"
