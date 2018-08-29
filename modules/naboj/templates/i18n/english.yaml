@@ -13,6 +13,7 @@ competition:
         genitive:       'Physics Náboj'
     email:              'info-en@physics.naboj.org'
     website:            'https://physics.naboj.org/'
+team:                   'Team'
 constants:
     title:              'Table of constants'
     instruction:        'We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted.'
