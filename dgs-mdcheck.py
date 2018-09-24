@@ -6,22 +6,33 @@ import check
 from utils import colour
 
 def checkSingleLine(line):
-    if not check.doubleDollars(line):
-        raise check.SingleLineError('Double dollars within text', line) 
-
-    return True
+    check.doubleDollars(line)
+    check.tooLong(line)
+    check.trailingWhitespace(line)
 
 def checkMarkdownFile(file):
     ok = True
+
+    try:
+        check.encoding(file.name)
+    except check.EncodingError as e:
+        print("File {name} is not valid: {message}".format(
+            name            = colour(file.name, 'name'),
+            message         = colour(e.message, 'error'),
+        ))
+        return False
 
     for number, line in enumerate(file):
         try:
             checkSingleLine(line)
         except check.SingleLineError as e:
-            print("Line {num}: {message} {}".format(
-                message     = e.message,
-                line        = colour(line, 'error')
-            ), end = '')
+            print("File {name} line {num}: {message}".format(
+                name        = colour(file.name, 'name'),
+                message     = colour(e.message, 'error'),
+                num         = colour(number, 'no')
+            ))
+            print(colour(line, 'no', 'hv'), end = '')
+            print('-' * (e.column - 2) + '^')
             ok = False
 
     return ok
@@ -30,14 +41,16 @@ def main():
     parser = argparse.ArgumentParser(
         description             = "DeGeŠ Markdown style checker",
     )
-    parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
+    parser.add_argument('infiles',   nargs = '+', type = argparse.FileType('r'), default = [sys.stdin])
+    parser.add_argument('-v', '--verbose', action = 'store_true')
     args = parser.parse_args()
-
-    if checkMarkdownFile(args.infile):
-        print("OK")
-        sys.exit(0)
-    else:
-        print("Not OK")
-        sys.exit(1)
+    
+    for filename in args.infiles:
+        if checkMarkdownFile(filename):
+            if args.verbose:
+                print("File {name} {ok}".format(
+                    name    = colour(filename.name, 'name'),
+                    ok      = colour('OK', 'ok'),
+                ))
 
 main()

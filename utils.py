@@ -1,12 +1,15 @@
-from colorama import Fore, Style
+from colorama import Fore, Back, Style
 
 
-def colour(what, c):
-    clr = {
+def colour(what, fg = 'no', bg = None):
+    colours = {
         'info': Fore.CYAN,
         'name': Fore.YELLOW,
         'error': Fore.RED,
         'ok': Fore.GREEN,
+        'no': Fore.WHITE,
     }
-    return "{}{}{}".format(clr[c], what, Style.RESET_ALL)
-
+    backgrounds = {
+        'hv': Back.BLUE,
+    }
+    return "{}{}{}{}".format(colours[fg], backgrounds.get(bg, ''), what, Style.RESET_ALL)
