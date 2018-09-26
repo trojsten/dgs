@@ -115,11 +115,11 @@ output/naboj/%/answers-mod5.pdf: \
 
 output/naboj/%/tearoff.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/problem.md))))) \
-	$$(subst source/,input/,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg))) \
-	$$(subst source/,input/,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png))) \
-	$$(subst source/,input/,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf))) \
-	$$(subst source/,input/,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg)))) \
-	$$(subst source/,input/,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp)))) \
+	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
+	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png)))) \
+	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \
+	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))))) \
+	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
 	input/naboj/%/barcodes.pdf \
 	input/naboj/%/tearoff.tex 
 	mkdir -p $(dir $@)
