@@ -39,8 +39,9 @@
             (@ if problem.evaluation @)%
                 opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
             (@ endif @)%
-        }{(* problem.title *)}%
+        }{(* round.number *).(* problem.number *) (* problem.title *)}%
     }
+
     \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
 \end{document}
