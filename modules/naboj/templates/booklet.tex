@@ -16,7 +16,7 @@
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{(* problem.number *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
         \protectedInput{\problemDirectory/problem.tex}%
     (@ endfor @)
 
@@ -27,7 +27,7 @@
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{(* problem.number *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
         \protectedInput{\problemDirectory/solution.tex}%
     (@ endfor @)
 
@@ -38,7 +38,7 @@
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{(* problem.number *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
         \protectedInput{\problemDirectory/answer.tex}%
     (@ endfor @)
 \end{document}
