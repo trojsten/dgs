@@ -2,52 +2,50 @@ MAKEFLAGS += --no-builtin-rules
 
 .SECONDEXPANSION:
 
-input/naboj/%/tearoff.tex: \
-	modules/naboj/templates/tearoff.tex \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-venue.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-
-input/naboj/%/format.tex: \
-	modules/naboj/format.tex \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
+input/naboj/%/build-language:
+	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
 
-input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
-	modules/naboj/templates/$$(notdir $@) \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml))
+input/naboj/%/build-venue:
+	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build-venue.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+
+input/naboj/%/tearoff.tex: \
+    input/naboj/$$*/build-venue \
+	modules/naboj/templates/tearoff.tex \
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
+
+input/naboj/%/format.tex: \
+    input/naboj/$$*/build-language \
+	modules/naboj/format.tex \
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
+    input/naboj/$$*/build-language \
+	modules/naboj/templates/$$(notdir $@) \
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
 input/naboj/%/intro.tex: \
-	source/naboj/%/intro.tex
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+    input/naboj/$$*/build-language \
+	source/naboj/%/intro.tex ;
 
 input/naboj/%/constants.tex: \
+    input/naboj/$$*/build-language \
 	modules/naboj/templates/constants.tex \
-	source/naboj/%/constants-table.tex
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	source/naboj/%/constants-table.tex ;
 
 input/naboj/%/instructions-text.tex: \
-	source/naboj/%/instructions-text.tex
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+    input/naboj/$$*/build-language \
+	source/naboj/%/instructions-text.tex ;
 
 input/naboj/%/instructions.tex: \
+    input/naboj/$$*/build-language \
 	modules/naboj/templates/instructions.tex \
-	source/naboj/%/instructions-text.tex
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	source/naboj/%/instructions-text.tex ;
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
@@ -56,7 +54,7 @@ input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
-	$$(subst $(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
 input/naboj/%/barcodes.txt: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
