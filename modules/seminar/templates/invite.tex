@@ -1,15 +1,6 @@
-\documentclass[12pt, twoside]{article}
-
-\input{core/core.tex}
-\input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* competition.id *)/settings.tex}
-
-\input{input/(* module.id *)/format-root.tex}
-\input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/format-semester.tex}
-
-\begin{document}
+(@ extends 'base.tex' @)
+ 
+(@ block content @)
     \pagestyle{main-(* competition.id *)}
     
     (@ for child in semester.camp.children @)
@@ -100,4 +91,4 @@
     (@ if not loop.last @)\newpage(@ endif @)
 
     (@ endfor @)
-\end{document}
+(@ endblock content @)

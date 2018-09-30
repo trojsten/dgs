@@ -11,7 +11,9 @@ input/seminar/format-root.tex: \
 input/seminar/%/format-competition.tex: \
 	modules/seminar/format-competition.tex \
 	source/seminar/$$*/meta.yaml \
-	input/seminar/format-root.tex
+	input/seminar/format-root.tex \
+	input/seminar/%/format-override.tex \
+	input/seminar/%/logo.pdf
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-format.py 'source/seminar/' -c $(word 1,$(words)) -o '$(dir $@)'
@@ -39,6 +41,14 @@ input/seminar/%/format-round.tex: \
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-format.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
+
+input/seminar/%/format-override.tex:
+	@mkdir -p $(dir $@)
+	cp source/seminar/$*/meta/format-override.tex $@
+
+input/seminar/%/logo.pdf:
+	@mkdir -p $(dir $@)
+	cp source/seminar/$*/meta/logo/logo.pdf $@
 
 input/seminar/%/intro.tex input/seminar/%/rules.tex: \
 	$$(subst $(cdir),,$$(abspath modules/seminar/styles/$$*/../../templates/$$(notdir $$@)))
@@ -152,7 +162,6 @@ output/seminar/%/solutions: \
 output/seminar/%/all: \
 	output/seminar/%/problems \
 	output/seminar/%/solutions ;
-
 
 output/%/invite.pdf:\
 	input/$$*/invite.tex\

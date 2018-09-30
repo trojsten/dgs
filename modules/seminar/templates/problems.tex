@@ -1,20 +1,8 @@
-\documentclass[12pt, twoside]{article}
-
-\input{core/core.tex}
-\input{core/format.tex}
-
-\input{input/(* module.id *)/format-root.tex}
-\input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/format-semester.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
-
-\newcounter{volume}
-\newcounter{semester}
-\newcounter{round}
-\newcounter{problem}
+(@ extends 'base.tex' @)
  
-\begin{document}
+(@ block content @)
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
+
     \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
     \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     \vspace*{8mm}
@@ -45,4 +33,4 @@
         }%
         \protectedInput{\problemDirectory/problem.tex}%
     (@ endfor @)
-\end{document}
+(@ endblock content @)

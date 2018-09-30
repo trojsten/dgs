@@ -3,7 +3,9 @@
 
 \fancypagestyle{main-(* competition.id *)}{
     \pagestyle{main}
-    \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}}}
+    \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{%
+        \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/logo.pdf}}%
+    }
     \fancyhead[LE,RO]{\textit{(* competition.full.nominative *)}}
     \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
     \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
@@ -30,7 +32,7 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{modules/seminar/styles/(* competition.id *)/logo/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/logo.pdf}\\[0pt]
             \vspace{4pt}
         \end{minipage}
     }
