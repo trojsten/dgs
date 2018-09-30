@@ -17,7 +17,7 @@ input/naboj/%/build-venue:
 input/naboj/%/tearoff.tex: \
     input/naboj/$$*/build-venue \
 	modules/naboj/templates/tearoff.tex \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) ;
 
 input/naboj/%/format.tex: \
     input/naboj/$$*/build-language \

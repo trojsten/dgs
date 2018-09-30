@@ -1,29 +1,6 @@
-\documentclass[12pt, twoside]{article}
+(@ extends 'base-venues.tex' @)
 
-\input{core/core.tex}
-\input{core/format.tex}
-\input{modules/(* module.id *)/styles/(* competition.id *)/format.tex}
-
-\newcounter{volume}
-\newcounter{problem}
-\newcounter{team}
-
-\fancypagestyle{tearoff}{%
-    \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
-    \titlespacing*{\subsection}{0pt}{0pt}{8pt}
-    \renewcommand{\headrulewidth}{0pt}
-    \renewcommand{\footrulewidth}{0pt}
-}
-
-\newgeometry{
-    paper = a4paper,
-    left = 5mm,
-    right = 5mm,
-    bottom = 3mm,
-    top = 0mm
-}
-
-\begin{document}
+(@ block content @)
     \pagestyle{tearoff}    
     (@ for team3 in venue.teams3 @)
         (@ for problem in volume.problems @)
@@ -47,7 +24,9 @@
                         \hspace{1mm}
                         \rotatebox{90}{%
                             \includegraphics[%
-                                width = 70mm, height = 15mm, page = (* team.number * volume.problems|length + problem.number *)]{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf}%
+                                width = 70mm, height = 15mm, page = (* team.number * volume.problems|length + problem.number *)]{%
+                                \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
+                            }%
                             \hspace{8mm}%
                         }%
                     \end{minipage}
@@ -57,4 +36,4 @@
             (@ endfor @)
         (@ endfor @)
     (@ endfor @)
-\end{document}
+(@ endblock @)

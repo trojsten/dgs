@@ -1,12 +1,13 @@
 \documentclass[12pt, twoside]{article}
 
 (@ include 'inputs.tex' @)
-(@ include 'inputs-language.tex' @)
+(@ block specific @)(@ endblock @)
 
 \newcounter{volume}
 \newcounter{problem}
+
+(@ block extras @)(@ endblock @)
  
 \begin{document}
-    (@ block content @)
-    (@ endblock @)
+    (@ block content @)(@ endblock @)
 \end{document}

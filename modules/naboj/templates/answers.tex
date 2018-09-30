@@ -1,14 +1,6 @@
-\documentclass[12pt, twoside]{article}
+(@ extends 'base-languages.tex' @)
 
-\input{core/core.tex}
-\input{core/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/format-specific.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
-
-\newcounter{volume}
-\newcounter{problem}
- 
-\begin{document}
+(@ block content @)
     \pagestyle{main}
     \section{(* i18n.section.answers *)}
     \pagestyle{answers}
@@ -19,4 +11,4 @@
         \subsection{(* problem.number *)}%
         \protectedInput{\problemDirectory/answer.tex}%
     (@ endfor @)
-\end{document}
+(@ endblock @)
