@@ -22,21 +22,12 @@ input/naboj/%/tearoff.tex: \
 input/naboj/%/format.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/format.tex \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../format-specific.tex)) \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../logo.pdf)) \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
-input/naboj/%/format-specific.tex:
-	@mkdir -p $(dir $@)
-	cp source/naboj/$*/meta/format-specific.tex $@
-
-input/naboj/%/logo.pdf:
-	@mkdir -p $(dir $@)
-	cp source/naboj/$*/meta/logo/logo.pdf $@
-
-input/naboj/%/barcode.pdf:
-	@mkdir -p $(dir $@)
-	cp source/naboj/$*/meta/logo/barcode.pdf $@
+input/naboj/%/copy-static:
+	mkdir -p $(dir $@)static/
+	cp -r source/naboj/$*/static/ input/naboj/$*/
 
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.pdf: \
     input/naboj/$$*/build-language \
