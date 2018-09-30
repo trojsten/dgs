@@ -26,10 +26,10 @@ input/naboj/%/format.tex: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
 input/naboj/%/copy-static:
-	mkdir -p $(dir $@)static/
+	@mkdir -p $(dir $@)static/
 	cp -r source/naboj/$*/static/ input/naboj/$*/
 
-input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.pdf: \
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
@@ -153,7 +153,7 @@ output/naboj/%/instructions.pdf: \
 
 output/naboj/%/cover.pdf: \
 	input/naboj/%/cover.tex \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../barcode.pdf))
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static))
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex
