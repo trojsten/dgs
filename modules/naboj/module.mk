@@ -22,9 +22,23 @@ input/naboj/%/tearoff.tex: \
 input/naboj/%/format.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/format.tex \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../format-specific.tex)) \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../logo.pdf)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
-input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
+input/naboj/%/format-specific.tex:
+	@mkdir -p $(dir $@)
+	cp source/naboj/$*/meta/format-specific.tex $@
+
+input/naboj/%/logo.pdf:
+	@mkdir -p $(dir $@)
+	cp source/naboj/$*/meta/logo/logo.pdf $@
+
+input/naboj/%/barcode.pdf:
+	@mkdir -p $(dir $@)
+	cp source/naboj/$*/meta/logo/barcode.pdf $@
+
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.pdf: \
     input/naboj/$$*/build-language \
 	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
@@ -147,7 +161,8 @@ output/naboj/%/instructions.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
 
 output/naboj/%/cover.pdf: \
-	input/naboj/%/cover.tex
+	input/naboj/%/cover.tex \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../barcode.pdf))
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex
