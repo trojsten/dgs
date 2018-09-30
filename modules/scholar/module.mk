@@ -2,12 +2,12 @@ MAKEFLAGS += --no-builtin-rules
 
 .SECONDEXPANSION:
 
-output/scholar/handout/%.pdf: \
-	input/scholar/handout/%.tex
+output/scholar/%.pdf: \
+	input/scholar/%.tex
+	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $<
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode $<
 
 .PHONY:
-
-output/seminar/%/copy: \
-	output/seminar/%/all
-	$(eval words := $(subst /, ,$*))
-	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
