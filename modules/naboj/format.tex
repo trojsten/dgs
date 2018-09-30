@@ -6,7 +6,7 @@
 \fancypagestyle{main}{%
     \fancyhead[LO,RE]{%
         \raisebox{(* competition.hacks.smallLogoRaise *)}{%
-            \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/logo.pdf}%
+            \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/static/logo/logo.pdf}%
         }%
     }%
     \fancyhead[C]{\textit{(* volume.number *). (* i18n.competition.name.nominative *), (* volume.number + competition.founded - 1 *)}}
@@ -66,7 +66,7 @@
             \vspace{4pt}
             {\Large (* volume.number*). (* i18n.competition.name.nominative *)}\\[4pt]
             {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]            
-            {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *)%
+            {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *) %
                 (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
             \vspace{6pt}
         \end{minipage}        
@@ -74,7 +74,7 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/static/logo/logo.pdf}\\[0pt]
             \vspace{4pt}
         \end{minipage}
     }
