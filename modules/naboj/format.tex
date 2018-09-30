@@ -3,8 +3,12 @@
 \numberwithin{equation}{subsection}
 \renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
 
-\fancypagestyle{main}{
-    \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{\includegraphics[keepaspectratio = true, height = 6mm]{modules/(* module.id *)/styles/(* competition.id *)/logo/logo.pdf}}}
+\fancypagestyle{main}{%
+    \fancyhead[LO,RE]{%
+        \raisebox{(* competition.hacks.smallLogoRaise *)}{%
+            \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/logo.pdf}%
+        }%
+    }%
     \fancyhead[C]{\textit{(* volume.number *). (* i18n.competition.name.nominative *), (* volume.number + competition.founded - 1 *)}}
     \fancyfoot[LO,RE]{\href{mailto:(* i18n.competition.email *)}{\texttt{(* i18n.competition.email *)}}}
     \fancyfoot[C]{\small \thepage}
@@ -62,14 +66,15 @@
             \vspace{4pt}
             {\Large (* volume.number*). (* i18n.competition.name.nominative *)}\\[4pt]
             {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]            
-            {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *) (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
+            {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *)%
+                (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
             \vspace{6pt}
         \end{minipage}        
     }           
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{modules/(* module.id *)/styles/(* competition.id *)/logo/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/logo.pdf}\\[0pt]
             \vspace{4pt}
         \end{minipage}
     }
