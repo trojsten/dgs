@@ -1,21 +1,17 @@
-\documentclass[12pt, oneside]{article}
+(@ extends 'base-languages.tex' @)
 
-\input{core/core.tex}
-\input{core/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/format-specific.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
+(@ block extras @)
+    \newgeometry{
+        left = 20mm,
+        right = 20mm,
+        bottom = 20mm,
+        top = 20mm,
+        headheight = 0pt,
+        footskip = 0pt
+    }
+(@ endblock @)
 
-\newgeometry{
-    paper = a4paper,
-    left = 20mm,
-    right = 20mm,
-    bottom = 20mm,
-    top = 20mm,
-    headheight = 0pt,
-    footskip = 0pt
-}
-
-\begin{document}            
+(@ block content @)
     \pagestyle{empty}
     \begin{center}
         \null
@@ -30,4 +26,5 @@
         \fontsize{60}{25}\selectfont
         (* volume.number + competition.founded - 1 *)
     \end{center}
-\end{document}
+(@ endblock @)
+
