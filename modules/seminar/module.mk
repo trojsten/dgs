@@ -57,7 +57,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build-round.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build-round.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
 input/seminar/%/semester.tex: \
 	input/seminar/$$*/format-semester.tex \

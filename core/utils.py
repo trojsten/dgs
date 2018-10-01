@@ -3,6 +3,10 @@
 import argparse, yaml, os, jinja2, sys
 from colorama import Fore, Style
 
+sys.path.append('.')
+
+import core.filters
+
 def mergeDicts(parent, *children):
     for child in children:
         parent = mergeDict(parent, child)
@@ -21,26 +25,6 @@ def mergeDict(parent, child):
             parent[key] = child[key]
     return parent
 
-def nodePath(root, competition = None, volume = None, semester = None, round = None, problem = None):
-    return os.path.join(
-        root,
-        '' if competition is None else  competition,
-        '' if volume is None else       '{:02d}'.format(volume),
-        '' if semester is None else     str(semester),
-        '' if round is None else        str(round),
-        '' if problem is None else      '{:02d}'.format(problem),
-    )
-
-def nodePath(module, submodule = None, *args):
-    return {
-        'scholar':  {
-            'handout':      nodePathHandout,
-        },
-        'seminar':  {
-            'default':      nodePathSeminar,
-        }
-    }[module].get(submodule)(*args)
-
 def isNode(path):
     return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
 
@@ -50,7 +34,7 @@ def listChildNodes(node):
 def loadYaml(*args):
     nargs = [x if type(x) is str else '{:02d}'.format(x) for x in args]
     try:
-       result = yaml.load(open(os.path.join(*nargs), 'r'))
+       result = yaml.load(open(os.path.join(*args), 'r'))
        if result is None:
            result = {}
     except FileNotFoundError as e:
@@ -58,9 +42,9 @@ def loadYaml(*args):
         raise e
     return result
 
-def loadMeta(*args):
+def loadMeta(pathfinder, args):
     try:
-       result = yaml.load(open(os.path.join(nodePath(*args), 'meta.yaml'), 'r'))
+       result = yaml.load(open(os.path.join(pathfinder(*args), 'meta.yaml'), 'r'))
        if result is None:
            result = {}
     except FileNotFoundError as e:
@@ -84,47 +68,11 @@ def jinjaEnv(directory):
     )
 
     mergeDicts(env.filters, {
-        'roman':        roman,
-        'formatList':   formatList,
+        'roman':        core.filters.roman,
+        'formatList':   core.filters.formatList,
     })
 
     return env
-
-def roman(what):
-    what = int(what)
-    if what == 0:
-        return '0'
-    if what > 4000:
-        raise ValueError("Argument must be between 1 and 3999")
-
-    ints = (1000, 900,  500, 400, 100,  90, 50,  40, 10,  9,   5,  4,   1)
-    nums = ('M',  'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
-    result = ""
-    for i in range(len(ints)):
-        count = int(what / ints[i])
-        result += nums[i] * count
-        what -= ints[i] * count
-    return result
-
-def formatList(list):
-    return renderList(list, textbf = True)
-
-def renderList(what, **kwargs):
-    if (type(what) == str):
-        what = [what]
-
-    textbf = kwargs.get('textbf', False)
-
-    if textbf:
-        what = ['\\textbf{{{}}}'.format(x) for x in what if x != '']
-
-    for i, item in enumerate(what[:-2]):
-        what[i] = '{},'.format(item)
-
-    if len(what) > 1:
-        what[-2] = '{} a'.format(what[-2])
-    
-    return ' '.join(what)
 
 def splitMod(what, step, first = 0):
     result = [[] for i in range(0, step)]
