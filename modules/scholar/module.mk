@@ -2,6 +2,9 @@ MAKEFLAGS += --no-builtin-rules
 
 .SECONDEXPANSION:
 
+input/scholar/%/format-handout.tex: \
+    modules/scholar/format-handout.tex
+
 output/scholar/%.pdf: \
 	input/scholar/%.tex
 	@mkdir -p $(dir $@)
