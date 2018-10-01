@@ -31,6 +31,16 @@ def nodePath(root, competition = None, volume = None, semester = None, round = N
         '' if problem is None else      '{:02d}'.format(problem),
     )
 
+def nodePath(module, submodule = None, *args):
+    return {
+        'scholar':  {
+            'handout':      nodePathHandout,
+        },
+        'seminar':  {
+            'default':      nodePathSeminar,
+        }
+    }[module].get(submodule)(*args)
+
 def isNode(path):
     return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
 
@@ -60,21 +70,24 @@ def loadMeta(*args):
 
 def jinjaEnv(directory):
     env = jinja2.Environment(
-	block_start_string = '(@',
-	block_end_string = '@)',
-	variable_start_string = '(*',
-	variable_end_string = '*)',
-	comment_start_string = '\#{',
-	comment_end_string = '}',
-	line_statement_prefix = '%%',
-	line_comment_prefix = '%#',
-	trim_blocks = True,
-	autoescape = False,
-	loader = jinja2.FileSystemLoader(directory),
+        block_start_string = '(@',
+        block_end_string = '@)',
+        variable_start_string = '(*',
+        variable_end_string = '*)',
+        comment_start_string = '\#{',
+        comment_end_string = '}',
+        line_statement_prefix = '%%',
+        line_comment_prefix = '%#',
+        trim_blocks = True,
+        autoescape = False,
+        loader = jinja2.FileSystemLoader(directory),
     )
 
-    env.filters['roman'] = roman
-    env.filters['formatList'] = formatList
+    mergeDicts(env.filters, {
+        'roman':        roman,
+        'formatList':   formatList,
+    })
+
     return env
 
 def roman(what):
