@@ -5,12 +5,5 @@
 - pridať sponzorov
 - --default-image-extensions
 
-
 # Style
-- Kam chceme písať footnote (pred vs za bodku)?
-- Chceme arabské alebo rímske číslice v ročníku?
 - Treba opakovať zadanie vo vzoráku (teraz KMS, FKS a UFO áno; KSP a Prask nie)
-
-
-# Náboj
-- spacing okolo \section{} je vidný
