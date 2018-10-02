@@ -128,7 +128,6 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
-
 \NewDocumentCommand{\rootDirectory}{}{input}
 \NewDocumentCommand{\activeDirectory}{}{<undefined>}
 
