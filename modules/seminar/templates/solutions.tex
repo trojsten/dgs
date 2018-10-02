@@ -3,8 +3,8 @@
 (@ block content @)
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
 
-    \pagestyle{solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
-    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+    \pagestyle{seminar-solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+    \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     \vspace*{8mm}
    
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
@@ -14,7 +14,7 @@
     \setcounter{semester}{(* semester.number *)}%
     \setcounter{round}{(* round.number *)}%
     \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+    \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
     \subsection{%
         \texorpdfstring{%
@@ -29,6 +29,6 @@
         }{(* round.number *).(* problem.number *) (* problem.title *)}%
     }
 
-    \protectedInput{\problemDirectory/solution.tex}%
+    \protectedInput{\activeDirectory/solution.tex}%
     (@ endfor @)
 (@ endblock content @)

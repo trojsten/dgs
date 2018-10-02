@@ -1,8 +1,8 @@
 % DeGeŠ style file
 % module: seminar
 
-\fancypagestyle{main-(* competition.id *)}{
-    \pagestyle{main}
+\fancypagestyle{seminar-main-(* competition.id *)}{
+    \pagestyle{seminar-main}
     \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{%
         \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/static/logo/logo.pdf}}%
     }
@@ -11,8 +11,8 @@
     \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
 }
     
-\fancypagestyle{first-(* competition.id *)}{%
-    \pagestyle{first}
+\fancypagestyle{seminar-first-(* competition.id *)}{%
+    \pagestyle{seminar-first}
     \fancyhead[L]{    
         \begin{minipage}{0.15\textwidth}
             \flushleft

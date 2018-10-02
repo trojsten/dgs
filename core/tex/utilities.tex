@@ -1,0 +1,110 @@
+\NewDocumentCommand{\URL}{m}{\href{#1}{\texttt{#1}}}
+
+% package siunitx -- custom units
+\DeclareSIUnit{\gforce}{g}
+\DeclareSIUnit{\year}{y}
+\DeclareSIUnit{\au}{AU}
+\DeclareSIUnit{\pixel}{px}
+\DeclareSIUnit{\year}{y}
+\DeclareSIUnit{\eur}{€}
+
+\NewDocumentCommand{\errorMessage}{+m}{\colorbox{red}{#1}}
+\NewDocumentCommand{\todoMessage}{+m}{\colorbox{cyan}{#1}}
+
+% Protected input -- \input entire file or typeset a warning message saying that it does not exist
+\NewDocumentCommand{\protectedInput}{m}{%
+    \IfFileExists{#1}{%
+        \input{#1}%
+    }{%
+        \errorMessage{MISSING FILE \texttt{#1}!}\\
+    }%
+}
+
+\NewDocumentCommand{\cutHere}{}{%
+    \noindent%
+    \raisebox{-2.8pt}[0pt][0.75\baselineskip]{\small\ding{34}}%
+    \unskip{\tiny\dotfill}
+}
+
+\RenewDocumentCommand{\vec}{m}{\overrightarrow{#1}}
+
+% \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
+% Insert a picture, protected against nonexistent files
+%   - filename, searched in \problemDirectory
+%   - extension for PDF
+%   -  HTML (ignoruje sa)
+%   - výška obrázka (napríklad v mm)
+%   - popis pod obrázkom
+%   - label pre odkázanie sa na obrázok
+\NewDocumentCommand{\insertPicture}{m m m m m m}{%
+    \begin{figure}[H]%
+        \centering%
+        \IfFileExists{\activeDirectory/#1.#2}{%
+            \includegraphics[keepaspectratio = true, height = #4]{\activeDirectory/#1.#2}%
+        }{%
+            \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
+        }%
+        \notblank{#5}{\caption{\textit{#5}}}%
+        \notblank{#6}{\label{#6}}%
+    \end{figure}%
+}
+
+% \insertPictureSimple{filename}{height}{caption}{label}
+\NewDocumentCommand{\insertPictureSimple}{m m m m}{%
+    \begin{figure}[H]%
+        \centering%
+        \IfFileExists{\activeDirectory/#1}{%
+            \includegraphics[keepaspectratio = true, height = #2]{\activeDirectory/#1}%
+        }{%
+            \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
+        }%
+        \notblank{#3}{\caption{\textit{#3}}}%
+        \notblank{#4}{\label{#4}}%
+    \end{figure}%
+}
+
+% \exampleIO[verbatim input][verbatim output]
+% Príklad vstupu/výstupu (KSP)
+%   - verbatim vstup
+%   ₋ verbatim výstup
+% Používa ExplSyntax z LaTeX3
+\ExplSyntaxOn
+\char_set_catcode_other:n{`\^^M}
+\NewDocumentCommand{\exampleIO}{+v +v}{
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_set:Nn \l_tmpb_tl {#2}
+    \tl_replace_all:Nnn \l_tmpa_tl {^^M} {\par}
+    \tl_replace_all:Nnn \l_tmpb_tl {^^M} {\par}
+    
+    \begin{minipage}[t]{0.48\linewidth}     
+        \begin{center}vstup\end{center}
+        \vspace{-15pt}                                              % one nasty hack here       
+        \fbox{
+            \begin{minipage}[t]{\linewidth}
+                \mbox{}\\[-1.5\baselineskip]                        % another nasty hack here
+                \ttfamily
+                \l_tmpa_tl
+            \end{minipage}
+        }
+    \end{minipage}
+    
+    \begin{minipage}[t]{0.0393\linewidth}
+        \mbox{}
+    \end{minipage}
+    
+    \begin{minipage}[t]{0.48\linewidth}
+        \begin{center}výstup\end{center}
+        \vspace{-15pt}                                              % guess what here
+        \fbox{
+            \begin{minipage}[t]{0.975\linewidth}
+                \mbox{}\\[-1.5\baselineskip]                        % and one nasty hack here
+                \ttfamily
+                \l_tmpb_tl
+            \end{minipage}
+        }
+    \end{minipage}
+    \\[1ex]
+}
+\char_set_catcode_end_line:n{`\^^M}
+\ExplSyntaxOff
+

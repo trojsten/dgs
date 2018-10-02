@@ -2,7 +2,6 @@
 % Fonts are loaded from .ttf and .otf files in the core/fonts/ directory. We NEVER use system fonts.
 
 % Change allocator to allow more than 16 alphabets per document
-
 \makeatletter
     \def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
     \patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
@@ -15,21 +14,21 @@
     Ligatures       = TeX
 }
 \setallmainfonts[
-    Path            = core/fonts/ ,
+    Path            = core/fonts/MinionPro/ ,
     Extension       = .otf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
     BoldItalicFont  = *-bi    
-]{minionpro}
+]{MinionPro}
 \setmathfont(Digits,Latin,Greek)[
-    Path            = core/fonts/ ,
+    Path            = core/fonts/MinionPro/ ,
     Extension       = .otf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
     BoldItalicFont  = *-bi    
-]{minionpro}
+]{MinionPro}
 \setmonofont[
     Path            = core/fonts/ ,
     Extension       = .ttf ,

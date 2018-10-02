@@ -3,8 +3,8 @@
 (@ block content @)
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
 
-    \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
-    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+    \pagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+    \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     \vspace*{8mm}
 
     {
@@ -19,7 +19,7 @@
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
         
         \subsection{%
             \texorpdfstring{%
@@ -31,6 +31,6 @@
                 (* round.number *).(* problem.number *) (* problem.title *)%
             }%
         }%
-        \protectedInput{\problemDirectory/problem.tex}%
+        \protectedInput{\activeDirectory/problem.tex}%
     (@ endfor @)
 (@ endblock content @)

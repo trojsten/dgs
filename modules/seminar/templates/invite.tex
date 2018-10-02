@@ -1,10 +1,10 @@
 (@ extends 'base.tex' @)
  
 (@ block content @)
-    \pagestyle{main-(* competition.id *)}
+    \pagestyle{seminar-main-(* competition.id *)}
     
     (@ for child in semester.camp.children @)
-        \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+        \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
         \vspace*{8mm}
         \section{Pozvánka na sústredenie}
             Mil(* 'ý' if child.male else 'á'*) riešiteľ(* '' if child.male else 'ka' *) (* child.name *) (* child.surname *),
