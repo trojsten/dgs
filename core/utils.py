@@ -122,3 +122,16 @@ class writeableDir(argparse.Action):
             setattr(namespace, self.dest, tryDir)
         else:
             raise argparse.ArgumentTypeError("readableDir: {0} is not a writeable directory".format(tryDir))
+
+def colour(what, how):
+    colours = {
+        'act': Fore.CYAN + Style.DIM,
+        'path': Fore.LIGHTGREEN_EX,
+        'name': Fore.YELLOW,
+        'error': Fore.RED,
+        'param': Fore.LIGHTBLUE_EX,
+        'num': Fore.GREEN,
+    }
+    return "{}{}{}".format(colours[how], what, Style.RESET_ALL)
+
+
