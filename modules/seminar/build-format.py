@@ -4,7 +4,6 @@ import argparse, yaml, os, jinja2, sys, pprint, colorama
 from colorama import Fore, Style
 
 sys.path.append('.')
-
 import build, core.builder
 
 args = build.createSeminarParser().parse_args()

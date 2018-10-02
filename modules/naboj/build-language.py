@@ -4,6 +4,7 @@ import argparse, yaml, os, jinja2, sys, pprint, colorama
 from colorama import Fore, Style
 
 import build, core.builder
+from core.utils import *
 
 args = build.createNabojParser('language').parse_args()
 
@@ -14,7 +15,10 @@ launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(build.nodePathNaboj(launchDirectory, competitionId, volumeId)) + Style.RESET_ALL)
+print("{} {}".format(
+    colour("Invoking Náboj template builder on", 'act'),
+    colour(build.nodePathNaboj(launchDirectory, competitionId, volumeId), 'path'),
+))
 
 bookletContext = build.bookletContext(launchDirectory, competitionId, volumeId, languageId)
 if args.debug:
