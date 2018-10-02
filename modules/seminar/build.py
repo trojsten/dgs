@@ -4,8 +4,7 @@ from colorama import Fore, Style
 
 sys.path.append('.')
 
-import core.builder, build
-
+import core.builder
 from core.utils import *
 
 def createSeminarParser():
@@ -48,7 +47,7 @@ def semesterContext(root, competition, volume, semester):
     rounds = OrderedDict()
 
     for child in listChildNodes(directory):
-        rounds[child] = build.roundContext(root, competition, volume, semester, child)
+        rounds[child] = roundContext(root, competition, volume, semester, child)
 
     return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
         'id': str(semester),
@@ -64,7 +63,7 @@ def roundContext(root, competition, volume, semester, round):
     problems = OrderedDict()
     for p in range(0, len(comp['categories'])):
         pn = '{:02d}'.format(p + 1)
-        problems[pn] = build.problemContext(root, competition, volume, semester, round, p + 1)
+        problems[pn] = problemContext(root, competition, volume, semester, round, p + 1)
 
     return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester, round)), {
         'id': round,
@@ -83,22 +82,22 @@ def problemContext(root, competition, volume, semester, round, problem):
 
 def bookletContext(root, competition = None, volume = None, semester = None, round = None):
     context = {
-        'module': build.moduleContext()
+        'module': moduleContext()
     }
     if competition  is not None:
-        context['competition']  = build.competitionContext   (root, competition)
+        context['competition']  = competitionContext   (root, competition)
     if volume       is not None:
-        context['volume']       = build.volumeContext        (root, competition, volume)
+        context['volume']       = volumeContext        (root, competition, volume)
     if semester     is not None:
-        context['semester']     = build.semesterContext      (root, competition, volume, semester)
+        context['semester']     = semesterContext      (root, competition, volume, semester)
     if round        is not None:
-        context['round']        = build.roundContext         (root, competition, volume, semester, round)
+        context['round']        = roundContext         (root, competition, volume, semester, round)
 
     return context
 
 def buildInviteContext(root, competition, volume, semester):
     context = {
-        'module': buildModuleContext()
+        'module': moduleContext()
     }
     context['competition']      = buildCompetitionContext   (root, competition)
     context['volume']           = buildVolumeContext        (root, competition, volume)

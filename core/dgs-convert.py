@@ -41,11 +41,20 @@ try:
     
     tempfile.close()
     
-    assert os.system('pandoc -R -S --no-tex-ligatures \--mathjax --from markdown --latex-engine=xelatex --to {format} --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" --output="{output}" {1}'.format(
-        format      = args.format,
-        input       = tempfile.name,
-        output      = args.outfile.name,
-    )) == 0
+    assert os.system('pandoc -R -S \
+        --no-tex-ligatures \
+        --mathjax \
+        --from markdown \
+        --latex-engine=xelatex \
+        --to {format} \
+        --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" \
+        --output="{output}" \
+        {input}'.format(
+            format      = args.format,
+            input       = tempfile.name,
+            output      = args.outfile.name,
+        )
+    ) == 0
     
     os.remove(tempfile.name)
 
