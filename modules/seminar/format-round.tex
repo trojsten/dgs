@@ -1,14 +1,14 @@
 % DeGeŠ style file
 % module: seminar
 
-\fancypagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
-    \pagestyle{main-(* competition.id *)}
+\fancypagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
+    \pagestyle{seminar-main-(* competition.id *)}
     \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
     \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
 }
 
-\fancypagestyle{solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
-    \pagestyle{main-(* competition.id *)}
+\fancypagestyle{seminar-solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}{%
+    \pagestyle{seminar-main-(* competition.id *)}
     \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.genitive *) časti}}
     \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
 }
