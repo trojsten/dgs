@@ -52,11 +52,11 @@ def semesterContext(root, competition, volume, semester):
 
     return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
         'id': str(semester),
-        'number':       semester,
-        'nominative':   'zimná' if semester == 1 else 'letná',
-        'nominativeNeuter':   'zimné' if semester == 1 else 'letné',
-        'genitive':     'zimnej' if semester == 1 else 'letnej',
-        'rounds':       rounds,
+        'number':           semester,
+        'nominative':       'zimná' if semester == 1 else 'letná',
+        'nominativeNeuter': 'zimné' if semester == 1 else 'letné',
+        'genitive':         'zimnej' if semester == 1 else 'letnej',
+        'rounds':           rounds,
     })
 
 def roundContext(root, competition, volume, semester, round):
@@ -100,9 +100,9 @@ def buildInviteContext(root, competition, volume, semester):
     context = {
         'module': buildModuleContext()
     }
-    context['competition']  = buildCompetitionContext   (root, competition)
-    context['volume']       = buildVolumeContext        (root, competition, volume)
-    context['semester']     = buildSemesterContext      (root, competition, volume, semester)
+    context['competition']      = buildCompetitionContext   (root, competition)
+    context['volume']           = buildVolumeContext        (root, competition, volume)
+    context['semester']         = buildSemesterContext      (root, competition, volume, semester)
     context['semester']['camp'] = loadYaml                  (root, competition, volume, str(semester), 'camp.yaml')
     
     return context
