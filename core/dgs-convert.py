@@ -41,11 +41,14 @@ try:
     
     tempfile.close()
     
-    assert os.system('pandoc -R -S --no-tex-ligatures --mathjax --from markdown --latex-engine=xelatex --to {0} --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" --output="{2}" {1}'.format(
-        args.format, tempfile.name, args.outfile.name, os.getcwd()
+    assert os.system('pandoc -R -S --no-tex-ligatures \--mathjax --from markdown --latex-engine=xelatex --to {format} --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" --output="{output}" {1}'.format(
+        format      = args.format,
+        input       = tempfile.name,
+        output      = args.outfile.name,
     )) == 0
     
-#    os.remove(tempfile.name)
+    os.remove(tempfile.name)
+
 except IOError as e:
     print(Fore.RED + __file__ + ": Could not create temporary file" + Style.RESET_ALL)
     fail()
