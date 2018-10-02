@@ -18,11 +18,8 @@ def formatList(list):
     return renderList(list, bold = True)
 
 def renderList(items, **kwargs):
-    if isinstance(items, str):
-        items = [items]
-
     if not isinstance(items, list):
-        raise TypeError("{} is not a list".format(items))
+        items = [items]
 
     if kwargs.get('bold', False):
         items = ['\\textbf{{{}}}'.format(x) for x in items]

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse, yaml, os, jinja2, sys, pprint, colorama
 
 from collections import OrderedDict
