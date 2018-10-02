@@ -7,8 +7,8 @@
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{(* problem.number *)}%
-        \protectedInput{\problemDirectory/answer.tex}%
+        \protectedInput{\activeDirectory/answer.tex}%
     (@ endfor @)
 (@ endblock @)

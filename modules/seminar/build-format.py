@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
+from colorama import Fore, Style
 
 sys.path.append('.')
 
 import build, core.builder
-from colorama import Fore, Style
 
 args = build.createSeminarParser().parse_args()
 

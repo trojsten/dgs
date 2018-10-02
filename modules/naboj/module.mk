@@ -6,7 +6,7 @@ input/naboj/%/build-language:
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)' #FIX THIS
+	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/build-venue:
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
@@ -23,7 +23,7 @@ input/naboj/%/format.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/format.tex \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/copy-static:
 	@mkdir -p $(dir $@)static/
@@ -32,7 +32,7 @@ input/naboj/%/copy-static:
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/templates/$$(notdir $@) \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/intro.tex: \
     input/naboj/$$*/build-language \
@@ -59,7 +59,7 @@ input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/barcodes.txt: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
@@ -152,8 +152,7 @@ output/naboj/%/instructions.pdf: \
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
 
 output/naboj/%/cover.pdf: \
-	input/naboj/%/cover.tex \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static))
+	input/naboj/%/cover.tex
 	mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex

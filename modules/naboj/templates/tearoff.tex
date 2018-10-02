@@ -8,18 +8,22 @@
                 \setcounter{volume}{(* volume.number *)}%
                 \setcounter{problem}{(* problem.number *)}%
                 \setcounter{team}{(* team.id *)}%
-                \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
+                \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
                 \begin{minipage}[t][91mm][t]{\textwidth}%
                     \begin{minipage}[t][81mm][t]{0.875\linewidth}\vspace{0pt}%
                         \subsection{(* problem.number *)}%
                         \setlength{\parskip}{6pt}
-                        \protectedInput{\problemDirectory/problem.tex}%
+                        \protectedInput{\activeDirectory/problem.tex}%
                     \end{minipage}%
                     \begin{minipage}[t][81mm][t]{0.125\linewidth}\vspace{0pt}%
                         \hspace{2mm}
                         \rotatebox{90}{%
                             \hspace{16mm}
-                            \textsf{\fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)\fontsize{25}{0}\selectfont(* '%03d'|format(team.id) *)\fontsize{20}{0}\selectfont(* '%03d'|format(problem.number) *)}
+                            \textsf{%
+                                \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
+                                \fontsize{25}{0}\selectfont(* '%03d'|format(team.id) *)%
+                                \fontsize{20}{0}\selectfont(* '%03d'|format(problem.number) *)%
+                            }%
                         }%
                         \hspace{1mm}
                         \rotatebox{90}{%
