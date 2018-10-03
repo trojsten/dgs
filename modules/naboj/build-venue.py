@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from colorama import Fore, Style
+import os, sys, pprint
 
-import build, core.builder
+sys.path.append('.')
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
+import core.utilities.argparser as argparser
+import core.utilities.context as context
 
 args = build.createNabojParser('venue').parse_args()
 
@@ -14,13 +18,13 @@ launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-print(Fore.CYAN + Style.DIM + "Invoking Náboj template builder on {}".format(build.nodePathNaboj(launchDirectory, competitionId, volumeId)) + Style.RESET_ALL)
+print(c.act("Invoking Náboj template builder on"), c.path(build.nodePathNaboj(launchDirectory, competitionId, volumeId)))
 
 tearoffContext = build.tearoffContext(launchDirectory, competitionId, volumeId, venueId)
 if args.debug:
     pprint.pprint(tearoffContext)
 
 for target in ['barcodes.txt', 'tearoff.tex']:
-    core.builder.jinjaTemplate(os.path.join(thisDirectory, 'templates'), target, tearoffContext, outputDirectory)
+    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), target, tearoffContext, outputDirectory)
 
-print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
+print(c.ok("Template builder successful"))
