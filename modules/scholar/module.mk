@@ -15,8 +15,8 @@ input/scholar/%/handout.tex: \
     input/scholar/$$*/build-handout ;
 
 output/scholar/%.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/content.md))) \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../../copy-static)) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/content.md))) \
 	input/scholar/$$*.tex \
     input/scholar/$$*/format-handout.tex
 	@mkdir -p $(dir $@)

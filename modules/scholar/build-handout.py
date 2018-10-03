@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys, pprint
+import os, sys, pprint
 
 sys.path.append('.')
-import build, core.builder
-from core.utils import *
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
 
 args = build.createScholarParser('handout').parse_args()
 
@@ -16,17 +17,17 @@ context = build.handoutContext(launchDirectory, args.course, args.year, args.les
 if args.debug:
     pprint.pprint(context)
 
-print("{}{}{}".format(
-    colour("Invoking template builder on handout '", 'act'),
-    colour("{course}/{year}/{lesson}".format(
+print(c.act("Invoking template builder on handout"), c.path("{course}/{year}/{lesson}".format(
         course  = args.course,
         year    = args.year,
         lesson  = args.lesson,
-    ), 'path'),
-    colour("'", 'act')
-))
+    ))
+)
+
+for template in ['format-handout.tex']:
+    jinja.printTemplate(thisDirectory, template, context, outputDirectory)
 
 for template in ['handout.tex']:
-    core.builder.jinjaTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
+    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
 
-print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
+print(c.ok("Template builder successful"))
