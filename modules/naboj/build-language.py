@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys, pprint
+import os, sys, pprint
 
 sys.path.append('.')
 import build

@@ -58,7 +58,7 @@ def venueContext(root, competition, volume, venue):
         venueMeta = context.loadYaml(root, competition, volume, 'venues', venue, 'meta.yaml')
         return context.mergeDicts(venueMeta, {
             'id':       venue,
-            'teams3':   context.splitDiv(numerate(venueMeta['teams']), 3),
+            'teams3':   context.splitDiv(context.numerate(venueMeta['teams']), 3),
         })
     except KeyError as e:
         print(c.err("[FATAL] KeyError {}".format(e)))
@@ -85,7 +85,7 @@ def i18nContext(moduleRoot, competition, volume, language):
     return context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
 
 def globalI18nContext():
-    context = {}
+    i18n = {}
     for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
-        context[language] = context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
-    return context
+        i18n[language] = context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
+    return i18n
