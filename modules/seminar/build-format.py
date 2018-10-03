@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from colorama import Fore, Style
+import os, sys, pprint
 
 sys.path.append('.')
-import build, core.builder
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
 
 args = build.createSeminarParser().parse_args()
 
@@ -27,17 +28,20 @@ else:
     target = 'round'
 
 context = build.bookletContext(launchDirectory, args.competition, args.volume, args.semester, args.round)
+
+print(c.act("Invoking formatting template builder on {target:<12}".format(target = target)),
+    c.path("seminar{competition}{volume}{semester}{round}".format(
+        target      = target,
+        competition = '' if args.competition    is None else '/{}'.format(args.competition),
+        volume      = '' if args.volume         is None else '/{}'.format(args.volume),
+        semester    = '' if args.semester       is None else '/{}'.format(args.semester),
+        round       = '' if args.round          is None else '/{}'.format(args.round),
+    ))
+)
+
 if args.debug:
     pprint.pprint(context)
 
-print(Fore.CYAN + Style.DIM + "Invoking template builder on {target} 'seminar{competition}{volume}{semester}{round}'".format(
-    target      = target,
-    competition = '' if args.competition    is None else '/{}'.format(args.competition),
-    volume      = '' if args.volume         is None else '/{}'.format(args.volume),
-    semester    = '' if args.semester       is None else '/{}'.format(args.semester),
-    round       = '' if args.round          is None else '/{}'.format(args.round),
-) + Style.RESET_ALL)
+jinja.printTemplate(thisDirectory, 'format-{target}.tex'.format(target = target), context, outputDirectory)
 
-core.builder.jinjaTemplate(thisDirectory, 'format-{target}.tex'.format(target = target), context, outputDirectory)
-
-print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
+print(c.ok("Template builder successful"))

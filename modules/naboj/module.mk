@@ -2,13 +2,18 @@ MAKEFLAGS += --no-builtin-rules
 
 .SECONDEXPANSION:
 
-input/naboj/%/build-language:
+# Build scripts for language and venue prerequisites
+# % <competition>/<volume>/<language>
+input/naboj/%/build-language: \
+	modules/naboj/templates/constants.tex
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build-language.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/naboj/%/build-venue:
+# % <competition>/<volume>/<venue>
+input/naboj/%/build-venue: \
+	modules/naboj/templates/tearoff.tex
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -16,7 +21,6 @@ input/naboj/%/build-venue:
 
 input/naboj/%/tearoff.tex: \
     input/naboj/$$*/build-venue \
-	modules/naboj/templates/tearoff.tex \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) ;
 
 input/naboj/%/format.tex: \
@@ -40,7 +44,6 @@ input/naboj/%/intro.tex: \
 
 input/naboj/%/constants.tex: \
     input/naboj/$$*/build-language \
-	modules/naboj/templates/constants.tex \
 	source/naboj/%/constants-table.tex ;
 
 input/naboj/%/instructions-text.tex: \

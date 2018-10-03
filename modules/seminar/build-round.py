@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
-from colorama import Fore, Style
 
 sys.path.append('.')
-import build, core.builder
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
+import core.utilities.argparser as argparser
+import core.utilities.context as context
 
 args = build.createSeminarParser().parse_args()
 
@@ -14,18 +17,19 @@ outputDirectory     = os.path.realpath(args.output) if args.output else None
 
 context = build.bookletContext(launchDirectory, args.competition, args.volume, args.semester, args.round)
 
+print(c.act("Invoking round template builder on round "), c.path("seminar/{competition}/{volume}/{semester}/{round}".format(
+        competition = args.competition,
+        volume      = args.volume,
+        semester    = args.semester,
+        round       = args.round,
+    ))
+)
+
 if args.debug:
     pprint.pprint(context)
 
-print(Fore.CYAN + Style.DIM + "Invoking template builder on round '{competition}/{volume}/{semester}/{round}'".format(
-    competition = args.competition,
-    volume      = args.volume,
-    semester    = args.semester,
-    round       = args.round,
-) + Style.RESET_ALL)
-
 for template in ['problems.tex', 'solutions.tex']:
-    core.builder.jinjaTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
+    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
 
-print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)
+print(c.ok("Template builder successful"))
 
