@@ -83,28 +83,28 @@ def problemContext(root, competition, volume, semester, round, problem):
     })
 
 def bookletContext(root, competition = None, volume = None, semester = None, round = None):
-    context = {
+    booklet = {
         'module': moduleContext()
     }
     if competition  is not None:
-        context['competition']  = competitionContext   (root, competition)
+        booklet['competition']  = competitionContext    (root, competition)
     if volume       is not None:
-        context['volume']       = volumeContext        (root, competition, volume)
+        booklet['volume']       = volumeContext         (root, competition, volume)
     if semester     is not None:
-        context['semester']     = semesterContext      (root, competition, volume, semester)
+        booklet['semester']     = semesterContext       (root, competition, volume, semester)
     if round        is not None:
-        context['round']        = roundContext         (root, competition, volume, semester, round)
+        booklet['round']        = roundContext          (root, competition, volume, semester, round)
 
-    return context
+    return booklet
 
 def buildInviteContext(root, competition, volume, semester):
-    context = {
+    invite = {
         'module': moduleContext()
     }
-    context['competition']      = buildCompetitionContext   (root, competition)
-    context['volume']           = buildVolumeContext        (root, competition, volume)
-    context['semester']         = buildSemesterContext      (root, competition, volume, semester)
-    context['semester']['camp'] = loadYaml                  (root, competition, volume, str(semester), 'camp.yaml')
+    invite['competition']       = competitionContext    (root, competition)
+    invite['volume']            = volumeContext         (root, competition, volume)
+    invite['semester']          = semesterContext       (root, competition, volume, semester)
+    invite['semester']['camp']  = loadYaml              (root, competition, volume, str(semester), 'camp.yaml')
     
     return context
 
