@@ -3,12 +3,14 @@ from collections import OrderedDict
 from colorama import Fore, Style
 
 sys.path.append('.')
-
-import core.builder
-from core.utils import *
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
+import core.utilities.argparser as argparser
+import core.utilities.context as context
 
 def createSeminarParser():
-    parser = core.builder.createGenericParser()
+    parser = argparser.createGenericParser()
     parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
     parser.add_argument('-v', '--volume',      type = int)
     parser.add_argument('-s', '--semester',    type = int)
@@ -31,13 +33,13 @@ def moduleContext():
     }
 
 def competitionContext(root, competition):
-    return mergeDicts(loadMeta(nodePathSeminar, (root, competition)), {
+    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition)), {
         'id': competition,
     })
 
 def volumeContext(root, competition, volume):
-    vol = loadMeta(nodePathSeminar, (root, competition, volume))
-    return mergeDicts(vol, {
+    vol = context.loadMeta(nodePathSeminar, (root, competition, volume))
+    return context.mergeDicts(vol, {
         'id': volume,
         'number': int(volume),
     })
@@ -46,10 +48,10 @@ def semesterContext(root, competition, volume, semester):
     directory = nodePathSeminar(root, competition, volume, semester)
     rounds = OrderedDict()
 
-    for child in listChildNodes(directory):
+    for child in context.listChildNodes(directory):
         rounds[child] = roundContext(root, competition, volume, semester, child)
 
-    return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
+    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
         'id': str(semester),
         'number':           semester,
         'nominative':       'zimná' if semester == 1 else 'letná',
@@ -59,22 +61,22 @@ def semesterContext(root, competition, volume, semester):
     })
 
 def roundContext(root, competition, volume, semester, round):
-    comp = loadMeta(nodePathSeminar, (root, competition))
+    comp = context.loadMeta(nodePathSeminar, (root, competition))
     problems = OrderedDict()
     for p in range(0, len(comp['categories'])):
         pn = '{:02d}'.format(p + 1)
         problems[pn] = problemContext(root, competition, volume, semester, round, p + 1)
 
-    return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester, round)), {
+    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition, volume, semester, round)), {
         'id': round,
         'number': round,
         'problems': problems,
     })
 
 def problemContext(root, competition, volume, semester, round, problem):
-    comp = loadMeta(nodePathSeminar, (root, competition))
+    comp = context.loadMeta(nodePathSeminar, (root, competition))
 
-    return mergeDicts(loadMeta(nodePathSeminar, (root, competition, volume, semester, round, problem)), {
+    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition, volume, semester, round, problem)), {
         'id': '{:02d}'.format(problem),
         'number': problem,
         'categories': comp['categories'][problem - 1],

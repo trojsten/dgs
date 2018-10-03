@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
 
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from build import *
-from colorama import Fore, Style
+import argparse, os, sys, pprint
 
-args = modifyParserHandout(createDefaultParser()).parse_args()
+sys.path.append('.')
+import build, core.builder
+from core.utils import *
+
+args = build.createScholarParser('handout').parse_args()
 
 launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-context = buildHandoutContext(launchDirectory, args.course, args.year, args.lesson)
+context = build.handoutContext(launchDirectory, args.course, args.year, args.lesson)
 if args.debug:
     pprint.pprint(context)
 
-print(Fore.CYAN + Style.DIM + "Invoking template builder on {course}/{year}/{lesson}".format(
-    course  = args.course,
-    year    = args.year,
-    lesson  = args.lesson,
-) + Style.RESET_ALL)
+print("{}{}{}".format(
+    colour("Invoking template builder on handout '", 'act'),
+    colour("{course}/{year}/{lesson}".format(
+        course  = args.course,
+        year    = args.year,
+        lesson  = args.lesson,
+    ), 'path'),
+    colour("'", 'act')
+))
 
-buildFormatTemplate(thisDirectory, 'format-handout.tex'.format(build = build), context, outputDirectory)
+for template in ['handout.tex']:
+    core.builder.jinjaTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
 
 print(Fore.GREEN + "Template builder successful" + Style.RESET_ALL)

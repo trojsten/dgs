@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from colorama import Fore, Style
+import argparse, os, sys, pprint
 
 sys.path.append('.')
-
-import core.builder
-from core.utils import *
+import build
+import core.utilities.jinja as jinja
+import core.utilities.colour as c
+import core.utilities.argparser as argparser
+import core.utilities.context as context
 
 def createNabojParser(target):
-    parser = core.builder.createGenericParser()
+    parser = argparser.createGenericParser()
     parser.add_argument('competition', choices = ['FKS', 'KMS'])
     parser.add_argument('volume',      type = int)
     if target == 'language':
@@ -34,15 +35,15 @@ def moduleContext():
     }
 
 def competitionContext(root, competition):
-    return mergeDicts(loadYaml(root, competition, 'meta.yaml'), {
+    return context.mergeDicts(context.loadYaml(root, competition, 'meta.yaml'), {
         'id': competition,
     })
 
 def volumeContext(root, competition, volume):
-    vol = loadMeta(nodePathNaboj, (root, competition, volume))
-    vol['problems'] = addNumbers(vol['problems'], 1)
-    vol['problemsMod'] = splitMod(vol['problems'], 5, 1)
-    return mergeDicts(vol, {
+    vol = context.loadMeta(nodePathNaboj, (root, competition, volume))
+    vol['problems'] = context.addNumbers(vol['problems'], 1)
+    vol['problemsMod'] = context.splitMod(vol['problems'], 5, 1)
+    return context.mergeDicts(vol, {
         'id': volume,
         'number': int(volume),
     })
@@ -54,13 +55,13 @@ def languageContext(language):
 
 def venueContext(root, competition, volume, venue):
     try:
-        venueMeta = loadYaml(root, competition, volume, 'venues', venue, 'meta.yaml')
-        return mergeDicts(venueMeta, {
+        venueMeta = context.loadYaml(root, competition, volume, 'venues', venue, 'meta.yaml')
+        return context.mergeDicts(venueMeta, {
             'id':       venue,
-            'teams3':   splitDiv(numerate(venueMeta['teams']), 3),
+            'teams3':   context.splitDiv(numerate(venueMeta['teams']), 3),
         })
     except KeyError as e:
-        print(Fore.RED + "[FATAL] KeyError {}".format(e) + Style.RESET_ALL)
+        print(c.err("[FATAL] KeyError {}".format(e)))
         
 def bookletContext(root, competition, volume, language):
     return {
@@ -81,10 +82,10 @@ def tearoffContext(root, competition, volume, venue):
     }
 
 def i18nContext(moduleRoot, competition, volume, language):
-    return loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
+    return context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
 
 def globalI18nContext():
     context = {}
     for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
-        context[language] = loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
+        context[language] = context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
     return context

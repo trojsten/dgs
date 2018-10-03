@@ -1,10 +1,8 @@
 \documentclass[12pt, twoside]{dgs}
 
-\input{core/core.tex}
-\input{core/format.tex}
-
-\input{input/scholar/static/format-handout.tex}
+\input{input/scholar/(* course *)/static/format-override.tex}
  
 \begin{document}
-    \input{input/scholar/handout/(* filename *).tex}
+    \pagestyle{handout}
+    \input{input/scholar/(* course *)/(* 2018 *)/handout/(* lesson *)/content.tex}
 \end{document}

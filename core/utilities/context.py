@@ -2,9 +2,6 @@
 
 import yaml, os, sys
 
-sys.path.append('.')
-import core.utilities.filters as filters
-
 def mergeDicts(parent, *children):
     for child in children:
         parent = mergeDict(parent, child)

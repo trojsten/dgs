@@ -15,6 +15,7 @@ c_filename	:= $(shell tput sgr0; tput setaf 5)
 c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 15)
 
+include modules.mk
 include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
@@ -97,6 +98,7 @@ output/%.html: source/%.md
 	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	python3 core/dgs-convert.py html $< $@ || exit 1;
+
 
 .SECONDEXPANSION:
 
