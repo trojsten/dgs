@@ -1,0 +1,15 @@
+\documentclass[12pt, twoside]{dgs}
+
+\input{input/scholar/(* course.id *)/static/format-override.tex}
+\input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/format-homework.tex}
+ 
+\begin{document}
+    \pagestyle{handout}
+    \setcounter{section}{(* issue.number - 1 *)}
+    \section{Domáca úloha č. (* issue.number *)}
+    \begin{center}
+        Vypracovanú úlohu odovzdajte najneskôr do začiatku cvičenia (* issue.deadline|date:"%d. %m. %Y" *).
+        Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné.
+    \end{center}
+    \input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/content.tex}
+\end{document}

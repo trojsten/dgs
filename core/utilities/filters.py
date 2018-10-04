@@ -14,6 +14,9 @@ def roman(number):
         number -= ints[i] * count
     return result
 
+def isotex(date):
+    return date.strftime('%Y--%m--%d')
+
 def formatList(list):
     return renderList(list, bold = True)
 

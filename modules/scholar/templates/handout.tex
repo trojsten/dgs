@@ -1,9 +1,11 @@
 \documentclass[12pt, twoside]{dgs}
 
-\input{input/scholar/format-handout.tex}
 \input{input/scholar/(* course.id *)/static/format-override.tex}
+\input{input/scholar/(* course.id *)/(* year.id *)/handout/(* lesson.id *)/format-handout.tex}
  
 \begin{document}
     \pagestyle{handout}
-    \input{input/scholar/(* course.id *)/2018/handout/(* lesson.id *)/content.tex}
+    \setcounter{section}{(* lesson.number - 1 *)}
+    \section{Cvičenie č. (* lesson.number *)}
+    \input{input/scholar/(* course.id *)/(* year.id *)/handout/(* lesson.id *)/content.tex}
 \end{document}

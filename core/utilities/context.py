@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
 
-import yaml, os, sys
+import yaml, os, sys, pprint
 
-def mergeDicts(parent, *children):
-    for child in children:
-        parent = mergeDict(parent, child)
-    return parent
+import core.utilities.dicts as dicts
 
-def mergeDict(parent, child):
-    if parent is None:
-        return child
-    for key in child:
-        if key in parent:
-            if isinstance(parent[key], dict) and isinstance(parent[key], dict):
-                mergeDict(parent[key], child[key])
-            else:
-                parent[key] = child[key]
-        else:
-            parent[key] = child[key]
-    return parent
+class Context():
+    def __init__(self):
+        self.data = {}
+
+    def add(self, *args):
+        dicts.merge(self.data, *args)
+        return self
+
+    def loadYaml(*args):
+        try:
+            contents = yaml.load(open(os.path.join(*args), 'r'))
+            result = {} if contents is None else contents
+        except FileNotFoundError as e:
+            print(c.err("[FATAL] Could not load YAML file"), c.path(e))
+            raise e
+
+        self.data = contents
+        return self
+
+    def print(self):
+        pprint.pprint(self.data)
+
+    def addId(self, id):
+        self.add({'id': id})
+
+
 
 def isNode(path):
     return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
@@ -71,9 +82,18 @@ def addNumbers(what, start = 0):
 def numerate(objects, start = 0):
     num = start
     for item in objects:
-        mergeDicts(item, {
+        dicts.merge(item, {
             'number': num
         })
         num += 1
     return objects
 
+def addNumber(ctx, num):
+    return dicts.merge(ctx, {
+        'number': num,
+    })
+
+def addId(ctx, id):
+    return dicts.merge(ctx, {
+        'id':   id,
+    })
