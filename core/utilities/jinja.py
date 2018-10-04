@@ -2,6 +2,7 @@ import jinja2, os, sys
 
 import core.utilities.filters as filters
 import core.utilities.context as context
+import core.utilities.dicts as dicts
 
 # Create a custom LaTeX Jinja2 environment, including filters
 def environment(directory):
@@ -19,9 +20,10 @@ def environment(directory):
         loader = jinja2.FileSystemLoader(directory),
     )
 
-    context.mergeDicts(env.filters, {
+    dicts.merge(env.filters, {
         'roman':        filters.roman,
         'formatList':   filters.formatList,
+        'isotex':       filters.isotex,
     })
 
     return env
