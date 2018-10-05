@@ -8,8 +8,10 @@
     \setcounter{section}{(* issue.number - 1 *)}
     \section{Domáca úloha č. (* issue.number *)}
     \begin{center}
-        Vypracovanú úlohu odovzdajte najneskôr do začiatku cvičenia (* issue.deadline|date:"%d. %m. %Y" *).
-        Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné.
+        \textit{%
+            Vypracovanú úlohu odovzdajte na papieri alebo \href{mailto:martin.balaz@trojsten.sk}{e-mailom}
+            najneskôr do začiatku cvičenia (* issue.deadline.strftime('%d. %m. %Y') *).            
+            Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné.}
     \end{center}
     \input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/content.tex}
 \end{document}

@@ -9,67 +9,56 @@ import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
 
-class ContextHomework(context.Context):
-    def __init__(self, course, year, issue):
+class ContextScholar(context.Context):
+    def __init__(self, root, course, year, issue):
         super().__init__()
+        self.root   = root
         self.course = course
         self.year   = year
         self.issue  = issue
 
-        self.add(ContextModule('scholar'))
-        self.add(ContextCourse(course))
-        self.add(ContextYear(year))
-        self.add(ContextIssue(issue))
+        self.absorb('module',   ContextModule   ('scholar'))
+        self.absorb('course',   ContextCourse   (root, course))
+        self.absorb('year',     ContextYear     (root, course, year))
 
+class ContextHandout(ContextScholar):
+    def __init__(self, root, course, year, issue):
+        super().__init__(root, course, year, issue)
+        self.absorb('issue',    ContextIssue    (root, course, year, 'handouts', issue))
+
+class ContextHomework(ContextScholar):
+    def __init__(self, root, course, year, issue):
+        super().__init__(root, course, year, issue)
+        self.absorb('issue',    ContextIssue    (root, course, year, 'homework', issue))
 
 class ContextModule(context.Context):
     def __init__(self, module):
         super().__init__()
-        self.add({'module': module})
+        self.addId(module)
 
 class ContextCourse(context.Context):
-    def __init__(self, year):
+    def __init__(self, root, course):
         super().__init__()
-        self.add({'': year})
-
+        self.loadYaml(root, course, 'meta.yaml').addId(course)
+        
 class ContextYear(context.Context):
-    def __init__(self, year):
+    def __init__(self, root, course, year):
         super().__init__()
-        self.add({'year': year})
-    
+        self.loadYaml(root, course, '{:04d}'.format(year), 'meta.yaml').addId(year)
+
 class ContextIssue(context.Context):
-    def __init__(self, course, year, issue):
+    def __init__(self, root, course, year, target, issue):
         super().__init__()
-        self.load()
-
-#class ScholarBuilder(ContextBuilder):
-#    def parser()
-#    pass
-
-
-def createScholarParser(target):
+        id = '{:02d}'.format(issue)
+        self.loadYaml(root, course, '{:04d}'.format(year), target, id, 'meta.yaml').addId(id).addNumber(issue)
+    
+def createScholarParser():
     parser = argparser.createGenericParser()
     parser.add_argument('course',               choices = ['TA1'])
     parser.add_argument('year',                 type = int)
-    if target == 'handout':
-        parser.add_argument('lesson',           type = int)
-    elif target == 'homework':
-        parser.add_argument('issue',            type = int)
-    else:
-        raise KeyError("Unknown scholar parser target {}".format(target))
+    parser.add_argument('issue',                type = int)
 
     return parser
-
-def nodePathScholarHandout(root, course = None, year = None, lesson = None):
-    if lesson is None:
-        return os.path.join(root, course or '', year or '') 
-    else:
-        return os.path.join(root, course, '{:04d}'.format(year), 'handout', '{:02d}'.format(lesson))
-
-def moduleContext():
-    return {
-        'id':           'scholar',
-    }
 
 def courseContext(root, course):
     output = context.loadMeta(nodePathScholarHandout, (root, course))
