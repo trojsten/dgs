@@ -3,16 +3,21 @@
 import yaml, os, sys, pprint
 
 import core.utilities.dicts as dicts
+import core.utilities.colour as c
 
 class Context():
     def __init__(self):
         self.data = {}
 
     def add(self, *args):
-        dicts.merge(self.data, *args)
+        self.data = dicts.merge(self.data, *args)
         return self
 
-    def loadYaml(*args):
+    def absorb(self, key, ctx):
+        self.data[key] = dicts.merge(self.data.get(key), ctx.data)
+        return self
+
+    def loadYaml(self, *args):
         try:
             contents = yaml.load(open(os.path.join(*args), 'r'))
             result = {} if contents is None else contents
@@ -26,9 +31,11 @@ class Context():
     def print(self):
         pprint.pprint(self.data)
 
-    def addId(self, id):
-        self.add({'id': id})
+    def addNumber(self, number):
+        return self.add({'number': number})
 
+    def addId(self, id):
+        return self.add({'id': id})
 
 
 def isNode(path):
