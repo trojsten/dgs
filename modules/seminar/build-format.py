@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os, sys, pprint
 
 sys.path.append('.')
@@ -40,8 +38,8 @@ print(c.act("Invoking formatting template builder on {target:<12}".format(target
 )
 
 if args.debug:
-    pprint.pprint(context)
+    context.print()
 
-jinja.printTemplate(thisDirectory, 'format-{target}.tex'.format(target = target), context, outputDirectory)
+jinja.printTemplate(thisDirectory, 'format-{target}.tex'.format(target = target), context.data, outputDirectory)
 
 print(c.ok("Template builder successful"))
