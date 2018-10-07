@@ -4,14 +4,14 @@
 
 \fancypagestyle{scholar}{
     \fancyhf{}
-    \fancyhead[L]{\textit{(* course.name *)}}
+    \fancyhead[C]{\textit{(* course.name *)}}
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 }
 
 \fancypagestyle{handout}{
     \pagestyle{scholar}
-    \fancyhead[L]{\textit{(* course.name *)}}
-    \fancyhead[R]{\textit{Cvičenie č. (* issue.number *), (* issue.date.strftime('%d. %m. %Y') *)}}
+    \fancyhead[L]{\textit{Cvičenie č. (* issue.number *)}}
+    \fancyhead[R]{\textit{(* issue.date.strftime('%d. %m. %Y') *)}}
 
     \titleformat{\section}[block]{\LARGE\bfseries\centering}{}{0pt}{}
     \titleformat{\subsection}[hang]{\bfseries\large}{\bfseries\large\thesubsection}{6pt}{}

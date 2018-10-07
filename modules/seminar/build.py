@@ -7,62 +7,6 @@ import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
 
-class ContextSeminar(context.Context):
-    def __init__(self, root, course, year, issue):
-        super().__init__()
-        self.root   = root
-        self.course = course
-        self.year   = year
-        self.issue  = issue
-
-        self.absorb('module',       ContextModule   ('seminar'))
-        self.absorb('competition',  ContextCourse   (root, competition))
-        self.absorb('volume',       ContextYear     (root, competition, volume))
-
-class ContextRound(ContextSeminar):
-    def __init__(self, root, course, year, issue):
-        super().__init__(root, course, year, issue)
-        self.absorb('issue',    ContextIssue    (root, course, year, 'handouts', issue))
-
-class ContextSemester(ContextSeminar):
-    def __init__(self, root, course, year, issue):
-        super().__init__(root, course, year, issue)
-        self.absorb('issue',    ContextIssue    (root, course, year, 'homework', issue))
-
-class ContextModule(context.Context):
-    def __init__(self, module):
-        super().__init__()
-        self.addId(module)
-
-class ContextCompetition(context.Context):
-    def __init__(self, root, competition):
-        super().__init__()
-        self.loadMeta(root, competition).addId(competition)
-        
-class ContextVolume(context.Context):
-    def __init__(self, root, competition, volume):
-        super().__init__()
-        id = '{:02d}'.format(volume)
-        self.loadMeta(root, competition, '{:02d}'.format(volume)).addId(id)
-
-class ContextIssue(context.Context):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__()
-        id = '{:02d}'.format(issue)
-        self.loadYaml(root, course, '{:04d}'.format(year), target, id, 'meta.yaml').addId(id).addNumber(issue)
-   
-
-
-class ContextBooklet(context.Context):
-    def __init__(self, root, competition, volume, semester, round):
-        super().__init__()
-        print(root)
-        self.absorb('module',       ContextModule       ('seminar'))
-        self.absorb('competition',  ContextCompetition  (root, competition))
-        self.absorb('volume',       ContextVolume       (root, competition, volume))
-        self.absorb('semester',     ContextSemester     (root, competition, volume, semester))
-        self.absorb('round',        ContextRound        (root, competition, volume, semester, round))
-
 def createSeminarParser():
     parser = argparser.createGenericParser()
     parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
@@ -71,32 +15,84 @@ def createSeminarParser():
     parser.add_argument('-r', '--round',       type = int)
     return parser
 
-def nodePathSeminar(root, competition = None, volume = None, semester = None, round = None, problem = None):
-    return os.path.join(
-        root,
-        '' if competition is None else  competition,
-        '' if volume is None else       '{:02d}'.format(volume),
-        '' if semester is None else     str(semester),
-        '' if round is None else        str(round),
-        '' if problem is None else      '{:02d}'.format(problem),
-    )
+class ContextSeminar(context.Context):
+    def __init__(self):
+        super().__init__()
 
-def moduleContext():
-    return {
-        'id': 'seminar',
-    }
+    def loadMeta(self, *args):
+        return super().loadYaml(self.nodePath(*args))
 
-def competitionContext(root, competition):
-    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition)), {
-        'id': competition,
-    })
+    def nodePath(self, root, competition = None, volume = None, semester = None, round = None, problem = None):
+        return os.path.join(
+            root,
+            '' if competition is None else  competition,
+            '' if volume is None else       '{:02d}'.format(volume),
+            '' if semester is None else     str(semester),
+            '' if round is None else        str(round),
+            '' if problem is None else      '{:02d}'.format(problem),
+            'meta.yaml'
+        )
 
-def volumeContext(root, competition, volume):
-    vol = context.loadMeta(nodePathSeminar, (root, competition, volume))
-    return context.mergeDicts(vol, {
-        'id': volume,
-        'number': int(volume),
-    })
+class ContextModule(ContextSeminar):
+    def __init__(self, module):
+        super().__init__()
+        self.addId(module)
+
+class ContextCompetition(ContextSeminar):
+    def __init__(self, root, competition):
+        super().__init__()
+        self.loadMeta(root, competition).addId(competition)
+        
+class ContextVolume(ContextSeminar):
+    def __init__(self, root, competition, volume):
+        super().__init__()
+        self.loadMeta(root, competition, volume).addId('{:02}'.format(volume)).addNumber(volume)
+
+class ContextSemester(ContextSeminar):
+    def __init__(self, root, competition, volume, semester):
+        super().__init__()
+        self.loadMeta(root, competition, volume, semester).addId(str(semester)).addNumber(semester)
+
+class ContextRound(ContextSeminar):
+    def __init__(self, root, competition, volume, semester, round):
+        super().__init__()
+        self.loadMeta(root, competition, volume, semester, round).addId(str(round)).addNumber(round)
+
+class ContextRoundFull(ContextRound):
+    def __init__(self, root, competition, volume, semester, round):
+        super().__init__(root, competition, volume, semester, round)
+        
+        comp = ContextCompetition(root, competition)
+        problems = collections.OrderedDict()
+
+        for p in range(0, len(comp.data['categories'])):
+            pn = '{:02d}'.format(p + 1)
+            problems[pn] = ContextProblem(root, competition, volume, semester, round, p + 1).data
+
+        self.add({'problems': problems})
+
+class ContextProblem(ContextSeminar):
+    def __init__(self, root, competition, volume, semester, round, problem):
+        super().__init__()
+        self.loadMeta(root, competition, volume, semester, round, problem).addId('{:02d}'.format(problem)).addNumber(problem)
+
+        comp = ContextCompetition(root, competition)
+        self.add({'categories': comp.data['categories'][problem - 1]})
+
+
+class ContextBooklet(context.Context):
+    def __init__(self, root, competition, volume, semester, round):
+        super().__init__()
+        print(root, competition, volume, semester, round)
+        self.absorb('module',           ContextModule       ('seminar'))
+        self.absorb('competition',      ContextCompetition  (root, competition))
+        if volume   is not None:
+            self.absorb('volume',       ContextVolume       (root, competition, volume))
+        if semester is not None:
+            self.absorb('semester',     ContextSemester     (root, competition, volume, semester))
+        if round    is not None:
+            self.absorb('round',        ContextRoundFull    (root, competition, volume, semester, round))
+
 
 def semesterContext(root, competition, volume, semester):
     directory = nodePathSeminar(root, competition, volume, semester)
@@ -125,15 +121,6 @@ def roundContext(root, competition, volume, semester, round):
         'id': round,
         'number': round,
         'problems': problems,
-    })
-
-def problemContext(root, competition, volume, semester, round, problem):
-    comp = context.loadMeta(nodePathSeminar, (root, competition))
-
-    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition, volume, semester, round, problem)), {
-        'id': '{:02d}'.format(problem),
-        'number': problem,
-        'categories': comp['categories'][problem - 1],
     })
 
 def bookletContext(root, competition = None, volume = None, semester = None, round = None):

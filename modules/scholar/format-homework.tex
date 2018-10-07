@@ -5,12 +5,13 @@
 
 \fancypagestyle{scholar}{
     \fancyhf{}
+    \fancyhead[C]{\textit{(* course.name *)}}
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 }
 
 \fancypagestyle{handout}{
     \pagestyle{scholar}
-    \fancyhead[L]{\textit{(* course.name *), domáca úloha č. (* issue.number *)}}
+    \fancyhead[L]{\textit{Domáca úloha č. (* issue.number *)}}
     \fancyhead[R]{\textit{Deadline (* issue.deadline.strftime('%d. %m. %Y') *)}}
 
     \renewcommand{\thesubsubsection}{\thesubsection\alph{subsubsection}}

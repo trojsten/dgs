@@ -15,7 +15,7 @@ launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-context = build.bookletContext(launchDirectory, args.competition, args.volume, args.semester, args.round)
+context = build.ContextBooklet(launchDirectory, args.competition, args.volume, args.semester, args.round)
 
 print(c.act("Invoking round template builder on round "), c.path("seminar/{competition}/{volume}/{semester}/{round}".format(
         competition = args.competition,
@@ -26,10 +26,10 @@ print(c.act("Invoking round template builder on round "), c.path("seminar/{compe
 )
 
 if args.debug:
-    pprint.pprint(context)
+    context.print()
 
 for template in ['problems.tex', 'solutions.tex']:
-    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context, outputDirectory)
+    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context.data, outputDirectory)
 
 print(c.ok("Template builder successful"))
 
