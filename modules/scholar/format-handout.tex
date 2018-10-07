@@ -1,10 +1,10 @@
 % DeGeŠ style file
-% module: seminar
 
-\setcounter{secnumdepth}{3}
+\setcounter{secnumdepth}{1}
 
 \fancypagestyle{scholar}{
     \fancyhf{}
+    \fancyhead[L]{\textit{(* course.name *)}}
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 }
 
@@ -13,12 +13,11 @@
     \fancyhead[L]{\textit{(* course.name *)}}
     \fancyhead[R]{\textit{Cvičenie č. (* issue.number *), (* issue.date.strftime('%d. %m. %Y') *)}}
 
-    \renewcommand{\thesubsubsection}{\thesubsection\alph{subsubsection}}
-    
     \titleformat{\section}[block]{\LARGE\bfseries\centering}{}{0pt}{}
     \titleformat{\subsection}[hang]{\bfseries\large}{\bfseries\large\thesubsection}{6pt}{}
     \titleformat{\subsubsection}[hang]{\bfseries}{\thesubsubsection}{6pt}{}[]
+    \titleformat{\paragraph}[hang]{\bfseries}{\theparagraph}{0pt}{}[]
     \titlespacing{\section}{0pt}{0pt}{0pt}
     \titlespacing{\subsection}{0pt}{4mm}{0pt}
-    \titlespacing{\subsubsection}{0pt}{1mm}{0pt}
+    \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
 }
