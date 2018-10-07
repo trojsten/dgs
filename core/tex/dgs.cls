@@ -131,6 +131,6 @@
 \NewDocumentCommand{\rootDirectory}{}{input}
 \NewDocumentCommand{\activeDirectory}{}{<undefined>}
 
-\input{dgs/fonts.tex}
-\input{dgs/utilities.tex}
-\input{dgs/hacks.tex}
+\input{core/tex/fonts.tex}
+\input{core/tex/utilities.tex}
+\input{core/tex/hacks.tex}

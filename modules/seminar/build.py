@@ -1,13 +1,67 @@
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from collections import OrderedDict
-from colorama import Fore, Style
+import os, sys, pprint, collections
 
 sys.path.append('.')
-import build
 import core.utilities.jinja as jinja
+import core.utilities.dicts as dicts
 import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
+
+class ContextSeminar(context.Context):
+    def __init__(self, root, course, year, issue):
+        super().__init__()
+        self.root   = root
+        self.course = course
+        self.year   = year
+        self.issue  = issue
+
+        self.absorb('module',       ContextModule   ('seminar'))
+        self.absorb('competition',  ContextCourse   (root, competition))
+        self.absorb('volume',       ContextYear     (root, competition, volume))
+
+class ContextRound(ContextSeminar):
+    def __init__(self, root, course, year, issue):
+        super().__init__(root, course, year, issue)
+        self.absorb('issue',    ContextIssue    (root, course, year, 'handouts', issue))
+
+class ContextSemester(ContextSeminar):
+    def __init__(self, root, course, year, issue):
+        super().__init__(root, course, year, issue)
+        self.absorb('issue',    ContextIssue    (root, course, year, 'homework', issue))
+
+class ContextModule(context.Context):
+    def __init__(self, module):
+        super().__init__()
+        self.addId(module)
+
+class ContextCompetition(context.Context):
+    def __init__(self, root, competition):
+        super().__init__()
+        self.loadMeta(root, competition).addId(competition)
+        
+class ContextVolume(context.Context):
+    def __init__(self, root, competition, volume):
+        super().__init__()
+        id = '{:02d}'.format(volume)
+        self.loadMeta(root, competition, '{:02d}'.format(volume)).addId(id)
+
+class ContextIssue(context.Context):
+    def __init__(self, root, competition, volume, semester):
+        super().__init__()
+        id = '{:02d}'.format(issue)
+        self.loadYaml(root, course, '{:04d}'.format(year), target, id, 'meta.yaml').addId(id).addNumber(issue)
+   
+
+
+class ContextBooklet(context.Context):
+    def __init__(self, root, competition, volume, semester, round):
+        super().__init__()
+        print(root)
+        self.absorb('module',       ContextModule       ('seminar'))
+        self.absorb('competition',  ContextCompetition  (root, competition))
+        self.absorb('volume',       ContextVolume       (root, competition, volume))
+        self.absorb('semester',     ContextSemester     (root, competition, volume, semester))
+        self.absorb('round',        ContextRound        (root, competition, volume, semester, round))
 
 def createSeminarParser():
     parser = argparser.createGenericParser()
@@ -51,7 +105,7 @@ def semesterContext(root, competition, volume, semester):
     for child in context.listChildNodes(directory):
         rounds[child] = roundContext(root, competition, volume, semester, child)
 
-    return context.mergeDicts(context.loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
+    return dicts.merge(context.loadMeta(nodePathSeminar, (root, competition, volume, semester)), {
         'id': str(semester),
         'number':           semester,
         'nominative':       'zimná' if semester == 1 else 'letná',

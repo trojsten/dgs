@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os, sys, pprint
 
 sys.path.append('.')
@@ -12,11 +10,6 @@ import core.utilities.context as context
 class ContextScholar(context.Context):
     def __init__(self, root, course, year, issue):
         super().__init__()
-        self.root   = root
-        self.course = course
-        self.year   = year
-        self.issue  = issue
-
         self.absorb('module',   ContextModule   ('scholar'))
         self.absorb('course',   ContextCourse   (root, course))
         self.absorb('year',     ContextYear     (root, course, year))
@@ -59,30 +52,4 @@ def createScholarParser():
     parser.add_argument('issue',                type = int)
 
     return parser
-
-def courseContext(root, course):
-    output = context.loadMeta(nodePathScholarHandout, (root, course))
-    return dicts.merge(output, {
-        'id':           course,
-    })
-
-def yearContext(root, course, year):
-    return {
-        'id':           year,
-    }
-
-def lessonContext(root, course, year, lesson):
-    output = context.loadMeta(nodePathScholarHandout, (root, course, year, lesson))
-    output = context.addId(output, '{:02d}'.format(lesson))
-    return context.addNumber(output, lesson)
-
-def handoutContext(root, course, year, lesson):
-    handout = {
-        'module':       moduleContext(),
-        'course':       courseContext(root, course),
-        'year':         yearContext(root, course, year),
-        'lesson':       lessonContext(root, course, year, lesson),
-    }
-
-    return handout
 

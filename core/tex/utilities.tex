@@ -59,7 +59,7 @@
             \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
         }%
         \ifstrempty{#3}{}{\caption{\textit{#3}}}%
-        \notblank{#4}{\label{#4}}%
+        \ifstrempty{#4}{\label{#4}}%
     \end{figure}%
 }
 

@@ -27,7 +27,7 @@ elif args.round is None:
 else:
     target = 'round'
 
-context = build.bookletContext(launchDirectory, args.competition, args.volume, args.semester, args.round)
+context = build.ContextBooklet(launchDirectory, args.competition, args.volume, args.semester, args.round)
 
 print(c.act("Invoking formatting template builder on {target:<12}".format(target = target)),
     c.path("seminar{competition}{volume}{semester}{round}".format(

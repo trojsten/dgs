@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import yaml, os, sys, pprint
 
 import core.utilities.dicts as dicts
@@ -28,6 +26,9 @@ class Context():
         self.data = contents
         return self
 
+    def loadMeta(self, *args):
+        return self.loadYaml(*args, 'meta.yaml')
+
     def print(self):
         pprint.pprint(self.data)
 
@@ -45,13 +46,12 @@ def listChildNodes(node):
     return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
 
 def loadYaml(*args):
-    nargs = [x if type(x) is str else '{:02d}'.format(x) for x in args]
     try:
        result = yaml.load(open(os.path.join(*args), 'r'))
        if result is None:
            result = {}
     except FileNotFoundError as e:
-        print(Fore.RED + "[FATAL] Could not load YAML file: {}".format(e) + Style.RESET_ALL)
+        print(c.err("[FATAL] Could not load YAML file", c.path(e)))
         raise e
     return result
 
@@ -61,7 +61,7 @@ def loadMeta(pathfinder, args):
        if result is None:
            result = {}
     except FileNotFoundError as e:
-        print(Fore.RED + "[FATAL] Could not load metadata file: {}".format(e) + Style.RESET_ALL)
+        print(c.err("[FATAL] Could not load metadata file)", c.path(e)))
         raise e
     return result
 

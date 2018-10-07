@@ -10,8 +10,8 @@
 
 \fancypagestyle{handout}{
     \pagestyle{scholar}
-    \fancyhead[L]{\textit{(* course.name *)}}
-    \fancyhead[R]{\textit{Domáca úloha č. (* issue.number *), deadline (* issue.deadline|isotex *)}}
+    \fancyhead[L]{\textit{(* course.name *), domáca úloha č. (* issue.number *)}}
+    \fancyhead[R]{\textit{Deadline (* issue.deadline.strftime('%d. %m. %Y') *)}}
 
     \renewcommand{\thesubsubsection}{\thesubsection\alph{subsubsection}}
     
