@@ -27,15 +27,16 @@
 }
 
 \RenewDocumentCommand{\vec}{m}{\overrightarrow{#1}}
+%\RenewDocumentCommand{\vec}{m}{\vv{#1}}
 
 % \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
 % Insert a picture, protected against nonexistent files
 %   - filename, searched in \problemDirectory
 %   - extension for PDF
-%   -  HTML (ignoruje sa)
-%   - výška obrázka (napríklad v mm)
-%   - popis pod obrázkom
-%   - label pre odkázanie sa na obrázok
+%   - extension for HTML (ignored)
+%   - height
+%   - caption below the picture
+%   - label, should begin with "fig:"
 \NewDocumentCommand{\insertPicture}{m m m m m m}{%
     \begin{figure}[H]%
         \centering%

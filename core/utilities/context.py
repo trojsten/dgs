@@ -27,13 +27,22 @@ class Context():
         return self
 
     def loadMeta(self, *args):
-        return self.loadYaml(*args, 'meta.yaml')
+        return self.loadYaml(self.nodePath(*args), 'meta.yaml')
+
+    def nodePath(self, *args):
+        raise NotImplementedError("nodePath is not implemented")
 
     def print(self):
         pprint.pprint(self.data)
 
+    def setNumber(self):
+        return self.add({'number': self.number})
+
     def addNumber(self, number):
         return self.add({'number': number})
+
+    def setId(self):
+        return self.add({'id': self.id})
 
     def addId(self, id):
         return self.add({'id': id})

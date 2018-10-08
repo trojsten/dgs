@@ -42,7 +42,7 @@ input/scholar/%/build-homework: \
 	python3 modules/scholar/build-homework.py 'source/scholar/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/format-homework.tex: \
-	input/scholar/$$*/../build-homework ;
+	input/scholar/$$*/build-homework ;
 
 input/scholar/%/homework.tex: \
 	input/scholar/$$*/build-homework ;
@@ -51,7 +51,7 @@ output/scholar/%/homework.pdf: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	input/scholar/$$*/homework.tex \
-	input/scholar/$$*/homework/format-homework.tex
+	input/scholar/$$*/format-homework.tex
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/scholar/$*/homework.tex
