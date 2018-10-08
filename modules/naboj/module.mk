@@ -29,10 +29,6 @@ input/naboj/%/format.tex: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
-input/naboj/%/copy-static:
-	@mkdir -p $(dir $@)static/
-	cp -r source/naboj/$*/static/ input/naboj/$*/
-
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
     input/naboj/$$*/build-language \
 	modules/naboj/templates/$$(notdir $@) \
