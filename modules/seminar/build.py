@@ -66,7 +66,7 @@ class ContextRound(ContextSeminar):
         super().__init__()
         self.id = str(round)
         self.loadMeta(root, competition, volume, semester, round) \
-            .addId(self.id)
+            .addId(self.id) \
             .addNumber(round)
 
 class ContextRoundFull(ContextRound):
