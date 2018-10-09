@@ -27,7 +27,7 @@ class ContextScholar(context.Context):
 class ContextScholarBase(ContextScholar):
     def __init__(self, root, course, year):
         super().__init__()
-        self.absorb('module',   ContextModule   ('seminar'))
+        self.absorb('module',   ContextModule   ('scholar'))
         self.absorb('course',   ContextCourse   (root, course))
         self.absorb('year',     ContextYear     (root, course, year))
 

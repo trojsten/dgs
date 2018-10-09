@@ -64,6 +64,24 @@
     \end{figure}%
 }
 
+
+\DeclareMathOperator{\diff}{d\!}
+\DeclareMathOperator{\pdiff}{\partial\!}
+
+\NewDocumentCommand{\derive}{O{} m m}{\frac{\diff^{#1}#2}{\diff#3^{#1}}}
+\NewDocumentCommand{\pderive}{O{} m m}{\frac{\partial^{#1}#2}{\partial #3^{#1}}}
+
+\NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3 \, \diff#4}
+\NewDocumentCommand{\Intx}{O{} O{} m}{\kern -0.2em \int\limits_{#1}^{#2} #3}
+\NewDocumentCommand{\OInt}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3 \, \diff#4}
+\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\diff#5}
+\NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
+\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
+
+\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
+
+
+
 % \exampleIO[verbatim input][verbatim output]
 % Príklad vstupu/výstupu (KSP)
 %   - verbatim vstup
