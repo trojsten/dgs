@@ -51,15 +51,16 @@ class ContextSemester(ContextSeminar):
         self.loadMeta(root, competition, volume, semester) \
             .addId(self.id) \
             .addNumber(semester)
-
-class ContextSemesterFull(ContextSemester):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__(root, competition, volume, semester)
         self.add({
             'nominative':       'zimná' if semester == 1 else 'letná',
             'nominativeNeuter': 'zimné' if semester == 1 else 'letné',
             'genitive':         'zimnej' if semester == 1 else 'letnej',
         })
+
+class ContextSemesterFull(ContextSemester):
+    def __init__(self, root, competition, volume, semester):
+        super().__init__(root, competition, volume, semester)
+        # Missing: fill in rounds and such
 
 class ContextRound(ContextSeminar):
     def __init__(self, root, competition, volume, semester, round):

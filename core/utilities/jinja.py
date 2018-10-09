@@ -17,6 +17,7 @@ def environment(directory):
         line_comment_prefix = '%#',
         trim_blocks = True,
         autoescape = False,
+        undefined = jinja2.StrictUndefined,
         loader = jinja2.FileSystemLoader(directory),
     )
 
