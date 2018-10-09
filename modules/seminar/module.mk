@@ -59,27 +59,27 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-round.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
-input/seminar/%/semester.tex: \
-	input/seminar/$$*/format-semester.tex \
-	input/seminar/$$*/intro.tex \
-	input/seminar/$$*/rules.tex \
-	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
-	$$(wildcard source/seminar/$$*/*/meta.yaml) \
-	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/seminar/$$*/*/meta.yaml))), $$(dir)format-round.tex) \
-	source/seminar/$$*/meta.yaml \
-	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/intro.tex \
-	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/rules.tex 
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
-
-input/seminar/%/invite.tex: \
-	modules/seminar/templates/invite.tex \
-	input/seminar/$$*/format-semester.tex \
-	source/seminar/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/seminar/build-invite.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+#input/seminar/%/semester.tex: \
+#	input/seminar/$$*/format-semester.tex \
+#	input/seminar/$$*/intro.tex \
+#	input/seminar/$$*/rules.tex \
+#	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
+#	$$(wildcard source/seminar/$$*/*/meta.yaml) \
+#	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/seminar/$$*/*/meta.yaml))), $$(dir)format-round.tex) \
+#	source/seminar/$$*/meta.yaml \
+#	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/intro.tex \
+#	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/rules.tex 
+#	$(eval words := $(subst /, ,$*))
+#	@mkdir -p $(dir $@)
+#	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+#
+#input/seminar/%/invite.tex: \
+#	modules/seminar/templates/invite.tex \
+#	input/seminar/$$*/format-semester.tex \
+#	source/seminar/$$*/meta.yaml
+#	$(eval words := $(subst /, ,$*))
+#	@mkdir -p $(dir $@)
+#	python3 modules/seminar/build-invite.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
