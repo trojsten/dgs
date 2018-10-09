@@ -64,7 +64,7 @@ input/naboj/%/barcodes.txt: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-venue.py 'source/naboj/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build-venue.py 'source/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
 
 input/naboj/%/barcodes.pdf: \
 	input/naboj/%/barcodes.txt

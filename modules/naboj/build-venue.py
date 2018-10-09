@@ -5,22 +5,25 @@ import build
 import core.utilities.jinja as jinja
 import core.utilities.colour as c
 
-args = build.createNabojParser('venue').parse_args()
+args = build.createNabojVenueParser().parse_args()
 
-competitionId       = args.competition
-volumeId            = '{:02d}'.format(args.volume)
-venueId             = args.venue
 launchDirectory     = os.path.realpath(args.launch)
 thisDirectory       = os.path.realpath(os.path.dirname(__file__))
 outputDirectory     = os.path.realpath(args.output) if args.output else None
 
-print(c.act("Invoking Náboj template builder on"), c.path(build.nodePathNaboj(launchDirectory, competitionId, volumeId)))
+context = build.ContextTearoff(launchDirectory, args.competition, args.volume, args.venue)
 
-tearoffContext = build.tearoffContext(launchDirectory, competitionId, volumeId, venueId)
+print(c.act("Invoking Náboj template builder on"), c.path("{competition}/{volume}/{venue}".format(
+        competition = args.competition,
+        volume      = args.volume,
+        venue       = args.venue,
+    ))
+)
+
 if args.debug:
-    pprint.pprint(tearoffContext)
+    context.print()
 
 for target in ['barcodes.txt', 'tearoff.tex']:
-    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), target, tearoffContext, outputDirectory)
+    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), target, context.data, outputDirectory)
 
 print(c.ok("Template builder successful"))

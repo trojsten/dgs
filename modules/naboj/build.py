@@ -27,7 +27,12 @@ class ContextI18n(context.Context):
     def __init__(self, language):
         super().__init__()
         self.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
-        
+
+class ContextI18nGlobal(context.Context):
+    def __init__(self):
+        super().__init__()
+        for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
+            self.add({language: ContextI18n(language)})
 
 class ContextNaboj(context.Context):
     def nodePath(self, root, competition = None, volume = None, targetType = None, target = None):
@@ -66,13 +71,12 @@ class ContextLanguage(ContextNaboj):
         super().__init__()
         self.addId(language)
 
-
 class ContextVenue(ContextNaboj):
     def __init__(self, root, competition, volume, venue):
         super().__init__()
         self.loadMeta(root, competition, volume, 'venues', venue).addId(venue)
         
-        self.add('teamsDiv3', context.splidDiv(context.numerate(self.get('teams')), 3))
+        self.add({'teamsDiv3': context.splitDiv(context.numerate(self.data.get('teams')), 3)})
 
 class ContextBooklet(ContextNaboj):
     def __init__(self, root, competition, volume, language):
@@ -83,16 +87,16 @@ class ContextBooklet(ContextNaboj):
         self.absorb('language',         ContextLanguage     (language))
         self.absorb('i18n',             ContextI18n         (language))
 
- 
+class ContextTearoff(ContextNaboj):
+    def __init__(self, root, competition, volume, venue):
+        super().__init__()
+        self.absorb('module',           ContextModule       ('naboj'))
+        self.absorb('competition',      ContextCompetition  (root, competition))
+        self.absorb('volume',           ContextVolume       (root, competition, volume))
+        self.absorb('venue',            ContextVenue        (root, competition, volume, venue))
+        self.absorb('i18n',             ContextI18nGlobal   ())
 
-def bookletContext(root, competition, volume, language):
-    return {
-        'module':           moduleContext      (),
-        'competition':      competitionContext (root, competition),
-        'volume':           volumeContext      (root, competition, volume),
-        'i18n':             i18nContext        (root, competition, volume, language),
-        'language':         languageContext    (language),
-    }
+
 
 def tearoffContext(root, competition, volume, venue):
     return {
