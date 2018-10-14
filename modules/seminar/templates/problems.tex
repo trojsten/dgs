@@ -12,6 +12,7 @@
         \centering
         \vspace*{-5mm}
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
+        (@ if round.deadlineAbroad @) (pre zahraničie (* round.deadlineAbroad.strftime('%d. %m. %Y')(@ endif @)
     } 
         
     (@ for pid, problem in round.problems.items() @)%
