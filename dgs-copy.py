@@ -15,7 +15,7 @@ parser.add_argument('seminar', choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', '
 parser.add_argument('volume', type = int)
 parser.add_argument('part', type = int, choices = [1, 2])
 parser.add_argument('round', type = int, choices = [1, 2, 3])
-parser.add_argument('user')
+parser.add_argument('user', type = str)
 
 args = parser.parse_args()
 
