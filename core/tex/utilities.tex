@@ -68,7 +68,10 @@
 \DeclareMathOperator{\diff}{d\!}
 \DeclareMathOperator{\pdiff}{\partial\!}
 
-\NewDocumentCommand{\derive}{O{} m m}{\frac{\diff^{#1}#2}{\diff#3^{#1}}}
+\NewDocumentCommand{\Derivative}{m m}{\frac{\diff#1}{\diff#2}}
+\NewDocumentCommand{\DerivativeN}{m m m}{\frac{\diff^{\,#1}\!#2}{\diff#3}}
+\NewDocumentCommand{\DerivativeEval}{m m m}{\left.\frac{\diff#1}{\diff#2}\right|_{#2 = #3}}
+\NewDocumentCommand{\DerivativeNEval}{m m m m}{\left.\frac{\diff^{\,#1}\!#2}{\diff#3}\right|_{#3 = #4}}
 \NewDocumentCommand{\pderive}{O{} m m}{\frac{\partial^{#1}#2}{\partial #3^{#1}}}
 
 \NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3 \, \diff#4}
@@ -81,6 +84,8 @@
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
 \NewDocumentCommand{\Exp}{m}{\mathrm{e}^{#1}}
 \NewDocumentCommand{\mustequal}{}{\overset{!}{=}}
+
+\NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}
 
 
 % \exampleIO[verbatim input][verbatim output]

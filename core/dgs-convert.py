@@ -22,10 +22,10 @@ try:
 
     for line in args.infile:
         line = re.sub(r'^%(.*)$', '', line)
-        line = re.sub(r'^"', '„', line)
-        line = re.sub(r' "', ' „', line)
-        line = re.sub(r'\("', '(„', line)
-        line = re.sub(r'"', '“', line)
+#        line = re.sub(r'^"', '„', line)
+#        line = re.sub(r' "', ' „', line)
+#        line = re.sub(r'\("', '(„', line)
+#        line = re.sub(r'"', '“', line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
             line = re.sub(r'^@E\s*(.*)$', '\\errorMessage{\g<1>}', line)
@@ -42,7 +42,7 @@ try:
     tempfile.close()
     
     assert os.system('pandoc -R -S \
-        --no-tex-ligatures \
+        --smart \
         --mathjax \
         --from markdown \
         --latex-engine=xelatex \
