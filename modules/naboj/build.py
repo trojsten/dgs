@@ -95,23 +95,3 @@ class ContextTearoff(ContextNaboj):
         self.absorb('volume',           ContextVolume       (root, competition, volume))
         self.absorb('venue',            ContextVenue        (root, competition, volume, venue))
         self.absorb('i18n',             ContextI18nGlobal   ())
-
-
-
-def tearoffContext(root, competition, volume, venue):
-    return {
-        'i18n':             globalI18nContext  (),
-        'module':           moduleContext      (),
-        'competition':      competitionContext (root, competition),
-        'volume':           volumeContext      (root, competition, volume),
-        'venue':            venueContext       (root, competition, volume, venue),
-    }
-
-def i18nContext(moduleRoot, competition, volume, language):
-    return context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
-
-def globalI18nContext():
-    i18n = {}
-    for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
-        i18n[language] = context.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
-    return i18n

@@ -1,5 +1,9 @@
 (@ extends 'base-languages.tex' @)
 
+(@ block extras @)
+    \input{core/i18n/(* language.id *).tex}
+(@ endblock @)
+
 (@ block content @)
     \thispagestyle{first}
     \vspace*{15mm}
