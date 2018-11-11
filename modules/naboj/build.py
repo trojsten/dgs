@@ -32,7 +32,7 @@ class ContextI18nGlobal(context.Context):
     def __init__(self):
         super().__init__()
         for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
-            self.add({language: ContextI18n(language)})
+            self.absorb(language, ContextI18n(language))
 
 class ContextNaboj(context.Context):
     def nodePath(self, root, competition = None, volume = None, targetType = None, target = None):
