@@ -21,6 +21,7 @@ input/naboj/%/build-venue: \
 
 input/naboj/%/tearoff.tex: \
     input/naboj/$$*/build-venue \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) ;
 
 input/naboj/%/format.tex: \
@@ -156,6 +157,7 @@ output/naboj/%/cover.pdf: \
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex
 
+# All targets for <language>
 output/naboj/%/all: \
 	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/answers.pdf \
@@ -164,11 +166,14 @@ output/naboj/%/all: \
 	output/naboj/$$*/cover-print.pdf \
 	output/naboj/$$*/instructions.pdf ;
 
+# All targets for <venue>
 output/naboj/%/all: \
 	output/naboj/$$*/tearoff.pdf ;
 
+# All targets for all languages
 output/naboj/%/languages/all: \
-	$$(foreach dir,$$(dir $$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/meta.yaml))), $$(dir)all) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)all) ; 
 
+# All targets for all venues
 output/naboj/%/venues/all: \
-	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/naboj/$$*/venues/*/meta.yaml))), $$(dir)all) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)all) ; 
