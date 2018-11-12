@@ -2,7 +2,8 @@
 
 input/scholar/%/build-handout: \
 	modules/scholar/format-handout.tex \
-	modules/scholar/templates/handout.tex
+	modules/scholar/templates/handout.tex \
+    source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
