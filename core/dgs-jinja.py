@@ -28,4 +28,3 @@ latex_jinja_env = jinja2.Environment(
 )
 template = latex_jinja_env.get_template(name)
 print(template.render(yaml.load(args.context)))
-

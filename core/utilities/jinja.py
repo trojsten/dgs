@@ -27,7 +27,16 @@ def environment(directory):
         'isotex':       filters.isotex,
     })
 
+    dicts.merge(env.globals, {
+        'checkdigit':   checkdigit,
+    })
+
     return env
+
+def checkdigit(venue, team, problem):
+    digits = list(map(int, list('{:03d}{:03d}{:02d}0'.format(venue, team, problem))))
+    raw = sum([x*y for x, y in zip(digits, [3, 7, 1, 3, 7, 1, 3, 7, 1])])
+    return 9 - (raw - 1) % 10
 
 # Print a Jinja2 template with provided context
 def printTemplate(templateRoot, template, context, outputDirectory = None):
@@ -35,4 +44,3 @@ def printTemplate(templateRoot, template, context, outputDirectory = None):
         environment(templateRoot).get_template(template).render(context),
         file = sys.stdout if outputDirectory is None else open(os.path.join(outputDirectory, template), 'w')
     )
-
