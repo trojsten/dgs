@@ -1,5 +1,6 @@
 (@ extends 'base.tex' @)
 
 (@ block specific @)
+    \input{core/i18n/(* language.id *).tex}
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format.tex}
 (@ endblock @)

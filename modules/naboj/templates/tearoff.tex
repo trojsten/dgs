@@ -22,7 +22,8 @@
                             \textsf{%
                                 \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
                                 \fontsize{25}{0}\selectfont(* '%03d'|format(team.id) *)%
-                                \fontsize{20}{0}\selectfont(* '%03d'|format(problem.number) *)%
+                                \fontsize{20}{0}\selectfont(* '%02d'|format(problem.number) *)%
+                                \fontsize{20}{0}\selectfont(* '%01d'|format(checkdigit(venue.number, team.id, problem.number)) *)%
                             }%
                         }%
                         \hspace{1mm}
