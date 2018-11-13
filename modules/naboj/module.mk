@@ -5,6 +5,7 @@ MAKEFLAGS += --no-builtin-rules
 # Build scripts for language and venue prerequisites
 # % <competition>/<volume>/<language>
 input/naboj/%/build-language: \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	modules/naboj/templates/constants.tex
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -13,6 +14,7 @@ input/naboj/%/build-language: \
 
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
+	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	modules/naboj/templates/tearoff.tex
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -21,7 +23,6 @@ input/naboj/%/build-venue: \
 
 input/naboj/%/tearoff.tex: \
     input/naboj/$$*/build-venue \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) ;
 
 input/naboj/%/format.tex: \
