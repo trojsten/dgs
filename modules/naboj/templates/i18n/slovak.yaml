@@ -4,6 +4,7 @@ section:
     answers:            'Výsledky'
     constants:          'Tabuľka konštánt'
     instructions:       'Pokyny'
+    modulo:             'Zvyšok'
 caption:
     table:              'Tabuľka'
     figure:             'Obrázok'

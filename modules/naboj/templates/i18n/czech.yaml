@@ -4,6 +4,7 @@ section:
     answers:            'Výsledky'
     constants:          'Tabulka konstant'
     instructions:       'Pokyny'
+    modulo:             'Modulo'
 caption:
     table:              'Tabulka'
     figure:             'Obrázek'

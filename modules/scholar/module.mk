@@ -36,7 +36,8 @@ output/scholar/%/handout.pdf: \
 
 input/scholar/%/build-homework: \
 	modules/scholar/format-homework.tex \
-	modules/scholar/templates/homework.tex
+	modules/scholar/templates/homework.tex \
+    source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)

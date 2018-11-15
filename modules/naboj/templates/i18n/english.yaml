@@ -4,6 +4,7 @@ section:
     answers:            'Answers'
     constants:          'Table of constants'
     instructions:       'Instructions'
+    modulo:             'Modulo'
 caption:
     table:              'Table'
     figure:             'Figure'

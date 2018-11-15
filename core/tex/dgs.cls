@@ -44,6 +44,7 @@
 \RequirePackage[all]{nowidow}
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage{accents}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}

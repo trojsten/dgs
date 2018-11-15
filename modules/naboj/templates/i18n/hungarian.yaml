@@ -4,6 +4,7 @@ section:
     answers:            'Válaszok'
     constants:          'Konstansok táblázata'
     instructions:       'Utasítás'
+    modulo:             'Modulo'
 caption:
     table:              'Táblázat'
     figure:             'Ábra'

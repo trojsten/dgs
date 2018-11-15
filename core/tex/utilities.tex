@@ -67,6 +67,7 @@
 
 \DeclareMathOperator{\diff}{d\!}
 \DeclareMathOperator{\pdiff}{\partial\!}
+\DeclareMathOperator{\fdiff}{\Delta\!}
 
 \NewDocumentCommand{\Derivative}{m m}{\frac{\diff#1}{\diff#2}}
 \NewDocumentCommand{\DerivativeN}{m m m}{\frac{\diff^{\,#1}\!#2}{\diff#3}}
@@ -86,7 +87,8 @@
 \NewDocumentCommand{\mustequal}{}{\overset{!}{=}}
 
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}
-
+\NewDocumentCommand{\Abs}{m}{\left|#1\right|}
+\RenewDocumentCommand{\Hat}{m}{#1\kern-0.1em\hat{\phantom{#1}}}
 
 % \exampleIO[verbatim input][verbatim output]
 % Príklad vstupu/výstupu (KSP)
