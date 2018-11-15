@@ -4,6 +4,7 @@ section:
     answers:            'Решения'
     constants:          'Таблица констант'
     instructions:       'Указания'
+    modulo:             'Остаток от деления'
 caption:
     table:              'Таблица'
     figure:             'Картинка'

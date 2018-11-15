@@ -4,6 +4,7 @@ section:
     answers:            'Odpowiedzi'
     constants:          'Tabela stałych'
     instructions:       'Instrukcje'
+    modulo:             'Modulo'
 caption:
     table:              'Tabela'
     figure:             'Figura'
