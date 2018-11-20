@@ -23,3 +23,5 @@ constants:
     value:              'Hodnota'
 instructions:
     title:              'Pokyny' 
+envelope:
+    donotopen:          'Do not open this envelope before the competition starts.'

@@ -14,6 +14,7 @@ input/naboj/%/build-language: \
 
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
+    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	modules/naboj/templates/tearoff.tex
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
@@ -24,8 +25,10 @@ input/naboj/%/build-venue: \
 ################################### input ####################################
 # % <competition>/<volume>/<venue>
 input/naboj/%/tearoff.tex: \
-    input/naboj/$$*/build-venue \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) ;
+    input/naboj/$$*/build-venue ;
+
+input/naboj/%/envelope.tex: \
+    input/naboj/$$*/build-venue ;
 
 input/naboj/%/format.tex: \
     input/naboj/$$*/build-language \
@@ -72,11 +75,7 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/format.tex \
 	input/naboj/%/intro.tex \
 	input/naboj/%/booklet.tex 
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=output/naboj/$*/booklet -halt-on-error -interaction=nonstopmode input/naboj/$*/booklet.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=output/naboj/$*/booklet -halt-on-error -interaction=nonstopmode input/naboj/$*/booklet.tex
+	$(call doubletex,naboj)
 
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf
@@ -90,47 +89,29 @@ output/naboj/%/answers.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/answers.tex 
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers.tex
+	$(call doubletex,naboj)
 
 output/naboj/%/answers-mod5.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/answers-mod5.tex 
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers-mod5.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/answers-mod5.tex
+	$(call doubletex,naboj)
 
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
 	input/naboj/%/constants-table.tex \
 	$$(wildcard modules/naboj/templates/i18n/*.yaml)
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/constants.tex
+	$(call doubletex,naboj)
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
 	input/naboj/%/instructions-text.tex \
 	$$(wildcard modules/naboj/templates/i18n/*.yaml)
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/instructions.tex
+	$(call doubletex,naboj)
 
 output/naboj/%/cover.pdf: \
 	input/naboj/%/cover.tex
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/cover.tex
+	$(call doubletex,naboj)
 
 ########################## venue ################################
 
@@ -165,7 +146,14 @@ output/naboj/%/tearoff.pdf: \
 	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
 
-output/naboj/%/envelope.pdf: ;
+output/naboj/%/envelope.pdf: \
+	input/naboj/%/envelope.tex
+	mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/envelope.tex
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/envelope.tex
+
 
 # All targets for <language>
 output/naboj/%/all: \

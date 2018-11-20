@@ -23,4 +23,5 @@ constants:
     value:              'Величина'
 instructions:
     title:              'Инструкции' 
-
+envelope:
+    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'
