@@ -23,3 +23,5 @@ constants:
     value:              'Value'
 instructions:
     title:              'Utasítás' 
+envelope:
+    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'

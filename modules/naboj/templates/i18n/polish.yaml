@@ -23,3 +23,5 @@ constants:
     value:              'Wartość'
 instructions:
     title:              'Instrukcje' 
+envelope:
+    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'

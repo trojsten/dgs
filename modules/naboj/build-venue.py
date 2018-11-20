@@ -23,7 +23,7 @@ print(c.act("Invoking Náboj template builder on"), c.path("{competition}/{volum
 if args.debug:
     context.print()
 
-for target in ['barcodes.txt', 'tearoff.tex']:
+for target in ['barcodes.txt', 'tearoff.tex', 'envelope.tex']:
     jinja.printTemplate(os.path.join(thisDirectory, 'templates'), target, context.data, outputDirectory)
 
 print(c.ok("Template builder successful"))

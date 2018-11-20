@@ -15,6 +15,19 @@ c_filename	:= $(shell tput sgr0; tput setaf 5)
 c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 15)
 
+define xelatex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(1)/$*/$(basename $(notdir $@)).tex
+endef
+
+# doubletex(module)
+define doubletex
+    mkdir -p $(dir $@)
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	$(call xelatex,$(1))
+	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	$(call xelatex,$(1))
+endef
+
 include modules.mk
 include modules/*/module.mk
 
