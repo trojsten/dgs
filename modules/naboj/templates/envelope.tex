@@ -1,0 +1,12 @@
+(@ extends 'base-venues.tex' @)
+
+(@ block content @)
+    (@ for team in venue.teams @)
+        \fontsize{120}{0}\selectfont(* '%03d'|format(team.id) *)
+
+        \fontsize{30}{0}\selectfont(* team.name *)
+
+        (* i18n.envelope.donotopen *)
+        \newpage
+    (@ endfor @)
+(@ endblock @)

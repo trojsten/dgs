@@ -23,3 +23,5 @@ constants:
     value:              'Hodnota'
 instructions:
     title:              'Pokyny'
+envelope:
+    donotopen:          'Neotvárajte túto obálku pre začiatkom súťaže.'
