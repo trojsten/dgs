@@ -46,7 +46,7 @@ input/seminar/%/copy-static:
 	cp -r source/seminar/$*/static/ input/seminar/$*/
 
 input/seminar/%/intro.tex input/seminar/%/rules.tex: \
-	$$(subst $(cdir),,$$(abspath modules/seminar/styles/$$*/../../templates/$$(notdir $$@)))
+	$$(subst $(cdir),,$$(abspath modules/seminar/templates/$$(notdir $$@)))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
@@ -99,31 +99,19 @@ output/seminar/%/problems.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	input/seminar/%/pdf-prerequisites \
 	input/seminar/%/problems.tex
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/problems.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/problems.tex
+	$(call doubletex,seminar)
 
 output/seminar/%/solutions.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	input/seminar/%/pdf-prerequisites \
 	input/seminar/%/solutions.tex
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/solutions.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/solutions.tex
+	$(call doubletex,seminar)
 
 output/seminar/%/semester.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
 	input/seminar/%/*/pdf-prerequisites \
 	input/seminar/%/semester.tex
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/semester.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/seminar/$*/semester.tex
+	$(call doubletex,seminar)
 
 output/seminar/%/semester-print.pdf: \
 	output/seminar/%/semester.pdf
@@ -161,11 +149,7 @@ output/seminar/%/all: \
 output/%/invite.pdf:\
 	input/$$*/invite.tex\
 	source/%/meta.yaml
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), primary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action), secondary run:$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$*/invite.tex
+	$(call doubletex,seminar)
 
 .PHONY:
 

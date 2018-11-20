@@ -25,9 +25,11 @@ input/naboj/%/build-venue: \
 ################################### input ####################################
 # % <competition>/<volume>/<venue>
 input/naboj/%/tearoff.tex: \
+	modules/naboj/templates/$$(notdir $@) \
     input/naboj/$$*/build-venue ;
 
 input/naboj/%/envelope.tex: \
+	modules/naboj/templates/$$(notdir $@) \
     input/naboj/$$*/build-venue ;
 
 input/naboj/%/format.tex: \
@@ -37,8 +39,8 @@ input/naboj/%/format.tex: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
+	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
-	modules/naboj/templates/$$(notdir $@) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/intro.tex: \
@@ -54,8 +56,8 @@ input/naboj/%/instructions-text.tex: \
 	source/naboj/%/instructions-text.tex ;
 
 input/naboj/%/instructions.tex: \
+	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
-	modules/naboj/templates/instructions.tex \
 	source/naboj/%/instructions-text.tex ;
 
 input/naboj/%/pdf-prerequisites: \
