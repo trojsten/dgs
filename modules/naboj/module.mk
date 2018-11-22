@@ -6,6 +6,7 @@ MAKEFLAGS += --no-builtin-rules
 # % <competition>/<volume>/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
+	source/naboj/$$*/meta.yaml \
 	modules/naboj/templates/constants.tex
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
