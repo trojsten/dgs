@@ -80,6 +80,7 @@ class ContextVenue(ContextNaboj):
 class ContextBooklet(ContextNaboj):
     def __init__(self, root, competition, volume, language):
         super().__init__()
+        self.loadMeta(root, competition, volume, 'languages', language)
         self.absorb('module',           ContextModule       ('naboj'))
         self.absorb('competition',      ContextCompetition  (root, competition))
         self.absorb('volume',           ContextVolume       (root, competition, volume))

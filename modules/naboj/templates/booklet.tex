@@ -1,41 +1,47 @@
 (@ extends 'base-languages.tex' @)
 
 (@ block content @)
-    \thispagestyle{first}
-    \vspace*{15mm}
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
-    \newpage
-
+    \setcounter{volume}{(* volume.number *)}%
     \pagestyle{main}
-    \section{(* i18n.section.problems *)}
-    \pagestyle{problems}    
-    (@ for problem in volume.problems @)%
-        \setcounter{volume}{(* volume.number *)}%
-        \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-        \protectedInput{\activeDirectory/problem.tex}%
-    (@ endfor @)
+    (@ if booklet.contents.intro @)
+        \thispagestyle{first}
+        \vspace*{15mm}
+        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
+        \newpage
+    (@ endif @)
 
-    \newpage    
-    \section{(* i18n.section.solutions *)}
-    \pagestyle{solutions}    
-    (@ for problem in volume.problems @)%
-        \setcounter{volume}{(* volume.number *)}%
-        \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-        \protectedInput{\activeDirectory/solution.tex}%
-    (@ endfor @)
+    (@ if booklet.contents.problems @)
+        \section{(* i18n.section.problems *)}
+        \pagestyle{problems}    
+        (@ for problem in volume.problems @)%
+            \setcounter{problem}{(* problem.number *)}%
+            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \protectedInput{\activeDirectory/problem.tex}%
+        (@ endfor @)
+        \newpage    
+    (@ endif @)
 
-    \newpage
-    \section{(* i18n.section.answers *)}
-    \pagestyle{answers}
-    (@ for problem in volume.problems @)%
-        \setcounter{volume}{(* volume.number *)}%
-        \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-        \protectedInput{\activeDirectory/answer.tex}%
-    (@ endfor @)
+    (@ if booklet.contents.solutions @)
+        \section{(* i18n.section.solutions *)}
+        \pagestyle{solutions}    
+        (@ for problem in volume.problems @)%
+            \setcounter{problem}{(* problem.number *)}%
+            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \protectedInput{\activeDirectory/solution.tex}%
+        (@ endfor @)
+        \newpage
+    (@ endif @)
+
+    (@ if booklet.contents.answers @)
+        \section{(* i18n.section.answers *)}
+        \pagestyle{answers}
+        (@ for problem in volume.problems @)%
+            \setcounter{problem}{(* problem.number *)}%
+            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \protectedInput{\activeDirectory/answer.tex}%
+        (@ endfor @)
+    (@ endif @)
 (@ endblock @)
