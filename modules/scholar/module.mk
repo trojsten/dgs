@@ -49,7 +49,8 @@ output/scholar/%/homework.pdf: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	input/scholar/$$*/homework.tex \
-	input/scholar/$$*/format-homework.tex
+	input/scholar/$$*/format-homework.tex \
+	input/scholar/$$*/pdf-prerequisites
 	$(call doubletex,scholar)
 
 .PHONY:
