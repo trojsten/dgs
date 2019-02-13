@@ -48,6 +48,7 @@ try:
         --latex-engine=xelatex \
         --to {format} \
         --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" \
+        --metadata lang=sk-SK \
         --output="{output}" \
         {input}'.format(
             format      = args.format,

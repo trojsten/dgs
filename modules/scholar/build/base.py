@@ -7,12 +7,41 @@ import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
 
+def buildIssue(name, contextClass, formats, templates):
+    args = createScholarParser().parse_args()
+    launchDirectory     = os.path.realpath(args.launch)
+    thisDirectory       = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
+    outputDirectory     = os.path.realpath(args.output) if args.output else None
+
+    context             = contextClass(launchDirectory, args.course, args.year, args.issue)
+
+    if args.debug:
+        context.print()
+
+    print(c.act("Invoking template builder on {}".format(name)), c.path("{course}/{year}/{lesson}".format(
+            course  = args.course,
+            year    = args.year,
+            lesson  = args.issue,
+        ))
+    )
+
+    for template in formats:
+        print(thisDirectory, formats)
+        jinja.printTemplate(thisDirectory, template, context.data, outputDirectory)
+
+    for template in templates:
+        jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context.data, outputDirectory)
+
+    print(c.ok("Template builder successful"))
+
+
 def createScholarParser():
     parser = argparser.createGenericParser()
-    parser.add_argument('course',               choices = ['TA1'])
+    parser.add_argument('course',               choices = ['TA1', 'TA2'])
     parser.add_argument('year',                 type = int)
     parser.add_argument('issue',                type = int)
     return parser
+
 
 class ContextScholar(context.Context):
     def nodePath(self, root, course = None, year = None, targetType = None, issue = None):
@@ -23,6 +52,7 @@ class ContextScholar(context.Context):
             '' if targetType    is None else targetType,
             '' if issue         is None else '{:02d}'.format(issue)
         )
+
 
 class ContextScholarBase(ContextScholar):
     def __init__(self, root, course, year):
