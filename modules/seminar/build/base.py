@@ -1,55 +1,48 @@
 import os
 import sys
+import collections
 
 sys.path.append('.')
-import core.utilities.jinja as jinja
 import core.utilities.colour as c
-import core.utilities.argparser as argparser
 import core.utilities.context as context
 
 class BuilderSeminar(context.BaseBuilder):
-    def __init__(self, rootContextClass, templateRoot, formatters, templates):
+    def __init__(self, rootContextClass, templateRoot, formatters = [], templates = []):
         super().__init__(
             rootContextClass,
             formatters      = formatters,
             templates       = templates,
             templateRoot    = templateRoot
         )
-        self.context        = rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.bolume, self.args.semester, self.args.issue)
-
-        self.debugInfo()
-        self.build()
+        self.context        = rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.semester, self.args.round)
 
     def createArgParser(self):
         super().createArgParser()
-        self.parser.add_argument('course',               choices = ['TA1', 'TA2'])
-        self.parser.add_argument('year',                 type = int)
-        self.parser.add_argument('issue',                type = int)
+        self.parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
+        self.parser.add_argument('-v', '--volume',      type = int)
+        self.parser.add_argument('-s', '--semester',    type = int)
+        self.parser.add_argument('-r', '--round',       type = int)
     
     def printBuildInfo(self):
-        print(c.act("Invoking template builder on {}".format(self.target)), c.path("{course}/{year}/{lesson}".format(
-            course  = self.args.course,
-            year    = self.args.year,
-            lesson  = self.args.issue,
-        )))
+        print(c.act("Invoking formatting template builder on"), c.name(self.target),
+            c.path("seminar{competition}{volume}{semester}{round}".format(
+                competition = '' if self.args.competition    is None else '/{}'.format(self.args.competition),
+                volume      = '' if self.args.volume         is None else '/{}'.format(self.args.volume),
+                semester    = '' if self.args.semester       is None else '/{}'.format(self.args.semester),
+                round       = '' if self.args.round          is None else '/{}'.format(self.args.round),
+            ))
+        )
 
-def createSeminarParser():
-    parser = argparser.createGenericParser()
-    parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
-    parser.add_argument('-v', '--volume',      type = int)
-    parser.add_argument('-s', '--semester',    type = int)
-    parser.add_argument('-r', '--round',       type = int)
-    return parser
 
 class ContextSeminar(context.Context):
     def nodePath(self, root, competition = None, volume = None, semester = None, round = None, problem = None):
         return os.path.join(
             root,
-            '' if competition is None else  competition,
-            '' if volume is None else       '{:02d}'.format(volume),
-            '' if semester is None else     str(semester),
-            '' if round is None else        str(round),
-            '' if problem is None else      '{:02d}'.format(problem),
+            '' if competition   is None else  competition,
+            '' if volume        is None else  '{:02d}'.format(volume),
+            '' if semester      is None else  str(semester),
+            '' if round         is None else  str(round),
+            '' if problem       is None else  '{:02d}'.format(problem),
         )
 
 class ContextModule(ContextSeminar):
@@ -124,8 +117,9 @@ class ContextBooklet(ContextSeminar):
     def __init__(self, root, competition, volume, semester, round):
         super().__init__()
         self.absorb('module',           ContextModule       ('seminar'))
-        self.absorb('competition',      ContextCompetition  (root, competition))
-        
+
+        if competition is not None:
+            self.absorb('competition',  ContextCompetition  (root, competition))        
         if volume   is not None:
             self.absorb('volume',       ContextVolume       (root, competition, volume))
         if semester is not None:

@@ -2,7 +2,6 @@ import os
 import sys
 
 sys.path.append('.')
-import core.utilities.dicts as dicts
 import core.utilities.colour as c
 import core.utilities.context as context
 
@@ -16,9 +15,6 @@ class BuilderScholar(context.BaseBuilder):
         )
         self.context            = rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
 
-        self.debugInfo()
-        self.build()
-
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('course',               choices = ['TA1', 'TA2'])
@@ -26,7 +22,7 @@ class BuilderScholar(context.BaseBuilder):
         self.parser.add_argument('issue',                type = int)
     
     def printBuildInfo(self):
-        print(c.act("Invoking template builder on {}".format(self.target)), c.path("{course}/{year}/{lesson}".format(
+        print(c.act("Invoking template builder on"), c.name(self.target), c.path("{course}/{year}/{lesson}".format(
             course  = self.args.course,
             year    = self.args.year,
             lesson  = self.args.issue,

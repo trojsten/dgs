@@ -12,3 +12,5 @@ class BuilderHomework(base.BuilderScholar):
         self.target = 'homework'
 
 builder = BuilderHomework()
+builder.debugInfo()
+builder.build()

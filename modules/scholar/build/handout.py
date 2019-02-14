@@ -12,3 +12,5 @@ class BuilderHandout(base.BuilderScholar):
         self.target = 'handout'
 
 builder = BuilderHandout()
+builder.debugInfo()
+builder.build()
