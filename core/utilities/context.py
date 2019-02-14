@@ -108,8 +108,8 @@ def listChildNodes(node):
 
 def loadYaml(*args):
     try:
-       result = yaml.load(open(os.path.join(*args), 'r'))
-       if result is None:
+        result = yaml.load(open(os.path.join(*args), 'r'))
+        if result is None:
            result = {}
     except FileNotFoundError as e:
         print(c.err("[FATAL] Could not load YAML file", c.path(e)))
@@ -118,8 +118,8 @@ def loadYaml(*args):
 
 def loadMeta(pathfinder, args):
     try:
-       result = yaml.load(open(os.path.join(pathfinder(*args), 'meta.yaml'), 'r'))
-       if result is None:
+        result = yaml.load(open(os.path.join(pathfinder(*args), 'meta.yaml'), 'r'))
+        if result is None:
            result = {}
     except FileNotFoundError as e:
         print(c.err("[FATAL] Could not load metadata file)", c.path(e)))

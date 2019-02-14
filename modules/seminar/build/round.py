@@ -2,34 +2,16 @@
 
 import argparse, yaml, os, jinja2, sys, pprint, colorama
 
-sys.path.append('.')
-import build
-import core.utilities.jinja as jinja
-import core.utilities.colour as c
-import core.utilities.argparser as argparser
-import core.utilities.context as context
+class BuilderRound(base.BuilderScholar):
+    def __init__(self):
+        super().__init__(
+            base.ContextHandout,
+            formatters      = ['format-handout.tex'],
+            templates       = ['problems.tex', 'solutions.tex'],
+            templateRoot    = os.path.dirname(os.path.dirname(__file__)),
+        )
+        self.target = 'handout'
 
-args = build.createSeminarParser().parse_args()
-
-launchDirectory     = os.path.realpath(args.launch)
-thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(args.output) if args.output else None
+builder = BuilderRound()
 
 context = build.ContextBooklet(launchDirectory, args.competition, args.volume, args.semester, args.round)
-
-print(c.act("Invoking round template builder on round "), c.path("seminar/{competition}/{volume}/{semester}/{round}".format(
-        competition = args.competition,
-        volume      = args.volume,
-        semester    = args.semester,
-        round       = args.round,
-    ))
-)
-
-if args.debug:
-    context.print()
-
-for template in ['problems.tex', 'solutions.tex']:
-    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context.data, outputDirectory)
-
-print(c.ok("Template builder successful"))
-
