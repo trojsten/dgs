@@ -1,15 +1,11 @@
 import os, sys, pprint
 
 sys.path.append('.')
-import build
+import base
 import core.utilities.jinja as jinja
 import core.utilities.colour as c
 
 args = build.createSeminarParser().parse_args()
-
-launchDirectory     = os.path.realpath(args.launch)
-thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(args.output) if args.output else None
 
 if args.competition is None:
     target = 'root'

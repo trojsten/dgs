@@ -1,13 +1,57 @@
 from colorama import Fore, Style
 
+
+def colour(what, how):
+    return "{}{}{}".format(how, what, Style.RESET_ALL)
+
+
 def ok(what):
-    return "{}{}{}".format(Fore.GREEN, what, Style.RESET_ALL)
-    
+    return colour(what, Fore.GREEN)
+
+
+def num(what):
+    return colour(what, Fore.CYAN)
+
+
 def act(what):
-    return "{}{}{}".format(Fore.CYAN, what, Style.RESET_ALL)
-    
+    return colour(what, Fore.LIGHTGREEN_EX)
+
+
+def warn(what):
+    return colour(what, Fore.YELLOW)
+
+
 def err(what):
-    return "{}{}{}".format(Fore.RED, what, Style.RESET_ALL)
-    
+    return colour(what, Fore.RED)
+
+
+def critical(what):
+    return colour(what, Fore.RED)
+
+
 def path(what):
-    return "{}{}{}".format(Fore.YELLOW, what, Style.RESET_ALL)
+    return colour(what, Fore.LIGHTRED_EX)
+
+
+def name(what):
+    return colour(what, Fore.YELLOW)
+
+
+def over(what):
+    return colour(what, Fore.LIGHTGREEN_EX)
+
+
+def script(what):
+    return colour(what, Fore.LIGHTMAGENTA_EX)
+
+
+def param(what):
+    return colour(what, Fore.LIGHTBLUE_EX)
+
+
+def debug(what):
+    return colour(what, Fore.LIGHTBLACK_EX)
+
+
+def none(what):
+    return colour(what, Fore.WHITE)
