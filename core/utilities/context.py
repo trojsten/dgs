@@ -1,7 +1,59 @@
-import yaml, os, sys, pprint
+import yaml
+import os
+import sys
+import pprint
+import argparse
 
 import core.utilities.dicts as dicts
 import core.utilities.colour as c
+import core.utilities.argparser as argparser
+import core.utilities.jinja as jinja
+
+class BaseBuilder():
+    def __init__(self, rootContextClass, *, formatters, templates, templateRoot):
+        self.createArgParser()
+        self.args               = self.parser.parse_args()
+
+        self.launchDirectory    = os.path.realpath(self.args.launch)
+        self.outputDirectory    = os.path.realpath(self.args.output) if self.args.output else None
+        self.templateRoot       = templateRoot
+
+        self.formatters         = formatters
+        self.templates          = templates
+        self.target             = "<default>"
+
+    def debugInfo(self):
+        if self.args.debug:
+            print("Launched {target} builder in {dir}".format(
+                target  = c.name(self.target),
+                dir     = c.path(self.args.launch),
+            ))
+
+            self.context.print()
+        
+    def createArgParser(self):
+        self.parser = argparse.ArgumentParser(
+            description             = "Prepare a DGS input dataset from repository",
+        )
+        self.parser.add_argument('launch',              action = argparser.readableDir) 
+        self.parser.add_argument('-o', '--output',      action = argparser.writeableDir) 
+        self.parser.add_argument('-d', '--debug',       action = 'store_true')
+        return self.parser
+       
+    def build(self):
+        self.printBuildInfo()
+
+        if self.args.debug:
+            self.context.print()
+
+        for template in self.formatters:
+            jinja.printTemplate(self.templateRoot, template, self.context.data, self.outputDirectory)
+
+        for template in self.templates:
+            jinja.printTemplate(os.path.join(self.templateRoot, 'templates'), template, self.context.data, self.outputDirectory)
+
+        print(c.ok("Template builder successful"))
+
 
 class Context():
     def __init__(self):

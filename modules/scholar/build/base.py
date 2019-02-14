@@ -1,47 +1,36 @@
-import os, sys, pprint
+import os
+import sys
 
 sys.path.append('.')
-import core.utilities.jinja as jinja
 import core.utilities.dicts as dicts
 import core.utilities.colour as c
-import core.utilities.argparser as argparser
 import core.utilities.context as context
 
-def buildIssue(name, contextClass, formats, templates):
-    args = createScholarParser().parse_args()
-    launchDirectory     = os.path.realpath(args.launch)
-    thisDirectory       = os.path.realpath(os.path.dirname(os.path.dirname(__file__)))
-    outputDirectory     = os.path.realpath(args.output) if args.output else None
+class BuilderScholar(context.BaseBuilder):
+    def __init__(self, rootContextClass, templateRoot, formatters, templates):
+        super().__init__(
+            rootContextClass,
+            formatters      = formatters,
+            templates       = templates,
+            templateRoot    = templateRoot
+        )
+        self.context            = rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
 
-    context             = contextClass(launchDirectory, args.course, args.year, args.issue)
+        self.debugInfo()
+        self.build()
 
-    if args.debug:
-        context.print()
-
-    print(c.act("Invoking template builder on {}".format(name)), c.path("{course}/{year}/{lesson}".format(
-            course  = args.course,
-            year    = args.year,
-            lesson  = args.issue,
-        ))
-    )
-
-    for template in formats:
-        print(thisDirectory, formats)
-        jinja.printTemplate(thisDirectory, template, context.data, outputDirectory)
-
-    for template in templates:
-        jinja.printTemplate(os.path.join(thisDirectory, 'templates'), template, context.data, outputDirectory)
-
-    print(c.ok("Template builder successful"))
-
-
-def createScholarParser():
-    parser = argparser.createGenericParser()
-    parser.add_argument('course',               choices = ['TA1', 'TA2'])
-    parser.add_argument('year',                 type = int)
-    parser.add_argument('issue',                type = int)
-    return parser
-
+    def createArgParser(self):
+        super().createArgParser()
+        self.parser.add_argument('course',               choices = ['TA1', 'TA2'])
+        self.parser.add_argument('year',                 type = int)
+        self.parser.add_argument('issue',                type = int)
+    
+    def printBuildInfo(self):
+        print(c.act("Invoking template builder on {}".format(self.target)), c.path("{course}/{year}/{lesson}".format(
+            course  = self.args.course,
+            year    = self.args.year,
+            lesson  = self.args.issue,
+        )))
 
 class ContextScholar(context.Context):
     def nodePath(self, root, course = None, year = None, targetType = None, issue = None):

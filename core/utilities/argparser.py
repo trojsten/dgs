@@ -1,14 +1,5 @@
 import argparse, os
 
-def createGenericParser():
-    parser = argparse.ArgumentParser(
-        description             = "Prepare and compile a DeGeŠ input from repository",
-    )
-    parser.add_argument('launch',              action = readableDir) 
-    parser.add_argument('-o', '--output',      action = writeableDir) 
-    parser.add_argument('-d', '--debug',       action = 'store_true')
-    return parser
-
 class readableDir(argparse.Action):
     def __call__(self, parser, namespace, values, option_string = None):
         tryDir = values

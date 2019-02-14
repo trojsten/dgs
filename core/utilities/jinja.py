@@ -1,7 +1,6 @@
 import jinja2, os, sys
 
 import core.utilities.filters as filters
-import core.utilities.context as context
 import core.utilities.dicts as dicts
 
 # Create a custom LaTeX Jinja2 environment, including filters

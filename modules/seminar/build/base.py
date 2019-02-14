@@ -7,6 +7,10 @@ import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
 
+class BuilderSeminar():
+    def __init__(self, 
+        self.context            = rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
+
 def createSeminarParser():
     parser = argparser.createGenericParser()
     parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
@@ -99,21 +103,10 @@ class ContextBooklet(ContextSeminar):
         super().__init__()
         self.absorb('module',           ContextModule       ('seminar'))
         self.absorb('competition',      ContextCompetition  (root, competition))
+        
         if volume   is not None:
             self.absorb('volume',       ContextVolume       (root, competition, volume))
         if semester is not None:
             self.absorb('semester',     ContextSemester     (root, competition, volume, semester))
         if round    is not None:
             self.absorb('round',        ContextRoundFull    (root, competition, volume, semester, round))
-
-def buildInviteContext(root, competition, volume, semester):
-    invite = {
-        'module': moduleContext()
-    }
-    invite['competition']       = competitionContext    (root, competition)
-    invite['volume']            = volumeContext         (root, competition, volume)
-    invite['semester']          = semesterContext       (root, competition, volume, semester)
-    invite['semester']['camp']  = loadYaml              (root, competition, volume, str(semester), 'camp.yaml')
-    
-    return context
-
