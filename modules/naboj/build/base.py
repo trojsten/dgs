@@ -7,32 +7,28 @@ import core.utilities.colour as c
 import core.utilities.argparser as argparser
 import core.utilities.context as context
 
-def createNabojParser():
-    parser = argparser.createGenericParser()
-    parser.add_argument('-c', '--competition',  choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
-    parser.add_argument('-v', '--volume',       type = int)
-    return parser
+class BuilderNaboj(context.BaseBuilder):
+    def createArgParser(self):
+        super().createArgParser()
+        self.parser.add_argument('-c', '--competition',  choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
+        self.parser.add_argument('-v', '--volume',       type = int)
+    
+    def printBuildInfo(self):
+        raise NotImplementedError
 
-def createNabojLanguageParser():
-    parser = createNabojParser()
-    parser.add_argument('-l', '--language',     type = str)
-    return parser
-
-def createNabojVenueParser():
-    parser = createNabojParser()
-    parser.add_argument('-p', '--venue',        type = str)
-    return parser
 
 class ContextI18n(context.Context):
     def __init__(self, language):
         super().__init__()
-        self.loadYaml(os.path.dirname(os.path.realpath(__file__)), 'templates', 'i18n', language + '.yaml')
+        self.loadYaml(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'templates', 'i18n', language + '.yaml')
+
 
 class ContextI18nGlobal(context.Context):
     def __init__(self):
         super().__init__()
         for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
             self.absorb(language, ContextI18n(language))
+
 
 class ContextNaboj(context.Context):
     def nodePath(self, root, competition = None, volume = None, targetType = None, target = None):

@@ -18,7 +18,7 @@ parser.add_argument('round', type = int, choices = [1, 2, 3])
 
 args = parser.parse_args()
 
-query = "ssh sesquideus@ksp.sk 'rm -rf /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/; \
+query = "ssh sesquideus@ksp.sk 'rm -rf /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/;\
 mkdir -p \
 /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/ \
 /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/ \

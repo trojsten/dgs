@@ -1,0 +1,11 @@
+% DeGeŠ style file
+
+\setcounter{secnumdepth}{3}
+
+\fancypagestyle{homework}{
+    \pagestyle{scholar}
+    \fancyhead[L]{\textit{Domáca úloha č. (* issue.number *)}}
+    \fancyhead[R]{\textit{Deadline (* issue.deadline.strftime('%d. %m. %Y') *)}}
+
+    \renewcommand{\thesubsubsection}{\thesubsection\alph{subsubsection}}
+}

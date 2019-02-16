@@ -1,15 +1,12 @@
 import os
 import base
-import core.utilities.jinja as jinja
-import core.utilities.colour as c
 
 class BuilderFormat(base.BuilderSeminar):
     def __init__(self):
-        super().__init__(
-            base.ContextBooklet,
-            templateRoot    = os.path.dirname(os.path.dirname(__file__)),
-        )
-    
+        self.rootContextClass = base.ContextBooklet
+        super().__init__()
+        self.target = 'handout'
+
     def parseArgs(self):
         args = self.parser.parse_args()
 
@@ -28,8 +25,8 @@ class BuilderFormat(base.BuilderSeminar):
             self.target = 'round'
 
         self.args = args
-        self.formatters = ['format-{}.tex'.format(self.target)]
+        self.templates = {
+            'format': ['{}.tex'.format(self.target)],
+        }
 
-builder = BuilderFormat()
-builder.debugInfo()
-builder.build()
+BuilderFormat().build()

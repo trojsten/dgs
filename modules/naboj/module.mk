@@ -11,7 +11,7 @@ input/naboj/%/build-language: \
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-language.py 'source/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
@@ -21,7 +21,7 @@ input/naboj/%/build-venue: \
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build-venue.py 'source/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
 
 ################################### input ####################################
 # % <competition>/<volume>/<venue>

@@ -7,7 +7,7 @@ input/scholar/%/build-handout: \
 	@echo -e '$(c_action)Building handout for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/scholar/build/handout.py 'source/scholar/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/scholar/build/handout.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/build-homework: \
 	modules/scholar/format-homework.tex \
@@ -16,7 +16,7 @@ input/scholar/%/build-homework: \
 	@echo -e '$(c_action)Building homework for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/scholar/build/homework.py 'source/scholar/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/scholar/build/homework.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/format-handout.tex: \
 	input/scholar/$$*/build-handout ;

@@ -6,14 +6,9 @@ import core.utilities.colour as c
 import core.utilities.context as context
 
 class BuilderScholar(context.BaseBuilder):
-    def __init__(self, rootContextClass, templateRoot, formatters, templates):
-        super().__init__(
-            rootContextClass,
-            formatters      = formatters,
-            templates       = templates,
-            templateRoot    = templateRoot
-        )
-        self.context            = rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
+    def __init__(self):
+        super().__init__()
+        self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
 
     def createArgParser(self):
         super().createArgParser()
