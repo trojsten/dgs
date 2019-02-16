@@ -6,7 +6,7 @@ input/seminar/format-root.tex: \
 	modules/seminar/format-root.tex \
 	source/seminar/meta.yaml
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/format.py 'source/seminar' -o '$(dir $@)'
+	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -o '$(dir $@)'
 
 input/seminar/%/format-competition.tex: \
 	modules/seminar/format-competition.tex \
@@ -15,7 +15,7 @@ input/seminar/%/format-competition.tex: \
 	input/seminar/$$*/copy-static
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/format.py 'source/seminar/' -c $(word 1,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -o '$(dir $@)'
 
 input/seminar/%/format-volume.tex: \
 	modules/seminar/format-volume.tex \
@@ -23,7 +23,7 @@ input/seminar/%/format-volume.tex: \
 	$$(subst $(cdir),,$$(abspath input/seminar/$$*/../format-competition.tex))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/format.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
 
 input/seminar/%/format-semester.tex: \
 	modules/seminar/format-semester.tex \
@@ -31,7 +31,7 @@ input/seminar/%/format-semester.tex: \
 	$$(subst $(cdir),,$$(abspath input/seminar/$$*/../format-volume.tex))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/format.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/format-round.tex: \
 	modules/seminar/format-round.tex \
@@ -39,7 +39,7 @@ input/seminar/%/format-round.tex: \
 	$$(subst $(cdir),,$$(abspath input/seminar/$$*/../format-semester.tex))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/format.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
 input/seminar/%/copy-static:
 	@mkdir -p $(dir $@)static/
@@ -49,7 +49,7 @@ input/seminar/%/intro.tex input/seminar/%/rules.tex: \
 	$$(subst $(cdir),,$$(abspath modules/seminar/templates/$$(notdir $$@)))
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 	input/seminar/$$*/format-round.tex \
@@ -57,7 +57,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/round.py 'source/seminar/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/round.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
 #input/seminar/%/semester.tex: \
 #	input/seminar/$$*/format-semester.tex \
@@ -71,7 +71,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 #	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/rules.tex 
 #	$(eval words := $(subst /, ,$*))
 #	@mkdir -p $(dir $@)
-#	python3 ./modules/seminar/build-semester.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+#	python3 ./modules/seminar/build-semester.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 #
 #input/seminar/%/invite.tex: \
 #	modules/seminar/templates/invite.tex \
@@ -79,7 +79,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
 #	source/seminar/$$*/meta.yaml
 #	$(eval words := $(subst /, ,$*))
 #	@mkdir -p $(dir $@)
-#	python3 modules/seminar/build-invite.py 'source/seminar/' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+#	python3 modules/seminar/build-invite.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \

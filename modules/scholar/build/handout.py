@@ -3,14 +3,12 @@ import base
 
 class BuilderHandout(base.BuilderScholar):
     def __init__(self):
-        super().__init__(
-            base.ContextHandout,
-            formatters      = ['format-handout.tex'],
-            templates       = ['handout.tex'],
-            templateRoot    = os.path.dirname(os.path.dirname(__file__)),
-        )
-        self.target = 'handout'
+        self.rootContextClass   = base.ContextHandout
+        self.templates          = {
+            'format':       ['base.tex', 'handout.tex'],
+            'templates':    ['handout.tex'],
+        }
+        self.target             = 'handout'
+        super().__init__()
 
-builder = BuilderHandout()
-builder.debugInfo()
-builder.build()
+BuilderHandout().build()

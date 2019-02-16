@@ -7,14 +7,9 @@ import core.utilities.colour as c
 import core.utilities.context as context
 
 class BuilderSeminar(context.BaseBuilder):
-    def __init__(self, rootContextClass, templateRoot, formatters = [], templates = []):
-        super().__init__(
-            rootContextClass,
-            formatters      = formatters,
-            templates       = templates,
-            templateRoot    = templateRoot
-        )
-        self.context        = rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.semester, self.args.round)
+    def __init__(self):
+        super().__init__()
+        self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.semester, self.args.round)
 
     def createArgParser(self):
         super().createArgParser()
@@ -24,7 +19,7 @@ class BuilderSeminar(context.BaseBuilder):
         self.parser.add_argument('-r', '--round',       type = int)
     
     def printBuildInfo(self):
-        print(c.act("Invoking formatting template builder on"), c.name(self.target),
+        print(c.act("Invoking template builder on"), c.name(self.target),
             c.path("seminar{competition}{volume}{semester}{round}".format(
                 competition = '' if self.args.competition    is None else '/{}'.format(self.args.competition),
                 volume      = '' if self.args.volume         is None else '/{}'.format(self.args.volume),

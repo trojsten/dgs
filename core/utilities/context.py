@@ -10,25 +10,22 @@ import core.utilities.argparser as argparser
 import core.utilities.jinja as jinja
 
 class BaseBuilder():
-    def __init__(self, rootContextClass, *, formatters = [], templates = [], templateRoot):
-        self.formatters         = formatters
-        self.templates          = templates
-
+    def __init__(self):
         self.createArgParser()
         self.parseArgs()
 
         self.launchDirectory    = os.path.realpath(self.args.launch)
+        self.templateRoot       = os.path.realpath(self.args.templateRoot)
         self.outputDirectory    = os.path.realpath(self.args.output) if self.args.output else None
-        self.templateRoot       = templateRoot
 
-    def debugInfo(self):
+    def printDebugInfo(self):
         if self.args.debug:
             print("Launched {target} builder in {dir}".format(
                 target  = c.name(self.target),
                 dir     = c.path(self.args.launch),
             ))
-            print("Formatting templates:", self.formatters)
-            print("Content templates:", self.templates)
+            print("Content templates:")
+            pprint.pprint(self.templates)
 
             print("Context:")
             self.context.print()
@@ -38,6 +35,7 @@ class BaseBuilder():
             description             = "Prepare a DGS input dataset from repository",
         )
         self.parser.add_argument('launch',              action = argparser.readableDir) 
+        self.parser.add_argument('templateRoot',        action = argparser.readableDir)
         self.parser.add_argument('-o', '--output',      action = argparser.writeableDir) 
         self.parser.add_argument('-d', '--debug',       action = 'store_true')
         return self.parser
@@ -46,13 +44,12 @@ class BaseBuilder():
         self.args = self.parser.parse_args()
        
     def build(self):
+        self.printDebugInfo()
         self.printBuildInfo()
 
-        for template in self.formatters:
-            jinja.printTemplate(self.templateRoot, template, self.context.data, self.outputDirectory)
-
-        for template in self.templates:
-            jinja.printTemplate(os.path.join(self.templateRoot, 'templates'), template, self.context.data, self.outputDirectory)
+        for dir, templates in self.templates.items():
+            for template in templates:
+                jinja.printTemplate(os.path.join(self.templateRoot, dir), template, self.context.data, self.outputDirectory)
 
         print(c.ok("Template builder successful"))
 
@@ -71,10 +68,11 @@ class Context():
 
     def loadYaml(self, *args):
         try:
-            contents = yaml.load(open(os.path.join(*args), 'r'))
+            filename = os.path.join(*args)
+            contents = yaml.load(open(filename, 'r'))
             result = {} if contents is None else contents
         except FileNotFoundError as e:
-            print(c.err("[FATAL] Could not load YAML file"), c.path(e))
+            print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
 
         self.data = contents

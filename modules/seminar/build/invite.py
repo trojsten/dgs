@@ -1,18 +1,16 @@
-#!/usr/bin/env python3
+import os
+import base
 
-import argparse, yaml, os, jinja2, sys, pprint, colorama
-from build import *
-from colorama import Fore, Style
+class BuilderInvite(base.BuilderSeminar):
+    def __init__(self):
+        self.rootContextClass   = base.ContextInvite
+        self.formatters         = []
+        self.templates          = ['problems.tex', 'solutions.tex']
+        super().__init__()
+        self.target = 'invite'
 
-args = createParser(3).parse_args()
+BuilderRound().build()
 
-launchDirectory     = os.path.realpath(args.launch)
-thisDirectory       = os.path.realpath(os.path.dirname(__file__))
-outputDirectory     = os.path.realpath(args.output) if args.output else None
-
-context = buildInviteContext(launchDirectory, args.competition, args.volume, args.semester)
-if args.verbose:
-    pprint.pprint(context)
 
 print(Fore.CYAN + Style.DIM + "Invoking template builder on invite '{competition}/{volume}/{semester}'".format(
     competition = args.competition,
