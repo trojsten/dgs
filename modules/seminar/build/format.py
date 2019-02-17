@@ -5,7 +5,6 @@ class BuilderFormat(base.BuilderSeminar):
     def __init__(self):
         self.rootContextClass = base.ContextBooklet
         super().__init__()
-        self.target = 'handout'
 
     def parseArgs(self):
         args = self.parser.parse_args()
@@ -26,7 +25,7 @@ class BuilderFormat(base.BuilderSeminar):
 
         self.args = args
         self.templates = {
-            'format': ['{}.tex'.format(self.target)],
+            'format': ['format-{}.tex'.format(self.target)],
         }
 
 BuilderFormat().build()
