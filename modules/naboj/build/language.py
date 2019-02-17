@@ -8,7 +8,7 @@ class BuilderNabojLanguage(base.BuilderNaboj):
     def __init__(self):
         super().__init__()
         self.templates          = {
-            'format':       ['base.tex'],
+            'format':       ['format-language.tex'],
             'templates':    ['booklet.tex', 'answers.tex', 'answers-mod5.tex', 'constants.tex', 'cover.tex', 'instructions.tex'],
         }
         self.target = 'language'
@@ -32,7 +32,8 @@ class BuilderNabojLanguage(base.BuilderNaboj):
         super().build()
         for template in ['intro.tex', 'instructions-text.tex']:
             jinja.printTemplate(
-                os.path.join(self.launchDirectory, self.args.competition, '{:02d}'.format(self.args.volume), 'languages', self.args.language), template, self.context.data, self.outputDirectory
+                os.path.join(self.launchDirectory, self.args.competition, '{:02d}'.format(self.args.volume), 'languages', self.args.language),
+                template, self.context.data, self.outputDirectory
             )
 
 BuilderNabojLanguage().build()

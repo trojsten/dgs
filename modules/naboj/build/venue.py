@@ -1,9 +1,15 @@
 import os
 import base
 
+import core.utilities.colour as c
+
 class BuilderNabojVenue(base.BuilderNaboj):
     def __init__(self):
-        self.rootContextClass = context.ContextTearoff
+        self.templates          = {
+            'templates':    ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
+        }
+        self.target = 'venue'
+        self.rootContextClass = base.ContextTearoff
         super().__init__()
         self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.venue)
 
@@ -20,5 +26,4 @@ class BuilderNabojVenue(base.BuilderNaboj):
             ))
         )
 
-for target in ['barcodes.txt', 'tearoff.tex', 'envelope.tex']:
-    jinja.printTemplate(os.path.join(thisDirectory, 'templates'), target, context.data, outputDirectory)
+BuilderNabojVenue().build()
