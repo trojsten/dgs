@@ -1,7 +1,7 @@
 .SECONDEXPANSION:
 
 input/scholar/%/build-handout: \
-	modules/scholar/format-handout.tex \
+	modules/scholar/format/format-handout.tex \
 	modules/scholar/templates/handout.tex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout for $(c_filename)$*$(c_action):$(c_default)'
@@ -10,7 +10,7 @@ input/scholar/%/build-handout: \
 	python3 modules/scholar/build/handout.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/build-homework: \
-	modules/scholar/format-homework.tex \
+	modules/scholar/format/format-homework.tex \
 	modules/scholar/templates/homework.tex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework for $(c_filename)$*$(c_action):$(c_default)'
