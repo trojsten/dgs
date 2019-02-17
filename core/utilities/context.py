@@ -24,10 +24,10 @@ class BaseBuilder():
                 target  = c.name(self.target),
                 dir     = c.path(self.args.launch),
             ))
-            print("Content templates:")
+            print(c.act("Content templates:"))
             pprint.pprint(self.templates)
 
-            print("Context:")
+            print(c.act("Context:"))
             self.context.print()
         
     def createArgParser(self):
