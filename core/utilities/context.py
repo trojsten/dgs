@@ -17,6 +17,7 @@ class BaseBuilder():
         self.launchDirectory    = os.path.realpath(self.args.launch)
         self.templateRoot       = os.path.realpath(self.args.templateRoot)
         self.outputDirectory    = os.path.realpath(self.args.output) if self.args.output else None
+        self.createContext()
 
     def printDebugInfo(self):
         if self.args.debug:
@@ -42,7 +43,10 @@ class BaseBuilder():
 
     def parseArgs(self):
         self.args = self.parser.parse_args()
-       
+
+    def createContext(self):
+        self.context = self.rootContextClass(os.path.realpath(self.args.launch), *self.path)
+
     def build(self):
         self.printDebugInfo()
         self.printBuildInfo()

@@ -7,16 +7,19 @@ import core.utilities.colour as c
 import core.utilities.context as context
 
 class BuilderSeminar(context.BaseBuilder):
-    def __init__(self):
-        super().__init__()
-        self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.semester, self.args.round)
-
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
         self.parser.add_argument('-v', '--volume',      type = int)
         self.parser.add_argument('-s', '--semester',    type = int)
         self.parser.add_argument('-r', '--round',       type = int)
+
+    def path(self):
+         
+
+    def createContext(self):
+        self.path = (self.args.competition, 
+        super().createContext()
     
     def printBuildInfo(self):
         print(c.act("Invoking template builder on"), c.name(self.target),

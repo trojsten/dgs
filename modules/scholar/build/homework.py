@@ -5,7 +5,7 @@ class BuilderHomework(base.BuilderScholar):
     def __init__(self):
         self.rootContextClass   = base.ContextHomework
         self.templates          = {
-            'format':       ['format-base.tex', 'format-homework.tex'],
+            'format':       ['format-course.tex', 'format-homework.tex'],
             'templates':    ['homework.tex'],
         }
         self.target             = 'homework'
