@@ -25,9 +25,9 @@ endef
 # Compiles a selected target twice (to ensure references are correct)
 define doubletex
     mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
+	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): primary run$(c_default)'
 	$(call xelatex,$(1))
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
+	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): secondary run$(c_default)'
 	$(call xelatex,$(1))
 endef
 
@@ -36,19 +36,19 @@ include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 input/%.tex: source/%.md
-	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	python3 core/dgs-convert.py latex $< $@ || exit 1;
 
 # Copy TeX files from source to input
 input/%.tex: source/%.tex
-	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
+	@echo -e '$(c_action)[rsvg-convert] Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 # Convert SVG image to PDF (for XeLaTeX output)
 input/%.pdf: source/%.svg
-	@echo -e '$(c_action)Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
@@ -56,7 +56,7 @@ input/%.pdf: source/%.svg
 
 # Render gnuplot file to PDF (for XeLaTeX)
 input/%.pdf: input/%.gp
-	@echo -e '$(c_action)[Gnuplot] Rendering file $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[gnuplot] Rendering file $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 
@@ -98,7 +98,7 @@ output/%.png: source/%.png
 
 # Render gnuplot file to PNG (for web)
 output/%.png: input/%.gp
-	@echo -e '$(c_action)[Gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 	cp $(subst output/,input/,$@) $@
@@ -111,7 +111,7 @@ output/%.jpg: source/%.jpg
 
 # DeGeŠ convert Markdown to web (for web)
 output/%.html: source/%.md
-	@echo -e '$(c_action)[Pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	python3 core/dgs-convert.py html $< $@ || exit 1;
 

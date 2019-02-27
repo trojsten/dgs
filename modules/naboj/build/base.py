@@ -8,6 +8,8 @@ import core.utilities.argparser as argparser
 import core.utilities.context as context
 
 class BuilderNaboj(context.BaseBuilder):
+    module = 'naboj'
+
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('-c', '--competition',  choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
