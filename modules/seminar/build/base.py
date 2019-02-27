@@ -3,10 +3,11 @@ import sys
 import collections
 
 sys.path.append('.')
-import core.utilities.colour as c
 import core.utilities.context as context
 
 class BuilderSeminar(context.BaseBuilder):
+    module = 'seminar'
+
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('-c', '--competition', choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
@@ -14,23 +15,16 @@ class BuilderSeminar(context.BaseBuilder):
         self.parser.add_argument('-s', '--semester',    type = int)
         self.parser.add_argument('-r', '--round',       type = int)
 
+    def id(self):
+        return (self.args.competition, self.args.volume, self.args.semester, self.args.round)
+
     def path(self):
-         
-
-    def createContext(self):
-        self.path = (self.args.competition, 
-        super().createContext()
-    
-    def printBuildInfo(self):
-        print(c.act("Invoking template builder on"), c.name(self.target),
-            c.path("seminar{competition}{volume}{semester}{round}".format(
-                competition = '' if self.args.competition    is None else '/{}'.format(self.args.competition),
-                volume      = '' if self.args.volume         is None else '/{}'.format(self.args.volume),
-                semester    = '' if self.args.semester       is None else '/{}'.format(self.args.semester),
-                round       = '' if self.args.round          is None else '/{}'.format(self.args.round),
-            ))
+        return (
+            '' if self.args.competition is None else self.args.competition,
+            '' if self.args.volume is None else '{:02d}'.format(self.args.volume),
+            '' if self.args.semester is None else str(self.args.semester),
+            '' if self.args.round is None else str(self.args.round),
         )
-
 
 class ContextSeminar(context.Context):
     def nodePath(self, root, competition = None, volume = None, semester = None, round = None, problem = None):

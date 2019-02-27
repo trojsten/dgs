@@ -4,14 +4,14 @@ import base
 import core.utilities.colour as c
 
 class BuilderNabojVenue(base.BuilderNaboj):
+    target = 'venue'
+
     def __init__(self):
-        self.templates          = {
+        self.rootContextClass = base.ContextTearoff
+        self.templates = {
             'templates':    ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
         }
-        self.target = 'venue'
-        self.rootContextClass = base.ContextTearoff
         super().__init__()
-        self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.competition, self.args.volume, self.args.venue)
 
     def createArgParser(self):
         super().createArgParser()

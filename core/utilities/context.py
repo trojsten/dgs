@@ -44,8 +44,23 @@ class BaseBuilder():
     def parseArgs(self):
         self.args = self.parser.parse_args()
 
+    def id(self):
+        raise NotImplementedError
+
+    def path(self):
+        raise NotImplementedError
+
+    def printBuildInfo(self):
+        print(
+            c.act("Invoking"),
+            c.name(self.module),
+            c.act("template builder on"),
+            c.name(self.target),
+            c.path(os.path.join(*self.path())),
+        )
+
     def createContext(self):
-        self.context = self.rootContextClass(os.path.realpath(self.args.launch), *self.path)
+        self.context = self.rootContextClass(os.path.realpath(self.args.launch), *self.id())
 
     def build(self):
         self.printDebugInfo()

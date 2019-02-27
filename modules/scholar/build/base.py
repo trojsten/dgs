@@ -6,23 +6,23 @@ import core.utilities.colour as c
 import core.utilities.context as context
 
 class BuilderScholar(context.BaseBuilder):
+    module = 'scholar'
+
     def __init__(self):
         super().__init__()
-        self.context = self.rootContextClass(os.path.realpath(self.args.launch), self.args.course, self.args.year, self.args.issue)
 
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('course',               choices = ['TA1', 'TA2'])
         self.parser.add_argument('year',                 type = int)
         self.parser.add_argument('issue',                type = int)
-    
-    def printBuildInfo(self):
-        print(c.act("Invoking template builder on"), c.name(self.target), c.path("{course}/{year}/{lesson}".format(
-            course  = self.args.course,
-            year    = self.args.year,
-            lesson  = self.args.issue,
-        )))
 
+    def id(self):
+        return (self.args.course, self.args.year, self.args.issue)
+
+    def path(self):
+        return (self.args.course, '{:04d}'.format(self.args.year), 'handouts', '{:02d}'.format(self.args.issue))
+    
 class ContextScholar(context.Context):
     def nodePath(self, root, course = None, year = None, targetType = None, issue = None):
         return os.path.join(
@@ -30,7 +30,7 @@ class ContextScholar(context.Context):
             '' if course        is None else course,
             '' if year          is None else '{:04d}'.format(year),
             '' if targetType    is None else targetType,
-            '' if issue         is None else '{:02d}'.format(issue)
+            '' if issue         is None else '{:02d}'.format(issue),
         )
 
 
@@ -64,18 +64,15 @@ class ContextCourse(ContextScholar):
 class ContextYear(ContextScholar):
     def __init__(self, root, course, year):
         super().__init__()
-        self.id = '{:04d}'.format(year)
         self.loadMeta(root, course, year) \
-            .addId(self.id) \
+            .addId('{:04d}'.format(year)) \
             .addNumber(year)
 
 class ContextIssue(ContextScholar):
     def __init__(self, root, course, year, target, issue):
         super().__init__()
-        self.id = '{:02d}'.format(issue)
-        self.number = issue
         self.loadMeta(root, course, year, target, issue) \
-            .addId(self.id) \
+            .addId('{:02d}'.format(issue)) \
             .addNumber(issue)
 
 
