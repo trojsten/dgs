@@ -6,6 +6,7 @@ import core.utilities.jinja as jinja
 
 class BuilderNabojLanguage(base.BuilderNaboj):
     target = 'language'
+    subdir = 'languages'
 
     def __init__(self):
         self.rootContextClass = base.ContextBooklet
@@ -21,7 +22,9 @@ class BuilderNabojLanguage(base.BuilderNaboj):
 
     def id(self):
         return (self.args.competition, self.args.volume, self.args.language)
-
+    
+    def path(self):
+        return (self.args.competition, '{:02d}'.format(self.args.volume), self.subdir, self.args.language)
 
     def build(self):
         super().build()
@@ -30,5 +33,6 @@ class BuilderNabojLanguage(base.BuilderNaboj):
                 os.path.join(self.launchDirectory, self.args.competition, '{:02d}'.format(self.args.volume), 'languages', self.args.language),
                 template, self.context.data, self.outputDirectory
             )
+
 
 BuilderNabojLanguage().build()
