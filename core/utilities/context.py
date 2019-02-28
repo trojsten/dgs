@@ -70,7 +70,7 @@ class BaseBuilder():
             for template in templates:
                 jinja.printTemplate(os.path.join(self.templateRoot, dir), template, self.context.data, self.outputDirectory)
 
-        print(c.ok("Template builder successful"))
+        print(c.ok("Template builder on"), c.name(self.target), c.ok("successful"))
 
 
 class Context():

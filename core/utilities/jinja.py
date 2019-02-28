@@ -38,8 +38,8 @@ def checkdigit(venue, team, problem):
     return 9 - (raw - 1) % 10
 
 # Print a Jinja2 template with provided context
-def printTemplate(templateRoot, template, context, outputDirectory = None):
+def printTemplate(templateRoot, template, context, outputDirectory = None, newName = None):
     print(
         environment(templateRoot).get_template(template).render(context),
-        file = sys.stdout if outputDirectory is None else open(os.path.join(outputDirectory, template), 'w')
+        file = sys.stdout if outputDirectory is None else open(os.path.join(outputDirectory, template if newName is None else newName), 'w')
     )
