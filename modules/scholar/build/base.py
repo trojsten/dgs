@@ -21,7 +21,7 @@ class BuilderScholar(context.BaseBuilder):
         return (self.args.course, self.args.year, self.args.issue)
 
     def path(self):
-        return (self.args.course, '{:04d}'.format(self.args.year), 'handouts', '{:02d}'.format(self.args.issue))
+        return (self.args.course, '{:04d}'.format(self.args.year), self.subdir, '{:02d}'.format(self.args.issue))
     
 class ContextScholar(context.Context):
     def nodePath(self, root, course = None, year = None, targetType = None, issue = None):
