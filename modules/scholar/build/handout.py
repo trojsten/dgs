@@ -9,7 +9,7 @@ class BuilderHandout(base.BuilderScholar):
         self.rootContextClass   = base.ContextHandout
         self.templates          = {
             'format':       ['format-course.tex', 'format-handout.tex'],
-            'templates':    ['handout.tex'],
+            'templates':    ['handout-students.tex', 'handout-solutions.tex'],
         }
         super().__init__()
 

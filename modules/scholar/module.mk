@@ -2,7 +2,8 @@
 
 input/scholar/%/build-handout: \
 	modules/scholar/format/format-handout.tex \
-	modules/scholar/templates/handout.tex \
+	modules/scholar/templates/handout-students.tex \
+	modules/scholar/templates/handout-solutions.tex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -24,7 +25,10 @@ input/scholar/%/format-handout.tex: \
 input/scholar/%/format-homework.tex: \
 	input/scholar/$$*/build-homework ;
 
-input/scholar/%/handout.tex: \
+input/scholar/%/handout-students.tex: \
+	input/scholar/$$*/build-handout ;
+
+input/scholar/%/handout-solutions.tex: \
 	input/scholar/$$*/build-handout ;
 
 input/scholar/%/homework.tex: \
@@ -37,12 +41,20 @@ input/scholar/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
 	source/scholar/$$*/meta.yaml ;
 
-output/scholar/%/handout.pdf: \
+input/scholar/%/handout: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/handout.tex \
 	input/scholar/$$*/format-handout.tex \
-	input/scholar/$$*/pdf-prerequisites
+	input/scholar/$$*/pdf-prerequisites ;
+
+output/scholar/%/handout-students.pdf: \
+	input/scholar/%/handout \
+	input/scholar/$$*/handout-students.tex
+	$(call doubletex,scholar)
+
+output/scholar/%/handout-solutions.pdf: \
+	input/scholar/%/handout \
+	input/scholar/$$*/handout-students.tex
 	$(call doubletex,scholar)
 
 output/scholar/%/homework.pdf: \

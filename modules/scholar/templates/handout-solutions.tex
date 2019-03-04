@@ -1,0 +1,6 @@
+(@ extends 'handout-base.tex' @)
+
+(@ block subtitle @) (riešenia)(@ endblock subtitle @)
+(@ block solutions @)
+    \input{input/scholar/(* course.id *)/(* year.id *)/handouts/(* issue.id *)/solutions.tex}
+(@ endblock solutions @)
