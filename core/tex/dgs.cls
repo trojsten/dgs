@@ -35,7 +35,6 @@
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
 \RequirePackage{etoolbox}
-\RequirePackage{MnSymbol}
 \RequirePackage{cancel}
 \RequirePackage{fancyhdr}
 \RequirePackage{hyphenat}
