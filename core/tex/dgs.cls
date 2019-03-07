@@ -32,6 +32,7 @@
 \RequirePackage{caption}
 \RequirePackage{booktabs}
 \RequirePackage{titlesec}
+\RequirePackage{leftidx}
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
 \RequirePackage{etoolbox}
