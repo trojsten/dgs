@@ -159,7 +159,7 @@ output/naboj/%/envelope.pdf: \
 
 
 # All targets for <language>
-output/naboj/%/all: \
+output/naboj/%: \
 	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/answers.pdf \
 	output/naboj/$$*/answers-mod5.pdf \
@@ -168,7 +168,7 @@ output/naboj/%/all: \
 	output/naboj/$$*/instructions.pdf ;
 
 # All targets for <venue>
-output/naboj/%/all: \
+output/naboj/%: \
 	output/naboj/$$*/tearoff.pdf \
     output/naboj/$$*/envelope.pdf ;
 

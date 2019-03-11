@@ -142,11 +142,11 @@ output/seminar/%/solutions: \
 	output/seminar/%/solutions.pdf \
 	output/seminar/%/html-solutions ;
 
-output/seminar/%/all: \
+output/seminar/%: \
 	output/seminar/%/problems \
 	output/seminar/%/solutions ;
 
-output/%/invite.pdf:\
+output/seminar/%/invite.pdf:\
 	input/$$*/invite.tex\
 	source/%/meta.yaml
 	$(call doubletex,seminar)
@@ -154,6 +154,6 @@ output/%/invite.pdf:\
 .PHONY:
 
 output/seminar/%/copy: \
-	output/seminar/%/all
+	output/seminar/%/
 	$(eval words := $(subst /, ,$*))
 	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))

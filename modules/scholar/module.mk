@@ -57,6 +57,13 @@ output/scholar/%/handout-solutions.pdf: \
 	input/scholar/$$*/handout-students.tex
 	$(call doubletex,scholar)
 
+output/scholar/%: \
+	output/scholar/%/handout-students.pdf \
+	output/scholar/%/handout-solutions.pdf ;
+
+output/scholar/%: \
+	output/scholar/%/homework.pdf ;
+
 output/scholar/%/homework.pdf: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \

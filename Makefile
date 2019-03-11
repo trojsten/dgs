@@ -86,7 +86,7 @@ input/%.dat: source/%.dat
 
 # Output PNG from SVG (for web)
 output/%.png: source/%.svg
-	@echo -e '$(c_action)Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert -f png -h 300 -a -o $@ $<
 
