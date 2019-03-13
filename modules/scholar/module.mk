@@ -49,12 +49,12 @@ input/scholar/%/handout: \
 
 output/scholar/%/handout-students.pdf: \
 	input/scholar/%/handout \
-	input/scholar/$$*/handout-students.tex
+	input/scholar/%/handout-students.tex
 	$(call doubletex,scholar)
 
 output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout \
-	input/scholar/$$*/handout-students.tex
+	input/scholar/%/handout-students.tex
 	$(call doubletex,scholar)
 
 output/scholar/%: \
