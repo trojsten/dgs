@@ -18,8 +18,10 @@
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
 \NewDocumentCommand{\Exp}{m}{\mathrm{e}^{#1}}
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
-\NewDocumentCommand{\mustequal}{}{\overset{!}{=}}
-\NewDocumentCommand{\Nuclide}{O{} O{} m}{\ensuremath{\leftidx{^{#1}_{#2}}{\mathrm{#3}}{}}}
+\NewDocumentCommand{\MustEqual}{}{\overset{!}{=}}
+\NewDocumentCommand{\DefEqual}{}{\overset{\mathrm{def}}{=}}
+\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}

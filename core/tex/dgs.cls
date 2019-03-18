@@ -41,6 +41,7 @@
 \RequirePackage{hyphenat}
 \RequirePackage{pifont}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
+\RequirePackage[version=4]{mhchem}
 
 \RequirePackage[all]{nowidow}
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
