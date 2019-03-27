@@ -2,9 +2,7 @@ import os
 import base
 
 class BuilderFormat(base.BuilderSeminar):
-    def __init__(self):
-        self.rootContextClass = base.ContextBooklet
-        super().__init__()
+    rootContextClass = base.ContextBooklet
 
     def parseArgs(self):
         args = self.parser.parse_args()
