@@ -7,12 +7,10 @@ class BuilderNabojVenue(base.BuilderNaboj):
     target = 'venue'
     subdir = 'venues'
 
-    def __init__(self):
-        self.rootContextClass = base.ContextTearoff
-        self.templates = {
-            'templates': ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
-        }
-        super().__init__()
+    rootContextClass = base.ContextTearoff
+    templates = {
+        'templates': ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
+    }
 
     def createArgParser(self):
         super().createArgParser()

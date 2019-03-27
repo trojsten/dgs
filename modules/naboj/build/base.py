@@ -15,6 +15,7 @@ class BuilderNaboj(context.BaseBuilder):
         self.parser.add_argument('-c', '--competition',  choices = ['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
         self.parser.add_argument('-v', '--volume',       type = int)
     
+
 class ContextI18n(context.Context):
     def __init__(self, language):
         super().__init__()
@@ -38,16 +39,19 @@ class ContextNaboj(context.Context):
             '' if target        is None else    target,
         )
 
+
 class ContextModule(ContextNaboj):
     def __init__(self, module):
         super().__init__()
         self.addId(module)
+
 
 class ContextCompetition(ContextNaboj):
     def __init__(self, root, competition):
         super().__init__()
         self.loadMeta(root, competition) \
             .addId(competition)
+
         
 class ContextVolume(ContextNaboj):
     def __init__(self, root, competition, volume):
@@ -60,16 +64,19 @@ class ContextVolume(ContextNaboj):
         self.add({'problems':       context.addNumbers(self.data['problems'], 1)})
         self.add({'problemsMod5':   context.splitMod(self.data['problems'], 5, 1)})
 
+
 class ContextLanguage(ContextNaboj):
     def __init__(self, language):
         super().__init__()
         self.addId(language)
+
 
 class ContextVenue(ContextNaboj):
     def __init__(self, root, competition, volume, venue):
         super().__init__()
         self.loadMeta(root, competition, volume, 'venues', venue).addId(venue)
         self.add({'teamsDiv3': context.splitDiv(context.numerate(self.data.get('teams')), 3)})
+
 
 class ContextBooklet(ContextNaboj):
     def __init__(self, root, competition, volume, language):
@@ -80,6 +87,7 @@ class ContextBooklet(ContextNaboj):
         self.absorb('volume',           ContextVolume       (root, competition, volume))
         self.absorb('language',         ContextLanguage     (language))
         self.absorb('i18n',             ContextI18n         (language))
+
 
 class ContextTearoff(ContextNaboj):
     def __init__(self, root, competition, volume, venue):

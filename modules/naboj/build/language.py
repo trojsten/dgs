@@ -8,13 +8,11 @@ class BuilderNabojLanguage(base.BuilderNaboj):
     target = 'language'
     subdir = 'languages'
 
-    def __init__(self):
-        self.rootContextClass = base.ContextBooklet
-        self.templates          = {
-            'format':       ['format-language.tex'],
-            'templates':    ['booklet.tex', 'answers.tex', 'answers-mod5.tex', 'constants.tex', 'cover.tex', 'instructions.tex'],
-        }
-        super().__init__()
+    rootContextClass = base.ContextBooklet
+    templates          = {
+        'format':       ['format-language.tex'],
+        'templates':    ['booklet.tex', 'answers.tex', 'answers-mod5.tex', 'constants.tex', 'cover.tex', 'instructions.tex'],
+    }
     
     def createArgParser(self):
         super().createArgParser()
