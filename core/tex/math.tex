@@ -9,6 +9,8 @@
 \NewDocumentCommand{\DerivativeNEval}{m m m m}{\left.\frac{\diff^{\,#1}\!#2}{\diff#3}\right|_{#3 = #4}}
 \NewDocumentCommand{\PDerivative}{O{} m m}{\frac{\partial^{#1}#2}{\partial #3^{#1}}}
 
+\NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
+
 \NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3 \, \diff#4}
 \NewDocumentCommand{\Intx}{O{} O{} m}{\kern -0.2em \int\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\OInt}{O{} O{} m m}{\kern -0.2em \oint\limits_{#1}^{#2} #3 \, \diff#4}

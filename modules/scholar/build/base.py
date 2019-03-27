@@ -8,9 +8,6 @@ import core.utilities.context as context
 class BuilderScholar(context.BaseBuilder):
     module = 'scholar'
 
-    def __init__(self):
-        super().__init__()
-
     def createArgParser(self):
         super().createArgParser()
         self.parser.add_argument('course',               choices = ['TA1', 'TA2'])

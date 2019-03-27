@@ -71,7 +71,8 @@ class ContextSemester(ContextSeminar):
 class ContextSemesterFull(ContextSemester):
     def __init__(self, root, competition, volume, semester):
         super().__init__(root, competition, volume, semester)
-        # Missing: fill in rounds and such
+        # Currently missing: fill in rounds and such
+        # This will be useful for invites
 
 class ContextRound(ContextSeminar):
     def __init__(self, root, competition, volume, semester, round):
