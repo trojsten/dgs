@@ -54,7 +54,8 @@ output/scholar/%/handout-students.pdf: \
 
 output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout \
-	input/scholar/%/handout-students.tex
+	input/scholar/%/handout-students.tex \
+	input/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
 output/scholar/%: \
