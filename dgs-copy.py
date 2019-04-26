@@ -18,7 +18,7 @@ parser.add_argument('round', type = int, choices = [1, 2, 3])
 
 args = parser.parse_args()
 
-query = "ssh sesquideus@ksp.sk 'rm -rf /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/;\
+query = "ssh sesquideus@ksp 'rm -rf /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/;\
 mkdir -p \
 /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/ \
 /var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/ \
@@ -32,7 +32,7 @@ print(query)
 os.system(query)
 
 for problem in range(1, 8):
-    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html sesquideus@ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
+    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -43,7 +43,7 @@ for problem in range(1, 8):
     os.system(query)
 
 for problem in range(1, 8):
-    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html sesquideus@ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/prikl{problem}.html".format(
+    query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/prikl{problem}.html".format(
         seminar = args.seminar,
         volume = args.volume,
         part = args.part,
@@ -53,7 +53,7 @@ for problem in range(1, 8):
     print(query)
     os.system(query)
 
-query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/problems.pdf sesquideus@ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/zadania.pdf".format(
+query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/problems.pdf sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/zadania.pdf".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
@@ -62,7 +62,7 @@ query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/problems.pdf ses
 print(query)
 os.system(query)
 
-query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/solutions.pdf sesquideus@ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/vzoraky.pdf".format(
+query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/solutions.pdf sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/vzoraky.pdf".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
@@ -71,7 +71,7 @@ query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/solutions.pdf se
 print(query)
 os.system(query)
 
-query = "find ./output/seminar/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' sesquideus@ksp.sk:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
+query = "find ./output/seminar/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
     seminar = args.seminar,
     volume = args.volume,
     part = args.part,
