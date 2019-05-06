@@ -2,12 +2,15 @@
 \DeclareMathOperator{\pdiff}{\partial\!}
 \DeclareMathOperator{\fdiff}{\Delta\!}
 
-\NewDocumentCommand{\DerivativeE}{m}{\frac{\diff}{\diff#1}}
 \NewDocumentCommand{\Derivative}{m m}{\frac{\diff#1}{\diff#2}}
+\NewDocumentCommand{\DerivativeE}{m}{\frac{\diff}{\diff#1}}
+\NewDocumentCommand{\DerivativeParen}{m m}{\frac{\diff}{\diff#1}\left(#2\right)}
 \NewDocumentCommand{\DerivativeN}{m m m}{\frac{\diff^{\,#1}\!#2}{\diff#3}}
 \NewDocumentCommand{\DerivativeEval}{m m m}{\left.\frac{\diff#1}{\diff#2}\right|_{#2 = #3}}
 \NewDocumentCommand{\DerivativeNEval}{m m m m}{\left.\frac{\diff^{\,#1}\!#2}{\diff#3}\right|_{#3 = #4}}
+
 \NewDocumentCommand{\PDerivative}{O{} m m}{\frac{\partial^{#1}#2}{\partial #3^{#1}}}
+\NewDocumentCommand{\PDerivativeParen}{m m}{\frac{\partial}{\partial#1}\left(#2\right)}
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
 
