@@ -14,9 +14,35 @@
     \pagestyle{main}
     \fancyhead[LE,RO]{\textit{Pravidlá}}
 }
-    
+
 \fancypagestyle{first}{%
     \fancyhf{}
-}  
+}
+
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 75pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % we wish to include header and footer into page dimensions
+    %showframe                                              % display visual frame (must be turned off for production)
+    }
+\savegeometry{first}
+
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 20pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % we wish to include header and footer into page dimensions
+    %showframe                                              % display visual frame (must be turned off for production)
+    }
+\savegeometry{main}
 
 \numberwithin{equation}{subsection}

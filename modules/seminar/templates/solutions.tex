@@ -1,20 +1,22 @@
 (@ extends 'base.tex' @)
- 
+
 (@ block content @)
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
 
+    \loadgeometry{main}
     \pagestyle{solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
     \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
-    \vspace*{8mm}
-   
+    \loadgeometry{first}
+    \afterpage{\aftergroup\restoregeometry}%
+
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
-        
+
     (@ for pid, problem in round.problems.items() @)%
     \setcounter{volume}{(* volume.number *)}%
     \setcounter{semester}{(* semester.number *)}%
     \setcounter{round}{(* round.number *)}%
     \setcounter{problem}{(* problem.number *)}%
-    \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+    \RenewExpandableDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
     \subsection{%
         \texorpdfstring{%
@@ -24,7 +26,7 @@
             (@ endif @)%
             (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
             (@ if problem.evaluation @)%
-                opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
+                opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)%
             (@ endif @)%
         }{(* round.number *).(* problem.number *) (* problem.title *)}%
     }
