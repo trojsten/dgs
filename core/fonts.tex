@@ -20,7 +20,7 @@
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
+    BoldItalicFont  = *-bi
 ]{minionpro}
 \setmathfont(Digits,Latin,Greek)[
     Path            = core/fonts/ ,
@@ -28,7 +28,7 @@
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
+    BoldItalicFont  = *-bi
 ]{minionpro}
 \setmonofont[
     Path            = core/fonts/ ,
@@ -36,7 +36,7 @@
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
+    BoldItalicFont  = *-bi
 ]{ubuntumono}
 \setsansfont[
     Path            = core/fonts/ ,
@@ -44,7 +44,7 @@
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi    
+    BoldItalicFont  = *-bi
 ]{verdana}
 
 % Fixes mathspec bug -- URL numbers are normally rendered with upright font
@@ -60,3 +60,7 @@
     \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
     \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
 \makeatother
+
+\DeclareFontFamily{U}{skulls}{}
+\DeclareFontShape{U}{skulls}{m}{n}{ <-> skull }{}
+\newcommand{\skull}{\text{\usefont{U}{skulls}{m}{n}\symbol{'101}}}
