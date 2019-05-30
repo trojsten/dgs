@@ -1,31 +1,33 @@
 (@ extends 'base.tex' @)
- 
+
 (@ block content @)
+    \loadgeometry{main}
     \pagestyle{main-(* competition.id *)}
     \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
-    \vspace*{15mm}
+    \loadgeometry{first}
+    \afterpage{\aftergroup\restoregeometry}%
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/intro.tex}
     \newpage
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/rules.tex}
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage
-        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex} 
+        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
         \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
         {
             \section{Zadania (* round.number *). kola}%
             \centering%
             \vspace*{-5mm}%
             Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
-        } 
+        }
 
         (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-        
+        \RenewExpandableDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+
         \subsection{%
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)}%
