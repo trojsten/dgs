@@ -10,7 +10,7 @@ class BuilderScholar(context.BaseBuilder):
 
     def createArgParser(self):
         super().createArgParser()
-        self.parser.add_argument('course',               choices = ['TA1', 'TA2'])
+        self.parser.add_argument('course',               type = str, choices = ['TA1', 'TA2'])
         self.parser.add_argument('year',                 type = int)
         self.parser.add_argument('issue',                type = int)
 
@@ -18,18 +18,33 @@ class BuilderScholar(context.BaseBuilder):
         return (self.args.course, self.args.year, self.args.issue)
 
     def path(self):
-        return (self.args.course, '{:04d}'.format(self.args.year), self.subdir, '{:02d}'.format(self.args.issue))
-    
+        return (self.args.course, f'{self.args.year:04d}', self.subdir, f'{self.args.issue:02d}')
+   
+
+class BuilderSingle(context.BaseBuilder):
+    module = 'scholar'
+
+    def createArgParser(self):
+        super().createArgParser()
+        self.parser.add_argument('course', type = str, choices = ['FKS'])
+        self.parser.add_argument('lecture', type = str)
+
+    def id(self):
+        return (self.args.course, self.args.lecture)
+
+    def path(self):
+        return (self.args.course, self.args.lecture)
+
+
 class ContextScholar(context.Context):
     def nodePath(self, root, course = None, year = None, targetType = None, issue = None):
         return os.path.join(
             root,
             '' if course        is None else course,
-            '' if year          is None else '{:04d}'.format(year),
+            '' if year          is None else f'{year:04d}',
             '' if targetType    is None else targetType,
-            '' if issue         is None else '{:02d}'.format(issue),
+            '' if issue         is None else f'{issue:02d}',
         )
-
 
 class ContextScholarBase(ContextScholar):
     def __init__(self, root, course, year):
@@ -62,14 +77,44 @@ class ContextYear(ContextScholar):
     def __init__(self, root, course, year):
         super().__init__()
         self.loadMeta(root, course, year) \
-            .addId('{:04d}'.format(year)) \
+            .addId(f'{year:04d}') \
             .addNumber(year)
 
 class ContextIssue(ContextScholar):
     def __init__(self, root, course, year, target, issue):
         super().__init__()
         self.loadMeta(root, course, year, target, issue) \
-            .addId('{:02d}'.format(issue)) \
+            .addId(f'{issue:02d}') \
             .addNumber(issue)
 
+
+class ContextScholarSingle(context.Context):
+    def nodePath(self, root, course = None, lecture = None):
+        return os.path.join(
+            root,
+            '' if course    is None else course,
+            '' if lecture   is None else lecture,
+        )
+
+class ContextScholarLecture(ContextScholarSingle):
+    def __init__(self, root, course, lecture):
+        super().__init__()
+        self.absorb('module',   ContextSingleModule   ('scholar'))
+        self.absorb('course',   ContextSingleCourse   (root, course))
+        self.absorb('lecture',  ContextSingleLecture  (root, course, lecture))
+
+class ContextSingleModule(ContextScholarSingle):
+    def __init__(self, module):
+        super().__init__()
+        self.addId(module)
+
+class ContextSingleCourse(ContextScholarSingle):
+    def __init__(self, root, course):
+        super().__init__()
+        self.loadMeta(root, course).addId(course)
+
+class ContextSingleLecture(ContextScholarSingle):
+    def __init__(self, root, course, lecture):
+        super().__init__()
+        self.loadMeta(root, course, lecture).addId(lecture)
 

@@ -28,10 +28,10 @@ try:
 #        line = re.sub(r'"', '“', line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
-            line = re.sub(r'^@E\s*(.*)$', '\\errorMessage{\g<1>}', line)
+            line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
             line = re.sub(r'^@L(.*)$', '\g<1>', line)
-            line = re.sub(r'^@P', '\insertPicture', line)
-            line = re.sub(r'^@NP', '\insertPictureSimple', line)
+            line = re.sub(r'^@P', '\\\\insertPicture', line)
+            line = re.sub(r'^@NP', '\\\\insertPictureSimple', line)
             line = re.sub(r'^@TODO\s*(.*)$', '\\\\todoMessage{\g<1>}', line)
         if args.format == 'html':
             line = re.sub(r'^@L(.*)$', '', line)

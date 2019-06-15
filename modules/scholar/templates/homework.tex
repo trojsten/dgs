@@ -1,19 +1,19 @@
 \documentclass[12pt, twoside]{dgs}
 
+\RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/homework/(* issue.id *)}%
 \input{input/scholar/(* course.id *)/static/format-override.tex}
-\input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/format-course.tex}
-\input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/format-homework.tex}
+\input{\activeDirectory/format-course.tex}
+\input{\activeDirectory/format-homework.tex}
  
 \begin{document}
     \pagestyle{homework}
     \setcounter{section}{(* issue.number - 1 *)}
-    \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/homework/(* issue.id *)}%
     \section{Domáca úloha č. (* issue.number *)}
     \begin{center}
         \textit{%
-            Vypracovanú úlohu odovzdajte na papieri alebo \href{mailto:martin.balaz@trojsten.sk}{e-mailom}
+            Vypracovanú úlohu odovzdajte na papieri alebo \href{mailto:(* course.teacher.email *)}{e-mailom}
             najneskôr do začiatku cvičenia (* issue.deadline.strftime('%d. %m. %Y') *).            
             Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné.}
     \end{center}
-    \input{input/scholar/(* course.id *)/(* year.id *)/homework/(* issue.id *)/content.tex}
+    \input{\activeDirectory/content.tex}
 \end{document}
