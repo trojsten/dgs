@@ -75,7 +75,7 @@ class ContextVenue(ContextNaboj):
     def __init__(self, root, competition, volume, venue):
         super().__init__()
         self.loadMeta(root, competition, volume, 'venues', venue).addId(venue)
-        self.add({'teamsDiv3': context.splitDiv(context.numerate(self.data.get('teams')), 3)})
+        self.add({'teamsDiv3':      context.splitDiv(context.numerate(self.data.get('teams')), 3)})
 
 
 class ContextBooklet(ContextNaboj):

@@ -1,6 +1,12 @@
+\RenewDocumentCommand{\vec}{m}{\mathbf{#1}}
+%\RenewDocumentCommand{\vec}{m}{\vv{#1}}
+
 \DeclareMathOperator{\diff}{d\!}
 \DeclareMathOperator{\pdiff}{\partial\!}
 \DeclareMathOperator{\fdiff}{\Delta\!}
+\DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
+\DeclareMathOperator{\Div}{\del\cdot}
+\DeclareMathOperator{\Rot}{\del\times}
 
 \NewDocumentCommand{\Derivative}{m m}{\frac{\diff#1}{\diff#2}}
 \NewDocumentCommand{\DerivativeE}{m}{\frac{\diff}{\diff#1}}
@@ -14,9 +20,9 @@
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
 
-\NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3 \, \diff#4}
+\NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3\diff#4}
 \NewDocumentCommand{\Intx}{O{} O{} m}{\kern -0.2em \int\limits_{#1}^{#2} #3}
-\NewDocumentCommand{\OInt}{O{} O{} m m}{\kern -0.2em \oint\limits_{#1}^{#2} #3 \, \diff#4}
+\NewDocumentCommand{\OInt}{O{} O{} m m}{\oint\limits_{#1}^{#2}\!#3\diff#4}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\diff#5}
 \NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
@@ -27,6 +33,7 @@
 \NewDocumentCommand{\MustEqual}{}{\overset{!}{=}}
 \NewDocumentCommand{\DefEqual}{}{\overset{\mathrm{def}}{=}}
 \NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}

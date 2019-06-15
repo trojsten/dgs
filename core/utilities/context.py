@@ -101,7 +101,7 @@ class Context():
         return self.loadYaml(self.nodePath(*args), 'meta.yaml')
 
     def nodePath(self, *args):
-        raise NotImplementedError("nodePath is not implemented")
+        raise NotImplementedError("Child classes must implement nodePath method")
 
     def print(self):
         pprint.pprint(self.data)
@@ -174,13 +174,3 @@ def numerate(objects, start = 0):
         })
         num += 1
     return objects
-
-def addNumber(ctx, num):
-    return dicts.merge(ctx, {
-        'number': num,
-    })
-
-def addId(ctx, id):
-    return dicts.merge(ctx, {
-        'id':   id,
-    })

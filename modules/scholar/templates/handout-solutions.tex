@@ -1,8 +1,8 @@
 (@ extends 'handout-base.tex' @)
 
 (@ block content @)
-    \input{input/scholar/(* course.id *)/(* year.id *)/handouts/(* issue.id *)/content.tex}
+    \input{\activeDirectory/content.tex}
     \newpage
     \section{Riešenia}
-    \input{input/scholar/(* course.id *)/(* year.id *)/handouts/(* issue.id *)/solutions.tex}
+    \input{\activeDirectory/solutions.tex}
 (@ endblock content @)
