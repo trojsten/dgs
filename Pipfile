@@ -4,14 +4,14 @@ name = "pypi"
 url = "https://pypi.org/simple"
 
 [requires]
-python_version = "3.7.3"
+python_version = "3.7"
 
 [dev-packages]
 
 [packages]
 colorama = "==0.3.9"
 ply = "==3.11"
-"Jinja2" = "==2.10"
+"Jinja2" = ">=2.10.1"
 PyYAML = "==3.13"
 MarkupSafe = "==1.0"
 matplotlib = "*"
