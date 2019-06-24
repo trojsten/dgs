@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-import os, sys, re, argparse, colorama
-from colorama import Fore, Style
+import os, sys, re, argparse
+
+from utilities import colour as c
 
 def fail():
-    print(Fore.RED + "dgs-convert: failure" + Style.RESET_ALL)
+    print(f"{c.err('dgs-convert: failure')}")
     sys.exit(1)
-
-colorama.init()
 
 parser = argparse.ArgumentParser(
     description             = "DeGeŠ Markdown conversion utility",
 )
 parser.add_argument('format',   choices = ['latex', 'html'])
+parser.add_argument('locale',   choices = ['sk', 'cs', 'en', 'fr', 'ru', 'pl'])
 parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
 parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
 args = parser.parse_args()
@@ -22,10 +22,8 @@ try:
 
     for line in args.infile:
         line = re.sub(r'^%(.*)$', '', line)
-#        line = re.sub(r'^"', '„', line)
-#        line = re.sub(r' "', ' „', line)
-#        line = re.sub(r'\("', '(„', line)
-#        line = re.sub(r'"', '“', line)
+        line = re.sub(r'"\b', '„', line)
+        line = re.sub(r'\b"', '“', line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
             line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
@@ -60,12 +58,12 @@ try:
     os.remove(tempfile.name)
 
 except IOError as e:
-    print(Fore.RED + __file__ + ": Could not create temporary file" + Style.RESET_ALL)
+    print(f"{c.name(__file__)}: Could not create a temporary file")
     fail()
 except AssertionError as e:
-    print(Fore.RED + __file__ + ": Calling pandoc failed" + Style.RESET_ALL)
+    print(f"{c.name(__file__)}: Calling pandoc failed")
     fail()
 else:
-    print(Fore.GREEN + "dgs-convert: success" + Style.RESET_ALL)
+    print(f"{c.ok('dgs-convert: success')}")
     sys.exit(0)
 
