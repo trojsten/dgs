@@ -3,6 +3,30 @@
 \numberwithin{equation}{subsection}
 \renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
 
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 75pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,
+}
+\savegeometry{first}
+
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 20pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        
+}
+\savegeometry{main}
+
 \fancypagestyle{main}{%
     \fancyhead[LO,RE]{%
         \raisebox{(* competition.hacks.smallLogoRaise *)}{%
