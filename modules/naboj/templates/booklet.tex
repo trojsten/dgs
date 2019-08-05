@@ -3,9 +3,12 @@
 (@ block content @)
     \setcounter{volume}{(* volume.number *)}%
     \pagestyle{main}
+    \loadgeometry{main}
+
     (@ if booklet.contents.intro @)
         \thispagestyle{first}
-        \vspace*{15mm}
+        \loadgeometry{first}
+        \afterpage{\aftergroup\restoregeometry}
         \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
         \newpage
     (@ endif @)
