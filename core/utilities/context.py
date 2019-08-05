@@ -88,7 +88,7 @@ class Context():
     def loadYaml(self, *args):
         try:
             filename = os.path.join(*args)
-            contents = yaml.load(open(filename, 'r'))
+            contents = yaml.load(open(filename, 'r'), Loader = yaml.SafeLoader)
             result = {} if contents is None else contents
         except FileNotFoundError as e:
             print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
