@@ -20,6 +20,7 @@
             \setcounter{problem}{(* problem.number *)}%
             \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \label{ssc:problem-(* problem.id*)}%
             \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
         \newpage    
@@ -32,6 +33,7 @@
             \setcounter{problem}{(* problem.number *)}%
             \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \label{ssc:solution-(* problem.id*)}%
             \protectedInput{\activeDirectory/solution.tex}%
         (@ endfor @)
         \newpage
@@ -44,6 +46,7 @@
             \setcounter{problem}{(* problem.number *)}%
             \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \label{ssc:answer-(* problem.id*)}%
             \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
     (@ endif @)
