@@ -1,10 +1,9 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{dgs}[2018/10/02 DeGeŠ core class]
 
-\LoadClass[12pt, twoside]{article}
+\LoadClass[12pt, twoside, a4paper]{article}
 
 \RequirePackage[
-    paper                   = a4paper,
     left                    = 15mm,
     right                   = 15mm,
     top                     = 15mm,
@@ -39,6 +38,7 @@
 \RequirePackage{cancel}
 \RequirePackage{fancyhdr}
 \RequirePackage{hyphenat}
+\RequirePackage{nicefrac}
 \RequirePackage{pifont}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
