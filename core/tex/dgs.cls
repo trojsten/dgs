@@ -40,6 +40,7 @@
 \RequirePackage{hyphenat}
 \RequirePackage{nicefrac}
 \RequirePackage{pifont}
+\RequirePackage{chngcntr}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
 
