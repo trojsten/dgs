@@ -1,5 +1,7 @@
 (@ extends 'base.tex' @)
 
+(@ block documentclass @)oneside(@ endblock @)
+
 (@ block specific @)
     \newcounter{team}
 
@@ -11,8 +13,7 @@
     }
 
     \newgeometry{
-        paper       = a4paper,
-        left        = 10mm,
+        left        = 12mm,
         right       = 5mm,
         bottom      = 3mm,
         top         = 0mm,
