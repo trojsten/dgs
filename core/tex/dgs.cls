@@ -1,7 +1,14 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{dgs}[2018/10/02 DeGeŠ core class]
+\ProvidesClass{dgs}[2019/08/09 DeGeŠ core class]
 
-\LoadClass[12pt, twoside, a4paper]{article}
+\DeclareOption{oneside}{\PassOptionsToClass{\CurrentOption}{article}}
+\DeclareOption{twoside}{\PassOptionsToClass{\CurrentOption}{article}}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
+
+\ExecuteOptions{a4paper, 12pt}
+\ProcessOptions\relax
+
+\LoadClass[a4paper, 12pt]{article}
 
 \RequirePackage[
     left                    = 15mm,
