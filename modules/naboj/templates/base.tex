@@ -3,8 +3,12 @@
 \input{input/(* module.id *)/(* competition.id *)/static/format-override.tex}
 (@ block specific @)(@ endblock @)
 
-\newcounter{volume}
-\newcounter{problem}
+\newcounter{volume}[section]
+\newcounter{problem}[section]
+
+\renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
+\renewcommand{\thefigure}{\arabic{problem}.\arabic{figure}}
+\renewcommand{\thetable}{\arabic{problem}.\arabic{table}}
 
 \begin{document}
     (@ block content @)(@ endblock @)
