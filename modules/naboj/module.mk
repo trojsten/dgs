@@ -26,6 +26,8 @@ input/naboj/%/build-venue: \
 ################################### input ####################################
 # % <competition>/<volume>/<venue>
 input/naboj/%/tearoff.tex: \
+	modules/naboj/templates/base.tex \
+	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
     input/naboj/$$*/build-venue ;
 
@@ -40,6 +42,8 @@ input/naboj/%/format-language.tex: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
+	modules/naboj/templates/base.tex \
+	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
@@ -79,6 +83,10 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/intro.tex \
 	input/naboj/%/booklet.tex 
 	$(call doubletex,naboj)
+
+output/naboj/%/copy: \
+	output/naboj/%/booklet.pdf
+	scp $< fks:/home/sesquideus/public_html/booklet.pdf
 
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf
