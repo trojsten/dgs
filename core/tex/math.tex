@@ -8,17 +8,74 @@
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\Rot}{\del\times}
 
-\NewDocumentCommand{\Derivative}{m m}{\frac{\diff#1}{\diff#2}}
-\NewDocumentCommand{\DerivativeE}{m}{\frac{\diff}{\diff#1}}
-\NewDocumentCommand{\DerivativeParen}{m m}{\frac{\diff}{\diff#1}\left(#2\right)}
-\NewDocumentCommand{\DerivativeN}{m m m}{\frac{\diff^{\,#1}\!#2}{\diff#3}}
-\NewDocumentCommand{\DerivativeEval}{m m m}{\left.\frac{\diff#1}{\diff#2}\right|_{#2 = #3}}
-\NewDocumentCommand{\DerivativeNEval}{m m m m}{\left.\frac{\diff^{\,#1}\!#2}{\diff#3}\right|_{#3 = #4}}
+% \Derivative[order]{what}{by-what}
+\NewDocumentCommand{\Derivative}{O{} m m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\diff#2}{\diff#3}%
+    }{%
+        \frac{\diff^{\,{#1}}\!{#2}}{\diff{#3}^{#1}}%
+    }%
+}%
 
-\NewDocumentCommand{\PDerivative}{O{} m m}{\frac{\partial^{#1}#2}{\partial #3^{#1}}}
-\NewDocumentCommand{\PDerivativeParen}{m m}{\frac{\partial}{\partial#1}\left(#2\right)}
+% \DerivativeEmpty[order]{by-what}
+\NewDocumentCommand{\DerivativeE}{O{} m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\diff}{\diff#2}%
+    }{%
+        \frac{\diff^{\,{#1}}}{\diff{#2}^{\,#1}}%
+    }%
+}%
+
+% \DerivativeParentheses{what}{by-what}
+\NewDocumentCommand{\DerivativeParen}{O{} m m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\diff}{\diff#3}\left(#2\right)%
+    }{%
+        \frac{\diff^{#1}}{\diff #3^{#1}}\left(#2\right)%
+    }%
+}%
+
+% \DerivativeEvaluate[order]{what}{by-what}{where}
+% \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
+    \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+}%
+
+% \PartialDerivative[order]{what}{by-what}
+\NewDocumentCommand{\PDerivative}{O{} m m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\pdiff#2}{\pdiff#3}%
+    }{%
+        \frac{\pdiff^{\,{#1}}\!{#2}}{\pdiff{#3}^{#1}}%
+    }%
+}%
+
+% \PartialDerivativeEmpty[order]{by-what}
+\NewDocumentCommand{\PDerivativeE}{O{} m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\pdiff}{\pdiff#2}%
+    }{%
+        \frac{\pdiff^{\,{#1}}}{\pdiff{#2}^{\,#1}}%
+    }%
+}%
+
+% \PartialDerivativeParentheses{what}{by-what}
+\NewDocumentCommand{\PDerivativeParen}{O{} m m}{%
+    \IfNoValueTF{#1}{%
+        \frac{\pdiff}{\pdiff#3}\left(#2\right)%
+    }{%
+        \frac{\pdiff^{#1}}{\pdiff #3^{#1}}\left(#2\right)%
+    }%
+}%
+
+% \PartialDerivativeEvaluate[order]{what}{by-what}{where}
+% \PartialDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
+    \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+}%
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
+\NewDocumentCommand{\Expected}{m}{\left<#1\right>}
 
 \NewDocumentCommand{\Int}{O{} O{} m m}{\kern -0.2em \int\limits_{#1}^{#2} #3\diff#4}
 \NewDocumentCommand{\Intx}{O{} O{} m}{\kern -0.2em \int\limits_{#1}^{#2} #3}
