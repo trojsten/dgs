@@ -128,10 +128,7 @@ output/naboj/%/cover.pdf: \
 
 # Barcodes in text format
 input/naboj/%/barcodes.txt: \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml))
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+    input/naboj/$$*/build-venue ;
 
 # Barcodes text -> PDF, one per page
 input/naboj/%/barcodes.pdf: \

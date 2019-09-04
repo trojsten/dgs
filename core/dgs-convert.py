@@ -39,21 +39,15 @@ try:
     
     tempfile.close()
     
-    assert os.system('pandoc -R -S \
-        --smart \
+    assert os.system(f'pandoc\
         --mathjax \
-        --from markdown \
-        --latex-engine=xelatex \
-        --to {format} \
+        --from markdown-smart \
+        --pdf-engine=xelatex \
+        --to {args.format} \
         --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" \
         --metadata lang=sk-SK \
-        --output="{output}" \
-        {input}'.format(
-            format      = args.format,
-            input       = tempfile.name,
-            output      = args.outfile.name,
-        )
-    ) == 0
+        --output="{args.outfile.name}" \
+        {tempfile.name}') == 0
     
     os.remove(tempfile.name)
 
