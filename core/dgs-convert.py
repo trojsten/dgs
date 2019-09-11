@@ -17,13 +17,22 @@ parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), defa
 parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
 args = parser.parse_args()
 
+quoteOpen, quoteClose = {
+    'sk':   ('„', '“'),
+    'cs':   ('„', '“'),
+    'en':   ('“', '”'),
+    'fr':   ('«\ ', '\ »'),
+    'ru':   ('«', '»'),
+    'pl':   ('„', '”'),
+}[args.locale]
+
 try:
     tempfile = open('.convert-temp', 'w')
 
     for line in args.infile:
         line = re.sub(r'^%(.*)$', '', line)
-        line = re.sub(r'"\b', '„', line)
-        line = re.sub(r'\b"', '“', line)
+        line = re.sub(r'"\b', quoteOpen, line)
+        line = re.sub(r'\b"', quoteClose, line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
             line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
@@ -39,15 +48,16 @@ try:
     
     tempfile.close()
     
-    assert os.system(f'pandoc\
+    assert os.system(f'pandoc \
         --mathjax \
-        --from markdown-smart \
+        --from markdown+smart \
         --pdf-engine=xelatex \
         --to {args.format} \
         --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" \
         --metadata lang=sk-SK \
         --output="{args.outfile.name}" \
-        {tempfile.name}') == 0
+        {tempfile.name}'
+    ) == 0
     
     os.remove(tempfile.name)
 
