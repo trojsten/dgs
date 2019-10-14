@@ -1,0 +1,13 @@
+(@ extends 'base.tex' @)
+ 
+(@ block content @)
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
+    \pagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+    \loadgeometry{main}
+
+    \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+    \loadgeometry{firstpage}
+    \afterpage{\aftergroup\restoregeometry}%
+   
+    (@ block inner @)(@ endblock @)
+(@ endblock content @)
