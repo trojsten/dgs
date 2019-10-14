@@ -7,7 +7,7 @@
 
     (@ if booklet.contents.intro @)
         \thispagestyle{first}
-        \loadgeometry{first}
+        \loadgeometry{firstpage}
         \afterpage{\aftergroup\restoregeometry}
         \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
         \newpage
