@@ -113,7 +113,7 @@ output/%.jpg: source/%.jpg
 output/%.html: source/%.md
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/dgs-convert.py html $< $@ || exit 1;
+	python3 core/dgs-convert.py html sk $< $@ || exit 1;
 
 
 .SECONDEXPANSION:

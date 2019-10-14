@@ -3,8 +3,7 @@ MAKEFLAGS += --no-builtin-rules
 .SECONDEXPANSION:
 
 input/seminar/format-root.tex: \
-	modules/seminar/format/format-root.tex \
-	source/seminar/meta.yaml
+	modules/seminar/format/format-root.tex
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build/format.py 'source/seminar/' 'modules/seminar' -o '$(dir $@)'
 
