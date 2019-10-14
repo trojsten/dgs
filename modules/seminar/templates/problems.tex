@@ -1,14 +1,8 @@
-(@ extends 'base.tex' @)
+(@ extends 'base-booklets.tex' @)
  
-(@ block content @)
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
-
-    \pagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
-    \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
-    \vspace*{8mm}
-
+(@ block inner @)
+    \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
     {
-        \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
         \centering
         \vspace*{-5mm}
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
@@ -34,4 +28,4 @@
         }%
         \protectedInput{\activeDirectory/problem.tex}%
     (@ endfor @)
-(@ endblock content @)
+(@ endblock inner @)
