@@ -1,8 +1,10 @@
 (@ extends 'base-booklets.tex' @)
  
-(@ block inner @)
-    \pagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+(@ block pagestyle @)
+    \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-problems}
+(@ endblock pagestyle @)
 
+(@ block inner @)
     \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
     {
         \centering

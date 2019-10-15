@@ -1,8 +1,10 @@
 (@ extends 'base-booklets.tex' @)
  
-(@ block inner @)
-    \pagestyle{seminar-solutions-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+(@ block pagestyle @)
+    \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-solutions}
+(@ endblock pagestyle @)
 
+(@ block inner @)
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
         
     (@ for pid, problem in round.problems.items() @)%
