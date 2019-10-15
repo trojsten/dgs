@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys, re, argparse
+import tempfile
 
 from utilities import colour as c
 
@@ -27,12 +28,13 @@ quoteOpen, quoteClose = {
 }[args.locale]
 
 try:
+    temporaryIn = tempfile.SpooledTemporaryFile(mode = 'w+b')
+
     tempfile = open('.convert-temp', 'w')
+    tempfile2 = open('.convert-temp2', 'w+')
 
     for line in args.infile:
         line = re.sub(r'^%(.*)$', '', line)
-        line = re.sub(r'"\b', quoteOpen, line)
-        line = re.sub(r'\b"', quoteClose, line)
         if args.format == 'latex':
             line = re.sub(r'^@H(.*)$', '', line)
             line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
@@ -50,20 +52,28 @@ try:
     
     assert os.system(f'pandoc \
         --mathjax \
-        --from markdown+smart \
+        --from markdown-smart \
         --pdf-engine=xelatex \
         --to {args.format} \
         --filter pandoc-crossref -M "crossrefYaml=core/crossref.yaml" \
         --metadata lang=sk-SK \
-        --output="{args.outfile.name}" \
+        --output="{tempfile2.name}" \
         {tempfile.name}'
     ) == 0
+
+    for line in tempfile2:
+        line = re.sub(r'"\b', quoteOpen, line)
+        line = re.sub(r'"', quoteClose, line)
+        args.outfile.write(line)
+
+    args.outfile.close()
     
     os.remove(tempfile.name)
+    os.remove(tempfile2.name)
 
-except IOError as e:
-    print(f"{c.name(__file__)}: Could not create a temporary file")
-    fail()
+#except IOError as e:
+#    print(f"{c.name(__file__)}: Could not create a temporary file")
+#    fail()
 except AssertionError as e:
     print(f"{c.name(__file__)}: Calling pandoc failed")
     fail()
