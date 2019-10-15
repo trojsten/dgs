@@ -5,14 +5,11 @@
 (@ endblock specific @)
  
 (@ block content @)
-    \loadgeometry{main}
-
-    \pagestyle{seminar-problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+    (@ block pagestyle @)(@ endblock pagestyle @)
     \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
     
     \loadgeometry{firstpage}
     \afterpage{\aftergroup\restoregeometry}
-
 
     (@ block inner @)(@ endblock @)
 (@ endblock content @)
