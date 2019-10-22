@@ -107,7 +107,9 @@ class Convertor():
         if self.args.format == 'html':
             line = re.sub(r'^@H\s*(.*)$', '\g<1>', line) 
             line = re.sub(r'^@P{(.*?)}{(.*?)}{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
-                '<figure><img src="obrazky/\g<1>.\g<3>" style="height: \g<4>" alt="\g<5>"/><figcaption>\g<5></figcaption></figure>', line)
+                '![\g<5>](obrazky/\g<1>.\g<3>)', line)
+            line = re.sub(r'^@NP{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
+                '![\g<3>](obrazky/\g<1>)', line)
         return line
 
     def callPandoc(self):
@@ -128,8 +130,9 @@ class Convertor():
         return out
 
     def postprocess(self, line):
-        line = re.sub(r'``', '“', line)
-        line = re.sub(r"''", '”', line)
+        if self.args.format == 'latex':
+            line = re.sub(r'``', '“', line)
+            line = re.sub(r"''", '”', line)
         return line
 
     def replaceQuotes(self, line):
