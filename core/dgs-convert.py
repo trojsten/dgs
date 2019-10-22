@@ -16,7 +16,19 @@ class Convertor():
         'fr':   ('«\u202F', '\u202F»'),
         'ru':   ('«', '»'),
         'pl':   ('„', '”'),
+        'hu':   ('„', '”'),
     }
+
+    languages = {
+        'sk':   'slovak',
+        'cs':   'czech',
+        'en':   'english',
+        'ru':   'russian',
+        'pl':   'polish',
+        'hu':   'hungarian',
+        'fr':   'french',
+    }
+
 
     def __init__(self):
         self.args = self.parseArguments()
@@ -34,6 +46,7 @@ class Convertor():
 
     def initialize(self):
         self.quoteOpen, self.quoteClose = self.quotationMarks[self.args.locale]
+        self.language = self.languages[self.args.locale]
 
     def run(self):
         try:
@@ -104,10 +117,10 @@ class Convertor():
         subprocess.run([
             "pandoc",
             "--mathjax",
-            "--from", "markdown-smart",
+            "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.args.format,
-            "--filter", "pandoc-crossref", "-M", "'crossrefYaml=core/crossref.yaml'",
+            "--filter", f"pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
             "--metadata", "lang=sk-SK",
         ], stdin = self.file, stdout = out)
 
@@ -116,6 +129,7 @@ class Convertor():
 
     def postprocess(self, line):
         line = re.sub(r'``', '“', line)
+        line = re.sub(r"''", '”', line)
         return line
 
     def replaceQuotes(self, line):
