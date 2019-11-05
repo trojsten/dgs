@@ -14,7 +14,9 @@ competition:
         genitive:       "Fyzikálního Náboje"
     email:              "info-cz@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-team:                   "Tým"
+tearoff:
+    team:               "Tým"
+    bottom:             "Tým si vyzvedl všechny úkoly."
 constants:
     title:              "Tabulka konstant"
     instruction:        "Během soutěže doporučujeme používat hodnoty konstant z~této tabulky. Výsledek získaný s použitím přesnějších hodnot Vám určitě \\textbf{bude} uznán."
