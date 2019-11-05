@@ -18,13 +18,13 @@ team:                   "Zespół"
 constants:
     title:              "Tabela stałych"
     instruction:        "Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \\textbf{będą} akceptowane."
-    constant:           "Stała"
-    symbol:             "Oznaczenie"
-    value:              "Wartość"
+    constant:           "stała"
+    symbol:             "oznaczenie"
+    value:              "wartość"
 instructions:
     title:              "Instrukcje" 
 envelope:
-    donotopen:          "Do not open this envelope before the competition starts. TRANSLATE"
+    donotopen:          ""
 
 physics_constants:
     au:                 "jednostka astronomiczna (odległość Ziemia--Słońce)"
@@ -45,7 +45,7 @@ physics_constants:
     permittivity:       "przenikalność magnetyczna próżni"
     planck:             "stała Plancka"
     pressure_standard:  "ciśnienie atmosferyczne"
-    puerperium:         "pológ"
+    puerperium:         "połóg"
     radius_earth:       "promień Ziemi"
     radius_sun:         "promień Słońca"
     solar_flux:         "gęstość strumienia promieniowania słonecznego w \\SI{1}{\\au}"
