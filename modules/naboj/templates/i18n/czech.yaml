@@ -18,13 +18,13 @@ team:                   "Tým"
 constants:
     title:              "Tabulka konstant"
     instruction:        "Během soutěže doporučujeme používat hodnoty konstant z~této tabulky. Výsledek získaný s použitím přesnějších hodnot Vám určitě \\textbf{bude} uznán."
-    constant:           "Konstanta"
-    symbol:             "Značka"
-    value:              "Hodnota"
+    constant:           "konstanta"
+    symbol:             "značka"
+    value:              "hodnota"
 instructions:
     title:              "Pokyny" 
 envelope:
-    donotopen:          "Do not open this envelope before the competition starts."
+    donotopen:          ""
 
 physics_constants:
     au:                 "astronomická jednotka (vzdálenost Zem--Slunce)"

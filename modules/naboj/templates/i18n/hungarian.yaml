@@ -17,14 +17,14 @@ competition:
 team:                   "Csapat"
 constants:
     title:              "Konstansok táblázata"
-    instruction:        "We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \\textbf{will} be accepted."
-    constant:           "Constant"
-    symbol:             "Symbol"
-    value:              "Value"
+    instruction:        ""
+    constant:           ""
+    symbol:             ""
+    value:              ""
 instructions:
     title:              "Utasítás" 
 envelope:
-    donotopen:          "Do not open this envelope before the competition starts. TRANSLATE"
+    donotopen:          "Do not open this envelope before the competition starts."
 
 physics_constants:
     au:                 "csillagászati egység (Föld--Nap távolság)"
@@ -53,5 +53,5 @@ physics_constants:
     stefan_boltzmann:   "Stefan--Boltzmann állandó"
     universal_gas:      "univerzális gáz állandó"
 
-    # heat_water: A víz hőkapacitása
-    # ice_melting: A víz párolgási entalpiája
+    # heat_water:       "a víz hőkapacitása"
+    # ice_melting:      "a víz párolgási entalpiája"
