@@ -64,7 +64,7 @@ class ContextVolume(ContextNaboj):
         self.add({'problems':       context.addNumbers(self.data['problems'], 1)})
         self.add({'problemsMod5':   context.splitMod(self.data['problems'], 5, 1)})
 
-        self.data['problems'].append({'id': '_end', 'number': 0})
+        self.data['problems'].append({'id': '-end-', 'number': 0})
 
 class ContextLanguage(ContextNaboj):
     def __init__(self, language):
