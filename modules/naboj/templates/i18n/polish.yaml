@@ -25,3 +25,30 @@ instructions:
     title:              'Instrukcje' 
 envelope:
     donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'
+
+physconstants:
+    au:                 "Jednostka astronomiczna (odległość Ziemia--Słońce)"
+    avogadro:           "Stała Avogadra"
+    boltzmann:          "Stała Boltzmanna"
+    density_air:        "Gęstość powietrza"
+    density_helium:     "Gęstość helu"
+    density_water:      "Gęstość wody"
+    elementary_charge:  "Ładunek elementarny"
+    gforce:             "Standard gravity of the Earth"
+    gravity:            "Stała grawitacji"
+    light_speed:        "Szybkość światła w próżni"
+    mass_earth:         "Masa Ziemi"
+    mass_electron:      "Masa elektronu"
+    mass_proton:        "Masa protonu"
+    mass_sun:           "Masa Słońca"
+    parsec:             "Parsek"
+    permeability:       "Przenikalność elektryczna próżni"
+    permittivity:       "Przenikalność magnetyczna próżni"
+    planck:             "Stała Plancka"
+    pressure_standard:  "Ciśnienie atmosferyczne"
+    puerperium:         "Pológ"
+    radius_earth:       "Promień Ziemi"
+    radius_sun:         "Promień Słońca"
+    solar_flux:         "Gęstość strumienia promieniowania słonecznego w \\SI{1}{\\au}"
+    stefan_boltzmann:   "Stała Stefana-Boltzmanna"
+    universal_gas:      "Stała gazowa"

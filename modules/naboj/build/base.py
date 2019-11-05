@@ -1,11 +1,11 @@
-import argparse, os, sys, pprint
+import argparse
+import os
+import sys
+import pprint
 
 sys.path.append('.')
-import core.utilities.jinja as jinja
-import core.utilities.dicts as dicts
-import core.utilities.colour as c
-import core.utilities.argparser as argparser
-import core.utilities.context as context
+
+from core.utilities import jinja, dicts, colour as c, argparser, context
 
 class BuilderNaboj(context.BaseBuilder):
     module = 'naboj'
