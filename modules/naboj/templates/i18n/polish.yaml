@@ -1,54 +1,54 @@
 section:
-    problems:           'Problemy'
-    solutions:          'Rozwiązania'
-    answers:            'Odpowiedzi'
-    constants:          'Tabela stałych'
-    instructions:       'Instrukcje'
-    modulo:             'Modulo'
+    problems:           "Problemy"
+    solutions:          "Rozwiązania"
+    answers:            "Odpowiedzi"
+    constants:          "Tabela stałych"
+    instructions:       "Instrukcje"
+    modulo:             "Modulo"
 caption:
-    table:              'Tabela'
-    figure:             'Figura'
+    table:              "Tabela"
+    figure:             "Figura"
 competition:
     name:
-        nominative:     'Nabój Fizyczny'
-        genitive:       'Nabója Fizycznego'
-    email:              'info-pl@physics.naboj.org'
-    website:            'https://physics.naboj.org/'
-team:                   'Zespół'
+        nominative:     "Nabój Fizyczny"
+        genitive:       "Nabója Fizycznego"
+    email:              "info-pl@physics.naboj.org"
+    website:            "https://physics.naboj.org/"
+team:                   "Zespół"
 constants:
-    title:              'Tabela stałych'
-    instruction:        'Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \textbf{będą} akceptowane.'
-    constant:           'Stała'
-    symbol:             'Oznaczenie'
-    value:              'Wartość'
+    title:              "Tabela stałych"
+    instruction:        "Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \textbf{będą} akceptowane."
+    constant:           "Stała"
+    symbol:             "Oznaczenie"
+    value:              "Wartość"
 instructions:
-    title:              'Instrukcje' 
+    title:              "Instrukcje" 
 envelope:
-    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'
+    donotopen:          "Do not open this envelope before the competition starts. TRANSLATE"
 
-physconstants:
-    au:                 "Jednostka astronomiczna (odległość Ziemia--Słońce)"
-    avogadro:           "Stała Avogadra"
-    boltzmann:          "Stała Boltzmanna"
-    density_air:        "Gęstość powietrza"
-    density_helium:     "Gęstość helu"
-    density_water:      "Gęstość wody"
-    elementary_charge:  "Ładunek elementarny"
-    gforce:             "Standard gravity of the Earth"
-    gravity:            "Stała grawitacji"
-    light_speed:        "Szybkość światła w próżni"
-    mass_earth:         "Masa Ziemi"
-    mass_electron:      "Masa elektronu"
-    mass_proton:        "Masa protonu"
-    mass_sun:           "Masa Słońca"
-    parsec:             "Parsek"
-    permeability:       "Przenikalność elektryczna próżni"
-    permittivity:       "Przenikalność magnetyczna próżni"
-    planck:             "Stała Plancka"
-    pressure_standard:  "Ciśnienie atmosferyczne"
-    puerperium:         "Pológ"
-    radius_earth:       "Promień Ziemi"
-    radius_sun:         "Promień Słońca"
-    solar_flux:         "Gęstość strumienia promieniowania słonecznego w \\SI{1}{\\au}"
-    stefan_boltzmann:   "Stała Stefana-Boltzmanna"
-    universal_gas:      "Stała gazowa"
+physics_constants:
+    au:                 "jednostka astronomiczna (odległość Ziemia--Słońce)"
+    avogadro:           "stała Avogadra"
+    boltzmann:          "stała Boltzmanna"
+    density_air:        "gęstość powietrza"
+    density_helium:     "gęstość helu"
+    density_water:      "gęstość wody"
+    elementary_charge:  "ładunek elementarny"
+    gforce:             "przyspieszenie ziemskie normalne"
+    gravity:            "stała grawitacji"
+    mass_earth:         "masa Ziemi"
+    mass_electron:      "masa elektronu"
+    mass_proton:        "masa protonu"
+    mass_sun:           "masa Słońca"
+    parsec:             "parsek"
+    permeability:       "przenikalność elektryczna próżni"
+    permittivity:       "przenikalność magnetyczna próżni"
+    planck:             "stała Plancka"
+    pressure_standard:  "ciśnienie atmosferyczne"
+    puerperium:         "pológ"
+    radius_earth:       "promień Ziemi"
+    radius_sun:         "promień Słońca"
+    solar_flux:         "gęstość strumienia promieniowania słonecznego w \\SI{1}{\\au}"
+    speed_light:        "szybkość światła w próżni"
+    stefan_boltzmann:   "stała Stefana-Boltzmanna"
+    universal_gas:      "stała gazowa"

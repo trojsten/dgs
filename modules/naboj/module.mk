@@ -192,8 +192,8 @@ output/naboj/%: \
 
 # All targets for all languages
 output/naboj/%/languages/all: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)all) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ; 
 
 # All targets for all venues
 output/naboj/%/venues/all: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)all) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ; 

@@ -1,52 +1,54 @@
 section:
-    problems:           'Задания'
-    solutions:          'Образцы решений'
-    answers:            'Решения'
-    constants:          'Таблица констант'
-    instructions:       'Указания'
-    modulo:             'Остаток от деления'
+    problems:           "Задания"
+    solutions:          "Образцы решений"
+    answers:            "Решения"
+    constants:          "Таблица констант"
+    instructions:       "Указания"
+    modulo:             "Остаток от деления"
 caption:
-    table:              'Таблица'
-    figure:             'Картинка'
+    table:              "Таблица"
+    figure:             "Картинка"
 competition:
     name:
-        nominative:     'Физический Náboj'
-        genitive:       'Физикального Náboja'
-    email:              'info-cz@physics.naboj.org'
-    website:            'https://physics.naboj.org/'
-team:                   'Команда'
+        nominative:     "Физический Náboj"
+        genitive:       "Физикального Náboja"
+    email:              "info-cz@physics.naboj.org"
+    website:            "https://physics.naboj.org/"
+team:                   "Команда"
 constants:
-    title:              'Таблица констант'
-    instruction:        'В течение соревнования рекомендуем пользоваться константами с этой таблицы. Решение полученное при помощи более точных величин Вам тоже примут.'
-    constant:           'Константа'
-    symbol:             'Символ'
-    value:              'Величина'
+    title:              "Таблица констант"
+    instruction:        "В течение соревнования рекомендуем пользоваться константами с этой таблицы. Решение полученное при помощи более точных величин Вам тоже примут."
+    constant:           "Константа"
+    symbol:             "Символ"
+    value:              "Величина"
 instructions:
-    title:              'Инструкции' 
+    title:              "Инструкции" 
 envelope:
-    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'
+    donotopen:          "Do not open this envelope before the competition starts. TRANSLATE"
 
-physconstants:
-    au:                 'Астрономическая единица (расстояние Земля--Сольнче)'
-    avogadro:           'Постоянная Авогадро'
-    boltzmann:          'Постоянная Больцмана'
-    density_air:        'Плотность воздуха при стандартных условиях'
-    density_helium:     'Плотность гелия при стандартных условиях'
-    density_water:      'Плотность воды'
-    elementary_charge:  'Элементарный заряд'
-    gforce:             'Нормальное ускорение свободного падения'
-    gravity:            'Гравитационная постоянная'
-    light_speed:        'Скорость света в вакууме'
-    mass_electron:      'Масса электрона'
-    mass_proton:        'Масса протона'
-    mass_earth:         'Масса Земли'
-    mass_sun:           'Масса Солнца'
-    parsec:             'Парсек'
-    permeability:       'Магнитная проницаемость вакуума'
-    permittivity:       'Электрическая проницаемость вакуума'
-    pressure_standard:  'Стандартное атмосферическое давление'
-    radius_earth:       'Радиус Земли'
-    radius_sun:         'Радиус Солнца'
-    solar_flux:         'Солярная постоянная'
-    stefan_boltzmann:   'Постоянная Стефана--Больцмана'
-    universal_gas:      'Универсальная (молярная) газовая постоянная'
+physics_constants:
+    au:                 "астрономическая единица (расстояние Земля--Сольнче)"
+    avogadro:           "постоянная Авогадро"
+    boltzmann:          "постоянная Больцмана"
+    density_air:        "плотность воздуха при стандартных условиях"
+    density_helium:     "плотность гелия при стандартных условиях"
+    density_water:      "плотность воды"
+    elementary_charge:  "элементарный заряд"
+    gforce:             "нормальное ускорение свободного падения"
+    gravity:            "гравитационная постоянная"
+    mass_earth:         "масса Земли"
+    mass_electron:      "масса электрона"
+    mass_proton:        "масса протона"
+    mass_sun:           "масса Солнца"
+    parsec:             "парсек"
+    permeability:       "магнитная проницаемость вакуума"
+    permittivity:       "электрическая проницаемость вакуума"
+    planck:             "постоянная Планка"
+    pressure_standard:  "стандартное атмосферическое давление"
+    puerperium:         "послеродовой период"
+    radius_earth:       "радиус Земли"
+    radius_sun:         "радиус Солнца"
+    solar_flux:         "солярная постоянная"
+    speed_light:        "скорость света в вакууме"
+    stefan_boltzmann:   "постоянная Стефана--Больцмана"
+    universal_gas:      "универсальная (молярная) газовая постоянная"
