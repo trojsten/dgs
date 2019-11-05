@@ -1,27 +1,57 @@
 section:
-    problems:           'Feladatok'
-    solutions:          'Megoldások'
-    answers:            'Válaszok'
-    constants:          'Konstansok táblázata'
-    instructions:       'Utasítás'
-    modulo:             'Modulo'
+    problems:           "Feladatok"
+    solutions:          "Megoldások"
+    answers:            "Válaszok"
+    constants:          "Konstansok táblázata"
+    instructions:       "Utasítás"
+    modulo:             "Modulo"
 caption:
-    table:              'Táblázat'
-    figure:             'Ábra'
+    table:              "Táblázat"
+    figure:             "Ábra"
 competition:
     name:
-        nominative:     'Náboj Fizika'
-        genitive:       'Náboj Fizika'
-    email:              'info-hu@physics.naboj.org'
-    website:            'https://physics.naboj.org/'
-team:                   'Csapat'
+        nominative:     "Náboj Fizika"
+        genitive:       "Náboj Fizika"
+    email:              "info-hu@physics.naboj.org"
+    website:            "https://physics.naboj.org/"
+team:                   "Csapat"
 constants:
-    title:              'Konstansok táblázata'
-    instruction:        'We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted.'
-    constant:           'Constant'
-    symbol:             'Symbol'
-    value:              'Value'
+    title:              "Konstansok táblázata"
+    instruction:        "We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted."
+    constant:           "Constant"
+    symbol:             "Symbol"
+    value:              "Value"
 instructions:
-    title:              'Utasítás' 
+    title:              "Utasítás" 
 envelope:
-    donotopen:          'Do not open this envelope before the competition starts. TRANSLATE'
+    donotopen:          "Do not open this envelope before the competition starts. TRANSLATE"
+
+physics_constants:
+    au:                 "csillagászati egység (Föld--Nap távolság)"
+    avogadro:           "Avogadro állandó"
+    boltzmann:          "Boltzmann állandó"
+    #density_air:        ""
+    #density_helium:     ""
+    density_water:      "a víz sűrűsége"
+    elementary_charge:  "elemi töltés"
+    gforce:             "nehézségi gyorsulás a Földön"
+    gravity:            "gravitációs állandó"
+    mass_earth:         "a Föld tömege"
+    #mass_electron:      ""
+    #mass_proton:        ""
+    mass_sun:           "a Nap tömege"
+    parsec:             "parszek"
+    permeability:       "a vákuum mágneses permeabilitása"
+    permittivity:       "a vákuum dielektromos állandója (permittivitása)"
+    planck:             "Planck allándó"
+    pressure_standard:  "standard légköri nyomás"
+    puerperium:         "puerperium (a gyermekágy időszaka)"
+    radius_earth:       "a Föld sugara"
+    radius_sun:         "a Nap sugara"
+    solar_flux:         "napállandó (a Nap sugárzásának fluxus sűrűsége \SI{1}{\au} távolságban)"
+    speed_light:        "fénysebesség vákuumban"
+    stefan_boltzmann:   "Stefan--Boltzmann állandó"
+    universal_gas:      "univerzális gáz állandó"
+
+    # heat_water: A víz hőkapacitása
+    # ice_melting: A víz párolgási entalpiája

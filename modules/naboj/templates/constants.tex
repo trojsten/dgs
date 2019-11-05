@@ -17,8 +17,8 @@
                 (@ for id in field @)
                     (@ with constant = competition.constants.get(id) @)
                         (@ if constant is not none @)
-                            (@ if id in i18n.physconstants @)
-                                (* i18n.physconstants.get(id) *)
+                            (@ if id in i18n.physics_constants @)
+                                (* i18n.physics_constants.get(id) *)
                             (@ else @)
                                 \bf \textcolor{red}{No translation provided for <}\verb|(* id *)|\textcolor{red}{>}
                             (@ endif @) &
