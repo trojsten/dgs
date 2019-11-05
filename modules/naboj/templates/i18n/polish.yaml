@@ -14,7 +14,9 @@ competition:
         genitive:       "Nabója Fizycznego"
     email:              "info-pl@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-team:                   "Zespół"
+tearoff:    
+    team:               "Zespół"
+    bottom:             "The team has received all problems."
 constants:
     title:              "Tabela stałych"
     instruction:        "Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \\textbf{będą} akceptowane."

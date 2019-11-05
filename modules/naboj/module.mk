@@ -28,7 +28,8 @@ input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
-    input/naboj/$$*/build-venue ;
+    input/naboj/$$*/build-venue \
+	i18n ;
 
 input/naboj/%/envelope.tex: \
 	modules/naboj/templates/$$(notdir $@) \

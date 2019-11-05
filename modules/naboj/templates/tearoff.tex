@@ -15,7 +15,11 @@
                         \vspace{0pt}%
                         \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
                         \setlength{\parskip}{6pt}
-                        \protectedInput{\activeDirectory/problem.tex}%
+                        (@ if problem.id != '_end' @)
+                            \protectedInput{\activeDirectory/problem.tex}%
+                        (@ else @)
+                            (* i18n.get(team.language).tearoff.bottom *)
+                        (@ endif @)
                     \end{minipage}%
                     \begin{minipage}[t][88mm][t]{0.15\linewidth}
                         \vspace{0mm}%
@@ -39,7 +43,7 @@
                             \hspace{6mm}%
                         }%
                     \end{minipage}
-                    {\small (* i18n.get(team.language).team *) \textbf{(* team.id *)}: (* team.name *)}
+                    {\small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.id *)}: (* team.name *)}
                 \end{minipage}%
                 (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
             (@ endfor @)

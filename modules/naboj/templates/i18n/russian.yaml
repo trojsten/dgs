@@ -14,7 +14,9 @@ competition:
         genitive:       "Физикального Náboja"
     email:              "info-cz@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-team:                   "Команда"
+tearoff:
+    team:               "Команда"
+    bottom:             "The team has received all problems."
 constants:
     title:              "Таблица констант"
     instruction:        "В течение соревнования рекомендуем пользоваться константами с этой таблицы. Решение полученное при помощи более точных величин Вам тоже примут."

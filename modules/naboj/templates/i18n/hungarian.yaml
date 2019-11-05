@@ -14,7 +14,9 @@ competition:
         genitive:       "Náboj Fizika"
     email:              "info-hu@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-team:                   "Csapat"
+tearoff:
+    team:               "Csapat"
+    bottom:             "The team has received all problems."
 constants:
     title:              "Konstansok táblázata"
     instruction:        ""
