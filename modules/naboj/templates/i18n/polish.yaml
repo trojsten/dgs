@@ -17,7 +17,7 @@ competition:
 team:                   "Zespół"
 constants:
     title:              "Tabela stałych"
-    instruction:        "Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \textbf{będą} akceptowane."
+    instruction:        "Podczas zawodów zalecamy stosowanie podanych wartości stałych fizycznych. Jednak wyniki obliczone z dokładniejszymi wartościami \\textbf{będą} akceptowane."
     constant:           "Stała"
     symbol:             "Oznaczenie"
     value:              "Wartość"

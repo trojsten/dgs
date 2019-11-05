@@ -17,7 +17,7 @@ competition:
 team:                   "Csapat"
 constants:
     title:              "Konstansok táblázata"
-    instruction:        "We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted."
+    instruction:        "We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \\textbf{will} be accepted."
     constant:           "Constant"
     symbol:             "Symbol"
     value:              "Value"
@@ -48,7 +48,7 @@ physics_constants:
     puerperium:         "puerperium (a gyermekágy időszaka)"
     radius_earth:       "a Föld sugara"
     radius_sun:         "a Nap sugara"
-    solar_flux:         "napállandó (a Nap sugárzásának fluxus sűrűsége \SI{1}{\au} távolságban)"
+    solar_flux:         "napállandó (a Nap sugárzásának fluxus sűrűsége \\SI{1}{\\au} távolságban)"
     speed_light:        "fénysebesség vákuumban"
     stefan_boltzmann:   "Stefan--Boltzmann állandó"
     universal_gas:      "univerzális gáz állandó"
