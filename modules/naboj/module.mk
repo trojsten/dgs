@@ -53,7 +53,6 @@ input/naboj/%/intro.tex: \
 
 input/naboj/%/constants.tex: \
     input/naboj/$$*/build-language \
-	source/naboj/$$*/constants-table.tex \
 	i18n ;
 
 input/naboj/%/instructions-text.tex: \
@@ -122,7 +121,6 @@ output/naboj/%/answers-mod5.pdf: \
 
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
-	input/naboj/%/constants-table.tex \
 	modules/naboj/templates/constants.tex \
 	i18n
 	$(call doubletex,naboj)

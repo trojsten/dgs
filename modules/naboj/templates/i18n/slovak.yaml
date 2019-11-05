@@ -17,7 +17,7 @@ competition:
 team:                   "Tím"
 constants:
     title:              "Tabuľka konštánt"
-    instruction:        "Počas Náboja odporúčame používať hodnoty konštánt z~tejto tabuľky. Výsledok získaný s použitím presnejších hodnôt Vám určite \textbf{bude} uznaný."
+    instruction:        "Počas Náboja odporúčame používať hodnoty konštánt z~tejto tabuľky. Výsledok získaný s použitím presnejších hodnôt Vám určite \\textbf{bude} uznaný."
     constant:           "Konštanta"
     symbol:             "Značka"
     value:              "Hodnota"
