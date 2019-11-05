@@ -1,27 +1,52 @@
 section:
-    problems:           'Zadania'
-    solutions:          'Vzorové riešenia'
-    answers:            'Výsledky'
-    constants:          'Tabuľka konštánt'
-    instructions:       'Pokyny'
-    modulo:             'Zvyšok'
+    problems:           "Zadania"
+    solutions:          "Vzorové riešenia"
+    answers:            "Výsledky"
+    constants:          "Tabuľka konštánt"
+    instructions:       "Pokyny"
+    modulo:             "Zvyšok"
 caption:
-    table:              'Tabuľka'
-    figure:             'Obrázok'
+    table:              "Tabuľka"
+    figure:             "Obrázok"
 competition:
     name:
-        nominative:     'Fyzikálny Náboj'
-        genitive:       'Fyzikálneho Náboja'
-    email:              'info-sk@physics.naboj.org'
-    website:            'https://physics.naboj.org/'
-team:                   'Tím'
+        nominative:     "Fyzikálny Náboj"
+        genitive:       "Fyzikálneho Náboja"
+    email:              "info-sk@physics.naboj.org"
+    website:            "https://physics.naboj.org/"
+team:                   "Tím"
 constants:
-    title:              'Tabuľka konštánt'
-    instruction:        'Počas Náboja odporúčame používať hodnoty konštánt z~tejto tabuľky. Výsledok získaný s použitím presnejších hodnôt Vám však určite \textbf{bude} uznaný.'
-    constant:           'Konštanta'
-    symbol:             'Značka'
-    value:              'Hodnota'
+    title:              "Tabuľka konštánt"
+    instruction:        "Počas Náboja odporúčame používať hodnoty konštánt z~tejto tabuľky. Výsledok získaný s použitím presnejších hodnôt Vám určite \textbf{bude} uznaný."
+    constant:           "Konštanta"
+    symbol:             "Značka"
+    value:              "Hodnota"
 instructions:
-    title:              'Pokyny'
+    title:              "Pokyny"
 envelope:
-    donotopen:          'Neotvárajte túto obálku pred začiatkom súťaže.'
+    donotopen:          "Neotvárajte túto obálku pred začiatkom súťaže."
+
+physconstants:
+    au:                 "Astronomická jednotka (vzdialenosť Zem--Slnko)"
+    avogadro:           "Avogadrova konštanta"
+    boltzmann:          "Boltzmannova konštanta"
+    density_air:        "Hustota vzduchu"
+    density_helium:     "Hustota hélia"
+    density_water:      "Hustota vody"
+    elementary_charge:  "Elementárny náboj"
+    gforce:             "Tiažové zrýchlenie pri povrchu Zeme"
+    gravity:            "Gravitačná konštanta"
+    mass_earth:         "Hmotnosť Zeme"
+    mass_electron:      "Hmotnosť elektrónu"
+    mass_proton:        "Hmotnosť protónu"
+    mass_sun:           "Hmotnosť Slnka"
+    parsec:             "Parsek"
+    permeability:       "Magnetická permeabilita vákua"
+    permittivity:       "Elektrická permitivita vákua"
+    pressure_standard:  "Štandardný tlak pri hladine mora"
+    radius_earth:       "Polomer Zeme"
+    radius_sun:         "Polomer Slnka"
+    solar_flux:         "Solárna konštanta"
+    speed_light:        "Rýchlosť svetla"
+    stefan_boltzmann:   "Stefan--Boltzmannova konštanta"
+    universal_gas:      "Univerzálna plynová konštanta"

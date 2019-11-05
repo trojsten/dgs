@@ -9,12 +9,37 @@
 
     \begin{figure}[H]
         \centering
-        \begin{tabular}{l c c}
+        \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
             \toprule
                 (* i18n.constants.constant *) & (* i18n.constants.symbol *) & (* i18n.constants.value *) \\
             \midrule
-            \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/constants-table.tex}
+            (@ for field in volume.constants.values() @)
+                (@ for id in field @)
+                    (@ with constant = competition.constants.get(id) @)
+                        (@ if constant is not none @)
+                            (@ if id in i18n.physconstants @)
+                                (* i18n.physconstants.get(id) *)
+                            (@ else @)
+                                \bf \textcolor{red}{No translation provided for <}\verb|(* id *)|\textcolor{red}{>}
+                            (@ endif @) &
+                            (@ if 'symbol' in constant @)
+                                $(* constant.symbol *)$
+                            (@ else @)
+                                <no symbol defined>
+                            (@ endif @) &
+                            (@ if 'value' in constant and 'symbol' in constant @)
+                                \SI{(* constant.value *)}{(* constant.unit *)}
+                            (@ else @)
+                                \textbf{\textcolor{red}{no value or unit defined}}
+                            (@ endif @) \\
+                        (@ else @)
+                            \bf \textcolor{red}{Undefined constant} \verb|(* id *)| & & \\
+                        (@ endif @)
+                    (@ endwith @)
+                (@ endfor @)
+                (@ if not loop.last @)\midrule(@ endif @)
+            (@ endfor @)
             \bottomrule
-        \end{tabular}
+        \end{tabular*}
     \end{figure}
 (@ endblock @)

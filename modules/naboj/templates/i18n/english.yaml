@@ -1,27 +1,50 @@
 section:
-    problems:           'Problems'
-    solutions:          'Solutions'
-    answers:            'Answers'
-    constants:          'Table of constants'
-    instructions:       'Instructions'
-    modulo:             'Modulo'
+    problems:           "Problems"
+    solutions:          "Solutions"
+    answers:            "Answers"
+    constants:          "Table of constants"
+    instructions:       "Instructions"
+    modulo:             "Modulo"
 caption:
-    table:              'Table'
-    figure:             'Figure'
+    table:              "Table"
+    figure:             "Figure"
 competition:
     name:
-        nominative:     'Physics Náboj'
-        genitive:       'Physics Náboj'
-    email:              'info-en@physics.naboj.org'
-    website:            'https://physics.naboj.org/'
-team:                   'Team'
+        nominative:     "Physics Náboj"
+        genitive:       "Physics Náboj"
+    email:              "info-en@physics.naboj.org"
+    website:            "https://physics.naboj.org/"
+team:                   "Team"
 constants:
-    title:              'Table of constants'
-    instruction:        'We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted.'
-    constant:           'Constant'
-    symbol:             'Symbol'
-    value:              'Value'
+    title:              "Table of constants"
+    instruction:        "We recommend to use these values of constants during the competition. However, results calculated with more precise values of these constants \textbf{will} be accepted."
+    constant:           "Constant"
+    symbol:             "Symbol"
+    value:              "Value"
 instructions:
-    title:              'Instructions' 
+    title:              "Instructions" 
 envelope:
-    donotopen:          'Do not open this envelope before the competition starts.'
+    donotopen:          "Do not open this envelope before the competition starts.":
+
+physconstants:
+    au:                 "Astronomical unit"
+    avogadro:           "Avogadro constant"
+    boltzmann:          "Boltzmann constant"
+    density_air:        "Density of the air at STP"
+    density_helium:     "Density of helium at STP"
+    density_water:      "Density of water at STP"
+    elementary_charge:  "Elementary charge"
+    gforce:             "Standard gravity of the Earth"
+    gravity:            "Gravitational constant"
+    light_speed:        "Speed of light"
+    mass_electron:      "Electron rest mass"
+    mass_proton:        "Proton rest mass"
+    parsec:             "Parsec"
+    permeability:       "Permeability of free space"
+    permittivity:       "Permittivity of free space"
+    pressure_standard:  "Atmospheric pressure"
+    radius_earth:       "Radius of the Earth"
+    radius_sun:         "Radius of the Sun"
+    solar_flux:         "Solar constant"
+    stefan_boltzmann:   "Stefan--Boltzmann constant"
+    universal_gas:      "Universal gas constant"

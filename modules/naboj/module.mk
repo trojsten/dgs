@@ -6,8 +6,7 @@ MAKEFLAGS += --no-builtin-rules
 # % <competition>/<volume>/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-	source/naboj/$$*/meta.yaml \
-	modules/naboj/templates/constants.tex
+	source/naboj/$$*/meta.yaml
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -54,16 +53,17 @@ input/naboj/%/intro.tex: \
 
 input/naboj/%/constants.tex: \
     input/naboj/$$*/build-language \
-	source/naboj/%/constants-table.tex ;
+	source/naboj/$$*/constants-table.tex \
+	i18n ;
 
 input/naboj/%/instructions-text.tex: \
     input/naboj/$$*/build-language \
-	source/naboj/%/instructions-text.tex ;
+	source/naboj/$$*/instructions-text.tex ;
 
 input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
-	source/naboj/%/instructions-text.tex ;
+	source/naboj/$$*/instructions-text.tex ;
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
@@ -74,10 +74,22 @@ input/naboj/%/pdf-prerequisites: \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
+input/naboj/%/problems: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) ;
+
+input/naboj/%/solutions: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/solution.md))) ;
+
+input/naboj/%/answers: \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) ;
+
+i18n: \
+	$$(wildcard modules/naboj/templates/i18n/*.yaml) ;
+
 output/naboj/%/booklet.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/solution.md))) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
+	input/naboj/%/problems \
+	input/naboj/%/solutions \
+	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/format-language.tex \
 	input/naboj/%/intro.tex \
@@ -97,13 +109,13 @@ output/naboj/%/cover-print.pdf: \
 	pdfnup --quiet --nup 2x1 $< --outfile $@
 
 output/naboj/%/answers.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
+	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/answers.tex 
 	$(call doubletex,naboj)
 
 output/naboj/%/answers-mod5.pdf: \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) \
+	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/answers-mod5.tex 
 	$(call doubletex,naboj)
@@ -111,7 +123,8 @@ output/naboj/%/answers-mod5.pdf: \
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
 	input/naboj/%/constants-table.tex \
-	$$(wildcard modules/naboj/templates/i18n/*.yaml)
+	modules/naboj/templates/constants.tex \
+	i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/instructions.pdf: \
