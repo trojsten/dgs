@@ -190,9 +190,9 @@ output/naboj/%: \
     output/naboj/$$*/envelope.pdf ;
 
 # All targets for all languages
-output/naboj/%/languages/all: \
+output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ; 
 
 # All targets for all venues
-output/naboj/%/venues/all: \
+output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ; 
