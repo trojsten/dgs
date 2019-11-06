@@ -1,6 +1,6 @@
 (@ for team in venue.teams -@)
-(@ set outer = loop @)
 (@ for problem in volume.problems -@)
-(* '%03d'|format(venue.number) *)(* '%03d'|format(team.id) *)(* '%02d'|format(problem.number) *)(* checkdigit(venue.number, team.id, problem.number) *)(@ if not outer.last or not loop.last @)(* '\n' *)(@ endif @)
+(* '%03d'|format(venue.number) *)(* '%03d'|format(team.id) *)(* '%02d'|format(problem.number) *)(* checkdigit(venue.number, team.id, problem.number) *)(* '\n' *)
 (@- endfor @)
+(* '%03d'|format(venue.number) *)(* '%03d'|format(team.id) *)(* '%02d'|format(0) *)(* checkdigit(venue.number, team.id, 0) *)(@ if not loop.last @)(* '\n' *)(@ endif @)
 (@- endfor @)

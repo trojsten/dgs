@@ -6,7 +6,8 @@ MAKEFLAGS += --no-builtin-rules
 # % <competition>/<volume>/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-	source/naboj/$$*/meta.yaml
+	source/naboj/$$*/meta.yaml \
+	i18n ;
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -16,7 +17,7 @@ input/naboj/%/build-language: \
 input/naboj/%/build-venue: \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-	modules/naboj/templates/tearoff.tex
+	i18n ;
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -28,8 +29,7 @@ input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
-    input/naboj/$$*/build-venue \
-	i18n ;
+    input/naboj/$$*/build-venue ;
 
 input/naboj/%/envelope.tex: \
 	modules/naboj/templates/$$(notdir $@) \
@@ -50,20 +50,19 @@ input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.t
 
 input/naboj/%/intro.tex: \
     input/naboj/$$*/build-language \
-	source/naboj/%/intro.tex ;
+	source/naboj/$$*/$$(notdir $$@) ;
 
 input/naboj/%/constants.tex: \
-    input/naboj/$$*/build-language \
-	i18n ;
+    input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions-text.tex: \
     input/naboj/$$*/build-language \
-	source/naboj/$$*/instructions-text.tex ;
+	source/naboj/$$*/$$(notdir $$@) ;
 
 input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
-	source/naboj/$$*/instructions-text.tex ;
+	input/naboj/$$*/instructions-text.tex ;
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
