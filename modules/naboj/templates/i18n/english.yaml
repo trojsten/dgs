@@ -2,7 +2,6 @@ section:
     problems:           "Problems"
     solutions:          "Solutions"
     answers:            "Answers"
-    constants:          "Table of constants"
     instructions:       "Instructions"
     modulo:             "Modulo"
 caption:

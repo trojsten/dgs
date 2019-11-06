@@ -2,7 +2,6 @@ section:
     problems:           "Zadání"
     solutions:          "Vzorová řešení"
     answers:            "Výsledky"
-    constants:          "Tabulka konstant"
     instructions:       "Pokyny"
     modulo:             "Modulo"
 caption:
