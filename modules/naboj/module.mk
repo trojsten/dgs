@@ -53,6 +53,7 @@ input/naboj/%/intro.tex: \
 	source/naboj/$$*/$$(notdir $$@) ;
 
 input/naboj/%/constants.tex: \
+	modules/naboj/templates/constants.tex \
     input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions-text.tex: \
@@ -60,8 +61,8 @@ input/naboj/%/instructions-text.tex: \
 	source/naboj/$$*/$$(notdir $$@) ;
 
 input/naboj/%/instructions.tex: \
-	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language \
+	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/instructions-text.tex ;
 
 input/naboj/%/pdf-prerequisites: \
@@ -121,14 +122,12 @@ output/naboj/%/answers-mod5.pdf: \
 
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
-	modules/naboj/templates/constants.tex \
 	i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
-	input/naboj/%/instructions-text.tex \
-	$$(wildcard modules/naboj/templates/i18n/*.yaml)
+	i18n 
 	$(call doubletex,naboj)
 
 output/naboj/%/cover.pdf: \
