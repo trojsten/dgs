@@ -2,7 +2,6 @@ section:
     problems:           "Problemy"
     solutions:          "Rozwiązania"
     answers:            "Odpowiedzi"
-    instructions:       "Instrukcje"
     modulo:             "Modulo"
 caption:
     table:              "Tabela"
