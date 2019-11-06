@@ -9,7 +9,7 @@ from utilities import colour as c
 
 
 class Convertor():
-    quotationMarks = {
+    quotation_marks = {
         'sk':   ('„', '“'),
         'cs':   ('„', '“'),
         'en':   ('“', '”'),
@@ -31,28 +31,28 @@ class Convertor():
 
 
     def __init__(self):
-        self.args = self.parseArguments()
+        self.args = self.parse_arguments()
         self.initialize()
 
-    def parseArguments(self):
+    def parse_arguments(self):
         parser = argparse.ArgumentParser(
             description             = "DeGeŠ Markdown conversion utility",
         )
         parser.add_argument('format',   choices = ['latex', 'html'])
-        parser.add_argument('locale',   choices = self.quotationMarks.keys())
+        parser.add_argument('locale',   choices = self.quotation_marks.keys())
         parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
         parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
         return parser.parse_args()
 
     def initialize(self):
-        self.quoteOpen, self.quoteClose = self.quotationMarks[self.args.locale]
+        self.quote_open, self.quote_close = self.quotation_marks[self.args.locale]
         self.language = self.languages[self.args.locale]
 
     def run(self):
         try:
-            self.file = self.fileOperation(self.preprocess)(self.args.infile)
-            self.file = self.callPandoc()
-            self.file = self.fileOperation(self.postprocess)(self.file)
+            self.file = self.file_operation(self.preprocess)(self.args.infile)
+            self.file = self.call_pandoc()
+            self.file = self.file_operation(self.postprocess)(self.file)
             self.write()
         except IOError as e:
             print(f"{c.path(__file__)}: Could not create a temporary file")
@@ -64,7 +64,7 @@ class Convertor():
             print(f"{c.ok('dgs-convert: success')}")
             sys.exit(0)
 
-    def fileOperation(self, function):
+    def file_operation(self, function):
         def inner(f):
             out = tempfile.SpooledTemporaryFile(mode = 'w+')
 
@@ -85,19 +85,19 @@ class Convertor():
         self.file.seek(0)
 
     def preprocess(self, line):
-        if self.filterTags(line):
-            return self.replaceQuotes(self.replaceTags(line))
+        if self.filter_tags(line):
+            return self.replace_quotes(self.replace_tags(line))
         else:
             return None
 
-    def filterTags(self, line):
+    def filter_tags(self, line):
         if re.match(r'^%', line) or \
             (re.match(r'^@H', line) and self.args.format == 'latex') or \
             (re.match(r'^@L', line) and self.args.format == 'html'):
             return False
         return True
 
-    def replaceTags(self, line):
+    def replace_tags(self, line):
         if self.args.format == 'latex':
             line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
             line = re.sub(r'^@L\s*(.*)$', '\g<1>', line)
@@ -112,7 +112,7 @@ class Convertor():
                 '![\g<3>](obrazky/\g<1>)', line)
         return line
 
-    def callPandoc(self):
+    def call_pandoc(self):
         out = tempfile.SpooledTemporaryFile(mode = 'w+')
 
         self.file.seek(0)
@@ -135,9 +135,9 @@ class Convertor():
             line = re.sub(r"''", '”', line)
         return line
 
-    def replaceQuotes(self, line):
-        line = re.sub(r'"([^\s])', self.quoteOpen + '\g<1>', line)
-        line = re.sub(r'"', self.quoteClose, line)
+    def replace_quotes(self, line):
+        line = re.sub(r'"([^\s])', self.quote_open + '\g<1>', line)
+        line = re.sub(r'"', self.quote_close, line)
         return line
 
 convertor = Convertor()       
