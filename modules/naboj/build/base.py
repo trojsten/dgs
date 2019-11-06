@@ -7,6 +7,7 @@ sys.path.append('.')
 
 from core.utilities import jinja, dicts, colour as c, argparser, context
 
+
 class BuilderNaboj(context.BaseBuilder):
     module = 'naboj'
 
@@ -69,6 +70,7 @@ class ContextLanguage(ContextNaboj):
     def __init__(self, language):
         super().__init__()
         self.addId(language)
+        self.add({'polyglossia': 'magyar' if language == 'hungarian' else language})
 
 
 class ContextVenue(ContextNaboj):
