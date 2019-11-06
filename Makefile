@@ -42,7 +42,7 @@ input/%.tex: source/%.md
 
 # Copy TeX files from source to input
 input/%.tex: source/%.tex
-	@echo -e '$(c_action)[rsvg-convert] Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
+	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 

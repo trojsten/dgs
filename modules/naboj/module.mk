@@ -1,4 +1,7 @@
 MAKEFLAGS += --no-builtin-rules
+MAKEFLAGS += --no-builtin-variables
+
+.SUFFIXES:
 
 .SECONDEXPANSION:
 
@@ -57,13 +60,12 @@ input/naboj/%/constants.tex: \
     input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions-text.tex: \
-    input/naboj/$$*/build-language \
-	source/naboj/$$*/$$(notdir $$@) ;
+	source/naboj/$$*/$$(notdir $$@) \
+    input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions.tex: \
-    input/naboj/$$*/build-language \
 	modules/naboj/templates/$$(notdir $$@) \
-	input/naboj/$$*/instructions-text.tex ;
+    input/naboj/$$*/build-language ;
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
