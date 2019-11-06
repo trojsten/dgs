@@ -2,7 +2,6 @@ section:
     problems:           "Problemy"
     solutions:          "Rozwiązania"
     answers:            "Odpowiedzi"
-    constants:          "Tabela stałych"
     instructions:       "Instrukcje"
     modulo:             "Modulo"
 caption:
