@@ -2,7 +2,6 @@ section:
     problems:           "Feladatok"
     solutions:          "Megoldások"
     answers:            "Válaszok"
-    instructions:       "Utasítás"
     modulo:             "Modulo"
 caption:
     table:              "Táblázat"

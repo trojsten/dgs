@@ -2,7 +2,6 @@ section:
     problems:           "Задания"
     solutions:          "Образцы решений"
     answers:            "Решения"
-    instructions:       "Указания"
     modulo:             "Остаток от деления"
 caption:
     table:              "Таблица"

@@ -2,7 +2,6 @@ section:
     problems:           "Problems"
     solutions:          "Solutions"
     answers:            "Answers"
-    instructions:       "Instructions"
     modulo:             "Modulo"
 caption:
     table:              "Table"
