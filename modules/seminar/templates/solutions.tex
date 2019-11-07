@@ -5,7 +5,7 @@
 (@ endblock pagestyle @)
 
 (@ block inner @)
-    \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.genitive *) časti}{Riešenia}}
+    \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.feminine.genitive *) časti}{Riešenia}}
         
     (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
@@ -18,11 +18,11 @@
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)} \hfill \normalsize%
                 (@ if problem.solutionBy @)%
-                    vzorák (* problem.solutionBy|formatList *)%
+                    vzorák (* problem.solutionBy|format_list *)%
                 (@ endif @)%
                 (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
                 (@ if problem.evaluation @)%
-                    opravoval(* problem.genderSuffix *) (* problem.evaluation|formatList *)% 
+                    opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)% 
                 (@ endif @)%
             }{(* round.number *).(* problem.number *) (* problem.title *)}%
         }

@@ -11,7 +11,7 @@
 
             v~korešpondenčnej časti si dosiah(* 'ol' if child.male else 'la' *) výborné výsledky,
             gratulujeme a~týmto Ťa pozývame ako \textbf{(* 'náhradní' if child.substitute else 'účastní' *)(* 'ka' if child.male else 'čku' *)}
-            na~(* semester.nominativeNeuter *) sústredenie (* volume.number *). ročníka (* competition.short *).
+            na~(* semester.neuter.nominative *) sústredenie (* volume.number *). ročníka (* competition.short *).
             Prosíme, vyplň prihlášku čo najrýchlejšie, \textbf{a to aj v~prípade, že na sústredenie neprídeš}.
 
         \subsection{Informácie}
@@ -32,9 +32,9 @@
                     odídeme dňa \textbf{(* semester.camp.dates.end.strftime('%d.~%m.~%Y') *)}
                     o~\textbf{(* semester.camp.transport.depart.time *)} a do (* semester.camp.transport.disband.place.genitive *)
                     spoločne zo sústredenia dorazíme autobusom o~\textbf{(* semester.camp.transport.disband.time *)}.
-                \item Nezabudni si so sebou priniesť (* semester.camp.stuff.all|formatList *).%
-                    (@ if semester.camp.stuff.boys and child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.boys|formatList *).(@ endif @)%
-                    (@ if semester.camp.stuff.girls and child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.girls|formatList *).(@ endif @)%
+                \item Nezabudni si so sebou priniesť (* semester.camp.stuff.all|format_list *).%
+                    (@ if 'boys' in semester.camp.stuff and child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.boys|format_list *).(@ endif @)%
+                    (@ if 'girls' in semester.camp.stuff and not child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.girls|format_list *).(@ endif @)%
                 \item Je zakázané priniesť si a požívať alkoholické a tabakové výrobky. Pri porušení zákazu si vyhradzujeme právo poslať účastníka zo sústredenia domov.
                 \item Prípadné otázky zasielajte e-mailom na \href{mailto:(* semester.camp.contact.email *)}{\texttt{(* semester.camp.contact.email *)}}. V~núdzových prípadoch na otázky odpovie
                     telefonicky (* semester.camp.contact.name *) na čísle (* semester.camp.contact.phone *).
@@ -47,7 +47,7 @@
             (@ for chain in semester.camp.transport.there @)
                 (@ for transport in chain @)
                     \makebox[50mm][c]{(* transport.place.nominative *) ((* transport.time *))}%
-                    (@ if transport.vehicle @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
+                    (@ if 'vehicle' in transport @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
                 (@ endfor @)%
                 (@ if not loop.last @)\\(@ endif @)%
             (@ endfor @)
@@ -55,7 +55,7 @@
             (@ for chain in semester.camp.transport.back @)
                 (@ for transport in chain @)
                     \makebox[50mm][c]{(* transport.place.nominative *) ((* transport.time *))}%
-                    (@ if transport.vehicle @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
+                    (@ if 'vehicle' in transport @) $\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\quad (* transport.vehicle *)\quad}}}$ (@ endif @)
                 (@ endfor @)%
                 (@ if not loop.last @)\\(@ endif @)%
             (@ endfor @)

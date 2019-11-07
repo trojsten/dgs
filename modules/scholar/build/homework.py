@@ -1,14 +1,21 @@
-import os
-import base
+import builder
+import context
 
-class BuilderHomework(base.BuilderScholar):
+
+class BuilderHomework(builder.BuilderScholar):
     target = 'homework'
     subdir = 'homework'
 
-    rootContextClass   = base.ContextHomework
-    templates          = {
-        'format':       ['format-course.tex', 'format-homework.tex'],
-        'templates':    ['homework.tex'],
+    root_context_class = context.ContextHomework
+    templates = {
+        'format': [
+            'format-course.tex',
+            'format-homework.tex',
+        ],
+        'templates': [
+            'homework.tex',
+        ],
     }
+
 
 BuilderHomework().build()

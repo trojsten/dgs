@@ -1,11 +1,12 @@
-import base
+import builder
+import context
 
 
-class BuilderNabojVenue(base.BuilderNaboj):
+class BuilderNabojVenue(builder.BuilderNaboj):
     target = 'venue'
     subdir = 'venues'
 
-    root_context_class = base.ContextTearoff
+    root_context_class = context.ContextTearoff
     templates = {
         'templates': ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
     }

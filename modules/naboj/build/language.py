@@ -1,14 +1,16 @@
 import os
-import base
+
+import builder
+import context
 
 import core.utilities.jinja as jinja
 
 
-class BuilderNabojLanguage(base.BuilderNaboj):
+class BuilderNabojLanguage(builder.BuilderNaboj):
     target = 'language'
     subdir = 'languages'
 
-    root_context_class = base.ContextBooklet
+    root_context_class = context.ContextBooklet
     templates = {
         'format': ['format-language.tex'],
         'templates': [
