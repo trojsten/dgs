@@ -1,47 +1,42 @@
 import yaml
 import os
-import sys
 import pprint
 import argparse
 
-import core.utilities.dicts as dicts
-import core.utilities.colour as c
-import core.utilities.argparser as argparser
-import core.utilities.jinja as jinja
+from core.utilities import dicts, colour as c, argparser, jinja
+
 
 class BaseBuilder():
     def __init__(self):
-        self.createArgParser()
-        self.parseArgs()
+        self.create_argument_parser()
+        self.parse_args()
 
-        self.launchDirectory    = os.path.realpath(self.args.launch)
-        self.templateRoot       = os.path.realpath(self.args.templateRoot)
-        self.outputDirectory    = os.path.realpath(self.args.output) if self.args.output else None
-        self.createContext()
+        self.launch_directory = os.path.realpath(self.args.launch)
+        self.template_root = os.path.realpath(self.args.template_root)
+        self.output_directory = os.path.realpath(self.args.output) if self.args.output else None
+        self.create_context()
 
-    def printDebugInfo(self):
+    def print_debug_info(self):
         if self.args.debug:
             print("Launched {target} builder in {dir}".format(
-                target  = c.name(self.target),
-                dir     = c.path(self.args.launch),
+                target=c.name(self.target),
+                dir=c.path(self.args.launch),
             ))
             print(c.act("Content templates:"))
             pprint.pprint(self.templates)
 
             print(c.act("Context:"))
             self.context.print()
-        
-    def createArgParser(self):
-        self.parser = argparse.ArgumentParser(
-            description             = "Prepare a DGS input dataset from repository",
-        )
-        self.parser.add_argument('launch',              action = argparser.readableDir) 
-        self.parser.add_argument('templateRoot',        action = argparser.readableDir)
-        self.parser.add_argument('-o', '--output',      action = argparser.writeableDir) 
-        self.parser.add_argument('-d', '--debug',       action = 'store_true')
+
+    def create_argument_parser(self):
+        self.parser = argparse.ArgumentParser(description="Prepare a DGS input dataset from repository")
+        self.parser.add_argument('launch', action=argparser.readable_dir)
+        self.parser.add_argument('template_root', action=argparser.readable_dir)
+        self.parser.add_argument('-o', '--output', action=argparser.writeable_dir)
+        self.parser.add_argument('-d', '--debug', action='store_true')
         return self.parser
 
-    def parseArgs(self):
+    def parse_args(self):
         self.args = self.parser.parse_args()
 
     def id(self):
@@ -50,7 +45,7 @@ class BaseBuilder():
     def path(self):
         raise NotImplementedError
 
-    def printBuildInfo(self):
+    def print_build_info(self):
         print(
             c.act("Invoking"),
             c.name(self.module),
@@ -59,16 +54,16 @@ class BaseBuilder():
             c.path(os.path.join(*self.path())),
         )
 
-    def createContext(self):
-        self.context = self.rootContextClass(os.path.realpath(self.args.launch), *self.id())
+    def create_context(self):
+        self.context = self.root_context_class(os.path.realpath(self.args.launch), *self.id())
 
     def build(self):
-        self.printDebugInfo()
-        self.printBuildInfo()
+        self.print_debug_info()
+        self.print_build_info()
 
         for dir, templates in self.templates.items():
             for template in templates:
-                jinja.printTemplate(os.path.join(self.templateRoot, dir), template, self.context.data, self.outputDirectory)
+                jinja.print_template(os.path.join(self.template_root, dir), template, self.context.data, self.output_directory)
 
         print(c.ok("Template builder on"), c.name(self.target), c.ok("successful"))
 
@@ -85,11 +80,11 @@ class Context():
         self.data[key] = dicts.merge(self.data.get(key), ctx.data)
         return self
 
-    def loadYaml(self, *args):
+    def load_YAML(self, *args):
         try:
             filename = os.path.join(*args)
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
-            result = {} if contents is None else contents
+            contents = {} if contents is None else contents
         except FileNotFoundError as e:
             print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
@@ -97,65 +92,70 @@ class Context():
         self.data = contents
         return self
 
-    def loadMeta(self, *args):
-        return self.loadYaml(self.nodePath(*args), 'meta.yaml')
+    def load_meta(self, *args):
+        return self.load_YAML(self.nodePath(*args), 'meta.yaml')
 
-    def nodePath(self, *args):
+    def node_path(self, *args):
         raise NotImplementedError("Child classes must implement nodePath method")
 
     def print(self):
         pprint.pprint(self.data)
 
-    def setNumber(self):
+    def set_number(self):
         return self.add({'number': self.number})
 
-    def addNumber(self, number):
+    def add_number(self, number):
         return self.add({'number': number})
 
-    def setId(self):
+    def set_id(self):
         return self.add({'id': self.id})
 
-    def addId(self, id):
+    def add_id(self, id):
         return self.add({'id': id})
 
 
-def isNode(path):
+def is_node(path):
     return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
 
-def listChildNodes(node):
-    return list(filter(lambda child: isNode(os.path.join(node, child)), sorted(os.listdir(node))))
 
-def loadYaml(*args):
+def list_child_nodes(node):
+    return list(filter(lambda child: is_node(os.path.join(node, child)), sorted(os.listdir(node))))
+
+
+def load_YAML(*args):
     try:
         result = yaml.load(open(os.path.join(*args), 'r'))
         if result is None:
-           result = {}
+            result = {}
     except FileNotFoundError as e:
         print(c.err("[FATAL] Could not load YAML file", c.path(e)))
         raise e
     return result
 
-def loadMeta(pathfinder, args):
+
+def load_meta(pathfinder, args):
     try:
         result = yaml.load(open(os.path.join(pathfinder(*args), 'meta.yaml'), 'r'))
         if result is None:
-           result = {}
+            result = {}
     except FileNotFoundError as e:
         print(c.err("[FATAL] Could not load metadata file)", c.path(e)))
         raise e
     return result
 
 
-def splitMod(what, step, first = 0):
+def split_mod(what, step, first=0):
     result = [[] for i in range(0, step)]
     for i, item in enumerate(what):
         result[(i + first) % step].append(item)
     return result
 
-def splitDiv(what, step):
-    return [] if what == [] else [what[0:step]] + splitDiv(what[step:], step)
 
-def addNumbers(what, start = 0):
+def split_div(what, step):
+    return [] if what == [] else [what[0:step]] + split_div(what[step:], step)
+
+
+def add_numbers(what, start=0):
     result = []
     num = start
     for item in what:
@@ -166,7 +166,8 @@ def addNumbers(what, start = 0):
         num += 1
     return result
 
-def numerate(objects, start = 0):
+
+def numerate(objects, start=0):
     num = start
     for item in objects:
         dicts.merge(item, {
