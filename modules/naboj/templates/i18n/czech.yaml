@@ -24,7 +24,7 @@ constants:
 instructions:
     title:              "Pokyny" 
 envelope:
-    donotopen:          ""
+    donotopen:          "Neotvírejte tuto obálku před začátkem soutěže."
 
 physics_constants:
     au:                 "astronomická jednotka (vzdálenost Zem--Slunce)"
