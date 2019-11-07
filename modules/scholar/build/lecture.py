@@ -1,13 +1,20 @@
-import os
-import base
+import builder
+import context
 
-class BuilderLecture(base.BuilderSingle):
+
+class BuilderLecture(builder.BuilderSingle):
     target = 'lecture'
 
-    rootContextClass   = base.ContextScholarLecture
-    templates          = {
-        'format':       ['format-course.tex', 'format-lecture.tex'],
-        'templates':    ['lecture.tex'],
+    rootContextClass = context.ContextScholarLecture
+    templates = {
+        'format': [
+            'format-course.tex',
+            'format-lecture.tex',
+        ],
+        'templates': [
+            'lecture.tex',
+        ],
     }
+
 
 BuilderLecture().build()

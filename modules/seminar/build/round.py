@@ -1,11 +1,16 @@
-import os
-import base
+import builder
+import context
 
-class BuilderRound(base.BuilderSeminar):
-    rootContextClass   = base.ContextBooklet
-    templates          = {
-        'templates':    ['problems.tex', 'solutions.tex'],
+
+class BuilderRound(builder.BuilderRound):
+    root_context_class = context.ContextBooklet
+    templates = {
+        'templates': [
+            'problems.tex',
+            'solutions.tex',
+        ],
     }
     target = 'round'
+
 
 BuilderRound().build()

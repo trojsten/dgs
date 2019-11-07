@@ -6,15 +6,6 @@ sys.path.append('.')
 from core.utilities import context
 
 
-class BuilderNaboj(context.BaseBuilder):
-    module = 'naboj'
-
-    def create_argument_parser(self):
-        super().create_argument_parser()
-        self.parser.add_argument('-c', '--competition', choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX'])
-        self.parser.add_argument('-v', '--volume', type=int)
-
-
 class ContextI18n(context.Context):
     def __init__(self, language):
         super().__init__()

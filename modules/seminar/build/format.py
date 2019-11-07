@@ -1,10 +1,12 @@
-import os
-import base
+import builder
+import context
 
-class BuilderFormat(base.BuilderSeminar):
-    rootContextClass = base.ContextBooklet
 
-    def parseArgs(self):
+class BuilderFormat(builder.BuilderSeminar):
+    root_context_class = context.ContextBooklet
+    target = 'format'
+
+    def parse_arguments(self):
         args = self.parser.parse_args()
 
         if args.competition is None:
@@ -23,7 +25,8 @@ class BuilderFormat(base.BuilderSeminar):
 
         self.args = args
         self.templates = {
-            'format': ['format-{}.tex'.format(self.target)],
+            'format': [f'format-{self.target}.tex'],
         }
+
 
 BuilderFormat().build()
