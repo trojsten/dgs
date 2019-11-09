@@ -18,7 +18,7 @@
         \pagestyle{problems}    
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
-            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
             \label{ssc:problem-(* problem.id*)}%
             \protectedInput{\activeDirectory/problem.tex}%
@@ -34,7 +34,7 @@
             \setcounter{equation}{0}%
             \setcounter{table}{0}%
             \setcounter{figure}{0}%
-            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
             \label{ssc:solution-(* problem.id*)}%
             \protectedInput{\activeDirectory/solution.tex}%
@@ -47,7 +47,7 @@
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
-            \RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
             \label{ssc:answer-(* problem.id*)}%
             \protectedInput{\activeDirectory/answer.tex}%

@@ -121,8 +121,16 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
-\NewDocumentCommand{\rootDirectory}{}{input}
-\NewDocumentCommand{\activeDirectory}{}{<undefined>}
+\NewExpandableDocumentCommand{\rootDirectory}{}{input}
+\NewExpandableDocumentCommand{\activeDirectory}{}{<undefined>}
+
+\NewExpandableDocumentCommand{\setRoot}{m}{%
+    \RenewExpandableDocumentCommand{\rootDirectory}{}{#1}%
+}
+
+\NewExpandableDocumentCommand{\setActive}{m}{%
+    \RenewExpandableDocumentCommand{\activeDirectory}{}{#1}%
+}
 
 \input{core/tex/fonts.tex}
 \input{core/tex/utilities.tex}
