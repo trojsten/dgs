@@ -20,7 +20,7 @@ class ContextI18nGlobal(context.Context):
 
 
 class ContextNaboj(context.Context):
-    def nodePath(self, root, competition=None, volume=None, target_type=None, target=None):
+    def node_path(self, root, competition=None, volume=None, target_type=None, target=None):
         return os.path.join(
             root,
             '' if competition is None else competition,

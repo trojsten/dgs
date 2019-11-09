@@ -5,7 +5,7 @@ import context
 class BuilderLecture(builder.BuilderSingle):
     target = 'lecture'
 
-    rootContextClass = context.ContextScholarLecture
+    root_context_class = context.ContextScholarLecture
     templates = {
         'format': [
             'format-course.tex',
