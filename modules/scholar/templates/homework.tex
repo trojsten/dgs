@@ -1,6 +1,6 @@
 \documentclass[12pt, twoside]{dgs}
 
-\RenewDocumentCommand{\activeDirectory}{}{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/homework/(* issue.id *)}%
+\setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/homework/(* issue.id *)}%
 \input{input/scholar/(* course.id *)/static/format-override.tex}
 \input{\activeDirectory/format-course.tex}
 \input{\activeDirectory/format-homework.tex}
