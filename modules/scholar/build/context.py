@@ -7,12 +7,12 @@ from core.utilities import context
 
 
 class ContextScholar(context.Context):
-    def node_path(self, root, course=None, year=None, targetType=None, issue=None):
+    def node_path(self, root, course=None, year=None, target_type=None, issue=None):
         return os.path.join(
             root,
             '' if course is None else course,
             '' if year is None else f'{year:04d}',
-            '' if targetType is None else targetType,
+            '' if target_type is None else target_type,
             '' if issue is None else f'{issue:02d}',
         )
 
@@ -66,7 +66,7 @@ class ContextIssue(ContextScholar):
 
 
 class ContextScholarSingle(context.Context):
-    def nodePath(self, root, course=None, lecture=None):
+    def node_path(self, root, course=None, lecture=None):
         return os.path.join(
             root,
             '' if course is None else course,
