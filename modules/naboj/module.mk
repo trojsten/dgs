@@ -1,8 +1,3 @@
-MAKEFLAGS += --no-builtin-rules
-MAKEFLAGS += --no-builtin-variables
-
-.SUFFIXES:
-
 .SECONDEXPANSION:
 
 # Build scripts for language and venue prerequisites

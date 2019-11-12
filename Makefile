@@ -1,4 +1,5 @@
 MAKEFLAGS += --no-builtin-rules
+MAKEFLAGS += --no-builtin-variables
 path		:= $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir 		:= $(dir $(path))
 
@@ -6,8 +7,8 @@ cdir 		:= $(dir $(path))
 
 .SECONDARY:
 
-version	=			'2.00'
-date =				'2018-10-02'
+version	=			'3.00'
+date =				'2019-11-12'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
