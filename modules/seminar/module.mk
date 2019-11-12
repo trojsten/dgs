@@ -1,5 +1,3 @@
-MAKEFLAGS += --no-builtin-rules
-
 .SECONDEXPANSION:
 
 input/seminar/format-root.tex: \
