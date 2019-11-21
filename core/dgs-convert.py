@@ -136,8 +136,9 @@ class Convertor():
         return line
 
     def replace_quotes(self, line):
-        line = re.sub(r'"([^\s])', self.quote_open + '\g<1>', line)
-        line = re.sub(r'"', self.quote_close, line)
+        line = re.sub(r'"(\b)', self.quote_open + '\g<1>', line)
+        line = re.sub(r'(\b)"', '\g<1>' + self.quote_close, line)
+        line = re.sub(r'(\W)"', '\g<1>' + self.quote_close, line)
         return line
 
 convertor = Convertor()       
