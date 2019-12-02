@@ -10,7 +10,7 @@ class BuilderScholar(builder.BaseBuilder):
 
     def create_argument_parser(self):
         super().create_argument_parser()
-        self.parser.add_argument('course', type=str, choices=['TA1', 'TA2'])
+        self.parser.add_argument('course', type=str)
         self.parser.add_argument('year', type=int)
         self.parser.add_argument('issue', type=int)
 
