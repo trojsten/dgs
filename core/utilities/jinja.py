@@ -30,6 +30,7 @@ def environment(directory):
 
     dicts.merge(env.globals, {
         'checkdigit': check_digit,
+        'plural': plural,
     })
 
     return env
@@ -41,6 +42,13 @@ def check_digit(venue, team, problem):
     raw = sum([x * y for x, y in zip(digits, [3, 7, 1, 3, 7, 1, 3, 7, 1])])
     return 9 - (raw - 1) % 10
 
+def plural(how_many, one, two, default):
+    if how_many == 1:
+        return one
+    if how_many > 2 and how_many < 5:
+        return two
+    else:
+        return default
 
 # Print a Jinja2 template with provided context
 def print_template(root, template, context, output_directory=None, new_name=None):

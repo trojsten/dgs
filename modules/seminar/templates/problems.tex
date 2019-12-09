@@ -1,5 +1,5 @@
 (@ extends 'base-booklets.tex' @)
- 
+
 (@ block pagestyle @)
     \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-problems}
 (@ endblock pagestyle @)
@@ -11,23 +11,23 @@
         \vspace*{-5mm}
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
         (@ if round.deadlineAbroad is defined @) (pre zahraničie (* round.deadlineAbroad.strftime('%d. %m. %Y') *)(@ endif @)
-    } 
-        
+    }
+
     (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-        
         \subsection{%
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)}%
+                \normalsize \hfill%
+                (@ if problem.pointsDescription @)%
+                    \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}, %
+                (@ endif @)%
                 (@ if problem.categories @)%
-                    \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
-                (@ endif @)
-                (@ if competition.id == 'FX' @)
-                    \normalsize \hfill \textbf{(* problem.pointsDescription *) bodov}%
+                    kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
                 (@ endif @)
             }{%
                 (* round.number *).(* problem.number *) (* problem.title *)%
