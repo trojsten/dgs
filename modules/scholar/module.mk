@@ -12,7 +12,8 @@ input/scholar/%/build-handout: \
 
 input/scholar/%/build-homework: \
 	modules/scholar/format/format-homework.tex \
-	modules/scholar/templates/homework.tex \
+	modules/scholar/templates/homework-students.tex \
+	modules/scholar/templates/homework-solutions.tex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -43,7 +44,10 @@ input/scholar/%/handout-students.tex: \
 input/scholar/%/handout-solutions.tex: \
 	input/scholar/$$*/build-handout ;
 
-input/scholar/%/homework.tex: \
+input/scholar/%/homework-students.tex: \
+	input/scholar/$$*/build-homework ;
+
+input/scholar/%/homework-solutions.tex: \
 	input/scholar/$$*/build-homework ;
 
 input/scholar/%/lecture.tex: \
@@ -62,6 +66,12 @@ input/scholar/%/handout: \
 	input/scholar/$$*/format-handout.tex \
 	input/scholar/$$*/pdf-prerequisites ;
 
+input/scholar/%/homework: \
+	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
+	input/scholar/$$*/format-homework.tex \
+	input/scholar/$$*/pdf-prerequisites ;
+
 output/scholar/%/handout-students.pdf: \
 	input/scholar/%/handout \
 	input/scholar/%/handout-students.tex
@@ -73,12 +83,15 @@ output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
-output/scholar/%/homework.pdf: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/homework.tex \
-	input/scholar/$$*/format-homework.tex \
-	input/scholar/$$*/pdf-prerequisites
+output/scholar/%/homework-students.pdf: \
+	input/scholar/%/homework \
+	input/scholar/%/homework-students.tex
+	$(call doubletex,scholar)
+
+output/scholar/%/homework-solutions.pdf: \
+	input/scholar/%/homework \
+	input/scholar/%/homework-students.tex \
+	input/scholar/%/homework-solutions.tex
 	$(call doubletex,scholar)
 
 output/scholar/%/lecture.pdf: \

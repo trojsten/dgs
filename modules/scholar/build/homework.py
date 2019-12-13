@@ -13,7 +13,8 @@ class BuilderHomework(builder.BuilderScholar):
             'format-homework.tex',
         ],
         'templates': [
-            'homework.tex',
+            'homework-students.tex',
+            'homework-solutions.tex',
         ],
     }
 
