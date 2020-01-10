@@ -101,3 +101,8 @@
 \RenewDocumentCommand{\Hat}{m}{#1\kern-0.4em\hat{\phantom{#1}}}
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
+
+\NewDocumentCommand{\Mag}{m}{{#1}^{\mathrm{m}}}
+\NewDocumentCommand{\Distrib}{m m m}{#1(#2;\,#3)}
+
+\NewDocumentCommand{\BigO}{m}{\mathcal{O}(#1)}
