@@ -6,7 +6,7 @@
     group-separator         = {\,},
     group-minimum-digits    = 5,
     inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami
-    exponent-product        = \times,                       % \times pre 5×10^7, \cdot pre 5.1O^7    
+    exponent-product        = \times,                       % \times pre 5×10^7, \cdot pre 5.1O^7
     number-unit-product     = {\ },                         % medzera medzi číslom a jednotkou
     output-decimal-marker   = {\text{,}},                   % v desatinných číslach chceme slovenskú čiarku
     range-units             = single,
@@ -17,13 +17,14 @@
     retain-explicit-plus    = true,                         % zachovávame explicitné +
 }
 
-\RenewDocumentCommand{\Sun}{}{\odot}
+\NewDocumentCommand{\Sun}{}{\odot}
+\NewDocumentCommand{\Earth}{}{\oplus}
 
 \DeclareSIUnit{\gforce}{g}
 \DeclareSIUnit{\year}{y}
 \DeclareSIUnit{\au}{au}
 \DeclareSIUnit{\pixel}{px}
 \DeclareSIUnit{\eur}{€}
-\DeclareSIUnit{\solarmass}{\ensuremath{\mathrm{M}_\odot}}
-\DeclareSIUnit{\solarluminosity}{\ensuremath{\mathrm{L}_\odot}}
-\DeclareSIUnit{\earthmass}{\ensuremath{\mathrm{M}_\oplus}}
+\DeclareSIUnit{\solarmass}{\ensuremath{\mathrm{M}_\Sun}}
+\DeclareSIUnit{\solarluminosity}{\ensuremath{\mathrm{L}_\Sun}}
+\DeclareSIUnit{\earthmass}{\ensuremath{\mathrm{M}_\Earth}}
