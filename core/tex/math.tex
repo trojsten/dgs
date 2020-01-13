@@ -102,7 +102,9 @@
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
 
-\NewDocumentCommand{\Mag}{m}{{#1}^{\mathrm{m}}}
-\NewDocumentCommand{\Distrib}{m m m}{#1(#2;\,#3)}
+\NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2;\,#3)}
 
+\NewDocumentCommand{\SmallO}{m}{\mathcal{o}(#1)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}(#1)}
+\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}(#1)}
