@@ -1,20 +1,20 @@
 \sisetup{
-    detect-all              = true,                         % chceme zachovávať formátovanie prostredia
+    detect-all              = true,                         % keep formatting around
     separate-uncertainty    = true,                         % 7.2 ± 0.5
-    multi-part-units        = single,                       % 12.3 ± 0.2 kg, neopakovať "kg"
-    per-mode                = reciprocal,                   % `symbol` pre "m/s", `reciprocal` pre "ms^{-1}"
+    multi-part-units        = single,                       % 12.3 ± 0.2 kg, do not repeat "kg"
+    per-mode                = reciprocal,                   % `symbol` for "m/s", `reciprocal` for "ms^{-1}"
     group-separator         = {\,},
     group-minimum-digits    = 5,
-    inter-unit-product      = {\kern 0.05em},               % veľmi tenká medzera medzi jednotkami
-    exponent-product        = \times,                       % \times pre 5×10^7, \cdot pre 5.1O^7
-    number-unit-product     = {\ },                         % medzera medzi číslom a jednotkou
-    output-decimal-marker   = {\text{,}},                   % v desatinných číslach chceme slovenskú čiarku
+    inter-unit-product      = {\kern 0.05em},               % add a very thin space between units
+    exponent-product        = \times,                       % \times for 5×10^7, \cdot for 5.1O^7
+    number-unit-product     = {\ },                         % a non-breakable space between numbers and units
+    output-decimal-marker   = {\text{.}},                   % decimal dot
     range-units             = single,
     range-phrase            = {\text{ -- }},                % 5 -- 10 m/s
     list-units              = single,                       %
-    list-pair-separator     = {\text{ a }},                 % 5 a 10 m/s
-    list-final-separator    = {\text{ a }},                 % 5, 7 a 10 m/s
-    retain-explicit-plus    = true,                         % zachovávame explicitné +
+    list-pair-separator     = {\text{\ and\ }},             % 5 a 10 m/s
+    list-final-separator    = {\text{\ and\ }},             % 5, 7 a 10 m/s
+    retain-explicit-plus    = true,
 }
 
 \NewDocumentCommand{\Sun}{}{\odot}
