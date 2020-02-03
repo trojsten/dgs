@@ -72,6 +72,7 @@
 }%
 
 \RenewDocumentCommand{\vec}{m}{\mathbf{#1}}
+\NewDocumentCommand{\uvec}{m}{\Hat{\mathbf{#1}}}
 %\NewDocumentCommand{\Avec}{m}{\vec{#1}}
 %\NewDocumentCommand{\Bvec}{m}{\mathbf{#1}}
 %\RenewDocumentCommand{\vec}{m}{\vv{#1}}
@@ -98,7 +99,7 @@
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
-\RenewDocumentCommand{\Hat}{m}{#1\kern-0.4em\hat{\phantom{#1}}}
+\RenewDocumentCommand{\Hat}{m}{#1\kern-0.5em\hat{\phantom{#1}}}
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
 
