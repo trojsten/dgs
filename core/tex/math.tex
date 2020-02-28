@@ -99,7 +99,7 @@
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
-\RenewDocumentCommand{\Hat}{m}{#1\kern-0.5em\hat{\phantom{#1}}}
+\RenewDocumentCommand{\Hat}{O{0em} m}{#2\kern#1\hat{\phantom{#2}}}
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
 
