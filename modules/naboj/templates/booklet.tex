@@ -15,7 +15,7 @@
 
     (@ if booklet.contents.problems @)
         \section{(* i18n.section.problems *)}
-        \pagestyle{problems}    
+        \pagestyle{problems}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
@@ -23,12 +23,12 @@
             \label{ssc:problem-(* problem.id*)}%
             \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
-        \newpage    
+        \newpage
     (@ endif @)
 
     (@ if booklet.contents.solutions @)
         \section{(* i18n.section.solutions *)}
-        \pagestyle{solutions}    
+        \pagestyle{solutions}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
             \setcounter{equation}{0}%
