@@ -1,12 +1,12 @@
 (@ extends 'base-booklets.tex' @)
- 
+
 (@ block pagestyle @)
     \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-solutions}
 (@ endblock pagestyle @)
 
 (@ block inner @)
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.feminine.genitive *) časti}{Riešenia}}
-        
+
     (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{semester}{(* semester.number *)}%

@@ -1,5 +1,5 @@
 (@ extends 'base.tex' @)
- 
+
 (@ block content @)
     \pagestyle{seminar-main-(* competition.id *)}
     \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
@@ -25,7 +25,7 @@
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-        
+
         \subsection{%
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)}%
