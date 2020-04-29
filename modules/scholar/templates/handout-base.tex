@@ -1,13 +1,8 @@
-\documentclass[12pt, twoside]{dgs}
+(@ extends 'base.tex' @)
 
-\setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/handouts/(* issue.id *)/}%
-\input{input/scholar/(* course.id *)/static/format-override.tex}
-\input{\activeDirectory/format-course.tex}
-\input{\activeDirectory/format-handout.tex}
- 
-\begin{document}
-    \pagestyle{handout}
-    \setcounter{section}{(* issue.number - 1 *)}
+(@ block type @)handout(@ endblock @)
+(@ block typedir @)handouts(@ endblock @)
+
+(@ block title @)
     \section{Cvičenie č. (* issue.number *)(@ block subtitle @)(@ endblock subtitle @)}
-    (@ block content @)(@ endblock content @)
-\end{document}
+(@ endblock @)
