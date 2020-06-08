@@ -8,6 +8,7 @@
 "..."
 "---"
 "Boha." "Boha?" "..."
+Ale "to" je "dobré", "nie..."?
 
 Prečo hovoríme o "čiarach"?
 
