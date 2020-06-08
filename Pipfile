@@ -4,7 +4,7 @@ name = "pypi"
 url = "https://pypi.org/simple"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
 
 [dev-packages]
 
@@ -13,7 +13,6 @@ colorama = ">=0.3.9"
 ply = ">=3.11"
 "Jinja2" = ">=2.10.1"
 PyYAML = ">3.13"
-MarkupSafe = "==1.0"
 matplotlib = "*"
 "flake8" = "*"
 pandoc-crossref = "*"

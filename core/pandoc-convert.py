@@ -17,6 +17,7 @@ class Convertor():
         'ru':   ('«', '»'),
         'pl':   ('„', '”'),
         'hu':   ('„', '”'),
+        'qq':   ('(', ')'),
     }
 
     languages = {
@@ -27,6 +28,7 @@ class Convertor():
         'pl':   'polish',
         'hu':   'hungarian',
         'fr':   'french',
+        'qq':   'test',
     }
 
 
@@ -41,7 +43,7 @@ class Convertor():
         parser.add_argument('format',   choices = ['latex', 'html'])
         parser.add_argument('locale',   choices = self.quotation_marks.keys())
         parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
-        parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout) 
+        parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout)
         return parser.parse_args()
 
     def initialize(self):
@@ -138,8 +140,8 @@ class Convertor():
     def replace_quotes(self, line):
         line = re.sub(r'"(\b)', self.quote_open + '\g<1>', line)
         line = re.sub(r'(\b)"', '\g<1>' + self.quote_close, line)
+        line = re.sub(r'(\S)"', '\g<1>' + self.quote_close, line)
         line = re.sub(r'"(\S)', self.quote_open + '\g<1>', line)
-        line = re.sub(r'(\W)"', '\g<1>' + self.quote_close, line)
         return line
 
 convertor = Convertor()
