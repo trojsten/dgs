@@ -3,6 +3,7 @@
 (@ block content @)
     \input{\activeDirectory/content.tex}
     \newpage
+    \setcounter{section}{(* issue.number - 1 *)}
     \section{Riešenia}
     \input{\activeDirectory/solutions.tex}
 (@ endblock content @)
