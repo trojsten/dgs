@@ -83,6 +83,10 @@ output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
+output/scholar/%/handouts/all: \
+	$$(subst content.md,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/content.md))) \
+	$$(subst content.md,handout-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/content.md))) ;
+
 output/scholar/%/homework-students.pdf: \
 	input/scholar/%/homework \
 	input/scholar/%/homework-students.tex
