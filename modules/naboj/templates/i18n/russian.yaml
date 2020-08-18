@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "элементарный заряд"
     gforce:             "нормальное ускорение свободного падения"
     gravity:            "гравитационная постоянная"
+    inch:               "английский дюйм"
     mass_earth:         "масса Земли"
     mass_electron:      "масса электрона"
     mass_proton:        "масса протона"
