@@ -8,9 +8,10 @@
                 \setcounter{volume}{(* volume.number *)}%
                 \setcounter{problem}{(* problem.number *)}%
                 \setcounter{team}{(* team.id *)}%
+                \input{core/i18n/(* team.language *)/override.tex}
                 \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
 
-                \begin{minipage}[t][96mm][t]{\textwidth}%
+                \begin{minipage}[t][90mm][t]{\textwidth}%
                     \begin{minipage}[t][88mm][t]{0.85\linewidth}%
                         \vspace{0pt}%
                         \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
@@ -49,7 +50,7 @@
             \setcounter{problem}{0}%
             \setcounter{team}{(* team.id *)}%
 
-            \begin{minipage}[t][96mm][t]{\textwidth}%
+            \begin{minipage}[t][90mm][t]{\textwidth}%
                 \begin{minipage}[t][88mm][t]{0.85\linewidth}%
                     \centering
                     \vspace*{37mm}

@@ -20,7 +20,7 @@
     headheight              = 20pt,
     headsep                 = 16pt,
     footskip                = 32pt,
-    includeheadfoot,                                        
+    includeheadfoot,
 }
 \savegeometry{main}
 
@@ -69,7 +69,7 @@
 
 \fancypagestyle{first}{%
     \fancyhf{}
-    \fancyhead[L]{    
+    \fancyhead[L]{
         \begin{minipage}{0.15\textwidth}
             \flushleft
             \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
@@ -81,12 +81,12 @@
             \centering
             \vspace{4pt}
             {\Large (* volume.number*). (* i18n.competition.name.nominative *)}\\[4pt]
-            {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]            
+            {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]
             {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *) %
                 (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
             \vspace{6pt}
-        \end{minipage}        
-    }           
+        \end{minipage}
+    }
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
