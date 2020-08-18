@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "elemi töltés"
     gforce:             "nehézségi gyorsulás a Földön"
     gravity:            "gravitációs állandó"
+    inch:               "hüvelyk"
     mass_earth:         "a Föld tömege"
     mass_electron:      "elektron tömege"
     mass_proton:        "proton tömege"

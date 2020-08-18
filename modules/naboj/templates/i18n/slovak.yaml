@@ -12,7 +12,7 @@ competition:
         genitive:       "Fyzikálneho Náboja"
     email:              "info-sk@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-tearoff:    
+tearoff:
     team:               "Tím"
     bottom:             "Tím si vyzdvihol všetky úlohy."
 constants:
@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "elementárny náboj"
     gforce:             "tiažové zrýchlenie pri povrchu Zeme"
     gravity:            "gravitačná konštanta"
+    inch:               "palec"
     mass_earth:         "hmotnosť Zeme"
     mass_electron:      "hmotnosť elektrónu"
     mass_proton:        "hmotnosť protónu"

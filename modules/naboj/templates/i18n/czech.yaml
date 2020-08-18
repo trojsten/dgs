@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "elementární náboj"
     gforce:             "tíhové zrychlení při povrchu Země"
     gravity:            "gravitační konstanta"
+    inch:               "palec"
     mass_earth:         "hmotnost Země"
     mass_electron:      "hmotnost elektronu"
     mass_proton:        "hmotnost protonu"

@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "elementary charge"
     gforce:             "standard acceleration due to gravity"
     gravity:            "gravitational constant"
+    inch:               "inch"
     mass_earth:         "mass of the Earth"
     mass_electron:      "electron rest mass"
     mass_proton:        "proton rest mass"

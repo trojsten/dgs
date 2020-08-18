@@ -12,7 +12,7 @@ competition:
         genitive:       "Nabója Fizycznego"
     email:              "info-pl@physics.naboj.org"
     website:            "https://physics.naboj.org/"
-tearoff:    
+tearoff:
     team:               "Zespół"
     bottom:             "The team has received all problems."
 constants:
@@ -22,9 +22,9 @@ constants:
     symbol:             "oznaczenie"
     value:              "wartość"
 instructions:
-    title:              "Instrukcje" 
+    title:              "Instrukcje"
 envelope:
-    donotopen:          ""
+    donotopen:          "???"
 
 physics_constants:
     au:                 "jednostka astronomiczna (odległość Ziemia--Słońce)"
@@ -36,6 +36,7 @@ physics_constants:
     elementary_charge:  "ładunek elementarny"
     gforce:             "przyspieszenie ziemskie normalne"
     gravity:            "stała grawitacji"
+    inch:               "cal"
     mass_earth:         "masa Ziemi"
     mass_electron:      "masa elektronu"
     mass_proton:        "masa protonu"
