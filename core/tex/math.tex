@@ -87,12 +87,15 @@
 \NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
 
+\NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
+\NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
+
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
 \NewDocumentCommand{\Exp}{m}{\mathrm{e}^{#1}}
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
 \NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
-\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Implies}{}{\QText{\Rightarrow}}
 
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
@@ -106,9 +109,9 @@
 \NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
 \NewDocumentCommand{\Distribution}{m m m}{#1(#2;\,#3)}
 
-\NewDocumentCommand{\SmallO}{m}{\mathcal{o}(#1)}
-\NewDocumentCommand{\BigO}{m}{\mathcal{O}(#1)}
-\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}(#1)}
+\NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
+\NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
+\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
 
 \NewDocumentCommand{\Natural}{}{\mathbb{N}}
 \NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
@@ -117,5 +120,7 @@
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
 
-\NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
-\NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
+\NewDocumentCommand{\IntervalCC}{m m}{\left\langle #1; #2\right\rangle}
+\NewDocumentCommand{\IntervalCO}{m m}{\left\langle #1; #2\right)}
+\NewDocumentCommand{\IntervalOC}{m m}{\left( #1; #2\right\rangle}
+\NewDocumentCommand{\IntervalOO}{m m}{\left( #1; #2\right)}
