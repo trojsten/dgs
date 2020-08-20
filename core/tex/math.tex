@@ -95,7 +95,7 @@
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
 \NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
-\NewDocumentCommand{\Implies}{}{\QText{\Rightarrow}}
+\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
 
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
@@ -120,7 +120,7 @@
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
 
-\NewDocumentCommand{\IntervalCC}{m m}{\left\langle #1; #2\right\rangle}
+\NewDocumentCommand{\IntervalCC}{m m}{\langle #1; #2\rangle}
 \NewDocumentCommand{\IntervalCO}{m m}{\left\langle #1; #2\right)}
 \NewDocumentCommand{\IntervalOC}{m m}{\left( #1; #2\right\rangle}
 \NewDocumentCommand{\IntervalOO}{m m}{\left( #1; #2\right)}
