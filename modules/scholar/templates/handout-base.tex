@@ -11,17 +11,17 @@
     }
 (@ endblock style @)
 
-(@ block title @)
+(@ block content @)
     \section{Cvičenie č. (* issue.number *)(@ block subtitle @)(@ endblock subtitle @)}
-
-    (@ for section in sections @)
+    (@ for sid, section in issue.sections.items() @)
         \section{(* section.name *)}
-        \input{\activeDirectory/(* section.id *)/text.tex}
+        \protectedInput{\activeDirectory/(* section.id *)/text.tex}
         \subsection{Úlohy}
-        (@ for problem in problems @)
-            \subsubsection{problem.id}
-            \input{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
+        (@ for pid, problem in section.problems.items() @)
+            \subsubsection{(* problem.id *)}
+            \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
             (@ block solution @)(@ endblock solution @)
         (@ endfor @)
+        (@ if not loop.last @)\newpage(@ endif @)
     (@ endfor @)
-(@ endblock @)
+(@ endblock content @)

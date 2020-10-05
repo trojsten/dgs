@@ -10,7 +10,6 @@ class BuilderHandout(builder.BuilderScholar):
     templates = {
         'format': [
             'format-course.tex',
-            'format-handout.tex',
         ],
         'templates': [
             'handout-students.tex',
