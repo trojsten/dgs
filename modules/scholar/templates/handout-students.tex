@@ -2,4 +2,14 @@
 
 (@ block content @)
     \input{\activeDirectory/content.tex}
+
+    (@ for section in sections @)
+        \section{(* section.name *)}
+        \input{\activeDirectory/(* section.id *)/text.tex}
+        \subsection{Úlohy}
+        (@ for problem in problems @)
+            \subsubsection{problem.name}
+            \input{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
+        (@ endfor @)
+    (@ endfor @)
 (@ endblock content @)

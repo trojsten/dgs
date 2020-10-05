@@ -3,8 +3,24 @@
 \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/}%
 \input{core/i18n/slovak/override.tex}
 \input{input/scholar/(* course.id *)/static/format-override.tex}
-\input{\activeDirectory/format-course.tex}
-\input{\activeDirectory/format-(* self.type() *).tex}
+
+\setcounter{secnumdepth}{1}
+
+\fancypagestyle{scholar}{
+    \fancyhf{}
+    \fancyhead[C]{\textit{(* course.name *)}}
+    \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
+
+    \titleformat{\section}[block]{\LARGE\bfseries\centering}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\bfseries\large}{\bfseries\large\thesubsection}{6pt}{}
+    \titleformat{\subsubsection}[hang]{\bfseries}{\thesubsubsection}{6pt}{}[]
+    \titleformat{\paragraph}[hang]{\bfseries}{\theparagraph}{0pt}{}[]
+    \titlespacing{\section}{0pt}{0pt}{0pt}
+    \titlespacing{\subsection}{0pt}{4mm}{0pt}
+    \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
+}
+
+(@ block style @)(@ endblock @)
 
 \begin{document}
     \pagestyle{(* self.type() *)}

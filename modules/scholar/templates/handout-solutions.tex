@@ -1,8 +1,6 @@
 (@ extends 'handout-base.tex' @)
 
-(@ block content @)
-    \input{\activeDirectory/content.tex}
-    \newpage
-    \section{Riešenia}
-    \input{\activeDirectory/solutions.tex}
-(@ endblock content @)
+(@ block solution @)
+    \subsubsection{Riešenie}
+    \input{\activeDirectory/(* section.id *)/(* problem.id *)/solution.tex}
+(@ endblock solution @)
