@@ -33,7 +33,7 @@ class Context():
         return self.load_YAML(self.node_path(*args), 'meta.yaml')
 
     def node_path(self, *args):
-        raise NotImplementedError("Child classes must implement nodePath method")
+        raise NotImplementedError("Child classes must implement node_path method")
 
     def print(self):
         pprint.pprint(self.data)

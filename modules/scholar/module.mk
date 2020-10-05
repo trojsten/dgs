@@ -63,6 +63,8 @@ input/scholar/%/pdf-prerequisites: \
 input/scholar/%/handout: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
 	input/scholar/$$*/format-handout.tex \
 	input/scholar/$$*/pdf-prerequisites ;
 

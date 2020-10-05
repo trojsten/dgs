@@ -1,5 +1,7 @@
 import os
 import sys
+import collections
+from pathlib import Path
 
 sys.path.append('.')
 
@@ -7,13 +9,15 @@ from core.utilities import context
 
 
 class ContextScholar(context.Context):
-    def node_path(self, root, course=None, year=None, target_type=None, issue=None):
+    def node_path(self, root, course=None, year=None, target_type=None, issue=None, section=None, problem=None):
         return os.path.join(
             root,
             '' if course is None else course,
             '' if year is None else f'{year:04d}',
             '' if target_type is None else target_type,
             '' if issue is None else f'{issue:02d}',
+            '' if section is None else section,
+            '' if problem is None else f'{problem:02d}',
         )
 
 
@@ -63,6 +67,28 @@ class ContextIssue(ContextScholar):
         self.load_meta(root, course, year, target, issue) \
             .add_id(f'{issue:02d}') \
             .add_number(issue)
+
+        sections = collections.OrderedDict()
+        subdirs = sorted([f.name for f in Path(self.node_path(root, course, year, target, issue)).iterdir() if f.is_dir()])
+        self.add({'sections': {subdir: ContextSection(root, course, year, target, issue, subdir).data for subdir in subdirs}})
+
+
+class ContextSection(ContextScholar):
+    def __init__(self, root, course, year, target, issue, section):
+        super().__init__()
+        self.load_meta(root, course, year, target, issue, section) \
+            .add_id(section)
+
+        problems = collections.OrderedDict()
+        subdirs = sorted([f.name for f in Path(self.node_path(root, course, year, target, issue, section)).iterdir() if f.is_dir()])
+        self.add({'problems': {subdir: ContextProblem(root, course, year, target, issue, section, subdir).data for subdir in subdirs}})
+
+
+class ContextProblem(ContextScholar):
+    def __init__(self, root, course, year, target, issue, section, problem):
+        super().__init__()
+        self.add_id(problem) \
+            .add_number(problem)
 
 
 class ContextScholarSingle(context.Context):
