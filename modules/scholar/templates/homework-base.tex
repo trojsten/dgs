@@ -3,6 +3,16 @@
 (@ block type @)homework(@ endblock @)
 (@ block typedir @)homework(@ endblock @)
 
+(@ block style @)
+    \fancypagestyle{homework}{
+        \pagestyle{scholar}
+        \fancyhead[L]{\textit{Domáca úloha č. (* issue.number *)}}
+        \fancyhead[R]{\textit{Deadline (* issue.deadline.strftime('%d. %m. %Y') *)}}
+
+        \renewcommand{\thesubsubsection}{\thesubsection\alph{subsubsection}}
+    }
+(@ endblock style @)
+
 (@ block title @)
     \section{Domáca úloha č. (* issue.number *)}
     \begin{center}
