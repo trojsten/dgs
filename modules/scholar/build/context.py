@@ -88,7 +88,7 @@ class ContextProblem(ContextScholar):
     def __init__(self, root, course, year, target, issue, section, problem):
         super().__init__()
         self.add_id(problem) \
-            .add_number(problem)
+            .add_number(int(problem))
 
 
 class ContextScholarSingle(context.Context):
