@@ -12,16 +12,8 @@
 (@ endblock style @)
 
 (@ block content @)
+    \setcounter{section}{(* issue.number - 1 *)}
     \section{Cvičenie č. (* issue.number *)(@ block subtitle @)(@ endblock subtitle @)}
-    (@ for sid, section in issue.sections.items() @)
-        \section{(* section.name *)}
-        \protectedInput{\activeDirectory/(* section.id *)/text.tex}
-        \subsection{Úlohy}
-        (@ for pid, problem in section.problems.items() @)
-            \subsubsection{(* problem.id *)}
-            \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
-            (@ block solution @)(@ endblock solution @)
-        (@ endfor @)
-        (@ if not loop.last @)\newpage(@ endif @)
-    (@ endfor @)
+    (@ block sections @)
+    (@ endblock sections @)
 (@ endblock content @)

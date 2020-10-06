@@ -1,27 +1,15 @@
-(@ extends 'base.tex' @)
+(@ extends 'handout-base.tex' @)
 
-(@ block type @)handout(@ endblock @)
-(@ block typedir @)handouts(@ endblock @)
-
-(@ block style @)
-    \fancypagestyle{handout}{
-        \pagestyle{scholar}
-        \fancyhead[L]{\textit{Cvičenie č. (* issue.number *)}}
-        \fancyhead[R]{\textit{(* issue.date.strftime('%d. %m. %Y') *)}}
-    }
-(@ endblock style @)
-
-(@ block content @)
+(@ block sections @)
     (@ for sid, section in issue.sections.items() @)
-        \section{(* section.name *)}
+        \subsection{(* section.name *)}
         \protectedInput{\activeDirectory/(* section.id *)/text.tex}
-        \subsection{Úlohy}
         (@ for pid, problem in section.problems.items() @)
-            \subsubsection{(* problem.id *)}
+            \subsubsection{Úloha (* problem.number *)}
             \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
             \paragraph{Riešenie}
             \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/solution.tex}
         (@ endfor @)
         (@ if not loop.last @)\newpage(@ endif @)
     (@ endfor @)
-(@ endblock content @)
+(@ endblock sections @)

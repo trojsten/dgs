@@ -2,6 +2,8 @@
 
 input/scholar/%/build-handout: \
 	modules/scholar/format/format-handout.tex \
+	modules/scholar/templates/base.tex \
+	modules/scholar/templates/handout-base.tex \
 	modules/scholar/templates/handout-students.tex \
 	modules/scholar/templates/handout-solutions.tex \
 	source/scholar/$$*/meta.yaml
@@ -29,14 +31,6 @@ input/scholar/%/build-lecture: \
 	@mkdir -p $(dir $@)
 	python3 modules/scholar/build/lecture.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/scholar/%/format-handout.tex: \
-	input/scholar/$$*/build-handout ;
-
-input/scholar/%/format-homework.tex: \
-	input/scholar/$$*/build-homework ;
-
-input/scholar/%/format-lecture.tex: \
-	input/scholar/$$*/build-lecture ;
 
 input/scholar/%/handout-students.tex: \
 	input/scholar/$$*/build-handout ;
