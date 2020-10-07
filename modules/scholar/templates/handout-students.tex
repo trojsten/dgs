@@ -4,8 +4,9 @@
     (@ for sid, section in issue.sections.items() @)
         \subsection{(* section.name *)}
         \protectedInput{\activeDirectory/(* section.id *)/text.tex}
+        \subsubsection{Úlohy}
         (@ for pid, problem in section.problems.items() @)
-            \subsubsection{Úloha (* problem.number *)}
+            \paragraph{Úloha (* problem.number *)}
             \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
             (@ block solution @)(@ endblock solution @)
         (@ endfor @)
