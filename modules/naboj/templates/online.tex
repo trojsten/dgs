@@ -1,0 +1,24 @@
+(@ extends 'base-languages.tex' @)
+
+(@ block content @)
+    \newgeometry{
+        left        = 15mm,
+        right       = 15mm,
+        bottom      = 15mm,
+        top         = 15mm,
+    }
+
+    \pagenumbering{gobble}
+    \pagestyle{online}
+
+    (@ for problem in volume.problems @)%
+        \setcounter{volume}{(* volume.number *)}%
+        \setcounter{problem}{(* problem.number *)}%
+        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+        \label{ssc:problem-(* problem.id*)}%
+        \protectedInput{\activeDirectory/problem.tex}%
+        (@ if not loop.last @)\newpage(@ endif @)
+    (@ endfor @)
+    \newpage
+(@ endblock @)

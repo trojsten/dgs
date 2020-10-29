@@ -19,7 +19,8 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
             'answers-mod5.tex',
             'constants.tex',
             'cover.tex',
-            'instructions.tex'
+            'instructions.tex',
+            'online.tex',
         ],
     }
 
