@@ -13,84 +13,13 @@
     (@ for team3 in venue.teams_div_3 @)
         (@ for problem in volume.problems @)
             (@ for team in team3 @)%
-                \setcounter{volume}{(* volume.number *)}%
-                \setcounter{problem}{(* problem.number *)}%
-                \setcounter{team}{(* team.id *)}%
-                \input{core/i18n/(* team.language *)/override.tex}
-                \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
-
-                \begin{minipage}[t][90mm][t]{\textwidth}%
-                    \begin{minipage}[t][88mm][t]{0.85\linewidth}%
-                        \vspace{0pt}%
-                        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-                        \setlength{\parskip}{6pt}
-                        \protectedInput{\activeDirectory/problem.tex}%
-                    \end{minipage}%
-                    \begin{minipage}[t][88mm][t]{0.15\linewidth}
-                        \vspace{0mm}%
-                        \hspace{4mm}%
-                        \rotatebox{90}{%
-                            \hspace{24mm}%
-                            \textsf{%
-                                \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
-                                \fontsize{28}{0}\selectfont(* '%03d'|format(team.id) *)%
-                                \fontsize{20}{0}\selectfont(* '%02d'|format(problem.number) *)%
-                                \fontsize{20}{0}\selectfont(* '%01d'|format(checkdigit(venue.number, team.id, problem.number)) *)%
-                            }%
-                        }%
-                        \hspace{2pt}
-                        \rotatebox{90}{%
-                            \hspace{6mm}%
-                            \includegraphics[%
-                                width = 80mm, height = 14mm, page = (* team.number * (volume.problems|length + 1) + problem.number *)]{%
-                                \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
-                            }%
-                            \hspace{6mm}%
-                        }%
-                    \end{minipage}
-                    {\small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.id *)}: (* team.name *)}
-                \end{minipage}%
+                (@ include 'tearoff-problem.tex' @)
                 (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
             (@ endfor @)
         (@ endfor @)
         (@ for team in team3 @)%
-            \setcounter{volume}{(* volume.number *)}%
-            \setcounter{problem}{0}%
-            \setcounter{team}{(* team.id *)}%
-
-            \begin{minipage}[t][90mm][t]{\textwidth}%
-                \begin{minipage}[t][88mm][t]{0.85\linewidth}%
-                    \centering
-                    \vspace*{37mm}
-                    \LARGE
-                    \textit{(* i18n.get(team.language).tearoff.bottom *)}
-                \end{minipage}%
-                \begin{minipage}[t][88mm][t]{0.15\linewidth}
-                    \vspace{0mm}%
-                    \hspace{4mm}%
-                    \rotatebox{90}{%
-                        \hspace{24mm}%
-                        \textsf{%
-                            \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
-                            \fontsize{28}{0}\selectfont(* '%03d'|format(team.id) *)%
-                            \fontsize{20}{0}\selectfont(* '%02d'|format(0) *)%
-                            \fontsize{20}{0}\selectfont(* '%01d'|format(checkdigit(venue.number, team.id, 0)) *)%
-                        }%
-                    }%
-                    \hspace{2pt}
-                    \rotatebox{90}{%
-                        \hspace{6mm}%
-                        \includegraphics[%
-                            width = 80mm, height = 14mm, page = (* (team.number + 1) * (volume.problems|length + 1) *)]{%
-                            \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
-                        }%
-                        \hspace{6mm}%
-                    }%
-                \end{minipage}
-                {\small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.id *)}: (* team.name *)}
-            \end{minipage}%
+            (@ include 'tearoff-bottom.tex' @)
             (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
         (@ endfor @)
-
     (@ endfor @)
 (@ endblock @)
