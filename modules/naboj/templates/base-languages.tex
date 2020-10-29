@@ -6,4 +6,12 @@
     \input{core/i18n/(* language.id *)/override.tex}
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format-language.tex}
     \setmainlanguage{(* language.polyglossia *)}
+
+    \fancypagestyle{online}{%
+        \fancyhf{}
+        \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
+        \titlespacing*{\subsection}{0pt}{0pt}{8pt}
+        \renewcommand{\headrulewidth}{0pt}
+        \renewcommand{\footrulewidth}{0pt}
+    }
 (@ endblock @)

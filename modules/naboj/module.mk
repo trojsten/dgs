@@ -39,6 +39,12 @@ input/naboj/%/format-language.tex: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
     $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
+input/naboj/%/online.tex: \
+	modules/naboj/templates/base.tex \
+	modules/naboj/templates/base-languages.tex \
+	modules/naboj/templates/$$(notdir $@) \
+    input/naboj/$$*/build-language ;
+
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
@@ -83,6 +89,7 @@ input/naboj/%/answers: \
 i18n: \
 	$$(wildcard modules/naboj/templates/i18n/*.yaml) ;
 
+# Full booklet
 output/naboj/%/booklet.pdf: \
 	input/naboj/%/problems \
 	input/naboj/%/solutions \
@@ -90,7 +97,17 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/format-language.tex \
 	input/naboj/%/intro.tex \
-	input/naboj/%/booklet.tex 
+	input/naboj/%/booklet.tex
+	$(call doubletex,naboj)
+
+# "Tearoffs" for online version, one problem per page
+output/naboj/%/online.pdf: \
+	input/naboj/%/problems \
+	input/naboj/%/solutions \
+	input/naboj/%/answers \
+	input/naboj/%/pdf-prerequisites \
+	input/naboj/%/format-language.tex \
+	input/naboj/%/online.tex
 	$(call doubletex,naboj)
 
 output/naboj/%/copy: \
@@ -108,13 +125,13 @@ output/naboj/%/cover-print.pdf: \
 output/naboj/%/answers.pdf: \
 	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
-	input/naboj/%/answers.tex 
+	input/naboj/%/answers.tex
 	$(call doubletex,naboj)
 
 output/naboj/%/answers-mod5.pdf: \
 	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
-	input/naboj/%/answers-mod5.tex 
+	input/naboj/%/answers-mod5.tex
 	$(call doubletex,naboj)
 
 output/naboj/%/constants.pdf: \
@@ -124,7 +141,7 @@ output/naboj/%/constants.pdf: \
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
-	i18n 
+	i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/cover.pdf: \
@@ -154,21 +171,13 @@ output/naboj/%/tearoff.pdf: \
 	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))))) \
 	$$(subst source/,input/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
 	input/naboj/%/barcodes.pdf \
-	input/naboj/%/tearoff.tex 
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/tearoff.tex
+	input/naboj/%/tearoff.tex
+	$(call doubletex,naboj)
 
+# Envelope cover
 output/naboj/%/envelope.pdf: \
 	input/naboj/%/envelope.tex
-	mkdir -p $(dir $@)
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): primary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/envelope.tex
-	@echo -e '$(c_action)Compiling XeLaTeX file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/naboj/$*/envelope.tex
-
+	$(call doubletex,naboj)
 
 # All targets for <language>
 output/naboj/%: \
@@ -177,7 +186,8 @@ output/naboj/%: \
 	output/naboj/$$*/answers-mod5.pdf \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
-	output/naboj/$$*/instructions.pdf ;
+	output/naboj/$$*/instructions.pdf \
+	output/naboj/$$*/online.pdf ;
 
 # All targets for <venue>
 output/naboj/%: \

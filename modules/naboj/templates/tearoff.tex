@@ -1,7 +1,15 @@
 (@ extends 'base-venues.tex' @)
 
 (@ block content @)
+    \newgeometry{
+        left        = 12mm,
+        right       = 5mm,
+        bottom      = 3mm,
+        top         = 0mm,
+    }
+    \pagenumbering{gobble}
     \pagestyle{tearoff}
+
     (@ for team3 in venue.teams_div_3 @)
         (@ for problem in volume.problems @)
             (@ for team in team3 @)%
