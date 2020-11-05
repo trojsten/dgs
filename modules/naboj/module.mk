@@ -109,10 +109,12 @@ output/naboj/%/online.pdf: \
 	input/naboj/%/format-language.tex \
 	input/naboj/%/online.tex
 	$(call doubletex,naboj)
+	pdftk $@ burst output $(dir $@)/%02d.pdf
 
 output/naboj/%/copy: \
-	output/naboj/%/booklet.pdf
-	scp $< fks:/home/sesquideus/public_html/booklet.pdf
+	output/naboj/%/booklet.pdf \
+	output/naboj/%/online.pdf
+	scp -r $(dir $@) fks:/home/sesquideus/public_html/naboj/$$*/
 
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf
