@@ -7,11 +7,6 @@ class BuilderHomework(builder.BuilderScholar):
     subdir = 'homework'
 
     root_context_class = context.ContextHomework
-    templates = {
-        'format': [
-            'format-course.tex',
-            'format-homework.tex',
-        ],
         'templates': [
             'homework-students.tex',
             'homework-solutions.tex',

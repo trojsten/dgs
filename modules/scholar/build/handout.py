@@ -8,9 +8,6 @@ class BuilderHandout(builder.BuilderScholar):
 
     root_context_class = context.ContextHandout
     templates = {
-        'format': [
-            'format-course.tex',
-        ],
         'templates': [
             'handout-students.tex',
             'handout-solutions.tex',
