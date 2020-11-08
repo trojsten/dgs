@@ -1,7 +1,6 @@
 .SECONDEXPANSION:
 
 input/scholar/%/build-handout: \
-	modules/scholar/format/format-handout.tex \
 	modules/scholar/templates/base.tex \
 	modules/scholar/templates/handout-base.tex \
 	modules/scholar/templates/handout-students.tex \
@@ -13,7 +12,6 @@ input/scholar/%/build-handout: \
 	python3 modules/scholar/build/handout.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/build-homework: \
-	modules/scholar/format/format-homework.tex \
 	modules/scholar/templates/homework-students.tex \
 	modules/scholar/templates/homework-solutions.tex \
 	source/scholar/$$*/meta.yaml
@@ -23,7 +21,6 @@ input/scholar/%/build-homework: \
 	python3 modules/scholar/build/homework.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/build-lecture: \
-	modules/scholar/format/format-lecture.tex \
 	modules/scholar/templates/lecture.tex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
@@ -59,13 +56,11 @@ input/scholar/%/handout: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
-	input/scholar/$$*/format-handout.tex \
 	input/scholar/$$*/pdf-prerequisites ;
 
 input/scholar/%/homework: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/format-homework.tex \
 	input/scholar/$$*/pdf-prerequisites ;
 
 output/scholar/%/handout-students.pdf: \
