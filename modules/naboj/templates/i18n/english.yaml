@@ -22,7 +22,7 @@ constants:
     symbol:                 "symbol"
     value:                  "value"
 instructions:
-    title:                  "Instructions" 
+    title:                  "Instructions"
 envelope:
     donotopen:              "Do not open this envelope before the competition starts."
 
