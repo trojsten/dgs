@@ -100,6 +100,11 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/booklet.tex
 	$(call doubletex,naboj)
 
+# Booklet for printing
+output/naboj/%/booklet-print.pdf: \
+	output/naboj/%/booklet.pdf
+	pdfbook --short-edge --quiet --outfile $@ $<
+
 # "Tearoffs" for online version, one problem per page
 output/naboj/%/online.pdf: \
 	input/naboj/%/problems \
@@ -111,14 +116,8 @@ output/naboj/%/online.pdf: \
 	$(call doubletex,naboj)
 	pdftk $@ burst output $(dir $@)/%02d.pdf
 
-output/naboj/%/copy: \
-	output/naboj/%/booklet.pdf \
-	output/naboj/%/online.pdf
-	scp -r $(dir $@) fks:/home/sesquideus/public_html/naboj/$$*/
-
-output/naboj/%/booklet-print.pdf: \
-	output/naboj/%/booklet.pdf
-	pdfbook --short-edge --quiet --outfile $@ $<
+output/naboj/%/html: \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) ;
 
 output/naboj/%/cover-print.pdf: \
 	output/naboj/%/cover.pdf
