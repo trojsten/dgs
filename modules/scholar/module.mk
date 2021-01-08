@@ -12,6 +12,8 @@ input/scholar/%/build-handout: \
 	python3 modules/scholar/build/handout.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 input/scholar/%/build-homework: \
+	modules/scholar/templates/base.tex \
+	modules/scholar/templates/homework-base.tex \
 	modules/scholar/templates/homework-students.tex \
 	modules/scholar/templates/homework-solutions.tex \
 	source/scholar/$$*/meta.yaml
@@ -61,6 +63,8 @@ input/scholar/%/handout: \
 input/scholar/%/homework: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
 	input/scholar/$$*/pdf-prerequisites ;
 
 output/scholar/%/handout-students.pdf: \
@@ -70,7 +74,6 @@ output/scholar/%/handout-students.pdf: \
 
 output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout \
-	input/scholar/%/handout-students.tex \
 	input/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
@@ -85,7 +88,6 @@ output/scholar/%/homework-students.pdf: \
 
 output/scholar/%/homework-solutions.pdf: \
 	input/scholar/%/homework \
-	input/scholar/%/homework-students.tex \
 	input/scholar/%/homework-solutions.tex
 	$(call doubletex,scholar)
 

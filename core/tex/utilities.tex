@@ -14,6 +14,13 @@
     }%
 }
 
+% Try input -- \input entire file if it exists
+\NewDocumentCommand{\tryInput}{m}{%
+    \IfFileExists{#1}{%
+        \input{#1}%
+    }{}%
+}
+
 \NewDocumentCommand{\cutHere}{}{%
     \noindent%
     \raisebox{-2.8pt}[0pt][0.75\baselineskip]{\small\ding{34}}%
