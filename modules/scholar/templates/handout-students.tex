@@ -9,7 +9,6 @@
             (@ for pid, problem in section.problems.items() @)
                 \paragraph{Úloha (* problem.number *)}
                 \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
-                (@ block solution @)(@ endblock solution @)
             (@ endfor @)
         (@ endif @)
         (@ if not loop.last @)\newpage(@ endif @)

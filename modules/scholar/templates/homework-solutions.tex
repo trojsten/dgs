@@ -1,9 +1,20 @@
 (@ extends 'homework-base.tex' @)
 
-(@ block content @)
-    \input{\activeDirectory/content.tex}
-    \newpage
-    \setcounter{section}{(* issue.number - 1 *)}
-    \section{Riešenia}
-    \input{\activeDirectory/solutions.tex}
-(@ endblock content @)
+(@ block sections @)
+    (@ for problem in issue.problems @)
+        \subsection{(* problem.name *)}
+        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
+        (@ if problem.subproblems @)
+            (@ for subproblem in problem.subproblems @)
+                \subsubsection{(* subproblem.name *)}
+                \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
+                \paragraph{Riešenie}
+                \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
+            (@ endfor @)
+        (@ endif @)
+        \IfFileExists{\activeDirectory/(* problem.id *)/solution.tex}{%
+            \paragraph{Riešenie}
+            \input{\activeDirectory/(* problem.id *)/solution.tex}
+        }{}%
+    (@ endfor @)
+(@ endblock sections @)
