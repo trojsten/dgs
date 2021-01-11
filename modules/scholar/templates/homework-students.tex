@@ -2,11 +2,11 @@
 
 (@ block sections @)
     (@ for problem in issue.problems @)
-        \subsection{(* problem.name *)}
-        \tryInput{\activeDirectory/(* problem.id *)/text.tex}
+        \subsection{(* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)}
+        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
         (@ if problem.subproblems @)
             (@ for subproblem in problem.subproblems @)
-                \subsubsection{(* subproblem.name *)}
+                \subsubsection{(* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)}
                 \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
             (@ endfor @)
         (@ endif @)
