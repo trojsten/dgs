@@ -8,12 +8,15 @@
             \centering
             \vspace{4pt}
             {\Large (* competition.full.nominative *)}\\[4pt]
-            {\large (* volume.number|roman *). ročník, (* volume.number + competition.founded - 1 *)/(* volume.number + competition.founded *)}\\[8pt]            
-            {\footnotesize (* competition.short *), (* competition.organisation.department.short *) (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
+            {\large (* volume.number|roman *). ročník, (* volume.number + competition.founded - 1 *)/(* volume.number + competition.founded *)} \\[8pt]
+            {%
+                \footnotesize (* competition.short *), (* competition.organisation.department.short *)%
+                (* competition.organisation.faculty.short *), (* competition.organisation.address *)%
+            }\\[2pt]
             \vspace{6pt}
-        \end{minipage}        
-    }           
-}  
+        \end{minipage}
+    }
+}
 
 \fancypagestyle{seminar-main-(* competition.id *)-(* volume.id *)}{%
     \pagestyle{seminar-main-(* competition.id *)}

@@ -1,15 +1,10 @@
 (@ extends 'base.tex' @)
 
-(@ block specific @)
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
-(@ endblock specific @)
-
 (@ block content @)
-    (@ block pagestyle @)(@ endblock pagestyle @)
-    \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
+    \thispagestyle{seminar-booklet-first}
 
     \loadgeometry{firstpage}
-    \afterpage{\aftergroup\restoregeometry}
+    \afterpage{\globaldefs=1\restoregeometry}
 
     (@ block inner @)(@ endblock @)
 (@ endblock content @)

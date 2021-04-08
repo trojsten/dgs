@@ -1,10 +1,9 @@
 (@ extends 'base-booklets.tex' @)
 
-(@ block pagestyle @)
-    \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-problems}
-(@ endblock pagestyle @)
-
 (@ block inner @)
+    \pagestyle{seminar-booklet-body}
+    \fancyhead[LE,RO]{\textit{Zadania (* round.number *). kola (* semester.feminine.genitive *) časti -- (* round.deadline.strftime('%d. %m. %Y') *)}}
+
     \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.feminine.genitive *) časti}{Zadania}}
     {
         \centering

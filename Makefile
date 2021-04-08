@@ -131,6 +131,10 @@ input/%.gp:\
 output/%/clean:
 	rm -rf output/$*/
 
+output/%/distclean: \
+	output/%/clean
+	rm -rf input/$*/
+
 
 clean:
 	@echo -e '$(c_action)Clean:$(c_default)'
