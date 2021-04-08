@@ -75,11 +75,9 @@
     \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
 
-\RenewDocumentCommand{\vec}{m}{\mathbf{#1}}
-\NewDocumentCommand{\uvec}{m}{\Hat{\mathbf{#1}}}
-%\NewDocumentCommand{\Avec}{m}{\vec{#1}}
-%\NewDocumentCommand{\Bvec}{m}{\mathbf{#1}}
-%\RenewDocumentCommand{\vec}{m}{\vv{#1}}
+\NewDocumentCommand{\ArrowVector}{m}{\overrightarrow{#1}}
+\NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
+\NewDocumentCommand{\UnitVector}{m}{\Hat{\vec{#1}}}
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
 \NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}

@@ -1,46 +1,4 @@
 % DeGeŠ style file
 % module: seminar
 
-\newgeometry{
-    left                    = 15mm,
-    right                   = 15mm,
-    top                     = 15mm,
-    bottom                  = 15mm,
-    headheight              = 75pt,
-    headsep                 = 16pt,
-    footskip                = 32pt,
-    includeheadfoot,                                        % we wish to include header and footer into page dimensions
-}
-\savegeometry{firstpage}
 
-\newgeometry{
-    left                    = 15mm,
-    right                   = 15mm,
-    top                     = 15mm,
-    bottom                  = 15mm,
-    headheight              = 20pt,
-    headsep                 = 16pt,
-    footskip                = 32pt,
-    includeheadfoot,                                        % we wish to include header and footer into page dimensions
-}
-\savegeometry{main}
-
-\fancypagestyle{seminar-main}{
-    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
-    \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
-    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
-    \titlespacing{\section}{0pt}{8pt}{8pt}
-    \titlespacing{\subsection}{0pt}{8pt}{0pt}
-    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
-}
-
-\fancypagestyle{seminar-rules}{%
-    \pagestyle{main}
-    \fancyhead[LE,RO]{\textit{Pravidlá}}
-}
-
-\fancypagestyle{seminar-first}{%
-    \fancyhf{}
-}
-
-\numberwithin{equation}{subsection}

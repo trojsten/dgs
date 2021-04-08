@@ -1,8 +1,8 @@
 (@ extends 'base.tex' @)
- 
+
 (@ block content @)
     \pagestyle{seminar-main-(* competition.id *)}
-    
+
     (@ for child in semester.camp.children @)
         \thispagestyle{seminar-first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
         \vspace*{8mm}
@@ -72,7 +72,7 @@
             \vspace{5mm}
 
             \hfill (* competition.head.name *), hlavný vedúci (* competition.short *)
-        
+
         \cutHere
 
         \section{Potvrdenie o~bezinfekčnosti}

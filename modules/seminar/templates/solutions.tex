@@ -1,10 +1,9 @@
 (@ extends 'base-booklets.tex' @)
 
-(@ block pagestyle @)
-    \pagestyle{seminar-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)-solutions}
-(@ endblock pagestyle @)
-
 (@ block inner @)
+    \pagestyle{seminar-booklet-body}
+    \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.feminine.genitive *) časti}}
+
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.feminine.genitive *) časti}{Riešenia}}
 
     (@ for pid, problem in round.problems.items() @)%
@@ -22,7 +21,7 @@
                 (@ endif @)%
                 (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
                 (@ if problem.evaluation @)%
-                    opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)% 
+                    opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)%
                 (@ endif @)%
             }{(* round.number *).(* problem.number *) (* problem.title *)}%
         }
