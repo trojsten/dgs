@@ -10,14 +10,14 @@
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage
-        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex} 
+        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
         \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
         {
             \section{Zadania (* round.number *). kola}%
             \centering%
             \vspace*{-5mm}%
             Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
-        } 
+        }
 
         (@ for pid, problem in round.problems.items() @)%
         \setcounter{volume}{(* volume.number *)}%
