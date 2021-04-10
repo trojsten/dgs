@@ -1,14 +1,14 @@
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-builtin-variables
-path		:= $(abspath $(lastword $(MAKEFILE_LIST)))
-cdir		:= $(dir $(path))
+path := $(abspath $(lastword $(MAKEFILE_LIST)))
+cdir := $(dir $(path))
 
 .SUFFIXES:
 
 .SECONDARY:
 
-version	=			'3.00'
-date =				'2019-11-12'
+version =   '4.00'
+date =      '2021-04-08'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
@@ -25,7 +25,7 @@ endef
 # doubletex(module)
 # Compiles a selected target twice (to ensure references are correct)
 define doubletex
-    mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): primary run$(c_default)'
 	$(call xelatex,$(1))
 	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): secondary run$(c_default)'
