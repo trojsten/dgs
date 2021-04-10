@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-import sys, re, argparse
-import tempfile
+import argparse
 import fileinput
+import re
 import subprocess
+import sys
+import tempfile
 
 from utilities import colour as c
 
@@ -40,10 +42,10 @@ class Convertor():
         parser = argparse.ArgumentParser(
             description             = "DeGeŠ Markdown conversion utility",
         )
-        parser.add_argument('format',   choices = ['latex', 'html'])
-        parser.add_argument('locale',   choices = self.quotation_marks.keys())
-        parser.add_argument('infile',   nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
-        parser.add_argument('outfile',  nargs = '?', type = argparse.FileType('w'), default = sys.stdout)
+        parser.add_argument('format',   choices=['latex', 'html'])
+        parser.add_argument('locale',   choices=self.quotation_marks.keys())
+        parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+        parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
         return parser.parse_args()
 
     def initialize(self):
@@ -115,7 +117,7 @@ class Convertor():
         return line
 
     def call_pandoc(self):
-        out = tempfile.SpooledTemporaryFile(mode = 'w+')
+        out = tempfile.SpooledTemporaryFile(mode='w+')
 
         self.file.seek(0)
         subprocess.run([
@@ -144,5 +146,4 @@ class Convertor():
         line = re.sub(r'"(\S)', self.quote_open + '\g<1>', line)
         return line
 
-convertor = Convertor()
-convertor.run()
+Convertor().run()

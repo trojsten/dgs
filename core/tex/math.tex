@@ -30,9 +30,9 @@
 % \DerivativeParentheses{what}{by-what}
 \NewDocumentCommand{\DerivativeParen}{O{} m m}{%
     \IfNoValueTF{#1}{%
-        \frac{\diff}{\diff#3}\left(#2\right)%
+        \frac{\diff}{\diff#2}\left(#3\right)%
     }{%
-        \frac{\diff^{#1}}{\diff #3^{#1}}\left(#2\right)%
+        \frac{\diff^{#1}}{\diff #2^{#1}}\left(#3\right)%
     }%
 }%
 
@@ -70,7 +70,7 @@
 }%
 
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
-% \PartialDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+% \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
 \NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
     \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
