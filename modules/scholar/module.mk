@@ -47,6 +47,7 @@ input/scholar/%/lecture.tex: \
 	input/scholar/$$*/build-lecture ;
 
 input/scholar/%/pdf-prerequisites: \
+	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.png)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
@@ -54,14 +55,12 @@ input/scholar/%/pdf-prerequisites: \
 	source/scholar/$$*/meta.yaml ;
 
 input/scholar/%/handout: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
 	input/scholar/$$*/pdf-prerequisites ;
 
 input/scholar/%/homework: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
@@ -92,7 +91,6 @@ output/scholar/%/homework-solutions.pdf: \
 	$(call doubletex,scholar)
 
 output/scholar/%/lecture.pdf: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../copy-static)) \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
 	input/scholar/$$*/format-lecture.tex \
 	input/scholar/$$*/pdf-prerequisites
