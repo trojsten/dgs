@@ -37,20 +37,11 @@ class LineLength():
 
 
 class EqualsSpaces():
-    re_equal_space_left = re.compile('[^& ]=')
-    re_equal_space_right = re.compile('=[^& ]')
-    #re_equal_spaces = re.compile('(?!(?\\\\\w+\[[\w-]+| &| ))=(?>( |))')
+    re_equal_spaces = re.compile('(?!\\\\(?:SI|num|si)\[[\w-]+| | &)=(?! |& |[\w-]+(,|\]))')
 
     def check(self, line):
-        #if search := self.re_equal_spaces.search(line):
-        #    raise exceptions.SingleLineError('Spaces missing around "="', line, search.end() - 1)
-
-        #return
-        if search := self.re_equal_space_left.search(line):
-            raise exceptions.SingleLineError('No space left of "="', line, search.end() - 1)
-
-        if search := self.re_equal_space_right.search(line):
-            raise exceptions.SingleLineError('No space right of "="', line, search.end() - 1)
+        if search := self.re_equal_spaces.search(line):
+            raise exceptions.SingleLineError('Spaces missing around "="', line, search.end() - 1)
 
 
 class DoubleDollars():

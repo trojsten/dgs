@@ -40,6 +40,7 @@ input/seminar/%/invite.tex: \
 	python3 modules/seminar/build/invite.py 'source/seminar/' 'modules/seminar' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/pdf-prerequisites: \
+	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
