@@ -50,7 +50,7 @@ class StyleEnforcer():
             check.FailOnSearch('[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
             check.FailOnSearch('[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
             check.FailOnSearch('t\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
-            check.FailOnSearch('\\\\text\{[.,;]\}', "No need to enclose punctuation in \\text"),
+            check.FailOnSearch('\\\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
             check.FailOnSearch('\\\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\\\)?.+\)\}', "Omit parentheses in simple functions"),
             check.LineLength(),
             check.EqualsSpaces(),
