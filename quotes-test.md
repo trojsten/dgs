@@ -15,6 +15,8 @@ Prečo hovoríme o "čiarach"?
 Lebo hovoríme o "čiarach"!
 
 
+ale no tak
+
 $$\begin{aligned}
     3^4 \cdot 5 + 6
 \end{aligned}$$
@@ -39,3 +41,5 @@ $a = 4 pass
 $b &= 5$ pass
 $b&=5$ fail
 \SI[parse-numbers=false]{\pi}{\metre} pass
+$4 - 3 \cdot (2 + 3)$ fail
+$4 - \left(2 + 5\right)$ pass

@@ -41,6 +41,7 @@
 \RequirePackage{leftidx}
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
+\RequirePackage{graphicx}
 \RequirePackage{etoolbox}
 \RequirePackage{cancel}
 \RequirePackage{fancyhdr}

@@ -30,7 +30,7 @@ def critical(what):
 
 
 def path(what):
-    return colour(what, Fore.LIGHTRED_EX)
+    return colour(what, Fore.LIGHTBLUE_EX)
 
 
 def name(what):
