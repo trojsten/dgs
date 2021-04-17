@@ -116,6 +116,7 @@
 \captionsetup[figure]{
     format                  = hang,
     width                   = 0.9\textwidth,
+    textfont                = it,
 }
 
 \renewcommand{\arraystretch}{1.0}
