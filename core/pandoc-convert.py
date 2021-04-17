@@ -11,29 +11,57 @@ from utilities import colour as c
 
 
 class Convertor():
-    quotation_marks = {
-        'sk':   ('„', '“'),
-        'cs':   ('„', '“'),
-        'en':   ('“', '”'),
-        'fr':   ('«\u202F', '\u202F»'),
-        'ru':   ('«', '»'),
-        'pl':   ('„', '”'),
-        'hu':   ('„', '”'),
-        'qq':   ('(', ')'),
-    }
-
     languages = {
-        'sk':   'slovak',
-        'cs':   'czech',
-        'en':   'english',
-        'ru':   'russian',
-        'pl':   'polish',
-        'hu':   'hungarian',
-        'fr':   'french',
-        'qq':   'test',
+        'sk':   {
+            'name':     'slovak',
+            'quotes':   ('„', '“'),
+            'locale':   'sk-SK',
+        },
+        'cs':   {
+            'name':     'czech',
+            'quotes':   ('„', '“'),
+            'locale':   'cs-CS',
+        },
+        'en':   {
+            'name':     'english',
+            'quotes':   ('“', '”'),
+            'sub':      'en-US',
+        },
+        'ru':   {
+            'name':     'russian',
+            'quotes':   ('«', '»'),
+            'sub':      'ruRU',
+        },
+        'pl':   {
+            'name':     'polish',
+            'quotes':   ('„', '“'),
+            'sub':      'pl-PL',
+        },
+        'hu':   {
+            'name':     'hungarian',
+            'quotes':   ('„', '“'),
+            'sub':      'hu-HU',
+        },
+        'fr':   {
+            'name':     'french',
+            'quotes':   ('«\u202F', '\u202F»'),
+            'sub':      'fr-FR',
+        },
+        'qq':   {
+            'name':     'test',
+            'quotes':   ('(', ')'),
+            'sub':      'sk-SK',
+        },
     }
 
+    postprocessing_latex = [
+        (r"``", r"“"),
+        (r"''", r'”'),
+        (r"(?<=\\includegraphics)\[(.*)\]{(.*)}", r"[\g<1>]{\\activeDirectory/\g<2>}"),
+        (r"(?<=\\includegraphics)\[(.*)\]{(.*)\.(svg|gp)}", r"[\g<1>]{\g<2>.pdf}"),
+    ]
 
+    
     def __init__(self):
         self.args = self.parse_arguments()
         self.initialize()
@@ -43,14 +71,26 @@ class Convertor():
             description             = "DeGeŠ Markdown conversion utility",
         )
         parser.add_argument('format',   choices=['latex', 'html'])
-        parser.add_argument('locale',   choices=self.quotation_marks.keys())
+        parser.add_argument('locale',   choices=self.languages.keys())
         parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
         parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
         return parser.parse_args()
 
     def initialize(self):
-        self.quote_open, self.quote_close = self.quotation_marks[self.args.locale]
-        self.language = self.languages[self.args.locale]
+        locale = self.languages[self.args.locale]
+        (self.quote_open, self.quote_close) = locale['quotes']
+        self.language = locale['name']
+        self.locale = locale['locale']
+
+        self.postprocessing_latex = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
+        self.quotes_regexes = [
+            (r'"(\b)', self.quote_open + r'\g<1>'),
+            (r'(\b)"', r'\g<1>' + self.quote_close),
+            (r'(\S)"', r'\g<1>' + self.quote_close),
+            (r'"(\S)', self.quote_open + r'\g<1>'),
+        ]
+        self.quotes_regexes = [(re.compile(regex), repl) for regex, repl in self.quotes_regexes]
+
 
     def run(self):
         try:
@@ -108,8 +148,9 @@ class Convertor():
             line = re.sub(r'^@P', '\\\\insertPicture', line)
             line = re.sub(r'^@NP', '\\\\insertPictureSimple', line)
             line = re.sub(r'^@TODO\s*(.*)$', '\\\\todoMessage{\g<1>}', line)
+
         if self.args.format == 'html':
-            line = re.sub(r'^@H\s*(.*)$', '\g<1>', line) 
+            line = re.sub(r'^@H\s*(.*)$', '\g<1>', line)
             line = re.sub(r'^@P{(.*?)}{(.*?)}{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
                 '![\g<5>](obrazky/\g<1>.\g<3>)', line)
             line = re.sub(r'^@NP{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
@@ -126,24 +167,25 @@ class Convertor():
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.args.format,
-            "--filter", f"pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
-            "--metadata", "lang=sk-SK",
-        ], stdin = self.file, stdout = out)
+            "--filter", "pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
+            "--filter", "pandoc-fignos",
+            "--metadata", f"lang={self.languages[self.args.locale]['locale']}",
+        ], stdin=self.file, stdout=out)
 
         out.seek(0)
         return out
 
     def postprocess(self, line):
         if self.args.format == 'latex':
-            line = re.sub(r'``', '“', line)
-            line = re.sub(r"''", '”', line)
+            for regex, replacement in self.postprocessing_latex:
+                line = regex.sub(replacement, line)
+
         return line
 
     def replace_quotes(self, line):
-        line = re.sub(r'"(\b)', self.quote_open + '\g<1>', line)
-        line = re.sub(r'(\b)"', '\g<1>' + self.quote_close, line)
-        line = re.sub(r'(\S)"', '\g<1>' + self.quote_close, line)
-        line = re.sub(r'"(\S)', self.quote_open + '\g<1>', line)
+        for regex, replacement in self.quotes_regexes:
+            line = regex.sub(replacement, line)
+
         return line
 
 Convertor().run()
