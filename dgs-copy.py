@@ -33,49 +33,49 @@ os.system(query)
 
 for problem in range(1, 8):
     query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/problem.html sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/prikl{problem}.html".format(
-        seminar = args.seminar,
-        volume = args.volume,
-        part = args.part,
-        round = args.round,
-        problem = problem,
+        seminar=args.seminar,
+        volume=args.volume,
+        part=args.part,
+        round=args.round,
+        problem=problem,
     )
     print(query)
     os.system(query)
 
 for problem in range(1, 8):
     query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/{problem:02d}/solution.html sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/prikl{problem}.html".format(
-        seminar = args.seminar,
-        volume = args.volume,
-        part = args.part,
-        round = args.round,
-        problem = problem,
-    )   
+        seminar=args.seminar,
+        volume=args.volume,
+        part=args.part,
+        round=args.round,
+        problem=problem,
+    )
     print(query)
     os.system(query)
 
 query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/problems.pdf sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/zadania.pdf".format(
-    seminar = args.seminar,
-    volume = args.volume,
-    part = args.part,
-    round = args.round,
+    seminar=args.seminar,
+    volume=args.volume,
+    part=args.part,
+    round=args.round,
 )
 print(query)
 os.system(query)
 
 query = "scp ./output/seminar/{seminar}/{volume}/{part}/{round}/solutions.pdf sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/vzoraky.pdf".format(
-    seminar = args.seminar,
-    volume = args.volume,
-    part = args.part,
-    round = args.round,
+    seminar=args.seminar,
+    volume=args.volume,
+    part=args.part,
+    round=args.round,
 )
 print(query)
 os.system(query)
 
 query = "find ./output/seminar/{seminar}/{volume}/{part}/{round}/ \( -name '*.jpg' -o -name '*.png' \) -exec scp '{{}}' sesquideus@ksp:/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/ \;".format(
-    seminar = args.seminar,
-    volume = args.volume,
-    part = args.part,
-    round = args.round,
+    seminar=args.seminar,
+    volume=args.volume,
+    part=args.part,
+    round=args.round,
 )
 print(query)
 os.system(query)

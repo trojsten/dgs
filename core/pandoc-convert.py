@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import dotmap
 import fileinput
 import re
 import subprocess
@@ -16,6 +17,7 @@ class Convertor():
             'name':     'slovak',
             'quotes':   ('„', '“'),
             'locale':   'sk-SK',
+            'figure':   'Obrázok',
         },
         'cs':   {
             'name':     'czech',
@@ -59,9 +61,9 @@ class Convertor():
         (r"''", r'”'),
         (r"(?<=\\includegraphics)\[(.*)\]{(.*)}", r"[\g<1>]{\\activeDirectory/\g<2>}"),
         (r"(?<=\\includegraphics)\[(.*)\]{(.*)\.(svg|gp)}", r"[\g<1>]{\g<2>.pdf}"),
+        (r"^\\caption{}$", ""),
     ]
 
-    
     def __init__(self):
         self.args = self.parse_arguments()
         self.initialize()
@@ -77,10 +79,8 @@ class Convertor():
         return parser.parse_args()
 
     def initialize(self):
-        locale = self.languages[self.args.locale]
-        (self.quote_open, self.quote_close) = locale['quotes']
-        self.language = locale['name']
-        self.locale = locale['locale']
+        self.locale = dotmap.DotMap(self.languages[self.args.locale], _dynamic=False)
+        (self.quote_open, self.quote_close) = self.locale.quotes
 
         self.postprocessing_latex = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
         self.quotes_regexes = [
@@ -104,9 +104,19 @@ class Convertor():
         except AssertionError as e:
             print(f"{c.path(__file__)}: Calling pandoc failed")
             fail()
+        except Exception as e:
+            self.fail()
         else:
-            print(f"{c.ok('dgs-convert: success')}")
-            sys.exit(0)
+            self.finish()
+
+
+    def fail(self):
+        print(f"pandoc-convert: {c.err('failure')} on {c.path(self.args.infile.name)}")
+        sys.exit(-1)
+
+    def finish(self):
+        print(f"pandoc-convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
+        sys.exit(0)
 
     def file_operation(self, function):
         def inner(f):
@@ -143,11 +153,11 @@ class Convertor():
 
     def replace_tags(self, line):
         if self.args.format == 'latex':
-            line = re.sub(r'^@E\s*(.*)$', '\\\\errorMessage{\g<1>}', line)
-            line = re.sub(r'^@L\s*(.*)$', '\g<1>', line)
-            line = re.sub(r'^@P', '\\\\insertPicture', line)
-            line = re.sub(r'^@NP', '\\\\insertPictureSimple', line)
-            line = re.sub(r'^@TODO\s*(.*)$', '\\\\todoMessage{\g<1>}', line)
+            line = re.sub(r'^@E\s*(.*)$', r'\\errorMessage{\g<1>}', line)
+            line = re.sub(r'^@L\s*(.*)$', r'\g<1>', line)
+            line = re.sub(r'^@P', r'\\insertPicture', line)
+            line = re.sub(r'^@NP', r'\\insertPictureSimple', line)
+            line = re.sub(r'^@TODO\s*(.*)$', r'\\todoMessage{\g<1>}', line)
 
         if self.args.format == 'html':
             line = re.sub(r'^@H\s*(.*)$', '\g<1>', line)
@@ -168,7 +178,8 @@ class Convertor():
             "--pdf-engine", "xelatex",
             "--to", self.args.format,
             "--filter", "pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
-            "--filter", "pandoc-fignos",
+#            "--filter", "pandoc-fignos", "-M", f'fignos-caption-name="{self.locale.figure}"',
+            "--filter", "pandoc-eqnos",
             "--metadata", f"lang={self.languages[self.args.locale]['locale']}",
         ], stdin=self.file, stdout=out)
 
