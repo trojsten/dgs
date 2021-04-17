@@ -1,12 +1,12 @@
 (@ extends 'handout-base.tex' @)
 
 (@ block sections @)
-    (@ for sid, section in issue.sections.items() @)
+    (@ for section in issue.sections @)
         \subsection{(* section.name *)}
         \protectedInput{\activeDirectory/(* section.id *)/text.tex}
         \subsubsection{Úlohy}
-        (@ for pid, problem in section.problems.items() @)
-            \paragraph{Úloha (* problem.number *)}
+        (@ for problem in section.problems @)
+            \paragraph{Úloha (* loop.index *)}
             \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
             \subparagraph{Riešenie}
             \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/solution.tex}

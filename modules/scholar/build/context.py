@@ -68,6 +68,12 @@ class ContextIssueSubSub(ContextScholar):
             .add_id(subsub)
 
 
+class ContextHandoutSubSub(ContextScholar):
+    def __init__(self, root, course, year, target, issue, sub, subsub):
+        super().__init__()
+        self.add_id(subsub)
+
+
 # Homework and its subcontexts
 class ContextHomeworkProblem(ContextIssueSub):
     subcontext_name = 'subproblems'
@@ -81,7 +87,7 @@ class ContextHomeworkIssue(ContextIssue):
 
 class ContextHandoutSection(ContextIssueSub):
     subcontext_name = 'problems'
-    subcontext_class = ContextIssueSubSub
+    subcontext_class = ContextHandoutSubSub
 
 
 class ContextHandoutIssue(ContextIssue):
