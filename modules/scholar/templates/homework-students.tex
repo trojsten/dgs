@@ -3,11 +3,15 @@
 (@ block sections @)
     (@ for problem in issue.problems @)
         \subsection{(* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)}
+        \label{sec:(* problem.id *)}
         \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
+        (@ block solution scoped @)(@ endblock solution @)
         (@ if problem.subproblems @)
             (@ for subproblem in problem.subproblems @)
                 \subsubsection{(* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)}
+                \label{sec:(* problem.id*)-(* subproblem.id *)}
                 \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
+                (@ block subsolution scoped @)(@ endblock subsolution @)
             (@ endfor @)
         (@ endif @)
     (@ endfor @)

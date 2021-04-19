@@ -1,11 +1,12 @@
 (@ extends 'handout-base.tex' @)
 
 (@ block problems @)
-    \subsection{Úlohy}
     (@ if issue.problems @)
+        \subsection{Úlohy}
         (@ for problem in issue.problems @)
             \subsubsection{Úloha (* loop.index *)}
             \protectedInput{\activeDirectory/(* problem.id *)/problem.tex}
+            (@ block solution scoped @)(@ endblock solution @)
         (@ endfor @)
     (@ endif @)
 (@ endblock problems @)

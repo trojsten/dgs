@@ -1,19 +1,11 @@
-(@ extends 'homework-base.tex' @)
+(@ extends 'homework-students.tex' @)
 
-(@ block sections @)
-    (@ for problem in issue.problems @)
-        \subsection{(* problem.name *)}
-        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
-        (@ if problem.subproblems @)
-            (@ for subproblem in problem.subproblems @)
-                \subsubsection{(* subproblem.name *)}
-                \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
-                \paragraph{Riešenie}
-                \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
-            (@ endfor @)
-        (@ else @)
-            \paragraph{Riešenie}
-            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
-        (@ endif @)
-    (@ endfor @)
-(@ endblock sections @)
+(@ block solution @)
+    \paragraph{Riešenie}
+    \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+(@ endblock solution @)
+
+(@ block subsolution @)
+    \paragraph{Riešenie}
+    \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
+(@ endblock subsolution @)
