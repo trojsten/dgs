@@ -11,10 +11,9 @@
                 \paragraph{Riešenie}
                 \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
             (@ endfor @)
-        (@ endif @)
-        \IfFileExists{\activeDirectory/(* problem.id *)/solution.tex}{%
+        (@ else @)
             \paragraph{Riešenie}
-            \input{\activeDirectory/(* problem.id *)/solution.tex}
-        }{}%
+            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+        (@ endif @)
     (@ endfor @)
 (@ endblock sections @)

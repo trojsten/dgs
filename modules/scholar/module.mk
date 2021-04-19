@@ -76,7 +76,7 @@ output/scholar/%/handout-solutions.pdf: \
 	input/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
-output/scholar/%/handouts/all: \
+output/scholar/%/handouts: \
 	$$(subst meta.yaml,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) \
 	$$(subst meta.yaml,handout-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) ;
 
@@ -89,6 +89,10 @@ output/scholar/%/homework-solutions.pdf: \
 	input/scholar/%/homework \
 	input/scholar/%/homework-solutions.tex
 	$(call doubletex,scholar)
+
+output/scholar/%/homework: \
+	$$(subst meta.yaml,homework-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/homework/*/meta.yaml))) \
+	$$(subst meta.yaml,homework-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/homework/*/meta.yaml))) ;
 
 output/scholar/%/lecture.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \

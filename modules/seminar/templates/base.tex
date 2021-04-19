@@ -38,7 +38,7 @@
 
     \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{%
         \includegraphics[keepaspectratio=true, height=6mm]{%
-            input/(* module.id *)/(* competition.id *)/static/logo/logo.pdf}%
+            input/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
         }%
     }
     \fancyhead[LE,RO]{\textit{(* competition.full.nominative *)}}
@@ -77,7 +77,7 @@
     \fancyhead[R]{
         \begin{minipage}{0.2\textwidth}
             \flushright
-            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/static/logo/logo.pdf}\\[0pt]
+            \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}\\[0pt]
             \vspace{4pt}
         \end{minipage}
     }
@@ -88,7 +88,7 @@
 \numberwithin{equation}{subsection}
 
 % Include overrides specific to this seminar instance from its static file (in the repository)
-\input{input/(* module.id *)/(* competition.id *)/static/format-override.tex}
+\input{input/(* module.id *)/(* competition.id *)/.static/format-override.tex}
 
 (@ block specific @)(@ endblock @)
 

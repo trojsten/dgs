@@ -22,7 +22,7 @@ class Convertor():
         'cs':   {
             'name':     'czech',
             'quotes':   ('„', '“'),
-            'locale':   'cs-CS',
+            'locale':   'cs-CZ',
         },
         'en':   {
             'name':     'english',
@@ -32,7 +32,7 @@ class Convertor():
         'ru':   {
             'name':     'russian',
             'quotes':   ('«', '»'),
-            'sub':      'ruRU',
+            'sub':      'ru-RU',
         },
         'pl':   {
             'name':     'polish',
