@@ -77,8 +77,8 @@ output/scholar/%/handout-solutions.pdf: \
 	$(call doubletex,scholar)
 
 output/scholar/%/handouts/all: \
-	$$(subst content.md,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/content.md))) \
-	$$(subst content.md,handout-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/content.md))) ;
+	$$(subst meta.yaml,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) \
+	$$(subst meta.yaml,handout-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) ;
 
 output/scholar/%/homework-students.pdf: \
 	input/scholar/%/homework \
