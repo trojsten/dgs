@@ -10,7 +10,7 @@ input/seminar/%/intro.tex input/seminar/%/rules.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
-input/seminar/%/problems.tex input/seminar/%/solutions.tex: \
+input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex: \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
@@ -66,6 +66,14 @@ output/seminar/%/solutions.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	input/seminar/$$*/pdf-prerequisites \
 	input/seminar/$$*/solutions.tex
+	$(call doubletex,seminar)
+
+output/seminar/%/solutions-full.pdf: \
+	modules/seminar/templates/solutions-full.tex \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
+	input/seminar/$$*/pdf-prerequisites \
+	input/seminar/$$*/solutions-full.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/semester.pdf: \

@@ -1,16 +1,13 @@
 (@ extends 'handout-base.tex' @)
 
-(@ block sections @)
-    (@ for section in issue.sections @)
-        \subsection{(* section.name *)}
-        \protectedInput{\activeDirectory/(* section.id *)/text.tex}
-        \subsubsection{Úlohy}
-        (@ for problem in section.problems @)
-            \paragraph{Úloha (* loop.index *)}
-            \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/problem.tex}
-            \subparagraph{Riešenie}
-            \protectedInput{\activeDirectory/(* section.id *)/(* problem.id *)/solution.tex}
+(@ block problems @)
+    \subsection{Úlohy}
+    (@ if issue.problems @)
+        (@ for problem in issue.problems @)
+            \subsubsection{Úloha (* loop.index *)}
+            \protectedInput{\activeDirectory/(* problem.id *)/problem.tex}
+            \paragraph{Riešenie}
+            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
         (@ endfor @)
-        (@ if not loop.last @)\newpage(@ endif @)
-    (@ endfor @)
-(@ endblock sections @)
+    (@ endif @)
+(@ endblock problems @)

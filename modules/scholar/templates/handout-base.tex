@@ -13,7 +13,9 @@
 
 (@ block content @)
     \setcounter{section}{(* issue.number - 1 *)}
-    \section{Cvičenie č. (* issue.number *)(@ block subtitle @)(@ endblock subtitle @)}
-    (@ block sections @)
-    (@ endblock sections @)
+    \section{(* issue.name *)(@ block subtitle @)(@ endblock subtitle @)}
+    \invisiblesubsection{Text}
+    \protectedInput{\activeDirectory/text.tex}
+    (@ block problems @)
+    (@ endblock problems @)
 (@ endblock content @)

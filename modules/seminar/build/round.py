@@ -8,6 +8,7 @@ class BuilderRound(builder.BuilderRound):
         'templates': [
             'problems.tex',
             'solutions.tex',
+            'solutions-full.tex',
         ],
     }
     target = 'round'

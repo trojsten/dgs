@@ -53,6 +53,19 @@ class ContextIssue(ContextScholar):
         self.add_subdirs(self.subcontext_class, self.subcontext_name, root, course, year, target, issue)
 
 
+class ContextHandoutProblem(ContextScholar):
+    def __init__(self, root, course, year, target, issue, sub):
+        super().__init__()
+        self.add_id(sub)
+
+
+class ContextHandoutIssue(ContextIssue):
+    subcontext_name = 'problems'
+    subcontext_class = ContextHandoutProblem
+
+
+
+
 class ContextIssueSub(ContextScholar):
     def __init__(self, root, course, year, target, issue, sub):
         super().__init__()
@@ -85,14 +98,7 @@ class ContextHomeworkIssue(ContextIssue):
     subcontext_class = ContextHomeworkProblem
 
 
-class ContextHandoutSection(ContextIssueSub):
-    subcontext_name = 'problems'
-    subcontext_class = ContextHandoutSubSub
 
-
-class ContextHandoutIssue(ContextIssue):
-    subcontext_name = 'sections'
-    subcontext_class = ContextHandoutSection
 
 
 class ContextIssueBase(ContextScholar):
