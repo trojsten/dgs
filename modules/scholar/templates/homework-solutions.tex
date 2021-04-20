@@ -1,8 +1,10 @@
 (@ extends 'homework-students.tex' @)
 
 (@ block solution @)
-    \paragraph{Riešenie}
-    \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+    (@ if issue.problems|length == 0 @)
+        \paragraph{Riešenie}
+        \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+    (@ endif @)
 (@ endblock solution @)
 
 (@ block subsolution @)
