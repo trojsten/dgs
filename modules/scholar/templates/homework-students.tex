@@ -5,7 +5,9 @@
         \subsection{(* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)}
         \label{sec:(* problem.id *)}
         \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
-        (@ block solution scoped @)(@ endblock solution @)
+        (@ if issue.problems|length == 0 @)
+            (@ block solution scoped @)(@ endblock solution @)
+        (@ endif @)
         (@ if problem.subproblems @)
             (@ for subproblem in problem.subproblems @)
                 \subsubsection{(* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)}
