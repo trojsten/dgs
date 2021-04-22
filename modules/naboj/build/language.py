@@ -11,18 +11,15 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
     subdir = 'languages'
 
     root_context_class = context.ContextBooklet
-    templates = {
-        'format': ['format-language.tex'],
-        'templates': [
-            'booklet.tex',
-            'answers.tex',
-            'answers-mod5.tex',
-            'constants.tex',
-            'cover.tex',
-            'instructions.tex',
-            'online.tex',
-        ],
-    }
+    templates = [
+        'booklet.tex',
+        'answers.tex',
+        'answers-mod5.tex',
+        'constants.tex',
+        'cover.tex',
+        'instructions.tex',
+        'online.tex',
+    ]
 
     def create_argument_parser(self):
         super().create_argument_parser()

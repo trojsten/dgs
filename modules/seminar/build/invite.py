@@ -4,11 +4,9 @@ import context
 
 class BuilderInvite(builder.BuilderSemester):
     root_context_class = context.ContextInvite
-    templates = {
-        'templates': [
-            'invite.tex',
-        ],
-    }
+    templates = [
+        'invite.tex',
+    ],
     target = 'invite'
 
 

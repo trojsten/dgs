@@ -5,6 +5,10 @@ sys.path.append('.')
 from core.utilities import builder
 
 
+def empty_if_none(what):
+    return '' if what is None else what
+
+
 class BuilderSeminar(builder.BaseBuilder):
     module = 'seminar'
 
@@ -20,10 +24,10 @@ class BuilderSeminar(builder.BaseBuilder):
 
     def path(self):
         return (
-            '' if self.args.competition is None else self.args.competition,
-            '' if self.args.volume is None else f'{self.args.volume:02d}',
-            '' if self.args.semester is None else str(self.args.semester),
-            '' if self.args.round is None else str(self.args.round),
+            empty_if_none(self.args.competition),
+            empty_if_none(self.args.volume),
+            empty_if_none(self.args.semester),
+            empty_if_none(self.args.round),
         )
 
 

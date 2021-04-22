@@ -3,8 +3,111 @@
 (@ block documentclass @)twoside(@ endblock @)
 
 (@ block specific @)
+    \newgeometry{
+        left                    = 15mm,
+        right                   = 15mm,
+        top                     = 15mm,
+        bottom                  = 15mm,
+        headheight              = 75pt,
+        headsep                 = 16pt,
+        footskip                = 32pt,
+        includeheadfoot,
+    }
+    \savegeometry{firstpage}
+
+    \newgeometry{
+        left                    = 15mm,
+        right                   = 15mm,
+        top                     = 15mm,
+        bottom                  = 15mm,
+        headheight              = 20pt,
+        headsep                 = 16pt,
+        footskip                = 32pt,
+        includeheadfoot,
+    }
+    \savegeometry{main}
+
+    \fancypagestyle{main}{%
+        \fancyhead[LO,RE]{%
+            \raisebox{(* competition.hacks.smallLogoRaise *)}{%
+                \includegraphics[keepaspectratio = true, height = 6mm]{input/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
+            }%
+        }%
+        \fancyhead[C]{\textit{(* volume.number *). (* i18n.competition.name.nominative *), (* volume.number + competition.founded - 1 *)}}
+        \fancyfoot[LO,RE]{\href{mailto:(* i18n.competition.email *)}{\texttt{(* i18n.competition.email *)}}}
+        \fancyfoot[C]{\small \thepage}
+        \fancyfoot[LE,RO]{\URL{(* i18n.competition.website *)}}
+        \titleformat{\section}[hang]{\centering\huge\vspace*{-7mm}}{}{0pt}{}
+        \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
+        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titlespacing*{\section}{0pt}{0pt}{8pt}
+        \titlespacing*{\subsection}{0pt}{8pt}{8pt}
+        \titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
+    }
+
+    \fancypagestyle{problems}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.section.problems *)}}
+    }
+
+    \fancypagestyle{solutions}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.section.solutions *)}}
+    }
+
+    \fancypagestyle{answers}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.section.answers *)}}
+    }
+
+    \fancypagestyle{constants}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.constants.title *)}}
+    }
+
+    \fancypagestyle{instructions}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.instructions.title *)}}
+    }
+
+    \fancypagestyle{first}{%
+        \fancyhf{}
+        \fancyhead[L]{
+            \begin{minipage}{0.15\textwidth}
+                \flushleft
+                \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+                \vspace{16pt}
+            \end{minipage}
+        }
+        \fancyhead[C]{
+            \begin{minipage}{0.7\textwidth}
+                \centering
+                \vspace{4pt}
+                {\Large (* volume.number*). (* i18n.competition.name.nominative *)}\\[4pt]
+                {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]
+                {\footnotesize (* competition.organisation.name.short *), (* competition.organisation.department.short *) %
+                    (* competition.organisation.faculty.short *), (* competition.organisation.address *)}\\[2pt]
+                \vspace{6pt}
+            \end{minipage}
+        }
+        \fancyhead[R]{
+            \begin{minipage}{0.2\textwidth}
+                \flushright
+                \includegraphics[width = 30mm, keepaspectratio = true]{input/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}\\[0pt]
+                \vspace{4pt}
+            \end{minipage}
+        }
+        \fancyfoot[LO,RE]{\href{mailto:(* i18n.competition.email *)}{\texttt{(* i18n.competition.email *)}}}
+        \fancyfoot[C]{\small \thepage}
+        \fancyfoot[LE,RO]{\URL{(* i18n.competition.website *)}}
+        \titleformat{\subsection}[hang]{\bfseries}{}{0pt}{}[]
+    }
+    \setcounter{secnumdepth}{0}
+
+    \captionsetup[table]{name=(* i18n.caption.table *)}
+    \captionsetup[figure]{name=(* i18n.caption.figure *)}
+
     \input{core/i18n/(* language.id *)/override.tex}
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/format-language.tex}
     \setmainlanguage{(* language.polyglossia *)}
 
     \fancypagestyle{online}{%
@@ -14,4 +117,6 @@
         \renewcommand{\headrulewidth}{0pt}
         \renewcommand{\footrulewidth}{0pt}
     }
+
+    \pagestyle{main}
 (@ endblock @)

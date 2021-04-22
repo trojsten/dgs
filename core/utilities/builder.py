@@ -1,6 +1,6 @@
-import os
 import pprint
 import argparse
+from pathlib import Path
 
 from core.utilities import colour as c, argparser, jinja
 
@@ -10,9 +10,9 @@ class BaseBuilder():
         self.create_argument_parser()
         self.parse_arguments()
 
-        self.launch_directory = os.path.realpath(self.args.launch)
-        self.template_root = os.path.realpath(self.args.template_root)
-        self.output_directory = os.path.realpath(self.args.output) if self.args.output else None
+        self.launch_directory = Path(self.args.launch)
+        self.template_root = Path(self.args.template_root)
+        self.output_directory = Path(self.args.output) if self.args.output else None
         self.create_context()
 
     def print_debug_info(self):
@@ -38,6 +38,9 @@ class BaseBuilder():
     def parse_arguments(self):
         self.args = self.parser.parse_args()
 
+    def full_name(self):
+        return '/'.join(map(str, self.id()))
+
     def id(self):
         raise NotImplementedError
 
@@ -45,23 +48,16 @@ class BaseBuilder():
         raise NotImplementedError
 
     def print_build_info(self):
-        print(
-            c.act("Invoking"),
-            c.name(self.module),
-            c.act("template builder on"),
-            c.name(self.target),
-            c.path(os.path.join(*self.path())),
-        )
+        print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_name())}")
 
     def create_context(self):
-        self.context = self.root_context_class(os.path.realpath(self.args.launch), *self.id())
+        self.context = self.root_context_class(self.launch_directory, *self.id())
 
     def build(self):
         self.print_debug_info()
         self.print_build_info()
 
-        for dir, templates in self.templates.items():
-            for template in templates:
-                jinja.print_template(os.path.join(self.template_root, dir), template, self.context.data, self.output_directory)
+        for template in self.templates:
+            jinja.print_template(self.template_root / 'templates', template, self.context.data, self.output_directory)
 
-        print(c.ok("Template builder on"), c.name(self.target), c.ok("successful"))
+        print(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")

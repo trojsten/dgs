@@ -13,7 +13,7 @@ input/naboj/%/build-language: \
 
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	i18n ;
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
@@ -27,17 +27,11 @@ input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
-    input/naboj/$$*/build-venue ;
+	input/naboj/$$*/build-venue ;
 
 input/naboj/%/envelope.tex: \
 	modules/naboj/templates/$$(notdir $@) \
-    input/naboj/$$*/build-venue ;
-
-input/naboj/%/format-language.tex: \
-    input/naboj/$$*/build-language \
-	modules/naboj/format/format-language.tex \
-	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
+	input/naboj/$$*/build-venue ;
 
 input/naboj/%/online.tex: \
 	modules/naboj/templates/base.tex \
@@ -49,24 +43,24 @@ input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.t
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $$@) \
-    input/naboj/$$*/build-language \
-    $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
+	input/naboj/$$*/build-language \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 input/naboj/%/intro.tex: \
-    input/naboj/$$*/build-language \
+	input/naboj/$$*/build-language \
 	source/naboj/$$*/$$(notdir $$@) ;
 
 input/naboj/%/constants.tex: \
 	modules/naboj/templates/constants.tex \
-    input/naboj/$$*/build-language ;
+	input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions-text.tex: \
 	source/naboj/$$*/$$(notdir $$@) \
-    input/naboj/$$*/build-language ;
+	input/naboj/$$*/build-language ;
 
 input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
-    input/naboj/$$*/build-language ;
+	input/naboj/$$*/build-language ;
 
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
@@ -95,7 +89,6 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/solutions \
 	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
-	input/naboj/%/format-language.tex \
 	input/naboj/%/intro.tex \
 	input/naboj/%/booklet.tex
 	$(call doubletex,naboj)
@@ -111,7 +104,6 @@ output/naboj/%/online.pdf: \
 	input/naboj/%/solutions \
 	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
-	input/naboj/%/format-language.tex \
 	input/naboj/%/online.tex
 	$(call doubletex,naboj)
 	pdftk $@ burst output $(dir $@)/%02d.pdf
@@ -153,7 +145,7 @@ output/naboj/%/cover.pdf: \
 
 # Barcodes in text format
 input/naboj/%/barcodes.txt: \
-    input/naboj/$$*/build-venue ;
+	input/naboj/$$*/build-venue ;
 
 # Barcodes text -> PDF, one per page
 input/naboj/%/barcodes.pdf: \
@@ -190,15 +182,10 @@ output/naboj/%: \
 	output/naboj/$$*/instructions.pdf \
 	output/naboj/$$*/online.pdf ;
 
-# All targets for <venue>
-output/naboj/%: \
-	output/naboj/$$*/tearoff.pdf \
-    output/naboj/$$*/envelope.pdf ;
-
 # All targets for all languages
 output/naboj/%/languages: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ;
 
 # All targets for all venues
 output/naboj/%/venues: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ; 
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
