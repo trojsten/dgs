@@ -1,8 +1,8 @@
 .SECONDEXPANSION:
 
 input/seminar/%/copy-static:
-	@mkdir -p $(dir $@)static/
-	cp -r source/seminar/$*/static/ input/seminar/$*/
+	@mkdir -p $(dir $@).static/
+	cp -r source/seminar/$*/.static/ input/seminar/$*/
 
 input/seminar/%/intro.tex input/seminar/%/rules.tex: \
 	$$(subst $(cdir),,$$(abspath modules/seminar/templates/$$(notdir $$@)))
