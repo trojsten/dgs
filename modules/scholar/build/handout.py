@@ -7,12 +7,10 @@ class BuilderHandout(builder.BuilderScholar):
     subdir = 'handouts'
 
     root_context_class = context.ContextHandout
-    templates = {
-        'templates': [
-            'handout-students.tex',
-            'handout-solutions.tex',
-        ],
-    }
+    templates = [
+        'handout-students.tex',
+        'handout-solutions.tex',
+    ]
 
 
 BuilderHandout().build()

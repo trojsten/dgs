@@ -7,9 +7,7 @@ class BuilderNabojVenue(builder.BuilderNaboj):
     subdir = 'venues'
 
     root_context_class = context.ContextTearoff
-    templates = {
-        'templates': ['barcodes.txt', 'tearoff.tex', 'envelope.tex'],
-    }
+    templates = ['barcodes.txt', 'tearoff.tex', 'envelope.tex']
 
     def create_argument_parser(self):
         super().create_argument_parser()
