@@ -64,6 +64,10 @@ class Convertor():
         (r"^\\caption{}$", ""),
     ]
 
+    postprocessing_html = [
+        (r"", r"")
+    ]
+
     def __init__(self):
         self.args = self.parse_arguments()
         self.initialize()
@@ -105,6 +109,8 @@ class Convertor():
             print(f"{c.path(__file__)}: Calling pandoc failed")
             fail()
         except Exception as e:
+            print(f"Unexpected exception occurred:")
+            raise e
             self.fail()
         else:
             self.finish()
@@ -145,26 +151,31 @@ class Convertor():
             return None
 
     def filter_tags(self, line):
-        if re.match(r'^%', line) or \
-            (re.match(r'^@H', line) and self.args.format == 'latex') or \
-            (re.match(r'^@L', line) and self.args.format == 'html'):
+        if re.match(r"^%", line) or \
+            (re.match(r"^@H", line) and self.args.format == 'latex') or \
+            (re.match(r"^@L", line) and self.args.format == 'html'):
             return False
         return True
 
     def replace_tags(self, line):
         if self.args.format == 'latex':
-            line = re.sub(r'^@E\s*(.*)$', r'\\errorMessage{\g<1>}', line)
-            line = re.sub(r'^@L\s*(.*)$', r'\g<1>', line)
-            line = re.sub(r'^@P', r'\\insertPicture', line)
-            line = re.sub(r'^@NP', r'\\insertPictureSimple', line)
-            line = re.sub(r'^@TODO\s*(.*)$', r'\\todoMessage{\g<1>}', line)
+            line = re.sub(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", line)
+            line = re.sub(r"^@L\s*(.*)$", r"\g<1>", line)
+            line = re.sub(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", line)
 
         if self.args.format == 'html':
-            line = re.sub(r'^@H\s*(.*)$', '\g<1>', line)
-            line = re.sub(r'^@P{(.*?)}{(.*?)}{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
-                '![\g<5>](obrazky/\g<1>.\g<3>)', line)
-            line = re.sub(r'^@NP{(.*?)}{(.*?)}{(.*)}{(.*?)}$',
-                '![\g<3>](obrazky/\g<1>)', line)
+            line = re.sub(r"^@E\s*(.*)$", r"Error: \g<1>", line)
+            line = re.sub(r"^@H\s*(.*)$", "\g<1>", line)
+            line = re.sub(
+                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>jpg|png)\){(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){\g<extras>}",
+                line
+            )
+            line = re.sub(
+                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp|svg)\){(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
+                line
+            )
         return line
 
     def call_pandoc(self):
