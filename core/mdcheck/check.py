@@ -37,7 +37,7 @@ class LineLength():
 
 
 class EqualsSpaces():
-    re_equal_spaces = re.compile('(?!\\\\(?:SI|num|si)\[[\w-]+| | &)=(?! |& |[\w-]+(,|\]))')
+    re_equal_spaces = re.compile('(?!\\\\(?:SI|num|si)\[[\w-]+| | &|(#eq:[a-z-]+ )?height)=(?! |& |[\w-]+(,|\])|[0-9]+mm)')
 
     def check(self, line):
         if search := self.re_equal_spaces.search(line):
