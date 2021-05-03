@@ -65,7 +65,8 @@ class Convertor():
     ]
 
     postprocessing_html = [
-        (r"", r"")
+        (r'<img src="(.*)" style="height:(.*)" alt="(.*)">', r'<img src="\g<1>" style="max-width: 100%; max-height: calc(1.5 * \g<2>); margin: auto; display: block;" alt="\g<3>">'),
+        (r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>', r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>'),
     ]
 
     def __init__(self):
@@ -86,7 +87,10 @@ class Convertor():
         self.locale = dotmap.DotMap(self.languages[self.args.locale], _dynamic=False)
         (self.quote_open, self.quote_close) = self.locale.quotes
 
-        self.postprocessing_latex = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
+        if self.args.format == 'latex':
+            self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
+        if self.args.format == 'html':
+            self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_html]
         self.quotes_regexes = [
             (r'"(\b)', self.quote_open + r'\g<1>'),
             (r'(\b)"', r'\g<1>' + self.quote_close),
@@ -176,6 +180,11 @@ class Convertor():
                 r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
                 line
             )
+            line = re.sub(
+                r"^!\[(?P<caption>.*)\]\(obrazky/(?P<filename>.*)\.(?P<extension>.*)\){height(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){#fig:\g<filename> height\g<extras>}",
+                line
+            )
         return line
 
     def call_pandoc(self):
@@ -198,10 +207,8 @@ class Convertor():
         return out
 
     def postprocess(self, line):
-        if self.args.format == 'latex':
-            for regex, replacement in self.postprocessing_latex:
-                line = regex.sub(replacement, line)
-
+        for regex, replacement in self.postprocessing:
+            line = regex.sub(replacement, line)
         return line
 
     def replace_quotes(self, line):
