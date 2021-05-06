@@ -5,11 +5,12 @@
     \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.feminine.genitive *) časti}}
 
     \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.feminine.genitive *) časti}{Riešenia}}
+    \setcounter{volume}{(* volume.number *)}%
+    \setcounter{semester}{(* semester.number *)}%
+    \setcounter{round}{(* round.number *)}%
+    \setcounter{section}{(* round.number *)}%
 
     (@ for pid, problem in round.problems.items() @)%
-        \setcounter{volume}{(* volume.number *)}%
-        \setcounter{semester}{(* semester.number *)}%
-        \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
