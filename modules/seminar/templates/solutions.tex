@@ -1,32 +1,14 @@
 (@ extends 'base-booklets.tex' @)
 
-(@ block inner @)
-    \pagestyle{seminar-booklet-body}
-    \fancyhead[LE,RO]{\textit{Riešenia (* round.number *). kola (* semester.feminine.genitive *) časti}}
+(@ block kind @)solution(@ endblock kind @)
+(@ block kind_verbose @)Riešenia(@ endblock kind_verbose @)
 
-    \section{\texorpdfstring{Riešenia (* round.id *). kola (* semester.feminine.genitive *) časti}{Riešenia}}
-    \setcounter{volume}{(* volume.number *)}%
-    \setcounter{semester}{(* semester.number *)}%
-    \setcounter{round}{(* round.number *)}%
-    \setcounter{section}{(* round.number *)}%
-
-    (@ for pid, problem in round.problems.items() @)%
-        \setcounter{problem}{(* problem.number *)}%
-        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-
-        \subsection{%
-            \texorpdfstring{%
-                \large \textbf{(* problem.title *)} \hfill \normalsize%
-                (@ if problem.solutionBy @)%
-                    vzorák (* problem.solutionBy|format_list *)%
-                (@ endif @)%
-                (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
-                (@ if problem.evaluation @)%
-                    opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)%
-                (@ endif @)%
-            }{(* round.number *).(* problem.number *) (* problem.title *)}%
-        }
-
-        \protectedInput{\activeDirectory/solution.tex}%
-    (@ endfor @)
-(@ endblock inner @)
+(@ block heading_inner @)
+    (@ if problem.solutionBy @)%
+        vzorák (* problem.solutionBy|format_list *)%
+    (@ endif @)%
+    (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
+    (@ if problem.evaluation @)%
+        opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)%
+    (@ endif @)%
+(@ endblock heading_inner @)

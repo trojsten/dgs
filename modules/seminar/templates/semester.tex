@@ -30,7 +30,7 @@
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)}%
                 (@ if problem.categories @)%
-                \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|formatList *)%
+                \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
                 (@ endif @)
             }{%
                 (* round.number *).(* problem.number *) (* problem.title *)%

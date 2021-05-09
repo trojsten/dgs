@@ -6,5 +6,45 @@
     \loadgeometry{firstpage}
     \afterpage{\globaldefs=1\restoregeometry}
 
+    \pagestyle{seminar-booklet-body}
+
+    \fancyhead[LE,RO]{%
+        \textit{
+            (* self.kind_verbose() *) (* round.number *). kola (* semester.feminine.genitive *) časti%
+        }%
+    }
+    \fancyhead[LO,RE]{%
+        \textit{Termín (* round.deadline.strftime('%d. %m. %Y') *)}%
+    }
+
+    \section{%
+        \texorpdfstring{%
+            (* self.kind_verbose() *) (* round.number *). kola (* semester.feminine.genitive *) časti%
+        }{%
+            (* self.kind() *)%
+        }%
+    }
+    (@ block subtitle @)(@ endblock subtitle @)
+
+    \setcounter{volume}{(* volume.number *)}
+    \setcounter{semester}{(* semester.number *)}
+    \setcounter{round}{(* round.number *)}
+    \setcounter{section}{(* round.number *)}
+
     (@ block inner @)(@ endblock @)
+
+    (@ for pid, problem in round.problems.items() @)%
+        \setcounter{problem}{(* problem.number *)}%
+        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+
+        \subsection{%
+            \texorpdfstring{%
+                \large \textbf{(* problem.title *)} \hfill \normalsize%
+                (@ block heading_inner scoped @)(@ endblock heading_inner @)
+            }{(* round.number *).(* problem.number *) (* problem.title *)}%
+        }
+
+        (@ block problem_again @)(@ endblock @)
+        \protectedInput{\activeDirectory/(* self.kind() *).tex}%
+    (@ endfor @)
 (@ endblock content @)
