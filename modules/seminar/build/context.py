@@ -50,10 +50,11 @@ class ContextSemester(ContextSeminar):
         self.add({
             'neuter': {
                 'nominative': ['zimné', 'letné'][semester - 1],
+                'genitive': ['zimného', 'letného'][semester - 1],
             },
             'feminine': {
-                'genitive': ['zimnej', 'letnej'][semester - 1],
                 'nominative': ['zimná', 'letná'][semester - 1],
+                'genitive': ['zimnej', 'letnej'][semester - 1],
             },
         })
 

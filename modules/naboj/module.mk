@@ -1,7 +1,12 @@
 .SECONDEXPANSION:
 
 # Build scripts for language and venue prerequisites
-# % <competition>/<volume>/<language>
+
+# Shorthand for all i18n YAML definition files
+i18n: \
+	$$(wildcard modules/naboj/templates/i18n/*.yaml) ;
+
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/meta.yaml \
@@ -9,7 +14,7 @@ input/naboj/%/build-language: \
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
@@ -19,26 +24,31 @@ input/naboj/%/build-venue: \
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
 
-################################### input ####################################
-# % <competition>/<volume>/<venue>
+### Input files ###################################################################################
+
+# % <competition>/<volume>/venues/<venue>
 input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
 	input/naboj/$$*/build-venue ;
 
+# % <competition>/<volume>/venues/<venue>
 input/naboj/%/envelope.tex: \
 	modules/naboj/templates/$$(notdir $@) \
 	input/naboj/$$*/build-venue ;
 
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/online.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $@) \
     input/naboj/$$*/build-language ;
 
+# Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
@@ -46,22 +56,32 @@ input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.t
 	input/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
+# Introduction page for booklet
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/intro.tex: \
 	input/naboj/$$*/build-language \
 	source/naboj/$$*/$$(notdir $$@) ;
 
+# Constants sheet
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/constants.tex: \
 	modules/naboj/templates/constants.tex \
 	input/naboj/$$*/build-language ;
 
+# Instructions to be put on the table before the competition (content)
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/instructions-text.tex: \
 	source/naboj/$$*/$$(notdir $$@) \
 	input/naboj/$$*/build-language ;
 
+# Instructions to be put on the table before the competition (full document)
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-language ;
 
+# PDF prerequisites (pictures, graphs, meta files)
+# % <competition>/<volume>/languages/<language>
 input/naboj/%/pdf-prerequisites: \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/naboj/$$*/*/*.png)) \
@@ -71,6 +91,7 @@ input/naboj/%/pdf-prerequisites: \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
+# All problems
 input/naboj/%/problems: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) ;
 
@@ -80,10 +101,27 @@ input/naboj/%/solutions: \
 input/naboj/%/answers: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
-i18n: \
-	$$(wildcard modules/naboj/templates/i18n/*.yaml) ;
+### Venues ######################################
+
+# Barcodes in text format
+input/naboj/%/barcodes.txt: \
+	input/naboj/$$*/build-venue ;
+
+# Barcodes text -> PDF, one per page
+input/naboj/%/barcodes.pdf: \
+	input/naboj/%/barcodes.txt
+	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
+	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .txt,.ps,$<)
+	ps2pdf $(subst .txt,.ps,$<) $@.big
+	pdfcrop $@.big $@
+
+
+
+### Output files ##################################################################################
+### Languages ###################################
 
 # Full booklet
+# % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet.pdf: \
 	input/naboj/%/problems \
 	input/naboj/%/solutions \
@@ -93,12 +131,14 @@ output/naboj/%/booklet.pdf: \
 	input/naboj/%/booklet.tex
 	$(call doubletex,naboj)
 
-# Booklet for printing
+# Full booklet folded for printing
+# % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf
 	pdfbook --short-edge --quiet --outfile $@ $<
 
-# "Tearoffs" for online version, one problem per page
+# "Virtual tearoffs" for online version, one problem per page
+# % <competition>/<volume>/venues/<venue>
 output/naboj/%/online.pdf: \
 	input/naboj/%/problems \
 	input/naboj/%/solutions \
@@ -141,19 +181,22 @@ output/naboj/%/cover.pdf: \
 	input/naboj/%/cover.tex
 	$(call doubletex,naboj)
 
-########################## venue ################################
+# All targets for <language>
+output/naboj/%: \
+	output/naboj/$$*/booklet-print.pdf \
+	output/naboj/$$*/answers.pdf \
+	output/naboj/$$*/answers-mod5.pdf \
+	output/naboj/$$*/constants.pdf \
+	output/naboj/$$*/cover-print.pdf \
+	output/naboj/$$*/instructions.pdf \
+	output/naboj/$$*/online.pdf ;
 
-# Barcodes in text format
-input/naboj/%/barcodes.txt: \
-	input/naboj/$$*/build-venue ;
+# All targets for all languages
+output/naboj/%/languages: \
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ;
 
-# Barcodes text -> PDF, one per page
-input/naboj/%/barcodes.pdf: \
-	input/naboj/%/barcodes.txt
-	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
-	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .txt,.ps,$<)
-	ps2pdf $(subst .txt,.ps,$<) $@.big
-	pdfcrop $@.big $@
+
+
 
 # Tearoffs, three problems per page, aligned for cutting
 output/naboj/%/tearoff.pdf: \
@@ -171,20 +214,6 @@ output/naboj/%/tearoff.pdf: \
 output/naboj/%/envelope.pdf: \
 	input/naboj/%/envelope.tex
 	$(call doubletex,naboj)
-
-# All targets for <language>
-output/naboj/%: \
-	output/naboj/$$*/booklet-print.pdf \
-	output/naboj/$$*/answers.pdf \
-	output/naboj/$$*/answers-mod5.pdf \
-	output/naboj/$$*/constants.pdf \
-	output/naboj/$$*/cover-print.pdf \
-	output/naboj/$$*/instructions.pdf \
-	output/naboj/$$*/online.pdf ;
-
-# All targets for all languages
-output/naboj/%/languages: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ;
 
 # All targets for all venues
 output/naboj/%/venues: \
