@@ -6,9 +6,6 @@ from mdcheck import check, exceptions
 from utilities import colour as c
 
 
-
-
-
 class StyleEnforcer():
     def __init__(self):
         self.parser = argparse.ArgumentParser(
@@ -38,7 +35,7 @@ class StyleEnforcer():
 
         line_errors = [
             check.FailOnSearch(r'\t', "Tabs instead of spaces"),
-            check.FailOnSearch(r',[^\s]', "Comma not followed by whitespace"),
+            check.CommaSpace(),
             check.FailOnSearch(r'[ \t]$', "Trailing whitespace"),
             check.FailOnSearch(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
             check.FailOnSearch(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
@@ -54,13 +51,13 @@ class StyleEnforcer():
             check.FailOnSearch(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
             check.LineLength(),
             check.EqualsSpaces(),
+            check.PlusSpaces(),
             check.DoubleDollars(),
         ]
 
         line_warnings = [
-            check.FailOnSearch(r'\btak\b', "Do you really need this \"tak\" here?", offset=1),
-            check.FailOnSearch(r'(?<!left)\(', "Consider using \\left("),
-            check.FailOnSearch(r'(?<!right)\)', "Consider using \\right)"),
+            check.FailOnSearch(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
+            check.Parentheses(),
         ]
 
         for number, line in enumerate(file):

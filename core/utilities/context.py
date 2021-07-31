@@ -54,11 +54,11 @@ class Context():
 
 
 def is_node(path):
-    return (os.path.isdir(path) and os.path.basename(os.path.normpath(path))[0] != '.')
+    return (path.is_dir() and path.name[0] != '.')
 
 
 def list_child_nodes(node):
-    return list(filter(lambda child: is_node(os.path.join(node, child)), sorted(os.listdir(node))))
+    return sorted([dir for dir in p.iterdir() if is_node(dir)])
 
 
 def split_mod(what, step, first=0):
