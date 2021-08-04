@@ -13,7 +13,7 @@
     Ligatures       = TeX
 }
 
-\setallmainfonts[
+\setmainfont[
     Path            = core/fonts/MinionPro/ ,
     Extension       = .otf ,
     UprightFont     = *-r ,
@@ -22,14 +22,18 @@
     BoldItalicFont  = *-bi
 ]{MinionPro}
 
-\setmathfont(Digits,Latin,Greek)[
-    Path            = core/fonts/MinionPro/ ,
-    Extension       = .otf ,
-    UprightFont     = *-r ,
-    BoldFont        = *-b ,
-    ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi
-]{MinionPro}
+\setmathfont[
+    Path = core/fonts/MinionMath/,
+    SizeFeatures = {
+        { Size=8.4- },
+        { Size=6-8.4, Font=MinionMath-Capt.otf } ,
+        { Size=-6, Font=MinionMath-Tiny.otf }
+    },
+]{MinionMath-Regular.otf}
+
+\setmathrm[
+    Path = core/fonts/MinionMath/
+]{MinionMath-Regular.otf}
 
 \setmonofont[
     Path            = core/fonts/UbuntuMono/ ,
@@ -50,20 +54,6 @@
     ItalicFont      = *-i ,
     BoldItalicFont  = *-bi
 ]{verdana}
-
-% Fixes mathspec bug -- URL numbers are normally rendered with upright font
-\makeatletter
-    \DeclareMathSymbol{0}{\mathalpha}{\eu@DigitsArabic@symfont}{`0}
-    \DeclareMathSymbol{1}{\mathalpha}{\eu@DigitsArabic@symfont}{`1}
-    \DeclareMathSymbol{2}{\mathalpha}{\eu@DigitsArabic@symfont}{`2}
-    \DeclareMathSymbol{3}{\mathalpha}{\eu@DigitsArabic@symfont}{`3}
-    \DeclareMathSymbol{4}{\mathalpha}{\eu@DigitsArabic@symfont}{`4}
-    \DeclareMathSymbol{5}{\mathalpha}{\eu@DigitsArabic@symfont}{`5}
-    \DeclareMathSymbol{6}{\mathalpha}{\eu@DigitsArabic@symfont}{`6}
-    \DeclareMathSymbol{7}{\mathalpha}{\eu@DigitsArabic@symfont}{`7}
-    \DeclareMathSymbol{8}{\mathalpha}{\eu@DigitsArabic@symfont}{`8}
-    \DeclareMathSymbol{9}{\mathalpha}{\eu@DigitsArabic@symfont}{`9}
-\makeatother
 
 \DeclareFontFamily{U}{skulls}{}
 \DeclareFontShape{U}{skulls}{m}{n}{ <-> skull }{}

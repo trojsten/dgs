@@ -54,7 +54,7 @@
 
 \RequirePackage[all]{nowidow}
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
-\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage{fontspec}                         % includes fontspec
 \RequirePackage{accents}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
@@ -69,6 +69,8 @@
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
 \setdefaultlanguage{slovak}
+
+\RequirePackage{unicode-math}
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 
