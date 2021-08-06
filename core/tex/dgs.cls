@@ -54,6 +54,7 @@
 
 \RequirePackage[all]{nowidow}
 \RequirePackage{boolexpr}                                   % boolean expressions, switch
+\RequirePackage[mathlf]{MinionPro}
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage{accents}
 
