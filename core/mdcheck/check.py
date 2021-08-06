@@ -45,11 +45,17 @@ class EqualsSpaces():
 
 
 class PlusSpaces():
-    re_plus_spaces = re.compile(r'[^" ]\+[^" ]')
+    re_plus_in_quotes = re.compile(r'"\+"')
+    re_plus_in_curly = re.compile(r'{\+}')
+    re_plus_unary = re.compile(r'[(\[]\+[^ ]')
+    re_plus_spaces = re.compile(r'[^ ]\+[^ ]')
 
     def check(self, line):
+        if self.re_plus_in_quotes.search(line) or self.re_plus_in_curly.search(line) or self.re_plus_unary.search(line):
+            return
+
         if search := self.re_plus_spaces.search(line):
-            raise exceptions.SingleLineError('Spaces missing around "+"', line, search.end() - 1)
+            raise exceptions.SingleLineError('Spaces missing around "+"', line, search.end() - 2)
 
 
 class DoubleDollars():

@@ -25,7 +25,7 @@ $F_\circ$ This should pass!
 $F^{\circ}$
 $3^\circ$
 $5^{\circ}$
-	tabs!
+	Line with tabs!
 \SI{3,5e8}{\kilo\metre}
 \SI{3.5}{\kilo\metre}, hehe should pass
 Nevieme písať, t.j. robíme debilné chyby.
@@ -43,3 +43,9 @@ $b&=5$ fail
 \SI[parse-numbers=false]{\pi}{\metre} pass
 $4 - 3 \cdot (2 + 3)$ fail
 $4 - \left(2 + 5\right)$ pass
+
+"+"
+$\left(+1, +5\right)$
+"f_{+}"
+
+$1+2$ FAIL
