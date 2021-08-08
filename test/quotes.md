@@ -36,6 +36,10 @@ trailing tab
 $\sin{(\alpha)}$
 $\ln{(3)}$
 
+\SI{1e5}{\kilo\gram} pass
+\SI{5 \cdot 10^{-4}}{\kilo\gram} fail
+\ang{10^3}
+
 $a=3$ fail
 $a = 4 pass
 $b &= 5$ pass

@@ -37,11 +37,23 @@ class LineLength():
 
 
 class EqualsSpaces():
-    re_equal_spaces = re.compile(r'(?!\\(?:SI|num|si)\[[\w-]+| | &|(#eq:[a-z-]+ )?height)=(?! |& |[\w-]+(,|\])|[0-9]+mm|$)')
+    re_equal_spaces = re.compile(r'(?!\\(?:SI|num|si)\[[\w-]+| | &|(#eq:[a-z-]+ )?height)(=|\\approx|\\doteq)(?! |& |[\w-]+(,|\])|[0-9]+mm|$)')
 
     def check(self, line):
         if search := self.re_equal_spaces.search(line):
-            raise exceptions.SingleLineError('Spaces missing around "="', line, search.end() - 1)
+            raise exceptions.SingleLineError(f'Spaces missing around "{search.group(0)}"', line, search.end() - 1)
+
+
+class CdotSpaces():
+    re_cdot_spaces = re.compile(r' \\cdot( |$)')
+    re_cdot = re.compile(r'\\cdot')
+
+    def check(self, line):
+        if search := self.re_cdot_spaces.search(line):
+            return
+
+        if search := self.re_cdot.search(line):
+            raise exceptions.SingleLineError("Spaces missing around \\cdot", line, search.end() - 1)
 
 
 class PlusSpaces():
@@ -83,6 +95,18 @@ class DoubleDollars():
             raise exceptions.SingleLineError('Double dollars within text', line, search.start())
 
 
+class ParenthesesSpace():
+    re_right_space = re.compile(r'[^ ] +(\\right)?\)')
+    re_left_space = re.compile(r'(\\left)?\( ')
+
+    def check(self, line):
+        if search := self.re_left_space.search(line):
+            raise exceptions.SingleLineError("Space after left parenthesis", line, search.start())
+
+        if search := self.re_right_space.search(line):
+            raise exceptions.SingleLineError("Space before right parenthesis", line, search.start() + 1)
+
+
 class Parentheses():
     re_image = re.compile(r'^!\[.*\](.*){.*}$')
     re_left = re.compile(r'(?<!left)\(')
@@ -100,20 +124,32 @@ class Parentheses():
 
 
 class CommaSpace():
-    re_slash = re.compile(r'(\^|_){\\,')
     re_fail = re.compile(r',[^\s^]')
 
     def check(self, line):
-        if self.re_slash.search(line):
-            return
-
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError("Comma not followed by whitespace", line, search.start())
 
 
+class SemicolonSpace():
+    re_allowed = re.compile(r'(\\SIlist|\\SIrange|\\ang|\\numlist){(([0-9.e-]*);)+[0-9.e-]+}')
+    re_fail = re.compile(r';[^\s^]')
+
+    def check(self, line):
+        if search := self.re_allowed.search(line):
+            return
+
+        if search := self.re_fail.search(line):
+            raise exceptions.SingleLineError("Semicolon not followed by whitespace", line, search.start())
 
 
+class SIExponents():
+    re_fail = re.compile(r'(?P<command>\\ang|\\SI|\\SIlist|\\SIrange){[^}]*(\\cdot|\\times|\^)[^}]*}')
 
+    def check(self, line):
+        if search := self.re_fail.search(line):
+            raise exceptions.SingleLineError(f"Use e notation instead of TeX inside {search.group('command')}",
+                line, search.start() + len(search.group('command')) + 1)
 
 
 def double_space(line):

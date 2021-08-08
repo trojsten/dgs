@@ -90,8 +90,10 @@
 \NewDocumentCommand{\MeanValue}{m}{\overline{#1}}
 
 \NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\diff#4}
+\NewDocumentCommand{\IntScalar}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cdot\diff#4}
 \NewDocumentCommand{\Intx}{O{} O{} m}{\int\limits_{#1}^{#2} \kern -0.2em #3}
 \NewDocumentCommand{\OInt}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\diff#4}
+\NewDocumentCommand{\OIntScalar}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cdot\diff#4}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\diff#5}
 \NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
