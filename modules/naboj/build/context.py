@@ -7,16 +7,16 @@ from core.utilities import context
 
 
 class ContextI18n(context.Context):
-    def __init__(self, language):
+    def __init__(self, root, competition, language):
         super().__init__()
-        self.load_YAML(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'templates', 'i18n', language + '.yaml')
+        self.load_YAML(root, competition, '.static', 'i18n', language + '.yaml')
 
 
 class ContextI18nGlobal(context.Context):
     def __init__(self):
-        super().__init__()
+        super().__init__(root, competition)
         for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
-            self.absorb(language, ContextI18n(language))
+            self.absorb(language, ContextI18n(root, competition, language))
 
 
 class ContextNaboj(context.Context):
@@ -77,7 +77,7 @@ class ContextBooklet(ContextNaboj):
         self.absorb('competition', ContextCompetition(root, competition))
         self.absorb('volume', ContextVolume(root, competition, volume))
         self.absorb('language', ContextLanguage(language))
-        self.absorb('i18n', ContextI18n(language))
+        self.absorb('i18n', ContextI18n(root, competition, language))
 
 
 class ContextTearoff(ContextNaboj):

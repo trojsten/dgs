@@ -1,6 +1,7 @@
 \DeclareMathOperator{\diff}{d\!}
 \DeclareMathOperator{\pdiff}{\partial\!}
 \DeclareMathOperator{\fdiff}{\Delta\!}
+\DeclareMathOperator{\sdiff}{\delta\!}
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\Rot}{\del\times}
@@ -135,3 +136,11 @@
 \NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
 \NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
 \NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
+
+\let\temp\varphi%
+\let\varphi\phi%
+\let\phi\temp%
+
+\let\temp\varepsilon%
+\let\varepsilon\epsilon%
+\let\epsilon\temp%

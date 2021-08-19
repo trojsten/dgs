@@ -16,17 +16,29 @@
     list-pair-separator     = {\text{\ and\ }},             % 5 a 10 m/s
     list-final-separator    = {\text{\ and\ }},             % 5, 7 a 10 m/s
     retain-explicit-plus    = true,
+    math-ohm                = \Omega,
+    text-ohm                = \ensuremath{\Omega},
+    math-micro              = \text{μ},
+    text-micro              = μ,
 }
 
-\RenewDocumentCommand{\Sun}{}{\odot}
-\RenewDocumentCommand{\Earth}{}{\oplus}
+\RenewDocumentCommand{\Sun}{}{\text{\sun}}
+\NewDocumentCommand{\Mercury}{}{\text{\mercury}}
+\NewDocumentCommand{\Venus}{}{\text{\venus}}
+\NewDocumentCommand{\Earth}{}{\text{\earth}}
+\NewDocumentCommand{\Mars}{}{\text{\mars}}
+\NewDocumentCommand{\Jupiter}{}{\text{\jupiter}}
+\NewDocumentCommand{\Saturn}{}{\text{\saturn}}
+\NewDocumentCommand{\Uranus}{}{\text{\uranus}}
+\NewDocumentCommand{\Neptune}{}{\text{\neptune}}
+\NewDocumentCommand{\Pluto}{}{\text{\pluto}}
 
 \DeclareSIUnit{\gforce}{g}
 \DeclareSIUnit{\year}{y}
 \DeclareSIUnit{\au}{au}
 \DeclareSIUnit{\byte}{B}
-\DeclareSIUnit{\celsius}{\ensuremath{°}C}
-\DeclareSIUnit{\fahrenheit}{\ensuremath{°}F}
+\DeclareSIUnit{\celsius}{°C}
+\DeclareSIUnit{\fahrenheit}{°F}
 \DeclareSIUnit{\parsec}{pc}
 \DeclareSIUnit{\pixel}{px}
 \DeclareSIUnit{\eur}{€}

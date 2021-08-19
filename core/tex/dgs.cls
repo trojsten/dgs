@@ -29,7 +29,7 @@
 \RequirePackage{enumitem}
 \RequirePackage{listings}
 \RequirePackage{lastpage}
-\RequirePackage{marvosym}
+\RequirePackage{wasysym}
 \RequirePackage{pdftexcmds}
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
@@ -49,6 +49,7 @@
 \RequirePackage{nicefrac}
 \RequirePackage{pifont}
 \RequirePackage{chngcntr}
+\RequirePackage[weather]{ifsym}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
 

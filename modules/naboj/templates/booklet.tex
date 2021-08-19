@@ -20,7 +20,7 @@
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-            \label{ssc:problem-(* problem.id*)}%
+            \label{ssc:(* problem.id*)-problem}%
             \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
         \newpage
@@ -36,7 +36,7 @@
             \setcounter{figure}{0}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-            \label{ssc:solution-(* problem.id*)}%
+            \label{ssc:(* problem.id*)-solution}%
             \protectedInput{\activeDirectory/solution.tex}%
         (@ endfor @)
         \newpage
@@ -49,7 +49,7 @@
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
-            \label{ssc:answer-(* problem.id*)}%
+            \label{ssc:(* problem.id*)-answer}%
             \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
     (@ endif @)

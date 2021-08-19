@@ -59,9 +59,9 @@ class Convertor():
     postprocessing_latex = [
         (r"``", r"“"),
         (r"''", r'”'),
-        (r"(?<=\\includegraphics)\[(.*)\]{(.*)}", r"[\g<1>]{\\activeDirectory/\g<2>}"),
-        (r"(?<=\\includegraphics)\[(.*)\]{(.*)\.(svg|gp)}", r"[\g<1>]{\g<2>.pdf}"),
-        (r"^\\caption{}$", ""),
+        (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
+        (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
+        (r"^\\caption{}(\\label{.*})?\n", ""),
     ]
 
     postprocessing_html = [
@@ -75,7 +75,7 @@ class Convertor():
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser(
-            description             = "DeGeŠ Markdown conversion utility",
+            description="DeGeŠ Markdown conversion utility",
         )
         parser.add_argument('format',   choices=['latex', 'html'])
         parser.add_argument('locale',   choices=self.languages.keys())
@@ -98,7 +98,6 @@ class Convertor():
             (r'"(\S)', self.quote_open + r'\g<1>'),
         ]
         self.quotes_regexes = [(re.compile(regex), repl) for regex, repl in self.quotes_regexes]
-
 
     def run(self):
         try:

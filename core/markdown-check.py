@@ -75,7 +75,7 @@ class StyleEnforcer():
                 ok &= all([self.check_line(checker, file, number, line, cfunc=c.warn) for checker in line_warnings])
 
         if self.args.verbose and ok:
-            print(f"File {c.ok('OK')}: {c.path(file.name)}")
+            print(f"File {c.path(file.name)} {c.ok('OK')}")
 
     def check_line(self, checker, file, number, line, *, cfunc=c.err):
         try:

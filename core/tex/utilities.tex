@@ -27,42 +27,13 @@
     \unskip{\tiny\dotfill}
 }
 
-
-% \insertPicture{filename}{extension}{(ignored)}{height}{caption}{label}
-% Insert a picture, protected against nonexistent files
-%   - filename, searched in \problemDirectory
-%   - extension for PDF
-%   - extension for HTML (ignored)
-%   - height
-%   - caption below the picture
-%   - label, should begin with "fig:"
-\NewDocumentCommand{\insertPicture}{m m m m m m}{%
-    \begin{figure}[H]%
-        \centering%
-        \IfFileExists{\activeDirectory/#1.#2}{%
-            \includegraphics[keepaspectratio = true, height = #4]{\activeDirectory/#1.#2}%
-        }{%
-            \includegraphics[keepaspectratio = true, height = #4]{example-image-a}%
-        }%
-        \ifstrempty{#5}{}{\caption{\textit{#5}}}%
-        \ifstrempty{#6}{}{\label{#6}}%
-    \end{figure}%
+\NewDocumentCommand{\insertPicture}{O{} m}{%
+    \IfFileExists{\activeDirectory/#2}{%
+        \includegraphics[#1]{\activeDirectory/#2}%
+    }{%
+        \includegraphics[#1]{example-image-a}%
+    }%
 }
-
-% \insertPictureSimple{filename}{height}{caption}{label}
-\NewDocumentCommand{\insertPictureSimple}{m m m m}{%
-    \begin{figure}[H]%
-        \centering%
-        \IfFileExists{\activeDirectory/#1}{%
-            \includegraphics[keepaspectratio = true, height = #2]{\activeDirectory/#1}%
-        }{%
-            \includegraphics[keepaspectratio = true, height = #2]{example-image-a}%
-        }%
-        \ifstrempty{#3}{}{\caption{\textit{#3}}}%
-        \ifstrempty{#4}{}{\label{#4}}%
-    \end{figure}%
-}
-
 
 % \exampleIO[verbatim input][verbatim output]
 % Príklad vstupu/výstupu (KSP)
