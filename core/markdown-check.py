@@ -34,7 +34,7 @@ class StyleEnforcer():
             return False
 
         line_errors = [
-            check.FailOnSearch(r'\t', "Tabs instead of spaces"),
+            check.FailOnSearch(r'\t', "Tab instead of spaces"),
             check.CommaSpace(),
             check.SemicolonSpace(),
             check.ParenthesesSpace(),
@@ -53,12 +53,11 @@ class StyleEnforcer():
             check.FailOnSearch(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailOnSearch(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
             check.FailOnSearch(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
+            check.FailOnSearch(r'#(eq|fig|sec):label', "Default label used"),
+            check.EqualsSpaces(),
             check.CdotSpaces(),
             check.SIExponents(),
-#            check.ApproxSpaces(),
-#            check.DoteqSpaces(),
             check.LineLength(),
-            check.EqualsSpaces(),
             check.PlusSpaces(),
             check.DoubleDollars(),
         ]

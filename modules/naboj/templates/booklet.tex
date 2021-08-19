@@ -19,7 +19,14 @@
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \hypersetup{linkcolor=black}%
+            \subsection{%
+                \texorpdfstring{%
+                    \hyperref[ssc:(* problem.id *)-answer]{(* problem.number *)}%
+                }{%
+                    (* problem.number *). (* problem.id *)%
+                }%
+            }%
             \label{ssc:(* problem.id*)-problem}%
             \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
@@ -35,7 +42,13 @@
             \setcounter{table}{0}%
             \setcounter{figure}{0}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \subsection{%
+                \texorpdfstring{%
+                    \hyperref[ssc:(* problem.id *)-problem]{(* problem.number *)}%
+                }{%
+                    (* problem.number *). (* problem.id *)%
+                }%
+            }%
             \label{ssc:(* problem.id*)-solution}%
             \protectedInput{\activeDirectory/solution.tex}%
         (@ endfor @)
@@ -48,7 +61,13 @@
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
-            \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
+            \subsection{%
+                \texorpdfstring{%
+                    \hyperref[ssc:(* problem.id *)-solution]{(* problem.number *)}%
+                }{%
+                    (* problem.number *). (* problem.id *)%
+                }%
+            }%
             \label{ssc:(* problem.id*)-answer}%
             \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
