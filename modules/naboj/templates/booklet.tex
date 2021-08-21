@@ -28,6 +28,7 @@
                 }%
             }%
             \label{ssc:(* problem.id*)-problem}%
+            \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
         \newpage
@@ -42,6 +43,7 @@
             \setcounter{table}{0}%
             \setcounter{figure}{0}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
                     \hyperref[ssc:(* problem.id *)-problem]{(* problem.number *)}%
@@ -50,6 +52,7 @@
                 }%
             }%
             \label{ssc:(* problem.id*)-solution}%
+            \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/solution.tex}%
         (@ endfor @)
         \newpage
@@ -61,6 +64,7 @@
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
             \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
                     \hyperref[ssc:(* problem.id *)-solution]{(* problem.number *)}%
@@ -69,6 +73,7 @@
                 }%
             }%
             \label{ssc:(* problem.id*)-answer}%
+            \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
     (@ endif @)

@@ -151,6 +151,13 @@ class SIExponents():
             raise exceptions.SingleLineError(f"Use e notation instead of TeX inside {search.group('command')}",
                 line, search.start() + len(search.group('command')) + 1)
 
+class ConflictMarkers():
+    re_fail = re.compile(r'(<<<<<<<|=======|>>>>>>>)')
+
+    def check(self, line):
+        if search := self.re_fail.search(line):
+            raise exceptions.SingleLineError(f"Git conflict markers found!", line, search.start())
+
 
 def double_space(line):
     if search := re_double_space.search(line):

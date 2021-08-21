@@ -3,14 +3,14 @@
 # Build scripts for language and venue prerequisites
 
 # Shorthand for all i18n YAML definition files
-i18n: \
-	$$(wildcard modules/naboj/templates/i18n/*.yaml) ;
+source/naboj/%/i18n: \
+	$$(wildcard source/naboj/$$*/.static/i18n/*.yaml) ;
 
 # % <competition>/<volume>/languages/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/meta.yaml \
-	i18n ;
+	source/naboj/$$*/../../../i18n ;
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -20,7 +20,7 @@ input/naboj/%/build-language: \
 input/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
-	i18n ;
+	source/naboj/$$*/../../../i18n ;
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
@@ -169,12 +169,12 @@ output/naboj/%/answers-mod5.pdf: \
 
 output/naboj/%/constants.pdf: \
 	input/naboj/%/constants.tex \
-	i18n
+	source/naboj/%/i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
-	i18n
+	source/naboj/%/i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/cover.pdf: \
