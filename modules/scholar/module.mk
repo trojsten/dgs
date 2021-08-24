@@ -46,6 +46,7 @@ input/scholar/%/homework-solutions.tex: \
 input/scholar/%/lecture.tex: \
 	input/scholar/$$*/build-lecture ;
 
+# <subject>/<year>/<target>/<issue>/
 input/scholar/%/pdf-prerequisites: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.jpg)) \

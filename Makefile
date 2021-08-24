@@ -32,7 +32,6 @@ define doubletex
 	$(call xelatex,$(1))
 endef
 
-include modules.mk
 include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
@@ -126,6 +125,12 @@ input/%.gp:\
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Copying gnuplot file $(c_filename)$<$(c_action):$(c_default)'
 	cp $< $@
+
+%/copy-static: \
+	$$(wildcard $$(subst input/,source/,$$*)/.static/*)
+	@echo -e '$(c_action)Copying static files for $(c_filename)$*$(c_action):$(c_default)'
+	@mkdir -p $(dir $@).static/
+	cp -r $(subst input/,source/,$*)/.static/ $*/
 
 
 output/%/clean:

@@ -1,104 +1,104 @@
 .SECONDEXPANSION:
 
-input/scholar/%/build-handout: \
-	modules/scholar/format/format-handout.tex \
-	modules/scholar/templates/handout-students.tex \
-	modules/scholar/templates/handout-solutions.tex \
-	source/scholar/$$*/meta.yaml
+input/simple/%/build-handout: \
+	modules/simple/format/format-handout.tex \
+	modules/simple/templates/handout-students.tex \
+	modules/simple/templates/handout-solutions.tex \
+	source/simple/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/scholar/build/handout.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/simple/build/handout.py 'source/simple/' 'modules/simple' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/scholar/%/build-homework: \
-	modules/scholar/format/format-homework.tex \
-	modules/scholar/templates/homework-students.tex \
-	modules/scholar/templates/homework-solutions.tex \
-	source/scholar/$$*/meta.yaml
+input/simple/%/build-homework: \
+	modules/simple/format/format-homework.tex \
+	modules/simple/templates/homework-students.tex \
+	modules/simple/templates/homework-solutions.tex \
+	source/simple/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/scholar/build/homework.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/simple/build/homework.py 'source/simple/' 'modules/simple' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/scholar/%/build-lecture: \
-	modules/scholar/format/format-lecture.tex \
-	modules/scholar/templates/lecture.tex \
-	source/scholar/$$*/meta.yaml
+input/simple/%/build-lecture: \
+	modules/simple/format/format-lecture.tex \
+	modules/simple/templates/lecture.tex \
+	source/simple/$$*/meta.yaml
 	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/scholar/build/lecture.py 'source/scholar/' 'modules/scholar' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/simple/build/lecture.py 'source/simple/' 'modules/simple' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-input/scholar/%/format-handout.tex: \
-	input/scholar/$$*/build-handout ;
+input/simple/%/format-handout.tex: \
+	input/simple/$$*/build-handout ;
 
-input/scholar/%/format-homework.tex: \
-	input/scholar/$$*/build-homework ;
+input/simple/%/format-homework.tex: \
+	input/simple/$$*/build-homework ;
 
-input/scholar/%/format-lecture.tex: \
-	input/scholar/$$*/build-lecture ;
+input/simple/%/format-lecture.tex: \
+	input/simple/$$*/build-lecture ;
 
-input/scholar/%/handout-students.tex: \
-	input/scholar/$$*/build-handout ;
+input/simple/%/handout-students.tex: \
+	input/simple/$$*/build-handout ;
 
-input/scholar/%/handout-solutions.tex: \
-	input/scholar/$$*/build-handout ;
+input/simple/%/handout-solutions.tex: \
+	input/simple/$$*/build-handout ;
 
-input/scholar/%/homework-students.tex: \
-	input/scholar/$$*/build-homework ;
+input/simple/%/homework-students.tex: \
+	input/simple/$$*/build-homework ;
 
-input/scholar/%/homework-solutions.tex: \
-	input/scholar/$$*/build-homework ;
+input/simple/%/homework-solutions.tex: \
+	input/simple/$$*/build-homework ;
 
-input/scholar/%/lecture.tex: \
-	input/scholar/$$*/build-lecture ;
+input/simple/%/lecture.tex: \
+	input/simple/$$*/build-lecture ;
 
-input/scholar/%/pdf-prerequisites: \
-	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.jpg)) \
-	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.png)) \
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
-	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
-	source/scholar/$$*/meta.yaml ;
+input/simple/%/pdf-prerequisites: \
+	$$(subst source/,input/,$$(wildcard source/simple/$$*/*.jpg)) \
+	$$(subst source/,input/,$$(wildcard source/simple/$$*/*.png)) \
+	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/simple/$$*/*.svg))) \
+	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/simple/$$*/*.gp))) \
+	source/simple/$$*/meta.yaml ;
 
-input/scholar/%/handout: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/format-handout.tex \
-	input/scholar/$$*/pdf-prerequisites ;
+input/simple/%/handout: \
+	$$(subst $$(cdir),,$$(abspath input/simple/$$*/../../../copy-static)) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/simple/$$*/*.md))) \
+	input/simple/$$*/format-handout.tex \
+	input/simple/$$*/pdf-prerequisites ;
 
-input/scholar/%/homework: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../../../copy-static)) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/format-homework.tex \
-	input/scholar/$$*/pdf-prerequisites ;
+input/simple/%/homework: \
+	$$(subst $$(cdir),,$$(abspath input/simple/$$*/../../../copy-static)) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/simple/$$*/*.md))) \
+	input/simple/$$*/format-homework.tex \
+	input/simple/$$*/pdf-prerequisites ;
 
-output/scholar/%/handout-students.pdf: \
-	input/scholar/%/handout \
-	input/scholar/%/handout-students.tex
-	$(call doubletex,scholar)
+output/simple/%/handout-students.pdf: \
+	input/simple/%/handout \
+	input/simple/%/handout-students.tex
+	$(call doubletex,simple)
 
-output/scholar/%/handout-solutions.pdf: \
-	input/scholar/%/handout \
-	input/scholar/%/handout-students.tex \
-	input/scholar/%/handout-solutions.tex
-	$(call doubletex,scholar)
+output/simple/%/handout-solutions.pdf: \
+	input/simple/%/handout \
+	input/simple/%/handout-students.tex \
+	input/simple/%/handout-solutions.tex
+	$(call doubletex,simple)
 
-output/scholar/%/homework-students.pdf: \
-	input/scholar/%/homework \
-	input/scholar/%/homework-students.tex
-	$(call doubletex,scholar)
+output/simple/%/homework-students.pdf: \
+	input/simple/%/homework \
+	input/simple/%/homework-students.tex
+	$(call doubletex,simple)
 
-output/scholar/%/homework-solutions.pdf: \
-	input/scholar/%/homework \
-	input/scholar/%/homework-students.tex \
-	input/scholar/%/homework-solutions.tex
-	$(call doubletex,scholar)
+output/simple/%/homework-solutions.pdf: \
+	input/simple/%/homework \
+	input/simple/%/homework-students.tex \
+	input/simple/%/homework-solutions.tex
+	$(call doubletex,simple)
 
-output/scholar/%/lecture.pdf: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../copy-static)) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	input/scholar/$$*/format-lecture.tex \
-	input/scholar/$$*/pdf-prerequisites
-	$(call doubletex,scholar)
+output/simple/%/lecture.pdf: \
+	$$(subst $$(cdir),,$$(abspath input/simple/$$*/../copy-static)) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/simple/$$*/*.md))) \
+	input/simple/$$*/format-lecture.tex \
+	input/simple/$$*/pdf-prerequisites
+	$(call doubletex,simple)
 
 .PHONY:
