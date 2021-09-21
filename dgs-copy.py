@@ -22,19 +22,7 @@ args = parser.parse_args()
 seminar2 = 'Suši' if args.seminar == 'SUSI' else args.seminar
 
 
-query = "ssh {user}@ksp.sk 'rm -rf \
-/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round} && mkdir -p \
-/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/zadania/html/ \
-/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/vzoraky/html/ \
-/var/www-archiv/trojstenweb/tasks/{seminar}/{volume}/{part}/{round}/obrazky/'".format(
-    seminar = seminar2,
-    volume = args.volume,
-    part = args.part,
-    round = 100 if args.round == 'outdoor' else args.round,
-    user = args.user,
-)
-print(query)
-#os.system(query)
+os.system("rm -rf tasks")
 
 for problem in range(1, 8):
     query = "mkdir -p tasks/{seminar2}/{volume}/{part}/{round2}/zadania/html && ln -s $(pwd)/output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/{problem:02d}/problem.html tasks/{seminar2}/{volume}/{part}/{round2}/zadania/html/prikl{problem}.html".format(
