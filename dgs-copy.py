@@ -22,6 +22,7 @@ def main():
     parser.add_argument('part', type=int, choices=[1, 2])
     parser.add_argument('round', choices=['1', '2', '3', 'outdoor'])
     parser.add_argument('user', type=str)
+    parser.add_argument('-d', '--dry-run', action='store_true')
 
     args = parser.parse_args()
 
@@ -51,4 +52,10 @@ def main():
         f"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server and delete
-    fire(f"rsync -rzvhPL tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb && rm -rf tasks")
+    if not args.dry_run:
+        fire(f"rsync -rzvhPL tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb &&")
+
+    fire("rm -rf tasks")
+
+
+main()
