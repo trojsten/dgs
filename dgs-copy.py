@@ -6,90 +6,49 @@ from colorama import Fore as cf
 colorama.init()
 
 VERSION = "2.00"
-DATE = "2018-10-16"
+DATE = "2021-10-18"
 
-parser = argparse.ArgumentParser(
-    description             = "Copy a DeGeŠ round to www-archiv",
-)
-parser.add_argument('seminar', choices = ['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX', 'SUSI'])
-parser.add_argument('volume', type = int)
-parser.add_argument('part', type = int, choices = [1, 2])
-parser.add_argument('round', choices = ['1', '2', '3', 'outdoor'])
+parser = argparse.ArgumentParser(description="Copy a DeGeŠ round to www-archiv")
+parser.add_argument('seminar', choices=['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX', 'Suši'])
+parser.add_argument('volume', type=int)
+parser.add_argument('part', type=int, choices=[1, 2])
+parser.add_argument('round', choices=['1', '2', '3', 'outdoor'])
 parser.add_argument('user')
 
 args = parser.parse_args()
 
-seminar2 = 'Suši' if args.seminar == 'SUSI' else args.seminar
+seminar = args.seminar
+volume = args.volume
+part = args.part
+round = 100 if args.round == 'outdoor' else int(args.round)
+
+path_fragment_local = f"{seminar}/{volume:02d}/{part}/{round}"
+path_fragment_remote = f"{seminar}/{volume}/{part}/{round}"
+
+def fire(query):
+    print(query)
+    return os.system(query)
 
 
+# Delete the temporary directory
 os.system("rm -rf tasks")
 
 for problem in range(1, 8):
-    query = "mkdir -p tasks/{seminar2}/{volume}/{part}/{round2}/zadania/html && ln -s $(pwd)/output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/{problem:02d}/problem.html tasks/{seminar2}/{volume}/{part}/{round2}/zadania/html/prikl{problem}.html".format(
-        seminar1 = args.seminar,
-        seminar2 = seminar2,
-        volume = args.volume,
-        part = args.part,
-        round1 = args.round,
-        round2 = 100 if args.round == 'outdoor' else args.round,
-        problem = problem,
-        user = args.user,
-    )
-    print(query)
-    os.system(query)
+    path = f"{path_fragment_local}/{problem:02d}"
+    fire(f"mkdir -p tasks/{path_fragment_remote}/zadania/html && " \
+        f"ln -s $(pwd)/output/seminar/{path}/problem.html " \
+        f"tasks/{path_fragment_remote}/zadania/html/prikl{problem}.html")
 
 for problem in range(1, 8):
-    query = "mkdir -p tasks/{seminar2}/{volume}/{part}/{round2}/vzoraky/html && ln -s $(pwd)/output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/{problem:02d}/solution.html tasks/{seminar2}/{volume}/{part}/{round2}/vzoraky/html/prikl{problem}.html".format(
-        seminar1 = args.seminar,
-        seminar2 = seminar2,
-        volume = args.volume,
-        part = args.part,
-        round1 = args.round,
-        round2 = 100 if args.round == 'outdoor' else args.round,
-        problem = problem,
-        user = args.user,
-    )
-    print(query)
-    os.system(query)
+    path = f"{path_fragment_local}/{problem:02d}"
+    fire(f"mkdir -p tasks/{path_fragment_remote}/vzoraky/html && " \
+        f"ln -s $(pwd)/output/seminar/{path}/solution.html " \
+        f"tasks/{path_fragment_remote}/vzoraky/html/prikl{problem}.html")
 
-query = "ln -s $(pwd)/output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/problems.pdf tasks/{seminar2}/{volume}/{part}/{round2}/zadania/zadania.pdf".format(
-    seminar1 = args.seminar,
-    seminar2 = seminar2,
-    volume = args.volume,
-    part = args.part,
-    round1 = args.round,
-    round2 = 100 if args.round == 'outdoor' else args.round,
-    user = args.user,
-)
-print(query)
-os.system(query)
+fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/problems.pdf tasks/{path_fragment_remote}/zadania/zadania.pdf")
+fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
+fire(f"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
+    f"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
+    f"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
-query = "ln -s $(pwd)/output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/solutions.pdf tasks/{seminar2}/{volume}/{part}/{round2}/vzoraky/vzoraky.pdf".format(
-    seminar1 = args.seminar,
-    seminar2 = seminar2,
-    volume = args.volume,
-    part = args.part,
-    round1 = args.round,
-    round2 = 100 if args.round == 'outdoor' else args.round,
-    user = args.user,
-)
-print(query)
-os.system(query)
-
-query = "mkdir -p tasks/{seminar2}/{volume}/{part}/{round2}/obrazky/ && find output/seminar/{seminar1}/{volume:02d}/{part}/{round1}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) -exec ln -s $(pwd)/'{{}}' tasks/{seminar2}/{volume}/{part}/{round2}/obrazky/ \;".format(
-    seminar1 = args.seminar,
-    seminar2 = seminar2,
-    volume = args.volume,
-    part = args.part,
-    round1 = args.round,
-    round2 = 100 if args.round == 'outdoor' else args.round,
-    user = args.user,
-)
-print(query)
-os.system(query)
-
-query = "rsync -rzvhPL tasks {user}@ksp.sk:/var/www-archiv/trojstenweb && rm -rf tasks".format(
-    user = args.user,
-)
-print(query)
-os.system(query)
+fire(f"rsync -rzvhPL tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb && rm -rf tasks")
