@@ -53,7 +53,7 @@ def main():
 
     # rsync everything to server and delete
     if not args.dry_run:
-        fire(f"rsync -rzvhPL tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb &&")
+        fire(f"rsync -rzvhPL tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb")
 
     fire("rm -rf tasks")
 
