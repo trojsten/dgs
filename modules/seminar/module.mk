@@ -128,4 +128,4 @@ output/seminar/%: \
 output/seminar/%/copy: \
 	output/seminar/%/
 	$(eval words := $(subst /, ,$*))
-	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words))
+	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) $(user)

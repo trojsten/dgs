@@ -32,19 +32,19 @@ input/naboj/%/build-venue: \
 input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
-	modules/naboj/templates/$$(notdir $@) \
+	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
 input/naboj/%/envelope.tex: \
-	modules/naboj/templates/$$(notdir $@) \
+	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 input/naboj/%/online.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
-	modules/naboj/templates/$$(notdir $@) \
+	modules/naboj/templates/$$(notdir $$@) \
     input/naboj/$$*/build-language ;
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
