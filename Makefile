@@ -1,5 +1,4 @@
-MAKEFLAGS += --no-builtin-rules
-MAKEFLAGS += --no-builtin-variables
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
