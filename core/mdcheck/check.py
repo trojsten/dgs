@@ -45,15 +45,11 @@ class EqualsSpaces():
 
 
 class CdotSpaces():
-    re_cdot_spaces = re.compile(r' \\cdot( |$)')
-    re_cdot = re.compile(r'\\cdot')
+    re_cdot = re.compile(r'[^ ]\\cdot[^$]')
 
     def check(self, line):
-        if search := self.re_cdot_spaces.search(line):
-            return
-
         if search := self.re_cdot.search(line):
-            raise exceptions.SingleLineError("Spaces missing around \\cdot", line, search.end() - 1)
+            raise exceptions.SingleLineError("Spaces missing around \\cdot", line, search.start() + 1)
 
 
 class PlusSpaces():
