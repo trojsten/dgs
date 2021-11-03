@@ -1,0 +1,7 @@
+(@ extends 'base-languages.tex' @)
+
+(@ block content @)
+    \pagestyle{instructions-online}
+    \section{(* i18n.instructions_online.title *)}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/instructions-online-text.tex}
+(@ endblock @)

@@ -70,6 +70,12 @@
         \fancyhead[LE,RO]{\textit{(* i18n.instructions.title *)}}
     }
 
+    \fancypagestyle{instructions-online}{%
+        \pagestyle{main}
+        \fancyhead[LE,RO]{\textit{(* i18n.instructions_online.title *)}}
+        \titleformat{\subsection}[hang]{\large\bfseries}{}{6pt}{}[]
+    }
+
     \fancypagestyle{first}{%
         \fancyhf{}
         \fancyhead[L]{

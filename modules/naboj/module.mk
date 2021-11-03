@@ -80,6 +80,12 @@ input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-language ;
 
+# Instructions before the online competition (full document)
+# % <competition>/<volume>/languages/<language>
+input/naboj/%/instructions-online.tex: \
+	modules/naboj/templates/$$(notdir $$@) \
+	input/naboj/$$*/build-language ;
+
 # PDF prerequisites (pictures, graphs, meta files)
 # % <competition>/<volume>/languages/<language>
 input/naboj/%/pdf-prerequisites: \
@@ -174,6 +180,13 @@ output/naboj/%/constants.pdf: \
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
+	input/naboj/%/instructions-text.tex \
+	source/naboj/%/i18n
+	$(call doubletex,naboj)
+
+output/naboj/%/instructions-online.pdf: \
+	input/naboj/%/instructions-online.tex \
+	input/naboj/%/instructions-online-text.tex \
 	source/naboj/%/i18n
 	$(call doubletex,naboj)
 

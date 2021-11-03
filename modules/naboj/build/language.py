@@ -18,6 +18,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         'constants.tex',
         'cover.tex',
         'instructions.tex',
+        'instructions-online.tex',
         'online.tex',
     ]
 
