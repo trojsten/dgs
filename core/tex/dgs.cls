@@ -81,7 +81,7 @@
 \linespread{1.0}
 
 \setlength{\parindent}{0cm}
-\setlength{\parskip}{6pt}
+\setlength{\parskip}{1em plus 0.1em}
 
 \setstretch{1.0}
 
