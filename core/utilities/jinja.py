@@ -2,7 +2,7 @@ import jinja2
 import os
 import sys
 
-from core.utilities import dicts, filters
+from core.utilities import dicts, filters, colour as c
 
 
 # Create a custom LaTeX Jinja2 environment, including filters
@@ -52,7 +52,13 @@ def plural(how_many, one, two, default):
 
 # Print a Jinja2 template with provided context
 def print_template(root, template, context, output_directory=None, new_name=None):
-    print(
-        environment(root).get_template(template).render(context),
-        file=sys.stdout if output_directory is None else open(os.path.join(output_directory, template if new_name is None else new_name), 'w')
-    )
+    template_path = f'{root}/{template}'
+    output_path = sys.stdout if output_directory is None else open(os.path.join(output_directory, template if new_name is None else new_name), 'w')
+    try:
+        print(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
+        print(
+            environment(root).get_template(template).render(context),
+            file=output_path,
+        )
+    except jinja2.exceptions.TemplateNotFound as e:
+        print(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")

@@ -17,7 +17,9 @@
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
         \label{ssc:problem-(* problem.id*)}%
+        \ifstrequal{(* language.id *)}{persian}{\arabicfont\setRL}{}
         \protectedInput{\activeDirectory/problem.tex}%
+        \ifstrequal{(* language.id *)}{persian}{\unsetRL}{}
         (@ if not loop.last @)\newpage(@ endif @)
     (@ endfor @)
     \newpage

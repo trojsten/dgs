@@ -1,1 +1,1 @@
-scp -r output/naboj/FKS/ fks:/home/sesquideus/public_html/naboj/
+rsync -rzvhPL output/naboj/FKS sesquideus@fks:/home/sesquideus/public_html/naboj/

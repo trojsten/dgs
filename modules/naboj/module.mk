@@ -16,6 +16,7 @@ input/naboj/%/build-language: \
 	@mkdir -p $(dir $@)
 	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
+
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
@@ -70,8 +71,8 @@ input/naboj/%/constants.tex: \
 
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/languages/<language>
-input/naboj/%/instructions-text.tex: \
-	source/naboj/$$*/$$(notdir $$@) \
+input/naboj/%/instructions-inner.tex: \
+	source/naboj/$$*/_extras/instructions-inner.tex \
 	input/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (full document)
@@ -79,6 +80,13 @@ input/naboj/%/instructions-text.tex: \
 input/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-language ;
+
+# Instructions before the online competition (content)
+input/naboj/%/instructions-online-inner.tex: \
+	source/naboj/$$*/_extras/instructions-online-inner.md
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	python3 core/pandoc-convert.py latex sk $< $@ || exit 1;
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>
@@ -180,13 +188,14 @@ output/naboj/%/constants.pdf: \
 
 output/naboj/%/instructions.pdf: \
 	input/naboj/%/instructions.tex \
-	input/naboj/%/instructions-text.tex \
+	input/naboj/%/instructions-inner.tex \
 	source/naboj/%/i18n
 	$(call doubletex,naboj)
 
 output/naboj/%/instructions-online.pdf: \
+	input/naboj/%/pdf-prerequisites \
 	input/naboj/%/instructions-online.tex \
-	input/naboj/%/instructions-online-text.tex \
+	input/naboj/%/instructions-online-inner.tex \
 	source/naboj/%/i18n
 	$(call doubletex,naboj)
 
@@ -202,6 +211,7 @@ output/naboj/%: \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
 	output/naboj/$$*/instructions.pdf \
+	output/naboj/$$*/instructions-online.pdf \
 	output/naboj/$$*/online.pdf ;
 
 # All targets for all languages

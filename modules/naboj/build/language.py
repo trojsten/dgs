@@ -30,13 +30,13 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         return (self.args.competition, self.args.volume, self.args.language)
 
     def path(self):
-        return (self.args.competition, '{:02d}'.format(self.args.volume), self.subdir, self.args.language)
+        return (self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.language)
 
     def build(self):
         super().build()
-        for template in ['intro.tex', 'instructions-text.tex']:
+        for template in ['intro.tex', 'instructions-inner.tex']:
             jinja.print_template(
-                os.path.join(self.launch_directory, self.args.competition, '{:02d}'.format(self.args.volume), 'languages', self.args.language),
+                os.path.join(self.launch_directory, *self.path(), '_extras'),
                 template, self.context.data, self.output_directory
             )
 

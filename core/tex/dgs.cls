@@ -59,6 +59,8 @@
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage{accents}
 
+\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
+
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
 
@@ -70,6 +72,7 @@
 
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
+\RequirePackage{bidi}
 \setdefaultlanguage{slovak}
 
 \RequirePackage[nodisplayskipstretch]{setspace}
