@@ -61,7 +61,7 @@ input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.t
 # % <competition>/<volume>/languages/<language>
 input/naboj/%/intro.tex: \
 	input/naboj/$$*/build-language \
-	source/naboj/$$*/$$(notdir $$@) ;
+	source/naboj/$$*/_extras/$$(notdir $$@) ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
@@ -216,7 +216,7 @@ output/naboj/%: \
 
 # All targets for all languages
 output/naboj/%/languages: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*/)), $$(dir)) ;
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)), $$(dir)) ;
 
 
 
