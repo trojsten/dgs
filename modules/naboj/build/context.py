@@ -60,6 +60,7 @@ class ContextLanguage(ContextNaboj):
         super().__init__()
         self.add_id(language)
         self.add({'polyglossia': 'magyar' if language == 'hungarian' else language})
+        self.add({'rtl': True if language == 'persian' else False})
 
 
 class ContextVenue(ContextNaboj):

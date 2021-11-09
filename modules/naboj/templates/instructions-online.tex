@@ -4,7 +4,11 @@
     \pagestyle{instructions-online}
     \section{(* i18n.instructions_online.title *)}
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/_extras}%
-    \ifstrequal{(* language.id *)}{persian}{\arabicfont\setRL}{}
+    (@ if language.rtl @)
+        \arabicfont\setRL
+    (@ endif @)
     \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/instructions-online-inner.tex}
-    \ifstrequal{(* language.id *)}{persian}{\unsetRL}{}
+    (@ if language.rtl @)
+        \unsetRL
+    (@ endif @)
 (@ endblock @)
