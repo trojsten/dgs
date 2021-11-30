@@ -52,9 +52,9 @@
 % \PartialDerivative[order]{what}{by-what}
 \NewDocumentCommand{\PDerivative}{O{} m m}{%
     \IfNoValueTF{#1}{%
-        \frac{\pdiff#2}{\pdiff#3}%
+        \frac{\partial#2}{\partial#3}%
     }{%
-        \frac{\pdiff^{\,{#1}}\!{#2}}{\pdiff{#3}^{#1}}%
+        \frac{\partial^{#1}\!{#2}}{\pdiff{#3}^{#1}}%
     }%
 }%
 
