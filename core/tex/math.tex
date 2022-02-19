@@ -13,6 +13,7 @@
 \DeclareMathOperator{\LNand}{\quad\lnand\quad}
 
 \DeclareMathOperator{\sinc}{sinc}
+\DeclareMathOperator{\hav}{hav}
 
 \NewDocumentCommand{\Diff}{O{}}{\diff^{\,#1}\!}
 
@@ -109,6 +110,7 @@
 \NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
 \NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
 
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
@@ -132,6 +134,8 @@
 \NewDocumentCommand{\Rational}{}{\mathbb{Q}}
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
+
+\NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
 
 \NewDocumentCommand{\IntervalCC}{m m}{\left[#1; #2\right]}
 \NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
