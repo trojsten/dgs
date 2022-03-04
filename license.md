@@ -1,5 +1,6 @@
-Copyright (c) 2015-2021, Martin "Kvík" Baláž
-All rights reserved.
+BSD 3-Clause Revised License
+
+Copyright (c) 2015-2022, Martin "Kvík" Baláž and Matej "Krtko" Novota
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -8,13 +9,6 @@ modification, are permitted provided that the following conditions are met:
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-    * The original author has provided an explicit written permission
-      to use this software or any of its forks. The author specifically forbids
-      the use of this software or any of its parts developed by the author
-      for public use of any kind, including publishing of digital or printed
-      content generated with the help of this software or its forks,
-      unless a written authorization has been provided. The author reserves
-      the right to revoke such authorization at any time.
     * Neither the name of the software nor the
       names of its contributors may be used to endorse or promote products
       derived from this software without specific prior written permission.
