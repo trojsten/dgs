@@ -105,7 +105,7 @@ output/seminar/%/semester-print.pdf: \
 output/seminar/%/instagram: \
 	output/seminar/$$*/instagram.pdf
 	@echo -e '$(c_action)Splitting $(c_filename)$<$(c_action) to individual images$(c_action):$(c_default)'
-	pdftoppm -png -r 300 -aa yes -aaVector yes $< $@
+	pdftoppm -png -r 150 -aa yes -aaVector yes $< $@
 
 ### Batch outputs
 
