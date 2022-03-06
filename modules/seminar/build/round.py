@@ -8,6 +8,7 @@ class BuilderRound(builder.BuilderRound):
         'problems.tex',
         'solutions.tex',
         'solutions-full.tex',
+        'instagram.tex',
     ]
     target = 'round'
 

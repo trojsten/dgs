@@ -1,0 +1,68 @@
+(@ extends 'base.tex' @)
+
+(@ block specific @)
+    \usepackage[pscoord]{eso-pic}
+
+    \newlength{\pagesize}
+    \setlength{\pagesize}{160mm}
+    \pdfpagewidth=\pagesize \pdfpageheight=\pagesize % for PDF output
+    \paperwidth=\pagesize \paperheight=\pagesize     % for TikZ
+
+    \AddToShipoutPictureBG{
+        \put(-3, -1){
+            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-instagram.pdf}
+        }
+    }
+
+    \NewDocumentCommand{\setInstagramLayout}{}{
+        \newgeometry{
+            layoutwidth=\pagesize,
+            layoutheight=\pagesize,
+            left=10mm,
+            right=10mm,
+            bottom=10mm,
+            top=10mm,
+            headheight=0mm,
+            headsep=0mm,
+            footskip=0mm,
+            includeheadfoot,
+        }
+        \savegeometry{geometryInstagram}
+    }
+(@ endblock specific @)
+
+(@ block content @)
+    \pagestyle{empty}
+    \setInstagramLayout
+
+    \setcounter{volume}{(* volume.number *)}
+    \setcounter{semester}{(* semester.number *)}
+    \setcounter{round}{(* round.number *)}
+    \setcounter{section}{(* round.number *)}
+
+    (@ block inner @)(@ endblock @)
+
+    (@ for pid, problem in round.problems.items() @)%
+        \vspace*{\fill}
+        \setcounter{problem}{(* problem.number *)}%
+        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+
+        \subsection{%
+            \texorpdfstring{%
+                \large \textbf{(* problem.title *)} \hfill \normalsize%
+                (@ if problem.pointsDescription @)%
+                    \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}, %
+                (@ endif @)%
+                (@ if problem.categories @)%
+                    kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
+                (@ endif @)
+            }{(* round.number *).(* problem.number *) (* problem.title *)}%
+        }
+
+        (@ block problem_again @)(@ endblock @)
+        \protectedInput{\activeDirectory/problem.tex}%
+        \vspace*{6mm}
+        \vspace*{\fill}
+        \clearpage
+    (@ endfor @)
+(@ endblock content @)

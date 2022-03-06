@@ -11,7 +11,7 @@ input/seminar/%/intro.tex input/seminar/%/rules.tex: \
 	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' \
 		$(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
-input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex: \
+input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex input/seminar/%/instagram.tex: \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
@@ -76,6 +76,13 @@ output/seminar/%/solutions-full.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	input/seminar/$$*/pdf-prerequisites \
 	input/seminar/$$*/solutions-full.tex
+	$(call doubletex,seminar)
+
+output/seminar/%/instagram.pdf: \
+	modules/seminar/templates/instagram.tex \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	input/seminar/$$*/pdf-prerequisites \
+	input/seminar/$$*/instagram.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/semester.pdf: \

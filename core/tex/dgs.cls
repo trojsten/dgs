@@ -1,14 +1,14 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{dgs}[2019/08/09 DeGeŠ core class]
 
-\DeclareOption{oneside}{\PassOptionsToClass{\CurrentOption}{article}}
-\DeclareOption{twoside}{\PassOptionsToClass{\CurrentOption}{article}}
-\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
+\DeclareOption{oneside}{\PassOptionsToClass{\CurrentOption}{extarticle}}
+\DeclareOption{twoside}{\PassOptionsToClass{\CurrentOption}{extarticle}}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{extarticle}}
 
 \ExecuteOptions{a4paper, 12pt}
 \ProcessOptions\relax
 
-\LoadClass[a4paper, 12pt]{article}
+\LoadClass[a4paper, 12pt]{extarticle}
 
 \RequirePackage[
     left                    = 15mm,
