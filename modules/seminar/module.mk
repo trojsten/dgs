@@ -102,6 +102,13 @@ output/seminar/%/semester-print.pdf: \
 	@echo -e '$(c_action)Converting $(c_filename)$<$(c_action) to a short-edge booklet $(c_filename)$@$(c_action):$(c_default)'
 	pdfbook --short-edge --quiet --outfile $@ $<
 
+output/seminar/%/instagram: \
+	output/seminar/$$*/instagram.pdf
+	@echo -e '$(c_action)Splitting $(c_filename)$<$(c_action) to individual images$(c_action):$(c_default)'
+	pdftoppm -png -r 300 -aa yes -aaVector yes $< $@
+
+### Batch outputs
+
 output/seminar/%/html-problems: \
 	output/seminar/$$*/html-prerequisites \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md))) ;
