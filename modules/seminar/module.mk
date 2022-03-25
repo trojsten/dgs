@@ -5,13 +5,14 @@ input/seminar/%/copy-static:
 	cp -r source/seminar/$*/.static/ input/seminar/$*/
 
 input/seminar/%/intro.tex input/seminar/%/rules.tex: \
-	$$(subst $(cdir),,$$(abspath modules/seminar/templates/$$(notdir $$@)))
+	modules/seminar/templates/$$(notdir $@) \
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' \
 		$(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex input/seminar/%/instagram.tex: \
+	modules/seminar/templates/$$(notdir $@) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
@@ -34,7 +35,7 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solut
 #	python3 ./modules/seminar/build-semester.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 #
 input/seminar/%/invite.tex: \
-	modules/seminar/templates/invite.tex \
+	modules/seminar/templates/$$(notdir $@) \
 	input/seminar/$$*/format-semester.tex \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))

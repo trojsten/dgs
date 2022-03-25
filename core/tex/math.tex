@@ -83,7 +83,7 @@
     \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
 
-\NewDocumentCommand{\ArrowVector}{m}{\overrightarrow{#1}}
+\NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
 \NewDocumentCommand{\UnitVector}{m}{\vec{\hat{#1}}}
 
@@ -92,11 +92,14 @@
 \NewDocumentCommand{\Expected}{m}{\left<#1\right>}
 \NewDocumentCommand{\MeanValue}{m}{\overline{#1}}
 
-\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\diff#4}
-\NewDocumentCommand{\IntScalar}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cdot\diff#4}
+%\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\diff#4}
+\NewDocumentCommand{\Int}{O{} O{} m O{} m}{\int\limits_{#1}^{#2} \kern -0.2em #3#4\diff#5}
+\NewDocumentCommand{\IntDot}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cdot\diff#4}
+\NewDocumentCommand{\IntCross}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cross\diff#4}
 \NewDocumentCommand{\Intx}{O{} O{} m}{\int\limits_{#1}^{#2} \kern -0.2em #3}
 \NewDocumentCommand{\OInt}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\diff#4}
-\NewDocumentCommand{\OIntScalar}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cdot\diff#4}
+\NewDocumentCommand{\OIntDot}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cdot\diff#4}
+\NewDocumentCommand{\OIntCross}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cross\diff#4}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\diff#5}
 \NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
