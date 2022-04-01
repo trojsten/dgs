@@ -10,7 +10,7 @@
 
     \AddToShipoutPictureBG{
         \put(-3, -1){
-            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-instagram.pdf}
+            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-grey.pdf}
         }
     }
 
@@ -29,11 +29,21 @@
         }
         \savegeometry{geometryInstagram}
     }
+
+    \definecolor{colour-link-instagram}{RGB}{120, 207, 252}
+    \hypersetup{
+        linkcolor = colour-link-instagram,
+        urlcolor = colour-link-instagram,
+    }
 (@ endblock specific @)
 
 (@ block content @)
     \pagestyle{empty}
     \setInstagramLayout
+    \color{white}
+    \makeatletter
+        \color{white}\global\let\default@color\current@color
+    \makeatother
 
     \setcounter{volume}{(* volume.number *)}
     \setcounter{semester}{(* semester.number *)}
