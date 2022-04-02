@@ -136,7 +136,8 @@ output/seminar/%/solutions: \
 
 output/seminar/%: \
 	output/seminar/$$*/problems \
-	output/seminar/$$*/solutions ;
+	output/seminar/$$*/solutions \
+	output/seminar/$$*/instagram ;
 
 .PHONY:
 

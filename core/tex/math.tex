@@ -107,6 +107,9 @@
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
 
+\NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
+\NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
+
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
 \NewDocumentCommand{\Exp}{m}{e^{#1}}
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
@@ -130,6 +133,10 @@
 \NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
 \NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
+
+\NewDocumentCommand{\Set}{m O{} O{}}{
+    \left\{#1\right\}\IfNoValueTF{#2}{}{_{#2}}\IfNoValueTF{#3}{}{^{#3}}
+}
 
 \NewDocumentCommand{\Natural}{}{\mathbb{N}}
 \NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
