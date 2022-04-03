@@ -21,9 +21,9 @@ class BaseBuilder():
 
     def create_argument_parser(self):
         self.parser = argparse.ArgumentParser(description="Prepare a DGS input dataset from repository")
-        self.parser.add_argument('launch', action=argparser.readable_dir)
-        self.parser.add_argument('template_root', action=argparser.readable_dir)
-        self.parser.add_argument('-o', '--output', action=argparser.writeable_dir)
+        self.parser.add_argument('launch', action=argparser.ReadableDir)
+        self.parser.add_argument('template_root', action=argparser.ReadableDir)
+        self.parser.add_argument('-o', '--output', action=argparser.WriteableDir)
         self.parser.add_argument('-d', '--debug', action='store_true')
         return self.parser
 
