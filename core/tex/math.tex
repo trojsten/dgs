@@ -122,20 +122,23 @@
 
 \NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} {#3}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}
+\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\bigtimes\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\mathrm{max}} {#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\mathrm{min}} {#2}}
 \RenewDocumentCommand{\Hat}{O{0em} m}{#2\kern#1\hat{\phantom{#2}}}
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
 
 \NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
-\NewDocumentCommand{\Distribution}{m m m}{#1(#2;\,#3)}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \vert #3)}
 
 \NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
 \NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
 
-\NewDocumentCommand{\Set}{m O{} O{}}{
-    \left\{#1\right\}\IfNoValueTF{#2}{}{_{#2}}\IfNoValueTF{#3}{}{^{#3}}
+\NewDocumentCommand{\Set}{m O{} O{}}{%
+    \left\{#1\right\}\IfNoValueTF{#2}{}{_{#2}}\IfNoValueTF{#3}{}{^{#3}}%
 }
 
 \NewDocumentCommand{\Natural}{}{\mathbb{N}}
@@ -143,6 +146,8 @@
 \NewDocumentCommand{\Integer}{}{\mathbb{Z}}
 \NewDocumentCommand{\Rational}{}{\mathbb{Q}}
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
+\NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
 
 \NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
@@ -152,10 +157,7 @@
 \NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
 \NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
 
-\let\temp\varphi%
-\let\varphi\phi%
-\let\phi\temp%
+\NewDocumentCommand{\mat}{m}{\symbf{#1}}
 
-\let\temp\varepsilon%
-\let\varepsilon\epsilon%
-\let\epsilon\temp%
+\let\phi\varphi%
+\let\epsilon\varepsilon%
