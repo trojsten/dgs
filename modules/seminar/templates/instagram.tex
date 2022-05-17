@@ -8,9 +8,12 @@
     \pdfpagewidth=\pagesize \pdfpageheight=\pagesize % for PDF output
     \paperwidth=\pagesize \paperheight=\pagesize     % for TikZ
 
+    \definecolor{link-dark}{RGB}{120, 207, 252}
+    \definecolor{link-orange}{RGB}{0, 137, 162}
+
     \AddToShipoutPictureBG{
         \put(-3, -1){
-            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-grey.pdf}
+            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-(* round.instagram.skin *).pdf}
         }
     }
 
@@ -30,19 +33,18 @@
         \savegeometry{geometryInstagram}
     }
 
-    \definecolor{colour-link-instagram}{RGB}{120, 207, 252}
     \hypersetup{
-        linkcolor = colour-link-instagram,
-        urlcolor = colour-link-instagram,
+        linkcolor=link-(* round.instagram.skin *),
+        urlcolor=link-(* round.instagram.skin *),
     }
 (@ endblock specific @)
 
 (@ block content @)
     \pagestyle{empty}
     \setInstagramLayout
-    \color{white}
+    \color{(* round.instagram.textColour *)}
     \makeatletter
-        \color{white}\global\let\default@color\current@color
+        \color{(* round.instagram.textColour *)}\global\let\default@color\current@color
     \makeatother
 
     \setcounter{volume}{(* volume.number *)}
