@@ -141,6 +141,7 @@
     \left\{#1\right\}\IfNoValueTF{#2}{}{_{#2}}\IfNoValueTF{#3}{}{^{#3}}%
 }
 
+% Number sets
 \NewDocumentCommand{\Natural}{}{\mathbb{N}}
 \NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
 \NewDocumentCommand{\Integer}{}{\mathbb{Z}}
@@ -150,17 +151,19 @@
 \NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
 
+%
 \NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
+
+% Matrices
+\NewDocumentCommand{\mat}{m}{\symbf{#1}}
 \NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
-\NewDocumentCommand{\Det}{m}{\left|#1\right|}
 \NewDocumentCommand{\Inv}{m}{#1^{-1}}
+\NewDocumentCommand{\Det}{m}{\left|#1\right|}
 
 \NewDocumentCommand{\IntervalCC}{m m}{\left[#1; #2\right]}
 \NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
 \NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
 \NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
-
-\NewDocumentCommand{\mat}{m}{\symbf{#1}}
 
 \let\phi\varphi%
 \let\epsilon\varepsilon%
