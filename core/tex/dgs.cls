@@ -24,6 +24,7 @@
 
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
+\RequirePackage{mleftright}
 \RequirePackage{siunitx}
 \RequirePackage{xparse}
 \RequirePackage{enumitem}
