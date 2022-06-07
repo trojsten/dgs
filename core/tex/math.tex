@@ -7,6 +7,9 @@
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\Rot}{\del\times}
 
+\DeclareMathOperator{\maxop}{max\ }
+\DeclareMathOperator{\minop}{min\ }
+
 \DeclareMathOperator{\LXor}{\quad\lxor\quad}
 \DeclareMathOperator{\LOr}{\quad\lor\quad}
 \DeclareMathOperator{\LAnd}{\quad\land\quad}
@@ -89,7 +92,8 @@
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
 \NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}
-\NewDocumentCommand{\Expected}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
 \NewDocumentCommand{\MeanValue}{m}{\overline{#1}}
 
 %\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\diff#4}
@@ -124,8 +128,8 @@
 \NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\bigtimes\limits_{#1}^{#2} #3}
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
-\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\mathrm{max}} {#2}}
-\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\mathrm{min}} {#2}}
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
 \RenewDocumentCommand{\Hat}{O{0em} m}{#2\kern#1\hat{\phantom{#2}}}
 
 \NewDocumentCommand{\Angle}{}{\text{\AngleSign}}

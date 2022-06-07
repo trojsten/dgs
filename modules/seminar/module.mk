@@ -36,7 +36,6 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solut
 #
 input/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $@) \
-	input/seminar/$$*/format-semester.tex \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
