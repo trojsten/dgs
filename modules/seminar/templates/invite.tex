@@ -19,7 +19,8 @@
 
     (@ for child in semester.camp.children @)
         \section{Pozvánka na sústredenie}
-            Mil(* 'ý' if child.male else 'á'*) riešiteľ(* '' if child.male else 'ka' *) (* child.name *) (* child.surname *),
+            Mil(* 'ý' if child.male else 'á'*) riešiteľ(* '' if child.male else 'ka' *)
+            (@ if child.name != "" @)(* child.name *) (* child.surname *)(@ else @)\makebox[50mm]{\dotfill}(@ endif @),
 
             v~korešpondenčnej časti si dosiah(* 'ol' if child.male else 'la' *) výborné výsledky,
             gratulujeme a~týmto Ťa pozývame ako \textbf{(* 'náhradní' if child.substitute else 'účastní' *)(* 'ka' if child.male else 'čku' *)}
@@ -79,7 +80,8 @@
             \cutHere
 
             \subsection{Ospravedlnenie}
-                (* 'Váš žiak' if child.male else 'Vaša žiačka' *) \textbf{(* child.name *) (* child.surname *)}
+                (* 'Váš žiak' if child.male else 'Vaša žiačka' *)
+                (@ if child.name != "" @)\textbf{(* child.name *) (* child.surname *)} (@ else @)\makebox[30mm]{\dotfill}(@ endif @)
                 sa na základe výborných výsledkov vo (* competition.full.locative *)
                 zúčastní na sústredení jeho najlepších riešiteľov. To sa uskutoční v~dňoch
                 (* semester.camp.dates.begin.strftime('%d.~%m.') *) až (* semester.camp.dates.end.strftime('%d.~%m.~%Y') *)
@@ -95,7 +97,9 @@
             \cutHere
 
             \subsection{Potvrdenie o~bezinfekčnosti}
-                Vyhlasujem, že moje dieťa, (* child.name *) (* child.surname *), bytom v~\makebox[30mm]{\dotfill} neprejavuje príznaky akútneho ochorenia a že
+                Vyhlasujem, že moje dieťa,
+                (@ if child.name != "" @)\textbf{(* child.name *) (* child.surname *)}(@ else @)\makebox[30mm]{\dotfill}(@ endif @),
+                bytom v~\makebox[30mm]{\dotfill} neprejavuje príznaky akútneho ochorenia a že
                 príslušný orgán verejného zdravotníctva ani ošetrujúci lekár menovanému dieťaťu nenariadil
                 karanténne opatrenie (karanténu, zvýšený zdravotný dozor alebo lekársky dohľad). Nie je mi známe, že
                 by dieťa, jeho rodičia alebo iné osoby, ktoré s~ním žijú v~spoločnej domácnosti, prišli v~priebehu
