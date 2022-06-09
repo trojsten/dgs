@@ -35,7 +35,7 @@
                         (* semester.camp.accomodation.location.nominative *) (@ if semester.camp.accomodation.URL @) \\(\URL{(* semester.camp.accomodation.URL *)})(@ endif @).
                     \item Cena sústredenia nepresiahne \textbf{\SI{(* semester.camp.accomodation.price *)}{\eur}} (v~cene je zarátaná strava, ubytovanie,
                         doprava z~\textbf{(* semester.camp.transport.gather.place.genitive *)} do \textbf{(* semester.camp.accomodation.location.genitive *)}
-                        a~späť do~\textbf{(* semester.camp.transport.disband.place.genitive *)}), platí sa na mieste.
+                        a~späť do~\textbf{(* semester.camp.transport.disband.place.genitive *)}), platí sa vopred bankovým prevodom.
                     \item Stretneme sa \textbf{(* semester.camp.dates.begin.strftime('%d.~%m.~%Y') *)}
                         na železničnej stanici v~\textbf{(* semester.camp.transport.gather.place.locative *)},
                         odkiaľ spolu pôjdeme autobusom o~\textbf{(* semester.camp.transport.gather.time *)} do miesta konania sústredenia.
@@ -49,8 +49,8 @@
                         (@ if 'boys' in semester.camp.stuff and child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.boys|format_list *).(@ endif @)%
                         (@ if 'girls' in semester.camp.stuff and not child.male @)Okrem toho budeš potrebovať (* semester.camp.stuff.girls|format_list *).(@ endif @)%
                     \item Je zakázané priniesť si a požívať alkoholické a tabakové výrobky. Pri porušení zákazu si vyhradzujeme právo poslať účastníka zo sústredenia domov.
-                    \item Prípadné otázky zasielajte e-mailom na \href{mailto:(* semester.camp.contact.email *)}{\texttt{(* semester.camp.contact.email *)}}. V~núdzových prípadoch na otázky odpovie
-                        telefonicky (* semester.camp.contact.name *) na čísle (* semester.camp.contact.phone *).
+                    \item Prípadné otázky zasielajte e-mailom na \href{mailto:(* semester.camp.contact.email *)}{\texttt{(* semester.camp.contact.email *)}}.
+                        V~núdzových prípadoch na otázky odpovie telefonicky (* semester.camp.contact.name *) na čísle (* semester.camp.contact.phone *).
                 \end{itemize}
 
             \clearpage
@@ -89,7 +89,7 @@
                 Sme si istí, že zameškaný týždeň rýchlo dobehne.
                 \vspace{5mm}
 
-                \hfill \dotfill
+                \hfill \makebox[54mm]{\dotfill}
 
                 \vspace*{-8pt}
                 \hfill \textit{(* competition.head.name *), hlavný vedúci (* competition.short *)}
@@ -110,7 +110,7 @@
                 doplnení niektorých zákonov.
                 \vspace{5mm}
 
-                V~\dotfill dňa \dotfill, \hfill \dotfill
+                V~\dotfill dňa \dotfill, \hfill \makebox[46mm]{\dotfill}
 
                 \vspace*{-8pt}
                 \hfill \textit{podpis zákonného zástupcu} \\[5mm]
