@@ -26,10 +26,10 @@ class StyleEnforcer():
 
         try:
             check.encoding(file.name)
-        except check.EncodingError as e:
+        except exceptions.EncodingError as e:
             print("File {name} is not valid: {message}".format(
-                name            = colour(file.name, 'name'),
-                message         = colour(e.message, 'error'),
+                name            = c.name(file.name),
+                message         = c.err(e.message),
             ))
             return False
 

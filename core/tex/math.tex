@@ -7,6 +7,8 @@
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\Rot}{\del\times}
 
+\DeclareMathOperator{\atantwo}{atan2}
+
 \DeclareMathOperator{\maxop}{max\ }
 \DeclareMathOperator{\minop}{min\ }
 
@@ -130,9 +132,8 @@
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
 \NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
 \NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
-\RenewDocumentCommand{\Hat}{O{0em} m}{#2\kern#1\hat{\phantom{#2}}}
 
-\NewDocumentCommand{\Angle}{}{\text{\AngleSign}}
+\NewDocumentCommand{\Angle}{}{\sphericalangle}
 
 \NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
 \NewDocumentCommand{\Distribution}{m m m}{#1(#2 \vert #3)}
