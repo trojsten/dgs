@@ -11,6 +11,10 @@ import tempfile
 from utilities import colour as c
 
 
+def compile_regexes(regexes):
+    return [(re.compile(regex), repl) for (regex, repl) in regexes]
+
+
 class Convertor():
     languages = {
         'sk':   {
@@ -91,13 +95,18 @@ class Convertor():
             self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
         if self.args.format == 'html':
             self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_html]
-        self.quotes_regexes = [
+
+        self.quotes_regexes = compile_regexes([
             (r'"(\b)', self.quote_open + r'\g<1>'),
             (r'(\b)"', r'\g<1>' + self.quote_close),
             (r'(\S)"', r'\g<1>' + self.quote_close),
             (r'"(\S)', self.quote_open + r'\g<1>'),
-        ]
-        self.quotes_regexes = [(re.compile(regex), repl) for regex, repl in self.quotes_regexes]
+        ])
+
+        self.math_regexes = compile_regexes([
+            (r'^\$\${$', r'$$\n\\begin{aligned}'),
+            (r'^}\$\$', r'\\end{aligned}\n$$'),
+        ])
 
     def run(self):
         try:
@@ -149,7 +158,8 @@ class Convertor():
 
     def preprocess(self, line):
         if self.filter_tags(line):
-            return self.replace_quotes(self.replace_tags(line))
+            print(self.replace_math(self.replace_quotes(self.replace_tags(line))), end='')
+            return self.replace_math(self.replace_quotes(self.replace_tags(line)))
         else:
             return None
 
@@ -212,6 +222,12 @@ class Convertor():
 
     def replace_quotes(self, line):
         for regex, replacement in self.quotes_regexes:
+            line = regex.sub(replacement, line)
+
+        return line
+
+    def replace_math(self, line):
+        for regex, replacement in self.math_regexes:
             line = regex.sub(replacement, line)
 
         return line
