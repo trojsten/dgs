@@ -158,7 +158,6 @@ class Convertor():
 
     def preprocess(self, line):
         if self.filter_tags(line):
-            print(self.replace_math(self.replace_quotes(self.replace_tags(line))), end='')
             return self.replace_math(self.replace_quotes(self.replace_tags(line)))
         else:
             return None
