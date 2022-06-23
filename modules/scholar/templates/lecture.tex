@@ -1,8 +1,39 @@
 \documentclass[12pt, twoside]{dgs}
 
 \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* lecture.id *)}%
+\input{core/i18n/slovak/override.tex}
+\input{input/scholar/(* course.id *)/.static/format-override.tex}
+
+\setcounter{secnumdepth}{3}
+
+\hypersetup{bookmarksdepth=4}
+
+\fancypagestyle{scholar}{
+    \fancyhf{}
+    \fancyhead[L]{\textit{(* course.name *)}}
+    \fancyhead[R]{\textit{(* lecture.title *)}}
+    \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
+
+    \titleformat{\section}[block]{\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
+    \titleformat{\subsection}[hang]{\LARGE\bfseries\vspace{4mm}\vspace*{-4mm}}{}{0pt}{}
+    \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\bfseries}{}{0pt}{}[]
+    \titleformat{\subparagraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{6mm}{2mm}
+    \titlespacing{\subsection}{0pt}{6mm}{4mm}
+    \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
+    \titlespacing{\paragraph}{0pt}{2mm}{0pt}
+    \titlespacing{\subparagraph}{0pt}{2mm}{0pt}
+}
+
+\numberwithin{equation}{subsection}
+\numberwithin{figure}{subsection}
+
+(@ block style @)(@ endblock @)
 
 \begin{document}
-    \section{(* lecture.name *)}
+    \pagestyle{scholar}
+    \chapter{(* lecture.title *)}
     \input{\activeDirectory/content.tex}
+    (@ block content @)(@ endblock content @)
 \end{document}
