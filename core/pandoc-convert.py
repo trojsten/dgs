@@ -31,32 +31,32 @@ class Convertor():
         'en':   {
             'name':     'english',
             'quotes':   ('“', '”'),
-            'sub':      'en-US',
+            'locale':   'en-US',
         },
         'ru':   {
             'name':     'russian',
             'quotes':   ('«', '»'),
-            'sub':      'ru-RU',
+            'locale':   'ru-RU',
         },
         'pl':   {
             'name':     'polish',
             'quotes':   ('„', '“'),
-            'sub':      'pl-PL',
+            'locale':   'pl-PL',
         },
         'hu':   {
             'name':     'hungarian',
             'quotes':   ('„', '“'),
-            'sub':      'hu-HU',
+            'locale':   'hu-HU',
         },
         'fr':   {
             'name':     'french',
             'quotes':   ('«\u202F', '\u202F»'),
-            'sub':      'fr-FR',
+            'locale':   'fr-FR',
         },
         'qq':   {
             'name':     'test',
             'quotes':   ('(', ')'),
-            'sub':      'sk-SK',
+            'locale':   'sk-SK',
         },
     }
 
@@ -97,6 +97,7 @@ class Convertor():
             self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_html]
 
         self.quotes_regexes = compile_regexes([
+            (r'"(_)', self.quote_close + r'\g<1>'),
             (r'"(\b)', self.quote_open + r'\g<1>'),
             (r'(\b)"', r'\g<1>' + self.quote_close),
             (r'(\S)"', r'\g<1>' + self.quote_close),

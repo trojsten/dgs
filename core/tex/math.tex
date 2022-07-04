@@ -36,7 +36,7 @@
     \IfNoValueTF{#1}{%
         \frac{\diff}{\diff#2}%
     }{%
-        \frac{\diff^{\,{#1}}}{\diff{#2}^{\,#1}}%
+        \frac{\diff^{#1}}{\diff{#2}^{#1}}%
     }%
 }%
 
@@ -60,7 +60,7 @@
     \IfNoValueTF{#1}{%
         \frac{\partial#2}{\partial#3}%
     }{%
-        \frac{\partial^{#1}\!{#2}}{\pdiff{#3}^{#1}}%
+        \frac{\partial^{#1}{#2}}{\pdiff{#3}^{#1}}%
     }%
 }%
 
@@ -69,7 +69,7 @@
     \IfNoValueTF{#1}{%
         \frac{\pdiff}{\pdiff#2}%
     }{%
-        \frac{\pdiff^{\,{#1}}}{\pdiff{#2}^{\,#1}}%
+        \frac{\pdiff^{#1}}{\pdiff{#2}^{#1}}%
     }%
 }%
 
@@ -98,17 +98,22 @@
 \NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
 
-%\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\diff#4}
-\NewDocumentCommand{\Int}{O{} O{} m O{} m}{\int\limits_{#1}^{#2} \kern -0.2em #3#4\diff#5}
-\NewDocumentCommand{\IntDot}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cdot\diff#4}
-\NewDocumentCommand{\IntCross}{O{} O{} m m}{\int\limits_{#1}^{#2} \kern -0.2em #3\cross\diff#4}
-\NewDocumentCommand{\Intx}{O{} O{} m}{\int\limits_{#1}^{#2} \kern -0.2em #3}
-\NewDocumentCommand{\OInt}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\diff#4}
-\NewDocumentCommand{\OIntDot}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cdot\diff#4}
-\NewDocumentCommand{\OIntCross}{O{} O{} m m}{\oint\limits_{#1}^{#2} \kern -0.2em#3\cross\diff#4}
-\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{\quad#2} #3 \diff#4\diff#5}
-\NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{\quad#2} #3 \diff#4}
-\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2} #3 \diff#4\diff#5\diff#6}
+% Integral from #1 to #2 of #3 with respect to #4
+\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\diff#4}
+
+% Integral from #1 to #2 of dot product of #3 and #4
+\NewDocumentCommand{\IntDot}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\cdot\diff#4}
+\NewDocumentCommand{\IntCross}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\times\diff#4}
+\NewDocumentCommand{\Intx}{O{} O{} m}{\int\limits_{#1}^{#2} #3}
+\NewDocumentCommand{\OInt}{O{} O{} m O{} m}{\oint\limits_{#1}^{#2} #3#4\diff#5}
+\NewDocumentCommand{\OIntLD}{O{} O{} m m}{\oint\limits_{#1}^{#2}#3\cdot\diff#4}
+\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
+\NewDocumentCommand{\IIntL}{O{} O{} m m}{\iint\limits_{#1}^{#2}#3\diff#4}
+\NewDocumentCommand{\IIntLD}{O{} O{} m m}{\iint\limits_{#1}^{#2}#3\cdot\diff#4}
+\NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{#2}#3\diff#4}
+\NewDocumentCommand{\OIIntLD}{O{} O{} m m}{\oiint\limits_{#1}^{#2}#3\cdot\diff#4}
+\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
+\NewDocumentCommand{\IIIntOne}{O{} O{} m m}{\iiint\limits_{#1}^{#2}#3\diff#4}
 
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}

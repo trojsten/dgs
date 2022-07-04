@@ -15,7 +15,7 @@
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 
     \titleformat{\section}[block]{\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
-    \titleformat{\subsection}[hang]{\LARGE\bfseries\vspace{4mm}\vspace*{-4mm}}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\Large\bfseries}{}{0pt}{}
     \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
     \titleformat{\paragraph}[hang]{\bfseries}{}{0pt}{}[]
     \titleformat{\subparagraph}[hang]{\it\bfseries}{}{0pt}{}[]
@@ -33,7 +33,7 @@
 
 \begin{document}
     \pagestyle{scholar}
-    \chapter{(* lecture.title *)}
+    \section{(* lecture.title *)}
     \input{\activeDirectory/content.tex}
     (@ block content @)(@ endblock content @)
 \end{document}
