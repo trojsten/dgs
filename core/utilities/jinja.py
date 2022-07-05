@@ -5,6 +5,30 @@ import sys
 from core.utilities import dicts, filters, colour as c
 
 
+class CollectUndefined(jinja2.StrictUndefined):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.missing = []
+
+    def __call__(self, *args, **kwargs):
+        undefined = self.undefined_cls(*args, **kwargs)
+        self.missing.append(undefined._undefined_name)
+        return undefined
+
+    def assert_no_missing(self):
+        if len(self.missing) > 0:
+            raise MissingVariablesError(self.missing)
+
+
+class MissingVariablesError(Exception):
+    def __init__(self, missing, *args):
+        super().__init__(*args)
+        self.missing = missing
+
+    def __str__(self):
+        return f"Missing variables: {self.missing}"
+
+
 # Create a custom LaTeX Jinja2 environment, including filters
 def environment(directory):
     env = jinja2.Environment(
@@ -62,3 +86,7 @@ def print_template(root, template, context, output_directory=None, new_name=None
         )
     except jinja2.exceptions.TemplateNotFound as e:
         print(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
+        sys.exit(41)
+    except jinja2.exceptions.UndefinedError as e:
+        print(f"Missing required variable from metafile: {c.err(e)}")
+        sys.exit(43)

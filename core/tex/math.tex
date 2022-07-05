@@ -1,3 +1,4 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \DeclareMathOperator{\diff}{d\!}
 \DeclareMathOperator{\pdiff}{\partial\!}
 \DeclareMathOperator{\fdiff}{\Delta\!}
@@ -20,14 +21,23 @@
 \DeclareMathOperator{\sinc}{sinc}
 \DeclareMathOperator{\hav}{hav}
 
-\NewDocumentCommand{\Diff}{O{}}{\diff^{\,#1}\!}
+\NewDocumentCommand{\Diff}{O{}}{\diff^{#1}}
+
+% Inner derivative with any differential symbol
+\NewDocumentCommand{\Deriv}{O{\diff} O{} m m}{%
+    \IfNoValueTF{#2}{%
+        \frac{#1#3}{#1#4}%
+    }{%
+        \frac{#1^{#2}#3}{#1{#4}^{#2}}%
+    }%
+}
 
 % \Derivative[order]{what}{by-what}
 \NewDocumentCommand{\Derivative}{O{} m m}{%
     \IfNoValueTF{#1}{%
         \frac{\diff#2}{\diff#3}%
     }{%
-        \frac{\diff^{\,{#1}}\!{#2}}{\diff{#3}^{#1}}%
+        \frac{\diff^{#1}{#2}}{\diff{#3}^{#1}}%
     }%
 }%
 
@@ -91,6 +101,8 @@
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
 \NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
+\NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
+\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
 
 \NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
 \NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}
