@@ -1,10 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\DeclareMathOperator{\diff}{d\!}
-\DeclareMathOperator{\pdiff}{\partial\!}
-\DeclareMathOperator{\fdiff}{\Delta\!}
+\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
+\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
+\NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
 \DeclareMathOperator{\sdiff}{\delta\!}
 \DeclareMathOperator{\laplacian}{\Delta\!}
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
+\DeclareMathOperator{\Grad}{\del}
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\Rot}{\del\times}
 
@@ -21,75 +22,55 @@
 \DeclareMathOperator{\sinc}{sinc}
 \DeclareMathOperator{\hav}{hav}
 
-\NewDocumentCommand{\Diff}{O{}}{\diff^{#1}}
+\NewDocumentCommand{\Diff}{O{}}{%
+    \IfNoValueTF{#1}{\diff}{\diff^{#1}}%
+}
 
 % Inner derivative with any differential symbol
-\NewDocumentCommand{\Deriv}{O{\diff} O{} m m}{%
-    \IfNoValueTF{#2}{%
-        \frac{#1#3}{#1#4}%
+\NewDocumentCommand{\Deriv}{O{} m m m}{%
+    \ifblank{#1}{%
+        \frac{#2#3}{#2#4}%
     }{%
-        \frac{#1^{#2}#3}{#1{#4}^{#2}}%
+        \frac{#2^{#1}#3}{#2{#4}^{#1}}%
+    }%
+}
+
+\NewDocumentCommand{\DerivEmpty}{O{} m m}{%
+    \ifblank{#1}{%
+        \frac{#2}{#2#3}
+    }{%
+        \frac{#2^{#1}}{#2#3^{#1}}
+    }%
+}
+
+\NewDocumentCommand{\DerivParen}{O{} m m m}{%
+    \ifblank{#1}{%
+        \frac{#2}{#2#3}\left(#4\right)%
+    }{%
+        \frac{#2^{#1}}{#2#3^{#1}}\left(#4\right)%
     }%
 }
 
 % \Derivative[order]{what}{by-what}
-\NewDocumentCommand{\Derivative}{O{} m m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\diff#2}{\diff#3}%
-    }{%
-        \frac{\diff^{#1}{#2}}{\diff{#3}^{#1}}%
-    }%
-}%
+\NewDocumentCommand{\Derivative}{O{} m m}{\Deriv[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\PDerivative}{O{} m m}{\Deriv[#1]{\pdiff}{#2}{#3}}
+\NewDocumentCommand{\FDerivative}{O{} m m}{\Deriv[#1]{\fdiff}{#2}{#3}}
 
 % \DerivativeEmpty[order]{by-what}
-\NewDocumentCommand{\DerivativeE}{O{} m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\diff}{\diff#2}%
-    }{%
-        \frac{\diff^{#1}}{\diff{#2}^{#1}}%
-    }%
-}%
+\NewDocumentCommand{\DerivativeE}{O{} m}{\DerivEmpty[#1]{\diff}{#2}}
+\NewDocumentCommand{\PDerivativeE}{O{} m}{\DerivEmpty[#1]{\pdiff}{#2}}
+\NewDocumentCommand{\FDerivativeE}{O{} m}{\DerivEmpty[#1]{\fdiff}{#2}}
 
 % \DerivativeParentheses{what}{by-what}
-\NewDocumentCommand{\DerivativeParen}{O{} m m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\diff}{\diff#2}\left(#3\right)%
-    }{%
-        \frac{\diff^{#1}}{\diff #2^{#1}}\left(#3\right)%
-    }%
-}%
+\NewDocumentCommand{\DerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\PDerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\FDerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
+
 
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
 \NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
     \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
-}%
-
-% \PartialDerivative[order]{what}{by-what}
-\NewDocumentCommand{\PDerivative}{O{} m m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\partial#2}{\partial#3}%
-    }{%
-        \frac{\partial^{#1}{#2}}{\pdiff{#3}^{#1}}%
-    }%
-}%
-
-% \PartialDerivativeEmpty[order]{by-what}
-\NewDocumentCommand{\PDerivativeE}{O{} m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\pdiff}{\pdiff#2}%
-    }{%
-        \frac{\pdiff^{#1}}{\pdiff{#2}^{#1}}%
-    }%
-}%
-
-% \PartialDerivativeParentheses{what}{by-what}
-\NewDocumentCommand{\PDerivativeParen}{O{} m m}{%
-    \IfNoValueTF{#1}{%
-        \frac{\pdiff}{\pdiff#3}\left(#2\right)%
-    }{%
-        \frac{\pdiff^{#1}}{\pdiff #3^{#1}}\left(#2\right)%
-    }%
 }%
 
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
@@ -110,22 +91,55 @@
 \NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
 
+\makeatletter
+% Generic 1D integral
+\NewDocumentCommand{\Int@}{O{} O{} m m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
 % Integral from #1 to #2 of #3 with respect to #4
-\NewDocumentCommand{\Int}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\diff#4}
+\NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[]}
+% Integral from #1 to #2 of dot product of #3 and d#4
+\NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\cdot]}
+% Integral from #1 to #2 of cross product of #3 and d#4 (
+\NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\times]}
 
-% Integral from #1 to #2 of dot product of #3 and #4
-\NewDocumentCommand{\IntDot}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\cdot\diff#4}
-\NewDocumentCommand{\IntCross}{O{} O{} m m}{\int\limits_{#1}^{#2} #3\times\diff#4}
-\NewDocumentCommand{\Intx}{O{} O{} m}{\int\limits_{#1}^{#2} #3}
-\NewDocumentCommand{\OInt}{O{} O{} m O{} m}{\oint\limits_{#1}^{#2} #3#4\diff#5}
-\NewDocumentCommand{\OIntLD}{O{} O{} m m}{\oint\limits_{#1}^{#2}#3\cdot\diff#4}
+% Generic loop integral
+\NewDocumentCommand{\OInt@}{O{} m m O{}}{\oint\limits_{#1}#2#4\diff#3}
+% Loop integral over #1
+\NewDocumentCommand{\OInt}{O{} m m}{\OInt@[#1]{#2}{#3}[]}
+% Loop integral over #1 of dot product of #2 and d#3 (for instance magnetic B dl)
+\NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}[\cdot]}
+\NewDocumentCommand{\OIntDV}{O{} m m}{\OIntD[#1]{\vec{#2}}{\vec{#3}}}
+% Loop integral over #1 of cross product of #2 and d#3 (for instance magnetic B dl)
+\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}[\cross]}
+\NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
+
+% Generic 2D integral
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
-\NewDocumentCommand{\IIntL}{O{} O{} m m}{\iint\limits_{#1}^{#2}#3\diff#4}
-\NewDocumentCommand{\IIntLD}{O{} O{} m m}{\iint\limits_{#1}^{#2}#3\cdot\diff#4}
-\NewDocumentCommand{\OIInt}{O{} O{} m m}{\oiint\limits_{#1}^{#2}#3\diff#4}
-\NewDocumentCommand{\OIIntLD}{O{} O{} m m}{\oiint\limits_{#1}^{#2}#3\cdot\diff#4}
+% Surface integral over single differential
+\NewDocumentCommand{\IIntI@}{O{} O{} m m O{}}{\iint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\IIntI}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}}
+% Surface integral of dot product over single differential
+\NewDocumentCommand{\IIntID}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\IIntIDV}{O{} O{} m m}{\IIntID[#1][#2]{\vec{#3}}{\vec{#4}}}
+% Surface integral of cross product over single differential
+\NewDocumentCommand{\IIntIC}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\IIntICV}{O{} O{} m m}{\IIntIC[#1][#2]{\vec{#3}}{\vec{#4}}}
+
+% Surface integral over single differential
+\NewDocumentCommand{\OIIntI@}{O{} O{} m m O{}}{\oiint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
+% Surface integral of dot product over single differential
+\NewDocumentCommand{\OIIntID}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\OIIntIDV}{O{} O{} m m}{\OIIntID[#1][#2]{\vec{#3}}{\vec{#4}}}
+% Surface integral of cross product over single differential
+\NewDocumentCommand{\OIIntIC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\OIIntICV}{O{} O{} m m}{\OIIntIC[#1][#2]{\vec{#3}}{\vec{#4}}}
+
+% Generic 3D integral
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
-\NewDocumentCommand{\IIIntOne}{O{} O{} m m}{\iiint\limits_{#1}^{#2}#3\diff#4}
+% Volume integral over single differential
+\NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
+\makeatother
 
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}

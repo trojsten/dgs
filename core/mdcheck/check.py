@@ -68,6 +68,8 @@ class PlusSpaces():
 
 class DoubleDollars():
     re_dollars = re.compile(r'\$\$')
+    re_dollars_curly_open = re.compile(r'\$\${')
+    re_dollars_curly_close = re.compile(r'}\$\$')
     re_only_dollars = re.compile(r'^( *|%)\$\$$')
     re_dollars_ref_missing_space = re.compile(r'\$\${#eq:[a-z0-9-:]+}')
     re_dollars_ref = re.compile(r'^ *\$\$ {#eq:[\w:-]+}$')
@@ -78,7 +80,10 @@ class DoubleDollars():
         if search := self.re_dollars_ref_missing_space.search(line):
             raise exceptions.SingleLineError('Reference missing a space', line, search.start() + 4)
 
-        if self.re_only_dollars.match(line) or self.re_dollars_ref.match(line):
+        if self.re_only_dollars.match(line) \
+            or self.re_dollars_ref.match(line) \
+            or self.re_dollars_curly_open.match(line) \
+            or self.re_dollars_curly_close.match(line):
             return
 
         if search := self.re_aligned_begin.search(line):
