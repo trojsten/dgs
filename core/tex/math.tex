@@ -157,9 +157,11 @@
 
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
-\NewDocumentCommand{\Sum}{O{} O{} m}{\sum\limits_{#1}^{#2} {#3}}
-\NewDocumentCommand{\Product}{O{} O{} m}{\prod\limits_{#1}^{#2} #3}
-\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\bigtimes\limits_{#1}^{#2} #3}
+\NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+
 \NewDocumentCommand{\Abs}{m}{\left|#1\right|}
 \NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
 \NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
@@ -174,7 +176,7 @@
 \NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
 
 \NewDocumentCommand{\Set}{m O{} O{}}{%
-    \left\{#1\right\}\IfNoValueTF{#2}{}{_{#2}}\IfNoValueTF{#3}{}{^{#3}}%
+    \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
 }
 
 % Number sets

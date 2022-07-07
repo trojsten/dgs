@@ -34,26 +34,27 @@ class StyleEnforcer():
             return False
 
         line_errors = [
-            check.FailOnSearch(r'\t', "Tab instead of spaces"),
+            check.FailIfFound(r'\t', "Tab instead of spaces"),
             check.CommaSpace(),
             check.SemicolonSpace(),
             check.ParenthesesSpace(),
-            check.FailOnSearch(r'[ \t]$', "Trailing whitespace"),
-            check.FailOnSearch(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
-            check.FailOnSearch(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
-            check.FailOnSearch(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
-            check.FailOnSearch(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
-            check.FailOnSearch(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
-            check.FailOnSearch(r'{\s+[^\s]', "Left brace { followed by whitespace"),
-            check.FailOnSearch(r'[^\s]\s+}', "Right brace } preceded by whitespace"),
-            check.FailOnSearch(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
-            check.FailOnSearch(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
-            check.FailOnSearch(r'\\,', "You should not use typographic corrections"),
-            check.FailOnSearch(r'\\thinspace', "You should not use typographic corrections"),
-            check.FailOnSearch(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
-            check.FailOnSearch(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
-            check.FailOnSearch(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
-            check.FailOnSearch(r'#(eq|fig|sec):label', "Default label used"),
+            check.FailIfFound(r'[ \t]$', "Trailing whitespace"),
+            check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
+            check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
+            check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
+            check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
+            check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
+            check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
+            check.FailIfFound(r'{\s+[^\s]', "Left brace { followed by whitespace"),
+            check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace"),
+            check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
+            check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
+            check.FailIfFound(r'\\,', "You should not use typographic corrections"),
+            check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
+            check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
+            check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
+            check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
+            check.FailIfFound(r'#(eq|fig|sec):label', "Default label used"),
             check.ConflictMarkers(),
             check.EqualsSpaces(),
             check.CdotSpaces(),
@@ -64,7 +65,7 @@ class StyleEnforcer():
         ]
 
         line_warnings = [
-            check.FailOnSearch(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
+            check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
             check.Parentheses(),
         ]
 

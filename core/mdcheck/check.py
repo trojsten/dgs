@@ -3,15 +3,6 @@ import codecs
 
 from mdcheck import exceptions
 
-re_double_space = re.compile('.*\w  +\w')
-
-re_dollars = re.compile('\$\$')
-re_only_dollars = re.compile('^ *\$\$$')
-re_dollars_ref_missing_space = re.compile('\$\${#eq:[a-z0-9-]+}')
-re_dollars_ref = re.compile('^ *\$\$ {#eq:[A-Za-z0-9-]+}$')
-re_aligned_begin = re.compile('^\$\$ ?\\\\begin\{aligned\}')
-re_aligned_end = re.compile('^\\\\end\{aligned\} ?\$\$')
-
 
 class LineChecker():
     def check(self, line):
@@ -19,7 +10,7 @@ class LineChecker():
             checker().check(line)
 
 
-class FailOnSearch():
+class FailIfFound():
     def __init__(self, regex, message, *, offset=0):
         self.regex = re.compile(regex)
         self.message = message
@@ -32,12 +23,12 @@ class FailOnSearch():
 
 class LineLength():
     def check(self, line):
-        if len(line) > 120 and line[0] != '@':
+        if len(line) > 120:
             raise exceptions.SingleLineError("Line too long", line, 119)
 
 
 class EqualsSpaces():
-    re_equal_spaces = re.compile(r'(?!\\(?:SI|num|si)\[[\w-]+| | &|(#eq:[a-z-]+ )?height)(=|\\approx|\\doteq)(?! |& |[\w-]+(,|\])|[0-9]+mm|$)')
+    re_equal_spaces = re.compile(r'(?!\\(?:SI|num|si)\[[\w-]+| |\{| &|(#eq:[a-z-]+ )?height)(=|\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll)(?! |\}|& |[\w-]+(,|\])|[0-9]+mm|$)')
 
     def check(self, line):
         if search := self.re_equal_spaces.search(line):
@@ -58,11 +49,10 @@ class PlusSpaces():
     re_plus_unary = re.compile(r'[(\[]\+[^ ]')
     re_plus_spaces = re.compile(r'[^ ]\+[^ ]')
 
-    def check(self, line):
-        if self.re_plus_in_quotes.search(line) or self.re_plus_in_curly.search(line) or self.re_plus_unary.search(line):
-            return
+    re_plus = re.compile('(?<! |"|\(|\[|\{)(\+)(?! |"|\)|\]|\})')
 
-        if search := self.re_plus_spaces.search(line):
+    def check(self, line):
+        if search := self.re_plus.search(line):
             raise exceptions.SingleLineError('Spaces missing around "+"', line, search.end() - 2)
 
 
@@ -160,9 +150,12 @@ class ConflictMarkers():
             raise exceptions.SingleLineError(f"Git conflict markers found!", line, search.start())
 
 
-def double_space(line):
-    if search := re_double_space.search(line):
-        raise SingleLineError('Double spaces', line, search.end())
+class DoubleSpace():
+    re_double_space = re.compile('.*\w  +\w')
+
+    def check(self, line):
+        if search := re_double_space.search(line):
+            raise SingleLineError('Double spaces', line, search.end())
 
 
 """
@@ -188,5 +181,5 @@ def encoding(filename):
             pass
         return True
     except UnicodeDecodeError:
-        raise exceptions.EncodingError('Not a UTF-8 file')
+        raise exceptions.EncodingError(f'{filename} is not a UTF-8 file')
 
