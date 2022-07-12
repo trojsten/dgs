@@ -56,9 +56,13 @@ class BaseBuilder():
         """ Prints build info (always) """
         print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_name())}")
 
+    def print_dir_info(self):
+        print(f"Directory info for root {self.launch_directory.name}")
+
     def build(self):
         self.print_debug_info()
         self.print_build_info()
+        self.print_dir_info()
 
         for template in self.templates:
             jinja.print_template(self.template_root, template, self.context.data, self.output_directory)

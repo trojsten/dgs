@@ -2,8 +2,9 @@
 \NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
 \NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
 \NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
-\DeclareMathOperator{\sdiff}{\delta\!}
-\DeclareMathOperator{\laplacian}{\Delta\!}
+\NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
+
+\DeclareMathOperator{\laplacian}{\mathop{}\!\Delta}
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
 \DeclareMathOperator{\Grad}{\del}
 \DeclareMathOperator{\Div}{\del\cdot}
@@ -27,7 +28,8 @@
 }
 
 % Inner derivative with any differential symbol
-\NewDocumentCommand{\Deriv}{O{} m m m}{%
+\makeatletter
+\NewDocumentCommand{\Derivative@}{O{} m m m}{%
     \ifblank{#1}{%
         \frac{#2#3}{#2#4}%
     }{%
@@ -35,7 +37,7 @@
     }%
 }
 
-\NewDocumentCommand{\DerivEmpty}{O{} m m}{%
+\NewDocumentCommand{\DerivativeEmpty@}{O{} m m}{%
     \ifblank{#1}{%
         \frac{#2}{#2#3}
     }{%
@@ -43,7 +45,7 @@
     }%
 }
 
-\NewDocumentCommand{\DerivParen}{O{} m m m}{%
+\NewDocumentCommand{\DerivativeParentheses@}{O{} m m m}{%
     \ifblank{#1}{%
         \frac{#2}{#2#3}\left(#4\right)%
     }{%
@@ -51,20 +53,35 @@
     }%
 }
 
-% \Derivative[order]{what}{by-what}
-\NewDocumentCommand{\Derivative}{O{} m m}{\Deriv[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\PDerivative}{O{} m m}{\Deriv[#1]{\pdiff}{#2}{#3}}
-\NewDocumentCommand{\FDerivative}{O{} m m}{\Deriv[#1]{\fdiff}{#2}{#3}}
+% \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\Derivative}{O{} m m}{\Derivative@[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\PDerivative}{O{} m m}{\Derivative@[#1]{\pdiff}{#2}{#3}}
+\NewDocumentCommand{\FDerivative}{O{} m m}{\Derivative@[#1]{\fdiff}{#2}{#3}}
+\NewDocumentCommand{\UDerivative}{O{} m m}{\Derivative@[#1]{\udiff}{#2}{#3}}
+\newcommand*\Drv{\Derivative}
+\newcommand*\PDrv{\PDerivative}
+\newcommand*\FDrv{\FDerivative}
+\newcommand*\UDrv{\UDerivative}
 
-% \DerivativeEmpty[order]{by-what}
-\NewDocumentCommand{\DerivativeE}{O{} m}{\DerivEmpty[#1]{\diff}{#2}}
-\NewDocumentCommand{\PDerivativeE}{O{} m}{\DerivEmpty[#1]{\pdiff}{#2}}
-\NewDocumentCommand{\FDerivativeE}{O{} m}{\DerivEmpty[#1]{\fdiff}{#2}}
+% \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\diff}{#2}}
+\NewDocumentCommand{\PDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\pdiff}{#2}}
+\NewDocumentCommand{\FDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\fdiff}{#2}}
+\NewDocumentCommand{\UDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\udiff}{#2}}
+\newcommand*\DrvE{\DerivativeE}
+\newcommand*\PDrvE{\PDerivativeE}
+\newcommand*\FDrvE{\FDerivativeE}
+\newcommand*\UDrvE{\UDerivativeE}
 
-% \DerivativeParentheses{what}{by-what}
-\NewDocumentCommand{\DerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\PDerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\FDerivativeP}{O{} m m}{\DerivParen[#1]{\diff}{#2}{#3}}
+% \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\PDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\pdiff}{#2}{#3}}
+\NewDocumentCommand{\FDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\fdiff}{#2}{#3}}
+\NewDocumentCommand{\UDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\udiff}{#2}{#3}}
+\newcommand*\DrvP{\DerivativeP}
+\newcommand*\PDrvP{\PDerivativeP}
+\newcommand*\FDrvP{\FDerivativeP}
+\newcommand*\UDrvP{\UDerivativeP}
 
 
 % \DerivativeEvaluate[order]{what}{by-what}{where}
@@ -79,19 +96,7 @@
     \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
 
-\NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
-\NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
-\NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
-\NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
-\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
 
-\NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
-\NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}
-\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
-\NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
-\NewDocumentCommand{\Mean}{m}{\overline{#1}}
-
-\makeatletter
 % Generic 1D integral
 \NewDocumentCommand{\Int@}{O{} O{} m m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
 % Integral from #1 to #2 of #3 with respect to #4
@@ -140,6 +145,18 @@
 \NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
 \NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
 \makeatother
+
+\NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
+\NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
+\NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
+\NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
+\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
+
+\NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
+\NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
+\NewDocumentCommand{\Mean}{m}{\overline{#1}}
 
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}

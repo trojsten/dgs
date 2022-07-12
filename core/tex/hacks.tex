@@ -1,8 +1,9 @@
 \makeatletter
 
+\providecommand{\tightlist}{}
 % Render percent sign with nice font, not ugly Computer modern
-    \mathcode`\%="7025
-    \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
+\mathcode`\%="7025
+\DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
 
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
