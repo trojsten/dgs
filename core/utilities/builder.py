@@ -44,26 +44,28 @@ class BaseBuilder():
         raise NotImplementedError("Child classes of BaseBuilder must implement `path`")
 
     def print_debug_info(self):
-        """ Prints debug info (only when args.debug is True) """
-        if self.args.debug:
-            print(c.act("Content templates:"))
-            pprint.pprint(self.templates)
+        """ Prints debug info """
+        print(c.act("Content templates:"))
+        pprint.pprint(self.templates)
 
-            print(c.act("Context:"))
-            self.context.print()
+        print(c.act("Context:"))
+        self.context.print()
 
     def print_build_info(self):
-        """ Prints build info (always) """
+        """ Prints build info """
         print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
 
     def print_dir_info(self):
+        """ Prints directory info """
         print(f"{c.act('Directory structure:')}")
         Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def build(self):
         self.print_build_info()
-        self.print_debug_info()
-        self.print_dir_info()
+
+        if self.args.debug:
+            self.print_debug_info()
+            self.print_dir_info()
 
         for template in self.templates:
             jinja.print_template(self.template_root, template, self.context.data, self.output_directory)
