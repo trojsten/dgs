@@ -20,10 +20,10 @@ class BuilderSeminar(builder.BaseBuilder):
 
     def path(self):
         return (
-            empty_if_none(self.args.competition),
-            empty_if_none(self.args.volume),
-            empty_if_none(self.args.semester),
-            empty_if_none(self.args.round),
+            str(builder.empty_if_none(self.args.competition)),
+            str(builder.empty_if_none(self.args.volume)),
+            str(builder.empty_if_none(self.args.semester)),
+            str(builder.empty_if_none(self.args.round)),
         )
 
 

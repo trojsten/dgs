@@ -1,5 +1,6 @@
 import builder
 import context
+from core.utilities import crawler
 
 
 class BuilderLecture(builder.BuilderSingle):

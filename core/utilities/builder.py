@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 
 from core.utilities import colour as c, argparser, jinja
+from core.utilities.crawler import Crawler
 
 
 def empty_if_none(string):
@@ -33,6 +34,9 @@ class BaseBuilder():
     def full_name(self):
         return '/'.join(map(str, self.id()))
 
+    def full_path(self):
+        return Path(self.launch_directory, *self.path())
+
     def id(self):
         raise NotImplementedError("Child classes of BaseBuilder must implement `id`")
 
@@ -42,10 +46,6 @@ class BaseBuilder():
     def print_debug_info(self):
         """ Prints debug info (only when args.debug is True) """
         if self.args.debug:
-            print("Launched {target} builder in {dir}".format(
-                target=c.name(self.target),
-                dir=c.path(self.args.launch),
-            ))
             print(c.act("Content templates:"))
             pprint.pprint(self.templates)
 
@@ -54,14 +54,15 @@ class BaseBuilder():
 
     def print_build_info(self):
         """ Prints build info (always) """
-        print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_name())}")
+        print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
 
     def print_dir_info(self):
-        print(f"Directory info for root {self.launch_directory.name}")
+        print(f"{c.act('Directory structure:')}")
+        Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def build(self):
-        self.print_debug_info()
         self.print_build_info()
+        self.print_debug_info()
         self.print_dir_info()
 
         for template in self.templates:

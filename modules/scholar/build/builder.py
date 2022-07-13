@@ -33,4 +33,4 @@ class BuilderSingle(builder.BaseBuilder):
         return (self.args.course, self.args.lecture)
 
     def path(self):
-        return (self.args.course, self.args.lecture)
+        return self.id()

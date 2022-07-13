@@ -53,13 +53,13 @@ class Context():
         return self.add({'id': id})
 
 
-def is_node(path):
-    return (path.is_dir() and path.name[0] != '.')
-
-
-def list_child_nodes(node):
-    return sorted([dir for dir in p.iterdir() if is_node(dir)])
-
+#def is_node(path):
+#    return (path.is_dir() and path.name[0] != '.')
+#
+#
+#def list_child_nodes(node):
+#    return sorted([dir for dir in p.iterdir() if is_node(dir)])
+#
 
 def split_mod(what, step, first=0):
     result = [[] for i in range(0, step)]
@@ -70,6 +70,17 @@ def split_mod(what, step, first=0):
 
 def split_div(what, step):
     return [] if what == [] else [what[0:step]] + split_div(what[step:], step)
+
+
+def split_callback(what, callback, first=0):
+    """ Splits what by callback
+        what: [a]
+        callback: a -> int
+    """
+    result = {}
+    for i, item in enumerate(what):
+        result[callback(i)].append(item)
+    return result
 
 
 def add_numbers(what, start=0):

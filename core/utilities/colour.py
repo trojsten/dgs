@@ -55,3 +55,19 @@ def debug(what):
 
 def none(what):
     return colour(what, Fore.WHITE)
+
+
+def node(what):
+    return colour(what, Fore.LIGHTBLUE_EX)
+
+
+def notnode(what):
+    return colour(what, Fore.LIGHTRED_EX)
+
+
+def leaf(what):
+    return colour(what, Fore.WHITE)
+
+
+def meta(what):
+    return colour(what, Fore.LIGHTYELLOW_EX)
