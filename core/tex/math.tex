@@ -1,15 +1,22 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}\kern -0.05 em}
-\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial\kern -0.05 em}
+\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
+\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
 \NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
 \NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
 
-\DeclareMathOperator{\laplacian}{\mathop{}\!\Delta}
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
-\DeclareMathOperator{\Grad}{\del}
-\DeclareMathOperator{\Div}{\del\cdot}
-\DeclareMathOperator{\Rot}{\del\times}
+\DeclareMathOperator{\laplacian}{\mathop{}\!\Delta}
 
+\DeclareMathOperator{\Grad}{\del}
+\DeclareMathOperator{\GradT}{grad}
+\NewDocumentCommand{\GradV}{m}{\Grad{\vec{#1}}}
+
+\DeclareMathOperator{\Div}{\del\cdot}
+\DeclareMathOperator{\DivT}{div}
+\NewDocumentCommand{\DivV}{m}{\Div{\vec{#1}}}
+
+\DeclareMathOperator{\Rot}{\del\times}
+\DeclareMathOperator{\RotT}{rot}
 \NewDocumentCommand{\RotV}{m}{\Rot{\vec{#1}}}
 
 \DeclareMathOperator{\atantwo}{atan2}
@@ -41,9 +48,9 @@
 
 \NewDocumentCommand{\DerivativeEmpty@}{O{} m m}{%
     \ifblank{#1}{%
-        \frac{#2}{#2#3}
+        \frac{#2}{#2#3}%
     }{%
-        \frac{#2^{#1}}{#2#3^{#1}}
+        \frac{#2^{#1}}{#2#3^{#1}}%
     }%
 }
 
@@ -84,7 +91,6 @@
 \newcommand*\PDrvP{\PDerivativeP}
 \newcommand*\FDrvP{\FDerivativeP}
 \newcommand*\UDrvP{\UDerivativeP}
-
 
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0

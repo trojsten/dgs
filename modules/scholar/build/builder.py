@@ -26,7 +26,7 @@ class BuilderSingle(builder.BaseBuilder):
 
     def create_argument_parser(self):
         super().create_argument_parser()
-        self.parser.add_argument('course', type=str, choices=['FKS'])
+        self.parser.add_argument('course', type=str, choices=['FKS', 'dgs'])
         self.parser.add_argument('lecture', type=str)
 
     def id(self):
