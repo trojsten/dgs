@@ -50,6 +50,8 @@
 \RequirePackage{nicefrac}
 \RequirePackage{pifont}
 \RequirePackage{chngcntr}
+\RequirePackage{mathtools}
+\RequirePackage{ulem}
 \RequirePackage[weather]{ifsym}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
@@ -61,6 +63,7 @@
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
 
+\AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
 \newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}

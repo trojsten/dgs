@@ -2,8 +2,7 @@ import pprint
 import argparse
 from pathlib import Path
 
-from core.utilities import colour as c, argparser, jinja
-from core.utilities.crawler import Crawler
+from core.utilities import colour as c, argparser, jinja, crawler
 
 
 def empty_if_none(string):
@@ -11,6 +10,8 @@ def empty_if_none(string):
 
 
 class BaseBuilder():
+    module = None
+
     def __init__(self):
         self.create_argument_parser()
         self.args = self.parser.parse_args()
@@ -58,7 +59,7 @@ class BaseBuilder():
     def print_dir_info(self):
         """ Prints directory info """
         print(f"{c.act('Directory structure:')}")
-        Crawler(Path(self.launch_directory, *self.path())).print_path()
+        crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def build(self):
         self.print_build_info()
@@ -70,4 +71,5 @@ class BaseBuilder():
         for template in self.templates:
             jinja.print_template(self.template_root, template, self.context.data, self.output_directory)
 
-        print(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")
+        if self.args.debug:
+            print(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")

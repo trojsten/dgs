@@ -2,8 +2,6 @@ import yaml
 import os
 import pprint
 
-from collections import OrderedDict
-
 from core.utilities import dicts, colour as c
 
 

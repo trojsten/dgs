@@ -7,17 +7,20 @@
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
 \DeclareMathOperator{\laplacian}{\mathop{}\!\Delta}
 
-\DeclareMathOperator{\Grad}{\del}
+\DeclareMathOperator{\Grad}{\del\!}
 \DeclareMathOperator{\GradT}{grad}
 \NewDocumentCommand{\GradV}{m}{\Grad{\vec{#1}}}
+\NewDocumentCommand{\GradTV}{m}{\GradT{\vec{#1}}}
 
 \DeclareMathOperator{\Div}{\del\cdot}
 \DeclareMathOperator{\DivT}{div}
 \NewDocumentCommand{\DivV}{m}{\Div{\vec{#1}}}
+\NewDocumentCommand{\DivTV}{m}{\DivT{\vec{#1}}}
 
 \DeclareMathOperator{\Rot}{\del\times}
 \DeclareMathOperator{\RotT}{rot}
 \NewDocumentCommand{\RotV}{m}{\Rot{\vec{#1}}}
+\NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
 
 \DeclareMathOperator{\atantwo}{atan2}
 
@@ -73,24 +76,24 @@
 \newcommand*\UDrv{\UDerivative}
 
 % \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\diff}{#2}}
-\NewDocumentCommand{\PDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\pdiff}{#2}}
-\NewDocumentCommand{\FDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\fdiff}{#2}}
-\NewDocumentCommand{\UDerivativeE}{O{} m}{\DerivativeEmpty@[#1]{\udiff}{#2}}
-\newcommand*\DrvE{\DerivativeE}
-\newcommand*\PDrvE{\PDerivativeE}
-\newcommand*\FDrvE{\FDerivativeE}
-\newcommand*\UDrvE{\UDerivativeE}
+\NewDocumentCommand{\DerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\diff}{#2}}
+\NewDocumentCommand{\PDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\pdiff}{#2}}
+\NewDocumentCommand{\FDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\fdiff}{#2}}
+\NewDocumentCommand{\UDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\udiff}{#2}}
+\newcommand*\DrvE{\DerivativeEmpty}
+\newcommand*\PDrvE{\PDerivativeEmpty}
+\newcommand*\FDrvE{\FDerivativeEmpty}
+\newcommand*\UDrvE{\UDerivativeEmpty}
 
 % \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\PDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\pdiff}{#2}{#3}}
-\NewDocumentCommand{\FDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\fdiff}{#2}{#3}}
-\NewDocumentCommand{\UDerivativeP}{O{} m m}{\DerivativeParentheses@[#1]{\udiff}{#2}{#3}}
-\newcommand*\DrvP{\DerivativeP}
-\newcommand*\PDrvP{\PDerivativeP}
-\newcommand*\FDrvP{\FDerivativeP}
-\newcommand*\UDrvP{\UDerivativeP}
+\NewDocumentCommand{\DerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\diff}{#2}{#3}}
+\NewDocumentCommand{\PDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\pdiff}{#2}{#3}}
+\NewDocumentCommand{\FDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\fdiff}{#2}{#3}}
+\NewDocumentCommand{\UDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\udiff}{#2}{#3}}
+\newcommand*\DrvP{\DerivativeParen}
+\newcommand*\PDrvP{\PDerivativeParen}
+\newcommand*\FDrvP{\FDerivativeParen}
+\newcommand*\UDrvP{\UDerivativeParen}
 
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
@@ -111,8 +114,10 @@
 \NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
 \NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4 (
 \NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic loop integral
 \NewDocumentCommand{\OInt@}{O{} m m O{}}{\oint\limits_{#1}#2#4\diff#3}
@@ -152,9 +157,9 @@
 % Volume integral over single differential
 \NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
 \NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
-\makeatother
 
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
+\NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
 \NewDocumentCommand{\BoldVector}{m}{\mathbf{#1}}
 \NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
 \NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
@@ -187,7 +192,9 @@
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
 
-\NewDocumentCommand{\Abs}{m}{\left|#1\right|}
+\DeclarePairedDelimiter\abs@{\lvert}{\rvert}
+\NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
+
 \NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
 \NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
 
@@ -243,3 +250,4 @@
 % Patch \left and \right with package mleftright
 \let\left\mleft
 \let\right\mright
+\makeatother
