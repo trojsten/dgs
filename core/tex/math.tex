@@ -5,7 +5,9 @@
 \NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
 
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
-\DeclareMathOperator{\laplacian}{\mathop{}\!\Delta}
+\DeclareMathOperator{\laplacian}{\Delta}
+
+\NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
 
 \DeclareMathOperator{\Grad}{\del\!}
 \DeclareMathOperator{\GradT}{grad}
@@ -41,55 +43,74 @@
 
 % Inner derivative with any differential symbol
 \makeatletter
-\NewDocumentCommand{\Derivative@}{O{} m m m}{%
-    \ifblank{#1}{%
-        \frac{#2#3}{#2#4}%
+\ExplSyntaxOn
+\NewDocumentCommand{\Derivative@Frac}{m}{
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+}
+
+\NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
+    \Derivative@Frac{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3#4}{#3#5}%
     }{%
-        \frac{#2^{#1}#3}{#2{#4}^{#1}}%
+        \frac@{#3^{#2}#4}{#3{#5}^{#2}}%
     }%
 }
 
-\NewDocumentCommand{\DerivativeEmpty@}{O{} m m}{%
-    \ifblank{#1}{%
-        \frac{#2}{#2#3}%
+\NewDocumentCommand{\DerivativeParentheses@}{d<> o D<>{\diff} m m}{%
+    \Derivative@Frac{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#5}\left(#4\right)%
     }{%
-        \frac{#2^{#1}}{#2#3^{#1}}%
+        \frac@{#3^{#2}}{#3#5^{#2}}\left(#4\right)%
     }%
 }
 
-\NewDocumentCommand{\DerivativeParentheses@}{O{} m m m}{%
-    \ifblank{#1}{%
-        \frac{#2}{#2#3}\left(#4\right)%
+\NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#4}%
     }{%
-        \frac{#2^{#1}}{#2#3^{#1}}\left(#4\right)%
+        \frac@{#3^{#2}}{#3#4^{#2}}%
     }%
 }
+\ExplSyntaxOff
 
 % \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\Derivative}{O{} m m}{\Derivative@[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\PDerivative}{O{} m m}{\Derivative@[#1]{\pdiff}{#2}{#3}}
-\NewDocumentCommand{\FDerivative}{O{} m m}{\Derivative@[#1]{\fdiff}{#2}{#3}}
-\NewDocumentCommand{\UDerivative}{O{} m m}{\Derivative@[#1]{\udiff}{#2}{#3}}
+\NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\udiff>{#3}{#4}}
 \newcommand*\Drv{\Derivative}
 \newcommand*\PDrv{\PDerivative}
 \newcommand*\FDrv{\FDerivative}
 \newcommand*\UDrv{\UDerivative}
 
 % \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\diff}{#2}}
-\NewDocumentCommand{\PDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\pdiff}{#2}}
-\NewDocumentCommand{\FDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\fdiff}{#2}}
-\NewDocumentCommand{\UDerivativeEmpty}{O{} m}{\DerivativeEmpty@[#1]{\udiff}{#2}}
+\NewDocumentCommand{\DerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\diff>{#3}}
+\NewDocumentCommand{\PDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\pdiff>{#3}}
+\NewDocumentCommand{\FDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\fdiff>{#3}}
+\NewDocumentCommand{\UDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\udiff>{#3}}
 \newcommand*\DrvE{\DerivativeEmpty}
 \newcommand*\PDrvE{\PDerivativeEmpty}
 \newcommand*\FDrvE{\FDerivativeEmpty}
 \newcommand*\UDrvE{\UDerivativeEmpty}
 
 % \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\diff}{#2}{#3}}
-\NewDocumentCommand{\PDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\pdiff}{#2}{#3}}
-\NewDocumentCommand{\FDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\fdiff}{#2}{#3}}
-\NewDocumentCommand{\UDerivativeParen}{O{} m m}{\DerivativeParentheses@[#1]{\udiff}{#2}{#3}}
+\NewDocumentCommand{\DerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\udiff>{#3}{#4}}
 \newcommand*\DrvP{\DerivativeParen}
 \newcommand*\PDrvP{\PDerivativeParen}
 \newcommand*\FDrvP{\FDerivativeParen}
@@ -120,14 +141,14 @@
 \NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic loop integral
-\NewDocumentCommand{\OInt@}{O{} m m O{}}{\oint\limits_{#1}#2#4\diff#3}
+\NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff#3}
 % Loop integral over #1
-\NewDocumentCommand{\OInt}{O{} m m}{\OInt@[#1]{#2}{#3}[]}
+\NewDocumentCommand{\OInt}{O{} m m}{\OInt@[#1]{#2}{#3}<>}
 % Loop integral over #1 of dot product of #2 and d#3 (for instance magnetic B dl)
-\NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}[\cdot]}
+\NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}<\cdot>}
 \NewDocumentCommand{\OIntDV}{O{} m m}{\OIntD[#1]{\vec{#2}}{\vec{#3}}}
 % Loop integral over #1 of cross product of #2 and d#3 (for instance magnetic B dl)
-\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}[\cross]}
+\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}<\cross>}
 \NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
 
 % Generic 2D integral
@@ -228,7 +249,12 @@
 \NewDocumentCommand{\mat}{m}{\symbf{#1}}
 \NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
 \NewDocumentCommand{\Inv}{m}{#1^{-1}}
+
+% Vertical-style determinant
 \NewDocumentCommand{\Det}{m}{\left|#1\right|}
+% Text determinant
+\DeclareMathOperator{\DetT}{det}
+% Unit matrix
 \NewDocumentCommand{\Eye}{}{\mathbb{I}}
 
 % Intervals
