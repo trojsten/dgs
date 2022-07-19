@@ -157,21 +157,21 @@
 \NewDocumentCommand{\IIntI@}{O{} O{} m m O{}}{\iint\limits_{#1}^{#2}#3#5\diff#4}
 \NewDocumentCommand{\IIntI}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
-\NewDocumentCommand{\IIntID}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
-\NewDocumentCommand{\IIntIDV}{O{} O{} m m}{\IIntID[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\IIntDV}{O{} O{} m m}{\IIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Surface integral of cross product over single differential
-\NewDocumentCommand{\IIntIC}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\times]}
-\NewDocumentCommand{\IIntICV}{O{} O{} m m}{\IIntIC[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\IIntC}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\IIntCV}{O{} O{} m m}{\IIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Surface integral over single differential
 \NewDocumentCommand{\OIIntI@}{O{} O{} m m O{}}{\oiint\limits_{#1}^{#2}#3#5\diff#4}
 \NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
-\NewDocumentCommand{\OIIntID}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
-\NewDocumentCommand{\OIIntIDV}{O{} O{} m m}{\OIIntID[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\OIIntD}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\OIIntDV}{O{} O{} m m}{\OIIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Surface integral of cross product over single differential
-\NewDocumentCommand{\OIIntIC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
-\NewDocumentCommand{\OIIntICV}{O{} O{} m m}{\OIIntIC[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\OIIntC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\OIIntCV}{O{} O{} m m}{\OIIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic 3D integral
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
@@ -186,8 +186,8 @@
 \NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
 \NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
 
-\NewDocumentCommand{\EvalAt}{m m}{\left.#1\right|_{#2}}
-\NewDocumentCommand{\EvalFromTo}{m m m}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
 \NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
 \NewDocumentCommand{\ExpectedE}{m}{\mathbb{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
