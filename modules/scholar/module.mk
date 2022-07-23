@@ -97,6 +97,8 @@ output/scholar/%/homework: \
 
 output/scholar/%/lecture.pdf: \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
+	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
 	input/scholar/$$*/lecture.tex \
 	input/scholar/$$*/pdf-prerequisites
 	$(call doubletex,scholar)

@@ -30,7 +30,7 @@ class Context():
         return self
 
     def load_meta(self, *args):
-        return self.load_YAML(self.node_path(*args), 'meta.yaml')
+        return self.load_YAML(self.node_path(*args) / 'meta.yaml')
 
     def node_path(self, *args):
         raise NotImplementedError("Child classes must implement node_path method")

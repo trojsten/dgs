@@ -8,9 +8,8 @@ class Crawler():
         self.step = 4
         self.root = root
 
-    @staticmethod
-    def is_node(path):
-        return (path.is_dir() and path.name != '.')
+    def is_node(self, path):
+        return (path.is_dir() and path.name != '.' and Path(path, 'meta.yaml').is_file())
 
     @staticmethod
     def is_leaf(path):
@@ -33,3 +32,5 @@ class Crawler():
             for child in sorted(path.iterdir()):
                 self.print_path(child, offset + 1)
 
+    def children(self):
+        return [child.name for child in sorted(self.root.iterdir()) if self.is_node(child)]

@@ -5,9 +5,11 @@ sys.path.append('.')
 from core.utilities import builder
 
 
-class BuilderScholar(builder.BaseBuilder):
+class BuilderScholarBase(builder.BaseBuilder):
     module = 'scholar'
 
+
+class BuilderScholar(BuilderScholarBase):
     def create_argument_parser(self):
         super().create_argument_parser()
         self.parser.add_argument('course', type=str)
@@ -21,16 +23,6 @@ class BuilderScholar(builder.BaseBuilder):
         return (self.args.course, f'{self.args.year:04d}', self.subdir, f'{self.args.issue:02d}')
 
 
-class BuilderSingle(builder.BaseBuilder):
-    module = 'scholar'
-
-    def create_argument_parser(self):
-        super().create_argument_parser()
-        self.parser.add_argument('course', type=str, choices=['FKS', 'dgs'])
-        self.parser.add_argument('lecture', type=str)
-
-    def id(self):
-        return (self.args.course, self.args.lecture)
-
+class BuilderCourseBase(BuilderScholarBase):
     def path(self):
         return self.id()

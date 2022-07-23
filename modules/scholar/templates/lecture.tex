@@ -35,5 +35,17 @@
     \pagestyle{scholar}
     \section{(* lecture.title *)}
     \input{\activeDirectory/content.tex}
-    (@ block content @)(@ endblock content @)
+    (@ block content @)
+        (@ for part in parts @)
+            \subsection{\texorpdfstring{(* part.title *)}{(* part.pdftitle|default(part.title) *)}}
+                \input{\activeDirectory/(* part.id *)/text.tex}
+                (@ if part.problems @)
+                    \subsubsection{Úlohy}
+                    (@ for problem in part.problems @)
+                        \paragraph{(* problem.title *)}
+                        \input{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
+                    (@ endfor @)
+                (@ endif @)
+        (@ endfor @)
+    (@ endblock content @)
 \end{document}

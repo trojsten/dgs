@@ -5,23 +5,17 @@ from pathlib import Path
 
 sys.path.append('.')
 
-from core.utilities import context
+from core.utilities import context, crawler
 
 
 class ContextScholar(context.Context):
-    def node_path(self, root, course=None, year=None, target_type=None, issue=None, *deeper_levels):
-        return os.path.join(
-            root,
-            '' if course is None else course,
-            '' if year is None else f'{year:04d}',
-            '' if target_type is None else target_type,
-            '' if issue is None else f'{issue:02d}',
-            *deeper_levels
-        )
+    @staticmethod
+    def node_path(root, course='', lecture='', year='', target_type='', issue='', *deeper):
+        return Path(root, course, lecture, year, target_type, issue, *deeper)
 
     def add_subdirs(self, subcontext_class, subcontext_key, *subcontext_args):
-        subdirs = sorted([subdir.name for subdir in Path(self.node_path(*subcontext_args)).iterdir() if subdir.is_dir()])
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, subdir).data for subdir in subdirs]})
+        cr = crawler.Crawler(self.node_path(*subcontext_args))
+        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
 
 
 class ContextModule(ContextScholar):
@@ -121,12 +115,13 @@ class ContextHandout(ContextIssueBase):
 
 
 class ContextScholarSingle(context.Context):
-    def node_path(self, root, course=None, lecture=None):
-        return os.path.join(
-            root,
-            '' if course is None else course,
-            '' if lecture is None else lecture,
-        )
+    @staticmethod
+    def node_path(root, course='', lecture='', problem=''):
+        return Path(root, course, lecture, problem)
+
+    def add_subdirs(self, subcontext_class, subcontext_key, *subcontext_args):
+        cr = crawler.Crawler(self.node_path(*subcontext_args))
+        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
 
 
 class ContextScholarLecture(ContextScholarSingle):
@@ -135,6 +130,20 @@ class ContextScholarLecture(ContextScholarSingle):
         self.absorb('module', ContextSingleModule('scholar'))
         self.absorb('course', ContextSingleCourse(root, course))
         self.absorb('lecture', ContextSingleLecture(root, course, lecture))
+        self.crawler = crawler.Crawler(Path(root, course, lecture))
+
+        if 'parts' in self.data:
+            self.add({'parts': [ContextScholarPart(root, course, lecture, part).data for part in self.data['parts']]})
+        else:
+            self.add_subdirs(ContextScholarPart, 'parts', root, course, lecture)
+
+
+class ContextScholarPart(ContextScholarSingle):
+    def __init__(self, root, course, lecture, part):
+        super().__init__()
+        self.load_meta(root, course, lecture, part) \
+            .add_id(part)
+        self.add_subdirs(ContextDir, 'problems', root, course, lecture, part)
 
 
 class ContextSingleModule(ContextScholarSingle):
@@ -153,3 +162,16 @@ class ContextSingleLecture(ContextScholarSingle):
     def __init__(self, root, course, lecture):
         super().__init__()
         self.load_meta(root, course, lecture).add_id(lecture)
+
+
+class ContextDir(context.Context):
+    def __init__(self, root, *deeper):
+        self.load_meta(root, *deeper) \
+            .add_id(deeper[-1] if deeper else root)
+
+        crawl = crawler.Crawler(Path(root, *deeper))
+        self.add({'children': ContextDir(root, *deeper, child).data for child in crawl.children()})
+
+    @staticmethod
+    def node_path(*args):
+        return Path(*args)

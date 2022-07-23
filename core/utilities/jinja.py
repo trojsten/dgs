@@ -88,5 +88,6 @@ def print_template(root, template, context, output_directory=None, new_name=None
         print(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
         sys.exit(41)
     except jinja2.exceptions.UndefinedError as e:
-        print(f"Missing required variable from metafile: {c.err(e)}")
+        print(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
+        raise e
         sys.exit(43)
