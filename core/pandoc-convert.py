@@ -7,12 +7,9 @@ import re
 import subprocess
 import sys
 import tempfile
+import frontmatter
 
 from utilities import colour as c
-
-
-def compile_regexes(regexes):
-    return [(re.compile(regex), repl) for (regex, repl) in regexes]
 
 
 class Convertor():
@@ -60,18 +57,23 @@ class Convertor():
         },
     }
 
-    postprocessing_latex = [
-        (r"``", r"“"),
-        (r"''", r'”'),
-        (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
-        (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
-        (r"^\\caption{}(\\label{.*})?\n", ""),
-    ]
+    postprocessing = {
+        'latex': [
+            (r"``", r"“"),
+            (r"''", r'”'),
+            (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
+            (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
+            (r"^\\caption{}(\\label{.*})?\n", ""),
+        ],
+        'html': [
+            (r'<img src="(.*)" style="height:(.*)" alt="(.*)">', r'<img src="\g<1>" style="max-width: 100%; max-height: calc(1.5 * \g<2>); margin: auto; display: block;" alt="\g<3>">'),
+            (r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>', r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>'),
+        ]
+    }
 
-    postprocessing_html = [
-        (r'<img src="(.*)" style="height:(.*)" alt="(.*)">', r'<img src="\g<1>" style="max-width: 100%; max-height: calc(1.5 * \g<2>); margin: auto; display: block;" alt="\g<3>">'),
-        (r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>', r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>'),
-    ]
+    @staticmethod
+    def compile_regexes(regexes):
+        return [(re.compile(regex), repl) for (regex, repl) in regexes]
 
     def __init__(self):
         self.args = self.parse_arguments()
@@ -91,36 +93,36 @@ class Convertor():
         self.locale = dotmap.DotMap(self.languages[self.args.locale], _dynamic=False)
         (self.quote_open, self.quote_close) = self.locale.quotes
 
-        if self.args.format == 'latex':
-            self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_latex]
-        if self.args.format == 'html':
-            self.postprocessing = [(re.compile(regex), repl) for regex, repl in self.postprocessing_html]
-
-        self.quotes_regexes = compile_regexes([
+        quotes_regexes = [
             (r'"(_)', self.quote_close + r'\g<1>'),
             (r'"(\b)', self.quote_open + r'\g<1>'),
             (r'(\b)"', r'\g<1>' + self.quote_close),
             (r'(\S)"', r'\g<1>' + self.quote_close),
             (r'"(\S)', self.quote_open + r'\g<1>'),
-        ])
-
-        self.math_regexes = compile_regexes([
+        ]
+        math_regexes = [
             (r'^\$\${$', r'$$\n\\begin{aligned}'),
             (r'^}\$\$', r'\\end{aligned}\n$$'),
-        ])
+        ]
+
+        self.postprocessing = self.compile_regexes(self.postprocessing[self.args.format])
+        self.quotes_regexes = self.compile_regexes(quotes_regexes)
+        self.math_regexes = self.compile_regexes(math_regexes)
 
     def run(self):
         try:
+            fm, tm = frontmatter.parse(self.args.infile.read())
+            self.args.infile.seek(0)
             self.file = self.file_operation(self.preprocess)(self.args.infile)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
             self.write()
         except IOError as e:
             print(f"{c.path(__file__)}: Could not create a temporary file")
-            fail()
+            self.fail()
         except AssertionError as e:
             print(f"{c.path(__file__)}: Calling pandoc failed")
-            fail()
+            self.fail()
         except Exception as e:
             print(f"Unexpected exception occurred:")
             raise e

@@ -1,3 +1,4 @@
+import sys
 import yaml
 import os
 import pprint
@@ -24,7 +25,7 @@ class Context():
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
             print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
-            raise e
+            sys.exit(43)
 
         self.data = contents
         return self

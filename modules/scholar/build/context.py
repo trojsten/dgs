@@ -127,6 +127,7 @@ class ContextScholarSingle(context.Context):
 class ContextScholarLecture(ContextScholarSingle):
     def __init__(self, root, course, lecture):
         super().__init__()
+        self.load_meta(root, course, lecture)
         self.absorb('module', ContextSingleModule('scholar'))
         self.absorb('course', ContextSingleCourse(root, course))
         self.absorb('lecture', ContextSingleLecture(root, course, lecture))

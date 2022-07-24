@@ -33,9 +33,13 @@
 
 \begin{document}
     \pagestyle{scholar}
-    \section{(* lecture.title *)}
-    \input{\activeDirectory/content.tex}
+    \section{(* lecture.title *)}%
+    \textit{%
+        \tryInput{\activeDirectory/abstract.tex}
+    }
+
     (@ block content @)
+        \tryInput{\activeDirectory/content.tex}
         (@ for part in parts @)
             \subsection{\texorpdfstring{(* part.title *)}{(* part.pdftitle|default(part.title) *)}}
                 \input{\activeDirectory/(* part.id *)/text.tex}
