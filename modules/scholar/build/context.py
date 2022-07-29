@@ -116,12 +116,8 @@ class ContextHandout(ContextIssueBase):
 
 class ContextScholarSingle(context.Context):
     @staticmethod
-    def node_path(root, course='', lecture='', problem=''):
-        return Path(root, course, lecture, problem)
-
-    def add_subdirs(self, subcontext_class, subcontext_key, *subcontext_args):
-        cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
+    def node_path(root, course='', lecture='', part='', problem=''):
+        return Path(root, course, lecture, part, problem)
 
 
 class ContextScholarLecture(ContextScholarSingle):
@@ -144,7 +140,16 @@ class ContextScholarPart(ContextScholarSingle):
         super().__init__()
         self.load_meta(root, course, lecture, part) \
             .add_id(part)
-        self.add_subdirs(ContextDir, 'problems', root, course, lecture, part)
+        self.add_subdirs(ContextScholarProblem, 'problems', root, course, lecture, part)
+
+
+class ContextScholarProblem(ContextScholarSingle):
+    def __init__(self, root, course, lecture, part, problem):
+        super().__init__()
+        self.load_meta(root, course, lecture, part, problem) \
+            .add_id(problem)
+        self.add({'has_problem': Path(root, course, lecture, part, problem, 'problem.md').is_file()})
+        self.add({'has_solution': Path(root, course, lecture, part, problem, 'solution.md').is_file()})
 
 
 class ContextSingleModule(ContextScholarSingle):
@@ -163,6 +168,7 @@ class ContextSingleLecture(ContextScholarSingle):
     def __init__(self, root, course, lecture):
         super().__init__()
         self.load_meta(root, course, lecture).add_id(lecture)
+        self.add({'has_abstract': Path(root, course, lecture, 'abstract.md').is_file()})
 
 
 class ContextDir(context.Context):

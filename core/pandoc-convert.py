@@ -101,8 +101,8 @@ class Convertor():
             (r'"(\S)', self.quote_open + r'\g<1>'),
         ]
         math_regexes = [
-            (r'^\$\${$', r'$$\n\\begin{aligned}'),
-            (r'^}\$\$', r'\\end{aligned}\n$$'),
+            (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
+            (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
         ]
 
         self.postprocessing = self.compile_regexes(self.postprocessing[self.args.format])

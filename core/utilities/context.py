@@ -3,7 +3,7 @@ import yaml
 import os
 import pprint
 
-from core.utilities import dicts, colour as c
+from core.utilities import dicts, colour as c, crawler
 
 
 class Context():
@@ -50,6 +50,11 @@ class Context():
 
     def add_id(self, id):
         return self.add({'id': id})
+
+    def add_subdirs(self, subcontext_class, subcontext_key, *subcontext_args):
+        cr = crawler.Crawler(self.node_path(*subcontext_args))
+        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
+
 
 
 #def is_node(path):

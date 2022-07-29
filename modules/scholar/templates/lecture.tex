@@ -34,9 +34,11 @@
 \begin{document}
     \pagestyle{scholar}
     \section{(* lecture.title *)}%
-    \textit{%
-        \tryInput{\activeDirectory/abstract.tex}
-    }
+    (@ if lecture.has_abstract @)
+        \textit{\input{\activeDirectory/abstract.tex}}%
+    (@ else @)
+        \textit{Prednáška nemá abstrakt (ak ho chceš, vytvor v\ jej priečinku `abstract.md`).}
+    (@ endif @)
 
     (@ block content @)
         \tryInput{\activeDirectory/content.tex}
@@ -47,7 +49,13 @@
                     \subsubsection{Úlohy}
                     (@ for problem in part.problems @)
                         \paragraph{(* problem.title *)}
-                        \input{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
+                        \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
+                        (@ if problem.has_solution @)
+                            \paragraph{Riešenie}
+                            \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/solution.tex}
+                        (@ else @)
+                            \textit{Táto úloha nemá spísané riešenie.}
+                        (@ endif @)
                     (@ endfor @)
                 (@ endif @)
         (@ endfor @)
