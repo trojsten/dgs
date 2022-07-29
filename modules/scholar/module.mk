@@ -50,7 +50,11 @@ input/scholar/%/lecture.tex: \
 input/scholar/%/pdf-prerequisites: \
 	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.jpg)) \
+	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.png)) \
+	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*/*.png)) \
+	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.pdf)) \
+	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*/*.pdf)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
 	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
 	source/scholar/$$*/meta.yaml ;

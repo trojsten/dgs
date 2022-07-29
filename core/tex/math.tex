@@ -44,7 +44,7 @@
 % Inner derivative with any differential symbol
 \makeatletter
 \ExplSyntaxOn
-\NewDocumentCommand{\Derivative@Frac}{m}{
+\NewDocumentCommand{\SetDerivativeFrac@}{m}{
     \ernewcommand{\frac@}{\str_case:nnF{#1}{%
         {d}{\dfrac}%
         {t}{\tfrac}%
@@ -54,16 +54,16 @@
 }
 
 \NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
-    \Derivative@Frac{#1}
+    \SetDerivativeFrac@{#1}
     \IfNoValueTF{#2}{%
-        \frac@{#3#4}{#3#5}%
+        \frac@{#3#4}{\cdiff{#5}{#3}}%
     }{%
-        \frac@{#3^{#2}#4}{#3{#5}^{#2}}%
+        \frac@{#3^{#2}#4}{\cdiff{#5}{#3}^{#2}}%
     }%
 }
 
 \NewDocumentCommand{\DerivativeParentheses@}{d<> o D<>{\diff} m m}{%
-    \Derivative@Frac{#1}
+    \SetDerivativeFrac@{#1}
     \IfNoValueTF{#2}{%
         \frac@{#3}{#3#5}\left(#4\right)%
     }{%
@@ -128,17 +128,29 @@
     \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
 
+\ExplSyntaxOn
+\NewDocumentCommand{\cdiff}{O{,} m m}{\split_diff:nnn {#1} {#2} {#3}}
+
+\cs_new_protected:Npn \split_diff:nnn #1 #2 #3 {
+    \seq_set_split:Nnn \l_split_args_seq{#1}{#2}
+    \seq_map_inline:Nn \l_split_args_seq {#3 ##1}
+}
+
+\seq_new:N \l_split_args_seq
+\ExplSyntaxOff
 
 % Generic 1D integral
-\NewDocumentCommand{\Int@}{O{} O{} m m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
+\NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
 % Integral from #1 to #2 of #3 with respect to #4
-\NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[]}
+\NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
+% Empty integral for operations on expressions
+\NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
-\NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\cdot]}
-\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
+\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2][\vec{#3}]{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4 (
-\NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2]{#3}{#4}[\times]}
-\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
+\NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\times]}
+\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2][\vec{#3}]{\vec{#4}}}
 
 % Generic loop integral
 \NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff#3}
@@ -230,6 +242,10 @@
 
 \NewDocumentCommand{\Set}{m O{} O{}}{%
     \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+}
+
+\NewDocumentCommand{\Operation}{+m}{%
+    & \qquad \bigg/ #1%
 }
 
 % Number sets
