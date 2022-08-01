@@ -14,11 +14,12 @@
     \fancyhead[R]{\textit{(* lecture.title *)}}
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 
-    \titleformat{\section}[block]{\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
-    \titleformat{\subsection}[hang]{\Large\bfseries}{}{0pt}{}
-    \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
-    \titleformat{\paragraph}[hang]{\bfseries}{}{0pt}{}[]
-    \titleformat{\subparagraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titleformat{\part}[hang]{\Huge\bfseries\centering}{\Roman{part}. }{0pt}{}
+    \titleformat{\section}[hang]{\Large\bfseries}{\arabic{section}. }{0pt}{}[]
+    \titleformat{\subsection}[hang]{\large\bfseries}{}{0pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titlespacing{\part}{0pt}{-6mm}{4mm}
     \titlespacing{\section}{0pt}{6mm}{2mm}
     \titlespacing{\subsection}{0pt}{6mm}{4mm}
     \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
@@ -26,36 +27,37 @@
     \titlespacing{\subparagraph}{0pt}{2mm}{0pt}
 }
 
-\numberwithin{equation}{subsection}
-\numberwithin{figure}{subsection}
+\numberwithin{equation}{section}
+\numberwithin{figure}{section}
 
 (@ block style @)(@ endblock @)
 
 \begin{document}
     \pagestyle{scholar}
-    \section{(* lecture.title *)}%
+    \part{(* lecture.title *)}%
     (@ if lecture.has_abstract @)
         \textit{\input{\activeDirectory/abstract.tex}}%
     (@ else @)
-        \textit{Prednáška nemá abstrakt (ak ho chceš, vytvor v\ jej priečinku `abstract.md`).}
+        \textit{Prednáška nemá abstrakt (ak ho chceš, vytvor v\ jej priečinku \texttt{abstract.md}).}
     (@ endif @)
 
     (@ block content @)
         \tryInput{\activeDirectory/content.tex}
         (@ for part in parts @)
-            \subsection{\texorpdfstring{(* part.title *)}{(* part.pdftitle|default(part.title) *)}}
+            \section{\texorpdfstring{(* part.title *)}{(* part.pdftitle|default(part.title) *)}}
                 \input{\activeDirectory/(* part.id *)/text.tex}
                 (@ if part.problems @)
-                    \subsubsection{Úlohy}
+                    \subsection{Úlohy}
                     (@ for problem in part.problems @)
-                        \paragraph{(* problem.title *)}
-                        \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
-                        (@ if problem.has_solution @)
+                        \subsubsection{(* problem.title *)}
+                            \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
                             \paragraph{Riešenie}
-                            \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/solution.tex}
-                        (@ else @)
-                            \textit{Táto úloha nemá spísané riešenie.}
-                        (@ endif @)
+                            (@ if problem.has_solution @)
+                                \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/solution.tex}
+                            (@ else @)
+                                \textit{Táto úloha nemá spísané riešenie
+                                    (ak ho chceš, vytvor súbor \texttt{(* part.id *)/(* problem.id *)/solution.md}).}
+                            (@ endif @)
                     (@ endfor @)
                 (@ endif @)
         (@ endfor @)
