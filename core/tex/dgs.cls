@@ -110,16 +110,16 @@
 \setlist[description]{
     style           = multiline,
     labelindent     =       8mm,
-    leftmargin      =      28mm,
+    leftmargin      =      50mm,
     itemsep         =       0mm,
 }
 \setlist[enumerate]{
-    topsep          =   0mm,
-    itemsep         =   0mm,
+    topsep          =       0mm,
+    itemsep         =       0mm,
 }
 \setlist[itemize]{
-    topsep          =   0mm,
-    itemsep         =   0mm,
+    topsep          =       0mm,
+    itemsep         =       0mm,
 }
 
 % Setup figure caption format and width

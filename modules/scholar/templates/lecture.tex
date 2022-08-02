@@ -38,7 +38,7 @@
     (@ if lecture.has_abstract @)
         \textit{\input{\activeDirectory/abstract.tex}}%
     (@ else @)
-        \textit{Prednáška nemá abstrakt (ak ho chceš, vytvor v\ jej priečinku \texttt{abstract.md}).}
+        \textit{Prednáška nemá abstrakt (ak ho chceš, vytvor súbor \texttt{abstract.md}).}
     (@ endif @)
 
     (@ block content @)
@@ -50,7 +50,12 @@
                     \subsection{Úlohy}
                     (@ for problem in part.problems @)
                         \subsubsection{(* problem.title *)}
-                            \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
+                            (@ if problem.has_problem @)
+                                \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
+                            (@ else @)
+                                \textit{Táto úloha nemá spísané zadanie
+                                    (ak ho chceš, vytvor súbor \texttt{(* part.id *)/(* problem.id *)/problem.md}).}
+                            (@ endif @)
                             \paragraph{Riešenie}
                             (@ if problem.has_solution @)
                                 \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/solution.tex}
