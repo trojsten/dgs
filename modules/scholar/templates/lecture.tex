@@ -45,11 +45,13 @@
         \tryInput{\activeDirectory/content.tex}
         (@ for part in parts @)
             \section{\texorpdfstring{(* part.title *)}{(* part.pdftitle|default(part.title) *)}}
+                \label{(* lecture.id *)-(* part.id *)}
                 \input{\activeDirectory/(* part.id *)/text.tex}
                 (@ if part.problems @)
                     \subsection{Úlohy}
                     (@ for problem in part.problems @)
                         \subsubsection{(* problem.title *)}
+                            \label{(* lecture.id *)-(* part.id *)-(* problem.id *)}
                             (@ if problem.has_problem @)
                                 \protectedInput{\activeDirectory/(* part.id *)/(* problem.id *)/problem.tex}
                             (@ else @)
