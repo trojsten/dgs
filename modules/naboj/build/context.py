@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 sys.path.append('.')
 
@@ -20,14 +21,8 @@ class ContextI18nGlobal(context.Context):
 
 
 class ContextNaboj(context.Context):
-    def node_path(self, root, competition=None, volume=None, target_type=None, target=None):
-        return os.path.join(
-            root,
-            '' if competition is None else competition,
-            '' if volume is None else f'{volume:02d}',
-            '' if target_type is None else target_type,
-            '' if target is None else target,
-        )
+    def node_path(self, root, competition='', volume='', target_type='', target=''):
+        return Path(root, competition, f"{volume:02d}" if volume != '' else '', target_type, target)
 
 
 class ContextModule(ContextNaboj):

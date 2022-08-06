@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import builder
 import context
@@ -36,7 +36,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         super().build()
         for template in ['intro.tex', 'instructions-inner.tex']:
             jinja.print_template(
-                os.path.join(self.launch_directory, *self.path(), '_extras'),
+                Path(self.launch_directory, *self.path(), '_extras'),
                 template, self.context.data, self.output_directory
             )
 
