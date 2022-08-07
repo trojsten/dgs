@@ -57,14 +57,14 @@
 \RequirePackage[version=4]{mhchem}
 
 \RequirePackage[all]{nowidow}
-\RequirePackage{boolexpr}                                   % boolean expressions, switch
+%\RequirePackage{boolexpr}                                   % boolean expressions, switch
 \RequirePackage[mathlf]{MinionPro}
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
 
 \AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
-\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
+%\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
@@ -77,7 +77,7 @@
 
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
-\RequirePackage{bidi}
+%\RequirePackage{bidi}
 \setdefaultlanguage{slovak}
 
 \RequirePackage[nodisplayskipstretch]{setspace}
@@ -148,4 +148,5 @@
 \input{core/tex/utilities.tex}
 \input{core/tex/math.tex}
 \input{core/tex/hacks.tex}
+\input{core/tex/symbols.tex}
 \input{core/tex/siunitx.tex}
