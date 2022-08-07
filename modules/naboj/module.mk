@@ -34,6 +34,8 @@ input/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/tearoff-problem.tex \
+	modules/naboj/templates/tearoff-bottom.tex \
 	input/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
@@ -211,8 +213,8 @@ output/naboj/%: \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
 	output/naboj/$$*/instructions.pdf \
-	output/naboj/$$*/instructions-online.pdf \
-	output/naboj/$$*/online.pdf ;
+#	output/naboj/$$*/instructions-online.pdf \
+#	output/naboj/$$*/online.pdf ;
 
 # All targets for all languages
 output/naboj/%/languages: \

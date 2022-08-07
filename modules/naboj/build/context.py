@@ -14,8 +14,8 @@ class ContextI18n(context.Context):
 
 
 class ContextI18nGlobal(context.Context):
-    def __init__(self):
-        super().__init__(root, competition)
+    def __init__(self, root, competition):
+        super().__init__()
         for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
             self.absorb(language, ContextI18n(root, competition, language))
 
@@ -83,4 +83,4 @@ class ContextTearoff(ContextNaboj):
         self.absorb('competition', ContextCompetition(root, competition))
         self.absorb('volume', ContextVolume(root, competition, volume))
         self.absorb('venue', ContextVenue(root, competition, volume, venue))
-        self.absorb('i18n', ContextI18nGlobal())
+        self.absorb('i18n', ContextI18nGlobal(root, competition))

@@ -20,7 +20,7 @@
         \vspace{0mm}%
         \hspace{4mm}%
         \rotatebox{90}{%
-            \hspace{24mm}%
+            \hspace{22mm}%
             \textsf{%
                 \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
                 \fontsize{28}{0}\selectfont(* '%03d'|format(team.id) *)%
@@ -30,12 +30,14 @@
         }%
         \hspace{2pt}
         \rotatebox{90}{%
-            \hspace{6mm}%
+            \hspace{6mm}
             \includegraphics[%
-                width=80mm, height=14mm, page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
+                width=76mm, height=14mm,
+                keepaspectratio=false,
+                page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
                 \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
             }%
-            \hspace{6mm}%
+            \hspace{6mm}
         }%
     \end{minipage}
 
