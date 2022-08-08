@@ -123,13 +123,9 @@ class CommaSpace():
 
 
 class SemicolonSpace():
-    re_allowed = re.compile(r'(\\SIlist|\\SIrange|\\ang|\\numlist){(([0-9.e-]*);)+[0-9.e-]+}')
-    re_fail = re.compile(r';[^\s^]')
+    re_fail = re.compile(r'(?!\\ang{);[^\s]')
 
     def check(self, line):
-        if search := self.re_allowed.search(line):
-            return
-
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError("Semicolon not followed by whitespace", line, search.start())
 

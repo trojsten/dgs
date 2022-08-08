@@ -136,6 +136,13 @@
     \seq_map_inline:Nn \l_split_args_seq {#3 ##1}
 }
 
+\NewDocumentCommand{\Tuple}{O{;} >{\SplitList{;}} m}{%
+    \def\itemdelim@{\def\itemdelim@{#1}}%
+    {%
+        \left(\ProcessList{#2}{\insert@separator}\right)%
+    }%
+}
+
 \NewDocumentCommand{\Coord}{O{;} >{\SplitList{;}} m}{%
     \def\itemdelim@{\def\itemdelim@{#1}}%
     {%
@@ -231,7 +238,9 @@
 
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
 
 \DeclarePairedDelimiter\abs@{\lvert}{\rvert}

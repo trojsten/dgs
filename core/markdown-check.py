@@ -36,7 +36,7 @@ class StyleEnforcer():
         line_errors = [
             check.FailIfFound(r'\t', "Tab instead of spaces"),
             check.CommaSpace(),
-            check.SemicolonSpace(),
+#            check.SemicolonSpace(),
             check.ParenthesesSpace(),
             check.FailIfFound(r'[ \t]$', "Trailing whitespace"),
             check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
