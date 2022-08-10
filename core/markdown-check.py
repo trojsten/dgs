@@ -41,6 +41,7 @@ class StyleEnforcer():
             check.FailIfFound(r'[ \t]$', "Trailing whitespace"),
             check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
             check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
+#            check.FailIfFound(r'\$\\SI{.*}{.*}\$', "Solitary \\SI does not have to be enclosed in $$"),
             check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
             check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
             check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),

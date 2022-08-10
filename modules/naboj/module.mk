@@ -216,9 +216,14 @@ output/naboj/%: \
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
+# competition/volume
+output/naboj/%/booklets: \
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/booklet.pdf);
+
 # All targets for all languages
+# competition/volume
 output/naboj/%/languages: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)), $$(dir)) ;
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) ;
 
 
 
