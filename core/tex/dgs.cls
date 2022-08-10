@@ -53,6 +53,7 @@
 \RequirePackage{mathtools}
 \RequirePackage{ulem}
 \RequirePackage[weather]{ifsym}
+\RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
 
