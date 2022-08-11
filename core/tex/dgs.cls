@@ -45,6 +45,7 @@
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
 \RequirePackage{cancel}
+\RequirePackage{multicol}
 \RequirePackage{fancyhdr}
 \RequirePackage{hyphenat}
 \RequirePackage{nicefrac}

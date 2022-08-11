@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys
+import argparse, os, sys, re
+
+from pathlib import Path
 
 from mdcheck import check, exceptions
 from utilities import colour as c
@@ -16,24 +18,9 @@ class StyleEnforcer():
         self.parser.add_argument('-w', '--warnings', action='store_true')
         self.args = self.parser.parse_args()
 
-    def check(self):
-        for filename in self.args.infiles:
-            if self.check_markdown_file(filename):
-                pass
+        self.commented = re.compile(r'^%')
 
-    def check_markdown_file(self, file):
-        ok = True
-
-        try:
-            check.encoding(file.name)
-        except exceptions.EncodingError as e:
-            print("File {name} is not valid: {message}".format(
-                name            = c.name(file.name),
-                message         = c.err(e.message),
-            ))
-            return False
-
-        line_errors = [
+        self.line_errors = [
             check.FailIfFound(r'\t', "Tab instead of spaces"),
             check.CommaSpace(),
 #            check.SemicolonSpace(),
@@ -55,7 +42,6 @@ class StyleEnforcer():
             check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
             check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
-            check.FailIfFound(r'#(eq|fig|sec):label', "Default label used"),
             check.ConflictMarkers(),
             check.EqualsSpaces(),
             check.CdotSpaces(),
@@ -65,21 +51,50 @@ class StyleEnforcer():
             check.DoubleDollars(),
         ]
 
-        line_warnings = [
+        self.line_warnings = [
             check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
-            check.Parentheses(),
+            #check.Parentheses(),
         ]
+
+    def check(self):
+        for filename in self.args.infiles:
+            if self.check_markdown_file(filename):
+                pass
+
+    def check_markdown_file(self, file):
+        path = Path(file.name)
+        problem_id = Path(file.name).parent.stem
+
+        try:
+            check.encoding(path)
+        except exceptions.EncodingError as e:
+            print(f"File {c.name(file.name)} is not valid: {c.err(message)}")
+            return False
+
+        line_errors = self.line_errors
+        if path.name == 'problem.md':
+            line_errors = self.line_errors + [
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+            ]
+
+        if path.name == 'solution.md':
+            line_errors = self.line_errors + [
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+            ]
 
         for number, line in enumerate(file):
             ok = all([self.check_line(checker, file, number, line) for checker in line_errors])
 
             if self.args.warnings:
-                ok &= all([self.check_line(checker, file, number, line, cfunc=c.warn) for checker in line_warnings])
+                ok &= all([self.check_line(checker, file, number, line, cfunc=c.warn) for checker in self.line_warnings])
 
         if self.args.verbose and ok:
             print(f"File {c.path(file.name)} {c.ok('OK')}")
 
     def check_line(self, checker, file, number, line, *, cfunc=c.err):
+        if self.commented.match(line):
+            return True
         try:
             checker.check(line)
             return True
