@@ -10,8 +10,15 @@ from core.utilities import context, crawler
 
 class ContextScholar(context.Context):
     @staticmethod
-    def node_path(root, course='', lecture='', year='', target_type='', issue='', *deeper):
-        return Path(root, course, lecture, year, target_type, issue, *deeper)
+    def node_path(root, course=None, year=None, target_type=None, issue=None, *deeper):
+        return Path(
+            root,
+            '' if course is None else course,
+            '' if year is None else f'{year:04d}',
+            '' if target_type is None else target_type,
+            '' if issue is None else f'{issue:02d}',
+            *deeper
+        )
 
     def add_subdirs(self, subcontext_class, subcontext_key, *subcontext_args):
         cr = crawler.Crawler(self.node_path(*subcontext_args))
@@ -92,9 +99,6 @@ class ContextHomeworkIssue(ContextIssue):
     subcontext_class = ContextHomeworkProblem
 
 
-
-
-
 class ContextIssueBase(ContextScholar):
     def __init__(self, root, course, year, issue):
         super().__init__()
@@ -113,6 +117,8 @@ class ContextHandout(ContextIssueBase):
     target = 'handouts'
     issue_context_class = ContextHandoutIssue
 
+
+""" Single lecture contexts start here """
 
 class ContextScholarSingle(context.Context):
     @staticmethod

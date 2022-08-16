@@ -48,7 +48,7 @@ input/scholar/%/lecture.tex: \
 
 # <subject>/<year>/<target>/<issue>/
 input/scholar/%/pdf-prerequisites: \
-	$$(subst $$(cdir),,$$(abspath input/scholar/$$*/../copy-static)) \
+	$$(subst $$(cdir),,$$(abspath input/scholar/$$(word 1,$$(subst /, ,$$*))/copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/scholar/$$*/*.png)) \
