@@ -1,6 +1,7 @@
 import os
 import sys
 import collections
+from pathlib import Path
 
 sys.path.append('.')
 
@@ -9,7 +10,7 @@ from core.utilities import context
 
 class ContextSeminar(context.Context):
     def node_path(self, root, competition=None, volume=None, semester=None, round=None, problem=None):
-        return os.path.join(
+        return Path(
             root,
             '' if competition is None else competition,
             '' if volume is None else f'{volume:02d}',
