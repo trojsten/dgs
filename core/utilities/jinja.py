@@ -1,6 +1,7 @@
 import jinja2
 import os
 import sys
+import itertools
 
 from core.utilities import dicts, filters, colour as c
 
@@ -61,10 +62,17 @@ def environment(directory):
 
 
 # Compute a barcode128 check digit
-def check_digit(venue, team, problem):
-    digits = list(map(int, list('{:03d}{:03d}{:02d}0'.format(venue, team, problem))))
+def check_digit_old(venue, team, problem):
+    digits = list(map(int, list(f'{venue:03d}{team:03d}{problem:02d}0')))
     raw = sum([x * y for x, y in zip(digits, [3, 7, 1, 3, 7, 1, 3, 7, 1])])
     return 9 - (raw - 1) % 10
+
+
+def check_digit(team, problem):
+    digits = list(map(lambda x: int(x, 36), list(f'{team}{problem:02d}')))
+    raw = sum([x * y for x, y in zip(digits, itertools.cycle([3, 7, 1]))])
+    return 9 - (raw - 1) % 10
+
 
 def plural(how_many, one, two, default):
     if how_many == 1:

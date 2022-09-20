@@ -13,6 +13,6 @@
 
 (@ block probnum2 @)(* '%02d'|format(0) *)(@ endblock probnum2 @)
 
-(@ block checkdigit @)(* '%01d'|format(checkdigit(venue.number, team.id, 0)) *)(@ endblock checkdigit @)
+(@ block checkdigit @)(* '%01d'|format(checkdigit(team.id, 0)) *)(@ endblock checkdigit @)
 
 (@ block page @)(* (team.number + 1) * (volume.problems|length + 1) *)(@ endblock page @)

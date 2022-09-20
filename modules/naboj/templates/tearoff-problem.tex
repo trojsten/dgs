@@ -1,6 +1,6 @@
 \setcounter{volume}{(* volume.number *)}%
 \setcounter{problem}{(@ block probnum @)(* problem.number *)(@ endblock probnum @)}%
-\setcounter{team}{(* team.id *)}%
+%\setcounter{team}{(* team.id *)}%
 
 (@ block activate @)
     \input{core/i18n/(* team.language *)/override.tex}
@@ -20,12 +20,11 @@
         \vspace{0mm}%
         \hspace{4mm}%
         \rotatebox{90}{%
-            \hspace{22mm}%
+            \hspace{15mm}%
             \textsf{%
-                \fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)%
-                \fontsize{28}{0}\selectfont(* '%03d'|format(team.id) *)%
+                \fontsize{28}{0}\selectfont (* team.id *)%
                 \fontsize{20}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
-                \fontsize{20}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(venue.number, team.id, problem.number)) *)(@ endblock checkdigit @)%
+                \fontsize{20}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.id, problem.number)) *)(@ endblock checkdigit @)%
             }%
         }%
         \hspace{2pt}
