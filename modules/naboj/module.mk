@@ -212,7 +212,7 @@ output/naboj/%: \
 	output/naboj/$$*/answers-mod5.pdf \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
-	output/naboj/$$*/instructions.pdf \
+	output/naboj/$$*/instructions.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
