@@ -14,7 +14,8 @@
 
 (@ block heading_inner @)
     (@ if problem.pointsDescription @)%
-        \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}, %
+        \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}%
+        (@ if problem.categories @), (@ endif @)%
     (@ endif @)%
     (@ if problem.categories @)%
         kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%

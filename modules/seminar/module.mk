@@ -41,6 +41,7 @@ input/seminar/%/invite.tex: \
 	@mkdir -p $(dir $@)
 	python3 modules/seminar/build/invite.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
+# competition/volume/semester/round
 input/seminar/%/pdf-prerequisites: \
 	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
