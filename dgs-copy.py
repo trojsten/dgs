@@ -36,7 +36,7 @@ def main():
 
     # Copy HTML files
     for local, remote in (('problem', 'zadania'), ('solution', 'vzoraky')):
-        for problem in range(1, 8):
+        for problem in range(1, 9):
             pfl = f"{path_fragment_local}/{problem:02d}"
             fire(f"mkdir -p tasks/{path_fragment_remote}/{remote}/html && " \
                 f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html " \
