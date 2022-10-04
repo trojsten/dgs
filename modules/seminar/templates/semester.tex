@@ -1,17 +1,16 @@
 (@ extends 'base.tex' @)
 
 (@ block content @)
-    \pagestyle{seminar-booklet-main}
-    \thispagestyle{seminar-booklet-first}
+%    \pagestyle{seminar-booklet-main}
+%    \thispagestyle{seminar-booklet-first}
     \vspace*{15mm}
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/intro.tex}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/intro.tex}
     \newpage
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/rules.tex}
+    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/rules.tex}
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage
-        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
-        \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
+        %\pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
         {
             \section{Zadania (* round.number *). kola}%
             \centering%
@@ -36,7 +35,7 @@
                 (* round.number *).(* problem.number *) (* problem.title *)%
             }%
         }%
-        \protectedInput{\problemDirectory/problem.tex}%
+        \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
     (@ endfor @)
 (@ endblock content @)

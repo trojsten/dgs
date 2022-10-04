@@ -27,6 +27,7 @@ class BaseBuilder():
         self.parser.add_argument('template_root', action=argparser.ReadableDir)
         self.parser.add_argument('-o', '--output', action=argparser.WriteableDir)
         self.parser.add_argument('-d', '--debug', action='store_true')
+        self.parser.add_argument('-t', '--tree', action='store_true')
         return self.parser
 
     def create_context(self):
@@ -66,6 +67,8 @@ class BaseBuilder():
 
         if self.args.debug:
             self.print_debug_info()
+
+        if self.args.tree:
             self.print_dir_info()
 
         for template in self.templates:

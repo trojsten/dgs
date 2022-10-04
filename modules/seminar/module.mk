@@ -5,11 +5,11 @@ input/seminar/%/copy-static:
 	cp -r source/seminar/$*/.static/ input/seminar/$*/
 
 input/seminar/%/intro.tex input/seminar/%/rules.tex: \
-	modules/seminar/templates/$$(notdir $@) \
+	modules/seminar/templates/$$(notdir $@)
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' \
-		$(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/build/volume.py 'source/seminar/' 'source/seminar/$*/' \
+		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
 
 input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex input/seminar/%/instagram.tex: \
 	modules/seminar/templates/$$(notdir $@) \
@@ -20,20 +20,17 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solut
 	python3 ./modules/seminar/build/round.py 'source/seminar/' 'modules/seminar/templates/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
-#input/seminar/%/semester.tex: \
-#	input/seminar/$$*/format/semester.tex \
-#	input/seminar/$$*/intro.tex \
-#	input/seminar/$$*/rules.tex \
-#	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
-#	$$(wildcard source/seminar/$$*/*/meta.yaml) \
-#	$$(foreach dir,$$(dir $$(subst source/,input/,$$(wildcard source/seminar/$$*/*/meta.yaml))), $$(dir)format/format-round.tex) \
-#	source/seminar/$$*/meta.yaml \
-#	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/intro.tex \
-#	modules/seminar/styles/$$(word 1, $$(subst /, ,$$*))/templates/rules.tex 
-#	$(eval words := $(subst /, ,$*))
-#	@mkdir -p $(dir $@)
-#	python3 ./modules/seminar/build-semester.py 'source/seminar/' 'modules/seminar' $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) -o '$(dir $@)'
-#
+input/seminar/%/semester.tex: \
+	input/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
+	input/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/rules.tex \
+	$$(wildcard source/seminar/$$*/*/*/problem.md) \
+	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
+	$$(wildcard source/seminar/$$*/*/meta.yaml) \
+	source/seminar/$$*/meta.yaml
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+
 input/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $@) \
 	source/seminar/$$*/meta.yaml
@@ -43,7 +40,7 @@ input/seminar/%/invite.tex: \
 
 # competition/volume/semester/round
 input/seminar/%/pdf-prerequisites: \
-	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../../copy-static)) \
+	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
@@ -89,7 +86,7 @@ output/seminar/%/instagram.pdf: \
 output/seminar/%/semester.pdf: \
 	modules/seminar/templates/semester.tex \
 	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
-	input/seminar/$$*/*/pdf-prerequisites \
+	input/seminar/$$*/pdf-prerequisites \
 	input/seminar/$$*/semester.tex
 	$(call doubletex,seminar)
 

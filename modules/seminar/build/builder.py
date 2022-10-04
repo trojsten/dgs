@@ -27,6 +27,11 @@ class BuilderSeminar(builder.BaseBuilder):
         )
 
 
+class BuilderVolume(BuilderSeminar):
+    def id(self):
+        return (self.args.competition, self.args.volume)
+
+
 class BuilderSemester(BuilderSeminar):
     def id(self):
         return (self.args.competition, self.args.volume, self.args.semester)

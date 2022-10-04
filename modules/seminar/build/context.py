@@ -63,8 +63,13 @@ class ContextSemester(ContextSeminar):
 class ContextSemesterFull(ContextSemester):
     def __init__(self, root, competition, volume, semester):
         super().__init__(root, competition, volume, semester)
-        # Currently missing: fill in rounds and such
-        # This will be useful for invites
+
+        rounds = collections.OrderedDict()
+        for round in range(1, 4):
+            rn = f'{round}'
+            rounds[round] = ContextRoundFull(root, competition, volume, semester, round).data
+
+        self.add({'rounds': rounds})
 
 
 class ContextRound(ContextSeminar):
@@ -110,6 +115,33 @@ class ContextProblem(ContextSeminar):
         vol = ContextVolume(root, competition, volume)
         categories = vol.data['categories']
         self.add({'categories': categories[problem - 1]})
+
+
+""" Buildable contexts """
+
+
+class ContextVolumeBooklet(ContextSeminar):
+    def __init__(self, root, competition, volume):
+        super().__init__()
+        self.absorb('module', ContextModule('seminar'))
+
+        if competition is not None:
+            self.absorb('competition', ContextCompetition(root, competition))
+        if volume is not None:
+            self.absorb('volume', ContextVolume(root, competition, volume))
+
+
+class ContextSemesterBooklet(ContextSeminar):
+    def __init__(self, root, competition, volume, semester):
+        super().__init__()
+        self.absorb('module', ContextModule('seminar'))
+
+        if competition is not None:
+            self.absorb('competition', ContextCompetition(root, competition))
+        if volume is not None:
+            self.absorb('volume', ContextVolume(root, competition, volume))
+        if semester is not None:
+            self.absorb('semester', ContextSemesterFull(root, competition, volume, semester))
 
 
 class ContextBooklet(ContextSeminar):
