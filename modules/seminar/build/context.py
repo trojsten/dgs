@@ -80,10 +80,19 @@ class ContextRoundFull(ContextRound):
     def __init__(self, root, competition, volume, semester, round):
         super().__init__(root, competition, volume, semester, round)
 
-        comp = ContextCompetition(root, competition)
+        if not 'instagram' in self.data:
+            self.add({
+                'instagram': {
+                    'skin': 'orange',
+                    'textColour': 'black',
+                },
+            })
+
+        vol = ContextVolume(root, competition, volume)
+        categories = vol.data['categories']
         problems = collections.OrderedDict()
 
-        for p in range(0, len(comp.data['categories'])):
+        for p in range(0, len(categories)):
             pn = f'{(p + 1):02d}'
             problems[pn] = ContextProblem(root, competition, volume, semester, round, p + 1).data
 
@@ -98,8 +107,9 @@ class ContextProblem(ContextSeminar):
             .add_id(self.id) \
             .add_number(problem)
 
-        comp = ContextCompetition(root, competition)
-        self.add({'categories': comp.data['categories'][problem - 1]})
+        vol = ContextVolume(root, competition, volume)
+        categories = vol.data['categories']
+        self.add({'categories': categories[problem - 1]})
 
 
 class ContextBooklet(ContextSeminar):
