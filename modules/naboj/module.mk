@@ -248,3 +248,8 @@ output/naboj/%/envelope.pdf: \
 # All targets for all venues
 output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
+
+output/naboj/%/copy: \
+	output/naboj/%
+	rsync -rzvhPL output/naboj/$*/ fks:/home/sesquideus/public_html/naboj/$(subst output/,,$*)
+
