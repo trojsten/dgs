@@ -40,7 +40,7 @@ input/seminar/%/invite.tex: \
 
 # competition/volume/semester/round
 input/seminar/%/pdf-prerequisites: \
-	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../copy-static)) \
+	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../../copy-static)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
