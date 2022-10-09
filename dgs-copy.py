@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import os, re, datetime, argparse, shutil, json, colorama
-from colorama import Fore as cf
+import os
+import argparse
 
 
-VERSION = "3.00"
-DATE = "2021-10-18"
+VERSION = "3.01"
+DATE = "2022-10-09"
 
 
 def fire(query):
@@ -14,8 +14,6 @@ def fire(query):
 
 
 def main():
-    colorama.init()
-
     parser = argparse.ArgumentParser(description="Copy a DeGeŠ round to www-archiv")
     parser.add_argument('seminar', choices=['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX', 'Suši'])
     parser.add_argument('volume', type=int)
@@ -26,17 +24,26 @@ def main():
 
     args = parser.parse_args()
 
+    # SuŠi hack
     round = 100 if args.round == 'outdoor' else int(args.round)
 
+    # FKS hack: volumes <= 37 are now marked as "FKS-old"
+    if args.seminar == 'FKS' and args.volume <= 37:
+        remote_seminar = "FKS-old"
+        count = 7
+    else:
+        remote_seminar = args.seminar
+        count = 8
+
     path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{round}"
-    path_fragment_remote = f"{args.seminar}/{args.volume}/{args.part}/{round}"
+    path_fragment_remote = f"{remote_seminar}/{args.volume}/{args.part}/{round}"
 
     # Delete the temporary directory
     os.system("rm -rf tasks")
 
     # Copy HTML files
     for local, remote in (('problem', 'zadania'), ('solution', 'vzoraky')):
-        for problem in range(1, 9):
+        for problem in range(1, count + 1):
             pfl = f"{path_fragment_local}/{problem:02d}"
             fire(f"mkdir -p tasks/{path_fragment_remote}/{remote}/html && " \
                 f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html " \
@@ -47,9 +54,9 @@ def main():
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
 
     # Copy pictures
-    fire(f"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
-        f"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
-        f"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
+    fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
+        rf"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
+        rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server and delete
     if not args.dry_run:
