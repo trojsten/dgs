@@ -160,6 +160,7 @@
 % Integral from #1 to #2 of #3 with respect to #4
 \NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
 % Empty integral for operations on expressions
+\NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
 \NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
 \NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
