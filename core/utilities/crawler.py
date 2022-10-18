@@ -34,3 +34,6 @@ class Crawler():
 
     def children(self):
         return [child.name for child in sorted(self.root.iterdir()) if self.is_node(child)]
+
+    def subdirs(self):
+        return [child.name for child in sorted(self.root.iterdir()) if child.is_dir()]
