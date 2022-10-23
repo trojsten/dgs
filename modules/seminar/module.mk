@@ -101,7 +101,8 @@ output/seminar/%/semester-print.pdf: \
 	pdfbook --short-edge --quiet --outfile $@ $<
 
 output/seminar/%/instagram: \
-	output/seminar/$$*/instagram.pdf
+	output/seminar/$$*/instagram.pdf \
+	$$(subst source/,output/,$$(subst .md,.png,$$(wildcard source/seminar/$$*/*/*/problem.md)))
 	@echo -e '$(c_action)Splitting $(c_filename)$<$(c_action) to individual images$(c_action):$(c_default)'
 	pdftoppm -png -r 150 -aa yes -aaVector yes $< $@
 
