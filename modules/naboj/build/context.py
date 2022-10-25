@@ -61,8 +61,9 @@ class ContextLanguage(ContextNaboj):
 class ContextVenue(ContextNaboj):
     def __init__(self, root, competition, volume, venue):
         super().__init__()
+        comp = ContextCompetition(root, competition)
         self.load_meta(root, competition, volume, 'venues', venue).add_id(venue)
-        self.add({'teams_div_3': context.split_div(context.numerate(self.data.get('teams')), 3)})
+        self.add({'teams_grouped': context.split_div(context.numerate(self.data.get('teams')), comp.data['tearoff']['per_page'])})
 
 
 class ContextBooklet(ContextNaboj):

@@ -10,14 +10,14 @@
     \pagenumbering{gobble}
     \pagestyle{tearoff}
 
-    (@ for team3 in venue.teams_div_3 @)
+    (@ for team_group in venue.teams_grouped @)
         (@ for problem in volume.problems @)
-            (@ for team in team3 @)%
+            (@ for team in team_group @)%
                 (@ include 'tearoff-problem.tex' @)
                 (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
             (@ endfor @)
         (@ endfor @)
-        (@ for team in team3 @)%
+        (@ for team in team_group @)%
             (@ include 'tearoff-bottom.tex' @)
             (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
         (@ endfor @)
