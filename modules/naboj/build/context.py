@@ -16,7 +16,7 @@ class ContextI18n(context.Context):
 class ContextI18nGlobal(context.Context):
     def __init__(self, root, competition):
         super().__init__()
-        for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian']:
+        for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian', 'spanish']:
             self.absorb(language, ContextI18n(root, competition, language))
 
 

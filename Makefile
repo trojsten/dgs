@@ -37,7 +37,7 @@ include modules/*/module.mk
 input/%.tex: source/%.md
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py latex sk $< $@ || exit 1;
+	python3 core/pandoc-convert.py latex $(lang) $< $@ || exit 1;
 
 # Copy TeX files from source to input
 input/%.tex: source/%.tex
