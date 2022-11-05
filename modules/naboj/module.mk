@@ -6,6 +6,15 @@
 source/naboj/%/i18n: \
 	$$(wildcard source/naboj/$$*/.static/i18n/*.yaml) ;
 
+# DeGeŠ convert Markdown file to TeX (for XeLaTeX)
+# % <competition>/<volume>/languages/<language>/<problem>
+input/naboj/%.tex: source/naboj/%.md
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	$(eval words := $(subst /, ,$*))
+	python3 core/pandoc-convert.py latex $(word 4,$(words)) $< $@ || exit 1;
+
+
 # % <competition>/<volume>/languages/<language>
 input/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
@@ -40,7 +49,7 @@ input/naboj/%/tearoff.tex: \
 	input/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
-input/naboj/%/envelope.tex: \
+input/naboj/%/envelopes.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
 	input/naboj/$$*/build-venue ;
 
@@ -242,13 +251,26 @@ output/naboj/%/tearoff.pdf: \
 	$(call doubletex,naboj)
 
 # Envelope cover
-output/naboj/%/envelope.pdf: \
-	input/naboj/%/envelope.tex
+output/naboj/%/envelopes.pdf: \
+	input/naboj/%/envelopes.tex
 	$(call doubletex,naboj)
 
+
+
+# All targets for <venue>
+# <competition>/<volume>/venues/<venue>
+output/naboj/%: \
+	output/naboj/$$*/tearoff.pdf \
+	output/naboj/$$*/envelopes.pdf ;
+
 # All targets for all venues
+# <competition>/<volume>
 output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
+
+output/naboj/%: \
+	output/naboj/$$*/languages \
+	output/naboj/$$*/venues ;
 
 output/naboj/%/copy: \
 	output/naboj/%

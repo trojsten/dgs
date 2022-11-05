@@ -47,14 +47,24 @@ class ContextVolume(ContextNaboj):
             .add_number(volume)
 
         self.add({'problems': context.add_numbers(self.data['problems'], 1)})
-        self.add({'problems_modulo': context.split_mod(self.data['problems'], self.data['evaluator_count'], 1)})
+        self.add({'problems_modulo': context.split_mod(self.data['problems'], self.data['evaluators'], 1)})
 
 
 class ContextLanguage(ContextNaboj):
     def __init__(self, language):
         super().__init__()
         self.add_id(language)
-        self.add({'polyglossia': 'magyar' if language == 'hu' else language})
+        self.add({'polyglossia': {
+                'sk': 'slovak',
+                'en': 'english',
+                'cs': 'czech',
+                'hu': 'magyar',
+                'pl': 'polish',
+                'ru': 'russian',
+                'fa': 'persian',
+                'es': 'spanish',
+            }[language]}
+        )
         self.add({'rtl': True if language == 'fa' else False})
 
 
