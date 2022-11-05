@@ -20,6 +20,7 @@ input/naboj/%/build-language: \
 # % <competition>/<volume>/<venue>
 input/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath input/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/../../../i18n ;
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
@@ -52,7 +53,7 @@ input/naboj/%/online.tex: \
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
-input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-mod5.tex input/naboj/%/cover.tex: \
+input/naboj/%/booklet.tex input/naboj/%/answers.tex input/naboj/%/answers-modulo.tex input/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-languages.tex \
 	modules/naboj/templates/$$(notdir $$@) \
@@ -177,10 +178,10 @@ output/naboj/%/answers.pdf: \
 	input/naboj/%/answers.tex
 	$(call doubletex,naboj)
 
-output/naboj/%/answers-mod5.pdf: \
+output/naboj/%/answers-modulo.pdf: \
 	input/naboj/%/answers \
 	input/naboj/%/pdf-prerequisites \
-	input/naboj/%/answers-mod5.tex
+	input/naboj/%/answers-modulo.tex
 	$(call doubletex,naboj)
 
 output/naboj/%/constants.pdf: \
@@ -209,7 +210,7 @@ output/naboj/%/cover.pdf: \
 output/naboj/%: \
 	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/answers.pdf \
-	output/naboj/$$*/answers-mod5.pdf \
+	output/naboj/$$*/answers-modulo.pdf \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
 	output/naboj/$$*/instructions.pdf ;

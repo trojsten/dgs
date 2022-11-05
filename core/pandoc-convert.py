@@ -50,6 +50,11 @@ class Convertor():
             'quotes':   ('«\u202F', '\u202F»'),
             'locale':   'fr-FR',
         },
+        'es':   {
+            'name':     'spanish',
+            'quotes':   ('«', '»'),
+            'locale':   'es-ES',
+        },
         'qq':   {
             'name':     'test',
             'quotes':   ('(', ')'),

@@ -16,7 +16,7 @@ class ContextI18n(context.Context):
 class ContextI18nGlobal(context.Context):
     def __init__(self, root, competition):
         super().__init__()
-        for language in ['slovak', 'czech', 'hungarian', 'polish', 'english', 'russian', 'spanish']:
+        for language in ['sk', 'cs', 'hu', 'pl', 'en', 'ru', 'fa', 'es']: # Change this to scan the i18n directory
             self.absorb(language, ContextI18n(root, competition, language))
 
 
@@ -47,15 +47,15 @@ class ContextVolume(ContextNaboj):
             .add_number(volume)
 
         self.add({'problems': context.add_numbers(self.data['problems'], 1)})
-        self.add({'problems_mod_5': context.split_mod(self.data['problems'], 5, 1)})
+        self.add({'problems_modulo': context.split_mod(self.data['problems'], self.data['evaluator_count'], 1)})
 
 
 class ContextLanguage(ContextNaboj):
     def __init__(self, language):
         super().__init__()
         self.add_id(language)
-        self.add({'polyglossia': 'magyar' if language == 'hungarian' else language})
-        self.add({'rtl': True if language == 'persian' else False})
+        self.add({'polyglossia': 'magyar' if language == 'hu' else language})
+        self.add({'rtl': True if language == 'fa' else False})
 
 
 class ContextVenue(ContextNaboj):

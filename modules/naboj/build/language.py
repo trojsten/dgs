@@ -14,7 +14,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
     templates = [
         'booklet.tex',
         'answers.tex',
-        'answers-mod5.tex',
+        'answers-modulo.tex',
         'constants.tex',
         'cover.tex',
         'instructions.tex',

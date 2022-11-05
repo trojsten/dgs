@@ -61,17 +61,18 @@ def environment(directory):
     return env
 
 
-# Compute a barcode128 check digit
-def check_digit_old(venue, team, problem):
-    digits = list(map(int, list(f'{venue:03d}{team:03d}{problem:02d}0')))
-    raw = sum([x * y for x, y in zip(digits, [3, 7, 1, 3, 7, 1, 3, 7, 1])])
-    return 9 - (raw - 1) % 10
+def check_digit(team: str, problem: int) -> int:
+    return get_check_digit(f'{team}{problem:02d}')
 
 
-def check_digit(team, problem):
-    digits = list(map(lambda x: int(x, 36), list(f'{team}{problem:02d}')))
-    raw = sum([x * y for x, y in zip(digits, itertools.cycle([3, 7, 1]))])
-    return 9 - (raw - 1) % 10
+def get_check_digit(data: str) -> int:
+    try:
+        digits = map(lambda x: int(x, 36), data)
+    except ValueError:
+        raise ValueError("Found invalid character in barcode")
+
+    checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
+    return sum(checksum) % 10
 
 
 def plural(how_many, one, two, default):
