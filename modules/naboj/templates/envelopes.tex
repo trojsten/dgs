@@ -10,8 +10,10 @@
 
     (@ for team in venue.teams @)
         \vspace*{10mm}
-        \fontsize{120}{0}\selectfont
-        (* team.id *)
+        \fontsize{80}{0}\selectfont%
+        (* team.id[:4] *)%
+        \fontsize{120}{0}\selectfont%
+        (* team.id[4:] *)%
 
         \vspace{10mm}
         \fontsize{15}{0}\selectfont
