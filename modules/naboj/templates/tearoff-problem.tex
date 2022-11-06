@@ -24,16 +24,17 @@
         \rotatebox{90}{%
             \hspace{(* competition.tearoff.team_space *)mm}%
             \textsf{%
-                \fontsize{28}{0}\selectfont (* team.id *)%
-                \fontsize{20}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
-                \fontsize{20}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.id, problem.number)) *)(@ endblock checkdigit @)%
+                \fontsize{18}{0}\selectfont (* team.id[:4] *)%
+                \textbf{\fontsize{28}{0}\selectfont (* team.id[4:] *)}%
+                \fontsize{18}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
+                \fontsize{18}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.id, problem.number)) *)(@ endblock checkdigit @)%
             }%
         }%
         \hspace{2pt}
         \rotatebox{90}{%
             \hspace{(* competition.tearoff.barcode_space *)mm}
             \includegraphics[%
-                width=76mm, height=14mm,
+                width=50mm, height=14mm,
                 keepaspectratio=false,
                 page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
                 \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
