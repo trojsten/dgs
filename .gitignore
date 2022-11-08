@@ -10,6 +10,7 @@
 *.synctex
 *.pyc
 *__pycache__*
+*.dblite
 input/
 output/
 source

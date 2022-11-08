@@ -38,10 +38,10 @@ def main():
     path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{round}"
     path_fragment_remote = f"{remote_seminar}/{args.volume}/{args.part}/{round}"
 
-    # Delete the temporary directory
+    # delete the temporary directory
     os.system("rm -rf tasks")
 
-    # Copy HTML files
+    # copy HTML files
     for local, remote in (('problem', 'zadania'), ('solution', 'vzoraky')):
         for problem in range(1, count + 1):
             pfl = f"{path_fragment_local}/{problem:02d}"
@@ -49,18 +49,18 @@ def main():
                 f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html " \
                 f"tasks/{path_fragment_remote}/{remote}/html/prikl{problem}.html")
 
-    # Copy pdf files
+    # copy pdf files
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/problems.pdf tasks/{path_fragment_remote}/zadania/zadania.pdf")
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
 
-    # Copy pictures
+    # copy pictures
     fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
         rf"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
         rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server and delete
     if not args.dry_run:
-        fire(f"rsync -rzvhPL --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb")
+        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb")
 
     fire("rm -rf tasks")
 
