@@ -218,11 +218,11 @@ output/naboj/%/cover.pdf: \
 
 # All targets for <language>
 output/naboj/%: \
-	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/answers.pdf \
 	output/naboj/$$*/answers-modulo.pdf \
 	output/naboj/$$*/constants.pdf \
 	output/naboj/$$*/cover-print.pdf \
+	output/naboj/$$*/booklet-print.pdf \
 	output/naboj/$$*/instructions.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;

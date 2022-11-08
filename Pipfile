@@ -4,12 +4,12 @@ name = "pypi"
 url = "https://pypi.org/simple"
 
 [requires]
-python_version = "3.10"
+python_version = "3.11"
 
 [dev-packages]
 
 [packages]
-colorama = ">=0.4.3"
+colorama = ">=0.4.6"
 ply = ">=3.11"
 "Jinja2" = ">=2.10.1"
 PyYAML = ">=5.4"
@@ -22,3 +22,4 @@ pandoc-tablenos = "*"
 pandoc-secnos = "*"
 dotmap = "*"
 numpy = "*"
+scons = "*"
