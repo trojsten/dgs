@@ -40,8 +40,7 @@ def scan_jinja_extend(node, env, path, arg):
 
 jinja_scanner = Scanner(function=scan_jinja_extend, skeys=['.tex'])
 
-
-VariantDir('input', 'source')
+VariantDir('build', 'source')
 
 seminar_problems = [booklet.replace('source/', 'output/').replace('meta.yaml', 'problems.pdf') for booklet in find_booklets()]
 
