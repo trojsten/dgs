@@ -37,3 +37,6 @@ class Crawler():
 
     def subdirs(self):
         return [child.name for child in sorted(self.root.iterdir()) if child.is_dir()]
+
+    def __str__(self):
+        return f"Crawler at {self.root}"

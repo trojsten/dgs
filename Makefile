@@ -18,7 +18,7 @@ c_default	:= $(shell tput sgr0; tput setaf 15)
 # xelatex(module)
 # Compiles a selected target
 define xelatex
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -interaction=nonstopmode input/$(1)/$*/$(basename $(notdir $@)).tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode input/$(1)/$*/$(basename $(notdir $@)).tex
 endef
 
 # doubletex(module)

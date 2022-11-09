@@ -41,13 +41,14 @@ class ContextCompetition(ContextNaboj):
 class ContextVolume(ContextNaboj):
     def __init__(self, root, competition, volume):
         super().__init__()
-        self.id = '{:02d}'.format(volume)
+        self.id = f'{volume:02d}'
         self.load_meta(root, competition, volume) \
             .add_id(self.id) \
             .add_number(volume)
 
         self.add({'problems': context.add_numbers(self.data['problems'], 1)})
         self.add({'problems_modulo': context.split_mod(self.data['problems'], self.data['evaluators'], 1)})
+        self.add_subdirs(ContextVenue, 'venues', (root, competition, volume), (root, competition, volume, 'venues'))
 
 
 class ContextLanguage(ContextNaboj):
