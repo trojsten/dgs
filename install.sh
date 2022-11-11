@@ -1,3 +1,5 @@
 #!/bin/bash
 
-ln -s `kpsewhich -var-value=TEXMFHOME`/dgs.cls core/dgs.cls
+DIR=$(dirname $0)
+
+ln -s $PWD/core/tex/dgs.cls `kpsewhich -var-value=TEXMFHOME`/tex/latex/dgs.cls

@@ -18,7 +18,7 @@ c_default	:= $(shell tput sgr0; tput setaf 15)
 # xelatex(module)
 # Compiles a selected target
 define xelatex
-	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode input/$(1)/$*/$(basename $(notdir $@)).tex
+	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
 endef
 
 # doubletex(module)
@@ -34,19 +34,19 @@ endef
 include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
-input/%.tex: source/%.md
+build/%.tex: source/%.md
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	python3 core/pandoc-convert.py latex $(lang) $< $@ || exit 1;
 
 # Copy TeX files from source to input
-input/%.tex: source/%.tex
+build/%.tex: source/%.tex
 	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 # Convert SVG image to PDF (for XeLaTeX output)
-input/%.pdf: source/%.svg
+build/%.pdf: source/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
@@ -54,31 +54,31 @@ input/%.pdf: source/%.svg
 	mv $@-crop $@
 
 # Render gnuplot file to PDF (for XeLaTeX)
-input/%.pdf: input/%.gp
+build/%.pdf: build/%.gp
 	@echo -e '$(c_action)[gnuplot] Rendering file $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 
 # Copy PDF file (for XeLaTeX)
-input/%.pdf: source/%.pdf
+build/%.pdf: source/%.pdf
 	@echo -e '$(c_action)Copying PDF file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 # Copy PNG file (to input)
-input/%.png: source/%.png
+build/%.png: source/%.png
 	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 # Copy JPG file (to input)
-input/%.jpg: source/%.jpg
+build/%.jpg: source/%.jpg
 	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 # Copy DAT file (to input)
-input/%.dat: source/%.dat
+build/%.dat: source/%.dat
 	@echo -e '$(c_action)Copying data file $(c_filename)$<$(c_action) to file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
@@ -96,11 +96,11 @@ output/%.png: source/%.png
 	cp $< $@
 
 # Render gnuplot file to PNG (for web)
-output/%.png: input/%.gp
+output/%.png: build/%.gp
 	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(subst output/,input/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
-	cp $(subst output/,input/,$@) $@
+	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cp $(subst output/,build/,$@) $@
 
 # Copy JPG (for web)
 output/%.jpg: source/%.jpg
@@ -118,18 +118,18 @@ output/%.html: source/%.md
 .SECONDEXPANSION:
 
 # Copy Gnuplot file to input, along with all of its possible .dat prerequisites
-input/%.gp:\
+build/%.gp:\
 	source/%.gp\
-	$$(subst source/,input/,$$(wildcard $$(dir source/%.gp)*.dat))
+	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat))
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Copying gnuplot file $(c_filename)$<$(c_action):$(c_default)'
 	cp $< $@
 
 %/copy-static: \
-	$$(wildcard $$(subst input/,source/,$$*)/.static/*)
+	$$(wildcard $$(subst build/,source/,$$*)/.static/*)
 	@echo -e '$(c_action)Copying static files for $(c_filename)$*$(c_action):$(c_default)'
 	@mkdir -p $(dir $@).static/
-	cp -r $(subst input/,source/,$*)/.static/ $*/
+	cp -r $(subst build/,source/,$*)/.static/ $*/
 
 
 output/%/clean:
@@ -137,12 +137,12 @@ output/%/clean:
 
 output/%/distclean: \
 	output/%/clean
-	rm -rf input/$*/
+	rm -rf build/$*/
 
 
 clean:
 	@echo -e '$(c_action)Clean:$(c_default)'
-	rm -rf input/
+	rm -rf build/
 
 distclean: clean
 	@echo -e '$(c_action)Dist clean:$(c_default)'

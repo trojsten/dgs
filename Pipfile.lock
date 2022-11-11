@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a4f216c9486a3b2438a53ce7ebb1e9525d1c4fb345856a136172b0ce84c5dbdc"
+            "sha256": "05f41e077673a524b08474d3bdeba337cc8caaa088b25191b1e2827536603210"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,21 @@
         ]
     },
     "default": {
+        "argparse": {
+            "hashes": [
+                "sha256:62b089a55be1d8949cd2bc7e0df0bddb9e028faefc8c32038cc84862aefdd6e4",
+                "sha256:c31647edb69fd3d465a847ea3157d37bed1f95f19760b11a47aa91c04b666314"
+            ],
+            "version": "==1.4.0"
+        },
+        "argparsedirs": {
+            "hashes": [
+                "sha256:4e8c05cc61ee89a9e0e75b0acc42b9c147f5c338c5d5475dadb228e9ffd4e238",
+                "sha256:755990cfb9c84342f94d18470737ec1b73cff5f427bb255a20d5b89960d6fd31"
+            ],
+            "index": "pypi",
+            "version": "==0.0.5"
+        },
         "colorama": {
             "hashes": [
                 "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44",
@@ -253,6 +268,22 @@
             ],
             "index": "pypi",
             "version": "==6.0"
+        },
+        "scons": {
+            "hashes": [
+                "sha256:7703c4e9d2200b4854a31800c1dbd4587e1fa86e75f58795c740bcfa7eca7eaa",
+                "sha256:cbbd73b83cf85f1aaaf986370359de1bbfd3af97a765cb3554734f6dcec734e1"
+            ],
+            "index": "pypi",
+            "version": "==4.4.0"
+        },
+        "setuptools": {
+            "hashes": [
+                "sha256:d0b9a8433464d5800cbe05094acf5c6d52a91bfac9b52bcfc4d41382be5d5d31",
+                "sha256:e197a19aa8ec9722928f2206f8de752def0e4c9fc6953527360d1c36d94ddb2f"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==65.5.1"
         }
     },
     "develop": {}

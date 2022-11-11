@@ -1,17 +1,17 @@
 .SECONDEXPANSION:
 
-input/seminar/%/copy-static:
+build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
-	cp -r source/seminar/$*/.static/ input/seminar/$*/
+	cp -r source/seminar/$*/.static/ build/seminar/$*/
 
-input/seminar/%/intro.tex input/seminar/%/rules.tex: \
+build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $@)
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build/volume.py 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
 
-input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solutions-full.tex input/seminar/%/instagram.tex: \
+build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
 	modules/seminar/templates/$$(notdir $@) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
@@ -20,9 +20,9 @@ input/seminar/%/problems.tex input/seminar/%/solutions.tex input/seminar/%/solut
 	python3 ./modules/seminar/build/round.py 'source/seminar/' 'modules/seminar/templates/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
-input/seminar/%/semester.tex: \
-	input/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
-	input/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/rules.tex \
+build/seminar/%/semester.tex: \
+	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
+	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/rules.tex \
 	$$(wildcard source/seminar/$$*/*/*/problem.md) \
 	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
@@ -31,7 +31,7 @@ input/seminar/%/semester.tex: \
 	@mkdir -p $(dir $@)
 	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
-input/seminar/%/invite.tex: \
+build/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $@) \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
@@ -39,12 +39,12 @@ input/seminar/%/invite.tex: \
 	python3 modules/seminar/build/invite.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
 # competition/volume/semester/round
-input/seminar/%/pdf-prerequisites: \
-	$$(subst $$(cdir),,$$(abspath input/seminar/$$*/../../../copy-static)) \
-	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
-	$$(subst source/,input/,$$(wildcard source/seminar/$$*/*/*.png)) \
-	$$(subst source/,input/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
-	$$(subst source/,input/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
+build/seminar/%/pdf-prerequisites: \
+	$$(subst $$(cdir),,$$(abspath build/seminar/$$*/../../../copy-static)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml ;
 
@@ -56,43 +56,43 @@ output/seminar/%/html-prerequisites: \
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.tex \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
-	input/seminar/$$*/pdf-prerequisites \
-	input/seminar/$$*/problems.tex
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	build/seminar/$$*/pdf-prerequisites \
+	build/seminar/$$*/problems.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/solutions.pdf: \
 	modules/seminar/templates/solutions.tex \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
-	input/seminar/$$*/pdf-prerequisites \
-	input/seminar/$$*/solutions.tex
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
+	build/seminar/$$*/pdf-prerequisites \
+	build/seminar/$$*/solutions.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/solutions-full.pdf: \
 	modules/seminar/templates/solutions-full.tex \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
-	input/seminar/$$*/pdf-prerequisites \
-	input/seminar/$$*/solutions-full.tex
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
+	build/seminar/$$*/pdf-prerequisites \
+	build/seminar/$$*/solutions-full.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/instagram.pdf: \
 	modules/seminar/templates/instagram.tex \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
-	input/seminar/$$*/pdf-prerequisites \
-	input/seminar/$$*/instagram.tex
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	build/seminar/$$*/pdf-prerequisites \
+	build/seminar/$$*/instagram.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/semester.pdf: \
 	modules/seminar/templates/semester.tex \
-	$$(subst source/,input/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
-	input/seminar/$$*/pdf-prerequisites \
-	input/seminar/$$*/semester.tex
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
+	build/seminar/$$*/pdf-prerequisites \
+	build/seminar/$$*/semester.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/invite.pdf:\
 	source/seminar/$$*/meta.yaml \
-	input/seminar/$$*/invite.tex
+	build/seminar/$$*/invite.tex
 	$(call doubletex,seminar)
 
 output/seminar/%/semester-print.pdf: \

@@ -4,9 +4,9 @@
 %    \pagestyle{seminar-booklet-main}
 %    \thispagestyle{seminar-booklet-first}
     \vspace*{15mm}
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/intro.tex}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/intro.tex}
     \newpage
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/rules.tex}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/rules.tex}
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage

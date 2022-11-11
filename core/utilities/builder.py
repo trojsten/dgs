@@ -1,8 +1,9 @@
 import pprint
 import argparse
+import argparsedirs
 from pathlib import Path
 
-from core.utilities import colour as c, argparser, jinja, crawler
+from core.utilities import colour as c, jinja, crawler
 
 
 def empty_if_none(string):
@@ -23,9 +24,9 @@ class BaseBuilder():
 
     def create_argument_parser(self):
         self.parser = argparse.ArgumentParser(description="Prepare a DGS input dataset from repository")
-        self.parser.add_argument('launch', action=argparser.ReadableDir)
-        self.parser.add_argument('template_root', action=argparser.ReadableDir)
-        self.parser.add_argument('-o', '--output', action=argparser.WriteableDir)
+        self.parser.add_argument('launch', action=argparsedirs.ReadableDir)
+        self.parser.add_argument('template_root', action=argparsedirs.ReadableDir)
+        self.parser.add_argument('-o', '--output', action=argparsedirs.WriteableDir)
         self.parser.add_argument('-d', '--debug', action='store_true')
         self.parser.add_argument('-t', '--tree', action='store_true')
         return self.parser
@@ -45,7 +46,7 @@ class BaseBuilder():
     def path(self):
         raise NotImplementedError("Child classes of BaseBuilder must implement `path`")
 
-    def print_debug_info(self):
+    def print_debug_info(self) -> None:
         """ Prints debug info """
         print(c.act("Content templates:"))
         pprint.pprint(self.templates)
@@ -53,7 +54,7 @@ class BaseBuilder():
         print(c.act("Context:"))
         self.context.print()
 
-    def print_build_info(self):
+    def print_build_info(self) -> None:
         """ Prints build info """
         print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
 
