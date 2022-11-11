@@ -135,7 +135,7 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
-\NewExpandableDocumentCommand{\rootDirectory}{}{input}
+\NewExpandableDocumentCommand{\rootDirectory}{}{build}
 \NewExpandableDocumentCommand{\activeDirectory}{}{<undefined>}
 
 \NewExpandableDocumentCommand{\setRoot}{m}{%
