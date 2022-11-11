@@ -11,6 +11,6 @@
 *.pyc
 *__pycache__*
 *.dblite
-input/
+build/
 output/
 source
