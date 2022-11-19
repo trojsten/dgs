@@ -122,6 +122,7 @@
 \setlist[itemize]{
     topsep          =       0mm,
     itemsep         =       0mm,
+    leftmargin      =       8mm,
 }
 
 % Setup figure caption format and width
