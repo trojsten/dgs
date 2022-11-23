@@ -5,7 +5,6 @@
 \NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
 
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
-\DeclareMathOperator{\laplacian}{\Delta}
 
 \NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
 
@@ -164,10 +163,10 @@
 \NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
 \NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
-\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2][\vec{#3}]{\vec{#4}}}
+\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4 (
 \NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\times]}
-\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2][\vec{#3}]{\vec{#4}}}
+\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic loop integral
 \NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff#3}

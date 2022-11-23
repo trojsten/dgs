@@ -52,6 +52,7 @@
 \RequirePackage{pifont}
 \RequirePackage{chngcntr}
 \RequirePackage{mathtools}
+\RequirePackage{physics}
 \RequirePackage{ulem}
 \RequirePackage[weather]{ifsym}
 \RequirePackage{nth}
