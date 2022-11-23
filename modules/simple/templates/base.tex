@@ -1,0 +1,8 @@
+\documentclass[12pt, twoside]{dgs}
+
+\setActive{\rootDirectory/(* module.id *)/(* job.id *)(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/}%
+\input{core/i18n/(* i18n.language *)/override.tex}
+
+\begin{document}
+    (@ block content @)(@ endblock content @)
+\end{document}

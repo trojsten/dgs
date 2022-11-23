@@ -1,19 +1,13 @@
 (@ extends 'base.tex' @)
 
 (@ block content @)
-    \loadgeometry{main}
-    \pagestyle{main-(* competition.id *)}
-    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
-    \loadgeometry{first}
-    \afterpage{\aftergroup\restoregeometry}%
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/intro.tex}
+    \vspace*{15mm}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/intro.tex}
     \newpage
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/rules.tex}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/rules.tex}
 
     (@ for rid, round in semester.rounds.items() @)%
         \newpage
-        \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
-        \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
         {
             \section{Zadania (* round.number *). kola}%
             \centering%
@@ -26,19 +20,19 @@
         \setcounter{semester}{(* semester.number *)}%
         \setcounter{round}{(* round.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \RenewExpandableDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
+        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
 
         \subsection{%
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)}%
                 (@ if problem.categories @)%
-                \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|formatList *)%
+                \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
                 (@ endif @)
             }{%
                 (* round.number *).(* problem.number *) (* problem.title *)%
             }%
         }%
-        \protectedInput{\problemDirectory/problem.tex}%
+        \protectedInput{\activeDirectory/problem.tex}%
         (@ endfor @)
     (@ endfor @)
 (@ endblock content @)

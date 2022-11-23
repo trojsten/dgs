@@ -1,12 +1,26 @@
 [[source]]
+verify_ssl = true
 name = "pypi"
 url = "https://pypi.org/simple"
-verify_ssl = true
+
+[requires]
+python_version = "3.11"
 
 [dev-packages]
 
 [packages]
 pyyaml = "*"
-
-[requires]
-python_version = "3.7"
+colorama = ">=0.4.6"
+ply = ">=3.11"
+"Jinja2" = ">=2.10.1"
+PyYAML = ">=5.4"
+"flake8" = "*"
+python-frontmatter = "*"
+pandoc-crossref = ">=0.1.1"
+pandoc-fignos = "*"
+pandoc-eqnos = "*"
+pandoc-tablenos = "*"
+pandoc-secnos = "*"
+dotmap = "*"
+scons = "*"
+argparsedirs = "==0.0.5"

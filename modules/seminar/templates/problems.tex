@@ -1,38 +1,24 @@
-(@ extends 'base.tex' @)
+(@ extends 'base-booklets.tex' @)
 
-(@ block content @)
-    \input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/format-round.tex}
+(@ block kind @)problem(@ endblock kind @)
+(@ block kind_verbose @)Zadania(@ endblock kind_verbose @)
 
-    \loadgeometry{main}
-    \pagestyle{problems-(* competition.id *)-(* volume.id *)-(* semester.id *)-(* round.id *)}
-    \thispagestyle{first-(* competition.id *)-(* volume.id *)-(* semester.id *)}
-    \loadgeometry{first}
-    \afterpage{\aftergroup\restoregeometry}%
-
+(@ block subtitle @)
     {
-        \section{\texorpdfstring{Zadania (* round.id *). kola (* semester.genitive *) časti}{Zadania}}
         \centering
         \vspace*{-5mm}
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
+        (@ if round.deadlineAbroad is defined @) (pre zahraničie (* round.deadlineAbroad.strftime('%d. %m. %Y') *)(@ endif @)
     }
+(@ endblock subtitle @)
 
-    (@ for pid, problem in round.problems.items() @)%
-        \setcounter{volume}{(* volume.number *)}%
-        \setcounter{semester}{(* semester.number *)}%
-        \setcounter{round}{(* round.number *)}%
-        \setcounter{problem}{(* problem.number *)}%
-        \RenewExpandableDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-
-        \subsection{%
-            \texorpdfstring{%
-                \large \textbf{(* problem.title *)}%
-                (@ if problem.categories @)%
-                \normalsize \hfill kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|formatList *)%
-                (@ endif @)
-            }{%
-                (* round.number *).(* problem.number *) (* problem.title *)%
-            }%
-        }%
-        \protectedInput{\problemDirectory/problem.tex}%
-    (@ endfor @)
-(@ endblock content @)
+(@ block heading_inner @)
+    (@ if problem.pointsDescription @)%
+        \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}%
+        (@ if problem.categories @), (@ endif @)%
+    (@ endif @)%
+    (@ if problem.categories @)%
+        kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
+    (@ endif @)
+(@ endblock heading_inner @)
+>>>>>>> rework

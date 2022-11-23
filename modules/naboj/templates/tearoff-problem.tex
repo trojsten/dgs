@@ -1,0 +1,48 @@
+\setcounter{volume}{(* volume.number *)}%
+\setcounter{problem}{(@ block probnum @)(* problem.number *)(@ endblock probnum @)}%
+\setcounter{equation}{0}%
+\setcounter{table}{0}%
+\setcounter{figure}{0}%
+
+(@ block activate @)
+    \input{core/i18n/(* team.language *)/override.tex}
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
+(@ endblock activate @)
+
+\begin{minipage}[t][(* competition.tearoff.height *)mm][t]{\textwidth}%
+    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.85\linewidth}%
+        (@ block main @)
+            \vspace{0pt}%
+            \subsection{\texorpdfstring{(* problem.number *)}{(* team.id *) (* problem.number *). (* problem.id *)}}%
+            \setlength{\parskip}{6pt}
+            \protectedInput{\activeDirectory/problem.tex}%
+        (@ endblock main @)
+    \end{minipage}%
+    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.149\linewidth}
+        \vspace{0mm}%
+        \hspace{4mm}%
+        \rotatebox{90}{%
+            \hspace{(* competition.tearoff.team_space *)mm}%
+            \textsf{%
+                \fontsize{18}{0}\selectfont (* team.id[:4] *)%
+                \textbf{\fontsize{28}{0}\selectfont (* team.id[4:] *)}%
+                \fontsize{18}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
+                \fontsize{18}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.id, problem.number)) *)(@ endblock checkdigit @)%
+            }%
+        }%
+        \hspace{2pt}
+        \rotatebox{90}{%
+            \hspace{(* competition.tearoff.barcode_space *)mm}
+            \includegraphics[%
+                width=50mm, height=14mm,
+                keepaspectratio=false,
+                page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
+                \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
+            }%
+            \hspace{(* competition.tearoff.barcode_space *)mm}
+        }%
+    \end{minipage}
+
+    {\small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.id *)}: (* team.name *)}
+\end{minipage}%
+

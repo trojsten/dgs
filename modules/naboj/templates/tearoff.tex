@@ -1,39 +1,25 @@
 (@ extends 'base-venues.tex' @)
 
 (@ block content @)
-    \pagestyle{tearoff}    
-    (@ for team3 in venue.teams3 @)
+    \newgeometry{
+        left        = 12mm,
+        right       = 5mm,
+        bottom      = 3mm,
+        top         = 0mm,
+    }
+    \pagenumbering{gobble}
+    \pagestyle{tearoff}
+
+    (@ for team_group in venue.teams_grouped @)
         (@ for problem in volume.problems @)
-            (@ for team in team3 @)%
-                \setcounter{volume}{(* volume.number *)}%
-                \setcounter{problem}{(* problem.number *)}%
-                \setcounter{team}{(* team.id *)}%
-                \RenewDocumentCommand{\problemDirectory}{}{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* team.language *)/(* problem.id *)}%
-                \begin{minipage}[t][91mm][t]{\textwidth}%
-                    \begin{minipage}[t][81mm][t]{0.875\linewidth}\vspace{0pt}%
-                        \subsection{(* problem.number *)}%
-                        \setlength{\parskip}{6pt}
-                        \protectedInput{\problemDirectory/problem.tex}%
-                    \end{minipage}%
-                    \begin{minipage}[t][81mm][t]{0.125\linewidth}\vspace{0pt}%
-                        \hspace{2mm}
-                        \rotatebox{90}{%
-                            \hspace{16mm}
-                            \textsf{\fontsize{20}{0}\selectfont(* '%03d'|format(venue.number) *)\fontsize{25}{0}\selectfont(* '%03d'|format(team.id) *)\fontsize{20}{0}\selectfont(* '%03d'|format(problem.number) *)}
-                        }%
-                        \hspace{1mm}
-                        \rotatebox{90}{%
-                            \includegraphics[%
-                                width = 70mm, height = 15mm, page = (* team.number * volume.problems|length + problem.number *)]{%
-                                \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
-                            }%
-                            \hspace{8mm}%
-                        }%
-                    \end{minipage}
-                    {\small (* i18n.get(team.language).team *) \textbf{(* team.id *)}: (* team.name *)}
-                \end{minipage}%
-                (@ if loop.last @)\newpage(@ else @)\\(@ endif @)
+            (@ for team in team_group @)%
+                (@ include 'tearoff-problem.tex' @)
+                (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
             (@ endfor @)
+        (@ endfor @)
+        (@ for team in team_group @)%
+            (@ include 'tearoff-bottom.tex' @)
+            (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
         (@ endfor @)
     (@ endfor @)
 (@ endblock @)

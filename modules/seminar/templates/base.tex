@@ -1,19 +1,108 @@
-\documentclass[12pt, twoside]{article}
+\documentclass[12pt, twoside]{dgs}
 
-\input{core/core.tex}
-\input{core/format.tex}
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 75pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % we wish to include header and footer into page dimensions
+}
+\savegeometry{firstpage}
 
-\input{input/(* module.id *)/format-root.tex}
-\input{input/(* module.id *)/(* competition.id *)/static/format-override.tex}
-\input{input/(* module.id *)/(* competition.id *)/format-competition.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/format-volume.tex}
-\input{input/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/format-semester.tex}
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 20pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,                                        % we wish to include header and footer into page dimensions
+}
+\savegeometry{main}
+
+\fancypagestyle{seminar}{
+    \titleformat{\section}[hang]{\centering\LARGE}{}{0pt}{}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titlespacing{\section}{0pt}{8pt}{8pt}
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+    \titlespacing{\paragraph}{0pt}{8pt}{0pt}
+}
+
+\fancypagestyle{seminar-booklet-body}{
+    \pagestyle{seminar}
+
+    \fancyhead[LO,RE]{\raisebox{(* competition.hacks.smallLogoRaise *)}{%
+        \includegraphics[keepaspectratio=true, height=6mm]{%
+            build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
+        }%
+    }
+    \fancyhead[LE,RO]{\textit{(* competition.full.nominative *)}}
+    \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
+    \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
+}
+
+\fancypagestyle{seminar-booklet-rules}{%
+    \pagestyle{main}
+    \fancyhead[LE,RO]{\textit{Pravidlá}}
+}
+
+\fancypagestyle{seminar-booklet-first}{%
+    \pagestyle{seminar}
+
+    \fancyhead[L]{
+        \begin{minipage}{0.15\textwidth}
+            \flushleft
+            \includegraphics[height = 20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+            \vspace{16pt}
+        \end{minipage}
+    }
+    \fancyhead[C]{
+        \begin{minipage}{0.7\textwidth}
+            \centering
+            \vspace{4pt}
+            {\Large (* competition.full.nominative *)} \\[4pt]
+            {\large (* volume.number|roman *). ročník, (* volume.number + competition.founded - 1 *)/(* volume.number + competition.founded *)} \\[8pt]
+            {%
+                \footnotesize (* competition.short *), (* competition.organisation.department.short *) %
+                (* competition.organisation.faculty.short *), (* competition.organisation.address *)%
+            }\\[2pt]
+            \vspace{6pt}
+        \end{minipage}
+    }
+    \fancyhead[R]{
+        \begin{minipage}{0.2\textwidth}
+            \flushright
+            \includegraphics[width = 30mm, keepaspectratio = true]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}\\[0pt]
+            \vspace{4pt}
+        \end{minipage}
+    }
+    \fancyfoot[LO,RE]{\href{mailto:(* competition.email *)}{\texttt{(* competition.email *)}}}
+    \fancyfoot[LE,RO]{\URL{(* competition.URL *)}}
+}
+
+\numberwithin{equation}{subsection}
+\numberwithin{figure}{subsection}
+
+% Include overrides specific to this seminar instance from its static file (in the repository)
+\input{core/i18n/(* competition.language *)/override.tex}
+\input{build/(* module.id *)/(* competition.id *)/.static/format-override.tex}
+
+(@ block specific @)(@ endblock @)
+
+(@ block format @)(@ endblock @)
 
 \newcounter{volume}
 \newcounter{semester}
 \newcounter{round}
 \newcounter{problem}
- 
+
 \begin{document}
     (@ block content @)(@ endblock @)
 \end{document}

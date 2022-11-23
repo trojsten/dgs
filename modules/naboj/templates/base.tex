@@ -1,16 +1,15 @@
-\documentclass[12pt, twoside]{article}
+\documentclass[(@ block documentclass @)twoside(@ endblock @)]{dgs}
 
-\input{core/core.tex}
-\input{core/format.tex}
-\input{input/(* module.id *)/(* competition.id *)/static/format-override.tex}
-
+\input{build/(* module.id *)/(* competition.id *)/.static/format-override.tex}
 (@ block specific @)(@ endblock @)
 
-\newcounter{volume}
-\newcounter{problem}
+\newcounter{volume}[section]
+\newcounter{problem}[section]
 
-(@ block extras @)(@ endblock @)
- 
+\renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
+\renewcommand{\thefigure}{\arabic{problem}.\arabic{figure}}
+\renewcommand{\thetable}{\arabic{problem}.\arabic{table}}
+
 \begin{document}
     (@ block content @)(@ endblock @)
 \end{document}

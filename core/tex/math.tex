@@ -1,0 +1,315 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
+\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
+\NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
+\NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
+
+\DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
+
+\NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
+
+\DeclareMathOperator{\Grad}{\del\!}
+\DeclareMathOperator{\GradT}{grad}
+\NewDocumentCommand{\GradV}{m}{\Grad{\vec{#1}}}
+\NewDocumentCommand{\GradTV}{m}{\GradT{\vec{#1}}}
+
+\DeclareMathOperator{\Div}{\del\cdot}
+\DeclareMathOperator{\DivT}{div}
+\NewDocumentCommand{\DivV}{m}{\Div{\vec{#1}}}
+\NewDocumentCommand{\DivTV}{m}{\DivT{\vec{#1}}}
+
+\DeclareMathOperator{\Rot}{\del\times}
+\DeclareMathOperator{\RotT}{rot}
+\NewDocumentCommand{\RotV}{m}{\Rot{\vec{#1}}}
+\NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
+
+\DeclareMathOperator{\atantwo}{atan2}
+
+\DeclareMathOperator{\maxop}{max\ }
+\DeclareMathOperator{\minop}{min\ }
+
+\DeclareMathOperator{\LXor}{\quad\lxor\quad}
+\DeclareMathOperator{\LOr}{\quad\lor\quad}
+\DeclareMathOperator{\LAnd}{\quad\land\quad}
+\DeclareMathOperator{\LNand}{\quad\lnand\quad}
+
+\DeclareMathOperator{\sinc}{sinc}
+\DeclareMathOperator{\hav}{hav}
+
+\NewDocumentCommand{\Diff}{O{}}{%
+    \IfNoValueTF{#1}{\diff}{\diff^{#1}}%
+}
+
+% Inner derivative with any differential symbol
+\makeatletter
+\ExplSyntaxOn
+\NewDocumentCommand{\SetDerivativeFrac@}{m}{
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+}
+
+\NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
+    \SetDerivativeFrac@{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3#4}{\cdiff{#5}{#3}}%
+    }{%
+        \frac@{#3^{#2}#4}{\cdiff{#5}{#3}}%
+    }%
+}
+
+\NewDocumentCommand{\DerivativeParentheses@}{d<> o D<>{\diff} m m}{%
+    \SetDerivativeFrac@{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#5}\left(#4\right)%
+    }{%
+        \frac@{#3^{#2}}{#3#5^{#2}}\left(#4\right)%
+    }%
+}
+
+\NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#4}%
+    }{%
+        \frac@{#3^{#2}}{#3#4^{#2}}%
+    }%
+}
+\ExplSyntaxOff
+
+% \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\udiff>{#3}{#4}}
+\newcommand*\Drv{\Derivative}
+\newcommand*\PDrv{\PDerivative}
+\newcommand*\FDrv{\FDerivative}
+\newcommand*\UDrv{\UDerivative}
+
+% \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\diff>{#3}}
+\NewDocumentCommand{\PDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\pdiff>{#3}}
+\NewDocumentCommand{\FDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\fdiff>{#3}}
+\NewDocumentCommand{\UDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\udiff>{#3}}
+\newcommand*\DrvE{\DerivativeEmpty}
+\newcommand*\PDrvE{\PDerivativeEmpty}
+\newcommand*\FDrvE{\FDerivativeEmpty}
+\newcommand*\UDrvE{\UDerivativeEmpty}
+
+% \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\udiff>{#3}{#4}}
+\newcommand*\DrvP{\DerivativeParen}
+\newcommand*\PDrvP{\PDerivativeParen}
+\newcommand*\FDrvP{\FDerivativeParen}
+\newcommand*\UDrvP{\UDerivativeParen}
+
+% \DerivativeEvaluate[order]{what}{by-what}{where}
+% \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
+    \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+}%
+
+% \PartialDerivativeEvaluate[order]{what}{by-what}{where}
+% \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
+    \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
+}%
+
+\ExplSyntaxOn
+\NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}
+
+\cs_new_protected:Npn \dgs_split_diff:nnn #1 #2 #3 {
+    \seq_set_split:Nnn \l_split_args_seq{#1}{#2}
+    \seq_map_inline:Nn \l_split_args_seq {#3 ##1}
+}
+
+\NewDocumentCommand{\Tuple}{O{;} >{\SplitList{;}} m}{%
+    \def\itemdelim@{\def\itemdelim@{#1}}%
+    {%
+        \left(\ProcessList{#2}{\insert@separator}\right)%
+    }%
+}
+
+\NewDocumentCommand{\Coord}{O{;} >{\SplitList{;}} m}{%
+    \def\itemdelim@{\def\itemdelim@{#1}}%
+    {%
+        \left[\ProcessList{#2}{\insert@separator}\right]%
+    }%
+}
+
+\newcommand\insert@separator[1]{\itemdelim@ #1}
+
+\seq_new:N \l_split_args_seq
+\ExplSyntaxOff
+
+% Generic 1D integral
+\NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
+% Integral from #1 to #2 of #3 with respect to #4
+\NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
+% Empty integral for operations on expressions
+\NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
+\NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
+% Integral from #1 to #2 of dot product of #3 and d#4
+\NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
+\NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
+% Integral from #1 to #2 of cross product of #3 and d#4 (
+\NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\times]}
+\NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
+
+% Generic loop integral
+\NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff#3}
+% Loop integral over #1
+\NewDocumentCommand{\OInt}{O{} m m}{\OInt@[#1]{#2}{#3}<>}
+% Loop integral over #1 of dot product of #2 and d#3 (for instance magnetic B dl)
+\NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}<\cdot>}
+\NewDocumentCommand{\OIntDV}{O{} m m}{\OIntD[#1]{\vec{#2}}{\vec{#3}}}
+% Loop integral over #1 of cross product of #2 and d#3 (for instance magnetic B dl)
+\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}<\cross>}
+\NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
+
+% Generic 2D integral
+\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
+% Surface integral over single differential
+\NewDocumentCommand{\IIntI@}{O{} O{} m m O{}}{\iint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\IIntI}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}}
+% Surface integral of dot product over single differential
+\NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\IIntDV}{O{} O{} m m}{\IIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
+% Surface integral of cross product over single differential
+\NewDocumentCommand{\IIntC}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\IIntCV}{O{} O{} m m}{\IIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
+
+% Surface integral over single differential
+\NewDocumentCommand{\OIIntI@}{O{} O{} m m O{}}{\oiint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
+% Surface integral of dot product over single differential
+\NewDocumentCommand{\OIIntD}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
+\NewDocumentCommand{\OIIntDV}{O{} O{} m m}{\OIIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
+% Surface integral of cross product over single differential
+\NewDocumentCommand{\OIIntC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
+\NewDocumentCommand{\OIIntCV}{O{} O{} m m}{\OIIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
+
+% Generic 3D integral
+\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
+% Volume integral over single differential
+\NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
+
+\NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
+\NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
+\NewDocumentCommand{\BoldVector}{m}{\boldsymbol{#1}}
+\NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
+\NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
+\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
+
+\NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
+\NewDocumentCommand{\EvalB}{m m O{}}{\left[#1\right]_{#2}^{#3}}
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
+\NewDocumentCommand{\Mean}{m}{\overline{#1}}
+
+\NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
+\NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
+
+\NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
+\NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
+
+\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
+\NewDocumentCommand{\Exp}{m}{e^{#1}}
+\NewDocumentCommand{\LogTen}{}{\log_{10}}
+\NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
+\NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
+\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
+\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
+
+\NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
+
+\NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+
+\DeclarePairedDelimiter\abs@{\lvert}{\rvert}
+\NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
+
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
+
+\NewDocumentCommand{\Angle}{}{\sphericalangle}
+
+\NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \vert #3)}
+
+\NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
+\NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
+\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
+
+\NewDocumentCommand{\Set}{m O{} O{}}{%
+    \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+}
+
+\NewDocumentCommand{\Operation}{+m}{%
+    & \qquad \bigg/ #1%
+}
+
+% Number sets
+\NewDocumentCommand{\Natural}{}{\mathbb{N}}
+\NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
+\NewDocumentCommand{\Integer}{}{\mathbb{Z}}
+\NewDocumentCommand{\Rational}{}{\mathbb{Q}}
+\NewDocumentCommand{\Real}{}{\mathbb{R}}
+\NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
+\NewDocumentCommand{\Complex}{}{\mathbb{C}}
+
+% Functions
+\NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
+
+% Matrices
+\NewDocumentCommand{\mat}{m}{\symbf{#1}}
+\NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
+\NewDocumentCommand{\Inv}{m}{#1^{-1}}
+
+% Vertical-style determinant
+\NewDocumentCommand{\Det}{m}{\left|#1\right|}
+% Text determinant
+\DeclareMathOperator{\DetT}{det}
+% Unit matrix
+\NewDocumentCommand{\Eye}{}{\mathbb{I}}
+
+% Intervals
+\NewDocumentCommand{\IntervalCC}{m m}{\left[#1; #2\right]}
+\NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
+\NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
+\NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
+
+\NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
+
+% Fix weird font choices
+\let\tmp\phi
+\let\phi\varphi
+\let\varphi\tmp
+\let\tmp\epsilon
+\let\epsilon\varepsilon
+\let\varepsilon\tmp
+
+% Patch \left and \right with package mleftright
+\let\left\mleft
+\let\right\mright
+\makeatother

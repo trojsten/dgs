@@ -1,0 +1,47 @@
+% Setup fonts -- see fontspec/mathspec documentation.
+% Fonts are loaded from .ttf and .otf files in the core/fonts/ directory. We NEVER use system fonts.
+
+% Change allocator to allow more than 16 alphabets per document
+\makeatletter
+    \def\new@mathgroup{\alloc@8\mathgroup\mathchardef\@cclvi}
+    \patchcmd{\document@select@group}{\sixt@@n}{\@cclvi}{}{}
+    \patchcmd{\select@group}{\sixt@@n}{\@cclvi}{}{}
+\makeatother
+
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Ligatures       = TeX
+}
+
+\setmainfont[
+    Path            = core/fonts/MinionPro/ ,
+    Extension       = .otf ,
+    UprightFont     = *-Regular ,
+    BoldFont        = *-Bold ,
+    ItalicFont      = *-It ,
+    BoldItalicFont  = *-BoldIt
+]{MinionPro}
+
+\setmonofont[
+    Path            = core/fonts/UbuntuMono/ ,
+    Scale           = 0.9,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi
+]{UbuntuMono}
+
+\setsansfont[
+    Path            = core/fonts/ ,
+    Scale           = 0.9,
+    Extension       = .ttf ,
+    UprightFont     = *-r ,
+    BoldFont        = *-b ,
+    ItalicFont      = *-i ,
+    BoldItalicFont  = *-bi
+]{verdana}
+
+\DeclareFontFamily{U}{skulls}{}
+\DeclareFontShape{U}{skulls}{m}{n}{ <-> skull }{}
+\newcommand{\skull}{\text{\usefont{U}{skulls}{m}{n}\symbol{'101}}}

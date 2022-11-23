@@ -1,0 +1,19 @@
+General
+=======
+
+* check and fix possible math issues when scaling fonts
+
+
+Myriad Pro
+==========
+
+* accent positions of mathrm letters
+* kerning
+* integrals including integral from Myriad Pro fonts
+
+
+Cronos Pro
+==========
+
+* some kind of math support
+* kerning

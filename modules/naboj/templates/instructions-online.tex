@@ -1,0 +1,14 @@
+(@ extends 'base-languages.tex' @)
+
+(@ block content @)
+    \pagestyle{instructions-online}
+    \section{(* i18n.instructions_online.title *)}
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/_extras}%
+    (@ if language.rtl @)
+        \arabicfont\setRL
+    (@ endif @)
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/instructions-online-inner.tex}
+    (@ if language.rtl @)
+        \unsetRL
+    (@ endif @)
+(@ endblock @)

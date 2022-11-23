@@ -1,0 +1,22 @@
+(@ extends 'base-languages.tex' @)
+
+(@ block content @)
+    \thispagestyle{first}
+    \afterpage{\globaldefs=1\restoregeometry}
+
+    \vspace*{19mm}
+
+    \section{(* i18n.section.answers *)}
+    \pagestyle{answers}
+    (@ for modulo in volume.problems_modulo @)
+        \newpage%
+        \section{(* i18n.section.modulo *) (* loop.index0 *)}
+        (@ for problem in modulo @)%
+            \setcounter{volume}{(* volume.number *)}%
+            \setcounter{problem}{(* problem.number *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \subsection{(* problem.number *)}%
+            \protectedInput{\activeDirectory/answer.tex}%
+        (@ endfor @)
+    (@ endfor @)
+(@ endblock @)

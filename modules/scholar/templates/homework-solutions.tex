@@ -1,0 +1,11 @@
+(@ extends 'homework-students.tex' @)
+
+(@ block solution @)
+    \paragraph{Riešenie}
+    \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+(@ endblock solution @)
+
+(@ block subsolution @)
+    \paragraph{Riešenie}
+    \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
+(@ endblock subsolution @)
