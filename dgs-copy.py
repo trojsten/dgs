@@ -3,14 +3,31 @@
 import os
 import argparse
 
+from typing import Tuple
 
-VERSION = "3.01"
-DATE = "2022-10-09"
+
+VERSION = "3.02"
+DATE = "2022-11-24"
 
 
 def fire(query):
     print(query)
     return os.system(query)
+
+
+def problem_count(seminar: str, volume: int) -> Tuple[str, int]:
+    sr = seminar
+    if seminar == 'FKS':
+        if volume < 38:
+            (sr, count) = ('FKS-old', 7)
+        else:
+            (sr, count) = ('FKS', 8)
+    elif seminar == 'FX':
+        count = 6
+    else:
+        raise ValueError(f"Unsupported combination {seminar}/{volume}")
+
+    return sr, count
 
 
 def main():
@@ -27,16 +44,13 @@ def main():
     # SuŠi hack
     round = 100 if args.round == 'outdoor' else int(args.round)
 
+    seminar_remote = args.seminar
+
     # FKS hack: volumes <= 37 are now marked as "FKS-old"
-    if args.seminar == 'FKS' and args.volume <= 37:
-        remote_seminar = "FKS-old"
-        count = 7
-    else:
-        remote_seminar = args.seminar
-        count = 8
+    seminar_remote, count = problem_count(args.seminar, args.volume)
 
     path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{round}"
-    path_fragment_remote = f"{remote_seminar}/{args.volume}/{args.part}/{round}"
+    path_fragment_remote = f"{seminar_remote}/{args.volume}/{args.part}/{round}"
 
     # delete the temporary directory
     os.system("rm -rf tasks")
@@ -58,10 +72,11 @@ def main():
         rf"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
         rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
-    # rsync everything to server and delete
+    # rsync everything to server
     if not args.dry_run:
         fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb")
 
+    # delete the temporary structure
     fire("rm -rf tasks")
 
 
