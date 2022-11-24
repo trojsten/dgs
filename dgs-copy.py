@@ -52,7 +52,7 @@ def main():
     path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{round}"
     path_fragment_remote = f"{seminar_remote}/{args.volume}/{args.part}/{round}"
 
-    # delete the temporary directory
+    # delete the temporary directory if present
     os.system("rm -rf tasks")
 
     # copy HTML files
@@ -74,7 +74,7 @@ def main():
 
     # rsync everything to server
     if not args.dry_run:
-        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb")
+        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb/")
 
     # delete the temporary structure
     fire("rm -rf tasks")
