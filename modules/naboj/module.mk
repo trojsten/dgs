@@ -9,11 +9,8 @@ source/naboj/%/i18n: \
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # % <competition>/<volume>/languages/<language>/<problem>
 build/naboj/%.tex: source/naboj/%.md
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
 	$(eval words := $(subst /, ,$*))
-	python3 core/pandoc-convert.py latex $(word 4,$(words)) $< $@ || exit 1;
-
+	$(call pandoctex,$(word 4,$(words)))
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/build-language: \

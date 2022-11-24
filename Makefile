@@ -6,8 +6,8 @@ cdir := $(dir $(path))
 
 .SECONDARY:
 
-version =   '4.00'
-date =      '2021-04-08'
+version =   '4.01'
+date =      '2022-11-25'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
@@ -19,6 +19,18 @@ c_default	:= $(shell tput sgr0; tput setaf 15)
 # Compiles a selected target
 define xelatex
 	@texfot xelatex -file-line-error -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
+endef
+
+define pandoctex
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	python3 core/pandoc-convert.py latex $(1) $< $@ || exit 1;
+endef
+
+define pandochtml
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	python3 core/pandoc-convert.py html $(1) $< $@ || exit 1;
 endef
 
 # doubletex(module)
@@ -35,9 +47,7 @@ include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 build/%.tex: source/%.md
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py latex $(lang) $< $@ || exit 1;
+	$(call pandoctex,sk)
 
 # Copy TeX files from source to input
 build/%.tex: source/%.tex
@@ -108,12 +118,9 @@ output/%.jpg: source/%.jpg
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-# DeGeŠ convert Markdown to web (for web)
+# DeGeŠ convert Markdown to HTML (for web)
 output/%.html: source/%.md
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py html $(lang) $< $@ || exit 1;
-
+	$(call pandochtml,sk)
 
 .SECONDEXPANSION:
 
