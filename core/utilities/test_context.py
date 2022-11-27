@@ -1,6 +1,7 @@
 import pytest
 from .context import Context, split_mod, split_div, split_callback, is_prime
 from .filters import render_list, roman, textbf
+from .dicts import merge_one, merge
 
 
 class TestContext():
@@ -78,3 +79,8 @@ class TestRoman():
 
     def test_roman_1990(self):
         assert roman(1990) == 'MCMXC'
+
+
+class TestMerge():
+    def test_merge(self):
+        assert merge({'a': 1, 'b': 2}, {'a': 3, 'c': 5}) == {'a': 3, 'b': 2, 'c': 5}

@@ -14,7 +14,7 @@ class Context():
         self.data = {}
 
     def add(self, *dictionaries):
-        """ Merge a list of dictionaries with into this context, overriding same keys """
+        """ Merge a list of dictionaries into this context, overriding same keys """
         self.data = dicts.merge(self.data, *dictionaries)
         return self
 
@@ -62,6 +62,7 @@ class Context():
         self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
 
     def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
+        """ Use a Crawler to scan the filesystem and add subdirs to this Context (they do not have to contain meta.yaml) """
         cr = crawler.Crawler(self.node_path(*root))
         self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.subdirs()]})
 

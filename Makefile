@@ -22,14 +22,14 @@ define xelatex
 endef
 
 define pandoctex
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	python3 core/pandoc-convert.py latex $(1) $< $@ || exit 1;
 endef
 
 define pandochtml
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
 	python3 core/pandoc-convert.py html $(1) $< $@ || exit 1;
 endef
 
