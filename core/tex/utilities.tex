@@ -78,5 +78,22 @@
     \\[1ex]
 }
 \char_set_catcode_end_line:n{`\^^M}
+
+% title, points-description, categories
+\NewDocumentCommand{\switch}{m m m}{%
+    \str_case:nnF{#1}{#2}{#3}%
+}
+
+\NewDocumentCommand{\PluralMG}{m}{%
+    \switch{#1}{{1}{}{2}{y}{3}{y}{4}{y}}{ov}%
+}
+
+\NewDocumentCommand{\PluralFN}{m}{%
+    \switch{#1}{{1}{a}}{e}%
+}
+
+\NewDocumentCommand{\FormatList}{m}{%
+    #1
+}
 \ExplSyntaxOff
 

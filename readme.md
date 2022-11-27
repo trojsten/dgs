@@ -1,7 +1,11 @@
-This is DGS, short for Trojsten Document Generation System (pronounced "degeš").
+This is DGS, short for Document Generation System (pronounced [degeʃ]).
 
-## Hacks
+DGS is a build system for structured documents, mostly those built on standardized
+frameworks, where the structure is always the same (or very similar) but the underlying
+data change -- such as correspondence seminar problems, competitions, lectures,
+lectures and handouts. It includes a basic support for internationalization.
 
-### Create symlinks to pictures in Náboj
-cd <volume>/languages/slovak/
-find . -name "*.svg" -exec ln -s -T ../../slovak/{} ../<language>/{} \;
+The same content can be repeatedly rendered to various templates or output formats,
+for instance XeLaTeX for printable documents and HTML for the web.
+DGS is built with Makefile, Python and XeLaTeX, and uses `pandoc` and `rsvg-convert`
+to process content.

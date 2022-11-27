@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 from pathlib import Path
 
 sys.path.append('.')
@@ -16,13 +17,14 @@ class ContextI18n(context.Context):
 class ContextI18nGlobal(context.Context):
     def __init__(self, root, competition):
         super().__init__()
-        for language in ['sk', 'cs', 'hu', 'pl', 'en', 'ru', 'fa', 'es']: # Change this to scan the i18n directory
+        languages = [x.stem for x in Path(root, competition, '.static', 'i18n').glob('*.yaml')]
+        for language in languages:
             self.absorb(language, ContextI18n(root, competition, language))
 
 
 class ContextNaboj(context.Context):
     def node_path(self, root, competition='', volume='', target_type='', target=''):
-        return Path(root, competition, f"{volume:02d}" if volume != '' else '', target_type, target)
+        return Path(root, competition, volume, target_type, target)
 
 
 class ContextModule(ContextNaboj):
@@ -41,9 +43,8 @@ class ContextCompetition(ContextNaboj):
 class ContextVolume(ContextNaboj):
     def __init__(self, root, competition, volume):
         super().__init__()
-        self.id = f'{volume:02d}'
         self.load_meta(root, competition, volume) \
-            .add_id(self.id) \
+            .add_id(volume) \
             .add_number(volume)
 
         self.add({'problems': context.add_numbers(self.data['problems'], 1)})

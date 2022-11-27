@@ -47,16 +47,16 @@ def environment(directory):
         loader=jinja2.FileSystemLoader(directory),
     )
 
-    dicts.merge(env.filters, {
+    env.filters |= {
         'roman': filters.roman,
         'format_list': filters.format_list,
         'isotex': filters.isotex,
-    })
+    }
 
-    dicts.merge(env.globals, {
+    env.globals |= {
         'checkdigit': check_digit,
         'plural': plural,
-    })
+    }
 
     return env
 
@@ -68,8 +68,8 @@ def check_digit(team: str, problem: int) -> int:
 def get_check_digit(data: str) -> int:
     try:
         digits = map(lambda x: int(x, 36), data)
-    except ValueError:
-        raise ValueError("Found invalid character in barcode")
+    except ValueError as exc:
+        raise ValueError("Found invalid character in barcode") from exc
 
     checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
     return sum(checksum) % 10
@@ -83,8 +83,9 @@ def plural(how_many, one, two, default):
     else:
         return default
 
-# Print a Jinja2 template with provided context
+
 def print_template(root, template, context, output_directory=None, new_name=None):
+    """ Print a Jinja2 template with provided context """
     template_path = f'{root}/{template}'
     output_path = sys.stdout if output_directory is None else open(os.path.join(output_directory, template if new_name is None else new_name), 'w')
     try:
@@ -98,5 +99,4 @@ def print_template(root, template, context, output_directory=None, new_name=None
         sys.exit(41)
     except jinja2.exceptions.UndefinedError as e:
         print(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
-        raise e
         sys.exit(43)

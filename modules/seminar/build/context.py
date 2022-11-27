@@ -29,7 +29,8 @@ class ContextModule(ContextSeminar):
 class ContextCompetition(ContextSeminar):
     def __init__(self, root, competition):
         super().__init__()
-        self.load_meta(root, competition).add_id(competition)
+        self.load_meta(root, competition) \
+            .add_id(competition)
 
 
 class ContextVolume(ContextSeminar):
@@ -48,6 +49,7 @@ class ContextSemester(ContextSeminar):
         self.load_meta(root, competition, volume, semester) \
             .add_id(self.id) \
             .add_number(semester)
+        # Add fancy names for the semesters
         self.add({
             'neuter': {
                 'nominative': ['zimné', 'letné'][semester - 1],
@@ -63,13 +65,7 @@ class ContextSemester(ContextSeminar):
 class ContextSemesterFull(ContextSemester):
     def __init__(self, root, competition, volume, semester):
         super().__init__(root, competition, volume, semester)
-
-        rounds = collections.OrderedDict()
-        for round in range(1, 4):
-            rn = f'{round}'
-            rounds[round] = ContextRoundFull(root, competition, volume, semester, round).data
-
-        self.add({'rounds': rounds})
+        self.add_children(ContextRoundFull, 'rounds', (root, competition, volume, semester))
 
 
 class ContextRound(ContextSeminar):
@@ -124,49 +120,24 @@ class ContextVolumeBooklet(ContextSeminar):
     def __init__(self, root, competition, volume):
         super().__init__()
         self.absorb('module', ContextModule('seminar'))
-
-        if competition is not None:
-            self.absorb('competition', ContextCompetition(root, competition))
-        if volume is not None:
-            self.absorb('volume', ContextVolume(root, competition, volume))
+        self.absorb('competition', ContextCompetition(root, competition))
+        self.absorb('volume', ContextVolume(root, competition, volume))
 
 
 class ContextSemesterBooklet(ContextSeminar):
     def __init__(self, root, competition, volume, semester):
         super().__init__()
         self.absorb('module', ContextModule('seminar'))
-
-        if competition is not None:
-            self.absorb('competition', ContextCompetition(root, competition))
-        if volume is not None:
-            self.absorb('volume', ContextVolume(root, competition, volume))
-        if semester is not None:
-            self.absorb('semester', ContextSemesterFull(root, competition, volume, semester))
+        self.absorb('competition', ContextCompetition(root, competition))
+        self.absorb('volume', ContextVolume(root, competition, volume))
+        self.absorb('semester', ContextSemesterFull(root, competition, volume, semester))
 
 
 class ContextBooklet(ContextSeminar):
     def __init__(self, root, competition, volume, semester, round):
         super().__init__()
         self.absorb('module', ContextModule('seminar'))
-
-        if competition is not None:
-            self.absorb('competition', ContextCompetition(root, competition))
-        if volume is not None:
-            self.absorb('volume', ContextVolume(root, competition, volume))
-        if semester is not None:
-            self.absorb('semester', ContextSemester(root, competition, volume, semester))
-        if round is not None:
-            self.absorb('round', ContextRoundFull(root, competition, volume, semester, round))
-
-
-class ContextInvite(ContextSeminar):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__()
-        self.absorb('module', ContextModule('seminar'))
-
-        if competition is not None:
-            self.absorb('competition', ContextCompetition(root, competition))
-        if volume is not None:
-            self.absorb('volume', ContextVolume(root, competition, volume))
-        if semester is not None:
-            self.absorb('semester', ContextSemester(root, competition, volume, semester))
+        self.absorb('competition', ContextCompetition(root, competition))
+        self.absorb('volume', ContextVolume(root, competition, volume))
+        self.absorb('semester', ContextSemester(root, competition, volume, semester))
+        self.absorb('round', ContextRoundFull(root, competition, volume, semester, round))
