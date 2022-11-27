@@ -41,6 +41,7 @@ build/seminar/%/invite.tex: \
 # competition/volume/semester/round
 build/seminar/%/pdf-prerequisites: \
 	$$(subst $$(cdir),,$$(abspath build/seminar/$$*/../../../copy-static)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
