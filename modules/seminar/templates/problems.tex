@@ -12,11 +12,19 @@
     }
 (@ endblock subtitle @)
 
+(@ block problem @)
+    \begin{seminar-problem}{(* problem.title *)}%
+        {(* problem.pointsDescription *)}%
+        {(* problem.categories|format_list *)}
+        \protectedInput{\activeDirectory/(* self.kind() *).tex}%
+    \end{seminar-problem}
+(@ endblock problem @)
+
 (@ block heading_inner @)
     (@ if problem.pointsDescription @)%
         \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}%
     (@ endif @)%
     (@ if problem.categories @)%
-        , kategóri(@ if problem.categories|length == 1 @)a(@ else @)e(@ endif @) (* problem.categories|format_list *)%
+        , kategóri(* plural(problem.categories|length, "a", "e", "e") *) (* problem.categories|format_list(func=textbf) *)%
     (@ endif @)%
 (@ endblock heading_inner @)

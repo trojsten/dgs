@@ -1,8 +1,11 @@
+from typing import Optional, Callable
+
+
 def roman(number):
-    number = int(number)
-    if number == 0:
-        return '0'
-    if number > 4000:
+    if not type(number) == int:
+        raise TypeError("Only integers between 1 and 3999 can be formatted as Roman numerals")
+
+    if number <= 0 or number > 4000:
         raise ValueError("Argument must be between 1 and 3999")
 
     ints = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
@@ -19,16 +22,16 @@ def isotex(date):
     return date.strftime('%Y--%m--%d')
 
 
-def format_list(list):
-    return render_list(list, bold=True)
+def textbf(x: str) -> str:
+    return rf"\textbf{{{x}}}"
 
 
-def render_list(items, *, bold=False):
+def render_list(items, *, func: Optional[Callable]=None):
     if not isinstance(items, list):
         items = [items]
 
-    if bold:
-        items = [f"\\textbf{{{x}}}" for x in items]
+    if func is not None:
+        items = list(map(func, items))
 
     for i, item in enumerate(items[:-2]):
         items[i] = f"{item},"

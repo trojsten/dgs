@@ -49,13 +49,14 @@ def environment(directory):
 
     env.filters |= {
         'roman': filters.roman,
-        'format_list': filters.format_list,
+        'format_list': filters.render_list,
         'isotex': filters.isotex,
     }
 
     env.globals |= {
         'checkdigit': check_digit,
         'plural': plural,
+        'textbf': filters.textbf,
     }
 
     return env
