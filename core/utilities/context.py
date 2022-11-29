@@ -10,16 +10,20 @@ from core.utilities import dicts, colour as c, crawler
 
 
 class Context():
-    def __init__(self):
-        self.data = {}
+    defaults = {}
+
+    def __init__(self, *, defaults={}):
+        self.data = self.defaults
+        self.add(defaults)
 
     def add(self, *dictionaries):
         """ Merge a list of dictionaries with into this context, overriding same keys """
         self.data = dicts.merge(self.data, *dictionaries)
         return self
 
-    def absorb(self, key, ctx):
-        """ Absorb a new context `ctx` under the key `key` """
+    def adopt(self, key, ctx):
+        """ Adopt a new child context `ctx` under the key `key` """
+        assert isinstance(ctx, Context)
         self.data[key] = dicts.merge(self.data.get(key), ctx.data)
         return self
 

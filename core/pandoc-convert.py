@@ -71,9 +71,44 @@ class Convertor():
             (r"^\\caption{}(\\label{.*})?\n", ""),
         ],
         'html': [
-            (r'<img src="(.*)" style="height:(.*)" alt="(.*)">', r'<img src="\g<1>" style="max-width: 100%; max-height: calc(1.5 * \g<2>); margin: auto; display: block;" alt="\g<3>">'),
-            (r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>', r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>'),
-        ]
+            (
+                r'<img src="(.*)" (.*)id="(.*)" style="height:([0-9.]*)mm" (.*)>',
+                r'<img src="\g<1>" \g<2>id="\g<3>" style="max-width: 100%; max-height: calc(1.7 * \g<4>mm); margin: auto; display: block;" \g<5>>',
+            ),
+            (
+                r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>',
+                r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>',
+            ),
+        ],
+    }
+
+
+    math_regexes = [
+        (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
+        (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
+    ]
+    replace_regexes = {
+        'latex': [
+            (r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}"),
+            (r"^@L\s*(.*)$", r"\g<1>"),
+            (r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}"),
+        ],
+        'html': [
+            (r"^@E\s*(.*)$", r"Error: \g<1>"),
+            (r"^@H\s*(.*)$", "\g<1>"),
+            (
+                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>jpg|png|svg)\){(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){\g<extras>}",
+            ),
+            (
+                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp)\){(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
+            ),
+            (
+                r"^!\[(?P<caption>.*)\]\(obrazky/(?P<filename>.*)\.(?P<extension>.*)\){height(?P<extras>.*)}$",
+                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){#fig:\g<filename> height\g<extras>}",
+            ),
+        ],
     }
 
     @staticmethod
@@ -105,14 +140,11 @@ class Convertor():
             (r'(\S)"', r'\g<1>' + self.quote_close),
             (r'"(\S)', self.quote_open + r'\g<1>'),
         ]
-        math_regexes = [
-            (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
-            (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
-        ]
 
         self.postprocessing = self.compile_regexes(self.postprocessing[self.args.format])
         self.quotes_regexes = self.compile_regexes(quotes_regexes)
-        self.math_regexes = self.compile_regexes(math_regexes)
+        self.math_regexes = self.compile_regexes(self.math_regexes)
+        self.replace_regexes = self.compile_regexes(self.replace_regexes[self.args.format])
 
     def run(self):
         try:
@@ -171,36 +203,25 @@ class Convertor():
             return None
 
     def filter_tags(self, line):
+        """
+            Filter by customs tags:
+            -   remove lines beginning with '%'
+            -   remove lines beginning with '@H' if not converting for HTML
+            -   remove lines beginning with '@L' if not converting for LaTeX
+        """
         if re.match(r"^%", line) or \
-            (re.match(r"^@H", line) and self.args.format == 'latex') or \
-            (re.match(r"^@L", line) and self.args.format == 'html'):
+            (re.match(r"^@H", line) and self.args.format != 'html') or \
+            (re.match(r"^@L", line) and self.args.format != 'latex'):
             return False
         return True
 
     def replace_tags(self, line):
-        if self.args.format == 'latex':
-            line = re.sub(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", line)
-            line = re.sub(r"^@L\s*(.*)$", r"\g<1>", line)
-            line = re.sub(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", line)
+        """
+            Replace custom tags and pictures
+        """
+        for regex, replacement in self.replace_regexes:
+            line = regex.sub(replacement, line)
 
-        if self.args.format == 'html':
-            line = re.sub(r"^@E\s*(.*)$", r"Error: \g<1>", line)
-            line = re.sub(r"^@H\s*(.*)$", "\g<1>", line)
-            line = re.sub(
-                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>jpg|png)\){(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){\g<extras>}",
-                line
-            )
-            line = re.sub(
-                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp|svg)\){(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
-                line
-            )
-            line = re.sub(
-                r"^!\[(?P<caption>.*)\]\(obrazky/(?P<filename>.*)\.(?P<extension>.*)\){height(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){#fig:\g<filename> height\g<extras>}",
-                line
-            )
         return line
 
     def call_pandoc(self):

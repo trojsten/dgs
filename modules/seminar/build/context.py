@@ -78,16 +78,15 @@ class ContextRound(ContextSeminar):
 
 
 class ContextRoundFull(ContextRound):
+    defaults = {
+        'instagram': {
+            'skin': 'orange',
+            'textColour': 'black',
+        }
+    }
+
     def __init__(self, root, competition, volume, semester, round):
         super().__init__(root, competition, volume, semester, round)
-
-        if not 'instagram' in self.data:
-            self.add({
-                'instagram': {
-                    'skin': 'orange',
-                    'textColour': 'black',
-                },
-            })
 
         vol = ContextVolume(root, competition, volume)
         categories = vol.data['categories']

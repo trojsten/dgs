@@ -51,8 +51,8 @@ build/seminar/%/pdf-prerequisites: \
 
 output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/seminar/$$*/*/*.svg))) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
 
 output/seminar/%/problems.pdf: \

@@ -1,9 +1,8 @@
 import pytest
 from .context import Context, split_mod, split_div, split_callback, is_prime
-from .filters import render_list, roman, textbf
 
 
-class TestContext():
+class TestSplits():
     def test_splitmod(self):
         assert split_mod(list(range(0, 12)), 3) == [[0, 3, 6, 9], [1, 4, 7, 10], [2, 5, 8, 11]]
 
@@ -24,57 +23,54 @@ class TestContext():
             split_callback(list(range(0, 12)), is_prime, 1)
 
 
-class TestFilters():
-    def test_render_list_nolist(self):
-        assert render_list('string') == "string"
+@pytest.fixture
+def context_empty():
+    return Context()
 
-    def test_render_list_empty(self):
-        assert render_list([]) == ""
+@pytest.fixture
+def context_defaults():
+    return Context(defaults={
+        'foo': 'bar',
+        'baz': 5,
+    })
 
-    def test_render_list_one(self):
-        assert render_list(["x"]) == "x"
+@pytest.fixture
+def context_old():
+    return Context(defaults=dict(boss='Dušan', pictures='Plyš', htr='Kvík'))
 
-    def test_render_list_two(self):
-        assert render_list(["x", "y"]) == "x a y"
+@pytest.fixture
+def context_new():
+    return Context(defaults=dict(boss='Marcel', pictures='Terka', nothing='Nina'))
 
-    def test_render_list_three(self):
-        assert render_list(["x", "y", "z"]) == "x, y a z"
-
-    def test_render_list_four(self):
-        assert render_list(["Hovi", "Enka", "Fek", "Lista"]) == "Hovi, Enka, Fek a Lista"
-
-    def test_render_list_wrap(self):
-        assert render_list(["Tvoja", "mama"], func=textbf) == r"\textbf{Tvoja} a \textbf{mama}"
-
-    def test_render_list_f(self):
-        assert render_list(["x", "y", "z"], func=lambda x: f'f({x})') == r"f(x), f(y) a f(z)"
+@pytest.fixture
+def context_override(context_old, context_new):
+    ctx = Context()
+    print(ctx.data)
+    ctx.adopt('fks', context_old)
+    ctx.adopt('fks', context_new)
+    return ctx
 
 
-class TestRoman():
-    def test_roman_str(self):
-        with pytest.raises(TypeError):
-            roman('ryba')
+class TestContext():
+    def test_empty(self, context_empty):
+        assert context_empty.data == {}
 
-    def test_roman_float(self):
-        with pytest.raises(TypeError):
-            roman(3.0)
+    def test_empty_nothing(self, context_defaults):
+        with pytest.raises(KeyError):
+            context_defaults.data['boo']
 
-    def test_roman_zero(self):
-        with pytest.raises(ValueError):
-            roman(0)
+    def test_default(self, context_defaults):
+        assert context_defaults.data == {'foo': 'bar', 'baz': 5}
 
-    def test_roman_too_big(self):
-        with pytest.raises(ValueError):
-            roman(123456)
+    def test_add_id(self, context_defaults):
+        context_defaults.add_id(4)
+        assert context_defaults.data['id'] == 4
 
-    def test_roman_1(self):
-        assert roman(1234) == 'MCCXXXIV'
+    def test_adopt_override(self, context_override):
+        assert context_override.data['fks']['pictures'] == 'Terka'
 
-    def test_roman_2(self):
-        assert roman(1) == 'I'
+    def test_adopt_notoverride(self, context_override):
+        assert context_override.data['fks']['htr'] == 'Kvík'
 
-    def test_roman_49(self):
-        assert roman(49) == 'XLIX'
-
-    def test_roman_1990(self):
-        assert roman(1990) == 'MCMXC'
+    def test_adopt_new(self, context_override):
+        assert context_override.data['fks']['nothing'] == 'Nina'

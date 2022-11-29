@@ -99,6 +99,12 @@ output/%.png: source/%.svg
 	@mkdir -p $(dir $@)
 	rsvg-convert -f png -h 300 -a -o $@ $<
 
+# Copy SVG (for web)
+output/%.svg: source/%.svg
+	@echo -e '$(c_action)Copying SVG image $(c_filename)$<$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cp $< $@
+
 # Copy PNG (for web)
 output/%.png: source/%.png
 	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'

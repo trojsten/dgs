@@ -6,8 +6,8 @@ import argparse
 from typing import Tuple
 
 
-VERSION = "3.02"
-DATE = "2022-11-24"
+VERSION = "3.03"
+DATE = "2022-11-29"
 
 
 def fire(query):
@@ -68,8 +68,11 @@ def main():
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
 
     # copy pictures
+    COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz']
+    copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
+
     fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
-        rf"find output/seminar/{path_fragment_local}/ \( -name '*.jpg' -o -name '*.png' -o -name '*.kmz' \) " \
+        rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) " \
         rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server
