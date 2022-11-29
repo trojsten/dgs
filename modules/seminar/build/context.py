@@ -87,6 +87,7 @@ class ContextRoundFull(ContextRound):
 
     def __init__(self, root, competition, volume, semester, round):
         super().__init__(root, competition, volume, semester, round)
+        self.add(self.defaults)
 
         vol = ContextVolume(root, competition, volume)
         categories = vol.data['categories']
@@ -118,25 +119,25 @@ class ContextProblem(ContextSeminar):
 class ContextVolumeBooklet(ContextSeminar):
     def __init__(self, root, competition, volume):
         super().__init__()
-        self.absorb('module', ContextModule('seminar'))
-        self.absorb('competition', ContextCompetition(root, competition))
-        self.absorb('volume', ContextVolume(root, competition, volume))
+        self.adopt('module', ContextModule('seminar'))
+        self.adopt('competition', ContextCompetition(root, competition))
+        self.adopt('volume', ContextVolume(root, competition, volume))
 
 
 class ContextSemesterBooklet(ContextSeminar):
     def __init__(self, root, competition, volume, semester):
         super().__init__()
-        self.absorb('module', ContextModule('seminar'))
-        self.absorb('competition', ContextCompetition(root, competition))
-        self.absorb('volume', ContextVolume(root, competition, volume))
-        self.absorb('semester', ContextSemesterFull(root, competition, volume, semester))
+        self.adopt('module', ContextModule('seminar'))
+        self.adopt('competition', ContextCompetition(root, competition))
+        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt('semester', ContextSemesterFull(root, competition, volume, semester))
 
 
 class ContextBooklet(ContextSeminar):
     def __init__(self, root, competition, volume, semester, round):
         super().__init__()
-        self.absorb('module', ContextModule('seminar'))
-        self.absorb('competition', ContextCompetition(root, competition))
-        self.absorb('volume', ContextVolume(root, competition, volume))
-        self.absorb('semester', ContextSemester(root, competition, volume, semester))
-        self.absorb('round', ContextRoundFull(root, competition, volume, semester, round))
+        self.adopt('module', ContextModule('seminar'))
+        self.adopt('competition', ContextCompetition(root, competition))
+        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt('semester', ContextSemester(root, competition, volume, semester))
+        self.adopt('round', ContextRoundFull(root, competition, volume, semester, round))
