@@ -76,8 +76,8 @@ class Convertor():
                 r'<img src="\g<1>" \g<2>id="\g<3>" style="max-width: 100%; max-height: calc(1.7 * \g<4>mm); margin: auto; display: block;" \g<5>>',
             ),
             (
-                r'<figcaption aria-hidden="true">Figure (\d*): (.*)</figcaption>',
-                r'<figcaption style="text-align: center;" aria-hidden="true">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>',
+                r'<figcaption>Figure (\d*): (.*)</figcaption>',
+                r'<figcaption style="text-align: center;">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>',
             ),
         ],
     }
