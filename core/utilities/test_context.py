@@ -1,4 +1,5 @@
 import pytest
+from pprint import pprint as pp
 from .context import Context, split_mod, split_div, split_callback, is_prime
 
 
@@ -29,35 +30,28 @@ def context_empty():
 
 @pytest.fixture
 def context_defaults():
-    return Context(defaults={
-        'foo': 'bar',
-        'baz': 5,
-    })
+    return Context(foo='bar', baz=5)
 
 @pytest.fixture
 def context_old():
-    return Context(defaults=dict(boss='Dušan', pictures='Plyš', htr='Kvík'))
+    pp(Context().data)
+    return Context(boss='Dušan', pictures='Plyš', htr='Kvík')
 
 @pytest.fixture
 def context_new():
-    return Context(defaults=dict(boss='Marcel', pictures='Terka', nothing='Nina'))
+    return Context(boss='Marcel', pictures='Terka', nothing='Nina')
 
 @pytest.fixture
-def context_override(context_old, context_new):
-    ctx = Context()
-    print(ctx.data)
-    ctx.adopt('fks', context_old)
-    ctx.adopt('fks', context_new)
-    return ctx
+def context_override(context_empty, context_old, context_new):
+    context_empty.adopt('fks', context_old)
+    context_empty.adopt('fks', context_new)
+    return context_empty
 
 
 class TestContext():
-    def test_empty(self, context_empty):
-        assert context_empty.data == {}
-
     def test_empty_nothing(self, context_defaults):
         with pytest.raises(KeyError):
-            context_defaults.data['boo']
+            _ = context_defaults.data['boo']
 
     def test_default(self, context_defaults):
         assert context_defaults.data == {'foo': 'bar', 'baz': 5}
@@ -74,3 +68,10 @@ class TestContext():
 
     def test_adopt_new(self, context_override):
         assert context_override.data['fks']['nothing'] == 'Nina'
+
+    def test_adopt_full(self, context_override):
+        assert context_override.data == dict(fks=dict(boss='Marcel', pictures='Terka', htr='Kvík', nothing='Nina'))
+
+    def test_empty(self, context_empty):
+        assert context_empty.data == {}
+

@@ -1,4 +1,5 @@
 import math
+import copy
 import os
 import pprint
 import sys
@@ -12,8 +13,8 @@ from core.utilities import dicts, colour as c, crawler
 class Context():
     defaults = {}
 
-    def __init__(self, *, defaults={}):
-        self.data = self.defaults
+    def __init__(self, **defaults):
+        self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
 
     def add(self, *dictionaries):
