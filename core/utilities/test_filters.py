@@ -1,8 +1,10 @@
+import datetime
 import pytest
-from .filters import render_list, roman, textbf
+
+from .filters import render_list, roman, textbf, isotex, plural
 
 
-class TestFilters():
+class TestRender():
     def test_render_list_nolist(self):
         assert render_list('string') == "string"
 
@@ -26,6 +28,31 @@ class TestFilters():
 
     def test_render_list_f(self):
         assert render_list(["x", "y", "z"], func=lambda x: f'f({x})') == r"f(x), f(y) a f(z)"
+
+
+class TestIsotex():
+    def test_one(self):
+        assert isotex(datetime.date(2021, 9, 23)) == '2021--09--23'
+
+    def test_two(self):
+        with pytest.raises(AttributeError):
+            isotex('1. 1. 1999')
+
+
+@pytest.fixture
+def word():
+    return "plyš"
+
+
+class TestPlural():
+    def test_one(self, word):
+        assert word + plural(1, "", "e", "ov") == "plyš"
+
+    def test_two(self, word):
+        assert word + plural(3, "", "e", "ov") == "plyše"
+
+    def test_many(self, word):
+        assert word + plural(10, "", "e", "ov") == "plyšov"
 
 
 class TestRoman():

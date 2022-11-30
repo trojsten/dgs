@@ -1,6 +1,3 @@
-import copy
-
-
 def merge(parent, *children):
     for child in children:
         parent = merge_one(parent, child)

@@ -22,6 +22,10 @@ class Context():
         self.data = dicts.merge(self.data, *dictionaries)
         return self
 
+    def absorb(self, *ctxs):
+        self.data = dicts.merge(self.data, *[ctx.data for ctx in ctxs])
+        return self
+
     def adopt(self, key, ctx):
         """ Adopt a new child context `ctx` under the key `key` """
         assert isinstance(ctx, Context)
@@ -49,14 +53,8 @@ class Context():
     def print(self):
         pprint.pprint(self.data)
 
-    def set_number(self):
-        return self.add({'number': self.number})
-
     def add_number(self, number):
         return self.add({'number': number})
-
-    def set_id(self):
-        return self.add({'id': self.id})
 
     def add_id(self, id):
         return self.add({'id': id})

@@ -18,6 +18,29 @@ def roman(number):
     return result
 
 
+def check_digit(team: str, problem: int) -> int:
+    return get_check_digit(f'{team}{problem:02d}')
+
+
+def get_check_digit(data: str) -> int:
+    try:
+        digits = map(lambda x: int(x, 36), data)
+    except ValueError as exc:
+        raise ValueError("Found invalid character in barcode") from exc
+
+    checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
+    return sum(checksum) % 10
+
+
+def plural(how_many, one, two, many):
+    if how_many == 1:
+        return one
+    if how_many > 2 and how_many < 5:
+        return two
+    else:
+        return many
+
+
 def isotex(date):
     return date.strftime('%Y--%m--%d')
 
@@ -26,7 +49,7 @@ def textbf(x: str) -> str:
     return rf"\textbf{{{x}}}"
 
 
-def render_list(items, *, func: Optional[Callable]=None):
+def render_list(items, *, func: Optional[Callable]=None) -> str:
     if not isinstance(items, list):
         items = [items]
 

@@ -54,35 +54,12 @@ def environment(directory):
     }
 
     env.globals |= {
-        'checkdigit': check_digit,
-        'plural': plural,
+        'checkdigit': filters.check_digit,
+        'plural': filters.plural,
         'textbf': filters.textbf,
     }
 
     return env
-
-
-def check_digit(team: str, problem: int) -> int:
-    return get_check_digit(f'{team}{problem:02d}')
-
-
-def get_check_digit(data: str) -> int:
-    try:
-        digits = map(lambda x: int(x, 36), data)
-    except ValueError as exc:
-        raise ValueError("Found invalid character in barcode") from exc
-
-    checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
-    return sum(checksum) % 10
-
-
-def plural(how_many, one, two, default):
-    if how_many == 1:
-        return one
-    if how_many > 2 and how_many < 5:
-        return two
-    else:
-        return default
 
 
 def print_template(root, template, context, output_directory=None, new_name=None):
