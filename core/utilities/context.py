@@ -122,6 +122,3 @@ def numerate(objects, start=0):
         })
         num += 1
     return objects
-
-
-

@@ -77,7 +77,7 @@ def main():
 
     # rsync everything to server
     if not args.dry_run:
-        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp.sk:/var/www-archiv/trojstenweb/")
+        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@element.ksp.sk:/var/www-archiv/trojstenweb/")
 
     # delete the temporary structure
     fire("rm -rf tasks")
