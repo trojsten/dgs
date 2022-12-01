@@ -6,6 +6,9 @@ from core.utilities import builder
 
 
 class BuilderNaboj(builder.BaseBuilder):
+    class Meta:
+        abstract = True
+
     module = 'naboj'
 
     def create_argument_parser(self):

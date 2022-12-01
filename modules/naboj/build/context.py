@@ -17,8 +17,7 @@ class ContextI18n(context.Context):
 class ContextI18nGlobal(context.Context):
     def __init__(self, root, competition):
         super().__init__()
-        languages = [x.stem for x in Path(root, competition, '.static', 'i18n').glob('*.yaml')]
-        for language in languages:
+        for language in [x.stem for x in Path(self.root, self.competition, '.static', 'i18n').glob('*.yaml')]:
             self.adopt(language, ContextI18n(root, competition, language))
 
 
@@ -62,16 +61,19 @@ class ContextLanguage(ContextNaboj):
     def __init__(self, language):
         super().__init__()
         self.add_id(language)
-        self.add({'polyglossia': {
-                'sk': 'slovak',
-                'en': 'english',
-                'cs': 'czech',
-                'hu': 'magyar',
-                'pl': 'polish',
-                'ru': 'russian',
-                'fa': 'persian',
-                'es': 'spanish',
-            }[language]}
+        self.add(
+            {
+                'polyglossia': {
+                    'sk': 'slovak',
+                    'en': 'english',
+                    'cs': 'czech',
+                    'hu': 'magyar',
+                    'pl': 'polish',
+                    'ru': 'russian',
+                    'fa': 'persian',
+                    'es': 'spanish',
+                }[language]
+            }
         )
         self.add({'rtl': True if language == 'fa' else False})
 
