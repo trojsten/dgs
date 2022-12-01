@@ -1,4 +1,5 @@
-from typing import Optional, Callable
+import itertools
+from typing import Any, Optional, Callable
 
 
 def roman(number):
@@ -23,6 +24,7 @@ def check_digit(team: str, problem: int) -> int:
 
 
 def get_check_digit(data: str) -> int:
+    assert type(data) == str
     try:
         digits = map(lambda x: int(x, 36), data)
     except ValueError as exc:
@@ -45,11 +47,19 @@ def isotex(date):
     return date.strftime('%Y--%m--%d')
 
 
+def textit(x: str) -> str:
+    return rf"\textit{{{x}}}"
+
+
 def textbf(x: str) -> str:
     return rf"\textbf{{{x}}}"
 
 
-def render_list(items, *, func: Optional[Callable]=None) -> str:
+def wrap(x: str, format_str: str) -> str:
+    return format_str.format(x)
+
+
+def render_list(items: Any, *, func: Optional[Callable]=None) -> str:
     if not isinstance(items, list):
         items = [items]
 

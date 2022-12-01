@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from .filters import render_list, roman, textbf, isotex, plural
+from .filters import render_list, roman, textbf, isotex, plural, get_check_digit
 
 
 class TestRender():
@@ -34,7 +34,7 @@ class TestIsotex():
     def test_one(self):
         assert isotex(datetime.date(2021, 9, 23)) == '2021--09--23'
 
-    def test_two(self):
+    def test_no_datetime(self):
         with pytest.raises(AttributeError):
             isotex('1. 1. 1999')
 
@@ -86,3 +86,19 @@ class TestRoman():
 
     def test_roman_2022(self):
         assert roman(2022) == 'MMXXII'
+
+
+class TestCheckDigit():
+    def test_bad_string(self):
+        with pytest.raises(ValueError):
+            get_check_digit("Číž")
+
+    def test_dict_error(self):
+        with pytest.raises(AssertionError):
+            get_check_digit({})
+
+    def test_creation_1(self):
+        assert get_check_digit("6739") == 9
+
+    def test_creation_1(self):
+        assert get_check_digit("PRASA") == 2

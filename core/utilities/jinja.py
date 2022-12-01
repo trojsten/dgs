@@ -51,6 +51,7 @@ def environment(directory):
         'roman': filters.roman,
         'format_list': filters.render_list,
         'isotex': filters.isotex,
+        'plural': filters.plural,
     }
 
     env.globals |= {

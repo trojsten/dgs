@@ -1,30 +1,7 @@
 import pytest
-from pprint import pprint as pp
-from .context import Context, split_mod, split_div, split_callback, is_prime
+import math
 
-
-class TestSplits():
-    def test_splitmod(self):
-        assert split_mod(list(range(0, 12)), 3) == [[0, 3, 6, 9], [1, 4, 7, 10], [2, 5, 8, 11]]
-
-    def test_splitmod_2(self):
-        assert split_mod(list(range(0, 17)), 5) == [[0, 5, 10, 15], [1, 6, 11, 16], [2, 7, 12], [3, 8, 13], [4, 9, 14]]
-
-    def test_splitdiv(self):
-        assert split_div(list(range(0, 12)), 3) == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]]
-
-    def test_splitdiv_2(self):
-        assert split_div(list(range(0, 17)), 5) == [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16]]
-
-    def test_split_callback(self):
-        assert split_callback(list(range(0, 12)), is_prime, 2) == [[0, 1, 4, 6, 8, 9, 10], [2, 3, 5, 7, 11]]
-
-    def test_split_callback_prime(self):
-        assert split_callback(list(range(0, 12)), is_prime, 3) == [[0, 1, 4, 6, 8, 9, 10], [2, 3, 5, 7, 11], []]
-
-    def test_split_callback_bad_count(self):
-        with pytest.raises(IndexError):
-            split_callback(list(range(0, 12)), is_prime, 1)
+from .context import Context
 
 
 @pytest.fixture
@@ -41,7 +18,6 @@ def context_two():
 
 @pytest.fixture
 def context_old():
-    pp(Context().data)
     return Context(boss='Dušan', pictures='Plyš', htr='Kvík')
 
 @pytest.fixture
@@ -56,7 +32,7 @@ def context_override(context_empty, context_old, context_new):
 
 @pytest.fixture
 def context_numbered():
-    return Context()
+    return Context(id=123, number=456)
 
 
 class TestContext():
@@ -89,6 +65,14 @@ class TestContext():
     def test_add_number(self, context_defaults):
         context_defaults.add_number(7)
         assert context_defaults.data['number'] == 7
+
+    def test_add_id_override(self, context_defaults):
+        context_defaults.add_id(555)
+        assert context_defaults.data['id'] == 555
+
+    def test_add_number_override(self, context_defaults):
+        context_defaults.add_number(666)
+        assert context_defaults.data['number'] == 666
 
     def test_add(self, context_defaults, context_two):
         context_defaults.absorb(context_two)

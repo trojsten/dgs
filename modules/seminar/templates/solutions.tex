@@ -1,14 +1,14 @@
 (@ extends 'base-booklets.tex' @)
 
-(@ block kind @)solution(@ endblock kind @)
-(@ block kind_verbose @)Riešenia(@ endblock kind_verbose @)
+(@ set kind = 'solution' @)
+(@ set kind_verbose = 'riešenia' @)
 
 (@ block heading_inner @)
     (@ if problem.solutionBy @)%
-        vzorák (* problem.solutionBy|format_list *)%
+        vzorák (* problem.solutionBy|format_list(func=textbf) *)%
     (@ endif @)%
     (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
     (@ if problem.evaluation @)%
-        opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list *)%
+        opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list(func=textbf) *)%
     (@ endif @)%
 (@ endblock heading_inner @)

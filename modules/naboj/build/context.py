@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.append('.')
 
-from core.utilities import context
+from core.utilities import context, lists
 
 
 class ContextI18n(context.Context):
@@ -19,12 +19,18 @@ class ContextI18nGlobal(context.Context):
         super().__init__()
         languages = [x.stem for x in Path(root, competition, '.static', 'i18n').glob('*.yaml')]
         for language in languages:
-            self.absorb(language, ContextI18n(root, competition, language))
+            self.adopt(language, ContextI18n(root, competition, language))
 
 
 class ContextNaboj(context.Context):
-    def node_path(self, root, competition='', volume='', target_type='', target=''):
-        return Path(root, competition, volume, target_type, target)
+    def node_path(self, root, competition=None, volume=None, target_type=None, target=None):
+        return Path(
+            '' if root is None else root,
+            '' if competition is None else competition,
+            '' if volume is None else f'{volume:02d}',
+            '' if target_type is None else target_type,
+            '' if target is None else target
+        )
 
 
 class ContextModule(ContextNaboj):
@@ -47,8 +53,8 @@ class ContextVolume(ContextNaboj):
             .add_id(volume) \
             .add_number(volume)
 
-        self.add({'problems': context.add_numbers(self.data['problems'], 1)})
-        self.add({'problems_modulo': context.split_mod(self.data['problems'], self.data['evaluators'], 1)})
+        self.add({'problems': lists.add_numbers(self.data['problems'], 1)})
+        self.add({'problems_modulo': lists.split_mod(self.data['problems'], self.data['evaluators'], first=1)})
         self.add_subdirs(ContextVenue, 'venues', (root, competition, volume), (root, competition, volume, 'venues'))
 
 
@@ -75,25 +81,25 @@ class ContextVenue(ContextNaboj):
         super().__init__()
         comp = ContextCompetition(root, competition)
         self.load_meta(root, competition, volume, 'venues', venue).add_id(venue)
-        self.add({'teams_grouped': context.split_div(context.numerate(self.data.get('teams')), comp.data['tearoff']['per_page'])})
+        self.add({'teams_grouped': lists.split_div(lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page'])})
 
 
 class ContextBooklet(ContextNaboj):
     def __init__(self, root, competition, volume, language):
         super().__init__()
         self.load_meta(root, competition, volume, 'languages', language)
-        self.absorb('module', ContextModule('naboj'))
-        self.absorb('competition', ContextCompetition(root, competition))
-        self.absorb('volume', ContextVolume(root, competition, volume))
-        self.absorb('language', ContextLanguage(language))
-        self.absorb('i18n', ContextI18n(root, competition, language))
+        self.adopt('module', ContextModule('naboj'))
+        self.adopt('competition', ContextCompetition(root, competition))
+        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt('language', ContextLanguage(language))
+        self.adopt('i18n', ContextI18n(root, competition, language))
 
 
 class ContextTearoff(ContextNaboj):
     def __init__(self, root, competition, volume, venue):
         super().__init__()
-        self.absorb('module', ContextModule('naboj'))
-        self.absorb('competition', ContextCompetition(root, competition))
-        self.absorb('volume', ContextVolume(root, competition, volume))
-        self.absorb('venue', ContextVenue(root, competition, volume, venue))
-        self.absorb('i18n', ContextI18nGlobal(root, competition))
+        self.adopt('module', ContextModule('naboj'))
+        self.adopt('competition', ContextCompetition(root, competition))
+        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt('venue', ContextVenue(root, competition, volume, venue))
+        self.adopt('i18n', ContextI18nGlobal(root, competition))

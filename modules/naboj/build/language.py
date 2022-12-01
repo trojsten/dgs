@@ -30,7 +30,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         return (self.args.competition, self.args.volume, self.args.language)
 
     def path(self):
-        return (self.args.competition, self.args.volume, self.subdir, self.args.language)
+        return (self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.language)
 
     def build(self):
         super().build()
