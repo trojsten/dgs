@@ -42,11 +42,11 @@ class Convertor():
         ],
     }
 
-
     math_regexes = [
         (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
         (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
     ]
+
     replace_regexes = {
         'latex': [
             (r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}"),

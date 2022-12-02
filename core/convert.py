@@ -4,12 +4,13 @@ import argparse
 import sys
 
 from convertor import Convertor
+from core.utilities import colour as c
 
 
 class CLIInterface():
     def __init__(self):
-        args = self.parse_arguments()
-        self.convertor = Convertor(args.format, args.locale, args.infile, args.outfile)
+        self.args = self.parse_arguments()
+        self.convertor = Convertor(self.args.format, self.args.locale, self.args.infile, self.args.outfile)
         result = self.convertor.run()
         if result == 0:
             self.finish()
