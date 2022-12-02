@@ -22,11 +22,11 @@ def warn(what):
 
 
 def err(what):
-    return colour(what, Fore.RED)
+    return colour(what, Fore.RED + Style.BRIGHT)
 
 
 def critical(what):
-    return colour(what, Fore.RED)
+    return colour(what, Fore.RED + Style.BRIGHT)
 
 
 def path(what):

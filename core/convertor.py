@@ -1,65 +1,25 @@
-#!/usr/bin/env python3
-
-import argparse
 import dotmap
 import fileinput
 import re
 import subprocess
 import sys
 import tempfile
-import frontmatter
 
-from utilities import colour as c
+sys.path.append('.')
+from core.utilities import colour as c
 
 
 class Convertor():
     languages = {
-        'sk':   {
-            'name':     'slovak',
-            'quotes':   ('„', '“'),
-            'locale':   'sk-SK',
-            'figure':   'Obrázok',
-        },
-        'cs':   {
-            'name':     'czech',
-            'quotes':   ('„', '“'),
-            'locale':   'cs-CZ',
-        },
-        'en':   {
-            'name':     'english',
-            'quotes':   ('“', '”'),
-            'locale':   'en-US',
-        },
-        'ru':   {
-            'name':     'russian',
-            'quotes':   ('«', '»'),
-            'locale':   'ru-RU',
-        },
-        'pl':   {
-            'name':     'polish',
-            'quotes':   ('„', '“'),
-            'locale':   'pl-PL',
-        },
-        'hu':   {
-            'name':     'hungarian',
-            'quotes':   ('„', '“'),
-            'locale':   'hu-HU',
-        },
-        'fr':   {
-            'name':     'french',
-            'quotes':   ('«\u202F', '\u202F»'),
-            'locale':   'fr-FR',
-        },
-        'es':   {
-            'name':     'spanish',
-            'quotes':   ('«', '»'),
-            'locale':   'es-ES',
-        },
-        'qq':   {
-            'name':     'test',
-            'quotes':   ('(', ')'),
-            'locale':   'sk-SK',
-        },
+        'sk':   dict(name='slovak'      , locale='sk-SK', quotes=('„', '“'), figure='Obrázok'),
+        'cs':   dict(name='czech'       , locale='cs-CZ', quotes=('„', '“'), figure='Obrázek'),
+        'en':   dict(name='english'     , locale='en-US', quotes=('“', '”')),
+        'ru':   dict(name='russian'     , locale='ru-RU', quotes=('«', '»')),
+        'pl':   dict(name='polish'      , locale='pl-PL', quotes=('„', '“')),
+        'hu':   dict(name='hungarian'   , locale='hu-HU', quotes=('„', '“')),
+        'fr':   dict(name='french'      , locale='fr-FR', quotes=('«\u202F', '\u202F»')),
+        'es':   dict(name='spanish'     , locale='es-ES', quotes=('«', '»')),
+        'qq':   dict(name='test'        , locale='sk-SK', quotes=('(', ')')),
     }
 
     postprocessing = {
@@ -95,7 +55,7 @@ class Convertor():
         ],
         'html': [
             (r"^@E\s*(.*)$", r"Error: \g<1>"),
-            (r"^@H\s*(.*)$", "\g<1>"),
+            (r"^@H\s*(.*)$", r"\g<1>"),
             (
                 r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>jpg|png|svg)\){(?P<extras>.*)}$",
                 r"![\g<caption>](obrazky/\g<filename>.\g<extension>){\g<extras>}",
@@ -115,22 +75,13 @@ class Convertor():
     def compile_regexes(regexes):
         return [(re.compile(regex), repl) for (regex, repl) in regexes]
 
-    def __init__(self):
-        self.args = self.parse_arguments()
-        self.initialize()
+    def __init__(self, format, locale_code, infile, outfile):
+        self.locale_code = locale_code
+        self.locale = dotmap.DotMap(self.languages[locale_code], _dynamic=False)
+        self.format = format
+        self.infile = infile
+        self.outfile = outfile
 
-    def parse_arguments(self):
-        parser = argparse.ArgumentParser(
-            description="DeGeŠ Markdown conversion utility",
-        )
-        parser.add_argument('format',   choices=['latex', 'html'])
-        parser.add_argument('locale',   choices=self.languages.keys())
-        parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
-        parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
-        return parser.parse_args()
-
-    def initialize(self):
-        self.locale = dotmap.DotMap(self.languages[self.args.locale], _dynamic=False)
         (self.quote_open, self.quote_close) = self.locale.quotes
 
         quotes_regexes = [
@@ -141,21 +92,21 @@ class Convertor():
             (r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
-        self.postprocessing = self.compile_regexes(self.postprocessing[self.args.format])
+        self.postprocessing = self.compile_regexes(self.postprocessing[self.format])
         self.quotes_regexes = self.compile_regexes(quotes_regexes)
         self.math_regexes = self.compile_regexes(self.math_regexes)
-        self.replace_regexes = self.compile_regexes(self.replace_regexes[self.args.format])
+        self.replace_regexes = self.compile_regexes(self.replace_regexes[self.format])
 
     def run(self):
         try:
-            fm, tm = frontmatter.parse(self.args.infile.read())
-            self.args.infile.seek(0)
-            self.file = self.file_operation(self.preprocess)(self.args.infile)
+            #fm, tm = frontmatter.parse(self.infile.read())
+            #self.infile.seek(0)
+            self.file = self.file_operation(self.preprocess)(self.infile)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
             self.write()
         except IOError as e:
-            print(f"{c.path(__file__)}: Could not create a temporary file")
+            print(f"{c.path(__file__)}: Could not create a temporary file: {e}")
             self.fail()
         except AssertionError as e:
             print(f"{c.path(__file__)}: Calling pandoc failed")
@@ -163,22 +114,13 @@ class Convertor():
         except Exception as e:
             print(f"Unexpected exception occurred:")
             raise e
-            self.fail()
+            return -1
         else:
-            self.finish()
-
-
-    def fail(self):
-        print(f"pandoc-convert: {c.err('failure')} on {c.path(self.args.infile.name)}")
-        sys.exit(-1)
-
-    def finish(self):
-        print(f"pandoc-convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
-        sys.exit(0)
+            return 0
 
     def file_operation(self, function):
         def inner(f):
-            out = tempfile.SpooledTemporaryFile(mode = 'w+')
+            out = tempfile.SpooledTemporaryFile(mode='w+')
 
             for line in f:
                 line = function(line)
@@ -192,7 +134,7 @@ class Convertor():
 
     def write(self):
         for line in self.file:
-            self.args.outfile.write(line)
+            self.outfile.write(line)
 
         self.file.seek(0)
 
@@ -210,8 +152,8 @@ class Convertor():
             -   remove lines beginning with '@L' if not converting for LaTeX
         """
         if re.match(r"^%", line) or \
-            (re.match(r"^@H", line) and self.args.format != 'html') or \
-            (re.match(r"^@L", line) and self.args.format != 'latex'):
+            (re.match(r"^@H", line) and self.format != 'html') or \
+            (re.match(r"^@L", line) and self.format != 'latex'):
             return False
         return True
 
@@ -233,11 +175,11 @@ class Convertor():
             "--mathjax",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
-            "--to", self.args.format,
+            "--to", self.format,
             "--filter", "pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
 #            "--filter", "pandoc-fignos", "-M", f'fignos-caption-name="{self.locale.figure}"',
             "--filter", "pandoc-eqnos",
-            "--metadata", f"lang={self.languages[self.args.locale]['locale']}",
+            "--metadata", f"lang={self.languages[self.locale_code]['locale']}",
         ], stdin=self.file, stdout=out)
 
         out.seek(0)
@@ -260,4 +202,4 @@ class Convertor():
 
         return line
 
-Convertor().run()
+

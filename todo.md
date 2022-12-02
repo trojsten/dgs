@@ -1,7 +1,7 @@
 # Feature requests
 
 -   add sponsors to booklets
--   buy Minion Math
+-   buy Minion Math... once
 
 # Known problems
 
