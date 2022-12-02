@@ -1,10 +1,13 @@
-from typing import Iterable, Callable, List
+from typing import Iterable, Callable, List, Dict
 from core.utilities import dicts
 
-def add_numbers(what, start=0):
+
+def add_numbers(items: List, start: int=0) -> List[Dict]:
+    assert type(items) == list
+
     result = []
     num = start
-    for item in what:
+    for item in items:
         result.append({
             'number': num,
             'id': item,
@@ -13,14 +16,14 @@ def add_numbers(what, start=0):
     return result
 
 
-def numerate(objects, start=0):
+def numerate(items: Dict, start: int=0) -> List[Dict]:
     num = start
-    for item in objects:
+    for item in items:
         dicts.merge(item, {
             'number': num
         })
         num += 1
-    return objects
+    return items
 
 
 def split_mod(what: Iterable, count: int, *, first: int=0) -> list:

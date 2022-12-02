@@ -41,21 +41,42 @@ class TestSplits():
 
 
 @pytest.fixture
-def shopping():
+def shopping_list():
     return ["Javelin", "HIMARS", "ATACMS"]
 
+@pytest.fixture
+def folk_heroes():
+    return [
+        dict(language="sk", name="Jánošík"),
+        dict(language="cs", name="Krakonoš"),
+        dict(language="hu", name="Rózsa Sándor"),
+    ]
 
 class TestAdornments():
-    def test_add_numbers(self, shopping):
-        assert add_numbers(shopping) == [
+    def test_add_numbers(self, shopping_list):
+        assert add_numbers(shopping_list) == [
             dict(number=0, id="Javelin"),
             dict(number=1, id="HIMARS"),
             dict(number=2, id="ATACMS"),
         ]
 
-    def test_add_numbers_start(self, shopping):
-        assert add_numbers(shopping, start=4) == [
+    def test_add_numbers_start(self, shopping_list):
+        assert add_numbers(shopping_list, start=4) == [
             dict(number=4, id="Javelin"),
             dict(number=5, id="HIMARS"),
             dict(number=6, id="ATACMS"),
+        ]
+
+    def test_add_numbers_error(self, folk_heroes):
+        assert add_numbers(folk_heroes, start=4) == [
+            dict(number=4, id=dict(language="sk", name="Jánošík")),
+            dict(number=5, id=dict(language="cs", name="Krakonoš")),
+            dict(number=6, id=dict(language="hu", name="Rózsa Sándor")),
+        ]
+
+    def test_numerate(self, folk_heroes):
+        assert numerate(folk_heroes) == [
+            dict(number=0, language="sk", name="Jánošík"),
+            dict(number=1, language="cs", name="Krakonoš"),
+            dict(number=2, language="hu", name="Rózsa Sándor"),
         ]
