@@ -115,7 +115,8 @@ class Convertor():
         else:
             return 0
 
-    def file_operation(self, function):
+    @staticmethod
+    def file_operation(function):
         def inner(f):
             out = tempfile.SpooledTemporaryFile(mode='w+')
 
@@ -130,26 +131,28 @@ class Convertor():
     def write(self):
         for line in self.file:
             self.outfile.write(line)
-
         self.file.seek(0)
 
     def preprocess(self, line):
         if self.filter_tags(line):
-            for regex_set in [self.replace_regexes, self.quotes_regexes, self.math_regexes]:
-                line = self.process_line(line, regex_set)
-            return line
+            return self.chain_process(line, [self.replace_regexes, self.quotes_regexes, self.math_regexes])
         else:
             return ""
 
-    def process_line(self, line, regexes):
+    @staticmethod
+    def process_line(line, regexes):
         for regex, replacement in regexes:
             line = regex.sub(replacement, line)
         return line
 
-    def postprocess(self, line):
-        for regex_set in [self.post_regexes]:
-            line = self.process_line(line, regex_set)
+    @staticmethod
+    def chain_process(line, regex_sets):
+        for regex_set in regex_sets:
+            line = Convertor.process_line(line, regex_set)
         return line
+
+    def postprocess(self, line):
+        return self.chain_process(line, [self.post_regexes])
 
     def filter_tags(self, line):
         """
@@ -161,8 +164,8 @@ class Convertor():
         if re.match(r"^%", line) or \
             (re.match(r"^@H", line) and self.format != 'html') or \
             (re.match(r"^@L", line) and self.format != 'latex'):
-            return False
-        return True
+            return ""
+        return line
 
     def replace_tags(self, line):
         """

@@ -47,7 +47,7 @@ class ContextIssue(ContextScholar):
         self.load_meta(root, course, year, target, issue) \
             .add_id(f'{issue:02d}') \
             .add_number(issue)
-        self.add_subdirs(self.subcontext_class, self.subcontext_name, root, course, year, target, issue)
+        self.add_subdirs(self.subcontext_class, self.subcontext_name, (root, course, year, target, issue), (root, course, year, target, issue))
 
 
 class ContextHandoutProblem(ContextScholar):
@@ -98,10 +98,10 @@ class ContextHomeworkIssue(ContextIssue):
 class ContextIssueBase(ContextScholar):
     def __init__(self, root, course, year, issue):
         super().__init__()
-        self.absorb('module', ContextModule('scholar'))
-        self.absorb('course', ContextCourse(root, course))
-        self.absorb('year', ContextYear(root, course, year))
-        self.absorb('issue', self.issue_context_class(root, course, year, self.target, issue))
+        self.adopt('module', ContextModule('scholar'))
+        self.adopt('course', ContextCourse(root, course))
+        self.adopt('year', ContextYear(root, course, year))
+        self.adopt('issue', self.issue_context_class(root, course, year, self.target, issue))
 
 
 class ContextHomework(ContextIssueBase):
@@ -126,9 +126,9 @@ class ContextScholarLecture(ContextScholarSingle):
     def __init__(self, root, course, lecture):
         super().__init__()
         self.load_meta(root, course, lecture)
-        self.absorb('module', ContextSingleModule('scholar'))
-        self.absorb('course', ContextSingleCourse(root, course))
-        self.absorb('lecture', ContextSingleLecture(root, course, lecture))
+        self.adopt('module', ContextSingleModule('scholar'))
+        self.adopt('course', ContextSingleCourse(root, course))
+        self.adopt('lecture', ContextSingleLecture(root, course, lecture))
         self.crawler = crawler.Crawler(Path(root, course, lecture))
 
         if 'parts' in self.data:
