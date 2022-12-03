@@ -1,8 +1,9 @@
-from typing import Iterable, Callable, List, Dict
+import itertools
+from typing import Iterable, Callable, List, Dict, Any
 from core.utilities import dicts
 
 
-def add_numbers(items: List, start: int=0) -> List[Dict]:
+def add_numbers(items: List[Any], start: int=0) -> List[Dict]:
     assert type(items) == list
 
     result = []
@@ -19,6 +20,7 @@ def add_numbers(items: List, start: int=0) -> List[Dict]:
 def numerate(items: Dict, start: int=0) -> List[Dict]:
     num = start
     for item in items:
+        assert type(item) == dict
         dicts.merge(item, {
             'number': num
         })
@@ -33,8 +35,11 @@ def split_mod(what: Iterable, count: int, *, first: int=0) -> list:
     return result
 
 
-def split_div(what, count):
-    return [] if what == [] else [what[0:count]] + split_div(what[count:], count)
+def split_div(what: Iterable[Any], size: int) -> List[List[Any]]:
+    """ Split `what` into chunks of length `size`, last chunk might not be full """
+    what = iter(what)
+    return list(itertools.takewhile(bool, (list(itertools.islice(what, size)) for _ in itertools.repeat(None))))
+#   return list(itertools.batched(what, size)    for Python >=3.12
 
 
 def split_callback(what: Iterable, callback: Callable, count: int) -> List[List]:

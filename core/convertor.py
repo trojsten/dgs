@@ -13,7 +13,7 @@ class Convertor():
     languages = {
         'sk':   dict(name='slovak'      , locale='sk-SK', quotes=('„', '“'), figure='Obrázok'),
         'cs':   dict(name='czech'       , locale='cs-CZ', quotes=('„', '“'), figure='Obrázek'),
-        'en':   dict(name='english'     , locale='en-US', quotes=('“', '”')),
+        'en':   dict(name='english'     , locale='en-US', quotes=('“', '”'), figure='Picture'),
         'ru':   dict(name='russian'     , locale='ru-RU', quotes=('«', '»')),
         'pl':   dict(name='polish'      , locale='pl-PL', quotes=('„', '“')),
         'hu':   dict(name='hungarian'   , locale='hu-HU', quotes=('„', '“')),
@@ -22,13 +22,13 @@ class Convertor():
         'qq':   dict(name='test'        , locale='sk-SK', quotes=('(', ')')),
     }
 
-    postprocessing = {
+    post_regexes = {
         'latex': [
             (r"``", r"“"),
             (r"''", r'”'),
             (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
             (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
-            (r"^\\caption{}(\\label{.*})?\n", ""),
+            (r"^\\caption{}(\\label{.*})?\n", ""), # Remove empty labels and captions
         ],
         'html': [
             (
@@ -42,6 +42,7 @@ class Convertor():
         ],
     }
 
+    """ DeGeŠ hacks for shorter aligned math """
     math_regexes = [
         (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
         (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
@@ -63,10 +64,6 @@ class Convertor():
             (
                 r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp)\){(?P<extras>.*)}$",
                 r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
-            ),
-            (
-                r"^!\[(?P<caption>.*)\]\(obrazky/(?P<filename>.*)\.(?P<extension>.*)\){height(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){#fig:\g<filename> height\g<extras>}",
             ),
         ],
     }
@@ -92,10 +89,10 @@ class Convertor():
             (r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
-        self.postprocessing = self.compile_regexes(self.postprocessing[self.format])
         self.quotes_regexes = self.compile_regexes(quotes_regexes)
         self.math_regexes = self.compile_regexes(self.math_regexes)
         self.replace_regexes = self.compile_regexes(self.replace_regexes[self.format])
+        self.post_regexes = self.compile_regexes(self.post_regexes[self.format])
 
     def run(self):
         try:
@@ -123,9 +120,7 @@ class Convertor():
             out = tempfile.SpooledTemporaryFile(mode='w+')
 
             for line in f:
-                line = function(line)
-                if line is not None:
-                    out.write(line)
+                out.write(function(line))
 
             out.seek(0)
             return out
@@ -140,9 +135,21 @@ class Convertor():
 
     def preprocess(self, line):
         if self.filter_tags(line):
-            return self.replace_math(self.replace_quotes(self.replace_tags(line)))
+            for regex_set in [self.replace_regexes, self.quotes_regexes, self.math_regexes]:
+                line = self.process_line(line, regex_set)
+            return line
         else:
-            return None
+            return ""
+
+    def process_line(self, line, regexes):
+        for regex, replacement in regexes:
+            line = regex.sub(replacement, line)
+        return line
+
+    def postprocess(self, line):
+        for regex_set in [self.post_regexes]:
+            line = self.process_line(line, regex_set)
+        return line
 
     def filter_tags(self, line):
         """
@@ -184,22 +191,3 @@ class Convertor():
 
         out.seek(0)
         return out
-
-    def postprocess(self, line):
-        for regex, replacement in self.postprocessing:
-            line = regex.sub(replacement, line)
-        return line
-
-    def replace_quotes(self, line):
-        for regex, replacement in self.quotes_regexes:
-            line = regex.sub(replacement, line)
-
-        return line
-
-    def replace_math(self, line):
-        for regex, replacement in self.math_regexes:
-            line = regex.sub(replacement, line)
-
-        return line
-
-

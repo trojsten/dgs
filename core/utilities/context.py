@@ -23,6 +23,7 @@ class Context():
         return self
 
     def absorb(self, *ctxs):
+        """ Merge a list of other contexts into this context, overriding same keys """
         self.data = dicts.merge(self.data, *[ctx.data for ctx in ctxs])
         return self
 

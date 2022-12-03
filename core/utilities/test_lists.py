@@ -10,6 +10,28 @@ def is_prime(what: int) -> int:
         return int(all(what % x != 0 for x in range(2, math.isqrt(what) + 1)))
 
 
+@pytest.fixture
+def shopping_list():
+    return ["Javelin", "HIMARS", "ATACMS"]
+
+@pytest.fixture
+def folk_heroes():
+    return [
+        dict(language="sk", name="Jánošík"),
+        dict(language="cs", name="Krakonoš"),
+        dict(language="hu", name="Rózsa Sándor"),
+    ]
+
+@pytest.fixture
+def prime_generator():
+    def _generator(max: int):
+        for i in range(0, max):
+            if is_prime(i):
+                yield i
+
+    return _generator
+
+
 class TestSplits():
     def test_splitmod(self):
         assert split_mod(list(range(0, 12)), 3) == [[0, 3, 6, 9], [1, 4, 7, 10], [2, 5, 8, 11]]
@@ -23,10 +45,16 @@ class TestSplits():
     def test_splitdiv_empty(self):
         assert split_div([], 2) == []
 
-    def test_splitdiv(self):
+    def test_splitdiv_ragged(self):
+        assert split_div(['a', 'b', 'c'], 2) == [['a', 'b'], ['c']]
+
+    def test_splitdiv_generator(self):
+        assert split_div(range(0, 12), 3) == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]]
+
+    def test_splitdiv_list(self):
         assert split_div(list(range(0, 12)), 3) == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]]
 
-    def test_splitdiv_2(self):
+    def test_splitdiv_list2(self):
         assert split_div(list(range(0, 17)), 5) == [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14], [15, 16]]
 
     def test_split_callback(self):
@@ -39,18 +67,6 @@ class TestSplits():
         with pytest.raises(IndexError):
             split_callback(list(range(0, 12)), is_prime, 1)
 
-
-@pytest.fixture
-def shopping_list():
-    return ["Javelin", "HIMARS", "ATACMS"]
-
-@pytest.fixture
-def folk_heroes():
-    return [
-        dict(language="sk", name="Jánošík"),
-        dict(language="cs", name="Krakonoš"),
-        dict(language="hu", name="Rózsa Sándor"),
-    ]
 
 class TestAdornments():
     def test_add_numbers(self, shopping_list):
@@ -67,12 +83,16 @@ class TestAdornments():
             dict(number=6, id="ATACMS"),
         ]
 
-    def test_add_numbers_error(self, folk_heroes):
+    def test_add_numbers_dictlist(self, folk_heroes):
         assert add_numbers(folk_heroes, start=4) == [
             dict(number=4, id=dict(language="sk", name="Jánošík")),
             dict(number=5, id=dict(language="cs", name="Krakonoš")),
             dict(number=6, id=dict(language="hu", name="Rózsa Sándor")),
         ]
+
+    def test_numerate_error(self, shopping_list):
+        with pytest.raises(AssertionError):
+            numerate(shopping_list)
 
     def test_numerate(self, folk_heroes):
         assert numerate(folk_heroes) == [
