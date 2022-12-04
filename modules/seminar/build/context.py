@@ -3,9 +3,7 @@ import sys
 import collections
 from pathlib import Path
 
-sys.path.append('.')
-
-from core.utilities import context
+from core.build import context
 
 
 class ContextSeminar(context.Context):

@@ -17,7 +17,7 @@ class BuilderNabojVenue(builder.BuilderNaboj):
         return (self.args.competition, self.args.volume, self.args.venue)
 
     def path(self):
-        return (self.args.competition, self.args.volume, self.subdir, self.args.venue)
+        return (self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.venue)
 
 
 BuilderNabojVenue().build()

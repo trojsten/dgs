@@ -215,12 +215,12 @@ output/naboj/%/cover.pdf: \
 
 # All targets for <language>
 output/naboj/%: \
-	output/naboj/$$*/answers.pdf \
-	output/naboj/$$*/answers-modulo.pdf \
-	output/naboj/$$*/constants.pdf \
-	output/naboj/$$*/cover-print.pdf \
-	output/naboj/$$*/booklet-print.pdf \
-	output/naboj/$$*/instructions.pdf ;
+	output/naboj/%/answers.pdf \
+	output/naboj/%/answers-modulo.pdf \
+	output/naboj/%/constants.pdf \
+	output/naboj/%/cover-print.pdf \
+	output/naboj/%/booklet-print.pdf \
+	output/naboj/%/instructions.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
@@ -258,8 +258,8 @@ output/naboj/%/envelopes.pdf: \
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
-	output/naboj/$$*/tearoff.pdf \
-	output/naboj/$$*/envelopes.pdf ;
+	output/naboj/%/tearoff.pdf \
+	output/naboj/%/envelopes.pdf ;
 
 # All targets for all venues
 # <competition>/<volume>
@@ -267,10 +267,9 @@ output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
 
 output/naboj/%: \
-	output/naboj/$$*/languages \
-	output/naboj/$$*/venues ;
+	output/naboj/%/languages \
+	output/naboj/%/venues ;
 
 output/naboj/%/copy: \
 	output/naboj/%
 	rsync -rzvhPL output/naboj/$*/ fks:/home/sesquideus/public_html/naboj/$(subst output/,,$*)
-

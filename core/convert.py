@@ -3,8 +3,8 @@
 import argparse
 import sys
 
-from convertor import Convertor
-from core.utilities import colour as c
+from build.convertor import Convertor
+from utils import colour as c
 
 
 class CLIInterface():

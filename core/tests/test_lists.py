@@ -1,6 +1,8 @@
 import math
 import pytest
-from .lists import split_mod, split_div, split_callback, numerate, add_numbers
+import itertools
+
+from core.utils.lists import split_mod, split_div, split_callback, numerate, add_numbers
 
 
 def is_prime(what: int) -> int:
@@ -23,11 +25,21 @@ def folk_heroes():
     ]
 
 @pytest.fixture
-def prime_generator():
-    def _generator(max: int):
-        for i in range(0, max):
+def primes():
+    def _generator():
+        for i in itertools.count(2, 1):
             if is_prime(i):
                 yield i
+
+    return _generator
+
+@pytest.fixture
+def fibonacci():
+    def _generator():
+        a, b = 0, 1
+        for i in itertools.count():
+            yield a
+            a, b = b, a + b
 
     return _generator
 
@@ -40,7 +52,7 @@ class TestSplits():
         assert split_mod(list(range(0, 17)), 5) == [[0, 5, 10, 15], [1, 6, 11, 16], [2, 7, 12], [3, 8, 13], [4, 9, 14]]
 
     def test_splitmod_first_one(self):
-        assert split_mod(list(range(0, 12)), 3, first=1) == [[1, 4, 7, 10], [2, 5, 8, 11], [0, 3, 6, 9]]
+        assert split_mod(list(range(1, 12)), 3, first=1) == [[3, 6, 9], [1, 4, 7, 10], [2, 5, 8, 11]]
 
     def test_splitdiv_empty(self):
         assert split_div([], 2) == []
@@ -77,22 +89,25 @@ class TestAdornments():
         ]
 
     def test_add_numbers_start(self, shopping_list):
-        assert add_numbers(shopping_list, start=4) == [
+        assert add_numbers(shopping_list, itertools.count(4, 1)) == [
             dict(number=4, id="Javelin"),
             dict(number=5, id="HIMARS"),
             dict(number=6, id="ATACMS"),
         ]
 
+    def test_add_primes(self, shopping_list, primes):
+        assert add_numbers(shopping_list, primes()) == [
+            dict(number=2, id="Javelin"),
+            dict(number=3, id="HIMARS"),
+            dict(number=5, id="ATACMS"),
+        ]
+
     def test_add_numbers_dictlist(self, folk_heroes):
-        assert add_numbers(folk_heroes, start=4) == [
+        assert add_numbers(folk_heroes, itertools.count(4, 1)) == [
             dict(number=4, id=dict(language="sk", name="Jánošík")),
             dict(number=5, id=dict(language="cs", name="Krakonoš")),
             dict(number=6, id=dict(language="hu", name="Rózsa Sándor")),
         ]
-
-    def test_numerate_error(self, shopping_list):
-        with pytest.raises(AssertionError):
-            numerate(shopping_list)
 
     def test_numerate(self, folk_heroes):
         assert numerate(folk_heroes) == [
@@ -100,3 +115,15 @@ class TestAdornments():
             dict(number=1, language="cs", name="Krakonoš"),
             dict(number=2, language="hu", name="Rózsa Sándor"),
         ]
+
+    def test_numerate_primes(self, folk_heroes, fibonacci):
+        assert numerate(folk_heroes, itertools.islice(fibonacci(), 5, None)) == [
+            dict(number=5, language="sk", name="Jánošík"),
+            dict(number=8, language="cs", name="Krakonoš"),
+            dict(number=13, language="hu", name="Rózsa Sándor"),
+        ]
+
+    def test_numerate_error(self, shopping_list):
+        with pytest.raises(AssertionError):
+            numerate(shopping_list)
+

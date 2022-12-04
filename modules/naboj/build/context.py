@@ -1,11 +1,11 @@
 import os
 import sys
 import glob
+import itertools
 from pathlib import Path
 
-sys.path.append('.')
-
-from core.utilities import context, lists
+from core.build import context
+from core.utils import lists
 
 
 class ContextI18n(context.Context):
@@ -17,7 +17,7 @@ class ContextI18n(context.Context):
 class ContextI18nGlobal(context.Context):
     def __init__(self, root, competition):
         super().__init__()
-        for language in [x.stem for x in Path(self.root, self.competition, '.static', 'i18n').glob('*.yaml')]:
+        for language in [x.stem for x in Path(root, competition, '.static', 'i18n').glob('*.yaml')]:
             self.adopt(language, ContextI18n(root, competition, language))
 
 
@@ -49,11 +49,15 @@ class ContextVolume(ContextNaboj):
     def __init__(self, root, competition, volume):
         super().__init__()
         self.load_meta(root, competition, volume) \
-            .add_id(volume) \
+            .add_id(f'{volume:02d}') \
             .add_number(volume)
 
-        self.add({'problems': lists.add_numbers(self.data['problems'], 1)})
-        self.add({'problems_modulo': lists.split_mod(self.data['problems'], self.data['evaluators'], first=1)})
+        self.add(
+            dict(problems=lists.add_numbers(self.data['problems'], itertools.count(1))),
+            dict(problems_modulo=lists.split_mod(
+                lists.add_numbers(self.data['problems'], itertools.count(1)), self.data['evaluators'], first=1
+            )),
+        )
         self.add_subdirs(ContextVenue, 'venues', (root, competition, volume), (root, competition, volume, 'venues'))
 
 

@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from .filters import render_list, roman, textbf, isotex, plural, get_check_digit
+from core.utils.filters import render_list, roman, textbf, isotex, plural, get_check_digit
 
 
 class TestRender():
@@ -40,19 +40,33 @@ class TestIsotex():
 
 
 @pytest.fixture
-def word():
+def word_masculine():
     return "plyš"
 
 
+@pytest.fixture
+def word_feminine():
+    return "kategóri"
+
+
 class TestPlural():
-    def test_one(self, word):
-        assert word + plural(1, "", "e", "ov") == "plyš"
+    def test_one(self, word_masculine):
+        assert word_masculine + plural(1, "", "e", "ov") == "plyš"
 
-    def test_two(self, word):
-        assert word + plural(3, "", "e", "ov") == "plyše"
+    def test_two(self, word_masculine):
+        assert word_masculine + plural(3, "", "e", "ov") == "plyše"
 
-    def test_many(self, word):
-        assert word + plural(10, "", "e", "ov") == "plyšov"
+    def test_many(self, word_masculine):
+        assert word_masculine + plural(10, "", "e", "ov") == "plyšov"
+
+    def test_one_cat(self, word_feminine):
+        assert word_feminine + plural(1, "a", "e", "e") == "kategória"
+
+    def test_two_cat(self, word_feminine):
+        assert word_feminine + plural(2, "a", "e", "e") == "kategórie"
+
+    def test_many_cat(self, word_feminine):
+        assert word_feminine + plural(7, "a", "e", "e") == "kategórie"
 
 
 class TestRoman():
@@ -90,8 +104,9 @@ class TestRoman():
 
 class TestCheckDigit():
     def test_bad_string(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc:
             get_check_digit("Číž")
+        assert "invalid literal for int()" in str(exc.value)
 
     def test_dict_error(self):
         with pytest.raises(AssertionError):

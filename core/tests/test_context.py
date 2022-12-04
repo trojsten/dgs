@@ -1,7 +1,7 @@
 import pytest
 import math
 
-from .context import Context
+from core.build.context import Context
 
 
 @pytest.fixture

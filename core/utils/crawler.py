@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from core.utilities import colour as c
+from core.utils import colour as c
 
 
 class Crawler():

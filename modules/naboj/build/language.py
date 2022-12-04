@@ -3,7 +3,7 @@ from pathlib import Path
 import builder
 import context
 
-import core.utilities.jinja as jinja
+import core.build.jinja as jinja
 
 
 class BuilderNabojLanguage(builder.BuilderNaboj):

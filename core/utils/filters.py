@@ -1,8 +1,9 @@
 import itertools
-from typing import Any, Optional, Callable
+from collections.abc import Iterable
+from typing import Any, Optional, Callable, Union
 
 
-def roman(number):
+def roman(number: int) -> str:
     if not type(number) == int:
         raise TypeError("Only integers between 1 and 3999 can be formatted as Roman numerals")
 
@@ -28,7 +29,7 @@ def get_check_digit(data: str) -> int:
     try:
         digits = map(lambda x: int(x, 36), data)
     except ValueError as exc:
-        raise ValueError("Found invalid character in barcode") from exc
+        raise ValueError(f"Found invalid character in barcode: {exc}") from exc
 
     checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
     return sum(checksum) % 10
@@ -59,12 +60,15 @@ def wrap(x: str, format_str: str) -> str:
     return format_str.format(x)
 
 
-def render_list(items: Any, *, func: Optional[Callable]=None) -> str:
+def identity(x: Any) -> Any:
+    return x
+
+
+def render_list(items: Union[list, Any], *, func: Callable=identity) -> str:
     if not isinstance(items, list):
         items = [items]
 
-    if func is not None:
-        items = list(map(func, items))
+    items = list(map(func, items))
 
     for i, item in enumerate(items[:-2]):
         items[i] = f"{item},"

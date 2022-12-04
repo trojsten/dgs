@@ -5,7 +5,7 @@ import argparse, os, sys, re
 from pathlib import Path
 
 from mdcheck import check, exceptions
-from utilities import colour as c
+from utils import colour as c
 
 
 class StyleEnforcer():

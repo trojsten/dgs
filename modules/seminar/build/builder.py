@@ -2,7 +2,7 @@ import sys
 
 sys.path.append('.')
 
-from core.utilities import builder
+from core.build import builder
 
 
 class BuilderSeminar(builder.BaseBuilder):
