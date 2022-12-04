@@ -5,7 +5,8 @@ from pathlib import Path
 
 sys.path.append('.')
 
-from core.utilities import context, crawler
+from core.build import context
+from core.utils import crawler
 
 
 class ContextScholar(context.Context):
