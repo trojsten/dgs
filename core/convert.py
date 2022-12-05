@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from build.convertor import Convertor
+from builder.convertor import Convertor
 from utils import colour as c
 
 

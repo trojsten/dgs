@@ -3,7 +3,7 @@ import re
 import tempfile
 import sys
 
-from core.build.convertor import Convertor
+from core.builder.convertor import Convertor
 
 
 @pytest.fixture
