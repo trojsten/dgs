@@ -37,7 +37,7 @@ class TestQuotes():
 
     def test_slovak(self, convert):
         output = convert('latex', 'sk', 'Máme "dačo" a "niečo". "Čo také?" _"Asi nič."_')
-        assert output == r'Máme „dačo“ a „niečo“. „Čo také?“ \emph{„Asi nič.“}' + '\n'
+        assert output.replace("{}", "") == r'Máme „dačo“ a „niečo“. „Čo také?“ \emph{„Asi nič.“}' + '\n'
 
     def test_slovak_html(self, convert):
         output = convert('html', 'sk', 'Máme "dačo" a "niečo". "Čo také?" _"Asi nič."_')
@@ -45,7 +45,7 @@ class TestQuotes():
 
     def test_interpunction(self, convert):
         output = convert('latex', 'sk', '"Toto je veľká 0." "Joj?" "???" "!!!"')
-        assert output == r'„Toto je veľká 0.“ „Joj?“ „???“ „!!!“' + '\n'
+        assert output.replace("{}", "") == r'„Toto je veľká 0.“ „Joj?“ „???“ „!!!“' + '\n'
 
     def test_more_interpunction(self, convert):
         assert convert('latex', 'sk', 'Ale "to" je "dobré", "nie."?') == r'Ale „to“ je „dobré“, „nie.“?' + '\n'
@@ -71,7 +71,7 @@ class TestImages():
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert re.match(r'<figure>.*<img.*src=".*ryba.svg".*Masívna ryba.*<figcaption.*Masívna ryba.*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
+        assert re.match(r'<figure>.*<img.*src=".*ryba.svg".*<figcaption.*Masívna ryba.*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
 
 
 class TestTags():

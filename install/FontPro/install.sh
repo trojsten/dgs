@@ -1,4 +1,4 @@
 ./scripts/makeall MinionPro
 ./scripts/install
-updmap-user --enable Map=MinionPro.map
+sudo updmap-sys --enable Map=MinionPro.map
 
