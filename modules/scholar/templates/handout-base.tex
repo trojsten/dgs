@@ -13,7 +13,7 @@
 
 (@ block content @)
     \setcounter{section}{(* issue.number - 1 *)}
-    \section{(* issue.name *)(@ block subtitle @)(@ endblock subtitle @)}
+    \section{(* issue.title *)(@ block subtitle @)(@ endblock subtitle @)}
     \invisiblesubsection{Text}
     \protectedInput{\activeDirectory/text.tex}
     (@ block problems @)(@ endblock problems @)
