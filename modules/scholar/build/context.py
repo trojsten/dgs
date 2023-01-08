@@ -69,7 +69,7 @@ class ContextIssueSub(ContextScholar):
         super().__init__()
         self.load_meta(root, course, year, target, issue, sub) \
             .add_id(sub)
-        self.add_subdirs(self.subcontext_class, self.subcontext_name, root, course, year, target, issue, sub)
+        self.add_subdirs(self.subcontext_class, self.subcontext_name, (root, course, year, target, issue, sub), (root, course, year, target, issue, sub))
 
 
 class ContextIssueSubSub(ContextScholar):

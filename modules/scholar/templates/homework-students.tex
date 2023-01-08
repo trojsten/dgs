@@ -4,7 +4,7 @@
     (@ for problem in issue.problems @)
         \subsection{(* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)}
         \label{sec:(* problem.id *)}
-        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
+        \tryInput{\activeDirectory/(* problem.id *)/text.tex}
         (@ if problem.subproblems|length == 0 @)
             (@ block solution scoped @)(@ endblock solution @)
         (@ endif @)

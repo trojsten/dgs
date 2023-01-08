@@ -179,17 +179,17 @@ class Convertor():
         out = tempfile.SpooledTemporaryFile(mode='w+')
 
         self.file.seek(0)
-        subprocess.run([
+        args = [
             "pandoc",
             "--mathjax",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.format,
-            "--filter", "pandoc-crossref", "-M", "'crossrefYaml=core/i18n/{self.language}/crossref.yaml'",
-#            "--filter", "pandoc-fignos", "-M", f'fignos-caption-name="{self.locale.figure}"',
+            "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
             "--metadata", f"lang={self.languages[self.locale_code]['locale']}",
-        ], stdin=self.file, stdout=out)
+        ]
+        subprocess.run(args, stdin=self.file, stdout=out)
 
         out.seek(0)
         return out
