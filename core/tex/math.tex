@@ -118,8 +118,9 @@
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
 \NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
-    \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+    \Eval{\Derivative[#1]{#2}{#3}}{#3 = #4}%
 }%
+\newcommand*\DrvEval{\DerivativeEval}
 
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
 % \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
@@ -209,7 +210,7 @@
 
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
-\NewDocumentCommand{\BoldVector}{m}{\boldsymbol{#1}}
+\NewDocumentCommand{\BoldVector}{m}{\mathbfit{#1}}
 \NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
 \NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
 \NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}

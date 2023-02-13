@@ -7,6 +7,7 @@
 "Toto je veľká 0" "..." "???" "!!!"
 "..."
 "---"
+"--"
 "Boha." "Boha?" "..."
 Ale "to" je "dobré", "nie..."?
 
@@ -50,6 +51,11 @@ $4 - \left(2 + 5\right)$ pass
 
 "+"
 $\left(+1, +5\right)$
-"f_{+}"
+"$f_{+}$"
 
 $1+2$ FAIL
+
+Hertzsprung--Russell
+Mečiar --Fico
+Dzurinda-- Matovič
+Tvoja -- Mama

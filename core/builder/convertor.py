@@ -10,17 +10,27 @@ sys.path.append('.')
 from core.utils import colour as c
 
 
-class Convertor():
+class Locale:
+    def __init__(self, name, locale, quotes, **extras):
+        self.name = name
+        self.locale = locale
+        self.quotes = quotes
+
+        for k, v in extras.items():
+            self.__setattr__(k, v)
+
+
+class Convertor:
     languages = {
-        'sk':   dict(name='slovak'      , locale='sk-SK', quotes=('„', '“'), figure='Obrázok'),
-        'cs':   dict(name='czech'       , locale='cs-CZ', quotes=('„', '“'), figure='Obrázek'),
-        'en':   dict(name='english'     , locale='en-US', quotes=('“', '”'), figure='Picture'),
-        'ru':   dict(name='russian'     , locale='ru-RU', quotes=('«', '»')),
-        'pl':   dict(name='polish'      , locale='pl-PL', quotes=('„', '“')),
-        'hu':   dict(name='hungarian'   , locale='hu-HU', quotes=('„', '“')),
-        'fr':   dict(name='french'      , locale='fr-FR', quotes=('«\u202F', '\u202F»')),
-        'es':   dict(name='spanish'     , locale='es-ES', quotes=('«', '»')),
-        'qq':   dict(name='test'        , locale='sk-SK', quotes=('(', ')')),
+        'sk':   Locale('slovak',    'sk-SK', ('„', '“'), figure='Obrázok'),
+        'en':   Locale('english',   'en-US', ('“', '”'), figure='Figure'),
+        'cs':   Locale('czech',     'cs-CZ', ('„', '“'), figure='Obrázek'),
+        'ru':   Locale('russian',   'ru-RU', ('«', '»'), figure=''),
+        'pl':   Locale('polish',    'pl-PL', ('„', '“'), figure=''),
+        'hu':   Locale('hungarian', 'hu-HU', ('„', '“'), figure=''),
+        'fr':   Locale('french',    'fr-FR', ('«\u202F', '\u202F»'), figure=''),
+        'es':   Locale('spanish',   'es-ES', ('«', '»'), figure='Cuadro'),
+        'qq':   Locale('test',      'sk-SK', ('(', ')'), figure='Obrázok'),
     }
 
     post_regexes = {
@@ -30,6 +40,7 @@ class Convertor():
             (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
             (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
             (r"^\\caption{}(\\label{.*})?\n", ""), # Remove empty labels and captions
+#            (r"\b--\b", "{}--{}"),
         ],
         'html': [
             (
@@ -75,7 +86,7 @@ class Convertor():
 
     def __init__(self, format, locale_code, infile, outfile):
         self.locale_code = locale_code
-        self.locale = dotmap.DotMap(self.languages[locale_code], _dynamic=False)
+        self.locale = self.languages[locale_code]
         self.format = format
         self.infile = infile
         self.outfile = outfile
@@ -187,7 +198,7 @@ class Convertor():
             "--to", self.format,
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
-            "--metadata", f"lang={self.languages[self.locale_code]['locale']}",
+            "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
 
