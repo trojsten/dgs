@@ -4,11 +4,10 @@
 (@ set kind_verbose = 'riešenia' @)
 
 (@ block heading_inner @)
-    (@ if problem.solutionBy @)%
-        vzorák (* problem.solutionBy|format_list(func=textbf) *)%
+    (@ if problem.solution @)%
+        vzorák (* problem.solution|format_person(func=textbf) *)%
     (@ endif @)%
-    (@ if problem.solutionBy and problem.evaluation @), (@ endif @)%
     (@ if problem.evaluation @)%
-        opravoval(* problem.genderSuffix *) (* problem.evaluation|format_list(func=textbf) *)%
+        opravoval(* problem.evaluation|format_gender_suffix *) (* problem.evaluation|format_person(func=textbf) *)%
     (@ endif @)%
 (@ endblock heading_inner @)

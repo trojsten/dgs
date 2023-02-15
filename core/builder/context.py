@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import yaml
+from schema import Schema, SchemaWrongKeyError
 
 from collections.abc import Iterable
 
@@ -12,10 +13,19 @@ from core.utils import dicts, colour as c, crawler
 
 class Context():
     defaults = {}
+    schema = None   # Validation schema for the context, or None if it is not to be validated
 
     def __init__(self, **defaults):
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
+
+    def validate(self):
+        if self.schema is not None:
+            try:
+                self.schema.validate(self.data)
+            except SchemaWrongKeyError as exc:
+                print(exc)
+                raise exc
 
     def add(self, *dictionaries):
         """ Merge a list of dictionaries with into this context, overriding same keys """

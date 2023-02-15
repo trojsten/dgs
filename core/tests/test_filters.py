@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from core.utils.filters import render_list, roman, textbf, isotex, plural, get_check_digit
+from core.utils.filters import render_list, roman, textbf, isotex, plural, get_check_digit, format_gender_suffix, format_people
 
 
 class TestRender():
@@ -117,3 +117,55 @@ class TestCheckDigit():
 
     def test_creation_1(self):
         assert get_check_digit("PRASA") == 2
+
+
+class TestGenderSuffix:
+    def test_string(self):
+        assert format_gender_suffix('Adam') == 'o'
+
+    def test_single_dict_m(self):
+        assert format_gender_suffix(dict(name="Adam", gender='m')) == ''
+
+    def test_single_dict_n(self):
+        assert format_gender_suffix(dict(name="Tete", gender='?')) == 'o'
+
+    def test_single_dict_f(self):
+        assert format_gender_suffix(dict(name="Viki", gender='a')) == 'a'
+
+    def test_multi_dict(self):
+        assert format_gender_suffix([dict(name="Majo", gender='m'), dict(name="Nina", gender="f")]) == 'i'
+
+    def test_multi_dict_str(self):
+        assert format_gender_suffix(["Krto", "Zahradník", "Marcel"]) == 'i'
+
+
+class TestPeople:
+    def test_string(self):
+        assert format_people('Adam') == 'Adam'
+
+    def test_string_pair(self):
+        assert format_people(['Tom', 'Jerry']) == 'Tom a Jerry'
+
+    def test_string_many(self):
+        assert format_people(['Terka', 'zub', 'zub', 'zub']) == 'Terka, zub, zub a zub'
+
+    def test_single_dict(self):
+        assert format_people(dict(name='Adam', gender='m')) == 'Adam'
+
+    def test_single_dict_list(self):
+        assert format_people([{'name': 'Jaro', 'gender': 'm'}]) == 'Jaro'
+
+    def test_pair_dict_list(self):
+        assert format_people([{'name': 'Jaro', 'gender': 'm'}, "Moczo"]) == 'Jaro a Moczo'
+
+    def test_pair_wrapped(self):
+        assert format_people(["Hale", "Kala"], func=textbf) == r'\textbf{Hale} a \textbf{Kala}'
+
+    def test_many_wrapped(self):
+        assert format_people(
+            [
+                {'name': 'Jerome', 'gender': 'm'},
+                {'name': 'Harris', 'gender': 'm'},
+                {'name': 'George', 'gender': 'm'}
+            ]
+        ) == 'Jerome, Harris a George'

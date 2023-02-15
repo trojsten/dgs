@@ -1,7 +1,10 @@
 import pprint
 import argparse
 import argparsedirs
+import schema
+
 from pathlib import Path
+from abc import abstractmethod, ABCMeta
 
 from core.utils import colour as c, crawler
 from core.builder import jinja
@@ -11,7 +14,7 @@ def empty_if_none(string):
     return '' if string is None else string
 
 
-class BaseBuilder():
+class BaseBuilder(metaclass=ABCMeta):
     module = None
 
     def __init__(self):
@@ -24,6 +27,7 @@ class BaseBuilder():
         self.create_context()
 
     def create_argument_parser(self):
+        """ Create the default ArgumentParser """
         self.parser = argparse.ArgumentParser(description="Prepare a DGS input dataset from repository")
         self.parser.add_argument('launch', action=argparsedirs.ReadableDir)
         self.parser.add_argument('template_root', action=argparsedirs.ReadableDir)
@@ -41,11 +45,13 @@ class BaseBuilder():
     def full_path(self):
         return Path(self.launch_directory, *self.path())
 
+    @abstractmethod
     def id(self):
-        raise NotImplementedError("Child classes of BaseBuilder must implement `id`")
+        """ Return the id tuple """
 
+    @abstractmethod
     def path(self):
-        raise NotImplementedError("Child classes of BaseBuilder must implement `path`")
+        """ Return the root path for this builder """
 
     def print_debug_info(self) -> None:
         """ Prints debug info """

@@ -1,12 +1,16 @@
 import os
 import sys
 import collections
+import datetime
+
 from pathlib import Path
+from abc import ABCMeta, abstractmethod
+from schema import Schema, Optional, Use, And, Or
 
 from core.builder import context
 
 
-class ContextSeminar(context.Context):
+class ContextSeminar(context.Context, metaclass=ABCMeta):
     def node_path(self, root, competition=None, volume=None, semester=None, round=None, problem=None):
         return Path(
             root,
@@ -25,10 +29,36 @@ class ContextModule(ContextSeminar):
 
 
 class ContextCompetition(ContextSeminar):
+    schema = Schema({
+        'id': And(str, len),
+        'short': And(str, len),
+        'full': Schema({
+            'nominative': And(str, len),
+            Optional('genitive'): And(str, len),
+            Optional('locative'): And(str, len),
+        }),
+        'urls': Schema({
+            'web': And(str, len), # set this to URL
+            'submit': And(str, len), # and here too
+        }),
+        'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
+        'categories': list,
+        'founded': int,
+        Optional('email'): str,
+        Optional('hacks'): dict,
+        'head': Schema({
+            'name': And(str, len),
+            'email': And(str, len),  # change this to email
+            'phone': And(str, len),  # change this to phone regex
+        }),
+        'organisation': dict,
+    })
+
     def __init__(self, root, competition):
         super().__init__()
         self.load_meta(root, competition) \
             .add_id(competition)
+        self.validate()
 
 
 class ContextVolume(ContextSeminar):
@@ -67,6 +97,16 @@ class ContextSemesterFull(ContextSemester):
 
 
 class ContextRound(ContextSeminar):
+    schema = Schema([
+        {
+            'deadline': datetime.datetime,
+            Optional('instagram'): dict(
+                skin=Use(str, lambda x: x in ['orange', 'grey']),
+                textColour=Use(str),
+            )
+        }
+    ])
+
     def __init__(self, root, competition, volume, semester, round):
         super().__init__()
         self.id = str(round)
@@ -99,6 +139,20 @@ class ContextRoundFull(ContextRound):
 
 
 class ContextProblem(ContextSeminar):
+    schema = Schema({
+        'title': And(str, len),
+        'categories': list,
+        'number': And(int, lambda x: x >= 1 and x <= 8),
+        'id': str,
+        'evaluation': Or('', And(str, len), list, dict),
+        'solution': Or('', And(str, len), list, dict),
+        'points': Schema({
+            'description': And(int, lambda x: x >= 0),
+            Optional('code'): And(int, lambda x: x >= 0),
+        }),
+
+    })
+
     def __init__(self, root, competition, volume, semester, round, problem):
         super().__init__()
         self.id = f'{problem:02d}'
@@ -109,6 +163,7 @@ class ContextProblem(ContextSeminar):
         vol = ContextVolume(root, competition, volume)
         categories = vol.data['categories']
         self.add({'categories': categories[problem - 1]})
+        self.validate()
 
 
 """ Buildable contexts """

@@ -64,7 +64,7 @@ def identity(x: Any) -> Any:
     return x
 
 
-def render_list(items: Union[list, Any], *, func: Callable=identity) -> str:
+def render_list(items: Union[list, Any], *, func: Callable = identity, and_: str = 'a') -> str:
     if not isinstance(items, list):
         items = [items]
 
@@ -74,6 +74,52 @@ def render_list(items: Union[list, Any], *, func: Callable=identity) -> str:
         items[i] = f"{item},"
 
     if len(items) > 1:
-        items[-2] = f"{items[-2]} a"
+        items[-2] = f"{items[-2]} {and_}"
 
     return ' '.join(items)
+
+
+def process_people(people: Union[str, list, dict]) -> dict:
+    """
+    Pre-process people metadata:
+        - if a string, add unknown gender
+        - if a dict, wrap it in a list
+        - if a list, pass through
+        - otherwise raise exception
+    """
+    if isinstance(people, str):
+        return [dict(name=people, gender='?')]
+    elif isinstance(people, dict):
+        return [people]
+    elif isinstance(people, list):
+        return [dict(name=person, gender='?') if isinstance(person, str) else person for person in people]
+    else:
+        raise TypeError(f"Invalid people type: {people}")
+
+
+def format_gender_suffix(people: Union[str, list, dict], *, func: Callable = identity) -> str:
+    """
+        Format person metadata:
+            -   if it is a string, we do not know the gender
+            -   if it is a dict, it should have name and gender, display that
+            -   if it is a list of dicts, use plural and dispay a list of names
+
+        Returns
+        -------
+        str : gender suffix
+    """
+    people = process_people(people)
+    if len(people) > 1:
+        return "i"
+    else:
+        if people[0]['gender'] in ['', 'm']:
+            return ""
+        elif people[0]['gender'] in ['a', 'f']:
+            return "a"
+        else:
+            return "o"
+
+
+def format_people(people: Union[str, list, dict], *, func: Callable = identity) -> str:
+    people = process_people(people)
+    return render_list([person['name'] for person in people], func=func)

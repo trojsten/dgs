@@ -14,15 +14,15 @@
 
 (@ block problem @)
     \begin{seminar-problem}{(* problem.title *)}%
-        {(* problem.pointsDescription *)}%
+        {(* problem.points.description *)}%
         {(* problem.categories|format_list *)}
         \protectedInput{\activeDirectory/(* kind *).tex}%
     \end{seminar-problem}
 (@ endblock problem @)
 
 (@ block heading_inner @)
-    (@ if problem.pointsDescription @)%
-        \textbf{(* problem.pointsDescription *) bod(* problem.pointsDescription|plural("","y","ov") *)}%
+    (@ if problem.points.description @)%
+        \textbf{(* problem.points.description *) bod(* problem.points.description|plural("","y","ov") *)}%
     (@ endif @)%
     (@ if problem.categories @)%
         , kategóri(* plural(problem.categories|length, "a", "e", "e") *) (* problem.categories|format_list(func=textbf) *)%

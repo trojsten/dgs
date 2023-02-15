@@ -62,8 +62,8 @@
         \subsection{%
             \texorpdfstring{%
                 \large \textbf{(* problem.title *)} \hfill \normalsize%
-                (@ if problem.pointsDescription @)%
-                    \textbf{(* problem.pointsDescription *) bod(* '%s'|format(plural(problem.pointsDescription,"","y","ov")) *)}%
+                (@ if problem.points.description @)%
+                    \textbf{(* problem.points.description *) bod(* '%s'|format(plural(problem.points.description,"","y","ov")) *)}%
                     (@ if problem.categories @), (@ endif @)%
                 (@ endif @)%
                 (@ if problem.categories @)%
