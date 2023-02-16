@@ -42,7 +42,7 @@ class ContextCompetition(ContextSeminar):
             'submit': And(str, len), # and here too
         }),
         'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
-        'categories': list,
+        'categories': [[], [str]],
         'founded': int,
         Optional('email'): str,
         Optional('hacks'): dict,
@@ -62,12 +62,19 @@ class ContextCompetition(ContextSeminar):
 
 
 class ContextVolume(ContextSeminar):
+    schema = Schema({
+        'id': str,
+        'number': int,
+        Optional('categories'): [[], [str]],
+    })
+
     def __init__(self, root, competition, volume):
         super().__init__()
         self.id = f'{volume:02d}'
         self.load_meta(root, competition, volume) \
             .add_id(self.id) \
             .add_number(volume)
+        self.validate()
 
 
 class ContextSemester(ContextSeminar):

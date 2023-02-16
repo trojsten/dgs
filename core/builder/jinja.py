@@ -50,7 +50,7 @@ def environment(directory):
     env.filters |= {
         'roman': filters.roman,
         'format_list': filters.render_list,
-        'format_person': filters.format_person,
+        'format_people': filters.format_people,
         'format_gender_suffix': filters.format_gender_suffix,
         'isotex': filters.isotex,
         'plural': filters.plural,

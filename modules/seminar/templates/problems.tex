@@ -21,7 +21,7 @@
 (@ endblock problem @)
 
 (@ block heading_inner @)
-    (@ if problem.points.description @)%
+    (@ if problem.points.description is defined @)%
         \textbf{(* problem.points.description *) bod(* problem.points.description|plural("","y","ov") *)}%
     (@ endif @)%
     (@ if problem.categories @)%
