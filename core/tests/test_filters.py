@@ -121,13 +121,24 @@ class TestCheckDigit():
 
 class TestGenderSuffix:
     def test_string(self):
-        assert format_gender_suffix('Adam') == 'o'
+        """ A string fails in singular case, undefined gender """
+        with pytest.raises(ValueError):
+            format_gender_suffix('Adam')
+
+    def test_many_strings(self):
+        """ This should not fail: if plural, suffix is invariably 'i' (in Slovak) """
+        assert format_gender_suffix(['Pat', 'Mat']) == 'i'
+
+    def test_invalid_gender(self):
+        """ This fails: unknown gender """
+        with pytest.raises(ValueError):
+            format_gender_suffix(dict(name='Melody', gender='x'))
 
     def test_single_dict_m(self):
         assert format_gender_suffix(dict(name="Adam", gender='m')) == ''
 
     def test_single_dict_n(self):
-        assert format_gender_suffix(dict(name="Tete", gender='?')) == 'o'
+        assert format_gender_suffix(dict(name="Tete", gender='n')) == 'o'
 
     def test_single_dict_f(self):
         assert format_gender_suffix(dict(name="Viki", gender='a')) == 'a'
@@ -166,6 +177,14 @@ class TestPeople:
             [
                 {'name': 'Jerome', 'gender': 'm'},
                 {'name': 'Harris', 'gender': 'm'},
-                {'name': 'George', 'gender': 'm'}
+                {'name': 'George', 'gender': 'm'},
             ]
         ) == 'Jerome, Harris a George'
+
+    def test_girls_wrapped(self):
+        assert format_people(
+            [
+                {'name': 'Kika', 'gender': 'f'},
+                {'name': 'Emmika', 'gender': 'f'},
+            ], and_word='et'
+        ) == 'Kika et Emmika'

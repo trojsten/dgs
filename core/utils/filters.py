@@ -1,4 +1,5 @@
 import itertools
+from schema import Schema, Or
 from collections.abc import Iterable
 from typing import Any, Optional, Callable, Union
 
@@ -64,7 +65,7 @@ def identity(x: Any) -> Any:
     return x
 
 
-def render_list(items: Union[list, Any], *, func: Callable = identity, and_: str = 'a') -> str:
+def render_list(items: Union[list, Any], *, func: Callable = identity, and_word: str = 'a') -> str:
     if not isinstance(items, list):
         items = [items]
 
@@ -74,12 +75,12 @@ def render_list(items: Union[list, Any], *, func: Callable = identity, and_: str
         items[i] = f"{item},"
 
     if len(items) > 1:
-        items[-2] = f"{items[-2]} {and_}"
+        items[-2] = f"{items[-2]} {and_word}"
 
     return ' '.join(items)
 
 
-def process_people(people: Union[str, list, dict]) -> dict:
+def process_people(people: Union[list, dict]) -> dict:
     """
     Pre-process people metadata:
         - if a string, add unknown gender
@@ -87,26 +88,27 @@ def process_people(people: Union[str, list, dict]) -> dict:
         - if a list, pass through
         - otherwise raise exception
     """
+    Schema(Or([Or(str, {'name': str, 'gender': str})], Or(str, {'name': str, 'gender': str}), str)).validate(people)
     if isinstance(people, str):
         return [dict(name=people, gender='?')]
-    elif isinstance(people, dict):
+    if isinstance(people, dict):
         return [people]
     elif isinstance(people, list):
         return [dict(name=person, gender='?') if isinstance(person, str) else person for person in people]
     else:
-        raise TypeError(f"Invalid people type: {people}")
+        raise TypeError(f"Invalid people type: {type(people)}")
 
 
 def format_gender_suffix(people: Union[str, list, dict], *, func: Callable = identity) -> str:
     """
-        Format person metadata:
-            -   if it is a string, we do not know the gender
-            -   if it is a dict, it should have name and gender, display that
-            -   if it is a list of dicts, use plural and dispay a list of names
+    Format people metadata:
+        -   if it is a string, we do not know the gender
+        -   if it is a dict, it should have name and gender, display that
+        -   if it is a list of dicts, use plural and display a list of names
 
-        Returns
-        -------
-        str : gender suffix
+    Returns
+    -------
+    str : gender suffix
     """
     people = process_people(people)
     if len(people) > 1:
@@ -116,10 +118,18 @@ def format_gender_suffix(people: Union[str, list, dict], *, func: Callable = ide
             return ""
         elif people[0]['gender'] in ['a', 'f']:
             return "a"
-        else:
+        elif people[0]['gender'] in ['o', 'n']:
             return "o"
+        else:
+            raise ValueError("Tried to use an undefined gender suffix, define 'gender' key in meta.yaml")
 
 
-def format_people(people: Union[str, list, dict], *, func: Callable = identity) -> str:
+def format_people(people: Union[list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
+    """
+    Fully format a list of people
+    Parameters
+    ----------
+    """
+
     people = process_people(people)
-    return render_list([person['name'] for person in people], func=func)
+    return render_list([person['name'] for person in people], func=func, and_word=and_word)

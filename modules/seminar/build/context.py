@@ -174,8 +174,6 @@ class ContextProblem(ContextSeminar):
 
 
 """ Buildable contexts """
-
-
 class ContextVolumeBooklet(ContextSeminar):
     def __init__(self, root, competition, volume):
         super().__init__()

@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import yaml
+from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError
 
 from collections.abc import Iterable
@@ -11,9 +12,9 @@ from collections.abc import Iterable
 from core.utils import dicts, colour as c, crawler
 
 
-class Context():
-    defaults = {}
-    schema = None   # Validation schema for the context, or None if it is not to be validated
+class Context(metaclass=ABCMeta):
+    defaults = {}       # Defaults for every instance
+    schema = None       # Validation schema for the context, or None if it is not to be validated
 
     def __init__(self, **defaults):
         self.data = copy.deepcopy(self.defaults)
@@ -58,8 +59,9 @@ class Context():
     def load_meta(self, *args):
         return self.load_YAML(self.node_path(*args) / 'meta.yaml')
 
+    @abstractmethod
     def node_path(self, *args):
-        raise NotImplementedError("Child classes must implement node_path method")
+        """ Return node path for id tuple """
 
     def print(self):
         pprint.pprint(self.data)
@@ -78,3 +80,9 @@ class Context():
     def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
         cr = crawler.Crawler(self.node_path(*root))
         self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.subdirs()]})
+
+
+class BuildableContext(Context):
+    """
+    Only some contexts are meant to be built directly. This class provides a common ancestor.
+    """
