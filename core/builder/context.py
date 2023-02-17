@@ -59,9 +59,9 @@ class Context(metaclass=ABCMeta):
     def load_meta(self, *args):
         return self.load_YAML(self.node_path(*args) / 'meta.yaml')
 
-    @abstractmethod
     def node_path(self, *args):
-        """ Return node path for id tuple """
+        """ Return node path for id tuple -- empty for base context """
+        return ""
 
     def print(self):
         pprint.pprint(self.data)

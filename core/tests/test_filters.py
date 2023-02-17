@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from core.utils.filters import render_list, roman, textbf, isotex, plural, get_check_digit, format_gender_suffix, format_people
+from core.utils.filters import render_list, roman, textbf, textit, isotex, plural, get_check_digit, format_gender_suffix, format_people
 
 
 class TestRender():
@@ -126,7 +126,7 @@ class TestGenderSuffix:
             format_gender_suffix('Adam')
 
     def test_many_strings(self):
-        """ This should not fail: if plural, suffix is invariably 'i' (in Slovak) """
+        """ This should not fail: if plural, suffix is invariably 'i' (at least in Slovak) """
         assert format_gender_suffix(['Pat', 'Mat']) == 'i'
 
     def test_invalid_gender(self):
@@ -172,7 +172,7 @@ class TestPeople:
     def test_pair_wrapped(self):
         assert format_people(["Hale", "Kala"], func=textbf) == r'\textbf{Hale} a \textbf{Kala}'
 
-    def test_many_wrapped(self):
+    def test_many(self):
         assert format_people(
             [
                 {'name': 'Jerome', 'gender': 'm'},
@@ -186,5 +186,5 @@ class TestPeople:
             [
                 {'name': 'Kika', 'gender': 'f'},
                 {'name': 'Emmika', 'gender': 'f'},
-            ], and_word='et'
-        ) == 'Kika et Emmika'
+            ], func=textit, and_word='et'
+        ) == r'\textit{Kika} et \textit{Emmika}'
