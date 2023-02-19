@@ -1,5 +1,3 @@
-import os
-import sys
 import collections
 import datetime
 
@@ -11,9 +9,9 @@ from core.builder import context
 
 
 class ContextSeminar(context.Context, metaclass=ABCMeta):
-    def node_path(self, root, competition=None, volume=None, semester=None, round=None, problem=None):
+    def node_path(self, competition=None, volume=None, semester=None, round=None, problem=None):
         return Path(
-            root,
+            self.root,
             '' if competition is None else competition,
             '' if volume is None else f'{volume:02d}',
             '' if semester is None else str(semester),
@@ -23,8 +21,10 @@ class ContextSeminar(context.Context, metaclass=ABCMeta):
 
 
 class ContextModule(ContextSeminar):
-    def __init__(self, module):
-        super().__init__()
+    schema = Schema({'id': And(str, len)})
+
+    def populate(self, module):
+        self.name(module)
         self.add_id(module)
 
 
@@ -42,23 +42,28 @@ class ContextCompetition(ContextSeminar):
             'submit': And(str, len), # and here too
         }),
         'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
-        'categories': [[], [str]],
+        'categories': [[], [And(str, len)]],
         'founded': int,
         Optional('email'): str,
         Optional('hacks'): dict,
         'head': Schema({
-            'name': And(str, len),
+            'name': Or(
+                And(str, len),
+                {
+                    'name': And(str, len),
+                    'surname': And(str, len)
+                },
+            ),
             'email': And(str, len),  # change this to email
             'phone': And(str, len),  # change this to phone regex
         }),
         'organisation': dict,
     })
 
-    def __init__(self, root, competition):
-        super().__init__()
-        self.load_meta(root, competition) \
+    def populate(self, competition):
+        self.name(competition)
+        self.load_meta(competition) \
             .add_id(competition)
-        self.validate()
 
 
 class ContextVolume(ContextSeminar):
@@ -68,20 +73,25 @@ class ContextVolume(ContextSeminar):
         Optional('categories'): [[], [str]],
     })
 
-    def __init__(self, root, competition, volume):
-        super().__init__()
-        self.id = f'{volume:02d}'
-        self.load_meta(root, competition, volume) \
-            .add_id(self.id) \
+    def populate(self, competition, volume):
+        self.name(competition, volume)
+        self.load_meta(competition, volume) \
+            .add_id(f'{volume:02d}') \
             .add_number(volume)
-        self.validate()
 
 
 class ContextSemester(ContextSeminar):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__()
+    schema = Schema({
+        'id': And(str, len),
+        'number': And(int, lambda x: x in [1, 2]),
+        'neuter': Schema({'nominative': str, 'genitive': str}),
+        'feminine': Schema({'nominative': str, 'genitive': str}),
+    })
+
+    def populate(self, competition, volume, semester):
+        self.name(competition, volume, semester)
         self.id = str(semester)
-        self.load_meta(root, competition, volume, semester) \
+        self.load_meta(competition, volume, semester) \
             .add_id(self.id) \
             .add_number(semester)
         # Add fancy names for the semesters
@@ -98,31 +108,12 @@ class ContextSemester(ContextSeminar):
 
 
 class ContextSemesterFull(ContextSemester):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__(root, competition, volume, semester)
+    def populate(self, root, competition, volume, semester):
+        self.name(competition, volume, semester)
         self.add_children(ContextRoundFull, 'rounds', (root, competition, volume, semester))
 
 
 class ContextRound(ContextSeminar):
-    schema = Schema([
-        {
-            'deadline': datetime.datetime,
-            Optional('instagram'): dict(
-                skin=Use(str, lambda x: x in ['orange', 'grey']),
-                textColour=Use(str),
-            )
-        }
-    ])
-
-    def __init__(self, root, competition, volume, semester, round):
-        super().__init__()
-        self.id = str(round)
-        self.load_meta(root, competition, volume, semester, round) \
-            .add_id(self.id) \
-            .add_number(round)
-
-
-class ContextRoundFull(ContextRound):
     defaults = {
         'instagram': {
             'skin': 'orange',
@@ -130,20 +121,34 @@ class ContextRoundFull(ContextRound):
         }
     }
 
-    def __init__(self, root, competition, volume, semester, round):
-        super().__init__(root, competition, volume, semester, round)
-        self.add(self.defaults)
+    schema = Schema({
+        'deadline': datetime.date,
+        Optional('instagram'): Schema({
+            'skin': Use(str, lambda x: x in ['orange', 'grey']),
+            'textColour': str,
+        }),
+        'id': And(str, len),
+        'number': int,
+    })
 
-        vol = ContextVolume(root, competition, volume)
+    def populate(self, competition, volume, semester, round):
+        self.name(competition, volume, semester, round)
+        self.load_meta(competition, volume, semester, round) \
+            .add_id(str(round)) \
+            .add_number(round)
+
+
+class ContextRoundFull(ContextRound):
+    def populate(self, competition, volume, semester, round):
+        super().populate(competition, volume, semester, round)
+
+        vol = ContextVolume(self.root, competition, volume)
         categories = vol.data['categories']
-        problems = collections.OrderedDict()
 
-        for p in range(0, len(categories)):
-            pn = f'{(p + 1):02d}'
-            problems[pn] = ContextProblem(root, competition, volume, semester, round, p + 1).data
-
-        self.add({'problems': problems})
-
+        self.add_list('problems', [
+            ContextProblem(self.root, competition, volume, semester, round, problem)
+            for problem in range(1, len(categories) + 1)
+        ])
 
 class ContextProblem(ContextSeminar):
     schema = Schema({
@@ -156,35 +161,32 @@ class ContextProblem(ContextSeminar):
         'points': Schema({
             'description': And(int, lambda x: x >= 0),
             Optional('code'): And(int, lambda x: x >= 0),
+            Optional('extra'): And(int, lambda x: x >= 0),
         }),
 
     })
 
-    def __init__(self, root, competition, volume, semester, round, problem):
-        super().__init__()
-        self.id = f'{problem:02d}'
-        self.load_meta(root, competition, volume, semester, round, problem) \
-            .add_id(self.id) \
+    def populate(self, competition, volume, semester, round, problem):
+        self.name(competition, volume, semester, round, f'{problem:02d}')
+        self.load_meta(competition, volume, semester, round, problem) \
+            .add_id(f'{problem:02d}') \
             .add_number(problem)
 
-        vol = ContextVolume(root, competition, volume)
+        vol = ContextVolume(self.root, competition, volume)
         categories = vol.data['categories']
         self.add({'categories': categories[problem - 1]})
-        self.validate()
 
 
 """ Buildable contexts """
 class ContextVolumeBooklet(ContextSeminar):
-    def __init__(self, root, competition, volume):
-        super().__init__()
+    def populate(self, root, competition, volume):
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(root, competition))
         self.adopt('volume', ContextVolume(root, competition, volume))
 
 
 class ContextSemesterBooklet(ContextSeminar):
-    def __init__(self, root, competition, volume, semester):
-        super().__init__()
+    def populate(self, root, competition, volume, semester):
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(root, competition))
         self.adopt('volume', ContextVolume(root, competition, volume))
@@ -192,10 +194,11 @@ class ContextSemesterBooklet(ContextSeminar):
 
 
 class ContextBooklet(ContextSeminar):
-    def __init__(self, root, competition, volume, semester, round):
-        super().__init__()
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
-        self.adopt('semester', ContextSemester(root, competition, volume, semester))
-        self.adopt('round', ContextRoundFull(root, competition, volume, semester, round))
+    schema = Schema({})
+
+    def populate(self, competition, volume, semester, round):
+        self.adopt('module', ContextModule(self.root, 'seminar'))
+        self.adopt('competition', ContextCompetition(self.root, competition))
+        self.adopt('volume', ContextVolume(self.root, competition, volume))
+        self.adopt('semester', ContextSemester(self.root, competition, volume, semester))
+        self.adopt('round', ContextRoundFull(self.root, competition, volume, semester, round))

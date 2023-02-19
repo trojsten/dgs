@@ -13,6 +13,7 @@ build/naboj/%.tex: source/naboj/%.md
 	$(call pandoctex,$(word 4,$(words)))
 
 # % <competition>/<volume>/languages/<language>
+
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	build/naboj/$$*/../../../.static/logo/logo.pdf \
@@ -21,7 +22,7 @@ build/naboj/%/build-language: \
 	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
 
 # % <competition>/<volume>/<venue>
@@ -33,7 +34,7 @@ build/naboj/%/build-venue: \
 	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
 
 ### Input files ###################################################################################
 
@@ -173,7 +174,9 @@ output/naboj/%/online.pdf: \
 	pdftk $@ burst output $(dir $@)/%02d.pdf
 
 output/naboj/%/html: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) ;
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/cover-print.pdf: \
 	output/naboj/%/cover.pdf

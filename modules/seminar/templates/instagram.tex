@@ -54,7 +54,7 @@
 
     (@ block inner @)(@ endblock @)
 
-    (@ for pid, problem in round.problems.items() @)%
+    (@ for problem in round.problems @)%
         \vspace*{\fill}
         \setcounter{problem}{(* problem.number *)}%
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%

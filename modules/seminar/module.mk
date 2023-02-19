@@ -8,7 +8,7 @@ build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $@)
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/volume.py 'source/seminar/' 'source/seminar/$*/' \
+	python3 ./modules/seminar/builder/volume.py 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
@@ -17,7 +17,7 @@ build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solut
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/round.py 'source/seminar/' 'modules/seminar/templates/' \
+	python3 ./modules/seminar/builder/round.py 'source/seminar/' 'modules/seminar/templates/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
 build/seminar/%/semester.tex: \
@@ -29,14 +29,14 @@ build/seminar/%/semester.tex: \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+	python3 ./modules/seminar/builder/semester.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
 build/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $@) \
 	source/seminar/$$*/meta.yaml
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python3 modules/seminar/build/invite.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+	python3 modules/seminar/builder/invite.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 
 # competition/volume/semester/round
 build/seminar/%/pdf-prerequisites: \

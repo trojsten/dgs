@@ -1,15 +1,15 @@
 from typing import Iterable, Dict
 
 
-def merge(parent: Dict, *children: Iterable[Dict]) -> Dict:
+def merge(parent: Dict, *children: Iterable[Dict], overwrite=True) -> Dict:
     for child in children:
         parent = merge_one(parent, child)
     return parent
 
 
-def merge_one(parent: Dict, child: Dict) -> Dict:
+def merge_one(parent: Dict, child: Dict, *, overwrite=True) -> Dict:
     if id(parent) == id(child):
-        raise RecursionError("Cannot merge a context with itself")
+        return parent
 
     if parent is None:
         return child

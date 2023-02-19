@@ -4,7 +4,7 @@ import argparse
 import os
 from pathlib import Path
 
-import argparser
+import argparsedirs
 
 
 def fire(query):
