@@ -1,16 +1,15 @@
 from pathlib import Path
 
 import builder
-import context
-
 import core.builder.jinja as jinja
+from modules.naboj.builder.contexts import ContextBooklet
 
 
 class BuilderNabojLanguage(builder.BuilderNaboj):
     target = 'language'
     subdir = 'languages'
 
-    root_context_class = context.ContextBooklet
+    root_context_class = ContextBooklet
     templates = [
         'booklet.tex',
         'answers.tex',

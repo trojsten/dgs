@@ -8,24 +8,26 @@ from schema import Schema, Optional, Use, And, Or
 from core.builder import context
 
 
-class ContextSeminar(context.Context, metaclass=ABCMeta):
-    def node_path(self, competition=None, volume=None, semester=None, round=None, problem=None):
-        return Path(
-            self.root,
-            '' if competition is None else competition,
-            '' if volume is None else f'{volume:02d}',
-            '' if semester is None else str(semester),
-            '' if round is None else str(round),
-            '' if problem is None else f'{problem:02d}',
+class ContextSeminar(context.FileSystemContext, metaclass=ABCMeta):
+    def ident(self, competition=None, volume=None, semester=None, round=None, problem=None):
+        return (
+            self.default(competition),
+            self.default(volume, lambda x: f'{x:02d}'),
+            self.default(semester, str),
+            self.default(round, str),
+            self.default(problem, lambda x: f'{x:02d}'),
         )
 
+    def node_path(self, competition=None, volume=None, semester=None, round=None, problem=None):
+        return Path(self.root, *self.ident(competition, volume, semester, round, problem))
 
-class ContextModule(ContextSeminar):
+
+class ContextModule(context.Context):
     schema = Schema({'id': And(str, len)})
 
-    def populate(self, module):
-        self.name(module)
-        self.add_id(module)
+    def __init__(self, id):
+        super().__init__(id)
+        self.add_id(id)
 
 
 class ContextCompetition(ContextSeminar):
@@ -61,7 +63,6 @@ class ContextCompetition(ContextSeminar):
     })
 
     def populate(self, competition):
-        self.name(competition)
         self.load_meta(competition) \
             .add_id(competition)
 
@@ -74,7 +75,6 @@ class ContextVolume(ContextSeminar):
     })
 
     def populate(self, competition, volume):
-        self.name(competition, volume)
         self.load_meta(competition, volume) \
             .add_id(f'{volume:02d}') \
             .add_number(volume)
@@ -89,7 +89,6 @@ class ContextSemester(ContextSeminar):
     })
 
     def populate(self, competition, volume, semester):
-        self.name(competition, volume, semester)
         self.id = str(semester)
         self.load_meta(competition, volume, semester) \
             .add_id(self.id) \
@@ -109,7 +108,6 @@ class ContextSemester(ContextSeminar):
 
 class ContextSemesterFull(ContextSemester):
     def populate(self, root, competition, volume, semester):
-        self.name(competition, volume, semester)
         self.add_children(ContextRoundFull, 'rounds', (root, competition, volume, semester))
 
 
@@ -132,7 +130,6 @@ class ContextRound(ContextSeminar):
     })
 
     def populate(self, competition, volume, semester, round):
-        self.name(competition, volume, semester, round)
         self.load_meta(competition, volume, semester, round) \
             .add_id(str(round)) \
             .add_number(round)
@@ -141,13 +138,11 @@ class ContextRound(ContextSeminar):
 class ContextRoundFull(ContextRound):
     def populate(self, competition, volume, semester, round):
         super().populate(competition, volume, semester, round)
-
-        vol = ContextVolume(self.root, competition, volume)
-        categories = vol.data['categories']
+        count = len(ContextVolume(self.root, competition, volume).data['categories'])
 
         self.add_list('problems', [
             ContextProblem(self.root, competition, volume, semester, round, problem)
-            for problem in range(1, len(categories) + 1)
+            for problem in range(1, count + 1)
         ])
 
 class ContextProblem(ContextSeminar):
@@ -167,7 +162,6 @@ class ContextProblem(ContextSeminar):
     })
 
     def populate(self, competition, volume, semester, round, problem):
-        self.name(competition, volume, semester, round, f'{problem:02d}')
         self.load_meta(competition, volume, semester, round, problem) \
             .add_id(f'{problem:02d}') \
             .add_number(problem)
@@ -194,10 +188,10 @@ class ContextSemesterBooklet(ContextSeminar):
 
 
 class ContextBooklet(ContextSeminar):
-    schema = Schema({})
+    schema = Schema({})  # fix this
 
     def populate(self, competition, volume, semester, round):
-        self.adopt('module', ContextModule(self.root, 'seminar'))
+        self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))
         self.adopt('semester', ContextSemester(self.root, competition, volume, semester))

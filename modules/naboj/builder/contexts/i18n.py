@@ -4,7 +4,7 @@ from schema import Schema
 from core.builder import context
 
 
-class ContextI18n(context.Context):
+class ContextI18n(context.FileSystemContext):
     schema = Schema({
         'section': {
             'problems': str,
@@ -44,16 +44,24 @@ class ContextI18n(context.Context):
         'instructions_online': {
             'title': str,
         },
-        'physics_constants': {str: str},
+        'physics_constants': {
+            str: str
+        },
     })
 
-    def populate(self, root, competition, language):
-        self.load_YAML(root, competition, '.static', 'i18n', language + '.yaml')
+    def populate(self, competition, language):
+        self.load_YAML(self.root, competition, '.static', 'i18n', language + '.yaml')
+
+    def node_path(self, competition=None, language=None):
+        return Path(self.root, competition, '.static', 'i18n', language + '.yaml')
 
 
-class ContextI18nGlobal(context.Context):
+class ContextI18nGlobal(context.FileSystemContext):
     schema = Schema({})
 
-    def populate(self, root, competition):
-        for language in [x.stem for x in Path(root, competition, '.static', 'i18n').glob('*.yaml')]:
-            self.adopt(language, ContextI18n(root, competition, language))
+    def node_path(self, competition):
+        return Path(self.root, competition, '.static', 'i18n')
+
+    def populate(self, competition):
+        for language in [x.stem for x in self.node_path(competition).glob('*.yaml')]:
+            self.adopt(language, ContextI18n(self.root, competition, language))

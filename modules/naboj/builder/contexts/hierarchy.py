@@ -1,24 +1,23 @@
-import os
-import sys
-import glob
-import itertools
 import datetime
-from pathlib import Path
-from schema import Schema, And, Or, Optional, Regex
+import itertools
+from schema import Schema, And, Or
 
-from core.builder import context
-from core.utils import lists
-from core.utils.schema import valid_language, string
 import core.utils.globals as glob
+from core.utils import lists
+from core.utils.schema import string, valid_language
+from core.builder.context import Context
+from .base import ContextNaboj
 
-from contexts import ContextI18n, ContextI18nGlobal, ContextNaboj
 
-
-class ContextModule(ContextNaboj):
+class ContextModule(Context):
     schema = Schema({'id': string})
 
-    def populate(self, module):
-        self.add_id(module)
+    def __init__(self, module):
+        super().__init__(module)
+        self.populate()
+
+    def populate(self):
+        self.add_id(self.id)
 
 
 class ContextCompetition(ContextNaboj):
@@ -49,9 +48,8 @@ class ContextCompetition(ContextNaboj):
         'hacks':            dict,
     })
 
-    def populate(self, root, competition):
-        self.name(competition)
-        self.load_meta(root, competition) \
+    def populate(self, competition):
+        self.load_meta(competition) \
             .add_id(competition)
 
 
@@ -63,7 +61,6 @@ class ContextLanguage(ContextNaboj):
     })
 
     def populate(self, language):
-        self.name(language)
         self.add_id(language)
         self.add({'polyglossia': glob.languages[language]['polyglossia']})
         self.add({'rtl': glob.languages[language].get('rtl', False)}),
@@ -77,11 +74,16 @@ class ContextVenue(ContextNaboj):
         'teams_grouped': [[ContextNaboj.team]],
     })
 
-    def populate(self, root, competition, volume, venue):
-        self.name(competition, volume, venue)
-        comp = ContextCompetition(root, competition)
-        self.load_meta(root, competition, volume, 'venues', venue).add_id(venue)
-        self.add({'teams_grouped': lists.split_div(lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page'])})
+    def populate(self, competition, volume, venue):
+        comp = ContextCompetition(self.root, competition)
+        self.load_meta(competition, volume, 'venues', venue) \
+            .add_id(venue)
+        self.add({
+            'teams': lists.numerate(self.data.get('teams'), itertools.count(0)),
+            'teams_grouped': lists.split_div(
+                lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page']
+            )
+        })
 
 
 class ContextVolume(ContextNaboj):
@@ -95,12 +97,12 @@ class ContextVolume(ContextNaboj):
         'problems_modulo': [[ContextNaboj.problem]],
         'constants': dict,
         'evaluators': int,
-        'venues': [ContextVenue.schema],
+        #'venues': [ContextVenue.schema],
+        'table': int,
     })
 
-    def populate(self, root, competition, volume):
-        self.name(competition, volume)
-        self.load_meta(root, competition, volume) \
+    def populate(self, competition, volume):
+        self.load_meta(competition, volume) \
             .add_id(f'{volume:02d}') \
             .add_number(volume)
 
@@ -110,38 +112,10 @@ class ContextVolume(ContextNaboj):
                 lists.add_numbers(self.data['problems'], itertools.count(1)), self.data['evaluators'], first=1
             )),
         )
-        self.add_subdirs(ContextVenue, 'venues', (root, competition, volume), (root, competition, volume, 'venues'))
+        #self.add_subdirs(
+        #    ContextVenue,
+        #    'venues',
+        #    (competition, volume),
+        #    (competition, volume, 'venues')
+        #)
 
-
-class ContextBooklet(ContextNaboj):
-    schema = Schema({
-        'booklet': {
-            'contents': {
-                'intro': bool,
-                'problems': bool,
-                'solutions': bool,
-                'answers': bool,
-            }
-        },
-    })
-
-    def populate(self, root, competition, volume, language):
-        self.name(competition, volume, venue)
-        self.load_meta(competition, volume, 'languages', language)
-        self.adopt('module', ContextModule('naboj'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
-        self.adopt('language', ContextLanguage(language))
-        self.adopt('i18n', ContextI18n(root, competition, language))
-
-
-class ContextTearoff(ContextNaboj):
-    schema = Schema({})
-
-    def populate(self, root, competition, volume, venue):
-        self.name(competition, volume, venue)
-        self.adopt('module', ContextModule('naboj'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
-        self.adopt('venue', ContextVenue(root, competition, volume, venue))
-        self.adopt('i18n', ContextI18nGlobal(root, competition))

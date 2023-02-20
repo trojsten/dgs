@@ -1,12 +1,12 @@
 import builder
-import context
 
+from modules.naboj.builder.contexts import ContextTearoff
 
 class BuilderNabojVenue(builder.BuilderNaboj):
     target = 'venue'
     subdir = 'venues'
 
-    root_context_class = context.ContextTearoff
+    root_context_class = ContextTearoff
     templates = ['barcodes.txt', 'tearoff.tex', 'envelopes.tex']
 
     def create_argument_parser(self):

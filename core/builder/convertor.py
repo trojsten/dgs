@@ -127,6 +127,7 @@ class Convertor:
 
     @staticmethod
     def file_operation(function):
+        """ Decorator: apply a function to every line of a file """
         def inner(f):
             out = tempfile.SpooledTemporaryFile(mode='w+')
 
@@ -166,10 +167,10 @@ class Convertor:
 
     def filter_tags(self, line):
         """
-            Filter by customs tags:
-            -   remove lines beginning with '%'
-            -   remove lines beginning with '@H' if not converting for HTML
-            -   remove lines beginning with '@L' if not converting for LaTeX
+        Filter by customs tags:
+        -   remove lines beginning with '%'
+        -   remove lines beginning with '@H' unless converting for HTML
+        -   remove lines beginning with '@L' unless converting for LaTeX
         """
         if re.match(r"^%", line) or \
             (re.match(r"^@H", line) and self.format != 'html') or \
@@ -178,9 +179,7 @@ class Convertor:
         return line
 
     def replace_tags(self, line):
-        """
-            Replace custom tags and pictures
-        """
+        """ Replace custom tags and pictures """
         for regex, replacement in self.replace_regexes:
             line = regex.sub(replacement, line)
 
