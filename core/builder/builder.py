@@ -8,6 +8,7 @@ from abc import abstractmethod, ABCMeta
 
 from core.utils import colour as c, crawler
 from core.builder import jinja
+from core.builder.context import BuildableContext
 
 
 def empty_if_none(string):
@@ -71,6 +72,8 @@ class BaseBuilder(metaclass=ABCMeta):
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def build(self):
+        assert isinstance(self.context, BuildableContext), \
+            c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
         self.print_build_info()
 
         if self.args.debug:

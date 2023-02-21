@@ -6,6 +6,9 @@ from core.utils.schema import valid_language
 
 
 class ContextNaboj(context.FileSystemContext):
+    target = None
+    subdir = None
+    competitions = ['phys', 'chem']
     team = Schema({
         'id': And(str, len),
         'language': And(str, valid_language),
@@ -14,17 +17,27 @@ class ContextNaboj(context.FileSystemContext):
         'number': int,
     })
     problem = Schema({
-        'id': Regex(r'[a-z0-9-]+'), 'number': int
+        'id': Regex(r'[a-z0-9-]+'),
+        'number': int,
     })
 
-    def ident(self, competition=None, volume=None, target_type=None, target=None):
-        return (
-            self.default(competition),
-            self.default(volume, lambda x: f'{x:02d}'),
-            self.default(target_type),
-            self.default(target),
-        )
+    def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
+        assert competition in ContextNaboj.competitions
 
-    def node_path(self, competition=None, volume=None, target_type=None, target=None):
-        return Path(self.root, *self.ident(competition, volume, target_type, target))
+        result = []
+        if competition is not None:
+            result.append(competition)
+            if volume is not None:
+                result.append(f'{volume:02d}')
+                if self.target is not None:
+                    result.append(sub)
+                    if issue is not None:
+                        result.append(issue)
+        return tuple(result)
+
+    def ident(self, competition=None, volume=None, issue=None):
+        return self.as_tuple(competition, volume, self.target, issue)
+
+    def node_path(self, competition=None, volume=None, target=None, issue=None):
+        return Path(self.root, *self.as_tuple(competition, volume, self.subdir, issue))
 

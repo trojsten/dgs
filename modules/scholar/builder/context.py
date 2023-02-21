@@ -6,118 +6,12 @@ from abc import ABCMeta, abstractmethod
 
 sys.path.append('.')
 
-from core.builder import context
+from core.builder.context import Context, BuildableContext
 from core.utils import crawler
 
 
-class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
-    def ident(self, course=None, year=None, target_type=None, issue=None):
-        return (
-            self.default(course),
-            self.default(year, lambda x: f'{x:04d}'),
-            self.default(target_type),
-            self.default(issue, lambda x: f'{x:02d}'),
-        )
-
-    def node_path(self, course=None, year=None, target_type=None, issue=None, *deeper):
-        return Path(self.root, *self.ident(course, year, target_type, issue), *deeper)
-
-
-class ContextModule(ContextScholar):
-    def __init__(self, module):
-        self.add_id(module)
-
-
-class ContextCourse(ContextScholar):
-    def populate(self, course):
-        self.load_meta(course).add_id(course)
-
-
-class ContextYear(ContextScholar):
-    def populate(self, course, year):
-        self.load_meta(course, year) \
-            .add_id(f'{year:04d}') \
-            .add_number(year)
-
-
-class ContextIssue(ContextScholar):
-    def populate(self, course, year, target, issue):
-        self.name(course, year, target, issue)
-        self.load_meta(course, year, target, issue) \
-            .add_id(f'{issue:02d}') \
-            .add_number(issue)
-        self.add_subdirs(
-            self.subcontext_class,
-            self.subcontext_name,
-            (self.root, course, year, target, issue),
-            (self.root, course, year, target, issue),
-        )
-
-
-class ContextHandoutProblem(ContextScholar):
-    def populate(self, course, year, target, issue, sub):
-        self.name(course, year, target, issue, sub)
-        self.add_id(sub)
-
-
-class ContextHandoutIssue(ContextIssue):
-    subcontext_name = 'problems'
-    subcontext_class = ContextHandoutProblem
-
-
-class ContextIssueSub(ContextScholar):
-    def populate(self, course, year, target, issue, sub):
-        self.name(course, year, target, issue, sub)
-        self.load_meta(course, year, target, issue, sub) \
-            .add_id(sub)
-        self.add_subdirs(
-            self.subcontext_class,
-            self.subcontext_name,
-            (self.root, course, year, target, issue, sub),
-            (self.root, course, year, target, issue, sub),
-        )
-
-
-class ContextIssueSubSub(ContextScholar):
-    def __init__(self, course, year, target, issue, sub, subsub):
-        self.name(course, year, target, issue, sub, subsub)
-        self.load_meta(course, year, target, issue, sub, subsub) \
-            .add_id(subsub)
-
-
-class ContextHandoutSubSub(ContextScholar):
-    def __init__(self, course, year, target, issue, sub, subsub):
-        super().__init__()
-        self.add_id(subsub)
-
 
 # Homework and its subcontexts
-class ContextHomeworkProblem(ContextIssueSub):
-    subcontext_name = 'subproblems'
-    subcontext_class = ContextIssueSubSub
-
-
-class ContextHomeworkIssue(ContextIssue):
-    subcontext_name = 'problems'
-    subcontext_class = ContextHomeworkProblem
-
-
-class ContextIssueBase(ContextScholar):
-    def populate(self, course, year, issue):
-        self.adopt('module', ContextModule('scholar'))
-        self.adopt('course', ContextCourse(self.root, course))
-        self.adopt('year', ContextYear(self.root, course, year))
-        self.adopt('issue', self.issue_context_class(self.root, course, year, self.target, issue))
-
-
-class ContextHomework(ContextIssueBase):
-    target = 'homework'
-    issue_context_class = ContextHomeworkIssue
-
-
-class ContextHandout(ContextIssueBase):
-    target = 'handouts'
-    issue_context_class = ContextHandoutIssue
 
 
 """ Single lecture contexts start here """

@@ -9,16 +9,6 @@ from core.builder.context import Context
 from .base import ContextNaboj
 
 
-class ContextModule(Context):
-    schema = Schema({'id': string})
-
-    def __init__(self, module):
-        super().__init__(module)
-        self.populate()
-
-    def populate(self):
-        self.add_id(self.id)
-
 
 class ContextCompetition(ContextNaboj):
     schema = Schema({
@@ -54,19 +44,32 @@ class ContextCompetition(ContextNaboj):
 
 
 class ContextLanguage(ContextNaboj):
+    target = 'language'
+    subdir = 'languages'
     schema = Schema({
         'id': valid_language,
+        'booklet': {
+            'contents': {
+                'intro': bool,
+                'problems': bool,
+                'solutions': bool,
+                'answers': bool,
+            }
+        },
         'polyglossia': lambda x: x in [lang['polyglossia'] for lang in glob.languages.values()],
         'rtl': bool,
     })
 
-    def populate(self, language):
-        self.add_id(language)
+    def populate(self, competition, volume, language):
+        self.load_meta(competition, volume, self.subdir, language) \
+            .add_id(language)
         self.add({'polyglossia': glob.languages[language]['polyglossia']})
         self.add({'rtl': glob.languages[language].get('rtl', False)}),
 
 
 class ContextVenue(ContextNaboj):
+    target = 'venue'
+    subdir = 'venues'
     schema = Schema({
         'id':       And(str, len),
         'name':     And(str, len),
@@ -76,7 +79,7 @@ class ContextVenue(ContextNaboj):
 
     def populate(self, competition, volume, venue):
         comp = ContextCompetition(self.root, competition)
-        self.load_meta(competition, volume, 'venues', venue) \
+        self.load_meta(competition, volume, self.subdir, venue) \
             .add_id(venue)
         self.add({
             'teams': lists.numerate(self.data.get('teams'), itertools.count(0)),
@@ -112,10 +115,3 @@ class ContextVolume(ContextNaboj):
                 lists.add_numbers(self.data['problems'], itertools.count(1)), self.data['evaluators'], first=1
             )),
         )
-        #self.add_subdirs(
-        #    ContextVenue,
-        #    'venues',
-        #    (competition, volume),
-        #    (competition, volume, 'venues')
-        #)
-

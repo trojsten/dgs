@@ -6,9 +6,7 @@ import sys
 import yaml
 from typing import Iterable
 from abc import ABCMeta, abstractmethod
-from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError
-
-import collections
+from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
 
 from core.utils import dicts, colour as c, crawler, schema
 
@@ -92,7 +90,7 @@ class FileSystemContext(Context):
         self.validate()
 
     def name(self, *path):
-        self.id = '/'.join(*path)
+        selfid = '/'.join(*path)
 
     def load_YAML(self, *args):
         try:
@@ -133,3 +131,14 @@ class BuildableContext(Context):
     Only some contexts are meant to be built directly. This class provides a common ancestor.
     Not implemented yet.
     """
+
+
+class ContextModule(Context):
+    schema = Schema({'id': And(str, len)})
+
+    def __init__(self, module):
+        super().__init__(module)
+        self.populate()
+
+    def populate(self):
+        self.add_id(self.id)

@@ -1,14 +1,13 @@
-import collections
 import datetime
 
 from pathlib import Path
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from schema import Schema, Optional, Use, And, Or
 
-from core.builder import context
+from core.builder.context import FileSystemContext, BuildableContext, ContextModule
 
 
-class ContextSeminar(context.FileSystemContext, metaclass=ABCMeta):
+class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
     def ident(self, competition=None, volume=None, semester=None, round=None, problem=None):
         return (
             self.default(competition),
@@ -22,14 +21,6 @@ class ContextSeminar(context.FileSystemContext, metaclass=ABCMeta):
         return Path(self.root, *self.ident(competition, volume, semester, round, problem))
 
 
-class ContextModule(context.Context):
-    schema = Schema({'id': And(str, len)})
-
-    def __init__(self, id):
-        super().__init__(id)
-        self.add_id(id)
-
-
 class ContextCompetition(ContextSeminar):
     schema = Schema({
         'id': And(str, len),
@@ -40,8 +31,8 @@ class ContextCompetition(ContextSeminar):
             Optional('locative'): And(str, len),
         }),
         'urls': Schema({
-            'web': And(str, len), # set this to URL
-            'submit': And(str, len), # and here too
+            'web': And(str, len),       # set this to URL
+            'submit': And(str, len),    # and here too
         }),
         'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
         'categories': [[], [And(str, len)]],
@@ -145,6 +136,7 @@ class ContextRoundFull(ContextRound):
             for problem in range(1, count + 1)
         ])
 
+
 class ContextProblem(ContextSeminar):
     schema = Schema({
         'title': And(str, len),
@@ -172,6 +164,8 @@ class ContextProblem(ContextSeminar):
 
 
 """ Buildable contexts """
+
+
 class ContextVolumeBooklet(ContextSeminar):
     def populate(self, root, competition, volume):
         self.adopt('module', ContextModule('seminar'))
@@ -187,7 +181,7 @@ class ContextSemesterBooklet(ContextSeminar):
         self.adopt('semester', ContextSemesterFull(root, competition, volume, semester))
 
 
-class ContextBooklet(ContextSeminar):
+class ContextBooklet(BuildableContext, ContextSeminar):
     schema = Schema({})  # fix this
 
     def populate(self, competition, volume, semester, round):
