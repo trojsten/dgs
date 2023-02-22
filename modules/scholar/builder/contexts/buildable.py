@@ -1,9 +1,11 @@
+from abc import ABCMeta
+
 from core.builder.context import ContextModule, BuildableContext
 from .base import ContextScholar
 from .hierarchy import ContextCourse, ContextYear
 
 
-class ContextIssueBase(BuildableContext, ContextScholar):
+class ContextIssueBase(BuildableContext, ContextScholar, metaclass=ABCMeta):
     def populate(self, course: str, year: int, issue: int):
         self.adopt('module', ContextModule('scholar'))
         self.adopt('course', ContextCourse(self.root, course))

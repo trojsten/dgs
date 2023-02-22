@@ -15,10 +15,10 @@ class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
             result.append(course)
             if year is not None:
                 result.append(f'{year:04d}')
-                if self.target is not None:
+                if issue is not None:
+                    assert kind is not None, (course, year, kind, issue, *deeper)
                     result.append(kind)
-                    if issue is not None:
-                        result.append(f'{issue:02d}')
+                    result.append(f'{issue:02d}')
         return tuple(result)
 
     def ident(self, course=None, year=None, issue=None, *deeper):

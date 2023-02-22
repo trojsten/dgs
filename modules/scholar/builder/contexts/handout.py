@@ -3,24 +3,27 @@ from .hierarchy import ContextIssue
 from .buildable import ContextIssueBase
 
 
-class ContextHandoutSubSub(ContextScholar):
-    def __init__(self, course, year, target, issue, sub, subsub):
-        super().__init__()
-        self.add_id(subsub)
+class HandoutMixin:
+    target = 'handout'
+    subdir = 'handouts'
 
 
-class ContextHandoutProblem(ContextScholar):
-    def populate(self, course, year, target, issue, sub):
-        self.name(course, year, target, issue, sub)
-        self.add_id(sub)
+class ContextHandoutSubproblem(HandoutMixin, ContextScholar):
+    def populate(self, course, year, issue, problem, subproblem):
+        self.load_meta(course, year, issue, problem, subproblem) \
+            .add_id(subproblem)
 
 
-class ContextHandoutIssue(ContextIssue):
+class ContextHandoutProblem(HandoutMixin, ContextScholar):
+    def populate(self, course, year, issue, problem):
+        self.load_meta(course, year, issue, problem) \
+            .add_id(sub)
+
+
+class ContextHandoutIssue(HandoutMixin, ContextIssue):
     subcontext_name = 'problems'
     subcontext_class = ContextHandoutProblem
 
 
-class ContextHandout(ContextIssueBase):
+class ContextHandout(HandoutMixin, ContextIssueBase):
     issue_context_class = ContextHandoutIssue
-    target = 'handout'
-    subdir = 'handouts'

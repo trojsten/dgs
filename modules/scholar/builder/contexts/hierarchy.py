@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from schema import Schema, And
 
 from .base import ContextScholar
@@ -10,7 +11,8 @@ class ContextCourse(ContextScholar):
     })
 
     def populate(self, course):
-        self.load_meta(course).add_id(course)
+        self.load_meta(course) \
+            .add_id(course)
 
 
 class ContextYear(ContextScholar):
@@ -29,7 +31,7 @@ class ContextYear(ContextScholar):
             .add_number(year)
 
 
-class ContextIssue(ContextScholar):
+class ContextIssue(ContextScholar, metaclass=ABCMeta):
     def populate(self, course, year, issue):
         self.load_meta(course, year, issue) \
             .add_id(f'{issue:02d}') \
@@ -37,20 +39,20 @@ class ContextIssue(ContextScholar):
         self.add_subdirs(
             self.subcontext_class,
             self.subcontext_name,
-            (self.root, course, year, issue),
-            (self.root, course, year, issue),
+            (course, year, issue),
+            (course, year, issue),
         )
 
 
 class ContextIssueSub(ContextScholar):
-    def populate(self, course, year, target, issue, sub):
-        self.load_meta(course, year, target, issue, sub) \
+    def populate(self, course, year, issue, sub):
+        self.load_meta(course, year, issue, sub) \
             .add_id(sub)
         self.add_subdirs(
             self.subcontext_class,
             self.subcontext_name,
-            (self.root, course, year, target, issue, sub),
-            (self.root, course, year, target, issue, sub),
+            (course, year, issue, sub),
+            (course, year, issue, sub),
         )
 
 

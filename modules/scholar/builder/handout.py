@@ -1,12 +1,12 @@
 import builder
-import context
+import contexts
 
 
 class BuilderHandout(builder.BuilderScholar):
     target = 'handout'
     subdir = 'handouts'
 
-    root_context_class = context.ContextHandout
+    root_context_class = contexts.ContextHandout
     templates = [
         'handout-students.tex',
         'handout-solutions.tex',

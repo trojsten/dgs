@@ -99,12 +99,14 @@ class FileSystemContext(Context):
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
             print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
+            raise e
             sys.exit(43)
 
         self.data = contents
         return self
 
     def load_meta(self, *path):
+        print(f"Loading meta for {self.__class__.__name__} from {path}")
         return self.load_YAML(self.node_path(*path) / 'meta.yaml')
 
     @abstractmethod
@@ -121,7 +123,7 @@ class FileSystemContext(Context):
         self.add({subcontext_key: [subcontext_class(self.root, *subcontext_args, child).data for child in cr.children()]})
 
     def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
-        #print(f"Adding subdirs to {self.__class__.__name__}: {subcontext_class} with args {subcontext_args}, root {root}")
+        print(f"Adding subdirs to {self.__class__.__name__}: {subcontext_class.__name__} with args {subcontext_args}, root {root}")
         cr = crawler.Crawler(self.node_path(*root))
         self.add({subcontext_key: [subcontext_class(self.root, *subcontext_args, child).data for child in cr.subdirs()]})
 
@@ -129,7 +131,7 @@ class FileSystemContext(Context):
 class BuildableContext(Context):
     """
     Only some contexts are meant to be built directly. This class provides a common ancestor.
-    Not implemented yet.
+    Currently only useful for sanity checks.
     """
 
 

@@ -16,7 +16,7 @@ from core.utils import crawler
 
 """ Single lecture contexts start here """
 
-class ContextScholarSingle(context.Context):
+class ContextScholarSingle(Context):
     @staticmethod
     def node_path(root, course='', lecture='', part='', problem=''):
         return Path(root, course, lecture, part, problem)
@@ -73,7 +73,7 @@ class ContextSingleLecture(ContextScholarSingle):
         self.add({'has_abstract': Path(root, course, lecture, 'abstract.md').is_file()})
 
 
-class ContextDir(context.Context):
+class ContextDir(Context):
     def __init__(self, root, *deeper):
         self.load_meta(root, *deeper) \
             .add_id(deeper[-1] if deeper else root)
