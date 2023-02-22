@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import yaml
+from pathlib import Path
 from typing import Iterable
 from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
@@ -23,6 +24,7 @@ class Context(metaclass=ABCMeta):
             return name if func is None else func(name)
 
     def __init__(self, id, **defaults):
+        print(f"Creating a {c.name(self.__class__.__name__)} with defaults {defaults}")
         self.id = id
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
@@ -82,8 +84,12 @@ class FileSystemContext(Context):
     Context that is reasonably well mapped to a repository path.
     Can load files, meta.yaml, has node_path
     """
+    arg_schema = None
 
     def __init__(self, root, *path, **defaults):
+        if self.arg_schema is not None:
+            Schema(self.arg_schema).validate(path)
+
         super().__init__(self.name(self.ident(*path)), **defaults)
         self.root = root
         self.populate(*path)
@@ -117,15 +123,10 @@ class FileSystemContext(Context):
     def populate(self, *path):
         """ Fill the context with data from the filesystem """
 
-    def add_children(self, subcontext_class, subcontext_key, *subcontext_args):
-        """ Use a Crawler to scan the filesystem and add children to this Context """
+    def add_subdirs(self, *subcontext_args):
+        print(f"Adding subdirs to {self.__class__.__name__}: {self.subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add({subcontext_key: [subcontext_class(self.root, *subcontext_args, child).data for child in cr.children()]})
-
-    def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
-        print(f"Adding subdirs to {self.__class__.__name__}: {subcontext_class.__name__} with args {subcontext_args}, root {root}")
-        cr = crawler.Crawler(self.node_path(*root))
-        self.add({subcontext_key: [subcontext_class(self.root, *subcontext_args, child).data for child in cr.subdirs()]})
+        self.add({self.subcontext_key: [self.subcontext_class(self.root, *subcontext_args, child).data for child in cr.subdirs()]})
 
 
 class BuildableContext(Context):

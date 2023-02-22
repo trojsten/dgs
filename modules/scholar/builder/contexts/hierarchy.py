@@ -5,6 +5,7 @@ from .base import ContextScholar
 
 
 class ContextCourse(ContextScholar):
+    arg_schema = (str,)
     schema = Schema({
         'id': And(str, len),
         'title': And(str, len),
@@ -16,6 +17,7 @@ class ContextCourse(ContextScholar):
 
 
 class ContextYear(ContextScholar):
+    arg_schema = ContextCourse.arg_schema + (int,)
     schema = Schema({
         'id': And(str, len),
         'number': int,
@@ -25,38 +27,33 @@ class ContextYear(ContextScholar):
         }
     })
 
-    def populate(self, course, year):
+    def populate(self, course: str, year: int):
         self.load_meta(course, year) \
             .add_id(f'{year:04d}') \
             .add_number(year)
 
 
 class ContextIssue(ContextScholar, metaclass=ABCMeta):
+    arg_schema = ContextYear.arg_schema + (int,)
+
     def populate(self, course, year, issue):
         self.load_meta(course, year, issue) \
             .add_id(f'{issue:02d}') \
             .add_number(issue)
-        self.add_subdirs(
-            self.subcontext_class,
-            self.subcontext_name,
-            (course, year, issue),
-            (course, year, issue),
-        )
+        self.add_subdirs(course, year, issue)
 
 
 class ContextIssueSub(ContextScholar):
+    arg_schema = ContextIssue.arg_schema + (int,)
+
     def populate(self, course, year, issue, sub):
+        print(f"Populating a {self.__class__.__name__} with {course}, {year}, {issue}, {sub}")
         self.load_meta(course, year, issue, sub) \
             .add_id(sub)
-        self.add_subdirs(
-            self.subcontext_class,
-            self.subcontext_name,
-            (course, year, issue, sub),
-            (course, year, issue, sub),
-        )
+        self.add_subdirs(course, year, issue, sub)
 
 
 class ContextIssueSubSub(ContextScholar):
-    def __init__(self, course, year, target, issue, sub, subsub):
-        self.load_meta(course, year, target, issue, sub, subsub) \
+    def populate(self, course, year, issue, sub, subsub):
+        self.load_meta(course, year, issue, sub, subsub) \
             .add_id(subsub)

@@ -2,17 +2,27 @@ from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
 from .buildable import ContextIssueBase
 
 
-class ContextHomeworkProblem(ContextIssueSub):
-    subcontext_name = 'subproblems'
-    subcontext_class = ContextIssueSubSub
+class HomeworkMixin:
+    target = 'homework'
+    subdir = 'homework'
 
 
-class ContextHomeworkIssue(ContextIssue):
-    subcontext_name = 'problems'
+class ContextHomeworkSubproblem(HomeworkMixin, ContextIssueSubSub):
+    pass
+
+
+class ContextHomeworkProblem(HomeworkMixin, ContextIssueSub):
+    subcontext_key = 'subproblems'
+    subcontext_class = ContextHomeworkSubproblem
+
+
+class ContextHomeworkIssue(HomeworkMixin, ContextIssue):
+    subcontext_key = 'problems'
     subcontext_class = ContextHomeworkProblem
 
 
-class ContextHomework(ContextIssueBase):
-    target = 'homework'
-    subdir = 'homework'
+class ContextHomework(HomeworkMixin, ContextIssueBase):
     issue_context_class = ContextHomeworkIssue
+
+    def node_path(self, course, year, issue):
+        return super()

@@ -1,5 +1,4 @@
-from .base import ContextScholar
-from .hierarchy import ContextIssue
+from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
 from .buildable import ContextIssueBase
 
 
@@ -8,22 +7,20 @@ class HandoutMixin:
     subdir = 'handouts'
 
 
-class ContextHandoutSubproblem(HandoutMixin, ContextScholar):
-    def populate(self, course, year, issue, problem, subproblem):
-        self.load_meta(course, year, issue, problem, subproblem) \
-            .add_id(subproblem)
 
-
-class ContextHandoutProblem(HandoutMixin, ContextScholar):
+class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
     def populate(self, course, year, issue, problem):
-        self.load_meta(course, year, issue, problem) \
-            .add_id(sub)
+        self.add_id(problem)
 
 
 class ContextHandoutIssue(HandoutMixin, ContextIssue):
-    subcontext_name = 'problems'
+    arg_schema = (str, int, int)
+    subcontext_key = 'problems'
     subcontext_class = ContextHandoutProblem
 
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
+    arg_schema = (str, int, int)
     issue_context_class = ContextHandoutIssue
+
+
