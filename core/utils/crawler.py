@@ -1,13 +1,15 @@
+import logging
 from pathlib import Path
 
 from core.utils import colour as c
+
+logger = logging.getLogger('root')
 
 
 class Crawler():
     def __init__(self, root):
         self.step = 4
         self.root = root
-        print(f"Created a Crawler at {c.path(root)}")
 
     def is_node(self, path):
         return (path.is_dir() and path.name != '.' and Path(path, 'meta.yaml').is_file())

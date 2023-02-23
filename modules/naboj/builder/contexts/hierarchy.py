@@ -5,37 +5,39 @@ from schema import Schema, And, Or
 import core.utils.globals as glob
 from core.utils import lists
 from core.utils.schema import string, valid_language
-from core.builder.context import Context
 from .base import ContextNaboj
-
 
 
 class ContextCompetition(ContextNaboj):
     schema = Schema({
-        'id':               string,
-        'founded':          And(int, lambda x: x >= 1950),
-        'tearoff':          {
-                                'per_page': int,
-                                'height': int,
-                                'team_space': int,
-                                'barcode_space': int,
-                                'bottomsep': int,
-                                'inner': int,
-                            },
-        'organisation':     {
-                                'name': string,
-                                'address': string,
-                            },
-        'constants':        {
-                                str: {
-                                    'symbol': str,
-                                    'value': Or(str, int, float),
-                                    'unit': str,
-                                }
-                            },
-        'URL':              And(str, len),
-        'full':             {'nominative': str, 'genitive': str, 'locative': str},
-        'hacks':            dict,
+        'id': string,
+        'founded': And(int, lambda x: x >= 1950),
+        'tearoff': {
+            'per_page': int,
+            'height': int,
+            'team_space': int,
+            'barcode_space': int,
+            'bottomsep': int,
+            'inner': int,
+        },
+        'organisation': {
+            'name': string,
+            'address': string,
+        },
+        'constants': {
+            str: {
+                'symbol': str,
+                'value': Or(str, int, float),
+                'unit': str,
+            }
+        },
+        'URL': And(str, len),
+        'full': {
+            'nominative': str,
+            'genitive': str,
+            'locative': str
+        },
+        'hacks': dict,
     })
 
     def populate(self, competition):
@@ -71,9 +73,9 @@ class ContextVenue(ContextNaboj):
     target = 'venue'
     subdir = 'venues'
     schema = Schema({
-        'id':       And(str, len),
-        'name':     And(str, len),
-        'teams':    [ContextNaboj.team],
+        'id': And(str, len),
+        'name': And(str, len),
+        'teams': [ContextNaboj.team],
         'teams_grouped': [[ContextNaboj.team]],
     })
 
@@ -100,7 +102,6 @@ class ContextVolume(ContextNaboj):
         'problems_modulo': [[ContextNaboj.problem]],
         'constants': dict,
         'evaluators': int,
-        #'venues': [ContextVenue.schema],
         'table': int,
     })
 

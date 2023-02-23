@@ -10,7 +10,6 @@ class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
     subdir = None
 
     def as_tuple(self, course=None, year=None, kind=None, issue=None, *deeper):
-        print(c.name(self.__class__.__name__), "producing tuple from", (course, year, kind, issue, *deeper))
         result = []
         if course is not None:
             assert isinstance(course, str)
@@ -30,5 +29,4 @@ class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
 
     def node_path(self, course=None, year=None, issue=None, *deeper):
         return Path(self.root, *self.as_tuple(course, year, self.subdir, issue), *deeper)
-
 

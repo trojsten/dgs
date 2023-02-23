@@ -1,5 +1,4 @@
-import pprint
-from schema import Schema, And
+from schema import Schema
 
 from core.builder.context import BuildableContext, ContextModule
 from .hierarchy import ContextNaboj, ContextCompetition, ContextVolume, ContextLanguage, ContextVenue

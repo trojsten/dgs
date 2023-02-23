@@ -23,4 +23,3 @@ class ContextHandout(HandoutMixin, ContextIssueBase):
     arg_schema = (str, int, int)
     issue_context_class = ContextHandoutIssue
 
-

@@ -37,6 +37,9 @@ build/scholar/%/handout-students.tex: \
 build/scholar/%/handout-solutions.tex: \
 	build/scholar/$$*/build-handout ;
 
+build/scholar/%/handout-solved.tex: \
+	build/scholar/$$*/build-handout ;
+
 build/scholar/%/homework-students.tex: \
 	build/scholar/$$*/build-homework ;
 
@@ -81,9 +84,14 @@ output/scholar/%/handout-solutions.pdf: \
 	build/scholar/%/handout-solutions.tex
 	$(call doubletex,scholar)
 
+output/scholar/%/handout-solved.pdf: \
+	build/scholar/%/handout \
+	build/scholar/%/handout-solved.tex
+	$(call doubletex,scholar)
+
 output/scholar/%/handouts: \
 	$$(subst meta.yaml,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) \
-	$$(subst meta.yaml,handout-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) ;
+	$$(subst meta.yaml,handout-solved.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) ;
 
 output/scholar/%/homework-students.pdf: \
 	build/scholar/%/homework \

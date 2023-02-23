@@ -4,12 +4,15 @@ import os
 import pprint
 import sys
 import yaml
+import logging
 from pathlib import Path
 from typing import Iterable
 from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
 
 from core.utils import dicts, colour as c, crawler, schema
+
+logger = logging.getLogger('root')
 
 
 class Context(metaclass=ABCMeta):
@@ -23,9 +26,8 @@ class Context(metaclass=ABCMeta):
         else:
             return name if func is None else func(name)
 
-    def __init__(self, id, **defaults):
-        print(f"Creating a {c.name(self.__class__.__name__)} with defaults {defaults}")
-        self.id = id
+    def __init__(self, new_id, **defaults):
+        self.id = new_id
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
 
@@ -35,12 +37,12 @@ class Context(metaclass=ABCMeta):
 
     def validate(self):
         if self.schema is None:
-            print(f"{c.warn('WARNING')}: no schema defined for {self.__class__.__name__}, not validating")
+            logger.warn(f"{c.warn('WARNING')}: no schema defined for {self.__class__.__name__}, not validating")
         else:
             try:
                 self.schema.validate(self.data)
             except (SchemaMissingKeyError, SchemaError) as exc:
-                print(f"{c.err('ERROR')}: Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
+                logger.error(f"{c.err('ERROR')}: Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
                 raise exc
                 sys.exit(-1)
 
@@ -61,12 +63,17 @@ class Context(metaclass=ABCMeta):
         self.data[key] = dicts.merge(self.data.get(key), ctx.data)
 
         if self.schema is not None:
-            self.schema._schema[key] = schema.merge_one(self.schema._schema.get(key), ctx.schema)
+            if ctx.schema is None:
+                self.schema._schema[key] = {object: object}
+            else:
+                self.schema._schema[key] = schema.merge_one(self.schema._schema.get(key), ctx.schema)
         return self
 
     def add_list(self, key, items):
         self.data[key] = [item.data for item in items]
-        self.schema._schema[key] = [item.schema for item in items]
+        if self.schema is not None:
+            for item in items:
+                self.schema._schema[key] = [item.schema]
         return self
 
     def print(self):
@@ -96,7 +103,7 @@ class FileSystemContext(Context):
         self.validate()
 
     def name(self, *path):
-        selfid = '/'.join(*path)
+        self.id = '/'.join(*path)
 
     def load_YAML(self, *args):
         try:
@@ -104,7 +111,7 @@ class FileSystemContext(Context):
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
-            print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
+            logger.crit(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
             sys.exit(43)
 
@@ -112,7 +119,7 @@ class FileSystemContext(Context):
         return self
 
     def load_meta(self, *path):
-        print(f"Loading meta for {self.__class__.__name__} from {path}")
+        logger.debug(f"Loading meta for {self.__class__.__name__} from {path}")
         return self.load_YAML(self.node_path(*path) / 'meta.yaml')
 
     @abstractmethod
@@ -124,9 +131,9 @@ class FileSystemContext(Context):
         """ Fill the context with data from the filesystem """
 
     def add_subdirs(self, *subcontext_args):
-        print(f"Adding subdirs to {self.__class__.__name__}: {self.subcontext_class.__name__} with args {subcontext_args}")
+        logger.debug(f"Adding subdirs to {self.__class__.__name__}: {self.subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add({self.subcontext_key: [self.subcontext_class(self.root, *subcontext_args, child).data for child in cr.subdirs()]})
+        self.add_list(self.subcontext_key, [self.subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])
 
 
 class BuildableContext(Context):

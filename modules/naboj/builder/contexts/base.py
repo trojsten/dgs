@@ -40,4 +40,3 @@ class ContextNaboj(context.FileSystemContext):
 
     def node_path(self, competition=None, volume=None, target=None, issue=None):
         return Path(self.root, *self.as_tuple(competition, volume, self.subdir, issue))
-

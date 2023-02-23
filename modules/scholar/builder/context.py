@@ -1,12 +1,9 @@
-import os
 import sys
-import collections
 from pathlib import Path
-from abc import ABCMeta, abstractmethod
 
 sys.path.append('.')
 
-from core.builder.context import Context, BuildableContext
+from core.builder.context import Context
 from core.utils import crawler
 
 
@@ -27,9 +24,9 @@ class ContextScholarLecture(ContextScholarSingle):
         super().__init__()
         self.load_meta(course, lecture)
         self.adopt('module', ContextSingleModule('scholar'))
-        self.adopt('course', ContextSingleCourse(root, course))
-        self.adopt('lecture', ContextSingleLecture(root, course, lecture))
-        self.crawler = crawler.Crawler(Path(root, course, lecture))
+        self.adopt('course', ContextSingleCourse(self.root, course))
+        self.adopt('lecture', ContextSingleLecture(self.root, course, lecture))
+        self.crawler = crawler.Crawler(Path(self.root, course, lecture))
 
         if 'parts' in self.data:
             self.add({'parts': [ContextScholarPart(root, course, lecture, part).data for part in self.data['parts']]})

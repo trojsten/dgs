@@ -1,0 +1,12 @@
+(@ extends 'handout-students.tex' @)
+
+(@ block solutions @)
+    \newpage
+    (@ if issue.problems @)
+        \subsection{Riešenia}
+        (@ for problem in issue.problems @)
+            \subsubsection{Úloha (* loop.index *)}
+            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+        (@ endfor @)
+    (@ endif @)
+(@ endblock solutions @)

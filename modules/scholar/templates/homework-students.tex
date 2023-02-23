@@ -2,15 +2,27 @@
 
 (@ block sections @)
     (@ for problem in issue.problems @)
-        \subsection{(* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)}
+        \subsection{%
+            \texorpdfstring{%
+                (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
+            }{%
+                \thesubsection{} (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
+            }%
+        }
         \label{sec:(* problem.id *)}
-        \tryInput{\activeDirectory/(* problem.id *)/text.tex}
+        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
         (@ if problem.subproblems|length == 0 @)
             (@ block solution scoped @)(@ endblock solution @)
         (@ endif @)
         (@ if problem.subproblems @)
             (@ for subproblem in problem.subproblems @)
-                \subsubsection{(* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)}
+                \subsubsection{%
+                    \texorpdfstring{%
+                        (* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
+                    }{%
+                        \alph{subsubsection}. (* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
+                    }%
+                }
                 \label{sec:(* problem.id*)-(* subproblem.id *)}
                 \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
                 (@ block subsolution scoped @)(@ endblock subsolution @)

@@ -47,7 +47,6 @@ class ContextIssueSub(ContextScholar):
     arg_schema = ContextIssue.arg_schema + (int,)
 
     def populate(self, course, year, issue, sub):
-        print(f"Populating a {self.__class__.__name__} with {course}, {year}, {issue}, {sub}")
         self.load_meta(course, year, issue, sub) \
             .add_id(sub)
         self.add_subdirs(course, year, issue, sub)

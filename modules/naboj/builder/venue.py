@@ -2,6 +2,7 @@ import builder
 
 from modules.naboj.builder.contexts import ContextTearoff
 
+
 class BuilderNabojVenue(builder.BuilderNaboj):
     target = 'venue'
     subdir = 'venues'
