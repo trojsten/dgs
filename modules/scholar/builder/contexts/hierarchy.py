@@ -5,7 +5,6 @@ from .base import ContextScholar
 
 
 class ContextCourse(ContextScholar):
-    arg_schema = (str,)
     schema = Schema({
         'id': And(str, len),
         'title': And(str, len),
@@ -17,7 +16,6 @@ class ContextCourse(ContextScholar):
 
 
 class ContextYear(ContextScholar):
-    arg_schema = ContextCourse.arg_schema + (int,)
     schema = Schema({
         'id': And(str, len),
         'number': int,
@@ -34,8 +32,6 @@ class ContextYear(ContextScholar):
 
 
 class ContextIssue(ContextScholar, metaclass=ABCMeta):
-    arg_schema = ContextYear.arg_schema + (int,)
-
     def populate(self, course, year, issue):
         self.load_meta(course, year, issue) \
             .add_id(f'{issue:02d}') \
@@ -44,8 +40,6 @@ class ContextIssue(ContextScholar, metaclass=ABCMeta):
 
 
 class ContextIssueSub(ContextScholar):
-    arg_schema = ContextIssue.arg_schema + (int,)
-
     def populate(self, course, year, issue, sub):
         self.load_meta(course, year, issue, sub) \
             .add_id(sub)

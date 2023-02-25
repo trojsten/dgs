@@ -8,11 +8,11 @@ import logging
 from pathlib import Path
 from typing import Iterable
 from abc import ABCMeta, abstractmethod
-from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
+from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And, Or, Optional
 
 from core.utils import dicts, colour as c, crawler, schema
 
-logger = logging.getLogger('root')
+logger = logging.getLogger(__name__)
 
 
 class Context(metaclass=ABCMeta):
@@ -37,13 +37,15 @@ class Context(metaclass=ABCMeta):
 
     def validate(self):
         if self.schema is None:
-            logger.warn(f"{c.warn('WARNING')}: no schema defined for {self.__class__.__name__}, not validating")
+            logger.warn(f"No schema defined for {self.__class__.__name__}, skipping validation")
         else:
             try:
                 self.schema.validate(self.data)
             except (SchemaMissingKeyError, SchemaError) as exc:
-                logger.error(f"{c.err('ERROR')}: Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
-                raise exc
+                logger.error(f"Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
+                self.print()
+                logger.error("against schema")
+                pprint.pprint(self.schema._schema)
                 sys.exit(-1)
 
     def add(self, *dictionaries, overwrite=True):
@@ -64,20 +66,26 @@ class Context(metaclass=ABCMeta):
 
         if self.schema is not None:
             if ctx.schema is None:
+                # If child has no schema, accept anything
                 self.schema._schema[key] = {object: object}
             else:
-                self.schema._schema[key] = schema.merge_one(self.schema._schema.get(key), ctx.schema)
+                # otherwise merge schema (use the last one)
+                self.schema._schema[key] = ctx.schema
         return self
 
-    def add_list(self, key, items):
-        self.data[key] = [item.data for item in items]
-        if self.schema is not None:
-            for item in items:
-                self.schema._schema[key] = [item.schema]
+    def add_list(self, key, ctxs):
+        #print(f"{self.__class__.__name__} schema is originally {self.__class__.schema}")
+        #print(f"Adding list {c.name(key)} with items {ctxs}")
+        self.data[key] = [item.data for item in ctxs]
+
+        if self.__class__.schema is not None:
+            self.__class__.schema._schema[key] = [self.subcontext_class.schema]
+
+        #print(f"{self.__class__.__name__} schema is now {self.__class__.schema}")
         return self
 
     def print(self):
-        pprint.pprint(self.data)
+        pprint.pprint(self.data, width=200)
 
     def add_number(self, number):
         return self.add({'number': number})
@@ -103,7 +111,7 @@ class FileSystemContext(Context):
         self.validate()
 
     def name(self, *path):
-        self.id = '/'.join(*path)
+        return '/'.join(*path)
 
     def load_YAML(self, *args):
         try:

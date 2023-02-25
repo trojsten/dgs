@@ -126,25 +126,20 @@ class ContextRound(ContextSeminar):
             .add_number(round)
 
 
-class ContextRoundFull(ContextRound):
-    def populate(self, competition, volume, semester, round):
-        super().populate(competition, volume, semester, round)
-        count = len(ContextVolume(self.root, competition, volume).data['categories'])
-
-        self.add_list('problems', [
-            ContextProblem(self.root, competition, volume, semester, round, problem)
-            for problem in range(1, count + 1)
-        ])
-
-
 class ContextProblem(ContextSeminar):
+    persons = Or('',
+        [{
+            'name': And(str, len),
+            'gender': Or('f', 'm'),
+        }]
+    )
     schema = Schema({
         'title': And(str, len),
         'categories': list,
         'number': And(int, lambda x: x >= 1 and x <= 8),
         'id': str,
-        'evaluation': Or('', And(str, len), list, dict),
-        'solution': Or('', And(str, len), list, dict),
+        'evaluation': persons,
+        'solution': persons,
         'points': Schema({
             'description': And(int, lambda x: x >= 0),
             Optional('code'): And(int, lambda x: x >= 0),
@@ -162,6 +157,18 @@ class ContextProblem(ContextSeminar):
         categories = vol.data['categories']
         self.add({'categories': categories[problem - 1]})
 
+
+class ContextRoundFull(ContextRound):
+    subcontext_class = ContextProblem
+
+    def populate(self, competition, volume, semester, round):
+        super().populate(competition, volume, semester, round)
+        count = len(ContextVolume(self.root, competition, volume).data['categories'])
+
+        self.add_list('problems', [
+            self.subcontext_class(self.root, competition, volume, semester, round, problem)
+            for problem in range(1, count + 1)
+        ])
 
 """ Buildable contexts """
 

@@ -80,8 +80,8 @@
 
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
-%\RequirePackage{bidi}
 \setdefaultlanguage{slovak}
+%\RequirePackage{bidi}
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 

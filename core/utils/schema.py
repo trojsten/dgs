@@ -43,14 +43,8 @@ def merge_one(parent: Schema, child: Schema, *, overwrite: bool = True) -> Schem
 
     for key in child._schema:
         if key in parent._schema:
-            if overwrite:
-                if isinstance(parent._schema[key], Schema) and isinstance(child._schema[key], Schema):
-                    merge_one(parent._schema[key], child._schema[key])
-                else:
-                    parent[key] = child[key]
-            else:
-                raise ValueError(f"Merging Schemas failed due to conflicting values: {key}. You may want to specify overwrite=True.")
+            parent._schema[key] = Or(parent._schema[key], child._schema[key])
         else:
-            parent[key] = child[key]
+            parent._schema[key] = child._schema[key]
 
     return parent

@@ -2,13 +2,16 @@ import pprint
 import argparse
 import argparsedirs
 import schema
+import logging
 
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 
-from core.utils import colour as c, crawler
+from core.utils import colour as c, crawler, logger
 from core.builder import jinja
 from core.builder.context import BuildableContext
+
+logger = logger.setupLog(__name__)
 
 
 def empty_if_none(string):
@@ -25,6 +28,7 @@ class BaseBuilder(metaclass=ABCMeta):
         self.launch_directory = Path(self.args.launch)
         self.template_root = Path(self.args.template_root)
         self.output_directory = Path(self.args.output) if self.args.output else None
+        logger.setLevel(logging.INFO if self.args.debug else logging.INFO)
         self.create_context()
 
     def create_argument_parser(self):
@@ -56,22 +60,22 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def print_debug_info(self) -> None:
         """ Prints debug info """
-        print(c.act("Content templates:"))
+        logger.debug(c.act("Content templates:"))
         pprint.pprint(self.templates)
 
-        print(c.act("Context:"))
+        logger.debug(c.act("Context:"))
         self.context.print()
 
     def print_build_info(self) -> None:
         """ Prints build info """
-        print(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
+        logger.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
 
-    def print_dir_info(self):
+    def print_dir_info(self) -> None:
         """ Prints directory info """
-        print(f"{c.act('Directory structure:')}")
+        logger.debug(f"{c.act('Directory structure:')}")
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
-    def build(self):
+    def build(self) -> None:
         assert isinstance(self.context, BuildableContext), \
             c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
         self.print_build_info()
@@ -85,5 +89,4 @@ class BaseBuilder(metaclass=ABCMeta):
         for template in self.templates:
             jinja.print_template(self.template_root, template, self.context.data, self.output_directory)
 
-        if self.args.debug:
-            print(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")
+        logger.debug(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")

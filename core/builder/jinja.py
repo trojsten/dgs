@@ -2,8 +2,11 @@ import jinja2
 import os
 import sys
 import itertools
+import logging
 
-from core.utils import dicts, filters, colour as c
+from core.utils import dicts, filters, colour as c, logger
+
+logger = logger.setupLog('root')
 
 
 class CollectUndefined(jinja2.StrictUndefined):
@@ -70,14 +73,14 @@ def print_template(root, template, context, output_directory=None, new_name=None
     template_path = f'{root}/{template}'
     output_path = sys.stdout if output_directory is None else open(os.path.join(output_directory, template if new_name is None else new_name), 'w')
     try:
-        print(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
+        logger.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
         print(
             environment(root).get_template(template).render(context),
             file=output_path,
         )
     except jinja2.exceptions.TemplateNotFound as e:
-        print(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
+        logger.crit(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
         sys.exit(41)
     except jinja2.exceptions.UndefinedError as e:
-        print(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
+        logger.crit(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
         sys.exit(43)
