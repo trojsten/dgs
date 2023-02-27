@@ -58,6 +58,7 @@
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage[version=4]{mhchem}
+\RequirePackage{isomath}
 
 \RequirePackage[all]{nowidow}
 %\RequirePackage{boolexpr}                                   % boolean expressions, switch

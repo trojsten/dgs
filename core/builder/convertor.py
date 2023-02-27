@@ -38,6 +38,7 @@ class Convertor:
             (r"``", r"“"),
             (r"''", r'”'),
             (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
+            (r"\\includesvg\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
             (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
             (r"^\\caption{}(\\label{.*})?\n", ""), # Remove empty labels and captions
 #            (r"\b--\b", "{}--{}"),
@@ -196,7 +197,7 @@ class Convertor:
             "--pdf-engine", "xelatex",
             "--to", self.format,
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
-            "--filter", "pandoc-eqnos",
+            #"--filter", "pandoc-eqnos",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
