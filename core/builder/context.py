@@ -26,7 +26,7 @@ class Context(metaclass=ABCMeta):
         else:
             return name if func is None else func(name)
 
-    def __init__(self, new_id, **defaults):
+    def __init__(self, new_id=None, **defaults):
         self.id = new_id
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
@@ -74,18 +74,15 @@ class Context(metaclass=ABCMeta):
         return self
 
     def add_list(self, key, ctxs):
-        #print(f"{self.__class__.__name__} schema is originally {self.__class__.schema}")
-        #print(f"Adding list {c.name(key)} with items {ctxs}")
         self.data[key] = [item.data for item in ctxs]
 
         if self.__class__.schema is not None:
             self.__class__.schema._schema[key] = [self.subcontext_class.schema]
 
-        #print(f"{self.__class__.__name__} schema is now {self.__class__.schema}")
         return self
 
     def print(self):
-        pprint.pprint(self.data, width=200)
+        pprint.pprint(self.data, width=120)
 
     def add_number(self, number):
         return self.add({'number': number})

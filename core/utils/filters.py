@@ -1,7 +1,7 @@
 import itertools
 from schema import Schema, Or
 from collections.abc import Iterable
-from typing import Any, Optional, Callable, Union
+from typing import Any, Optional, Callable, Union, List, Dict
 
 
 def roman(number: int) -> str:
@@ -80,10 +80,9 @@ def render_list(items: Union[list, Any], *, func: Callable = identity, and_word:
     return ' '.join(items)
 
 
-def process_people(people: Union[list, dict]) -> dict:
+def process_people(people: Union[List[Dict[str, str]], Dict[str, str]]) -> List[Dict[str, str]]:
     """
     Pre-process people metadata:
-        - if a string, add unknown gender
         - if a dict, wrap it in a list
         - if a list, pass through
         - otherwise raise exception
@@ -99,10 +98,9 @@ def process_people(people: Union[list, dict]) -> dict:
         raise TypeError(f"Invalid people type: {type(people)}")
 
 
-def format_gender_suffix(people: Union[str, list, dict], *, func: Callable = identity) -> str:
+def format_gender_suffix(people: Dict[str, Dict[str, str]], *, func: Callable = identity) -> str:
     """
     Format people metadata:
-        -   if it is a string, we do not know the gender
         -   if it is a dict, it should have name and gender, display that
         -   if it is a list of dicts, use plural and display a list of names
 
@@ -114,14 +112,16 @@ def format_gender_suffix(people: Union[str, list, dict], *, func: Callable = ide
     if len(people) > 1:
         return "i"
     else:
-        if people[0]['gender'] in ['', 'm']:
+        if people[0]['gender'] == 'm':
             return ""
-        elif people[0]['gender'] in ['a', 'f']:
+        elif people[0]['gender'] == 'f':
             return "a"
-        elif people[0]['gender'] in ['o', 'n']:
+        elif people[0]['gender'] == 'n':
             return "o"
+        elif people[0]['gender'] == '?':
+            return r"\errorMessage{?}"
         else:
-            raise ValueError("Tried to use an undefined gender suffix, define 'gender' key in meta.yaml")
+            raise ValueError(f"Tried to use an undefined gender suffix '{people[0]['gender']}'. Define 'gender' key in meta.yaml")
 
 
 def format_people(people: Union[list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:

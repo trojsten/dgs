@@ -120,10 +120,9 @@ class TestCheckDigit():
 
 
 class TestGenderSuffix:
-    def test_string(self):
+    def test_undefined(self):
         """ A string fails in singular case, undefined gender """
-        with pytest.raises(ValueError):
-            format_gender_suffix('Adam')
+        assert format_gender_suffix('Adam') == r'\errorMessage{?}'
 
     def test_many_strings(self):
         """ This should not fail: if plural, suffix is invariably 'i' (at least in Slovak) """
@@ -141,7 +140,7 @@ class TestGenderSuffix:
         assert format_gender_suffix(dict(name="Tete", gender='n')) == 'o'
 
     def test_single_dict_f(self):
-        assert format_gender_suffix(dict(name="Viki", gender='a')) == 'a'
+        assert format_gender_suffix(dict(name="Viki", gender='f')) == 'a'
 
     def test_multi_dict(self):
         assert format_gender_suffix([dict(name="Majo", gender='m'), dict(name="Nina", gender="f")]) == 'i'

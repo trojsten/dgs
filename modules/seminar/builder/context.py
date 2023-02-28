@@ -130,7 +130,7 @@ class ContextProblem(ContextSeminar):
     persons = Or('',
         [{
             'name': And(str, len),
-            'gender': Or('f', 'm'),
+            'gender': Or('f', 'm', '?'),
         }]
     )
     schema = Schema({
