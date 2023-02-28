@@ -36,10 +36,10 @@
 }
 
 % \exampleIO[verbatim input][verbatim output]
-% Príklad vstupu/výstupu (KSP)
-%   - verbatim vstup
-%   ₋ verbatim výstup
-% Používa ExplSyntax z LaTeX3
+% Input and output for KSP
+%   - verbatim input
+%   ₋ verbatim output
+% Uses ExplSyntax from LaTeX3
 \ExplSyntaxOn
 \char_set_catcode_other:n{`\^^M}
 \NewDocumentCommand{\exampleIO}{+v +v}{
@@ -79,21 +79,5 @@
 }
 \char_set_catcode_end_line:n{`\^^M}
 
-% title, points-description, categories
-\NewDocumentCommand{\switch}{m m m}{%
-    \str_case:nnF{#1}{#2}{#3}%
-}
-
-\NewDocumentCommand{\PluralMG}{m}{%
-    \switch{#1}{{1}{}{2}{y}{3}{y}{4}{y}}{ov}%
-}
-
-\NewDocumentCommand{\PluralFN}{m}{%
-    \switch{#1}{{1}{a}}{e}%
-}
-
-\NewDocumentCommand{\FormatList}{m}{%
-    #1
-}
 \ExplSyntaxOff
 

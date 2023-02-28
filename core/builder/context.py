@@ -119,7 +119,7 @@ class FileSystemContext(Context):
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
-            logger.crit(c.err("[FATAL] Could not load YAML file"), c.path(filename))
+            logger.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
             sys.exit(43)
 
