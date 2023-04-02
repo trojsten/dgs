@@ -129,7 +129,7 @@ class ContextRound(ContextSeminar):
 class ContextProblem(ContextSeminar):
     persons = Or('',
         [{
-            'name': And(str, len),
+            'name': str,
             'gender': Or('f', 'm', '?'),
         }]
     )
