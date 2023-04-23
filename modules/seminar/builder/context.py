@@ -1,5 +1,3 @@
-import datetime
-
 from pathlib import Path
 from abc import ABCMeta
 from schema import Schema, Optional, Use, And, Or
@@ -31,7 +29,7 @@ class ContextCompetition(ContextSeminar):
             Optional('locative'): And(str, len),
         }),
         'urls': Schema({
-            'web': And(str, len),       # set this to URL
+            'web': And(str, len),       # set this to valid URL
             'submit': And(str, len),    # and here too
         }),
         'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
@@ -85,6 +83,7 @@ class ContextSemester(ContextSeminar):
             .add_id(self.id) \
             .add_number(semester)
         # Add fancy names for the semesters
+        # Maybe this should be a Jinja filter...?
         self.add({
             'neuter': {
                 'nominative': ['zimné', 'letné'][semester - 1],
@@ -106,7 +105,7 @@ class ContextRound(ContextSeminar):
     defaults = {
         'instagram': {
             'skin': 'orange',
-            'textColour': 'black',
+            'text_colour': 'black',
         }
     }
 
@@ -114,7 +113,7 @@ class ContextRound(ContextSeminar):
         'deadline': datetime.date,
         Optional('instagram'): Schema({
             'skin': Use(str, lambda x: x in ['orange', 'grey']),
-            'textColour': str,
+            'text_colour': str,
         }),
         'id': And(str, len),
         'number': int,
