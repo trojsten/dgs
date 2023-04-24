@@ -1,7 +1,7 @@
 import itertools
 from typing import Iterable, Callable, List, Dict, Any
 
-from core.utils import dicts
+from core.utilities import dicts
 
 
 def add_numbers(items: List[Any], numbers: Iterable=itertools.count()) -> List[Dict]:

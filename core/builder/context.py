@@ -10,7 +10,7 @@ from typing import Iterable
 from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And, Or, Optional
 
-from core.utils import dicts, colour as c, crawler, schema
+from core.utilities import dicts, colour as c, crawler, schema
 
 logger = logging.getLogger(__name__)
 

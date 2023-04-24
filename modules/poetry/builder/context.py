@@ -23,4 +23,4 @@ class ContextAuthor(ContextPoetry):
 
 class ContextPoem(ContextPoetry):
     def __init__(self, author, title):
-        self.load_meta(root, author, title)
+        self.load_meta(self.root, author, title)

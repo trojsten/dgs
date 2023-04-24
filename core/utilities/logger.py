@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 from core.utils import colour as c
 
@@ -23,7 +24,7 @@ class DeGeSFormatter(logging.Formatter):
 
     def formatTime(self, record, format):
         ct = self.converter(record.created)
-        return f"{time.strftime('%H:%M:%S', ct)}.{int(record.msecs):03d}"
+        return f"{datetime.strftime('%H:%M:%S', ct)}.{int(record.msecs):03d}"
 
 
 def setupLog(name, **kwargs):

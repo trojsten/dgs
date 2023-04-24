@@ -29,9 +29,9 @@ class ContextScholarLecture(ContextScholarSingle):
         self.crawler = crawler.Crawler(Path(self.root, course, lecture))
 
         if 'parts' in self.data:
-            self.add({'parts': [ContextScholarPart(root, course, lecture, part).data for part in self.data['parts']]})
+            self.add({'parts': [ContextScholarPart(self.root, course, lecture, part).data for part in self.data['parts']]})
         else:
-            self.add_subdirs(ContextScholarPart, 'parts', root, course, lecture)
+            self.add_subdirs(ContextScholarPart, 'parts', self.root, course, lecture)
 
 
 class ContextScholarPart(ContextScholarSingle):
@@ -39,7 +39,7 @@ class ContextScholarPart(ContextScholarSingle):
         self.name(course, lecture, part)
         self.load_meta(course, lecture, part) \
             .add_id(part)
-        self.add_subdirs(ContextScholarProblem, 'problems', root, course, lecture, part)
+        self.add_subdirs(ContextScholarProblem, 'problems', self.root, course, lecture, part)
 
 
 class ContextScholarProblem(ContextScholarSingle):
@@ -47,8 +47,8 @@ class ContextScholarProblem(ContextScholarSingle):
         self.name(course, lecture, part, problem)
         self.load_meta(course, lecture, part, problem) \
             .add_id(problem)
-        self.add({'has_problem': Path(root, course, lecture, part, problem, 'problem.md').is_file()})
-        self.add({'has_solution': Path(root, course, lecture, part, problem, 'solution.md').is_file()})
+        self.add({'has_problem': Path(self.root, course, lecture, part, problem, 'problem.md').is_file()})
+        self.add({'has_solution': Path(self.root, course, lecture, part, problem, 'solution.md').is_file()})
 
 
 class ContextSingleModule(ContextScholarSingle):

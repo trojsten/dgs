@@ -1,7 +1,7 @@
 from typing import Iterable
-from schema import Schema, And
+from schema import Schema, And, Or
 
-import core.utils.globals as glob
+import core.utilities.globals as glob
 
 
 def string(x: str) -> bool:

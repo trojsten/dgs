@@ -7,7 +7,7 @@ import tempfile
 
 sys.path.append('.')
 
-from core.utils import colour as c
+from core.utilities import colour as c
 
 
 class Locale:

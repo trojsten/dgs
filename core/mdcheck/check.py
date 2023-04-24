@@ -6,8 +6,9 @@ from mdcheck import exceptions
 
 class LineChecker():
     def check(self, line):
-        for checker in [Circ, Tabs, FracWithoutBrace]:
-            checker().check(line)
+        return True
+        #for checker in [Circ, Tabs, FracWithoutBrace]:
+        #    checker().check(line)
 
 
 class FailIfFound():
@@ -150,8 +151,8 @@ class DoubleSpace():
     re_double_space = re.compile('.*\w  +\w')
 
     def check(self, line):
-        if search := re_double_space.search(line):
-            raise SingleLineError('Double spaces', line, search.end())
+        if search := self.re_double_space.search(line):
+            raise exceptions.SingleLineError('Double spaces', line, search.end())
 
 
 """

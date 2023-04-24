@@ -1,7 +1,7 @@
 import datetime
 import pytest
 
-from core.utils.filters import render_list, roman, textbf, textit, isotex, plural, get_check_digit, format_gender_suffix, format_people
+from core.utilities.filters import render_list, roman, textbf, textit, isotex, plural, get_check_digit, format_gender_suffix, format_people
 
 
 class TestRender():

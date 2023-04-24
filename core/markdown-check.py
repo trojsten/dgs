@@ -68,7 +68,7 @@ class StyleEnforcer():
         try:
             check.encoding(path)
         except exceptions.EncodingError as e:
-            print(f"File {c.name(file.name)} is not valid: {c.err(message)}")
+            print(f"File {c.name(file.name)} is not valid: {c.err(e.message)}")
             return False
 
         line_errors = self.line_errors

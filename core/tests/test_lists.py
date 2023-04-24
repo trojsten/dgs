@@ -2,7 +2,7 @@ import math
 import pytest
 import itertools
 
-from core.utils.lists import split_mod, split_div, split_callback, numerate, add_numbers
+from core.utilities.lists import split_mod, split_div, split_callback, numerate, add_numbers
 
 
 def is_prime(what: int) -> int:

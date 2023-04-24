@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from core.utils import colour as c
+from core.utilities import colour as c
 
 logger = logging.getLogger('root')
 
