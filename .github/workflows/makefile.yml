@@ -1,0 +1,24 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "testing" ]
+  pull_request:
+    branches: [ "testing" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: "Clone FontPro"
+      uses: actions/checkout@master
+      with:
+        repository: TrojstenSK/FKS
+        path: source/seminar/FKS
+    - name: "Build"
+      run: |
+        make output/seminar/FKS/38/2/2
+    
