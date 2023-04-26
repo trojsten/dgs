@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from builder.convertor import Convertor
-from utils import colour as c
+from utilities import colour as c
 
 
 class CLIInterface():

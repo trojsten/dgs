@@ -4,7 +4,7 @@ import sys
 import itertools
 import logging
 
-from core.utils import dicts, filters, colour as c, logger
+from core.utilities import dicts, filters, colour as c, logger
 
 logger = logger.setupLog('root')
 

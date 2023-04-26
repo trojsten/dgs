@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 
-from core.utils import colour as c, crawler, logger
+from core.utilities import colour as c, crawler, logger
 from core.builder import jinja
 from core.builder.context import BuildableContext
 

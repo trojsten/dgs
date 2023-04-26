@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-from core.utils import colour as c
+from core.utilities import colour as c
 
 
 class DeGeSFormatter(logging.Formatter):
