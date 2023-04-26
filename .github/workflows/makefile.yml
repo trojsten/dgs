@@ -1,10 +1,11 @@
 name: Makefile CI
 
 on:
-  push:
-    branches: [ "testing" ]
-  pull_request:
-    branches: [ "testing" ]
+  workflow_run:
+    workflows: ["Install DeGeŠ"]
+    branches: [testing]
+    types: 
+      - completed
 
 jobs:
   build:
@@ -13,12 +14,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: "Clone FontPro"
+    - name: "Clone FKS"
       uses: actions/checkout@master
       with:
         repository: TrojstenSK/FKS
         path: source/seminar/FKS
-    - name: "Build"
+    - name: "Build FKS/38/2/2"
       run: |
         make output/seminar/FKS/38/2/2
     
