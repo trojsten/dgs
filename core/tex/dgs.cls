@@ -57,6 +57,7 @@
 \RequirePackage[weather]{ifsym}
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
+\RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}
 
 \RequirePackage[all]{nowidow}
@@ -137,6 +138,7 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
+\NewDocumentCommand{\passthrough}{m}{#1}
 \NewExpandableDocumentCommand{\rootDirectory}{}{build}
 \NewExpandableDocumentCommand{\activeDirectory}{}{<undefined>}
 

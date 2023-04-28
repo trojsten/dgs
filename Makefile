@@ -49,9 +49,15 @@ include modules/*/module.mk
 build/%.tex: source/%.md
 	$(call pandoctex,sk)
 
-# Copy TeX files from source to input
+# Copy TeX files from source to build
 build/%.tex: source/%.tex
 	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+# Copy py files from source to build
+build/%.py: source/%.py
+	@echo -e '$(c_action)Copying Python source file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -75,19 +81,19 @@ build/%.pdf: source/%.pdf
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-# Copy PNG file (to input)
+# Copy PNG file (to build)
 build/%.png: source/%.png
 	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-# Copy JPG file (to input)
+# Copy JPG file (to build)
 build/%.jpg: source/%.jpg
 	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-# Copy DAT file (to input)
+# Copy DAT file (to build)
 build/%.dat: source/%.dat
 	@echo -e '$(c_action)Copying data file $(c_filename)$<$(c_action) to file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
@@ -111,6 +117,12 @@ output/%.png: source/%.png
 	@mkdir -p $(dir $@)
 	cp $< $@
 
+# Copy py (for web)
+output/%.py: source/%.py
+	@echo -e '$(c_action)Copying Python source file $(c_filename)$<$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cp $< $@
+
 # Render gnuplot file to PNG (for web)
 output/%.png: build/%.gp
 	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
@@ -130,7 +142,7 @@ output/%.html: source/%.md
 
 .SECONDEXPANSION:
 
-# Copy Gnuplot file to input, along with all of its possible .dat prerequisites
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
 build/%.gp:\
 	source/%.gp\
 	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat))

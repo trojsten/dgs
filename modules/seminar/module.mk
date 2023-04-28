@@ -44,6 +44,7 @@ build/seminar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.py)) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
@@ -53,6 +54,7 @@ output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.py)) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
 
 output/seminar/%/problems.pdf: \
