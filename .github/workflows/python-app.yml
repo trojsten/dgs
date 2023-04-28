@@ -45,10 +45,10 @@ jobs:
       uses: actions/checkout@master
       with:
         repository: sebschub/FontPro
-        path: core/fonts/FontPro
+        path: assets/fonts/FontPro
     - name: "Set up FontPro"
       run: |
-        cd core/fonts/FontPro
+        cd assets/fonts/FontPro
         mkdir otf
         cp ../../fonts/MinionPro/*.otf otf/
         ./scripts/makeall MinionPro
