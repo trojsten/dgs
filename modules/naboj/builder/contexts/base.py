@@ -2,7 +2,7 @@ from pathlib import Path
 from schema import Schema, Optional, And, Regex
 
 from core.builder import context
-from core.utils.schema import valid_language
+from core.utilities.schema import valid_language
 
 
 class ContextNaboj(context.FileSystemContext):

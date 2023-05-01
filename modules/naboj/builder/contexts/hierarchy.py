@@ -2,9 +2,9 @@ import datetime
 import itertools
 from schema import Schema, And, Or
 
-import core.utils.globals as glob
-from core.utils import lists
-from core.utils.schema import string, valid_language
+import core.utilities.globals as glob
+from core.utilities import lists
+from core.utilities.schema import string, valid_language
 from .base import ContextNaboj
 
 
