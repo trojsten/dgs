@@ -28,7 +28,7 @@
 \RequirePackage{siunitx}
 \RequirePackage{xparse}
 \RequirePackage{enumitem}
-\RequirePackage{listings}
+\RequirePackage{minted}
 \RequirePackage{lastpage}
 \RequirePackage{wasysym}
 \RequirePackage{pdftexcmds}

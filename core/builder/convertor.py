@@ -62,7 +62,8 @@ class Convertor:
     replace_regexes = {
         'latex': [
             (r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}"),
-            (r"^@I\s*(.*)$", r"\\lstinputlisting[language=Python]{\\activeDirectory/\g<1>}"),
+            #(r"^@I\s*(.*)$", r"\\lstinputlisting[language=Python]{\\activeDirectory/\g<1>}"),
+            (r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}"),
             (r"^@L\s*(.*)$", r"\g<1>"),
             (r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}"),
         ],
@@ -192,10 +193,10 @@ class Convertor:
         args = [
             "pandoc",
             "--mathjax",
-            "--listings",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.format,
+            "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",

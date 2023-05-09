@@ -12,5 +12,5 @@
 *__pycache__*
 *.dblite
 build/
-output/
+*output/
 source
