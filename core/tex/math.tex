@@ -33,6 +33,8 @@
 \DeclareMathOperator{\LAnd}{\quad\land\quad}
 \DeclareMathOperator{\LNand}{\quad\lnand\quad}
 
+\DeclareMathOperator{\Intersect}{\cap}
+
 \DeclareMathOperator{\sinc}{sinc}
 \DeclareMathOperator{\hav}{hav}
 
@@ -284,8 +286,20 @@
 
 % Matrices
 \NewDocumentCommand{\mat}{m}{\symbf{#1}}
+
+% Transpose
 \NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
+% Transpose with auto matrix
+\NewDocumentCommand{\TransposeM}{m}{\mat{#1}^{\mathsf{T}}}
+% Transpose with parentheses
+\NewDocumentCommand{\TransposeP}{m}{\left(#1\right)^{\mathsf{T}}}
+
+% Inverted
 \NewDocumentCommand{\Inv}{m}{#1^{-1}}
+% Inverted matrix
+\NewDocumentCommand{\InvM}{m}{\mat{#1}^{-1}}
+% Inverted with parentheses
+\NewDocumentCommand{\InvP}{m}{\left(#1\right)^{-1}}
 
 % Vertical-style determinant
 \NewDocumentCommand{\Det}{m}{\left|#1\right|}
