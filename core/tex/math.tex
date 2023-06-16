@@ -243,10 +243,11 @@
 
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
-\NewDocumentCommand{\SumP}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\Sum[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
-\NewDocumentCommand{\ProductP}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\Product[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\CartesianProduct[#1][#2]{\left(#3\right)}}
 
 \DeclarePairedDelimiter\abs@{\lvert}{\rvert}
 \NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
