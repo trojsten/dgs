@@ -1,0 +1,12 @@
+[submodule "source/naboj/chem"]
+	path = source/naboj/chem
+	url = git@github.com:TrojstenSK/naboj-chemistry
+	branch = master
+[submodule "source/naboj/phys"]
+	path = source/naboj/phys
+	url = git@github.com:TrojstenSK/naboj-international
+	branch = master
+[submodule "source/seminar/FKS"]
+	path = source/seminar/FKS
+	url = git@github.com:TrojstenSK/FKS
+	branch = master
