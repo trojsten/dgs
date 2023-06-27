@@ -234,7 +234,7 @@
 \NewDocumentCommand{\Exp}{m}{e^{#1}}
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
 \NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
-\NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
+\NewDocumentCommand{\MustEqual}{}{\Must{=}}
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
 \NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
 \NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
@@ -242,6 +242,7 @@
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{#1\limits_{#2}^{#3} \left(#4\right)}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\SumP}{O{} O{} m}{\Sum[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
@@ -279,7 +280,9 @@
 \NewDocumentCommand{\Rational}{}{\mathbb{Q}}
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
 \NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNeg}{}{\mathbb{R}^{-}}
 \NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
+\NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
 
 % Functions
@@ -287,6 +290,7 @@
 
 % Matrices
 \NewDocumentCommand{\mat}{m}{\symbf{#1}}
+\NewDocumentCommand{\Mat}{m}{\mat{#1}}
 
 % Transpose
 \NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
