@@ -33,9 +33,12 @@
 \DeclareMathOperator{\LAnd}{\quad\land\quad}
 \DeclareMathOperator{\LNand}{\quad\lnand\quad}
 
+\DeclareMathOperator{\Union}{\cup}
 \DeclareMathOperator{\Intersect}{\cap}
 
+% Sinc
 \DeclareMathOperator{\sinc}{sinc}
+% Haversine
 \DeclareMathOperator{\hav}{hav}
 
 \NewDocumentCommand{\Diff}{O{}}{%
@@ -199,9 +202,11 @@
 \NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\OIIntD}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
+% Same, auto vectorize arguments
 \NewDocumentCommand{\OIIntDV}{O{} O{} m m}{\OIIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Surface integral of cross product over single differential
 \NewDocumentCommand{\OIIntC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
+% Same, auto vectorize arguments
 \NewDocumentCommand{\OIIntCV}{O{} O{} m m}{\OIIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic 3D integral
@@ -242,7 +247,7 @@
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
-\NewDocumentCommand{\AggregateP}{m O{} O{} m}{#1\limits_{#2}^{#3} \left(#4\right)}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\SumP}{O{} O{} m}{\Sum[#1][#2]{\left(#3\right)}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
@@ -284,6 +289,7 @@
 \NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
 \NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
+\NewDocumentCommand{\Quaternions}{}{\mathbb{H}}
 
 % Functions
 \NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
@@ -321,6 +327,8 @@
 
 \NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
 
+\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
+
 % Fix weird font choices
 \let\tmp\phi
 \let\phi\varphi
@@ -333,5 +341,3 @@
 \let\left\mleft
 \let\right\mright
 \makeatother
-
-\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}

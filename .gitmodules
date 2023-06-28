@@ -10,3 +10,7 @@
 	path = source/seminar/FKS
 	url = git@github.com:TrojstenSK/FKS
 	branch = master
+[submodule "source/seminar/testing"]
+	path = source/seminar/testing
+	url = git@github.com:TrojstenSK/dgs-seminar-testing.git
+	branch = testing
