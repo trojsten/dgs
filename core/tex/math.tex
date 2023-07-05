@@ -33,8 +33,8 @@
 \DeclareMathOperator{\LAnd}{\quad\land\quad}
 \DeclareMathOperator{\LNand}{\quad\lnand\quad}
 
-\DeclareMathOperator{\Union}{\cup}
-\DeclareMathOperator{\Intersect}{\cap}
+\DeclareMathOperator{\union}{\cup}
+\DeclareMathOperator{\intersection}{\cap}
 
 % Sinc
 \DeclareMathOperator{\sinc}{sinc}
@@ -249,22 +249,26 @@
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
 \NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
-\NewDocumentCommand{\SumP}{O{} O{} m}{\Sum[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
-\NewDocumentCommand{\ProductP}{O{} O{} m}{\Product[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
-\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\CartesianProduct[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
+\NewDocumentCommand{\Union}{O{} O{} m}{\Aggregate{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\UnionP}{O{} O{} m}{\AggregateP{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\Intersection}{O{} O{} m}{\Aggregate{\bigcap}[#1][#2]{#3}}
+\NewDocumentCommand{\IntersectionP}{O{} O{} m}{\AggregateP{\bigcap}[#1][#2]{#3}}
 
 \DeclarePairedDelimiter\abs@{\lvert}{\rvert}
 \NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
 
-\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
-\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop}{#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop}{#2}}
 
 \NewDocumentCommand{\Angle}{}{\sphericalangle}
 
 \NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
-\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \vert #3)}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \mid #3)}
 
 \NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}

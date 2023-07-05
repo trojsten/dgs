@@ -9,8 +9,8 @@ source/naboj/%/i18n: \
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # % <competition>/<volume>/languages/<language>/<problem>
 build/naboj/%.tex: source/naboj/%.md
-	$(eval words := $(subst /, ,$*))
-	$(call pandoctex,$(word 4,$(words)))
+	$(eval language := $(word 4,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
 
 # % <competition>/<volume>/languages/<language>
 
@@ -95,9 +95,10 @@ build/naboj/%/instructions.tex: \
 # Instructions before the online competition (content)
 build/naboj/%/instructions-online-inner.tex: \
 	source/naboj/$$*/_extras/instructions-online-inner.md
+	$(eval language := $(word 4,$(subst /, ,$*)))
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py latex sk $< $@ || exit 1;
+	python3 core/pandoc-convert.py latex $(language) $< $@ || exit 1;
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>
