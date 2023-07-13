@@ -33,12 +33,14 @@
     (@ for problem in round.problems @)%
         \setcounter{problem}{(* problem.number *)}%
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/(* semester.id *)/(* round.id *)/(* problem.id *)}%
-        \subsection{%
-            \texorpdfstring{%
-                \large \textbf{(* problem.title *)} \hfill \normalsize%
-                (@ block heading_inner scoped @)(@ endblock heading_inner @)}{(* round.number *).(* problem.number *) (* problem.title *)}%
+        \hypertarget{(* volume.id *)(* semester.id *)(* round.id *)(* problem.id *)-(* kind *)}{
+            \subsection{%
+                \texorpdfstring{%
+                    \large \textbf{(* problem.title *)} \hfill \normalsize%
+                    (@ block heading_inner scoped @)(@ endblock heading_inner @)}{(* round.number *).(* problem.number *) (* problem.title *)}%
+            }%
+            \label{sec:(* volume.id *)(* semester.id *)(* round.id *)(* problem.id *)-(* kind *)}
         }%
-        \label{(* volume.id *)(* semester.id *)(* round.id *)(* problem.id *)-(* kind *)}%
         (@ block problem_again @)(@ endblock @)
         \protectedInput{\activeDirectory/(* kind *).tex}%
     (@ endfor @)

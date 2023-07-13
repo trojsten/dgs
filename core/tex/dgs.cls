@@ -72,6 +72,7 @@
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
+\definecolor{orange}{RGB}{255, 128, 0}
 
 \RequirePackage[
     colorlinks              = true,

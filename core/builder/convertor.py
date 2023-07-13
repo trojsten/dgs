@@ -56,7 +56,7 @@ class Convertor:
     """ DeGeŠ hacks for shorter aligned math """
     math_regexes = [
         (r'^(\s*)\$\${$', r'\g<1>$$\n\\begin{aligned}'),
-        (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
+        (r'^(\s*)}\$\$$', r'\g<1>\\end{aligned}\n$$'),
     ]
 
     replace_regexes = {
@@ -78,6 +78,7 @@ class Convertor:
                 r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp)\){(?P<extras>.*)}$",
                 r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
             ),
+            (r"^@TODO\s*(.*)$", r"TODO: \g<1>"),
         ],
     }
 
