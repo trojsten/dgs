@@ -160,8 +160,9 @@ output/naboj/%/booklet.pdf: \
 # Full booklet folded for printing
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet-print.pdf: \
-	output/naboj/%/booklet.pdf
-	pdfbook --short-edge --quiet --outfile $@ $<
+	output/naboj/%/booklet.pdf ;
+	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
+	mv output/naboj/$*/booklet-book.pdf $@
 
 # "Virtual tearoffs" for online version, one problem per page
 # % <competition>/<volume>/venues/<venue>
@@ -180,8 +181,8 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/cover-print.pdf: \
-	output/naboj/%/cover.pdf
-	pdfnup --quiet --nup 2x1 $< --outfile $@
+	output/naboj/%/cover.pdf ;
+	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 output/naboj/%/answers.pdf: \
 	build/naboj/%/answers \
