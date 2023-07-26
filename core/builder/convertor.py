@@ -55,8 +55,8 @@ class Convertor:
 
     """ DeGeŠ hacks for shorter aligned math """
     math_regexes = [
-        (r'^(\s*)\$\${', r'\g<1>$$\n\\begin{aligned}'),
-        (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n$$'),
+        (r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}'),
+        (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$'),
     ]
 
     replace_regexes = {
