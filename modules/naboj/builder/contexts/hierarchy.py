@@ -1,6 +1,6 @@
 import datetime
 import itertools
-from schema import Schema, And, Or
+from schema import Schema, And, Or, Optional
 
 import core.utilities.globals as glob
 from core.utilities import lists
@@ -29,6 +29,7 @@ class ContextCompetition(ContextNaboj):
                 'symbol': str,
                 'value': Or(str, int, float),
                 'unit': str,
+                Optional('siextra'): str,
             }
         },
         'URL': And(str, len),
