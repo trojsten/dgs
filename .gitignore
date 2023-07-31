@@ -13,4 +13,6 @@
 *.dblite
 build/
 output/
-source
+source/
+_*/
+svg-inkscape/
