@@ -37,7 +37,8 @@ class Convertor:
         'latex': [
             (r"``", r"“"),
             (r"''", r'”'),
-            (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
+            (r"\\includegraphics\[(.*)\]{(.*)\.svg}", r"\\insertSVGPicture[\g<1>]{\g<2>}"),
+            (r"\\includegraphics\[(.*)\]{(.*)\.(gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
             (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
             (r"^\\caption{}(\\label{.*})?\n", ""), # Remove empty labels and captions
         ],

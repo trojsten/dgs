@@ -112,7 +112,7 @@ build/naboj/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.png)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.pdf)) \
-	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.svg)) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
@@ -161,8 +161,8 @@ output/naboj/%/booklet.pdf: \
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf ;
-	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
-	mv output/naboj/$*/booklet-book.pdf $@
+#	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
+#	mv output/naboj/$*/booklet-book.pdf $@
 
 # "Virtual tearoffs" for online version, one problem per page
 # % <competition>/<volume>/venues/<venue>
@@ -182,7 +182,7 @@ output/naboj/%/html: \
 
 output/naboj/%/cover-print.pdf: \
 	output/naboj/%/cover.pdf ;
-	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
+#	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 output/naboj/%/answers.pdf: \
 	build/naboj/%/answers \

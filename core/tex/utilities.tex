@@ -35,6 +35,14 @@
     }%
 }
 
+\NewDocumentCommand{\insertSVGPicture}{O{} m}{%
+    \IfFileExists{\activeDirectory/#2.svg}{%
+        \includesvg[#1]{\activeDirectory/#2}%
+    }{%
+        \includegraphics[#1]{example-image-a}%
+    }%
+}
+
 % \exampleIO[verbatim input][verbatim output]
 % Input and output for KSP
 %   - verbatim input

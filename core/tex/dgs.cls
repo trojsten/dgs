@@ -24,6 +24,7 @@
 
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
+\RequirePackage{svg}
 \RequirePackage{mleftright}
 \RequirePackage{siunitx}
 \RequirePackage{xparse}

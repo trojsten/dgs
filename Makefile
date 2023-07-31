@@ -62,12 +62,15 @@ build/%.py: source/%.py
 	cp $< $@
 
 # Convert SVG image to PDF (for XeLaTeX output)
-build/%.pdf: source/%.svg
-	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+build/%.svg: source/%.svg
+	@echo -e '$(c_action)Copying SVG source file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
-	pdfcrop $@ $@-crop
-	mv $@-crop $@
+	cp $< $@
+#	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+#	@mkdir -p $(dir $@)
+#	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
+#	pdfcrop $@ $@-crop
+#	mv $@-crop $@
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
