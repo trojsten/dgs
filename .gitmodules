@@ -14,3 +14,9 @@
 	path = source/seminar/testing
 	url = git@github.com:TrojstenSK/dgs-seminar-testing.git
 	branch = main
+[submodule "source/scholar/TA1"]
+	path = source/scholar/TA1
+	url = git@github.com:sesquideus/TA1
+[submodule "source/scholar/TA2"]
+	path = source/scholar/TA2
+	url = git@github.com:sesquideus/TA2
