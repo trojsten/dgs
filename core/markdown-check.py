@@ -71,16 +71,16 @@ class StyleEnforcer():
             return False
 
         line_errors = self.line_errors
-#        if path.name == 'problem.md':
-#            line_errors = self.line_errors + [
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
-#            ]
-#
-#        if path.name == 'solution.md':
-#            line_errors = self.line_errors + [
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
-#            ]
+        if path.name == 'problem.md':
+            line_errors = self.line_errors + [
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+            ]
+
+        if path.name == 'solution.md':
+            line_errors = self.line_errors + [
+                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+            ]
 
         for number, line in enumerate(file):
             ok = all([self.check_line(checker, file, number, line) for checker in line_errors])

@@ -1,17 +1,17 @@
+from abc import ABCMeta, abstractmethod
 import re
 import codecs
 
 from mdcheck import exceptions
 
 
-class LineChecker():
+class LineChecker(metaclass=ABCMeta):
+    @abstractmethod
     def check(self, line):
-        return True
-        #for checker in [Circ, Tabs, FracWithoutBrace]:
-        #    checker().check(line)
+        pass
 
 
-class FailIfFound():
+class FailIfFound(LineChecker):
     def __init__(self, regex, message, *, offset=0):
         self.regex = re.compile(regex)
         self.message = message
@@ -22,7 +22,7 @@ class FailIfFound():
             raise exceptions.SingleLineError(self.message, line, search.start() + self.offset)
 
 
-class LineLength():
+class LineLength(LineChecker):
     def check(self, line):
         if len(line) > 120:
             raise exceptions.SingleLineError("Line too long", line, 119)
@@ -153,6 +153,11 @@ class DoubleSpace():
     def check(self, line):
         if search := self.re_double_space.search(line):
             raise exceptions.SingleLineError('Double spaces', line, search.end())
+
+
+class EquationReference():
+    def check(self, line):
+        return True
 
 
 """
