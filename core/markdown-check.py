@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys, re
+import argparse, os, sys, re, copy
 
 from pathlib import Path
 
@@ -64,23 +64,27 @@ class StyleEnforcer():
         path = Path(file.name)
         problem_id = Path(file.name).parent.stem
 
+        self.problem_errors = [
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+        ]
+
+        self.solution_errors = [
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+        ]
+
         try:
             check.encoding(path)
         except exceptions.EncodingError as e:
             print(f"File {c.name(file.name)} is not valid: {c.err(e.message)}")
             return False
 
-        line_errors = self.line_errors
+        line_errors = copy.copy(self.line_errors)
         if path.name == 'problem.md':
-            line_errors = self.line_errors + [
-                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-                check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
-            ]
+            line_errors += self.problem_errors
 
         if path.name == 'solution.md':
-            line_errors = self.line_errors + [
-                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
-            ]
+            line_errors += self.solution_errors
 
         for number, line in enumerate(file):
             ok = all([self.check_line(checker, file, number, line) for checker in line_errors])

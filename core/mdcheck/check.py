@@ -50,7 +50,7 @@ class PlusSpaces():
     re_plus_unary = re.compile(r'[(\[]\+[^ ]')
     re_plus_spaces = re.compile(r'[^ ]\+[^ ]')
 
-    re_plus = re.compile('(?<! |"|\(|\[|\{)(\+)(?! |"|\)|\]|\})')
+    re_plus = re.compile('(?<! |"|\(|\[|\{|\$)(\+)(?! |"|\)|\]|\})')
 
     def check(self, line):
         if search := self.re_plus.search(line):
