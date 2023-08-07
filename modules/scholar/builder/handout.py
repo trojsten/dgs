@@ -1,7 +1,6 @@
 from builder import BuilderScholar
 from contexts import ContextHandout
 from contexts.handout import HandoutMixin
-from core.utils.logger import setupLog
 
 
 class BuilderHandout(HandoutMixin, BuilderScholar):

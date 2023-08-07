@@ -2,7 +2,7 @@ from abc import ABCMeta
 from pathlib import Path
 
 from core.builder import context
-from core.utils import colour as c
+from core.utilities import colour as c
 
 
 class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):

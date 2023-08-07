@@ -59,7 +59,9 @@ build/scholar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*/*.pdf)) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*/*.gp))) \
 	source/scholar/$$*/meta.yaml ;
 
 build/scholar/%/handout: \
