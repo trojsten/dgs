@@ -15,10 +15,23 @@ c_filename	:= $(shell tput sgr0; tput setaf 5)
 c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 15)
 
-# xelatex(module)
+
+
+# Ignore interactive mode with texfot
+TEXFOT_ARGS=--no-interactive \
+	--ignore 'Underfull.*'
+
+# On the first run, also ignore missing cross-references and acronyms
+TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
+	--ignore 'LaTeX Warning: Hyper reference.*' \
+	--ignore 'LaTeX Warning: Reference.*' \
+	--ignore 'LaTeX Warning: Citation.*'
+
+# xelatex(module, arity, texfot_args)
 # Compiles a selected target
 define xelatex
-	@texfot xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
+	@echo -e '$(c_action)[pdflatex] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
+	@texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
 endef
 
 define pandoctex
@@ -37,15 +50,14 @@ endef
 # Compiles a selected target twice (to ensure references are correct)
 define doubletex
 	mkdir -p $(dir $@)
-	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): primary run$(c_default)'
-	$(call xelatex,$(1))
-	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): secondary run$(c_default)'
-	$(call xelatex,$(1))
+	$(call xelatex,$(1),primary,${TEXFOT_ARGS_FIRST})
+	$(call xelatex,$(1),secondary,${TEXFOT_ARGS})
 endef
 
 include modules/*/module.mk
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
+# THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
 build/%.tex: source/%.md
 	$(call pandoctex,sk)
 

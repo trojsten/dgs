@@ -8,6 +8,7 @@ source/naboj/%/i18n: \
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # % <competition>/<volume>/languages/<language>/<problem>
+# Overrides global convertor!
 build/naboj/%.tex: source/naboj/%.md
 	$(eval language := $(word 4,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
