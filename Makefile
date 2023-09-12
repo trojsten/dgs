@@ -6,44 +6,55 @@ cdir := $(dir $(path))
 
 .SECONDARY:
 
-version =   '4.01'
-date =      '2022-11-25'
+version   = '4.02'
+date      = '2023-09-12'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
 c_filename	:= $(shell tput sgr0; tput setaf 5)
+c_extension := $(shell tput sgr0; tput bold; tput setaf 2)
 c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 15)
 
 
-
-# Ignore interactive mode with texfot
+# No interactive mode with texfot
+# and ignore underfull warnings
 TEXFOT_ARGS=--no-interactive \
 	--ignore 'Underfull.*'
 
-# On the first run, also ignore missing cross-references and acronyms
+# On the first run, also ignore missing cross-references and acronyms as they cannot be yet correct
 TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
 	--ignore 'LaTeX Warning: Hyper reference.*' \
 	--ignore 'LaTeX Warning: Reference.*' \
 	--ignore 'LaTeX Warning: Citation.*'
 
-# xelatex(module, arity, texfot_args)
+# xelatex(module, run, texfot_args)
 # Compiles a selected target
 define xelatex
 	@echo -e '$(c_action)[pdflatex] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
-	@texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
+	@texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) \
+		-halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
 endef
 
+# _pandoc(language, format, pretty_format)
+define _pandoc
+	@echo -e '$(c_action)[pandoc] Converting \
+		$(c_extension)Markdown$(c_action) file $(c_filename)$<$(c_action) to \
+		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	python3 core/convert.py $(2) $(1) $< $@ || exit 1;
+endef
+
+# pandoctex(language)
+# Converts a file from Markdown to LaTeX
 define pandoctex
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	python3 core/convert.py latex $(1) $< $@ || exit 1;
+	$(call _pandoc,$(1),latex,TeX)
 endef
 
+# pandochtml(language)
+# Converts a file from Markdown to HTML
 define pandochtml
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to HTML file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	python3 core/convert.py html $(1) $< $@ || exit 1;
+	$(call _pandoc,$(1),html,HTML)
 endef
 
 # doubletex(module)
@@ -52,6 +63,13 @@ define doubletex
 	mkdir -p $(dir $@)
 	$(call xelatex,$(1),primary,${TEXFOT_ARGS_FIRST})
 	$(call xelatex,$(1),secondary,${TEXFOT_ARGS})
+endef
+
+# copy(extension)
+define copy
+	@echo -e '$(c_action)Copying $(c_extension)$(1)$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cp $< $@
 endef
 
 include modules/*/module.mk
@@ -63,19 +81,15 @@ build/%.tex: source/%.md
 
 # Copy TeX files from source to build
 build/%.tex: source/%.tex
-	@echo -e '$(c_action)Copying TeX source file $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,TeX)
 
 # Copy py files from source to build
 build/%.py: source/%.py
-	@echo -e '$(c_action)Copying Python source file $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,Python)
 
 # Convert SVG image to PDF (for XeLaTeX output)
 build/%.pdf: source/%.svg
-	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
 	pdfcrop $@ $@-crop
@@ -83,33 +97,25 @@ build/%.pdf: source/%.svg
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
-	@echo -e '$(c_action)[gnuplot] Rendering file $(c_filename)$<$(c_action) to PDF file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[gnuplot] Rendering file $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 
 # Copy PDF file (for XeLaTeX)
 build/%.pdf: source/%.pdf
-	@echo -e '$(c_action)Copying PDF file $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,PDF)
 
 # Copy PNG file (to build)
 build/%.png: source/%.png
-	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,PNG)
 
 # Copy JPG file (to build)
 build/%.jpg: source/%.jpg
-	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,JPG)
 
 # Copy DAT file (to build)
 build/%.dat: source/%.dat
-	@echo -e '$(c_action)Copying data file $(c_filename)$<$(c_action) to file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,dat)
 
 # Output PNG from SVG (for web)
 output/%.png: source/%.svg
@@ -119,21 +125,15 @@ output/%.png: source/%.svg
 
 # Copy SVG (for web)
 output/%.svg: source/%.svg
-	@echo -e '$(c_action)Copying SVG image $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,SVG)
 
 # Copy PNG (for web)
 output/%.png: source/%.png
-	@echo -e '$(c_action)Copying PNG image $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,PNG)
 
 # Copy py (for web)
 output/%.py: source/%.py
-	@echo -e '$(c_action)Copying Python source file $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,Python)
 
 # Render gnuplot file to PNG (for web)
 output/%.png: build/%.gp
@@ -144,9 +144,7 @@ output/%.png: build/%.gp
 
 # Copy JPG (for web)
 output/%.jpg: source/%.jpg
-	@echo -e '$(c_action)Copying JPG image $(c_filename)$<$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cp $< $@
+	$(call copy,JPG)
 
 # DeGeŠ convert Markdown to HTML (for web)
 output/%.html: source/%.md
