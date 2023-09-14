@@ -1,20 +1,23 @@
+# Remove all stupid builtin rules and variables
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
+
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
+# Remove all default suffixes
 .SUFFIXES:
 
 .SECONDARY:
 
-version   = '4.02'
-date      = '2023-09-12'
+version   = '4.03'
+date      = '2023-09-14'
 
 c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
 c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
 c_filename	:= $(shell tput sgr0; tput setaf 5)
 c_extension := $(shell tput sgr0; tput bold; tput setaf 2)
 c_special	:= $(shell tput sgr0; tput setaf 3)
-c_default	:= $(shell tput sgr0; tput setaf 15)
+c_default	:= $(shell tput sgr0; tput setaf 7)
 
 
 # No interactive mode with texfot
@@ -66,7 +69,7 @@ define doubletex
 endef
 
 # copy(extension)
-define copy
+define _copy
 	@echo -e '$(c_action)Copying $(c_extension)$(1)$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	cp $< $@
@@ -81,11 +84,11 @@ build/%.tex: source/%.md
 
 # Copy TeX files from source to build
 build/%.tex: source/%.tex
-	$(call copy,TeX)
+	$(call _copy,TeX)
 
 # Copy py files from source to build
 build/%.py: source/%.py
-	$(call copy,Python)
+	$(call _copy,Python)
 
 # Convert SVG image to PDF (for XeLaTeX output)
 build/%.pdf: source/%.svg
@@ -103,19 +106,19 @@ build/%.pdf: build/%.gp
 
 # Copy PDF file (for XeLaTeX)
 build/%.pdf: source/%.pdf
-	$(call copy,PDF)
+	$(call _copy,PDF)
 
 # Copy PNG file (to build)
 build/%.png: source/%.png
-	$(call copy,PNG)
+	$(call _copy,PNG)
 
 # Copy JPG file (to build)
 build/%.jpg: source/%.jpg
-	$(call copy,JPG)
+	$(call _copy,JPG)
 
 # Copy DAT file (to build)
 build/%.dat: source/%.dat
-	$(call copy,dat)
+	$(call _copy,dat)
 
 # Output PNG from SVG (for web)
 output/%.png: source/%.svg
@@ -125,15 +128,15 @@ output/%.png: source/%.svg
 
 # Copy SVG (for web)
 output/%.svg: source/%.svg
-	$(call copy,SVG)
+	$(call _copy,SVG)
 
 # Copy PNG (for web)
 output/%.png: source/%.png
-	$(call copy,PNG)
+	$(call _copy,PNG)
 
 # Copy py (for web)
 output/%.py: source/%.py
-	$(call copy,Python)
+	$(call _copy,Python)
 
 # Render gnuplot file to PNG (for web)
 output/%.png: build/%.gp
@@ -144,7 +147,7 @@ output/%.png: build/%.gp
 
 # Copy JPG (for web)
 output/%.jpg: source/%.jpg
-	$(call copy,JPG)
+	$(call _copy,JPG)
 
 # DeGeŠ convert Markdown to HTML (for web)
 output/%.html: source/%.md
