@@ -36,6 +36,7 @@ build/naboj/%/build-language: \
 build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/../../../i18n ;
 	$(call prepare_arguments,venue)

@@ -34,7 +34,7 @@ TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
 # xelatex(module, run, texfot_args)
 # Compiles a selected target
 define xelatex
-	@echo -e '$(c_action)[pdflatex] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
+	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
 	@texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) \
 		-halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
 endef
