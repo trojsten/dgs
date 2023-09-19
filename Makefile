@@ -4,11 +4,6 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variable
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
-# Remove all default suffixes
-.SUFFIXES:
-
-.SECONDARY:
-
 version   = '4.03'
 date      = '2023-09-14'
 
@@ -20,12 +15,17 @@ c_special	:= $(shell tput sgr0; tput setaf 3)
 c_default	:= $(shell tput sgr0; tput setaf 7)
 
 
+# Remove all default suffixes
+.SUFFIXES:
+
+.SECONDARY:
+
 # No interactive mode with texfot
 # and ignore underfull warnings
 TEXFOT_ARGS=--no-interactive \
 	--ignore 'Underfull.*'
 
-# On the first run, also ignore missing cross-references and acronyms as they cannot be yet correct
+# On the first run, also ignore missing cross-references and acronyms as they cannot be correct yet
 TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
 	--ignore 'LaTeX Warning: Hyper reference.*' \
 	--ignore 'LaTeX Warning: Reference.*' \
@@ -60,9 +60,9 @@ define pandochtml
 	$(call _pandoc,$(1),html,HTML)
 endef
 
-# doubletex(module)
+# double_xelatex(module)
 # Compiles a selected target twice (to ensure references are correct)
-define doubletex
+define double_xelatex
 	mkdir -p $(dir $@)
 	$(call xelatex,$(1),primary,${TEXFOT_ARGS_FIRST})
 	$(call xelatex,$(1),secondary,${TEXFOT_ARGS})
