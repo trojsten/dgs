@@ -20,3 +20,6 @@
 [submodule "source/scholar/TA2"]
 	path = source/scholar/TA2
 	url = git@github.com:sesquideus/TA2
+[submodule "source/seminar/FX"]
+	path = source/seminar/FX
+	url = git@github.com:TrojstenSK/FX-problems
