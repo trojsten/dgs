@@ -5,7 +5,7 @@
     \pagestyle{main}
     \loadgeometry{main}
 
-    (@ if booklet.contents.intro @)
+    (@ if language.booklet.contents.intro @)
         \thispagestyle{first}
         \loadgeometry{firstpage}
         \afterpage{\aftergroup\restoregeometry}
@@ -13,7 +13,7 @@
         \newpage
     (@ endif @)
 
-    (@ if booklet.contents.problems @)
+    (@ if language.booklet.contents.problems @)
         \section{(* i18n.section.problems *)}
         \pagestyle{problems}
         (@ for problem in volume.problems @)%
@@ -34,7 +34,7 @@
         \newpage
     (@ endif @)
 
-    (@ if booklet.contents.solutions @)
+    (@ if language.booklet.contents.solutions @)
         \section{(* i18n.section.solutions *)}
         \pagestyle{solutions}
         (@ for problem in volume.problems @)%
@@ -58,7 +58,7 @@
         \newpage
     (@ endif @)
 
-    (@ if booklet.contents.answers @)
+    (@ if language.booklet.contents.answers @)
         \section{(* i18n.section.answers *)}
         \pagestyle{answers}
         (@ for problem in volume.problems @)%

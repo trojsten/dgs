@@ -1,0 +1,25 @@
+name: Makefile CI
+
+on:
+  workflow_run:
+    workflows: ["Install DeGeŠ"]
+    branches: [testing]
+    types: 
+      - completed
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: "Clone FKS"
+      uses: actions/checkout@master
+      with:
+        repository: TrojstenSK/FKS
+        path: source/seminar/FKS
+    - name: "Build FKS/38/2/2"
+      run: |
+        make output/seminar/FKS/38/2/2
+    

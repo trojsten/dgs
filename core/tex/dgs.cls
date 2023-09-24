@@ -28,7 +28,7 @@
 \RequirePackage{siunitx}
 \RequirePackage{xparse}
 \RequirePackage{enumitem}
-\RequirePackage{listings}
+\RequirePackage{minted}
 \RequirePackage{lastpage}
 \RequirePackage{wasysym}
 \RequirePackage{pdftexcmds}
@@ -53,10 +53,11 @@
 \RequirePackage{chngcntr}
 \RequirePackage{mathtools}
 \RequirePackage{physics}
-\RequirePackage{ulem}
+\RequirePackage[normalem]{ulem}
 \RequirePackage[weather]{ifsym}
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
+\RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}
 
 \RequirePackage[all]{nowidow}
@@ -71,6 +72,7 @@
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
+\definecolor{orange}{RGB}{255, 128, 0}
 
 \RequirePackage[
     colorlinks              = true,
@@ -80,8 +82,8 @@
 
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
-%\RequirePackage{bidi}
 \setdefaultlanguage{slovak}
+%\RequirePackage{bidi}
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 
@@ -137,6 +139,7 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
+\NewDocumentCommand{\passthrough}{m}{#1}
 \NewExpandableDocumentCommand{\rootDirectory}{}{build}
 \NewExpandableDocumentCommand{\activeDirectory}{}{<undefined>}
 

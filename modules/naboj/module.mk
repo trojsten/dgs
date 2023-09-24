@@ -8,32 +8,39 @@ source/naboj/%/i18n: \
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # % <competition>/<volume>/languages/<language>/<problem>
+# Overrides global convertor!
 build/naboj/%.tex: source/naboj/%.md
-	$(eval words := $(subst /, ,$*))
-	$(call pandoctex,$(word 4,$(words)))
+	$(eval language := $(word 4,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
 
 # % <competition>/<volume>/languages/<language>
+
+# prepare_arguments(target)
+# target = language | venue
+define prepare_arguments
+	@echo -e '$(c_action)Building $(1) for $(c_filename)$*$(c_action):$(c_default)'
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+endef
+
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	build/naboj/$$*/../../../.static/logo/logo.pdf \
 	source/naboj/$$*/meta.yaml \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml ;
-	@echo -e '$(c_action)Building language for $(c_filename)$*$(c_action):$(c_default)'
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
+	$(call prepare_arguments,language)
+	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
 
 # % <competition>/<volume>/<venue>
 build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/../../../i18n ;
-	@echo -e '$(c_action)Building venue for $(c_filename)$*$(c_action):$(c_default)'
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/naboj/build/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+	$(call prepare_arguments,venue)
+	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
 
 ### Input files ###################################################################################
 
@@ -94,9 +101,10 @@ build/naboj/%/instructions.tex: \
 # Instructions before the online competition (content)
 build/naboj/%/instructions-online-inner.tex: \
 	source/naboj/$$*/_extras/instructions-online-inner.md
+	$(eval language := $(word 4,$(subst /, ,$*)))
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py latex sk $< $@ || exit 1;
+	python3 core/pandoc-convert.py latex $(language) $< $@ || exit 1;
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>
@@ -153,13 +161,14 @@ output/naboj/%/booklet.pdf: \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 # Full booklet folded for printing
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet-print.pdf: \
-	output/naboj/%/booklet.pdf
-	pdfbook --short-edge --quiet --outfile $@ $<
+	output/naboj/%/booklet.pdf ;
+	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
+	mv output/naboj/$*/booklet-book.pdf $@
 
 # "Virtual tearoffs" for online version, one problem per page
 # % <competition>/<volume>/venues/<venue>
@@ -169,58 +178,60 @@ output/naboj/%/online.pdf: \
 	build/naboj/%/answers \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/online.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 	pdftk $@ burst output $(dir $@)/%02d.pdf
 
 output/naboj/%/html: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) ;
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/cover-print.pdf: \
-	output/naboj/%/cover.pdf
-	pdfnup --quiet --nup 2x1 $< --outfile $@
+	output/naboj/%/cover.pdf ;
+	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 output/naboj/%/answers.pdf: \
 	build/naboj/%/answers \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/answers.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 output/naboj/%/answers-modulo.pdf: \
 	build/naboj/%/answers \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/answers-modulo.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 output/naboj/%/constants.pdf: \
 	build/naboj/%/constants.tex \
 	source/naboj/%/i18n
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 output/naboj/%/instructions.pdf: \
 	build/naboj/%/instructions.tex \
 	build/naboj/%/instructions-inner.tex \
 	source/naboj/%/i18n
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 output/naboj/%/instructions-online.pdf: \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/instructions-online.tex \
 	build/naboj/%/instructions-online-inner.tex \
 	source/naboj/%/i18n
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 output/naboj/%/cover.pdf: \
 	build/naboj/%/cover.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 # All targets for <language>
 output/naboj/%: \
-	output/naboj/$$*/answers.pdf \
-	output/naboj/$$*/answers-modulo.pdf \
-	output/naboj/$$*/constants.pdf \
-	output/naboj/$$*/cover-print.pdf \
-	output/naboj/$$*/booklet-print.pdf \
-	output/naboj/$$*/instructions.pdf ;
+	output/naboj/%/answers.pdf \
+	output/naboj/%/answers-modulo.pdf \
+	output/naboj/%/constants.pdf \
+	output/naboj/%/cover-print.pdf \
+	output/naboj/%/booklet-print.pdf \
+	output/naboj/%/instructions.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
@@ -246,20 +257,20 @@ output/naboj/%/tearoff.pdf: \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
 	build/naboj/%/barcodes.pdf \
 	build/naboj/%/tearoff.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 # Envelope cover
 output/naboj/%/envelopes.pdf: \
 	build/naboj/%/envelopes.tex
-	$(call doubletex,naboj)
+	$(call double_xelatex,naboj)
 
 
 
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
-	output/naboj/$$*/tearoff.pdf \
-	output/naboj/$$*/envelopes.pdf ;
+	output/naboj/%/tearoff.pdf \
+	output/naboj/%/envelopes.pdf ;
 
 # All targets for all venues
 # <competition>/<volume>
@@ -267,10 +278,9 @@ output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
 
 output/naboj/%: \
-	output/naboj/$$*/languages \
-	output/naboj/$$*/venues ;
+	output/naboj/%/languages \
+	output/naboj/%/venues ;
 
 output/naboj/%/copy: \
 	output/naboj/%
 	rsync -rzvhPL output/naboj/$*/ fks:/home/sesquideus/public_html/naboj/$(subst output/,,$*)
-

@@ -4,21 +4,30 @@ build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
 	cp -r source/seminar/$*/.static/ build/seminar/$*/
 
+define _prepare_arguments
+	$(eval words := $(subst /, ,$*))
+	@mkdir -p $(dir $@)
+endef
+
+# _prepare_arguments_semester(builder)
+define prepare_arguments_semester
+	$(call _prepare_arguments)
+	python3 ./modules/seminar/builder/$(1).py 'source/seminar/' 'modules/seminar/templates/' \
+		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+endef
+
+# _prepare_arguments_round(builder)
+define prepare_arguments_round
+	$(call _prepare_arguments)
+	python3 ./modules/seminar/builder/$(1).py 'source/seminar/' 'modules/seminar/templates/' \
+		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
+endef
+
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $@)
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/volume.py 'source/seminar/' 'source/seminar/$*/' \
+	$(call _prepare_arguments)
+	python3 ./modules/seminar/builder/volume.py 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
-
-build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
-	modules/seminar/templates/$$(notdir $@) \
-	$$(wildcard source/seminar/$$*/*/meta.yaml) \
-	source/seminar/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/round.py 'source/seminar/' 'modules/seminar/templates/' \
-		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
 
 build/seminar/%/semester.tex: \
 	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
@@ -27,16 +36,18 @@ build/seminar/%/semester.tex: \
 	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 ./modules/seminar/build/semester.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+	$(call prepare_arguments_semester,semester)
 
 build/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $@) \
 	source/seminar/$$*/meta.yaml
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python3 modules/seminar/build/invite.py 'source/seminar/' 'modules/seminar/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
+	$(call prepare_arguments_semester,invite)
+
+build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
+	modules/seminar/templates/$$(notdir $@) \
+	$$(wildcard source/seminar/$$*/*/meta.yaml) \
+	source/seminar/$$*/meta.yaml
+	$(call prepare_arguments_round,round)
 
 # competition/volume/semester/round
 build/seminar/%/pdf-prerequisites: \
@@ -44,6 +55,7 @@ build/seminar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.py)) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
@@ -51,8 +63,9 @@ build/seminar/%/pdf-prerequisites: \
 
 output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
-	$$(subst source/,output/,$$(subst .svg,.png,$$(wildcard source/seminar/$$*/*/*.svg))) \
+	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.py)) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
 
 output/seminar/%/problems.pdf: \
@@ -60,14 +73,14 @@ output/seminar/%/problems.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/problems.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/solutions.pdf: \
 	modules/seminar/templates/solutions.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/solutions.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/solutions-full.pdf: \
 	modules/seminar/templates/solutions-full.tex \
@@ -75,26 +88,26 @@ output/seminar/%/solutions-full.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/solutions-full.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/instagram.pdf: \
 	modules/seminar/templates/instagram.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/instagram.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/semester.pdf: \
 	modules/seminar/templates/semester.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/semester.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/invite.pdf:\
 	source/seminar/$$*/meta.yaml \
 	build/seminar/$$*/invite.tex
-	$(call doubletex,seminar)
+	$(call double_xelatex,seminar)
 
 output/seminar/%/semester-print.pdf: \
 	output/seminar/$$*/semester.pdf
@@ -102,8 +115,7 @@ output/seminar/%/semester-print.pdf: \
 	pdfbook --short-edge --quiet --outfile $@ $<
 
 output/seminar/%/instagram: \
-	output/seminar/$$*/instagram.pdf \
-	$$(subst source/,output/,$$(subst .md,.png,$$(wildcard source/seminar/$$*/*/*/problem.md)))
+	output/seminar/$$*/instagram.pdf
 	@echo -e '$(c_action)Splitting $(c_filename)$<$(c_action) to individual images$(c_action):$(c_default)'
 	pdftoppm -png -r 150 -aa yes -aaVector yes $< $@
 

@@ -33,7 +33,12 @@
 \DeclareMathOperator{\LAnd}{\quad\land\quad}
 \DeclareMathOperator{\LNand}{\quad\lnand\quad}
 
+\DeclareMathOperator{\union}{\cup}
+\DeclareMathOperator{\intersection}{\cap}
+
+% Sinc
 \DeclareMathOperator{\sinc}{sinc}
+% Haversine
 \DeclareMathOperator{\hav}{hav}
 
 \NewDocumentCommand{\Diff}{O{}}{%
@@ -66,7 +71,7 @@
     \IfNoValueTF{#2}{%
         \frac@{#3}{#3#5}\left(#4\right)%
     }{%
-        \frac@{#3^{#2}}{#3#5^{#2}}\left(#4\right)%
+        \frac@{#3^{#2}}{#3{#5}^{#2}}\left(#4\right)%
     }%
 }
 
@@ -118,8 +123,9 @@
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
 \NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
-    \EvalAt{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+    \Eval{\Derivative[#1]{#2}{#3}}{#3 = #4}%
 }%
+\newcommand*\DrvEval{\DerivativeEval}
 
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
 % \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
@@ -180,10 +186,11 @@
 \NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
 
 % Generic 2D integral
+% [lower bound][upper bound]{integrand}{differential 1}{differential 2}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
 % Surface integral over single differential
-\NewDocumentCommand{\IIntI@}{O{} O{} m m O{}}{\iint\limits_{#1}^{#2}#3#5\diff#4}
-\NewDocumentCommand{\IIntI}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}}
+\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
 \NewDocumentCommand{\IIntDV}{O{} O{} m m}{\IIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
@@ -196,16 +203,18 @@
 \NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\OIIntD}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
+% Same, auto vectorize arguments
 \NewDocumentCommand{\OIIntDV}{O{} O{} m m}{\OIIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Surface integral of cross product over single differential
 \NewDocumentCommand{\OIIntC}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\times]}
+% Same, auto vectorize arguments
 \NewDocumentCommand{\OIIntCV}{O{} O{} m m}{\OIIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic 3D integral
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
 % Volume integral over single differential
-\NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
-\NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
+\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#4}[][#5]}
 
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
@@ -231,7 +240,7 @@
 \NewDocumentCommand{\Exp}{m}{e^{#1}}
 \NewDocumentCommand{\LogTen}{}{\log_{10}}
 \NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
-\NewDocumentCommand{\MustEqual}{}{\stackrel{!}{=}}
+\NewDocumentCommand{\MustEqual}{}{\Must{=}}
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
 \NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
 \NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
@@ -239,22 +248,28 @@
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
 \NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
-\NewDocumentCommand{\SumP}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
-\NewDocumentCommand{\ProductP}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{\left(#3\right)}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
+\NewDocumentCommand{\Union}{O{} O{} m}{\Aggregate{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\UnionP}{O{} O{} m}{\AggregateP{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\Intersection}{O{} O{} m}{\Aggregate{\bigcap}[#1][#2]{#3}}
+\NewDocumentCommand{\IntersectionP}{O{} O{} m}{\AggregateP{\bigcap}[#1][#2]{#3}}
 
 \DeclarePairedDelimiter\abs@{\lvert}{\rvert}
 \NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
 
-\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop} {#2}}
-\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop} {#2}}
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop}{#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop}{#2}}
 
 \NewDocumentCommand{\Angle}{}{\sphericalangle}
 
 \NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
-\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \vert #3)}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \mid #3)}
 
 \NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
@@ -275,16 +290,32 @@
 \NewDocumentCommand{\Rational}{}{\mathbb{Q}}
 \NewDocumentCommand{\Real}{}{\mathbb{R}}
 \NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNeg}{}{\mathbb{R}^{-}}
 \NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
+\NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
 \NewDocumentCommand{\Complex}{}{\mathbb{C}}
+\NewDocumentCommand{\Quaternions}{}{\mathbb{H}}
 
 % Functions
 \NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
 
 % Matrices
 \NewDocumentCommand{\mat}{m}{\symbf{#1}}
+\NewDocumentCommand{\Mat}{m}{\mat{#1}}
+
+% Transpose
 \NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
+% Transpose with auto matrix
+\NewDocumentCommand{\TransposeM}{m}{\mat{#1}^{\mathsf{T}}}
+% Transpose with parentheses
+\NewDocumentCommand{\TransposeP}{m}{\left(#1\right)^{\mathsf{T}}}
+
+% Inverted
 \NewDocumentCommand{\Inv}{m}{#1^{-1}}
+% Inverted matrix
+\NewDocumentCommand{\InvM}{m}{\mat{#1}^{-1}}
+% Inverted with parentheses
+\NewDocumentCommand{\InvP}{m}{\left(#1\right)^{-1}}
 
 % Vertical-style determinant
 \NewDocumentCommand{\Det}{m}{\left|#1\right|}
@@ -300,6 +331,8 @@
 \NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
 
 \NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
+
+\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
 
 % Fix weird font choices
 \let\tmp\phi

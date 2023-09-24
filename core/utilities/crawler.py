@@ -1,6 +1,9 @@
+import logging
 from pathlib import Path
 
 from core.utilities import colour as c
+
+logger = logging.getLogger('root')
 
 
 class Crawler():

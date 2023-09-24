@@ -1,9 +1,9 @@
 \documentclass[12pt, twoside]{dgs}
 
 \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/}%
-\input{core/i18n/slovak/override.tex}
+\input{core/i18n/sk/override.tex}
 
-\input{input/scholar/(* course.id *)/.static/format-override.tex}
+\input{build/scholar/(* course.id *)/.static/format-override.tex}
 
 \setcounter{secnumdepth}{3}
 
@@ -11,10 +11,10 @@
 
 \fancypagestyle{scholar}{
     \fancyhf{}
-    \fancyhead[C]{\textit{(* course.name *)}}
+    \fancyhead[C]{\textit{(* course.title *)}}
     \fancyfoot[C]{\small \thepage/\pageref*{LastPage}}
 
-    \titleformat{\section}[block]{\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
+    \titleformat{\section}[block]{\vspace*{-10mm}\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
     \titleformat{\subsection}[hang]{\LARGE\bfseries\vspace{4mm}\vspace*{-4mm}}{}{0pt}{}
     \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
     \titleformat{\paragraph}[hang]{\bfseries}{}{0pt}{}[]
@@ -28,6 +28,7 @@
 
 \numberwithin{equation}{subsection}
 \numberwithin{figure}{subsection}
+\renewcommand\thesubsubsection{\thesubsection\alph{subsubsection}}
 
 (@ block style @)(@ endblock @)
 

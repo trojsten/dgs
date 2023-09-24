@@ -40,9 +40,11 @@
         \titleformat{\section}[hang]{\centering\huge\vspace*{-7mm}}{}{0pt}{}
         \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
         \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titleformat{\paragraph}[hang]{\bfseries\itshape}{}{0pt}{}[]
         \titlespacing*{\section}{0pt}{0pt}{8pt}
         \titlespacing*{\subsection}{0pt}{8pt}{8pt}
         \titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
+        \titlespacing*{\paragraph}{0pt}{8pt}{-1em}
     }
 
     \fancypagestyle{problems}{%
@@ -81,7 +83,7 @@
         \fancyhead[L]{
             \begin{minipage}{0.15\textwidth}
                 \flushleft
-                \includegraphics[height=20mm]{core/logo/trojsten/large.pdf}\\[0pt]
+                \includegraphics[height=20mm]{assets/logo/trojsten/large.pdf}\\[0pt]
                 \vspace{16pt}
             \end{minipage}
         }

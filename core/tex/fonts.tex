@@ -14,7 +14,7 @@
 }
 
 \setmainfont[
-    Path            = core/fonts/MinionPro/ ,
+    Path            = assets/fonts/MinionPro/ ,
     Extension       = .otf ,
     UprightFont     = *-Regular ,
     BoldFont        = *-Bold ,
@@ -23,8 +23,8 @@
 ]{MinionPro}
 
 \setmonofont[
-    Path            = core/fonts/UbuntuMono/ ,
-    Scale           = 0.9,
+    Path            = assets/fonts/UbuntuMono/ ,
+    Scale           = 1,
     Extension       = .ttf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
@@ -33,7 +33,7 @@
 ]{UbuntuMono}
 
 \setsansfont[
-    Path            = core/fonts/ ,
+    Path            = assets/fonts/Verdana/ ,
     Scale           = 0.9,
     Extension       = .ttf ,
     UprightFont     = *-r ,
@@ -45,3 +45,5 @@
 \DeclareFontFamily{U}{skulls}{}
 \DeclareFontShape{U}{skulls}{m}{n}{ <-> skull }{}
 \newcommand{\skull}{\text{\usefont{U}{skulls}{m}{n}\symbol{'101}}}
+
+\setminted{fontsize=\footnotesize}

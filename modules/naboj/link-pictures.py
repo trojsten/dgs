@@ -4,7 +4,7 @@ import argparse
 import os
 from pathlib import Path
 
-import argparser
+import argparsedirs
 
 
 def fire(query):
@@ -15,7 +15,7 @@ def fire(query):
 class PictureLinker():
     def __init__(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('root', action=argparser.ReadableDir)
+        parser.add_argument('root', action=argparsedirs.ReadableDir)
         parser.add_argument('competition', type=str, choices=['math', 'phys', 'chem', 'junior'])
         parser.add_argument('volume', type=int)
         parser.add_argument('master', type=str, choices=['sk'])

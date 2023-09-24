@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, os, sys, re
+import argparse, os, sys, re, copy
 
 from pathlib import Path
 
@@ -28,7 +28,6 @@ class StyleEnforcer():
             check.FailIfFound(r'[ \t]$', "Trailing whitespace"),
             check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
             check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
-#            check.FailIfFound(r'\$\\SI{.*}{.*}\$', "Solitary \\SI does not have to be enclosed in $$"),
             check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
             check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
             check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
@@ -65,23 +64,27 @@ class StyleEnforcer():
         path = Path(file.name)
         problem_id = Path(file.name).parent.stem
 
+        self.problem_errors = [
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+        ]
+
+        self.solution_errors = [
+            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+        ]
+
         try:
             check.encoding(path)
         except exceptions.EncodingError as e:
-            print(f"File {c.name(file.name)} is not valid: {c.err(message)}")
+            print(f"File {c.name(file.name)} is not valid: {c.err(e.message)}")
             return False
 
-        line_errors = self.line_errors
-#        if path.name == 'problem.md':
-#            line_errors = self.line_errors + [
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
-#            ]
-#
-#        if path.name == 'solution.md':
-#            line_errors = self.line_errors + [
-#                check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
-#            ]
+        line_errors = copy.copy(self.line_errors)
+        if path.name == 'problem.md':
+            line_errors += self.problem_errors
+
+        if path.name == 'solution.md':
+            line_errors += self.solution_errors
 
         for number, line in enumerate(file):
             ok = all([self.check_line(checker, file, number, line) for checker in line_errors])

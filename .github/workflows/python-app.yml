@@ -1,0 +1,76 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Install DeGeŠ
+
+on:
+  push:
+    branches: [ "testing" ]
+  pull_request:
+    branches: [ "testing" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: siacodelabs/setup-pandoc@v1
+      with:
+          xelatex: true
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipenv
+        pipenv install    
+    - name: "Install utilities"
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: librsvg2-bin lcdf-typetools
+        version: 1.0
+    - name: "Set up pandoc-crossref"
+      run: |
+        wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.6.4/pandoc-crossref-Linux-2.9.2.1.tar.xz
+        tar -xf pandoc-crossref-Linux-2.9.2.1.tar.xz
+        mv ./pandoc-crossref "/usr/local/bin/pandoc-crossref"
+    - name: "Clone FontPro"
+      uses: actions/checkout@master
+      with:
+        repository: sebschub/FontPro
+        path: assets/fonts/FontPro
+    - name: "Set up FontPro"
+      run: |
+        cd assets/fonts/FontPro
+        mkdir otf
+        cp ../../fonts/MinionPro/*.otf otf/
+        ./scripts/makeall MinionPro
+        yes | sudo ./scripts/install
+        yes | updmap-user --enable Map=MinionPro.map
+    - name: "Install XeLaTeX"
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: texlive-full texlive-fonts-extra
+        version: 1.0
+    - name: "Set up XeLaTeX"
+      run: |
+        DIR=$(dirname $0)
+        TEXHOME=`kpsewhich -var-value=TEXMFHOME`
+        mkdir -p $TEXHOME/tex/latex/
+        ln -s $PWD/core/tex/dgs.cls $TEXHOME/tex/latex/dgs.cls
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        pipenv run python -m pytest
