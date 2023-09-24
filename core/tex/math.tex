@@ -186,10 +186,11 @@
 \NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
 
 % Generic 2D integral
+% [lower bound][upper bound]{integrand}{differential 1}{differential 2}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
 % Surface integral over single differential
-\NewDocumentCommand{\IIntI@}{O{} O{} m m O{}}{\iint\limits_{#1}^{#2}#3#5\diff#4}
-\NewDocumentCommand{\IIntI}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}}
+\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
 \NewDocumentCommand{\IIntDV}{O{} O{} m m}{\IIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
@@ -212,8 +213,8 @@
 % Generic 3D integral
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
 % Volume integral over single differential
-\NewDocumentCommand{\IIIntI@}{O{} O{} m m O{}}{\iiint\limits_{#1}^{#2}#3#5\diff#4}
-\NewDocumentCommand{\IIIntI}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}{#4}}
+\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#4}[][#5]}
 
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
