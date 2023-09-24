@@ -1,0 +1,190 @@
+\ExplSyntaxOn
+\makeatletter
+\NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}
+
+\cs_new_protected:Npn \dgs_split_diff:nnn #1 #2 #3 {
+    \seq_set_split:Nnn \l_split_args_seq{#1}{#2}
+    \seq_map_inline:Nn \l_split_args_seq {#3 ##1}
+}
+
+\NewDocumentCommand{\Tuple}{O{;} >{\SplitList{;}} m}{%
+    \def\itemdelim@{\def\itemdelim@{#1}}%
+    {%
+        \left(\ProcessList{#2}{\insert@separator}\right)%
+    }%
+}
+
+\NewDocumentCommand{\Coord}{O{;} >{\SplitList{;}} m}{%
+    \def\itemdelim@{\def\itemdelim@{#1}}%
+    {%
+        \left[\ProcessList{#2}{\insert@separator}\right]%
+    }%
+}
+
+\newcommand\insert@separator[1]{\itemdelim@ #1}
+
+\seq_new:N \l_split_args_seq
+\ExplSyntaxOff
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
+
+\NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
+
+\DeclareMathOperator{\Grad}{\del\!}
+\DeclareMathOperator{\GradT}{grad}
+\NewDocumentCommand{\GradV}{m}{\Grad{\vec{#1}}}
+\NewDocumentCommand{\GradTV}{m}{\GradT{\vec{#1}}}
+
+\DeclareMathOperator{\Div}{\del\cdot}
+\DeclareMathOperator{\DivT}{div}
+\NewDocumentCommand{\DivV}{m}{\Div{\vec{#1}}}
+\NewDocumentCommand{\DivTV}{m}{\DivT{\vec{#1}}}
+
+\DeclareMathOperator{\Rot}{\del\times}
+\DeclareMathOperator{\RotT}{rot}
+\NewDocumentCommand{\RotV}{m}{\Rot{\vec{#1}}}
+\NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
+
+\DeclareMathOperator{\atantwo}{atan2}
+
+\DeclareMathOperator{\maxop}{max\ }
+\DeclareMathOperator{\minop}{min\ }
+
+\DeclareMathOperator{\LXor}{\quad\lxor\quad}
+\DeclareMathOperator{\LOr}{\quad\lor\quad}
+\DeclareMathOperator{\LAnd}{\quad\land\quad}
+\DeclareMathOperator{\LNand}{\quad\lnand\quad}
+
+\DeclareMathOperator{\union}{\cup}
+\DeclareMathOperator{\intersection}{\cap}
+
+% Sinc
+\DeclareMathOperator{\sinc}{sinc}
+% Haversine
+\DeclareMathOperator{\hav}{hav}
+
+\NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
+\NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
+\NewDocumentCommand{\BoldVector}{m}{\boldsymbol{#1}}
+\NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
+\NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
+\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
+
+\NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
+\NewDocumentCommand{\EvalB}{m m O{}}{\left[#1\right]_{#2}^{#3}}
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
+\NewDocumentCommand{\Mean}{m}{\overline{#1}}
+
+\NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
+\NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
+
+\NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
+\NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
+
+\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
+\NewDocumentCommand{\Exp}{m}{e^{#1}}
+\NewDocumentCommand{\LogTen}{}{\log_{10}}
+\NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
+\NewDocumentCommand{\MustEqual}{}{\Must{=}}
+\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
+\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
+
+\NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
+
+\NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
+\NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
+\NewDocumentCommand{\Union}{O{} O{} m}{\Aggregate{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\UnionP}{O{} O{} m}{\AggregateP{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\Intersection}{O{} O{} m}{\Aggregate{\bigcap}[#1][#2]{#3}}
+\NewDocumentCommand{\IntersectionP}{O{} O{} m}{\AggregateP{\bigcap}[#1][#2]{#3}}
+
+\DeclarePairedDelimiter\abs@{\lvert}{\rvert}
+\NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
+
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop}{#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop}{#2}}
+
+\NewDocumentCommand{\Angle}{}{\sphericalangle}
+
+\NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \mid #3)}
+
+\NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
+\NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
+\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
+
+\NewDocumentCommand{\Set}{m O{} O{}}{%
+    \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+}
+
+\NewDocumentCommand{\Operation}{+m}{%
+    & \qquad \bigg/ #1%
+}
+
+% Number sets
+\NewDocumentCommand{\Natural}{}{\mathbb{N}}
+\NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
+\NewDocumentCommand{\Integer}{}{\mathbb{Z}}
+\NewDocumentCommand{\Rational}{}{\mathbb{Q}}
+\NewDocumentCommand{\Real}{}{\mathbb{R}}
+\NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNeg}{}{\mathbb{R}^{-}}
+\NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
+\NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
+\NewDocumentCommand{\Complex}{}{\mathbb{C}}
+\NewDocumentCommand{\Quaternions}{}{\mathbb{H}}
+
+% Functions
+\NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
+
+% Matrices
+\NewDocumentCommand{\mat}{m}{\symbf{#1}}
+\NewDocumentCommand{\Mat}{m}{\mat{#1}}
+
+% Transpose
+\NewDocumentCommand{\Transpose}{m}{#1^{\mathsf{T}}}
+% Transpose with auto matrix
+\NewDocumentCommand{\TransposeM}{m}{\mat{#1}^{\mathsf{T}}}
+% Transpose with parentheses
+\NewDocumentCommand{\TransposeP}{m}{\left(#1\right)^{\mathsf{T}}}
+
+% Inverted
+\NewDocumentCommand{\Inv}{m}{#1^{-1}}
+% Inverted matrix
+\NewDocumentCommand{\InvM}{m}{\mat{#1}^{-1}}
+% Inverted with parentheses
+\NewDocumentCommand{\InvP}{m}{\left(#1\right)^{-1}}
+
+% Vertical-style determinant
+\NewDocumentCommand{\Det}{m}{\left|#1\right|}
+% Text determinant
+\DeclareMathOperator{\DetT}{det}
+% Unit matrix
+\NewDocumentCommand{\Eye}{}{\mathbb{I}}
+
+% Intervals
+\NewDocumentCommand{\IntervalCC}{m m}{\left[#1; #2\right]}
+\NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
+\NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
+\NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
+
+\NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
+
+\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
+
+\include{core/tex/math/diffs.tex}
+\include{core/tex/math/integrals.tex}
+\include{core/tex/math/overrides.tex}
+
+\makeatother

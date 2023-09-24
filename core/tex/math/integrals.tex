@@ -10,6 +10,7 @@
 
 % Basic integral from #1 to #2 of #3 with respect to #4
 \NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
+\NewDocumentCommand{\IntP}{O{} O{} m m}{\Int@[#1][#2][\left(#3\right)]{#4}[]}
 % Empty integral for operations on expressions
 \NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
 \NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
@@ -37,6 +38,7 @@
 % Generic 2D integral
 % [lower bound][upper bound]{integrand}{differential 1}{differential 2}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
+\NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\left(#3\right)\diff#4\diff#5}
 % Surface integral over single differential
 \NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
 \NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}{#4}}
@@ -60,8 +62,11 @@
 \NewDocumentCommand{\OIIntCV}{O{} O{} m m}{\OIIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Generic 3D integral
+
+% [lower][upper]{integrand}{diff_1}{diff_2}{diff_3}
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
 % Volume integral over single differential
+% [lower limit][upper limit]{integrand}[differential power]{differential}
 \NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
 \NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#4}[][#5]}
 

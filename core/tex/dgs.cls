@@ -153,7 +153,7 @@
 
 \input{core/tex/fonts.tex}
 \input{core/tex/utilities.tex}
-\input{core/tex/math.tex}
+\input{core/tex/math/include.tex}
 \input{core/tex/hacks.tex}
 \input{core/tex/symbols.tex}
 \input{core/tex/siunitx.tex}
