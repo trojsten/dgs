@@ -1,0 +1,28 @@
+% Big aggregate functions, and parenthesizing versions
+\NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
+
+% sum (big sigma)
+% \Sum[lower limit][upper limit]{element}
+\NewDocumentCommand{\Sum}{O{} O{} m}{\Aggregate{\sum}[#1][#2]{#3}}
+\NewDocumentCommand{\SumP}{O{} O{} m}{\AggregateP{\sum}[#1][#2]{#3}}
+
+% product (big pi)
+% \Product[lower limit][upper limit]{element}
+\NewDocumentCommand{\Product}{O{} O{} m}{\Aggregate{\prod}[#1][#2]{#3}}
+\NewDocumentCommand{\ProductP}{O{} O{} m}{\AggregateP{\prod}[#1][#2]{#3}}
+
+% cartesian product (big cross)
+% \CartesianProduct[lower limit][upper limit]{element}
+\NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
+
+% logical union (big cup)
+% \Union[lower limit][upper limit]{element}
+\NewDocumentCommand{\Union}{O{} O{} m}{\Aggregate{\bigcup}[#1][#2]{#3}}
+\NewDocumentCommand{\UnionP}{O{} O{} m}{\AggregateP{\bigcup}[#1][#2]{#3}}
+
+% intersection (big cap)
+% \Intersection[lower limit][upper limit]{element}
+\NewDocumentCommand{\Intersection}{O{} O{} m}{\Aggregate{\bigcap}[#1][#2]{#3}}
+\NewDocumentCommand{\IntersectionP}{O{} O{} m}{\AggregateP{\bigcap}[#1][#2]{#3}}

@@ -1,0 +1,121 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{core/tex/math/utilities.tex}
+
+\input{core/tex/math/diff.tex}
+\input{core/tex/math/integrals.tex}
+\input{core/tex/math/vector.tex}
+\input{core/tex/math/matrix.tex}
+
+
+\DeclareMathOperator{\atantwo}{atan2}
+
+% Logical operators
+\DeclareMathOperator{\LXor}{\quad\lxor\quad}
+\DeclareMathOperator{\LOr}{\quad\lor\quad}
+\DeclareMathOperator{\LAnd}{\quad\land\quad}
+\DeclareMathOperator{\LNand}{\quad\lnand\quad}
+
+\DeclareMathOperator{\union}{\cup}
+\DeclareMathOperator{\intersection}{\cap}
+
+\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
+\NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
+
+% Sinc
+\DeclareMathOperator{\sinc}{sinc}
+% Haversine
+\DeclareMathOperator{\hav}{hav}
+
+% Evaluation at point
+\NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
+\NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
+\NewDocumentCommand{\EvalB}{m m O{}}{\left[#1\right]_{#2}^{#3}}
+% Expected value
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
+\NewDocumentCommand{\Mean}{m}{\overline{#1}}
+
+% Text with spaces on both sides
+\NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
+% Text with double spaces on both sides
+\NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
+
+\NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
+\NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
+
+\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
+\NewDocumentCommand{\Exp}{m}{e^{#1}}
+\NewDocumentCommand{\LogTen}{}{\log_{10}}
+\NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
+\NewDocumentCommand{\MustEqual}{}{\Must{=}}
+\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
+
+% Nuclide[A][Z]{symbol}
+% \Nuclide[235][92]{U} for uranium
+\NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
+
+\input{core/tex/math/aggregate.tex}
+
+\makeatletter
+\DeclarePairedDelimiter\abs@{\lvert}{\rvert}
+\NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
+\makeatother
+
+\DeclareMathOperator{\maxop}{max\ }
+\DeclareMathOperator{\minop}{min\ }
+\NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop}{#2}}
+\NewDocumentCommand{\Min}{O{} m}{\underset{#1}{\minop}{#2}}
+
+\NewDocumentCommand{\Angle}{}{\sphericalangle}
+
+% Astronomical magnitudes
+\NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
+
+% Distribution #1 of variable #2 with parameters #3
+\NewDocumentCommand{\Distribution}{m m m}{#1(#2 \mid #3)}
+
+% Asymptotic notations
+\NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
+\NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
+\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
+
+% Number set
+\NewDocumentCommand{\Set}{m O{} O{}}{%
+    \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+}
+
+% Operation to be done on both side of an equation
+\NewDocumentCommand{\Operation}{+m}{%
+    & \qquad \bigg/ #1%
+}
+
+% Number sets
+\NewDocumentCommand{\Natural}{}{\mathbb{N}}
+\NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
+\NewDocumentCommand{\Integer}{}{\mathbb{Z}}
+\NewDocumentCommand{\Rational}{}{\mathbb{Q}}
+\NewDocumentCommand{\Real}{}{\mathbb{R}}
+\NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
+\NewDocumentCommand{\RealNeg}{}{\mathbb{R}^{-}}
+\NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
+\NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
+\NewDocumentCommand{\Complex}{}{\mathbb{C}}
+\NewDocumentCommand{\Quaternions}{}{\mathbb{H}}
+
+% Function utilities
+\NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}
+
+% Intervals
+\NewDocumentCommand{\IntervalCC}{m m}{\left[#1; #2\right]}
+\NewDocumentCommand{\IntervalCO}{m m}{\left[#1; #2\right)}
+\NewDocumentCommand{\IntervalOC}{m m}{\left(#1; #2\right]}
+\NewDocumentCommand{\IntervalOO}{m m}{\left(#1; #2\right)}
+
+\NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
+
+\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
+
+\input{core/tex/math/patch.tex}
+
+\makeatother
