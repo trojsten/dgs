@@ -1,0 +1,101 @@
+% Regular upright differential
+\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
+% Partial differential
+\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
+% Finite differential
+\NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
+% Small delta differential
+\NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
+
+% Power differential
+\NewDocumentCommand{\Diff}{o}{%
+    \IfNoValueTF{#1}{\diff}{\diff^{#1}}%
+}
+
+% Inner derivative with any differential symbol
+\makeatletter
+\ExplSyntaxOn
+\NewDocumentCommand{\SetDerivativeFrac@}{m}{
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+}
+
+\NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
+    \SetDerivativeFrac@{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3#4}{\cdiff{#5}{#3}}%
+    }{%
+        \frac@{#3^{#2}#4}{\cdiff{#5}{#3}}%
+    }%
+}
+
+\NewDocumentCommand{\DerivativeParentheses@}{d<> o D<>{\diff} m m}{%
+    \SetDerivativeFrac@{#1}
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#5}\left(#4\right)%
+    }{%
+        \frac@{#3^{#2}}{#3{#5}^{#2}}\left(#4\right)%
+    }%
+}
+
+\NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
+    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+        {d}{\dfrac}%
+        {t}{\tfrac}%
+        {s}{\sfrac}%
+        {n}{\nicefrac}%
+    }{\frac}}%
+    \IfNoValueTF{#2}{%
+        \frac@{#3}{#3#4}%
+    }{%
+        \frac@{#3^{#2}}{#3#4^{#2}}%
+    }%
+}
+\ExplSyntaxOff
+
+% \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\udiff>{#3}{#4}}
+\newcommand*\Drv{\Derivative}
+\newcommand*\PDrv{\PDerivative}
+\newcommand*\FDrv{\FDerivative}
+\newcommand*\UDrv{\UDerivative}
+
+% \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\diff>{#3}}
+\NewDocumentCommand{\PDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\pdiff>{#3}}
+\NewDocumentCommand{\FDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\fdiff>{#3}}
+\NewDocumentCommand{\UDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\udiff>{#3}}
+\newcommand*\DrvE{\DerivativeEmpty}
+\newcommand*\PDrvE{\PDerivativeEmpty}
+\newcommand*\FDrvE{\FDerivativeEmpty}
+\newcommand*\UDrvE{\UDerivativeEmpty}
+
+% \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
+\NewDocumentCommand{\DerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\diff>{#3}{#4}}
+\NewDocumentCommand{\PDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\pdiff>{#3}{#4}}
+\NewDocumentCommand{\FDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\fdiff>{#3}{#4}}
+\NewDocumentCommand{\UDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\udiff>{#3}{#4}}
+\newcommand*\DrvP{\DerivativeParen}
+\newcommand*\PDrvP{\PDerivativeParen}
+\newcommand*\FDrvP{\FDerivativeParen}
+\newcommand*\UDrvP{\UDerivativeParen}
+
+% \DerivativeEvaluate[order]{what}{by-what}{where}
+% \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
+    \Eval{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+}%
+\newcommand*\DrvEval{\DerivativeEval}
+
+% \PartialDerivativeEvaluate[order]{what}{by-what}{where}
+% \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
+\NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
+    \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
+}%

@@ -1,0 +1,23 @@
+\DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
+
+\NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
+
+\DeclareMathOperator{\Grad}{\del\!}
+\DeclareMathOperator{\GradT}{grad}
+\NewDocumentCommand{\GradV}{m}{\Grad{\vec{#1}}}
+\NewDocumentCommand{\GradTV}{m}{\GradT{\vec{#1}}}
+
+\DeclareMathOperator{\Div}{\del\cdot}
+\DeclareMathOperator{\DivT}{div}
+\NewDocumentCommand{\DivV}{m}{\Div{\vec{#1}}}
+\NewDocumentCommand{\DivTV}{m}{\DivT{\vec{#1}}}
+
+% Rotation (with nabla)
+\DeclareMathOperator{\Rot}{\del\times}
+% Rotation (text)
+\DeclareMathOperator{\RotT}{rot}
+
+% Rotation (vectorize, nabla)
+\NewDocumentCommand{\RotV}{m}{\Rot{\vec{#1}}}
+% Rotation (vectorize, text)
+\NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
