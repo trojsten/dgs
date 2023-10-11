@@ -9,6 +9,7 @@
 \NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
 
 % Basic integral from #1 to #2 of #3 with respect to #4
+% Usage \Int[0][1]{x^2}{x}
 \NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
 \NewDocumentCommand{\IntP}{O{} O{} m m}{\Int@[#1][#2][\left(#3\right)]{#4}[]}
 % Empty integral for operations on expressions
@@ -16,6 +17,7 @@
 \NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
 \NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
+% ...auto-vectorized version
 \NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4
 \NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\times]}
@@ -68,6 +70,8 @@
 % Volume integral over single differential
 % [lower limit][upper limit]{integrand}[differential power]{differential}
 \NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
-\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#4}[][#5]}
+\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#5}[][#4]}
+\NewDocumentCommand{\IIIntV}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}[3]{#4}[]}
+\NewDocumentCommand{\IIIntPV}{O{} O{} m m}{\IIIntI@[#1][#2]{\left(#3\right)}[3]{#4}[]}
 
 \makeatother

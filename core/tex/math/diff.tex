@@ -11,6 +11,9 @@
 \NewDocumentCommand{\Diff}{o}{%
     \IfNoValueTF{#1}{\diff}{\diff^{#1}}%
 }
+\NewDocumentCommand{\PDiff}{o}{%
+    \IfNoValueTF{#1}{\pdiff}{\pdiff^{#1}}%
+}
 
 % Inner derivative with any differential symbol
 \makeatletter

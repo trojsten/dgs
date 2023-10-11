@@ -4,9 +4,11 @@ name = "pypi"
 url = "https://pypi.org/simple"
 
 [requires]
-python_version = "3.11"
+python_version = "3.12"
 
 [dev-packages]
+pytest = "*"
+"flake8" = "*"
 
 [packages]
 pyyaml = "*"
@@ -14,7 +16,6 @@ colorama = ">=0.4.6"
 ply = ">=3.11"
 "Jinja2" = ">=2.10.1"
 PyYAML = ">=5.4"
-"flake8" = "*"
 python-frontmatter = "*"
 pandoc-crossref = ">=0.1.1"
 pandoc-fignos = "*"
@@ -22,9 +23,7 @@ pandoc-eqnos = "*"
 pandoc-tablenos = "*"
 pandoc-secnos = "*"
 dotmap = "*"
-scons = "*"
 argparsedirs = "==0.0.5"
-pytest = "*"
 schema = "*"
 pandoc-minted = "*"
 pygments = "*"

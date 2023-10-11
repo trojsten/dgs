@@ -7,7 +7,6 @@
 \input{core/tex/math/vector.tex}
 \input{core/tex/math/matrix.tex}
 
-
 \DeclareMathOperator{\atantwo}{atan2}
 
 % Logical operators
@@ -90,18 +89,7 @@
     & \qquad \bigg/ #1%
 }
 
-% Number sets
-\NewDocumentCommand{\Natural}{}{\mathbb{N}}
-\NewDocumentCommand{\NaturalZero}{}{\mathbb{N}_0}
-\NewDocumentCommand{\Integer}{}{\mathbb{Z}}
-\NewDocumentCommand{\Rational}{}{\mathbb{Q}}
-\NewDocumentCommand{\Real}{}{\mathbb{R}}
-\NewDocumentCommand{\RealPos}{}{\mathbb{R}^{+}}
-\NewDocumentCommand{\RealNeg}{}{\mathbb{R}^{-}}
-\NewDocumentCommand{\RealNonneg}{}{\mathbb{R}_{\geq 0}}
-\NewDocumentCommand{\RealNonpos}{}{\mathbb{R}_{\leq 0}}
-\NewDocumentCommand{\Complex}{}{\mathbb{C}}
-\NewDocumentCommand{\Quaternions}{}{\mathbb{H}}
+\input{core/tex/math/sets.tex}
 
 % Function utilities
 \NewDocumentCommand{\Domain}{m}{\mathrm{dom}(#1)}

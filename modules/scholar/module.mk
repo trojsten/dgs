@@ -79,17 +79,17 @@ build/scholar/%/homework: \
 output/scholar/%/handout-students.pdf: \
 	build/scholar/%/handout \
 	build/scholar/%/handout-students.tex
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 output/scholar/%/handout-solutions.pdf: \
 	build/scholar/%/handout \
 	build/scholar/%/handout-solutions.tex
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 output/scholar/%/handout-solved.pdf: \
 	build/scholar/%/handout \
 	build/scholar/%/handout-solved.tex
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 output/scholar/%/handouts: \
 	$$(subst meta.yaml,handout-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/handouts/*/meta.yaml))) \
@@ -98,12 +98,12 @@ output/scholar/%/handouts: \
 output/scholar/%/homework-students.pdf: \
 	build/scholar/%/homework \
 	build/scholar/%/homework-students.tex
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 output/scholar/%/homework-solutions.pdf: \
 	build/scholar/%/homework \
 	build/scholar/%/homework-solutions.tex
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 output/scholar/%/homework: \
 	$$(subst meta.yaml,homework-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/homework/*/meta.yaml))) \
@@ -115,6 +115,6 @@ output/scholar/%/lecture.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
 	build/scholar/$$*/lecture.tex \
 	build/scholar/$$*/pdf-prerequisites
-	$(call doubletex,scholar)
+	$(call double_xelatex,scholar)
 
 .PHONY:
