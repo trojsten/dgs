@@ -43,12 +43,24 @@ class Convertor:
         ],
         'html': [
             (
-                r'<img src="(.*)" (.*)id="(.*)" style="height:([0-9.]*)mm" (.*)>',
-                r'<img src="\g<1>" \g<2>id="\g<3>" style="max-width: 100%; max-height: calc(1.7 * \g<4>mm); margin: auto; display: block;" \g<5>>',
+                r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm"(?P<end>.*)>',
+                r'<img src="obrazky/\g<1>.\g<2>"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"\g<end>>',
+            ),
+            (
+                r'<img src="(?P<filename>.*)\.(?P<extension>gp)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm" (?P<end>.*)>',
+                r'<img src="obrazky/\g<1>.png"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
             ),
             (
                 r'<figcaption>Figure (\d*): (.*)</figcaption>',
                 r'<figcaption style="text-align: center;">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>',
+            ),
+            (
+                r'(\\num|\\SI){e',
+                r'\g<1>{1.e',
+            ),
+            (
+                r'(\\num|\\SI){([0-9])e',
+                r'\g<1>{\g<2>.e',
             ),
         ],
     }
@@ -70,14 +82,6 @@ class Convertor:
         'html': [
             (r"^@E\s*(.*)$", r"Error: \g<1>"),
             (r"^@H\s*(.*)$", r"\g<1>"),
-            (
-                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>jpg|png|svg)\){(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.\g<extension>){\g<extras>}",
-            ),
-            (
-                r"^!\[(?P<caption>.*)\]\((?P<filename>.*)\.(?P<extension>gp)\){(?P<extras>.*)}$",
-                r"![\g<caption>](obrazky/\g<filename>.png){\g<extras>}",
-            ),
             (r"^@TODO\s*(.*)$", r"TODO: \g<1>"),
         ],
     }
@@ -200,7 +204,7 @@ class Convertor:
             "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
-            "--webtex='eqn://'",
+#            "--webtex='eqn://'",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
