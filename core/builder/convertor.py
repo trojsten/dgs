@@ -20,44 +20,63 @@ class Locale:
             self.__setattr__(k, v)
 
 
+class RegexPair:
+    def __init__(self, pattern: str, repl: str, *, purpose: str):
+        self._pattern = pattern
+        self._repl = repl
+        self.purpose = purpose
+
+    def compile(self):
+        return 
+
+
 class Convertor:
     languages = {
-        'sk':   Locale('slovak',    'sk-SK', ('„', '“'), figure='Obrázok'),
-        'en':   Locale('english',   'en-US', ('“', '”'), figure='Figure'),
-        'cs':   Locale('czech',     'cs-CZ', ('„', '“'), figure='Obrázek'),
+        'sk':   Locale('slovak',    'sk-SK', ('„', '“'), figure='Obrázok', table='Tabuľka'),
+        'en':   Locale('english',   'en-US', ('“', '”'), figure='Figure', table='Table'),
+        'cs':   Locale('czech',     'cs-CZ', ('„', '“'), figure='Obrázek', table='Tabulka'),
         'ru':   Locale('russian',   'ru-RU', ('«', '»'), figure=''),
         'pl':   Locale('polish',    'pl-PL', ('„', '“'), figure=''),
         'hu':   Locale('hungarian', 'hu-HU', ('„', '“'), figure=''),
         'fr':   Locale('french',    'fr-FR', ('«\u202F', '\u202F»'), figure=''),
-        'es':   Locale('spanish',   'es-ES', ('«', '»'), figure='Cuadro'),
-        'qq':   Locale('test',      'sk-SK', ('(', ')'), figure='Obrázok'),
+        'es':   Locale('spanish',   'es-ES', ('«', '»'), figure='Cuadro', table=''),
+        'qq':   Locale('test',      'sk-SK', ('(', ')'), figure='Obrázok', table='Obrázok'),
     }
 
     post_regexes = {
         'latex': [
+            # Change opening double quotation marks to the proper Unicode symbol
             (r"``", r"“"),
+            # Change closing double quotation marks to the proper Unicode symbol
             (r"''", r'”'),
-            (r"\\includegraphics\[(.*)\]{(.*)\.(svg|gp)}", r"\\insertPicture[\g<1>]{\g<2>.pdf}"),
-            (r"\\includegraphics\[(.*)\]{(.*)\.(png|jpg|pdf)}", r"\\insertPicture[\g<1>]{\g<2>.\g<3>}"),
-            (r"^\\caption{}(\\label{.*})?\n", ""), # Remove empty labels and captions
+            # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
+            (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}", r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
+            # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
+            (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}", r"\\insertPicture[\g<options>]{\g<stem>.\g<extension>}"),
+            # Remove empty labels and captions
+            (r"^\\caption{}(\\label{.*})?\n", ""),
         ],
         'html': [
+            # Prepend "obrazky/" and alter picture heights
             (
                 r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm"(?P<end>.*)>',
                 r'<img src="obrazky/\g<1>.\g<2>"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); height: calc(1.7 * \g<height>mm); margin: auto; display: block;"\g<end>>',
             ),
             (
                 r'<img src="(?P<filename>.*)\.(?P<extension>gp)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm" (?P<end>.*)>',
-                r'<img src="obrazky/\g<1>.png"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
+                r'<img src="obrazky/\g<1>.png"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
             ),
+            # Change figure title
             (
-                r'<figcaption>Figure (\d*): (.*)</figcaption>',
-                r'<figcaption style="text-align: center;">Obrázok \g<1>: <span style="font-style: italic;">\g<2></span></figcaption>',
+                r'<figcaption>Figure (?P<number>\d*): (?P<caption>.*)</figcaption>',
+                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">\g<caption></span></figcaption>',
             ),
+            # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
             (
                 r'(\\num|\\SI){e',
                 r'\g<1>{1.e',
             ),
+            # Hack fix: incorrect display of siunitx in MathJAX (adds a dot after short mantissa)
             (
                 r'(\\num|\\SI){([0-9])e',
                 r'\g<1>{\g<2>.e',
@@ -67,14 +86,15 @@ class Convertor:
 
     """ DeGeŠ hacks for shorter aligned math """
     math_regexes = [
+        # Beginning marker $${
         (r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}'),
+        # Ending marker }$$
         (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$'),
     ]
 
     replace_regexes = {
         'latex': [
             (r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}"),
-            #(r"^@I\s*(.*)$", r"\\lstinputlisting[language=Python]{\\activeDirectory/\g<1>}"),
             (r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}"),
             (r"^@L\s*(.*)$", r"\g<1>"),
             (r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}"),
@@ -91,9 +111,9 @@ class Convertor:
         return [(re.compile(regex), repl) for (regex, repl) in regexes]
 
     def __init__(self, format, locale_code, infile, outfile):
+        self.format = format
         self.locale_code = locale_code
         self.locale = self.languages[locale_code]
-        self.format = format
         self.infile = infile
         self.outfile = outfile
 
