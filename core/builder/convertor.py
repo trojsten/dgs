@@ -60,7 +60,7 @@ class Convertor:
             # Prepend "obrazky/" and alter picture heights
             (
                 r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm"(?P<end>.*)>',
-                r'<img src="obrazky/\g<1>.\g<2>"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); height: calc(1.7 * \g<height>mm); margin: auto; display: block;"\g<end>>',
+                r'<img src="obrazky/\g<1>.\g<2>"\g<something>style="width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"\g<end>>',
             ),
             (
                 r'<img src="(?P<filename>.*)\.(?P<extension>gp)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm" (?P<end>.*)>',
