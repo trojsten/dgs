@@ -5,9 +5,9 @@ name: Install DeGeŠ
 
 on:
   push:
-    branches: [ "testing" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "testing" ]
+    branches: [ "master" ]
 
 permissions:
   contents: read
@@ -74,3 +74,11 @@ jobs:
     - name: Test with pytest
       run: |
         pipenv run python -m pytest
+    - name: "Clone testing repository"
+      uses: actions/checkout@master
+      with:
+        repository: TrojstenSK/dgs-seminar-testing
+        path: source/seminar/testing
+    - name: "Build testing/01/1/1"
+      run: |
+        make output/seminar/testing/01/1/1
