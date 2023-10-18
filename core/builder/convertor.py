@@ -1,5 +1,3 @@
-import dotmap
-import fileinput
 import re
 import subprocess
 import sys
@@ -51,6 +49,8 @@ class Convertor:
             (r"''", r'”'),
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
             (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}", r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
+            # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
+            (r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}", r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}"),
             # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
             (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}", r"\\insertPicture[\g<options>]{\g<stem>.\g<extension>}"),
             # Remove empty labels and captions
@@ -64,7 +64,7 @@ class Convertor:
             ),
             (
                 r'<img src="(?P<filename>.*)\.(?P<extension>gp)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm" (?P<end>.*)>',
-                r'<img src="obrazky/\g<1>.png"\g<something>style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
+                r'<img src="obrazky/\g<1>.png"\g<something>style="width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
             ),
             # Change figure title
             (
