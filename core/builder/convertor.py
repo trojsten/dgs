@@ -57,19 +57,28 @@ class Convertor:
             (r"^\\caption{}(\\label{.*})?\n", ""),
         ],
         'html': [
-            # Prepend "obrazky/" and alter picture heights
+            # Prepend "obrazky/"
             (
-                r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm"(?P<end>.*)>',
-                r'<img src="obrazky/\g<1>.\g<2>"\g<something>style="width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"\g<end>>',
+                r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"',
+                r'<img src="obrazky/\g<filename>.\g<extension>"',
             ),
             (
-                r'<img src="(?P<filename>.*)\.(?P<extension>gp)"(?P<something>.*)style="height:(?P<height>[0-9.]*)mm" (?P<end>.*)>',
-                r'<img src="obrazky/\g<1>.png"\g<something>style="width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;" \g<end>>',
+                r'<img src="(?P<filename>.*)\.gp"',
+                r'<img src="obrazky/\g<filename>.png"',
+            ),
+            # alter picture heights
+            (
+                r'style="height:(?P<height>[0-9.]*)mm"',
+                r'style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"',
             ),
             # Change figure title
             (
-                r'<figcaption>Figure (?P<number>\d*): (?P<caption>.*)</figcaption>',
-                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">\g<caption></span></figcaption>',
+                r'<figcaption>Figure (?P<number>\d*):',
+                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
+            ),
+            (
+                r'<figcaption>Obrázok (?P<number>\d*):',
+                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
             ),
             # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
             (
