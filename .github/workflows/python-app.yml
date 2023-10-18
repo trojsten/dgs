@@ -81,4 +81,4 @@ jobs:
         path: source/seminar/testing
     - name: "Build testing/01/1/1"
       run: |
-        make output/seminar/testing/01/1/1
+        pipenv run make output/seminar/testing/01/1/1
