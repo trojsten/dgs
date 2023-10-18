@@ -53,7 +53,7 @@ jobs:
         cp ../../fonts/MinionPro/*.otf otf/
         ./scripts/makeall MinionPro
         yes | sudo ./scripts/install
-        yes | updmap-sys --enable Map=MinionPro.map
+        yes | sudo updmap-sys --enable Map=MinionPro.map
     - name: "Install XeLaTeX"
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
