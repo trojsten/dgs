@@ -14,12 +14,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: "Clone FKS"
+    - name: "Clone testing repository"
       uses: actions/checkout@master
       with:
-        repository: TrojstenSK/FKS
-        path: source/seminar/FKS
-    - name: "Build FKS/38/2/2"
+        repository: TrojstenSK/dgs-seminar-testing
+        path: source/seminar/testing
+    - name: "Build testing 01/1/1"
       run: |
-        make output/seminar/FKS/38/2/2
+        make output/seminar/testing/01/1/1
     
