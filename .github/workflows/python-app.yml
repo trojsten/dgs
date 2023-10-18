@@ -57,7 +57,7 @@ jobs:
     - name: "Install XeLaTeX"
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
-        packages: texlive-full texlive-fonts-extra
+        packages: texlive-full texlive-fonts-extra texlive-science
         version: 1.0
     - name: "Set up XeLaTeX"
       run: |
