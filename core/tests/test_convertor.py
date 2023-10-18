@@ -19,13 +19,6 @@ def convert():
 
     return _convert
 
-@pytest.fixture
-def convert_latexsk(convert):
-    def _convert(string):
-        return convert('latex', 'sk', string)
-
-    return _convert
-
 
 class TestQuotes():
     def test_math_plus(self, convert):

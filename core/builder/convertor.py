@@ -7,31 +7,7 @@ from typing import Optional, Callable
 sys.path.append('.')
 
 from core.utilities import colour as c
-
-
-class Locale:
-    def __init__(self, name, locale, quotes, **extras):
-        self.name = name
-        self.locale = locale
-        self.quotes = quotes
-
-        for k, v in extras.items():
-            self.__setattr__(k, v)
-
-
-class RegexFailure:
-    def __init__(self, pattern: str, *, error: str, flags: Optional[re.RegexFlag] = None):
-        self.pattern = re.compile(pattern)
-        self.error = error
-
-
-class RegexReplacement:
-    def __init__(self, pattern: str, repl: str, *, purpose: str = "", flags: Optional[re.RegexFlag] = None):
-        assert isinstance(flags, re.RegexFlag) or flags is None, f"Flags {flags} is not a re.RegexFlag"
-
-        self.pattern = re.compile(pattern)
-        self.repl = repl
-        self.purpose = purpose
+from .classes import Locale, RegexFailure, RegexReplacement
 
 
 class Convertor:

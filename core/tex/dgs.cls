@@ -61,7 +61,7 @@
 \RequirePackage[version=4]{mhchem}
 
 \RequirePackage[all]{nowidow}
-%\RequirePackage{boolexpr}                                   % boolean expressions, switch
+%\RequirePackage{boolexpr}                                  % boolean expressions, switch
 \RequirePackage[mathlf]{MinionPro}
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage[f]{esvect}
@@ -83,7 +83,7 @@
 \RequirePackage{polyglossia}                                % multi-language support
 \RequirePackage{xunicode}
 \setdefaultlanguage{slovak}
-%\RequirePackage{bidi}
+%\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 
