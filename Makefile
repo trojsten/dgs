@@ -124,11 +124,13 @@ build/%.dat: source/%.dat
 output/%.png: source/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	rsvg-convert -f png -h 300 -a -o $@ $<
+	rsvg-convert -f png -h 500 -a -o $@ $<
 
 # Copy SVG (for web)
 output/%.svg: source/%.svg
-	$(call _copy,SVG)
+	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	rsvg-convert -f svg -h 500 -a -o $@ $<
 
 # Copy PNG (for web)
 output/%.png: source/%.png
