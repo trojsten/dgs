@@ -1,31 +1,13 @@
-import re
 import subprocess
 import sys
 import tempfile
+import yaml
+from typing import Callable
 
 sys.path.append('.')
 
 from core.utilities import colour as c
-
-
-class Locale:
-    def __init__(self, name, locale, quotes, **extras):
-        self.name = name
-        self.locale = locale
-        self.quotes = quotes
-
-        for k, v in extras.items():
-            self.__setattr__(k, v)
-
-
-class RegexPair:
-    def __init__(self, pattern: str, repl: str, *, purpose: str):
-        self._pattern = pattern
-        self._repl = repl
-        self.purpose = purpose
-
-    def compile(self):
-        return 
+from .classes import Locale, RegexFailure, RegexReplacement
 
 
 class Convertor:
@@ -42,104 +24,122 @@ class Convertor:
     }
 
     post_regexes = {
+        'all': [],
         'latex': [
             # Change opening double quotation marks to the proper Unicode symbol
-            (r"``", r"“"),
+            RegexReplacement(r"``", r"“"),
             # Change closing double quotation marks to the proper Unicode symbol
-            (r"''", r'”'),
+            RegexReplacement(r"''", r'”'),
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
-            (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}", r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
+            RegexReplacement(r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
+                             r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
-            (r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}", r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}"),
+            RegexReplacement(r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
+                             r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
+                             purpose=r"Change \includesvg to protected \insertPicture"),
             # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
-            (r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}", r"\\insertPicture[\g<options>]{\g<stem>.\g<extension>}"),
+            RegexReplacement(r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
+                             r"\\insertPicture[\g<options>]{\g<stem>.\g<extension>}",
+                             purpose=r"Change \includegraphics to protected \insertPicture"),
             # Remove empty labels and captions
-            (r"^\\caption{}(\\label{.*})?\n", ""),
+            RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
         ],
         'html': [
             # Prepend "obrazky/"
-            (
+            RegexReplacement(
                 r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"',
                 r'<img src="obrazky/\g<filename>.\g<extension>"',
             ),
-            (
+            RegexReplacement(
                 r'<img src="(?P<filename>.*)\.gp"',
                 r'<img src="obrazky/\g<filename>.png"',
             ),
             # alter picture heights
-            (
+            RegexReplacement(
                 r'style="height:(?P<height>[0-9.]*)mm"',
                 r'style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"',
             ),
             # Change figure title
-            (
-                r'<figcaption>Figure (?P<number>\d*):',
-                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
-            ),
-            (
+            RegexReplacement(
                 r'<figcaption>Obrázok (?P<number>\d*):',
                 r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
             ),
             # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
-            (
+            RegexReplacement(
                 r'(\\num|\\SI){e',
                 r'\g<1>{1.e',
             ),
             # Hack fix: incorrect display of siunitx in MathJAX (adds a dot after short mantissa)
-            (
+            RegexReplacement(
                 r'(\\num|\\SI){([0-9])e',
                 r'\g<1>{\g<2>.e',
             ),
         ],
     }
 
-    """ DeGeŠ hacks for shorter aligned math """
-    math_regexes = [
-        # Beginning marker $${
-        (r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}'),
-        # Ending marker }$$
-        (r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$'),
-    ]
-
-    replace_regexes = {
-        'latex': [
-            (r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}"),
-            (r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}"),
-            (r"^@L\s*(.*)$", r"\g<1>"),
-            (r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}"),
+    post_checks = {
+        'all': [
+            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
         ],
         'html': [
-            (r"^@E\s*(.*)$", r"Error: \g<1>"),
-            (r"^@H\s*(.*)$", r"\g<1>"),
-            (r"^@TODO\s*(.*)$", r"TODO: \g<1>"),
+            RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
+            RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
+            RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
+            RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
+        ],
+        'latex': [
+            RegexFailure(r'@H', error="HTML-only tag in LaTeX"),
         ],
     }
 
-    @staticmethod
-    def compile_regexes(regexes):
-        return [(re.compile(regex), repl) for (regex, repl) in regexes]
+    pre_regexes = {
+        'all': [
+            RegexReplacement(r'^%.*$', r'', purpose="Comment"),
+            RegexReplacement(r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
+            RegexReplacement(r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
+        ],
+        'latex': [
+            RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
+            RegexReplacement(r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}", purpose="Replace code tag"),
+            RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
+            RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
+            RegexReplacement(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", purpose="Replace TODO tag"),
+        ],
+        'html': [
+            RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
+            RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
+            RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
+            RegexReplacement(r"^@TODO\s*(.*)$", r"TODO: \g<1>", purpose="Replace TODO tag"),
+        ],
+    }
 
-    def __init__(self, format, locale_code, infile, outfile):
-        self.format = format
+    def __init__(self, output_format: str, locale_code: str, infile, outfile):
+        self.output_format = output_format
         self.locale_code = locale_code
         self.locale = self.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
 
+        assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'"
+
+        # regexes = yaml.safe_load(open('core/builder/regexes.yaml', 'rb'))
+
         (self.quote_open, self.quote_close) = self.locale.quotes
 
-        quotes_regexes = [
-            (r'"(_)', self.quote_close + r'\g<1>'),
-            (r'"(\b)', self.quote_open + r'\g<1>'),
-            (r'(\b)"', r'\g<1>' + self.quote_close),
-            (r'(\S)"', r'\g<1>' + self.quote_close),
-            (r'"(\S)', self.quote_open + r'\g<1>'),
+        self.quotes_regexes = [
+            RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),
+            RegexReplacement(r'"(\b)', self.quote_open + r'\g<1>'),
+            RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
+            RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
+            RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
-        self.quotes_regexes = self.compile_regexes(quotes_regexes)
-        self.math_regexes = self.compile_regexes(self.math_regexes)
-        self.replace_regexes = self.compile_regexes(self.replace_regexes[self.format])
-        self.post_regexes = self.compile_regexes(self.post_regexes[self.format])
+        self.pre_regexes = self._filter_regexes(self.pre_regexes)
+        self.post_regexes = self._filter_regexes(self.post_regexes)
+        self.post_checks = self._filter_regexes(self.post_checks)
+
+    def _filter_regexes(self, regex_set: list) -> list:
+        return regex_set['all'] + regex_set[self.output_format]
 
     def run(self):
         try:
@@ -148,27 +148,28 @@ class Convertor:
             self.file = self.file_operation(self.preprocess)(self.infile)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
+            self.file = self.file_operation(self.post_check)(self.file)
             self.write()
         except IOError as e:
             print(f"{c.path(__file__)}: Could not create a temporary file: {e}")
         except AssertionError as e:
-            print(f"{c.path(__file__)}: Calling pandoc failed")
+            print(f"{c.path(__file__)}: Calling pandoc failed: {e}")
         except Exception as e:
-            print(f"Unexpected exception occurred:")
+            print("Unexpected exception occurred:")
             raise e
             return -1
         else:
             return 0
 
     @staticmethod
-    def file_operation(function):
-        """ Decorator: apply a function to every line of a file """
+    def file_operation(function: Callable) -> Callable:
+        """
+            Decorator: apply a function to every line of a file
+        """
         def inner(f):
             out = tempfile.SpooledTemporaryFile(mode='w+')
-
             for line in f:
                 out.write(function(line))
-
             out.seek(0)
             return out
 
@@ -180,45 +181,32 @@ class Convertor:
         self.file.seek(0)
 
     def preprocess(self, line):
-        if self.filter_tags(line):
-            return self.chain_process(line, [self.replace_regexes, self.quotes_regexes, self.math_regexes])
-        else:
-            return ""
+        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
 
     @staticmethod
-    def process_line(line, regexes):
-        for regex, replacement in regexes:
-            line = regex.sub(replacement, line)
+    def process_line(line: str, regexes) -> str:
+        for regex in regexes:
+            line = regex.pattern.sub(regex.repl, line)
         return line
 
     @staticmethod
-    def chain_process(line, regex_sets):
+    def check_line(line: str, regexes) -> str:
+        for regex in regexes:
+            if regex.pattern.search(line):
+                raise Exception(regex.error)
+        return line
+
+    @staticmethod
+    def chain_process(line: str, regex_sets: list, *, func=process_line) -> str:
         for regex_set in regex_sets:
-            line = Convertor.process_line(line, regex_set)
+            line = func(line, regex_set)
         return line
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])
 
-    def filter_tags(self, line):
-        """
-        Filter by customs tags:
-        -   remove lines beginning with '%'
-        -   remove lines beginning with '@H' unless converting for HTML
-        -   remove lines beginning with '@L' unless converting for LaTeX
-        """
-        if re.match(r"^%", line) or \
-            (re.match(r"^@H", line) and self.format != 'html') or \
-            (re.match(r"^@L", line) and self.format != 'latex'):
-            return ""
-        return line
-
-    def replace_tags(self, line):
-        """ Replace custom tags and pictures """
-        for regex, replacement in self.replace_regexes:
-            line = regex.sub(replacement, line)
-
-        return line
+    def post_check(self, line):
+        return self.chain_process(line, [self.post_checks], func=self.check_line)
 
     def call_pandoc(self):
         out = tempfile.SpooledTemporaryFile(mode='w+')
@@ -229,11 +217,11 @@ class Convertor:
             "--mathjax",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
-            "--to", self.format,
+            "--to", self.output_format,
             "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
-#            "--webtex='eqn://'",
+#           "--webtex='eqn://'",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)

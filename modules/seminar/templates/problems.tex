@@ -13,7 +13,8 @@
 (@ endblock subtitle @)
 
 (@ block problem @)
-    \begin{seminar-problem}{(* problem.title *)}%
+    \begin{seminar-problem}%
+        {(* problem.title *)}%
         {(* problem.points.description *)}%
         {(* problem.categories|format_list *)}
         \protectedInput{\activeDirectory/(* kind *).tex}%

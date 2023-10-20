@@ -24,29 +24,30 @@
 }
 \savegeometry{main}
 
-\newenvironment{seminar-problem}[3]{%
-    \subsection{%
-        \texorpdfstring{%
-            \bfseries
-            \large #1 \hfill \normalsize%
-            \ifstrempty{#2}{}{#2 bod\PluralMG{#2}}%
-            \ifstrempty{#3}{}{, kategóri\PluralFN{} #3}%
-        }{\arabic{round}.\arabic{problem} #1}%
-    }%
-    \label{\arabic{volume}\arabic{semester}\arabic{round}\arabic{problem}-problem}%
-}{}
-
-\newenvironment{seminar-solution}[4]{%
-    \subsection{%
-        \texorpdfstring{%
-            \bfseries
-            \large #1 \hfill \normalsize%
-            \ifstrempty{#2}{}{vzorák \FormatList{#2}}%
-            \ifstrempty{#3}{}{opravoval#3 \FormatList{#4}}%
-        }{\arabic{round}.\arabic{problem} #1}%
-    }%
-    \label{\arabic{volume}\arabic{semester}\arabic{round}\arabic{problem}-solution}%
-}{}
+% This is not used but may become useful... once... maybe
+%\NewDocumentEnvironment{seminar-problem}{m m m}{%
+%    \subsection{%
+%        \texorpdfstring{%
+%            \bfseries
+%            \large #1 \hfill \normalsize%
+%            \ifstrempty{#2}{}{#2 bod\PluralMG{#2}}%
+%            \ifstrempty{#3}{}{, kategóri\PluralFN{} #3}%
+%        }{\arabic{round}.\arabic{problem} #1}%
+%    }%
+%    \label{\arabic{volume}\arabic{semester}\arabic{round}\arabic{problem}-problem}%
+%}{}
+%
+%\NewDocumentEnvironment{seminar-solution}{m m m m}{%
+%    \subsection{%
+%        \texorpdfstring{%
+%            \bfseries
+%            \large #1 \hfill \normalsize%
+%            \ifstrempty{#2}{}{vzorák \FormatList{#2}}%
+%            \ifstrempty{#3}{}{opravoval#3 \FormatList{#4}}%
+%        }{\arabic{round}.\arabic{problem} #1}%
+%    }%
+%    \label{\arabic{volume}\arabic{semester}\arabic{round}\arabic{problem}-solution}%
+%}{}
 
 \fancypagestyle{seminar}{
     \titleformat{\section}[hang]{\centering\LARGE}{}{6pt}{}

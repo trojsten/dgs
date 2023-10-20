@@ -1,0 +1,24 @@
+pre:
+  all:
+    - pattern: '^(\s*)\$\${'
+      repl: '\g<1>$$\n\g<1>\\begin{aligned}'
+      purpose: 'Beginning align marker'
+    - pattern: '^(\s*)}\$\$'
+      repl: '\g<1>\\end{aligned}\n\g<1>$$'
+      purpose: 'Ending align marker'
+  latex:
+    - pattern:
+      repl:
+  html:
+    - pattern:
+      repl:
+
+post:
+
+
+post_check:
+  all:
+    - pattern: '(<<<<<<<<|========|>>>>>>>>)'
+      error: 'Github conflict marker'
+    - pattern: '^@H'
+      error: 'HTML-only tag'
