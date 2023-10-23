@@ -13,7 +13,7 @@
 
     \AddToShipoutPictureBG{
         \put(-3, -1){
-            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-(* round.instagram.skin|default('orange') *).pdf}
+            \includegraphics[width=1.05\pagesize, height=1.05\pagesize]{modules/seminar/templates/background-(* round.instagram.skin *).png}
         }
     }
 
@@ -42,7 +42,6 @@
 (@ block content @)
     \pagestyle{empty}
     \setInstagramLayout
-    \color{(* round.instagram.text_colour *)}
     \makeatletter
         \color{(* round.instagram.text_colour *)}\global\let\default@color\current@color
     \makeatother
