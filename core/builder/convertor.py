@@ -221,9 +221,12 @@ class Convertor:
             "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
-#           "--webtex='eqn://'",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
+        if self.output_format == 'html':
+            args += [
+                "--webtex=eqn://",
+            ]
         subprocess.run(args, stdin=self.file, stdout=out)
 
         out.seek(0)
