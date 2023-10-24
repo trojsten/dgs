@@ -1,0 +1,42 @@
+\documentclass{standalone}
+
+\RequirePackage{scrextend}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mleftright}
+\RequirePackage{siunitx}
+\RequirePackage{leftidx}
+\RequirePackage{pdftexcmds}
+\RequirePackage{cancel}
+\RequirePackage{nicefrac}
+\RequirePackage{mathtools}
+\RequirePackage{physics}
+\RequirePackage{expl3}
+\RequirePackage[version=4]{mhchem}
+\RequirePackage[f]{esvect}
+
+\RequirePackage[mathlf]{MinionPro}
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+
+\defaultfontfeatures{
+    Mapping         = tex-text,
+    Ligatures       = TeX
+}
+
+\setmainfont[
+    Path            = assets/fonts/MinionPro/ ,
+    Extension       = .otf ,
+    UprightFont     = *-Regular ,
+    BoldFont        = *-Bold ,
+    ItalicFont      = *-It ,
+    BoldItalicFont  = *-BoldIt
+]{MinionPro}
+
+\input{core/tex/siunitx.tex}
+\input{core/tex/math.tex}
+
+\changefontsizes{13pt}
+
+\begin{document}
+    \strut{}${{ .Equation }}$
+\end{document}

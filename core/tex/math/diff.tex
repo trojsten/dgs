@@ -15,11 +15,15 @@
     \IfNoValueTF{#1}{\pdiff}{\pdiff^{#1}}%
 }
 
+
 % Inner derivative with any differential symbol
 \makeatletter
 \ExplSyntaxOn
+
+\NewDocumentCommand{\frac@}{}{}
+
 \NewDocumentCommand{\SetDerivativeFrac@}{m}{
-    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+    \renewcommand{\frac@}{\str_case:nnF{#1}{%
         {d}{\dfrac}%
         {t}{\tfrac}%
         {s}{\sfrac}%
@@ -46,7 +50,7 @@
 }
 
 \NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
-    \ernewcommand{\frac@}{\str_case:nnF{#1}{%
+    \renewcommand{\frac@}{\str_case:nnF{#1}{%
         {d}{\dfrac}%
         {t}{\tfrac}%
         {s}{\sfrac}%
