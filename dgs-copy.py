@@ -69,18 +69,18 @@ def main():
 
     # copy pictures
     COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz']
-    copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
+    copy_wildcard = ' -o '.join([f"-name '*.{ext}'" for ext in COPY_EXTENSIONS])
 
-    fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
-        rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) " \
-        rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
+    fire(rf"""find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) -printf '%P\n' | xargs -I "{{}}" dirname "{{}}" | xargs -I "{{}}" mkdir -p "tasks/{path_fragment_remote}/{{}}" """)
+    fire(rf"""find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) -printf '%P\n' | xargs -I "{{}}" ln -s $(pwd)/output/seminar/{path_fragment_local}/{{}} "tasks/{path_fragment_remote}/{{}}" """)
+    #ln -s $(pwd)/output/seminar/{path_fragment_local}/{{}} tasks/{path_fragment_remote}/{{}}")
 
     # rsync everything to server
     if not args.dry_run:
         fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp:/var/www-archiv/trojstenweb/")
 
     # delete the temporary structure
-    fire("rm -rf tasks")
+#    fire("rm -rf tasks")
 
 
 main()

@@ -154,6 +154,8 @@ output/%.jpg: source/%.jpg
 # DeGeŠ convert Markdown to HTML (for web)
 output/%.html: source/%.md
 	$(call pandochtml,sk)
+	./wr -input $@ -template core/tex/wr.tex --engine xelatex -innerhtml -eqdir $(dir $@)/equations -output $@.conv
+	mv $@.conv $@
 
 .SECONDEXPANSION:
 
