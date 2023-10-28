@@ -25,7 +25,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
     def populate(self, competition, volume, language):
         super().populate(competition, volume, language)
         self.adopt('language', ContextLanguage(self.root, competition, volume, language))
-        self.adopt('i18n', ContextI18n(self.root, competition, language))
+        self.adopt('i18n', ContextI18nGlobal(self.root, competition))
 
 
 class BuildableContextVenue(BuildableContextNaboj):

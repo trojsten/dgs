@@ -275,7 +275,7 @@ output/naboj/%: \
 # All targets for all venues
 # <competition>/<volume>
 output/naboj/%/venues: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)), $$(dir)) ;
 
 output/naboj/%/all: \
 	output/naboj/%/languages \

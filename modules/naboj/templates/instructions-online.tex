@@ -3,12 +3,12 @@
 (@ block content @)
     \fancypagestyle{instructions-online}{%
         \pagestyle{naboj}
-        \fancyhead[LE,RO]{\textit{(* i18n.instructions_online.title *)}}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].instructions_online.title *)}}
         \titleformat{\subsection}[hang]{\large\bfseries}{}{6pt}{}[]
     }
     \pagestyle{instructions-online}
 
-    \section{(* i18n.instructions_online.title *)}
+    \section{(* i18n[language.id].instructions_online.title *)}
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/_extras}%
     (@ if language.rtl @)
         \arabicfont\setRL

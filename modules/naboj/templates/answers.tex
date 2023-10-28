@@ -1,7 +1,7 @@
 (@ extends 'base-booklet.tex' @)
 
 (@ block content @)
-    \section{(* i18n.section.answers *)}
+    \section{(* i18n[language.id].section.answers *)}
     \pagestyle{answers}
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
