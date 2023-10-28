@@ -13,10 +13,8 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
     templates = [
         'booklet.tex',
         'answers.tex',
-        'answers-modulo.tex',
         'constants.tex',
         'cover.tex',
-        'instructions.tex',
         'instructions-online.tex',
         'online.tex',
     ]
@@ -33,7 +31,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
 
     def build(self):
         super().build()
-        for template in ['intro.tex', 'instructions-inner.tex']:
+        for template in ['intro.tex']:
             jinja.print_template(
                 Path(self.launch_directory, *self.path(), '_extras'),
                 template, self.context.data, self.output_directory

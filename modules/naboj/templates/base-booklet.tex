@@ -1,0 +1,73 @@
+(@ extends 'base.tex' @)
+
+(@ block documentclass @)twoside(@ endblock @)
+
+(@ block specific @)
+    \newgeometry{
+        left                    = 15mm,
+        right                   = 15mm,
+        top                     = 15mm,
+        bottom                  = 15mm,
+        headheight              = 75pt,
+        headsep                 = 16pt,
+        footskip                = 32pt,
+        includeheadfoot,
+    }
+    \savegeometry{firstpage}
+
+    \newgeometry{
+        left                    = 15mm,
+        right                   = 15mm,
+        top                     = 15mm,
+        bottom                  = 15mm,
+        headheight              = 20pt,
+        headsep                 = 16pt,
+        footskip                = 32pt,
+        includeheadfoot,
+    }
+    \savegeometry{main}
+
+    \fancypagestyle{naboj}{%
+        \fancyhead[LO,RE]{%
+            \raisebox{(* competition.hacks.smallLogoRaise *)}{%
+                \includegraphics[keepaspectratio=true, height=6mm]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
+            }%
+        }%
+        \fancyhead[C]{\textit{(* volume.number *). (* i18n[language.id].competition.name.nominative *), (* volume.number + competition.founded - 1 *)}}
+        \fancyfoot[LO,RE]{\href{mailto:(* i18n[language.id].competition.email *)}{\texttt{(* i18n[language.id].competition.email *)}}}
+        \fancyfoot[C]{\small \thepage}
+        \fancyfoot[LE,RO]{\URL{(* i18n[language.id].competition.website *)}}
+        \titleformat{\section}[hang]{\centering\huge\vspace*{-7mm}}{}{0pt}{}
+        \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
+        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titleformat{\paragraph}[hang]{\bfseries\itshape}{}{0pt}{}[]
+        \titlespacing*{\section}{0pt}{0pt}{8pt}
+        \titlespacing*{\subsection}{0pt}{8pt}{8pt}
+        \titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
+        \titlespacing*{\paragraph}{0pt}{8pt}{-1em}
+    }
+
+    \fancypagestyle{problems}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.problems *)}}
+    }
+
+    \fancypagestyle{solutions}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.solutions *)}}
+    }
+
+    \fancypagestyle{answers}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
+    }
+
+    \captionsetup[table]{name=(* i18n[language.id].caption.table *)}
+    \captionsetup[figure]{name=(* i18n[language.id].caption.figure *)}
+
+    \setcounter{secnumdepth}{0}
+    \input{core/i18n/(* language.id *)/override.tex}
+    \setmainlanguage{(* language.polyglossia *)}
+
+    \pagestyle{naboj}
+(@ endblock @)

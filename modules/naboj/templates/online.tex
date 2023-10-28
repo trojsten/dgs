@@ -1,4 +1,4 @@
-(@ extends 'base-languages.tex' @)
+(@ extends 'base-booklet.tex' @)
 
 (@ block content @)
     \newgeometry{
@@ -6,6 +6,14 @@
         right       = 15mm,
         bottom      = 15mm,
         top         = 15mm,
+    }
+
+    \fancypagestyle{online}{%
+        \fancyhf{}
+        \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
+        \titlespacing*{\subsection}{0pt}{0pt}{8pt}
+        \renewcommand{\headrulewidth}{0pt}
+        \renewcommand{\footrulewidth}{0pt}
     }
 
     \pagenumbering{gobble}
@@ -17,9 +25,9 @@
         \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
         \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *)}}%
         \label{ssc:problem-(* problem.id*)}%
-        \ifstrequal{(* language.id *)}{persian}{\arabicfont\setRL}{}
+        \ifstrequal{(* language.id *)}{fa}{\arabicfont\setRL}{}
         \protectedInput{\activeDirectory/problem.tex}%
-        \ifstrequal{(* language.id *)}{persian}{\unsetRL}{}
+        \ifstrequal{(* language.id *)}{fa}{\unsetRL}{}
         (@ if not loop.last @)\newpage(@ endif @)
     (@ endfor @)
     \newpage

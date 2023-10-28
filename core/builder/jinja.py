@@ -80,7 +80,9 @@ def print_template(root, template, context, output_directory=None, new_name=None
         )
     except jinja2.exceptions.TemplateNotFound as e:
         logger.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
+        raise e
         sys.exit(41)
     except jinja2.exceptions.UndefinedError as e:
         logger.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
+        raise e
         sys.exit(43)

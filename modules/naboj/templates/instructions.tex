@@ -1,7 +1,12 @@
-(@ extends 'base-languages.tex' @)
+(@ extends 'base-booklet.tex' @)
 
 (@ block content @)
+    \fancypagestyle{instructions}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].instructions.title *)}}
+    }
     \pagestyle{instructions}
-    \section{(* i18n.instructions.title *)}
+
+    \section{(* i18n[language.id].instructions.title *)}
     \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/instructions-inner.tex}
 (@ endblock @)

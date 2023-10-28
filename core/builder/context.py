@@ -46,6 +46,7 @@ class Context(metaclass=ABCMeta):
                 self.print()
                 logger.error("against schema")
                 pprint.pprint(self.schema._schema)
+                raise exc
                 sys.exit(-1)
 
     def add(self, *dictionaries, overwrite=True):

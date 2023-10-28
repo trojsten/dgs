@@ -76,19 +76,27 @@ class ContextVenue(ContextNaboj):
     schema = Schema({
         'id': And(str, len),
         'name': And(str, len),
+        'language': valid_language,
         'teams': [ContextNaboj.team],
         'teams_grouped': [[ContextNaboj.team]],
+        'problems_modulo': [[ContextNaboj.problem]],
+        'evaluators': int,
+        Optional('start_override'): int,
     })
 
     def populate(self, competition, volume, venue):
         comp = ContextCompetition(self.root, competition)
+        vol = ContextVolume(self.root, competition, volume)
         self.load_meta(competition, volume, self.subdir, venue) \
             .add_id(venue)
         self.add({
             'teams': lists.numerate(self.data.get('teams'), itertools.count(0)),
             'teams_grouped': lists.split_div(
                 lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page']
-            )
+            ),
+            'problems_modulo': lists.split_mod(
+                lists.add_numbers([x['id'] for x in vol.data['problems']], itertools.count(1)), self.data['evaluators'], first=1
+            ),
         })
 
 
@@ -100,10 +108,9 @@ class ContextVolume(ContextNaboj):
         'date': datetime.date,
         'orgs': [str],
         'problems': [ContextNaboj.problem],
-        'problems_modulo': [[ContextNaboj.problem]],
         'constants': dict,
-        'evaluators': int,
         'table': int,
+        'start': int,
     })
 
     def populate(self, competition, volume):
@@ -113,7 +120,4 @@ class ContextVolume(ContextNaboj):
 
         self.add(
             dict(problems=lists.add_numbers(self.data['problems'], itertools.count(1))),
-            dict(problems_modulo=lists.split_mod(
-                lists.add_numbers(self.data['problems'], itertools.count(1)), self.data['evaluators'], first=1
-            )),
         )

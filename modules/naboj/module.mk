@@ -32,7 +32,7 @@ build/naboj/%/build-language: \
 	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
 
 
-# % <competition>/<volume>/<venue>
+# % <competition>/<volume>/venues/<venue>
 build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
@@ -47,7 +47,7 @@ build/naboj/%/build-venue: \
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-languages.tex \
+	modules/naboj/templates/base-tearoff.tex \
 	modules/naboj/templates/$$(notdir $$@) \
 	modules/naboj/templates/tearoff-problem.tex \
 	modules/naboj/templates/tearoff-bottom.tex \
@@ -61,7 +61,7 @@ build/naboj/%/envelopes.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
 	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-languages.tex \
+	modules/naboj/templates/base-booklet.tex \
 	modules/naboj/templates/$$(notdir $$@) \
     build/naboj/$$*/build-language ;
 
@@ -69,7 +69,7 @@ build/naboj/%/online.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/answers-modulo.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-languages.tex \
+	modules/naboj/templates/base-booklet.tex \
 	modules/naboj/templates/$$(notdir $$@) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
@@ -90,13 +90,15 @@ build/naboj/%/constants.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/instructions-inner.tex: \
 	source/naboj/$$*/_extras/instructions-inner.tex \
-	build/naboj/$$*/build-language ;
+	build/naboj/$$*/build-language \
+	build/naboj/$$*/build-venue ;
 
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
-	build/naboj/$$*/build-language ;
+	build/naboj/$$*/build-language \
+	build/naboj/$$*/build-venue ;
 
 # Instructions before the online competition (content)
 build/naboj/%/instructions-online-inner.tex: \
@@ -187,7 +189,7 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/cover-print.pdf: \
-	output/naboj/%/cover.pdf ;
+	output/naboj/%/cover.pdf
 	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 output/naboj/%/answers.pdf: \
@@ -227,11 +229,9 @@ output/naboj/%/cover.pdf: \
 # All targets for <language>
 output/naboj/%: \
 	output/naboj/%/answers.pdf \
-	output/naboj/%/answers-modulo.pdf \
 	output/naboj/%/constants.pdf \
 	output/naboj/%/cover-print.pdf \
-	output/naboj/%/booklet-print.pdf \
-	output/naboj/%/instructions.pdf ;
+	output/naboj/%/booklet-print.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
@@ -270,6 +270,8 @@ output/naboj/%/envelopes.pdf: \
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
 	output/naboj/%/tearoff.pdf \
+	output/naboj/%/instructions.pdf \
+	output/naboj/%/answers-modulo.pdf \
 	output/naboj/%/envelopes.pdf ;
 
 # All targets for all venues
