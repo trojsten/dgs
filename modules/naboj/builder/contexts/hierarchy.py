@@ -81,7 +81,7 @@ class ContextVenue(ContextNaboj):
         'teams_grouped': [[ContextNaboj.team]],
         'problems_modulo': [[ContextNaboj.problem]],
         'evaluators': int,
-        Optional('start_override'): int,
+        Optional('start'): int,
     })
 
     def populate(self, competition, volume, venue):

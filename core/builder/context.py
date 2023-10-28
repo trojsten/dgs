@@ -82,6 +82,12 @@ class Context(metaclass=ABCMeta):
 
         return self
 
+    def override(self, key, ctx):
+        if not key in self.data:
+            self.data[key] = ctx[key]
+
+        return self
+
     def print(self):
         pprint.pprint(self.data, width=120)
 

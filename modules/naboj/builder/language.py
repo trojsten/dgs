@@ -2,14 +2,14 @@ from pathlib import Path
 
 import builder
 import core.builder.jinja as jinja
-from modules.naboj.builder.contexts import ContextBooklet
+from modules.naboj.builder.contexts import BuildableContextLanguage
 
 
 class BuilderNabojLanguage(builder.BuilderNaboj):
     target = 'language'
     subdir = 'languages'
 
-    root_context_class = ContextBooklet
+    root_context_class = BuildableContextLanguage
     templates = [
         'booklet.tex',
         'answers.tex',
@@ -21,7 +21,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
 
     def create_argument_parser(self):
         super().create_argument_parser()
-        self.parser.add_argument('-l', '--language', type=str)
+        self.parser.add_argument('language', type=str)
 
     def id(self):
         return (self.args.competition, self.args.volume, self.args.language)

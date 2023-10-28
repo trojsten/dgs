@@ -13,5 +13,5 @@ class BuilderNaboj(builder.BaseBuilder):
 
     def create_argument_parser(self):
         super().create_argument_parser()
-        self.parser.add_argument('-c', '--competition', choices=['phys', 'math', 'chem', 'junior'])
-        self.parser.add_argument('-v', '--volume', type=int)
+        self.parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior'])
+        self.parser.add_argument('volume', type=int)

@@ -29,7 +29,7 @@ build/naboj/%/build-language: \
 	source/naboj/$$*/meta.yaml \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml ;
 	$(call prepare_arguments,language)
-	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -l $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 
 # % <competition>/<volume>/venues/<venue>
@@ -40,7 +40,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	source/naboj/$$*/../../../i18n ;
 	$(call prepare_arguments,venue)
-	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' -c $(word 1,$(words)) -v $(word 2,$(words)) -p $(word 4,$(words)) -o '$(dir $@)'
+	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 ### Input files ###################################################################################
 
@@ -87,17 +87,15 @@ build/naboj/%/constants.tex: \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)
-# % <competition>/<volume>/languages/<language>
+# % <competition>/<volume>/venues/<venues>
 build/naboj/%/instructions-inner.tex: \
-	source/naboj/$$*/_extras/instructions-inner.tex \
-	build/naboj/$$*/build-language \
+	source/naboj/$$*//instructions-inner.tex \
 	build/naboj/$$*/build-venue ;
 
 # Instructions to be put on the table before the competition (full document)
-# % <competition>/<volume>/languages/<language>
+# % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions.tex: \
 	modules/naboj/templates/$$(notdir $$@) \
-	build/naboj/$$*/build-language \
 	build/naboj/$$*/build-venue ;
 
 # Instructions before the online competition (content)
@@ -279,7 +277,7 @@ output/naboj/%: \
 output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*/)), $$(dir)) ;
 
-output/naboj/%: \
+output/naboj/%/all: \
 	output/naboj/%/languages \
 	output/naboj/%/venues ;
 
