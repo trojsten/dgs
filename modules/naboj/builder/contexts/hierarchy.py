@@ -42,6 +42,7 @@ class ContextCompetition(ContextNaboj):
     })
 
     def populate(self, competition):
+        super().populate(competition)
         self.load_meta(competition) \
             .add_id(competition)
 
@@ -64,6 +65,7 @@ class ContextLanguage(ContextNaboj):
     })
 
     def populate(self, competition, volume, language):
+        super().populate(competition)
         self.load_meta(competition, volume, self.subdir, language) \
             .add_id(language)
         self.add({'polyglossia': glob.languages[language]['polyglossia']})
@@ -85,6 +87,7 @@ class ContextVenue(ContextNaboj):
     })
 
     def populate(self, competition, volume, venue):
+        super().populate(competition)
         comp = ContextCompetition(self.root, competition)
         vol = ContextVolume(self.root, competition, volume)
         self.load_meta(competition, volume, self.subdir, venue) \
@@ -114,6 +117,7 @@ class ContextVolume(ContextNaboj):
     })
 
     def populate(self, competition, volume):
+        super().populate(competition)
         self.load_meta(competition, volume) \
             .add_id(f'{volume:02d}') \
             .add_number(volume)

@@ -1,3 +1,5 @@
+import datetime
+import subprocess
 from pathlib import Path
 from schema import Schema, Optional, And, Regex
 
@@ -23,6 +25,20 @@ class ContextNaboj(context.FileSystemContext):
         'id': Regex(r'[a-z0-9-]+'),
         'number': int,
     })
+    schema = Schema({
+        'hash': str,
+        'timestamp': datetime.datetime
+    })
+
+    def populate(self, competition):
+        # Add the hash of the current HEAD of the repository as "hash"
+        self.add({
+            'hash': subprocess.check_output(
+                ["git", "rev-parse", "--short", "--verify", "master"],
+                cwd=self.node_path(competition)
+            ).decode().rstrip("\n"),
+            'timestamp': datetime.datetime.now(datetime.timezone.utc)
+        })
 
     def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
         assert competition in ContextNaboj.competitions

@@ -34,7 +34,7 @@
 \RequirePackage{pdftexcmds}
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
-\RequirePackage{color}
+\RequirePackage{xcolor}
 \RequirePackage{float}
 \RequirePackage{caption}
 \RequirePackage{booktabs}

@@ -10,9 +10,10 @@ from .i18n import ContextI18n, ContextI18nGlobal
 
 
 class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
-    schema = Schema({})  # Nothing to be read directly
+    schema = ContextNaboj.schema
 
     def populate(self, competition, volume, venue):
+        super().populate(competition)
         self.adopt('module', ContextModule('naboj'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))
