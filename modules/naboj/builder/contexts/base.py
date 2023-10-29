@@ -10,9 +10,12 @@ class ContextNaboj(context.FileSystemContext):
     subdir = None
     competitions = ['phys', 'chem']
     team = Schema({
-        'id': And(str, len),
+        'id': And(int, lambda x: x >= 0 and x <= 9999),
+        'contact_email': And(str, len),
+        'code': str,
         'language': And(str, valid_language),
-        'name': And(str, len),
+        'display_name': And(str, len),
+        'venue_code': And(str, lambda x: len(x) == 5),
         Optional('venue'): int,
         'number': int,
     })
