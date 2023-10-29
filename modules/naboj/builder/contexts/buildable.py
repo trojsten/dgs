@@ -1,5 +1,6 @@
 import pprint
 import abc
+import core.utilities.schema as sch
 from schema import Schema, And, Optional
 
 import core.utilities.globals as glob
@@ -39,6 +40,10 @@ class BuildableContextVenue(BuildableContextNaboj):
             Optional('rtl'): bool,
         }
     })
+
+    def __init__(self, *args):
+        self.schema = sch.merge(super().schema, self.schema)
+        super().__init__(*args)
 
     def populate(self, competition, volume, venue):
         super().populate(competition, volume, venue)

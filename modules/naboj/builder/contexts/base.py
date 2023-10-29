@@ -1,3 +1,4 @@
+import os
 import datetime
 import subprocess
 from pathlib import Path
@@ -13,31 +14,48 @@ class ContextNaboj(context.FileSystemContext):
     competitions = ['phys', 'chem']
     team = Schema({
         'id': And(int, lambda x: x >= 0 and x <= 9999),
-        'contact_email': And(str, len),
         'code': str,
-        'language': And(str, valid_language),
+        'contact_email': And(str, len),
+        'contact_name': And(str, len),
+        'contact_phone': str,
+        'contestants': str,
         'display_name': And(str, len),
+        'in_school_symbol': None,
+        'language': And(str, valid_language),
+        'name': object,
+        'number': object,
+        'school': str,
+        'school_address': str,
+        'school_id': int,
+        'school_name': str,
+        'status': str,
+        'venue': And(str, len),
         'venue_code': And(str, lambda x: len(x) == 5),
-        Optional('venue'): int,
-        'number': int,
+        'venue_id': int,
     })
     problem = Schema({
         'id': Regex(r'[a-z0-9-]+'),
         'number': int,
     })
     schema = Schema({
-        'hash': str,
-        'timestamp': datetime.datetime
+        'build': {
+            'user': And(str, len),
+            'hash': Regex(r'[a-f0-9]{8}'),
+            'timestamp': datetime.datetime,
+        }
     })
 
-    def populate(self, competition):
+    def populate(self, competition: str):
         # Add the hash of the current HEAD of the repository as "hash"
         self.add({
-            'hash': subprocess.check_output(
-                ["git", "rev-parse", "--short", "--verify", "master"],
-                cwd=self.node_path(competition)
-            ).decode().rstrip("\n"),
-            'timestamp': datetime.datetime.now(datetime.timezone.utc)
+            'build': {
+                'user': os.environ.get('USERNAME'),
+                'hash': subprocess.check_output(
+                    ["git", "rev-parse", "--short", "--verify", "master"],
+                    cwd=self.node_path(competition)
+                ).decode().rstrip("\n"),
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+            }
         })
 
     def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):

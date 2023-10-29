@@ -66,6 +66,9 @@ class BaseBuilder(metaclass=ABCMeta):
         logger.debug(c.act("Context:"))
         self.context.print()
 
+        logger.debug(c.act("Schema:"))
+        pprint.pprint(self.context.schema._schema)
+
     def print_build_info(self) -> None:
         """ Prints build info """
         logger.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")

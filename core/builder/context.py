@@ -45,7 +45,7 @@ class Context(metaclass=ABCMeta):
                 logger.error(f"Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
                 self.print()
                 logger.error("against schema")
-                pprint.pprint(self.schema._schema)
+                pprint.pprint(self.schema._schema, width=120)
                 raise exc
                 sys.exit(-1)
 
