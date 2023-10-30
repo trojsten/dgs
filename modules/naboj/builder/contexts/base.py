@@ -1,11 +1,10 @@
 import os
 import datetime
-import subprocess
 from pathlib import Path
-from schema import Schema, Optional, And, Regex
+from schema import Schema, Optional, And, Or, Regex
 
 from core.builder import context
-from core.utilities.schema import valid_language
+import core.utilities.schema as sch
 
 
 class ContextNaboj(context.FileSystemContext):
@@ -20,8 +19,8 @@ class ContextNaboj(context.FileSystemContext):
         'contact_phone': str,
         'contestants': str,
         'display_name': And(str, len),
-        'in_school_symbol': None,
-        'language': And(str, valid_language),
+        'in_school_symbol': Or(None, And(str, lambda x: len(x) == 1)),
+        'language': And(str, sch.valid_language),
         'name': object,
         'number': object,
         'school': str,
@@ -40,7 +39,14 @@ class ContextNaboj(context.FileSystemContext):
     schema = Schema({
         'build': {
             'user': And(str, len),
-            'hash': Regex(r'[a-f0-9]{8}'),
+            'dgs': {
+                'hash': sch.commit_hash,
+                'branch': str,
+            },
+            'repo': {
+                'hash': sch.commit_hash,
+                'branch': str,
+            },
             'timestamp': datetime.datetime,
         }
     })
@@ -50,10 +56,14 @@ class ContextNaboj(context.FileSystemContext):
         self.add({
             'build': {
                 'user': os.environ.get('USERNAME'),
-                'hash': subprocess.check_output(
-                    ["git", "rev-parse", "--short", "--verify", "master"],
-                    cwd=self.node_path(competition)
-                ).decode().rstrip("\n"),
+                'dgs': {
+                    'hash': sch.get_last_commit_hash(),
+                    'branch': sch.get_branch(),
+                },
+                'repo': {
+                    'hash': sch.get_last_commit_hash(self.node_path(competition)),
+                    'branch': sch.get_branch(self.node_path(competition)),
+                },
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
             }
         })

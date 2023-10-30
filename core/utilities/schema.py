@@ -1,5 +1,7 @@
+import os
+import subprocess
 from typing import Iterable
-from schema import Schema, And, Or
+from schema import Schema, And, Or, Regex
 
 import core.utilities.globals as glob
 
@@ -11,6 +13,22 @@ def string(x: str) -> bool:
 
 def valid_language(code: str) -> bool:
     return code in glob.languages.keys()
+
+
+def commit_hash(code: str) -> bool:
+    return Regex(r'[a-f0-9]+')
+
+
+def check_output(command, *, cwd) -> str:
+    return subprocess.check_output(command, cwd=cwd if cwd is not None else os.getcwd()).decode().rstrip("\n")
+
+
+def get_last_commit_hash(cwd=None) -> str:
+    return check_output(["git", "rev-parse", "--short", "--verify", "master"], cwd=cwd)
+
+
+def get_branch(cwd=None) -> str:
+    return check_output(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"], cwd=cwd)
 
 
 def merge(parent: Schema, *children: Iterable[Schema]) -> Schema:
