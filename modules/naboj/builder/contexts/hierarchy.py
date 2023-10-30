@@ -83,7 +83,7 @@ class ContextVenue(ContextNaboj):
         'teams_grouped': [[ContextNaboj.team]],
         'problems_modulo': [[ContextNaboj.problem]],
         'evaluators': int,
-        Optional('start'): int,
+        'start': And(int, lambda x: x >= 0 and x < 1440),
     })
 
     def populate(self, competition, volume, venue):
@@ -107,13 +107,12 @@ class ContextVolume(ContextNaboj):
     schema = Schema({
         'id': And(str, len),
         'number': And(int, lambda x: x > 0),
-        'start': int,
         'date': datetime.date,
         'orgs': [str],
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,
-        'start': int,
+        'start': And(int, lambda x: x >= 0 and x < 1440),
     })
 
     def populate(self, competition, volume):
