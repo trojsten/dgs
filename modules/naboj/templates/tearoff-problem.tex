@@ -43,6 +43,10 @@
         }%
     \end{minipage}
 
-    {\small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.code *)}: (* team.display_name *)}
+    {
+        \small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.code *)}: %
+        (* team.school|truncate(80, false) *)%
+        (@ if team.in_school_symbol @)~\textbf{(* team.in_school_symbol *)}(@ endif @)%
+    }
 \end{minipage}%
 

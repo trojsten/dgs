@@ -82,6 +82,7 @@ class ContextVenue(ContextNaboj):
         'teams': [ContextNaboj.team],
         'teams_grouped': [[ContextNaboj.team]],
         'problems_modulo': [[ContextNaboj.problem]],
+        Optional('orgs'): [And(str, len)],
         'evaluators': int,
         'start': And(int, lambda x: x >= 0 and x < 1440),
     })
