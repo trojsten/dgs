@@ -57,6 +57,8 @@ def environment(directory):
         'format_gender_suffix': filters.format_gender_suffix,
         'isotex': filters.isotex,
         'plural': filters.plural,
+        'nth': filters.nth,
+        'upnth': filters.upnth,
     }
 
     env.globals |= {

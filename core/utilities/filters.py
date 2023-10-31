@@ -65,6 +65,31 @@ def identity(x: Any) -> Any:
     return x
 
 
+def _nth(x: int) -> str:
+    assert isinstance(x, int)
+    assert x >= 0
+    if x % 10 in [0, 4, 5, 6, 7, 8, 9]:
+        return "th"
+    else:
+        if (x % 100) // 10 == 1:
+            return "th"
+        else:
+            match x % 10:
+                case 1:
+                    return "st"
+                case 2:
+                    return "nd"
+                case 3:
+                    return "rd"
+
+def nth(x: int) -> str:
+    return f"{x}{_nth(x)}"
+
+
+def upnth(x: int) -> str:
+    return rf"${x}^{{\mathrm{{{_nth(x)}}}}}$"
+
+
 def render_list(items: Union[list, Any], *, func: Callable = identity, and_word: str = 'a') -> str:
     if not isinstance(items, list):
         items = [items]

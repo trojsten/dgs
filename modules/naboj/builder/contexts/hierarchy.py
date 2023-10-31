@@ -113,14 +113,17 @@ class ContextVolume(ContextNaboj):
         'constants': dict,
         'table': int,
         'start': And(int, lambda x: x >= 0 and x < 1440),
+        'year': And(int, lambda x: x >= 1950),
     })
 
     def populate(self, competition, volume):
         super().populate(competition)
+        comp = ContextCompetition(self.root, competition)
         self.load_meta(competition, volume) \
             .add_id(f'{volume:02d}') \
             .add_number(volume)
 
-        self.add(
-            dict(problems=lists.add_numbers(self.data['problems'], itertools.count(1))),
-        )
+        self.add(dict(
+            year=self.data['number'] + comp.data['founded'] - 1,
+            problems=lists.add_numbers(self.data['problems'], itertools.count(1)),
+        ))
