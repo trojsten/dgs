@@ -89,8 +89,8 @@ build/naboj/%/constants.tex: \
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/venues/<venues>
 build/naboj/%/instructions-inner.tex: \
-	source/naboj/$$*//instructions-inner.tex \
-	build/naboj/$$*/build-venue ;
+	source/naboj/$$*/instructions-inner.tex \
+	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/venues/<venue>
@@ -191,10 +191,6 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
-output/naboj/%/cover-print.pdf: \
-	output/naboj/%/cover.pdf
-	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
-
 output/naboj/%/answers.pdf: \
 	build/naboj/%/answers \
 	build/naboj/%/pdf-prerequisites \
@@ -217,21 +213,26 @@ output/naboj/%/cover.pdf: \
 	build/naboj/%/cover.tex
 	$(call double_xelatex,naboj)
 
+output/naboj/%/cover-print.pdf: \
+	output/naboj/%/cover.pdf
+	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
+
 # All targets for <language>
 output/naboj/%: \
 	output/naboj/%/answers.pdf \
 	output/naboj/%/constants.pdf \
 	output/naboj/%/cover-print.pdf \
+	output/naboj/%/booklet.pdf \
 	output/naboj/%/booklet-print.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
 
-# competition/volume
+# <competition>/<volume>
 output/naboj/%/booklets: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/booklet.pdf);
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/booklet.pdf) ;
 
 # All targets for all languages
-# competition/volume
+# <competition>/<volume>
 output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) ;
 
