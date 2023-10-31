@@ -67,7 +67,7 @@ build/naboj/%/online.tex: \
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
-build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/answers-modulo.tex build/naboj/%/cover.tex: \
+build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-booklet.tex \
 	modules/naboj/templates/$$(notdir $$@) \
@@ -135,6 +135,11 @@ build/naboj/%/answers: \
 
 ### Venues ######################################
 
+# Answers-modulo
+build/naboj/%/answers-modulo.tex: \
+	modules/naboj/templates/$$(notdir $$@) \
+	build/naboj/$$*/build-venue ;
+
 # Barcodes in text format
 build/naboj/%/barcodes.txt: \
 	build/naboj/$$*/build-venue ;
@@ -196,20 +201,8 @@ output/naboj/%/answers.pdf: \
 	build/naboj/%/answers.tex
 	$(call double_xelatex,naboj)
 
-output/naboj/%/answers-modulo.pdf: \
-	build/naboj/%/answers \
-	build/naboj/%/pdf-prerequisites \
-	build/naboj/%/answers-modulo.tex
-	$(call double_xelatex,naboj)
-
 output/naboj/%/constants.pdf: \
 	build/naboj/%/constants.tex \
-	source/naboj/%/i18n
-	$(call double_xelatex,naboj)
-
-output/naboj/%/instructions.pdf: \
-	build/naboj/%/instructions.tex \
-	build/naboj/%/instructions-inner.tex \
 	source/naboj/%/i18n
 	$(call double_xelatex,naboj)
 
@@ -260,6 +253,22 @@ output/naboj/%/tearoff.pdf: \
 # Envelope cover
 output/naboj/%/envelopes.pdf: \
 	build/naboj/%/envelopes.tex
+	$(call double_xelatex,naboj)
+
+output/naboj/%/instructions.pdf: \
+	build/naboj/%/instructions.tex \
+	$$(subst source/,build/,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/_extras/instructions-inner.tex)))) \
+	source/naboj/%/i18n
+	$(call double_xelatex,naboj)
+
+output/naboj/%/answers-modulo.pdf: \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/answer.md))))) \
+	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
+	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png)))) \
+	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \
+	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))))) \
+	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
+	build/naboj/%/answers-modulo.tex
 	$(call double_xelatex,naboj)
 
 

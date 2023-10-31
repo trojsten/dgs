@@ -33,7 +33,7 @@
                                 <no symbol defined>
                             (@ endif @) &
                             (@ if 'value' in constant and 'symbol' in constant @)
-                                \SI[(@ if 'siextra' in constant @)(* constant.siextra *)(@ endif @)]{(* constant.value *)}{(* constant.unit *)}
+                                $\SI[(@ if 'siextra' in constant @)(* constant.siextra *)(@ endif @)]{(* constant.value *)}{(* constant.unit *)}$
                             (@ else @)
                                 \textbf{\textcolor{red}{no value or unit defined}}
                             (@ endif @) \\
@@ -47,4 +47,5 @@
             \bottomrule
         \end{tabular*}
     \end{figure}
+    (@ include 'footer.tex' @)
 (@ endblock @)

@@ -77,12 +77,5 @@
             \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
     (@ endif @)
-
-    \vfill
-    {
-        \color{white}
-        \hfill built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
-
-        \hfill at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
-    }
+    (@ include 'footer.tex' @)
 (@ endblock @)
