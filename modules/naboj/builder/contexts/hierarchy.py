@@ -87,10 +87,37 @@ class ContextVenue(ContextNaboj):
         'start': And(int, lambda x: x >= 0 and x < 1440),
     })
 
+    def _add_extra_teams(self, competition, venue):
+        code = 0
+        while len(self.data['teams']) % competition.data['per_page'] != 0:
+            self.data['teams'].append({
+                'id': 0,
+                'code': f'SKBAS{999 - code}',
+                'contact_email': "none@none.none"
+                'contact_name': "Unnamed"
+                'contact_phone': "",
+                'contestants': "unknown",
+                'display_name': f"Extra set {999 - code}",
+                'in_school_symbol': ""
+                'language': self.data['language']
+                'name': "",
+                'number': 0,
+                'school': "",
+                'school_address': "",
+                'school_id': 0,
+                'school_name': "",
+                'status': 'R',
+                'venue': venue.data['id'],
+                'venue_code': venue.data['code'],
+                'venue_id': venue.data['id'],
+            })
+            code += 1
+
     def populate(self, competition, volume, venue):
         super().populate(competition)
         comp = ContextCompetition(self.root, competition)
         vol = ContextVolume(self.root, competition, volume)
+        self._add_extra_teams(comp, vol)
         self.load_meta(competition, volume, self.subdir, venue) \
             .add_id(venue)
         self.add({
