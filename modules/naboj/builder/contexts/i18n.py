@@ -5,7 +5,7 @@ from core.builder import context
 
 
 class ContextI18n(context.FileSystemContext):
-    schema = Schema({
+    _schema = Schema({
         'section': {
             'problems': str,
             'solutions': str,
@@ -50,14 +50,14 @@ class ContextI18n(context.FileSystemContext):
     })
 
     def populate(self, competition, language):
-        self.load_YAML(self.root, competition, '.static', 'i18n', language + '.yaml')
+        self.load_yaml(self.root, competition, '.static', 'i18n', language + '.yaml')
 
     def node_path(self, competition=None, language=None):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')
 
 
 class ContextI18nGlobal(context.FileSystemContext):
-    schema = Schema({})
+    _schema = Schema({})
 
     def node_path(self, competition):
         return Path(self.root, competition, '.static', 'i18n')

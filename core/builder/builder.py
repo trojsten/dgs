@@ -67,7 +67,7 @@ class BaseBuilder(metaclass=ABCMeta):
         self.context.print()
 
         logger.debug(c.act("Schema:"))
-        pprint.pprint(self.context.schema._schema)
+        pprint.pprint(self.context._schema._schema)
 
     def print_build_info(self) -> None:
         """ Prints build info """
@@ -90,6 +90,6 @@ class BaseBuilder(metaclass=ABCMeta):
             self.print_dir_info()
 
         for template in self.templates:
-            jinja.print_template(self.template_root, template, self.context.data, self.output_directory)
+            jinja.print_template(self.template_root, template, self.context._data, self.output_directory)
 
         logger.debug(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")

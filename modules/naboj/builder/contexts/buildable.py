@@ -1,23 +1,23 @@
-import pprint
 import abc
 import core.utilities.schema as sch
-from schema import Schema, And, Optional
+from schema import Schema, Optional
 
 import core.utilities.globals as glob
 from core.builder.context import BuildableContext, ContextModule
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
-from .i18n import ContextI18n, ContextI18nGlobal
+from .i18n import ContextI18nGlobal
 
 
 class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
-    schema = ContextNaboj.schema
+    _schema = BuildableContext._schema
 
     def populate(self, competition, volume, venue):
-        super().populate(competition)
         self.adopt('module', ContextModule('naboj'))
-        self.adopt('competition', ContextCompetition(self.root, competition))
+        comp = ContextCompetition(self.root, competition)
+        self.adopt('competition', comp)
         self.adopt('volume', ContextVolume(self.root, competition, volume))
+        self._add_build_info(comp.node_path(competition))
 
 
 class BuildableContextLanguage(BuildableContextNaboj):
@@ -33,7 +33,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
 class BuildableContextVenue(BuildableContextNaboj):
     target = 'venue'
     subdir = 'venues'
-    schema = Schema({
+    _schema = Schema({
         'language': {
             'id': str,
             'polyglossia': str,
@@ -42,7 +42,7 @@ class BuildableContextVenue(BuildableContextNaboj):
     })
 
     def __init__(self, *args):
-        self.schema = sch.merge(super().schema, self.schema)
+        self._schema = sch.merge(super()._schema, self.schema)
         super().__init__(*args)
 
     def populate(self, competition, volume, venue):
@@ -55,5 +55,5 @@ class BuildableContextVenue(BuildableContextNaboj):
             } | glob.languages[self.data['venue']['language']]
         })
 
-        if not 'start' in self.data['venue']:
+        if 'start' not in self.data['venue']:
             self.data['venue']['start'] = self.data['volume']['start']

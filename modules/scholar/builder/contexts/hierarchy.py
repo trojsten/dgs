@@ -5,7 +5,7 @@ from .base import ContextScholar
 
 
 class ContextCourse(ContextScholar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'title': And(str, len),
     })
@@ -16,7 +16,7 @@ class ContextCourse(ContextScholar):
 
 
 class ContextYear(ContextScholar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': int,
         'teacher': {

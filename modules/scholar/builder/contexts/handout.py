@@ -12,7 +12,7 @@ class HandoutMixin:
 
 
 class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
     })
 
@@ -21,7 +21,7 @@ class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
 
 
 class ContextHandoutIssue(HandoutMixin, ContextIssue):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': int,
         'title': And(str, len),
@@ -33,7 +33,7 @@ class ContextHandoutIssue(HandoutMixin, ContextIssue):
 
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
-    schema = Schema({})
+    _schema = Schema({})
 
     issue_context_class = ContextHandoutIssue
 

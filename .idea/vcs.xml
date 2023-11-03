@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/naboj/chem" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/naboj/phys" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/scholar/TA1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/scholar/TA2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/seminar/FKS" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/seminar/FX" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/source/seminar/testing" vcs="Git" />
+  </component>
+</project>

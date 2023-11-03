@@ -12,7 +12,7 @@ def fire(query):
     os.system(query)
 
 
-class PictureLinker():
+class PictureLinker:
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('root', action=argparsedirs.ReadableDir)
@@ -33,12 +33,12 @@ class PictureLinker():
         slave_path = self.root / self.competition / self.volume / 'languages' / self.args.slave
         print(f"Deleting symlinks in {slave_path}")
         fire(
-            f'cd {slave_path} &&' \
+            f'cd {slave_path} &&'
             f'find . -name "*.svg" -type "l" -delete; '
         )
         print(f"Creating new symlinks from {slave_path} to {master_path}")
         fire(
-            f"cd {master_path} && " \
+            f"cd {master_path} && "
             f'find . -name "*.svg" -exec ln -s -T ../../{self.args.master}/{{}} ../{self.args.slave}/{{}} \\;'
         )
 

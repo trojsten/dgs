@@ -22,7 +22,7 @@ class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
 
 
 class ContextCompetition(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'short': And(str, len),
         'full': Schema({
@@ -59,7 +59,7 @@ class ContextCompetition(ContextSeminar):
 
 
 class ContextVolume(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': str,
         'number': int,
         Optional('categories'): [[], [str]],
@@ -72,7 +72,7 @@ class ContextVolume(ContextSeminar):
 
 
 class ContextSemester(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': And(int, lambda x: x in [1, 2]),
         'neuter': Schema({'nominative': str, 'genitive': str}),
@@ -104,14 +104,14 @@ class ContextSemesterFull(ContextSemester):
 
 
 class ContextRound(ContextSeminar):
-    defaults = {
+    _defaults = {
         'instagram': {
             'skin': 'orange',
             'text_colour': 'black',
         }
     }
 
-    schema = Schema({
+    _schema = Schema({
         'deadline': datetime.date,
         Optional('instagram'): Schema({
             'skin': Use(str, lambda x: x in ['orange', 'grey']),
@@ -134,7 +134,7 @@ class ContextProblem(ContextSeminar):
             'gender': Or('f', 'm', '?'),
         }]
     )
-    schema = Schema({
+    _schema = Schema({
         'title': And(str, len),
         'categories': list,
         'number': And(int, lambda x: x >= 1 and x <= 8),
@@ -155,7 +155,7 @@ class ContextProblem(ContextSeminar):
             .add_number(problem)
 
         vol = ContextVolume(self.root, competition, volume)
-        categories = vol.data['categories']
+        categories = vol._data['categories']
         self.add({'categories': categories[problem - 1]})
 
 
@@ -164,7 +164,7 @@ class ContextRoundFull(ContextRound):
 
     def populate(self, competition, volume, semester, round):
         super().populate(competition, volume, semester, round)
-        count = len(ContextVolume(self.root, competition, volume).data['categories'])
+        count = len(ContextVolume(self.root, competition, volume)._data['categories'])
 
         self.add_list('problems', [
             self.subcontext_class(self.root, competition, volume, semester, round, problem)
@@ -190,7 +190,7 @@ class ContextSemesterBooklet(ContextSeminar):
 
 
 class ContextBooklet(BuildableContext, ContextSeminar):
-    schema = Schema({})  # fix this
+    _schema = Schema({})  # fix this
 
     def populate(self, competition, volume, semester, round):
         self.adopt('module', ContextModule('seminar'))

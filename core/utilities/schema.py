@@ -1,12 +1,11 @@
 import os
 import subprocess
-from typing import Iterable
 from schema import Schema, And, Or, Regex
 
 import core.utilities.globals as glob
 
 
-def string(x: str) -> bool:
+def string(x: str) -> And:
     """ Is non-empty string """
     return And(str, len)
 
@@ -15,8 +14,7 @@ def valid_language(code: str) -> bool:
     return code in glob.languages.keys()
 
 
-def commit_hash(code: str) -> bool:
-    return Regex(r'[a-f0-9]+')
+commit_hash = Regex(r'[a-f0-9]+')
 
 
 def check_output(command, *, cwd) -> str:
@@ -31,7 +29,7 @@ def get_branch(cwd=None) -> str:
     return check_output(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"], cwd=cwd)
 
 
-def merge(parent: Schema, *children: Iterable[Schema]) -> Schema:
+def merge(parent: Schema, *children: Schema) -> Schema:
     """ Merge an existing Schema with each in a list of child Schemas """
     for child in children:
         parent = merge_one(parent, child)

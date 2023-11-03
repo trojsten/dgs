@@ -20,7 +20,7 @@ class Context():
 
     def absorb(self, key, ctx):
         """ Absorb a new context `ctx` under the key `key` """
-        self.data[key] = dicts.merge(self.data.get(key), ctx.data)
+        self.data[key] = dicts.merge(self.data.get(key), ctx._data)
         return self
 
     def load_YAML(self, *args):
@@ -59,12 +59,12 @@ class Context():
     def add_children(self, subcontext_class, subcontext_key, *subcontext_args):
         """ Use a Crawler to scan the filesystem and add children to this Context """
         cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
+        self.add({subcontext_key: [subcontext_class(*subcontext_args, child)._data for child in cr.children()]})
 
     def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
         """ Use a Crawler to scan the filesystem and add subdirs to this Context (they do not have to contain meta.yaml) """
         cr = crawler.Crawler(self.node_path(*root))
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.subdirs()]})
+        self.add({subcontext_key: [subcontext_class(*subcontext_args, child)._data for child in cr.subdirs()]})
 
 
 def is_prime(what: int) -> int:

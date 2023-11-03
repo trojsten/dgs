@@ -28,8 +28,8 @@ class ContextScholarLecture(ContextScholarSingle):
         self.adopt('lecture', ContextSingleLecture(self.root, course, lecture))
         self.crawler = crawler.Crawler(Path(self.root, course, lecture))
 
-        if 'parts' in self.data:
-            self.add({'parts': [ContextScholarPart(self.root, course, lecture, part).data for part in self.data['parts']]})
+        if 'parts' in self._data:
+            self.add({'parts': [ContextScholarPart(self.root, course, lecture, part)._data for part in self._data['parts']]})
         else:
             self.add_subdirs(ContextScholarPart, 'parts', self.root, course, lecture)
 
@@ -76,7 +76,7 @@ class ContextDir(Context):
             .add_id(deeper[-1] if deeper else root)
 
         crawl = crawler.Crawler(Path(root, *deeper))
-        self.add({'children': ContextDir(root, *deeper, child).data for child in crawl.children()})
+        self.add({'children': ContextDir(root, *deeper, child)._data for child in crawl.children()})
 
     @staticmethod
     def node_path(*args):
