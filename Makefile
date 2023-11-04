@@ -82,10 +82,6 @@ include modules/*/module.mk
 build/%.tex: source/%.md
 	$(call pandoctex,sk)
 
-# Copy TeX files from source to build
-build/%.tex: source/%.tex
-	$(call _copy,TeX)
-
 # Copy py files from source to build
 build/%.py: source/%.py
 	$(call _copy,Python)

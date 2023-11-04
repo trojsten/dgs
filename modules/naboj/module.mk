@@ -23,6 +23,7 @@ define prepare_arguments
 	@mkdir -p $(dir $@)
 endef
 
+# % <competition>/<volume>/languages/<language>
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	build/naboj/$$*/../../../.static/logo/logo.pdf \
@@ -70,13 +71,14 @@ build/naboj/%/online.tex: \
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.tex \
 	modules/naboj/templates/base-booklet.tex \
+	modules/naboj/templates/footer.tex \
 	modules/naboj/templates/$$(notdir $$@) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
-build/naboj/%/intro.tex: \
+build/naboj/%/intro.tex build/naboj/%/evaluators.tex: \
 	build/naboj/$$*/build-language \
 	source/naboj/$$*/_extras/$$(notdir $$@) ;
 
@@ -264,6 +266,7 @@ output/naboj/%/instructions.pdf: \
 
 output/naboj/%/answers-modulo.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/answer.md))))) \
+	$$(subst source/,build/,$$(subst _extras,,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/_extras/evaluators.tex)))))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png)))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \

@@ -31,7 +31,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
 
     def build(self):
         super().build()
-        for template in ['intro.tex']:
+        for template in ['intro.tex', 'evaluators.tex']:
             jinja.print_template(
                 Path(self.launch_directory, *self.path(), '_extras'),
                 template, self.context._data, self.output_directory
