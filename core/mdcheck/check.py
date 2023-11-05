@@ -50,7 +50,7 @@ class PlusSpaces():
     re_plus_unary = re.compile(r'[(\[]\+[^ ]')
     re_plus_spaces = re.compile(r'[^ ]\+[^ ]')
 
-    re_plus = re.compile('(?<! |"|\(|\[|\{|\$)(\+)(?! |"|\)|\]|\})')
+    re_plus = re.compile(r'(?<! |"|\(|\[|\{|\$)(\+)(?! |"|\)|\]|\})')
 
     def check(self, line):
         if search := self.re_plus.search(line):
@@ -148,7 +148,7 @@ class ConflictMarkers():
 
 
 class DoubleSpace():
-    re_double_space = re.compile('.*\w  +\w')
+    re_double_space = re.compile(r'.*\w  +\w')
 
     def check(self, line):
         if search := self.re_double_space.search(line):
