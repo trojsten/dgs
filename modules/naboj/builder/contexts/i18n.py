@@ -11,6 +11,7 @@ class ContextI18n(context.FileSystemContext):
             'solutions': str,
             'answers': str,
             'modulo': str,
+            'evaluators': str,
         },
         'caption': {
             'table': str,

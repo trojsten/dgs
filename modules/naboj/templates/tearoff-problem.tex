@@ -25,7 +25,11 @@
             \hspace{(* competition.tearoff.team_space *)mm}%
             \textsf{%
                 \fontsize{18}{0}\selectfont (* team.code[:4] *)%
-                \textbf{\fontsize{28}{0}\selectfont (* team.code[4:] *)}%
+                \colorbox{(@ if team.venue_code[4] == 'S' @)black(@ else @)white(@ endif @)}{%
+                    \textcolor{(@ if team.venue_code[4] == 'S' @)white(@ else @)black(@ endif @)}{%
+                        \textbf{\fontsize{28}{0}\selectfont (* team.code[4:] *)}%
+                    }%
+                }%
                 \fontsize{18}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
                 \fontsize{18}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.code, problem.number)) *)(@ endblock checkdigit @)%
             }%
