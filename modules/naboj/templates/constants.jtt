@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.tex' @)
+(@ extends 'base-booklet.jtt' @)
 
 (@ block content @)
     \fancypagestyle{constants}{%
@@ -48,5 +48,5 @@
             \bottomrule
         \end{tabular*}
     \end{figure}
-    (@ include 'footer.tex' @)
+    (@ include 'footer.jtt' @)
 (@ endblock @)

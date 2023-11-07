@@ -11,12 +11,12 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
 
     root_context_class = BuildableContextLanguage
     templates = [
-        'booklet.tex',
-        'answers.tex',
-        'constants.tex',
-        'cover.tex',
-        'instructions-online.tex',
-        'online.tex',
+        'booklet.jtt',
+        'answers.jtt',
+        'constants.jtt',
+        'cover.jtt',
+        'instructions-online.jtt',
+        'online.jtt',
     ]
 
     def create_argument_parser(self):
@@ -31,10 +31,11 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
 
     def build(self):
         super().build()
-        for template in ['intro.tex']:
+        for template in ['intro.jtt']:
             jinja.print_template(
-                Path(self.launch_directory, *self.path(), '_extras'),
-                template, self.context.data, self.output_directory
+                Path(self.launch_directory, *self.path(), '_extras'), template, self.context.data,
+                outdir=self.output_directory,
+                new_name=Path(template).with_suffix('.tex'),
             )
 
 

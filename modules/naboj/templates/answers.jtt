@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.tex' @)
+(@ extends 'base-booklet.jtt' @)
 
 (@ block content @)
     \section{(* i18n[language.id].section.answers *)}
@@ -10,5 +10,5 @@
         \subsection{(* problem.number *)}%
         \protectedInput{\activeDirectory/answer.tex}%
     (@ endfor @)
-    (@ include 'footer.tex' @)
+    (@ include 'footer.jtt' @)
 (@ endblock @)
