@@ -10,7 +10,7 @@ import core.utilities.schema as sch
 class ContextNaboj(context.FileSystemContext):
     target = None
     subdir = None
-    competitions = ['phys', 'chem']
+    competitions = ['phys', 'chem', 'test']
     team = Schema({
         'id': And(int, lambda x: x >= 0 and x <= 9999),
         'code': str,
