@@ -32,11 +32,11 @@ class ContextCompetition(ContextNaboj):
                 Optional('siextra'): str,
             }
         },
-        'URL': And(str, len),
+        'URL': string,
         'full': {
-            'nominative': str,
-            'genitive': str,
-            'locative': str
+            'nominative': string,
+            'genitive': string,
+            'locative': string,
         },
         'hacks': dict,
     })
