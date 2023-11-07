@@ -5,8 +5,8 @@ import context
 class BuilderVolume(builder.BuilderVolume):
     root_context_class = context.ContextVolumeBooklet
     templates = [
-        'intro.tex',
-        'rules.tex',
+        'intro.jtt',
+        'rules.jtt',
     ]
     target = 'volume'
 

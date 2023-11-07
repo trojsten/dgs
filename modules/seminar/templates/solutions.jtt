@@ -1,4 +1,4 @@
-(@ extends 'base-booklets.tex' @)
+(@ extends 'base-booklets.jtt' @)
 
 (@ set kind = 'solution' @)
 (@ set kind_verbose = 'riešenia' @)

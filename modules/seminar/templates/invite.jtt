@@ -1,4 +1,4 @@
-(@ extends 'base.tex' @)
+(@ extends 'base.jtt' @)
 
 (@ block format @)
     \fancypagestyle{seminar-invite}{
