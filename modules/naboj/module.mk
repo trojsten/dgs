@@ -141,15 +141,15 @@ build/naboj/%/answers-modulo.tex: \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes in text format
-build/naboj/%/barcodes.txt: \
+build/naboj/%/barcodes.tex: \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes text -> PDF, one per page
 build/naboj/%/barcodes.pdf: \
-	build/naboj/%/barcodes.txt
+	build/naboj/%/barcodes.tex
 	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
-	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .txt,.ps,$<)
-	ps2pdf $(subst .txt,.ps,$<) $@.big
+	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .tex,.ps,$<)
+	ps2pdf $(subst .tex,.ps,$<) $@.big
 	pdfcrop $@.big $@
 
 

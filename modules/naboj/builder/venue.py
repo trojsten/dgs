@@ -11,7 +11,7 @@ class BuilderNabojVenue(builder.BuilderNaboj):
 
     root_context_class = BuildableContextVenue
     templates = [
-        'barcodes.txt',
+        'barcodes.jtt',
         'tearoff.jtt',
         'envelopes.jtt',
         'instructions.jtt',
