@@ -5,10 +5,10 @@ import context
 class BuilderRound(builder.BuilderRound):
     root_context_class = context.ContextBooklet
     templates = [
-        'problems.tex',
-        'solutions.tex',
-        'solutions-full.tex',
-        'instagram.tex',
+        'problems.jtt',
+        'solutions.jtt',
+        'solutions-full.jtt',
+        'instagram.jtt',
     ]
     target = 'round'
 

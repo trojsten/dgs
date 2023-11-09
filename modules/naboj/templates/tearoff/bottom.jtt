@@ -1,4 +1,4 @@
-(@ extends 'tearoff-problem.tex' @)
+(@ extends 'tearoff/problem.jtt' @)
 
 (@ block probnum @)0(@ endblock probnum @)
 

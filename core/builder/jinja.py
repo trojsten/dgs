@@ -3,6 +3,7 @@ import os
 import sys
 import itertools
 import logging
+from pathlib import Path
 
 from core.utilities import dicts, filters, colour as c, logger
 
@@ -70,10 +71,13 @@ def environment(directory):
     return env
 
 
-def print_template(root, template, context, output_directory=None, new_name=None):
+def print_template(root, template, context, *, outdir=None, new_name=None):
     """ Print a Jinja2 template with provided context """
-    template_path = f'{root}/{template}'
-    output_path = sys.stdout if output_directory is None else open(os.path.join(output_directory, template if new_name is None else new_name), 'w')
+    template_path = Path(root, template)
+    if outdir is None:
+        output_path = sys.stdout
+    else:
+        output_path = open(Path(outdir, template if new_name is None else new_name), 'w')
     try:
         logger.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
         print(
@@ -83,8 +87,6 @@ def print_template(root, template, context, output_directory=None, new_name=None
     except jinja2.exceptions.TemplateNotFound as e:
         logger.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
         raise e
-        sys.exit(41)
     except jinja2.exceptions.UndefinedError as e:
         logger.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
         raise e
-        sys.exit(43)

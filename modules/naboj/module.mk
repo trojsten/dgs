@@ -18,9 +18,9 @@ build/naboj/%.tex: source/naboj/%.md
 # prepare_arguments(target)
 # target = language | venue
 define prepare_arguments
+	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Building $(1) for $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
 endef
 
 build/naboj/%/build-language: \
@@ -46,31 +46,31 @@ build/naboj/%/build-venue: \
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/tearoff.tex: \
-	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-tearoff.tex \
-	modules/naboj/templates/$$(notdir $$@) \
-	modules/naboj/templates/tearoff-problem.tex \
-	modules/naboj/templates/tearoff-bottom.tex \
+	modules/naboj/templates/base.jtt \
+	modules/naboj/templates/base-tearoff.jtt \
+	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
+	modules/naboj/templates/tearoff/problem.jtt \
+	modules/naboj/templates/tearoff/bottom.jtt \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/envelopes.tex: \
-	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
-	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-booklet.tex \
-	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/base.jtt \
+	modules/naboj/templates/base-booklet.jtt \
+	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
     build/naboj/$$*/build-language ;
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
-	modules/naboj/templates/base.tex \
-	modules/naboj/templates/base-booklet.tex \
-	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/base.jtt \
+	modules/naboj/templates/base-booklet.jtt \
+	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
@@ -78,18 +78,18 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
 	build/naboj/$$*/build-language \
-	source/naboj/$$*/_extras/$$(notdir $$@) ;
+	source/naboj/$$*/_extras/$$(subst, jtt,tex,$$(notdir $$@)) ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/constants.tex: \
-	modules/naboj/templates/constants.tex \
+	modules/naboj/templates/constants.jtt \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/venues/<venues>
 build/naboj/%/instructions-inner.tex: \
-	source/naboj/$$*/instructions-inner.tex \
+	source/naboj/$$*/instructions-inner.jtt \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (full document)
@@ -141,15 +141,15 @@ build/naboj/%/answers-modulo.tex: \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes in text format
-build/naboj/%/barcodes.txt: \
+build/naboj/%/barcodes.tex: \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes text -> PDF, one per page
 build/naboj/%/barcodes.pdf: \
-	build/naboj/%/barcodes.txt
+	build/naboj/%/barcodes.tex
 	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
-	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .txt,.ps,$<)
-	ps2pdf $(subst .txt,.ps,$<) $@.big
+	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .tex,.ps,$<)
+	ps2pdf $(subst .tex,.ps,$<) $@.big
 	pdfcrop $@.big $@
 
 

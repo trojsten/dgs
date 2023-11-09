@@ -1,4 +1,4 @@
-(@ extends 'base-tearoff.tex' @)
+(@ extends 'base-tearoff.jtt' @)
 
 (@ block content @)
     \newgeometry{
@@ -13,12 +13,12 @@
     (@ for team_group in venue.teams_grouped @)
         (@ for problem in volume.problems @)
             (@ for team in team_group @)%
-                (@ include 'tearoff-problem.tex' @)
+                (@ include 'tearoff/problem.jtt' @)
                 (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
             (@ endfor @)
         (@ endfor @)
         (@ for team in team_group @)%
-            (@ include 'tearoff-bottom.tex' @)
+            (@ include 'tearoff/bottom.jtt' @)
             (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
         (@ endfor @)
     (@ endfor @)

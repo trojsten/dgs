@@ -1,4 +1,4 @@
-(@ extends 'base.tex' @)
+(@ extends 'base.jtt' @)
 
 (@ block documentclass @)oneside(@ endblock @)
 

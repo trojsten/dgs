@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.tex' @)
+(@ extends 'base-booklet.jtt' @)
 
 (@ block content @)
     \fancypagestyle{instructions-online}{%

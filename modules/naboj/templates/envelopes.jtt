@@ -1,4 +1,4 @@
-(@ extends 'base.tex' @)
+(@ extends 'base.jtt' @)
 
 (@ block specific @)
     \geometry{paper=c5paper, landscape}
