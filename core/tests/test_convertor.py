@@ -80,7 +80,7 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
+        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože(\n| )masívne\. Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
 
 
 class TestTags():
