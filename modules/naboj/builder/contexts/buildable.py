@@ -5,6 +5,7 @@ from schema import Schema, And, Optional
 
 import core.utilities.globals as glob
 from core.builder.context import BuildableContext, ContextModule
+from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
 from .i18n import ContextI18n, ContextI18nGlobal
@@ -15,6 +16,7 @@ class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMet
 
     def populate(self, competition, volume, venue):
         super().populate(competition)
+        NabojValidator(self.root).validate()
         self.adopt('module', ContextModule('naboj'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))

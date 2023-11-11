@@ -19,7 +19,7 @@ class NabojValidator(FileSystemValidator):
                 },
                 'answer.md': file,
                 Optional('meta.yaml'): file,
-                Optional(Regex(r'[a-z0-9-]+\.(png|svg|gp|py)')): file,
+                Optional(Regex(r'[a-z0-9-]+\.(png|svg|gp|py|dat)')): file,
             },
         },
         'languages': {

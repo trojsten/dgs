@@ -12,7 +12,6 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
     def __init__(self, root):
         self.root = Path(root)
         self.tree = self.scan(self.root)
-        self.validate()
 
     def scan(self, path):
         if path.name[0] == '.':
