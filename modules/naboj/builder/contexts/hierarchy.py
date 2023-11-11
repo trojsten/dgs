@@ -8,6 +8,7 @@ from core.utilities.schema import string, valid_language
 from .base import ContextNaboj
 
 
+
 class ContextCompetition(ContextNaboj):
     schema = Schema({
         'id': string,
@@ -33,11 +34,6 @@ class ContextCompetition(ContextNaboj):
             }
         },
         'URL': string,
-        'full': {
-            'nominative': string,
-            'genitive': string,
-            'locative': string,
-        },
         'hacks': dict,
     })
 

@@ -33,7 +33,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         super().build()
         for template in ['intro.jtt']:
             jinja.print_template(
-                Path(self.launch_directory, *self.path(), '_extras'), template, self.context.data,
+                Path(self.launch_directory, *self.path()), template, self.context.data,
                 outdir=self.output_directory,
                 new_name=Path(template).with_suffix('.tex'),
             )

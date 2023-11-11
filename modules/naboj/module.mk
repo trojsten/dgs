@@ -7,10 +7,17 @@ source/naboj/%/i18n: \
 	$$(wildcard source/naboj/$$*/.static/i18n/*.yaml) ;
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
-# % <competition>/<volume>/languages/<language>/<problem>
+# % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
-build/naboj/%.tex: source/naboj/%.md
-	$(eval language := $(word 4,$(subst /, ,$*)))
+
+build/naboj/%/answer.tex: \
+	source/naboj/$$*/../answer.md
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
+build/naboj/%.tex: \
+	source/naboj/%.md
+	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
 # % <competition>/<volume>/languages/<language>
@@ -78,7 +85,7 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
 	build/naboj/$$*/build-language \
-	source/naboj/$$*/_extras/$$(subst, jtt,tex,$$(notdir $$@)) ;
+	source/naboj/$$*/$$(subst tex,jtt,$$(notdir $$@)) ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
@@ -113,25 +120,32 @@ build/naboj/%/instructions-online.tex: \
 	build/naboj/$$*/build-language ;
 
 # PDF prerequisites (pictures, graphs, meta files)
-# % <competition>/<volume>/languages/<language>
+# % <competition>/<volume>
 build/naboj/%/pdf-prerequisites: \
-	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
-	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.png)) \
-	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.pdf)) \
-	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
-	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
-	$$(wildcard source/naboj/$$*/*/meta.yaml) \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.pdf)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.pdf)) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.svg))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
+	$$(wildcard source/naboj/$$*/meta.yaml) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
 # All problems
+# <competition>/<volume>
 build/naboj/%/problems: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/problem.md))) ;
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
 
 build/naboj/%/solutions: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/solution.md))) ;
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
 
 build/naboj/%/answers: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/*/answer.md))) ;
+	$$(addsuffix answer.tex,$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/))) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) ;
 
 ### Venues ######################################
 
@@ -160,10 +174,10 @@ build/naboj/%/barcodes.pdf: \
 # Full booklet
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet.pdf: \
-	build/naboj/%/problems \
-	build/naboj/%/solutions \
-	build/naboj/%/answers \
-	build/naboj/%/pdf-prerequisites \
+	build/naboj/%/../../problems \
+	build/naboj/%/../../solutions \
+	build/naboj/%/../../answers \
+	build/naboj/%/../../pdf-prerequisites \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

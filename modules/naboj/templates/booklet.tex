@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.jtt' @)
+(@ extends 'base-booklet.tex' @)
 
 (@ block content @)
     \setcounter{volume}{(* volume.number *)}%
@@ -42,7 +42,7 @@
             \setcounter{equation}{0}%
             \setcounter{table}{0}%
             \setcounter{figure}{0}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
@@ -53,7 +53,7 @@
             }%
             \label{ssc:(* problem.id*)-solution}%
             \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
+            \protectedInput{\activeDirectory/solution.tex}%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -63,7 +63,7 @@
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
@@ -74,10 +74,8 @@
             }%
             \label{ssc:(* problem.id*)-answer}%
             \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
-
-            \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}
+            \protectedInput{\activeDirectory/answer.tex}%
         (@ endfor @)
     (@ endif @)
-    (@ include 'footer.jtt' @)
+    (@ include 'footer.tex' @)
 (@ endblock @)
