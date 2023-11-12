@@ -40,7 +40,7 @@ build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../.static/logo/logo.pdf)) \
 	source/naboj/$$*/meta.yaml \
-	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml ;
+	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml
 	$(call prepare_arguments,language)
 	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
@@ -51,7 +51,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
-	source/naboj/$$*/../../../i18n ;
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
@@ -61,21 +61,21 @@ build/naboj/%/build-venue: \
 build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-tearoff.jtt \
-	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	modules/naboj/templates/tearoff/problem.jtt \
 	modules/naboj/templates/tearoff/bottom.jtt \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/envelopes.tex: \
-	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
     build/naboj/$$*/build-language ;
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
@@ -83,7 +83,7 @@ build/naboj/%/online.tex: \
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/$$(subst tex,jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
@@ -91,7 +91,7 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
 	build/naboj/$$*/build-language \
-	source/naboj/$$*/$$(subst tex,jtt,$$(notdir $$@)) ;
+	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
@@ -157,7 +157,7 @@ build/naboj/%/answers: \
 
 # Answers-modulo
 build/naboj/%/answers-modulo.tex: \
-	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes in text format
@@ -212,8 +212,8 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/answers.pdf: \
-	build/naboj/%/answers \
-	build/naboj/%/pdf-prerequisites \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers.tex
 	$(call double_xelatex,naboj)
 
@@ -289,6 +289,8 @@ output/naboj/%/answers-modulo.pdf: \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers-modulo.tex
 	$(call double_xelatex,naboj)
 

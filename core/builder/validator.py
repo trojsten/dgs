@@ -4,20 +4,23 @@ from pathlib import Path
 
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
+    IGNORED = ['.git']
+    _schema: Schema | None = None
+
     @property
     def schema(self) -> Schema:
-       pass
+        return self._schema
 
     def __init__(self, root):
         self.root = Path(root)
         self.tree = self.scan(self.root)
 
     def scan(self, path):
-        if path.name[0] == '.':
+        if path.name in self.IGNORED:
             return None
         if path.is_dir():
             return {
-                child.name: self.scan(Path(child)) for child in path.iterdir() if child.name[0] != '.'
+                child.name: self.scan(Path(child)) for child in path.iterdir() if child.name[0] not in self.IGNORED
             }
         else:
             return open(path, 'r')

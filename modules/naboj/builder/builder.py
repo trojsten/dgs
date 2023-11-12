@@ -1,15 +1,12 @@
+import abc
 import sys
 
 sys.path.append('.')
 
 from core.builder import builder
-from contexts import ContextNaboj
 
 
-class BuilderNaboj(builder.BaseBuilder):
-    class Meta:
-        abstract = True
-
+class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
     module = 'naboj'
 
     def create_argument_parser(self):

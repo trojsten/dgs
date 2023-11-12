@@ -6,9 +6,10 @@
     (@ for problem in volume.problems @)%
         \setcounter{volume}{(* volume.number *)}%
         \setcounter{problem}{(* problem.number *)}%
-        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+        \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
         \subsection{(* problem.number *)}%
-        \protectedInput{\activeDirectory/answer.tex}%
+        \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
+        \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}
     (@ endfor @)
     (@ include 'footer.jtt' @)
 (@ endblock @)

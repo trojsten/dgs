@@ -23,10 +23,10 @@ class BuilderNabojVenue(builder.BuilderNaboj):
         self.parser.add_argument('venue', type=str)
 
     def id(self):
-        return (self.args.competition, self.args.volume, self.args.venue)
+        return self.args.competition, self.args.volume, self.args.venue
 
     def path(self):
-        return (self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.venue)
+        return self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.venue
 
     def build(self):
         super().build()

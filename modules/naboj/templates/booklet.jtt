@@ -75,7 +75,6 @@
             \label{ssc:(* problem.id*)-answer}%
             \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
-
             \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}
         (@ endfor @)
     (@ endif @)
