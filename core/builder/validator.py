@@ -1,5 +1,4 @@
 import abc
-import pprint
 from schema import Schema
 from pathlib import Path
 

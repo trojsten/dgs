@@ -76,10 +76,9 @@ class ContextNaboj(context.FileSystemContext):
             result.append(competition)
             if volume is not None:
                 result.append(f'{volume:02d}')
-                if self.target is not None:
+                if self.target is not None and issue is not None:
                     result.append(sub)
-                    if issue is not None:
-                        result.append(issue)
+                    result.append(issue)
         return tuple(result)
 
     def ident(self, competition=None, volume=None, issue=None):

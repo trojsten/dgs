@@ -32,9 +32,9 @@ class NabojValidator(FileSystemValidator):
         },
         'venues': {
             Regex(r'[a-z]+'): {
+                'instructions-inner.jtt': file,
                 'meta.yaml': file,
             },
         },
         'meta.yaml': file,
     })
-

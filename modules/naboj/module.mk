@@ -11,7 +11,7 @@ source/naboj/%/i18n: \
 # Overrides global convertor!
 
 build/naboj/%/answer.tex: \
-	source/naboj/$$*/../answer.md
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../answer.md))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
@@ -19,6 +19,12 @@ build/naboj/%.tex: \
 	source/naboj/%.md
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
+
+
+define truepath
+	$$(subst $$(cdir),,$(1))
+endef 
+
 
 # % <competition>/<volume>/languages/<language>
 
@@ -32,7 +38,7 @@ endef
 
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
-	build/naboj/$$*/../../../.static/logo/logo.pdf \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../.static/logo/logo.pdf)) \
 	source/naboj/$$*/meta.yaml \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml ;
 	$(call prepare_arguments,language)
@@ -174,10 +180,10 @@ build/naboj/%/barcodes.pdf: \
 # Full booklet
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet.pdf: \
-	build/naboj/%/../../problems \
-	build/naboj/%/../../solutions \
-	build/naboj/%/../../answers \
-	build/naboj/%/../../pdf-prerequisites \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

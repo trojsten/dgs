@@ -23,3 +23,6 @@
 [submodule "source/seminar/FX"]
 	path = source/seminar/FX
 	url = git@github.com:TrojstenSK/FX-problems
+[submodule "source/naboj/test"]
+	path = source/naboj/test
+	url = git@github.com:TrojstenSK/dgs-naboj-testing

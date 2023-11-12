@@ -5,47 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="216217c4-343b-40c1-a3e7-2e1429f610c6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/dgs.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/builder/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/builder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/source/naboj/test" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/core/builder/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/tests/test_context.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/tests/test_context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/tests/test_convertor.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/tests/test_convertor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utilities/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utilities/context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utilities/dicts.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utilities/dicts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/utilities/schema.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utilities/schema.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/builder/validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/validator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/base.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/buildable.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/buildable.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/hierarchy.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/hierarchy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/i18n.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/i18n.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/language.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/language.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/venue.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/venue.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/link-pictures.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/link-pictures.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/scholar/builder/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/scholar/builder/context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/scholar/builder/contexts/handout.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/scholar/builder/contexts/handout.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/scholar/builder/contexts/hierarchy.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/scholar/builder/contexts/hierarchy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/scholar/builder/contexts/homework.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/scholar/builder/contexts/homework.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/seminar/builder/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/seminar/builder/context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/bratislava-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/bratislava-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/bratislava-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/bratislava-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/budapest-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/budapest-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/budapest-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/budapest-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/gdańsk/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/gdańsk/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/košice-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/košice-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/košice-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/košice-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/madrid-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/madrid-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/madrid-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/madrid-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/ostrava-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/ostrava-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/ostrava-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/ostrava-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/praha-junior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/praha-junior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/praha-senior/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/praha-senior/meta.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/venues/test/meta.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/venues/test/meta.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/validators.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/naboj/module.mk" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/module.mk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/naboj/templates/online.jtt" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/templates/online.jtt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,25 +39,30 @@
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;naboj-extra-tearoff&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/kvik/dgs&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.smartKeys&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "naboj-structure",
+    "last_opened_file_path": "/home/kvik/dgs",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.keymap",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/modules/naboj/builder/contexts" />
+    </key>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -94,7 +73,8 @@
       <updated>1698931903550</updated>
       <workItem from="1698931904738" duration="11000" />
       <workItem from="1698931923965" duration="7026000" />
-      <workItem from="1698948416065" duration="3933000" />
+      <workItem from="1698948416065" duration="5967000" />
+      <workItem from="1699747262320" duration="4390000" />
     </task>
     <servers />
   </component>

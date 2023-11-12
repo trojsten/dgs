@@ -13,10 +13,12 @@ from .i18n import ContextI18n, ContextI18nGlobal
 
 class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
     schema = ContextNaboj.schema
+    validator_class = NabojValidator
 
     def populate(self, competition, volume, venue):
+        self.validate_repo(competition, volume)
         super().populate(competition)
-        NabojValidator(self.root).validate()
+
         self.adopt('module', ContextModule('naboj'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))
@@ -25,6 +27,17 @@ class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMet
 class BuildableContextLanguage(BuildableContextNaboj):
     target = 'language'
     subdir = 'languages'
+    schema = Schema({
+        'language': {
+            'id': str,
+            'polyglossia': str,
+            Optional('rtl', default=False): bool,
+        }
+    })
+
+    def __init__(self, *args):
+        self.schema = sch.merge(super().schema, self.schema)
+        super().__init__(*args)
 
     def populate(self, competition, volume, language):
         super().populate(competition, volume, language)
@@ -39,7 +52,7 @@ class BuildableContextVenue(BuildableContextNaboj):
         'language': {
             'id': str,
             'polyglossia': str,
-            Optional('rtl'): bool,
+            Optional('rtl', default=False): bool,
         }
     })
 
@@ -57,5 +70,5 @@ class BuildableContextVenue(BuildableContextNaboj):
             } | glob.languages[self.data['venue']['language']]
         })
 
-        if not 'start' in self.data['venue']:
+        if 'start' not in self.data['venue']:
             self.data['venue']['start'] = self.data['volume']['start']

@@ -31,7 +31,7 @@ def get_branch(cwd=None) -> str:
     return check_output(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"], cwd=cwd)
 
 
-def merge(parent: Schema, *children: Iterable[Schema]) -> Schema:
+def merge(parent: Schema, *children: Schema) -> Schema:
     """ Merge an existing Schema with each in a list of child Schemas """
     for child in children:
         parent = merge_one(parent, child)

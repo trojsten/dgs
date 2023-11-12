@@ -1,3 +1,4 @@
+import abc
 import math
 import copy
 import os
@@ -98,12 +99,14 @@ class Context(metaclass=ABCMeta):
         return self.add({'id': id})
 
 
-class FileSystemContext(Context):
+class FileSystemContext(Context, metaclass=abc.ABCMeta):
     """
     Context that is reasonably well mapped to a repository path.
     Can load files, meta.yaml, has node_path
     """
     arg_schema = None
+    subcontext_key = None
+    subcontext_class = None
 
     def __init__(self, root, *path, **defaults):
         if self.arg_schema is not None:
@@ -143,9 +146,11 @@ class FileSystemContext(Context):
         """ Fill the context with data from the filesystem """
 
     def add_subdirs(self, *subcontext_args):
-        logger.debug(f"Adding subdirs to {self.__class__.__name__}: {self.subcontext_class.__name__} with args {subcontext_args}")
+        logger.debug(f"Adding subdirs to {self.__class__.__name__}: "
+                     f"{self.subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add_list(self.subcontext_key, [self.subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])
+        self.add_list(self.subcontext_key,
+                      [self.subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])
 
 
 class BuildableContext(Context):
@@ -153,6 +158,11 @@ class BuildableContext(Context):
     Only some contexts are meant to be built directly. This class provides a common ancestor.
     Currently only useful for sanity checks.
     """
+
+    validator_class = None
+
+    def validate_repo(self, *path):
+        self.validator_class(self.node_path(*path)).validate()
 
 
 class ContextModule(Context):
