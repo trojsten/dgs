@@ -66,6 +66,7 @@ def environment(directory):
         'checkdigit': filters.check_digit,
         'plural': filters.plural,
         'textbf': filters.textbf,
+        'path_exists': lambda x: os.path.exists(x),
     }
 
     return env

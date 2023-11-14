@@ -41,11 +41,11 @@ endef
 
 # _pandoc(language, format, pretty_format)
 define _pandoc
-	@echo -e '$(c_action)[pandoc] Converting \
+	@echo -e '$(c_action)[convert] Converting \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$<$(c_action) to \
-		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/convert.py $(2) $(1) $< $@ || exit 1;
+	@python3 core/convert.py $(2) $(1) $< $@ || exit 1;
 endef
 
 # pandoctex(language)

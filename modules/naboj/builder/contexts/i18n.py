@@ -1,3 +1,4 @@
+import yaml
 from pathlib import Path
 from schema import Schema
 
@@ -12,10 +13,6 @@ class ContextI18n(context.FileSystemContext):
             'answers': str,
             'modulo': str,
             'evaluators': str,
-        },
-        'caption': {
-            'table': str,
-            'figure': str,
         },
         'competition': {
             'name': {
@@ -35,6 +32,9 @@ class ContextI18n(context.FileSystemContext):
             'symbol': str,
             'value': str,
         },
+        'answers': {
+            'interval': str,
+        },
         'tearoff': {
             'team': str,
             'bottom': str,
@@ -48,10 +48,19 @@ class ContextI18n(context.FileSystemContext):
         'physics_constants': {
             str: str
         },
+        'crossref': {
+            'tblPrefix': str,
+            'figPrefix': str,
+            'eqnPrefix': str,
+            'figureTitle': str,
+            'tableTitle': str,
+        }
     })
 
     def populate(self, competition, language):
-        self.load_YAML(self.root, competition, '.static', 'i18n', language + '.yaml')
+        self.load_yaml(self.root, competition, '.static', 'i18n', language + '.yaml')
+        contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
+        self.add({'crossref': contents})
 
     def node_path(self, competition=None, language=None):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')

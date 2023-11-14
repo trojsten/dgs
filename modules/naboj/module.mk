@@ -10,8 +10,8 @@ source/naboj/%/i18n: \
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
 
-build/naboj/%/answer.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../answer.md))
+build/naboj/%/answer.tex build/naboj/%/answer-interval.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
@@ -20,11 +20,9 @@ build/naboj/%.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
-
 define truepath
 	$$(subst $$(cdir),,$(1))
 endef 
-
 
 # % <competition>/<volume>/languages/<language>
 
@@ -90,8 +88,8 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
-	build/naboj/$$*/build-language \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) ;
+	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	build/naboj/$$*/build-language ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
@@ -101,8 +99,8 @@ build/naboj/%/constants.tex: \
 
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/venues/<venues>
-build/naboj/%/instructions-inner.tex: \
-	source/naboj/$$*/instructions-inner.jtt \
+build/naboj/%/instructions-inner.tex build/naboj/%/evaluators.tex: \
+	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (full document)
@@ -151,13 +149,15 @@ build/naboj/%/solutions: \
 
 build/naboj/%/answers: \
 	$$(addsuffix answer.tex,$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) ;
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) \
+	$$(addsuffix answer-interval.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-interval.md),$$(wildcard $$(dir $$(int))*/)))) ;
 
 ### Venues ######################################
 
 # Answers-modulo
 build/naboj/%/answers-modulo.tex: \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/answer.jtt \
+	modules/naboj/templates/answers-modulo.jtt \
 	build/naboj/$$*/build-venue ;
 
 # Barcodes in text format
@@ -255,9 +255,6 @@ output/naboj/%/booklets: \
 # <competition>/<volume>
 output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) ;
-
-
-
 
 # Tearoffs, three problems per page, aligned for cutting
 output/naboj/%/tearoff.pdf: \

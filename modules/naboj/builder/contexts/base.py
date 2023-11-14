@@ -1,7 +1,7 @@
 import os
 import datetime
 from pathlib import Path
-from schema import Schema, Optional, And, Or, Regex
+from schema import Schema, And, Or, Regex
 
 from core.builder import context
 import core.utilities.schema as sch
@@ -12,7 +12,7 @@ class ContextNaboj(context.FileSystemContext):
     subdir = None
     competitions = ['phys', 'chem', 'test']
     team = Schema({
-        'id': And(int, lambda x: x >= 0 and x <= 9999),
+        'id': And(int, lambda x: 0 <= x <= 9999),
         'code': str,
         'contact_email': And(str, len),
         'contact_name': And(str, len),

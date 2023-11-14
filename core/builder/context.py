@@ -1,15 +1,11 @@
 import abc
-import math
 import copy
-import os
 import pprint
-import sys
 import yaml
 import logging
 from pathlib import Path
-from typing import Iterable
 from abc import ABCMeta, abstractmethod
-from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And, Or, Optional
+from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
 
 from core.utilities import dicts, colour as c, crawler, schema
 
@@ -38,17 +34,14 @@ class Context(metaclass=ABCMeta):
 
     def validate(self):
         if self.schema is None:
-            logger.warn(f"No schema defined for {self.__class__.__name__}, skipping validation")
+            logger.warning(f"No schema defined for {self.__class__.__name__}, skipping validation")
         else:
             try:
                 self.schema.validate(self.data)
-            except (SchemaMissingKeyError, SchemaError) as exc:
+            except (SchemaMissingKeyError, SchemaWrongKeyError, SchemaError) as exc:
                 logger.error(f"Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
-                self.print()
-                logger.error("against schema")
-                pprint.pprint(self.schema._schema, width=120)
+                pprint.pprint(self.schema)
                 raise exc
-                sys.exit(-1)
 
     def add(self, *dictionaries, overwrite=True):
         """ Merge a list of dictionaries into this context, overwriting existing keys """
@@ -84,7 +77,7 @@ class Context(metaclass=ABCMeta):
         return self
 
     def override(self, key, ctx):
-        if not key in self.data:
+        if key not in self.data:
             self.data[key] = ctx[key]
 
         return self
@@ -95,8 +88,8 @@ class Context(metaclass=ABCMeta):
     def add_number(self, number):
         return self.add({'number': number})
 
-    def add_id(self, id):
-        return self.add({'id': id})
+    def add_id(self, new_id):
+        return self.add({'id': new_id})
 
 
 class FileSystemContext(Context, metaclass=abc.ABCMeta):
@@ -117,25 +110,25 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         self.populate(*path)
         self.validate()
 
-    def name(self, *path):
+    @staticmethod
+    def name(*path):
         return '/'.join(*path)
 
-    def load_YAML(self, *args):
+    def load_yaml(self, *args):
+        filename = Path(*args)
         try:
-            filename = os.path.join(*args)
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
             logger.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
-            sys.exit(43)
 
         self.data = contents
         return self
 
     def load_meta(self, *path):
         logger.debug(f"Loading meta for {self.__class__.__name__} from {path}")
-        return self.load_YAML(self.node_path(*path) / 'meta.yaml')
+        return self.load_yaml(self.node_path(*path) / 'meta.yaml')
 
     @abstractmethod
     def node_path(self, *args):

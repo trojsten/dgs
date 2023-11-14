@@ -8,17 +8,17 @@ from core.builder.context import FileSystemContext, BuildableContext, ContextMod
 
 
 class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
-    def ident(self, competition=None, volume=None, semester=None, round=None, problem=None):
+    def ident(self, competition=None, volume=None, semester=None, issue=None, problem=None):
         return (
             self.default(competition),
             self.default(volume, lambda x: f'{x:02d}'),
             self.default(semester, str),
-            self.default(round, str),
+            self.default(issue, str),
             self.default(problem, lambda x: f'{x:02d}'),
         )
 
-    def node_path(self, competition=None, volume=None, semester=None, round=None, problem=None):
-        return Path(self.root, *self.ident(competition, volume, semester, round, problem))
+    def node_path(self, competition=None, volume=None, semester=None, issue=None, problem=None):
+        return Path(self.root, *self.ident(competition, volume, semester, issue, problem))
 
 
 class ContextCompetition(ContextSeminar):
@@ -31,8 +31,8 @@ class ContextCompetition(ContextSeminar):
             Optional('locative'): And(str, len),
         }),
         'urls': Schema({
-            'web': And(str, len),       # set this to valid URL
-            'submit': And(str, len),    # and here too
+            'web': And(str, len),  # set this to valid URL
+            'submit': And(str, len),  # and here too
         }),
         'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
         'categories': [[], [And(str, len)]],
@@ -99,8 +99,8 @@ class ContextSemester(ContextSeminar):
 
 
 class ContextSemesterFull(ContextSemester):
-    def populate(self, root, competition, volume, semester):
-        self.add_children(ContextRoundFull, 'rounds', (root, competition, volume, semester))
+    def populate(self, competition, volume, semester):
+        self.add_children(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
 
 class ContextRound(ContextSeminar):
@@ -121,23 +121,22 @@ class ContextRound(ContextSeminar):
         'number': int,
     })
 
-    def populate(self, competition, volume, semester, round):
-        self.load_meta(competition, volume, semester, round) \
-            .add_id(str(round)) \
-            .add_number(round)
+    def populate(self, competition, volume, semester, issue):
+        self.load_meta(competition, volume, semester, issue) \
+            .add_id(str(issue)) \
+            .add_number(issue)
 
 
 class ContextProblem(ContextSeminar):
     persons = Or('',
-        [{
-            'name': str,
-            'gender': Or('f', 'm', '?'),
-        }]
-    )
+                 [{
+                     'name': str,
+                     'gender': Or('f', 'm', '?'),
+                 }])
     schema = Schema({
         'title': And(str, len),
         'categories': list,
-        'number': And(int, lambda x: x >= 1 and x <= 8),
+        'number': And(int, lambda x: 1 <= x <= 8),
         'id': str,
         'evaluation': persons,
         'solution': persons,
@@ -149,8 +148,8 @@ class ContextProblem(ContextSeminar):
 
     })
 
-    def populate(self, competition, volume, semester, round, problem):
-        self.load_meta(competition, volume, semester, round, problem) \
+    def populate(self, competition, volume, semester, issue, problem):
+        self.load_meta(competition, volume, semester, issue, problem) \
             .add_id(f'{problem:02d}') \
             .add_number(problem)
 
@@ -162,14 +161,15 @@ class ContextProblem(ContextSeminar):
 class ContextRoundFull(ContextRound):
     subcontext_class = ContextProblem
 
-    def populate(self, competition, volume, semester, round):
-        super().populate(competition, volume, semester, round)
+    def populate(self, competition, volume, semester, issue):
+        super().populate(competition, volume, semester, issue)
         count = len(ContextVolume(self.root, competition, volume).data['categories'])
 
         self.add_list('problems', [
-            self.subcontext_class(self.root, competition, volume, semester, round, problem)
+            self.subcontext_class(self.root, competition, volume, semester, issue, problem)
             for problem in range(1, count + 1)
         ])
+
 
 """ Buildable contexts """
 
@@ -192,9 +192,9 @@ class ContextSemesterBooklet(ContextSeminar):
 class ContextBooklet(BuildableContext, ContextSeminar):
     schema = Schema({})  # fix this
 
-    def populate(self, competition, volume, semester, round):
+    def populate(self, competition, volume, semester, issue):
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))
         self.adopt('semester', ContextSemester(self.root, competition, volume, semester))
-        self.adopt('round', ContextRoundFull(self.root, competition, volume, semester, round))
+        self.adopt('round', ContextRoundFull(self.root, competition, volume, semester, issue))

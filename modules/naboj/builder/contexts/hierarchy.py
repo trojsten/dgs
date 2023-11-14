@@ -8,7 +8,6 @@ from core.utilities.schema import string, valid_language
 from .base import ContextNaboj
 
 
-
 class ContextCompetition(ContextNaboj):
     schema = Schema({
         'id': string,
@@ -81,7 +80,7 @@ class ContextVenue(ContextNaboj):
         'problems_modulo': [[ContextNaboj.problem]],
         Optional('orgs'): [And(str, len)],
         'evaluators': int,
-        'start': And(int, lambda x: x >= 0 and x < 1440),
+        'start': And(int, lambda x: 0 <= x < 1440),
     })
 
     def _add_extra_teams(self, competition, venue):
@@ -123,7 +122,8 @@ class ContextVenue(ContextNaboj):
                 lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page']
             ),
             'problems_modulo': lists.split_mod(
-                lists.add_numbers([x['id'] for x in vol.data['problems']], itertools.count(1)), self.data['evaluators'], first=1
+                lists.add_numbers([x['id'] for x in vol.data['problems']], itertools.count(1)),
+                self.data['evaluators'], first=1,
             ),
         })
 
@@ -137,7 +137,7 @@ class ContextVolume(ContextNaboj):
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,
-        'start': And(int, lambda x: x >= 0 and x < 1440),
+        'start': And(int, lambda x: 0 <= x < 1440),
         'year': And(int, lambda x: x >= 1950),
     })
 

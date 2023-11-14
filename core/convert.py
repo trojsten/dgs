@@ -25,13 +25,16 @@ class CLIInterface():
         parser.add_argument('locale',   choices=Convertor.languages.keys())
         parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
         parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+        parser.add_argument('--verbose', action='store_true')
         return parser.parse_args()
 
     def fail(self):
-        print(f"{c.err('pandoc-convert: failure on ')}{c.path(self.args.infile.name)}")
+        print(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
         sys.exit(-1)
 
     def finish(self):
-        print(f"pandoc-convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
+        if self.args.verbose:
+            print(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
+
 
 CLIInterface()
