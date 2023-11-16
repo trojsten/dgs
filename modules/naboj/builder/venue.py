@@ -14,7 +14,7 @@ class BuilderNabojVenue(builder.BuilderNaboj):
         'instructions.jtt',
         'answers-modulo.jtt',
     ]
-    i18n_templates = ['instructions-inner.jtt']
+    i18n_templates = ['instructions-inner.jtt', 'evaluators.jtt']
 
     def create_argument_parser(self):
         super().create_argument_parser()

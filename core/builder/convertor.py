@@ -95,8 +95,8 @@ class Convertor:
     pre_regexes = {
         'all': [
             RegexReplacement(r'^%.*$', r'', purpose="Comment"),
-            RegexReplacement(r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
-            RegexReplacement(r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
+            RegexReplacement(r'(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
+            RegexReplacement(r'(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),

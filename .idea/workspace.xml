@@ -5,47 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="216217c4-343b-40c1-a3e7-2e1429f610c6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/modules/naboj/templates/answer.jtt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/modules/naboj/scripts/link.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/builder/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/builder/jinja.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/jinja.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/convert.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/convert.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/i18n/hu/crossref.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/core/i18n/hu/crossref.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/i18n/pl/crossref.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/core/i18n/pl/crossref.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/i18n/ru/crossref.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/core/i18n/ru/crossref.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/tex/utilities.tex" beforeDir="false" afterPath="$PROJECT_DIR$/core/tex/utilities.tex" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/builder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/buildable.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/buildable.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/hierarchy.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/hierarchy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/i18n.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/i18n.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/builder/validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/builder/validator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/utilities/colour.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utilities/colour.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/utilities/schema.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/utilities/schema.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/builder/contexts/validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/contexts/validators.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/builder/language.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/language.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/builder/venue.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/builder/venue.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/module.mk" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/module.mk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/naboj/templates/answer.jtt" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/templates/answer.jtt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/naboj/templates/answers-modulo.jtt" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/templates/answers-modulo.jtt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/templates/answers.jtt" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/templates/answers.jtt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/naboj/templates/base-booklet.jtt" beforeDir="false" afterPath="$PROJECT_DIR$/modules/naboj/templates/base-booklet.jtt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/seminar/builder/context.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/seminar/builder/context.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/source/naboj/phys" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/cs.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/cs.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/en.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/en.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/es.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/es.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/fa.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/fa.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/hu.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/hu.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/pl.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/pl.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/ru.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/ru.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/sk.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/.static/i18n/sk.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/24/languages/fa/candles/problem.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/24/languages/fa/candles/problem.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/languages/en/crossbar/solution.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/languages/en/crossbar/solution.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/languages/sk/crossbar/solution.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/languages/sk/crossbar/solution.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/naboj/phys/26/languages/sk/wings-for-life/solution.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/naboj/phys/26/languages/sk/wings-for-life/solution.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -70,18 +53,19 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;naboj-structure&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/kvik/dgs/source/naboj/test/.static/i18n&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/kvik/dgs/source/naboj/test/01/languages/en&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.smartKeys&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;TexifyConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/source/naboj/test/01/languages/en" />
       <recent name="$PROJECT_DIR$/source/naboj/test/.static/i18n" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -100,7 +84,8 @@
       <workItem from="1698931923965" duration="7026000" />
       <workItem from="1698948416065" duration="5967000" />
       <workItem from="1699747262320" duration="4390000" />
-      <workItem from="1699882104386" duration="13008000" />
+      <workItem from="1699882104386" duration="21052000" />
+      <workItem from="1700131731966" duration="9448000" />
     </task>
     <servers />
   </component>

@@ -25,5 +25,12 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         else:
             return open(path, 'r')
 
-    def validate(self):
+    def validate(self) -> None:
         self.schema.validate(self.tree)
+        self.perform_extra_checks()
+
+    def perform_extra_checks(self) -> None:
+        """
+        Extra checks that are impossible or cumbersome to implement with schema.
+        Runs *after* schema validation.
+        """

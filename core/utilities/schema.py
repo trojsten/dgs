@@ -1,12 +1,11 @@
 import os
 import subprocess
-from typing import Iterable
 from schema import Schema, And, Or, Regex
 
 import core.utilities.globals as glob
 
 
-def string(x: str) -> bool:
+def string(x: str) -> And:
     """ Is non-empty string """
     return And(str, len)
 
@@ -15,7 +14,7 @@ def valid_language(code: str) -> bool:
     return code in glob.languages.keys()
 
 
-def commit_hash(code: str) -> bool:
+def commit_hash(code: str) -> Regex:
     return Regex(r'[a-f0-9]+')
 
 

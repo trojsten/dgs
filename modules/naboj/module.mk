@@ -10,7 +10,12 @@ source/naboj/%/i18n: \
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
 
-build/naboj/%/answer.tex build/naboj/%/answer-interval.tex: \
+build/naboj/%/answer.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
+build/naboj/%/answer-interval.tex: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
@@ -98,10 +103,14 @@ build/naboj/%/constants.tex: \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)
-# % <competition>/<volume>/venues/<venues>
-build/naboj/%/instructions-inner.tex build/naboj/%/evaluators.tex: \
+# % <competition>/<volume>/venues/<venue>
+build/naboj/%/instructions-inner.tex: \
 	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-language ;
+
+build/naboj/%/evaluators.tex: \
+	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	build/naboj/$$*/build-venue ;
 
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/venues/<venue>
@@ -279,8 +288,8 @@ output/naboj/%/instructions.pdf: \
 	source/naboj/%/i18n
 	$(call double_xelatex,naboj)
 
+# <competition>/<volume>/venues/<venue>
 output/naboj/%/answers-modulo.pdf: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/answer.md))))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png)))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \
@@ -288,7 +297,8 @@ output/naboj/%/answers-modulo.pdf: \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
-	build/naboj/%/answers-modulo.tex
+	build/naboj/%/answers-modulo.tex \
+	build/naboj/%/evaluators.tex
 	$(call double_xelatex,naboj)
 
 

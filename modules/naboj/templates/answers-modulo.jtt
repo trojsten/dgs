@@ -8,7 +8,7 @@
 
     \section{(* i18n[language.id].section.answers *)}
     \pagestyle{answers}
-    \protectedInput{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/evaluators.tex}
+    \protectedInput{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/evaluators.tex}
     (@ for modulo in venue.problems_modulo @)
         \newpage%
         \section{(* i18n[language.id].section.modulo *) (* loop.index0 *)}

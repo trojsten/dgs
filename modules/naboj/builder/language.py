@@ -15,7 +15,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         'instructions-online.jtt',
         'online.jtt',
     ]
-    i18n_templates = ['intro.jtt', 'evaluators.jtt']
+    i18n_templates = ['intro.jtt']
 
     def create_argument_parser(self):
         super().create_argument_parser()

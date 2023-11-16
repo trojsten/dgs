@@ -26,3 +26,6 @@
 [submodule "source/naboj/test"]
 	path = source/naboj/test
 	url = git@github.com:TrojstenSK/dgs-naboj-testing
+[submodule "source/scholar/STA"]
+	path = source/scholar/STA
+	url = git@github.com:sesquideus/teaching-STA

@@ -2,11 +2,10 @@
 \setcounter{problem}{(* problem.number *)}%
 \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 \subsection{(* problem.number *)}%
-\protectedInput{\activeDirectory/(* language.id *)/answer.tex}
-(@ if path_exists("build/{}/{}/{}/problems/{}/{}/answer-extra.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) @)
-    \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
-(@ endif @)
-(@ if path_exists("build/{}/{}/{}/problems/{}/{}/answer-interval.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) @)
-    \hfill
-    \textit{(* i18n[language.id].answers.interval *)} \tryInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
+\protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
+(@ if path_exists("build/{}/{}/{}/problems/{}/{}/answer-extra.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+\protected{\activeDirectory/(* language.id *)/answer-extra.tex}%
+(@- endif -@)%
+(@- if path_exists("build/{}/{}/{}/problems/{}/{}/answer-interval.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+\!\textit{, (* i18n[language.id].answers.interval *)} \tryInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
 (@ endif @)
