@@ -3,11 +3,17 @@ from schema import Schema, And
 
 from .base import ContextScholar
 
+import sys
+sys.path.append('.')
+
+from core.utilities.schema import valid_language
+
 
 class ContextCourse(ContextScholar):
     schema = Schema({
         'id': And(str, len),
         'title': And(str, len),
+        'language': valid_language
     })
 
     def populate(self, course):

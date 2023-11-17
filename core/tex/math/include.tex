@@ -75,9 +75,14 @@
 \NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
 \NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
 \NewDocumentCommand{\EvalB}{m m O{}}{\left[#1\right]_{#2}^{#3}}
+
+% Statistics
 \NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
 \NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
+\NewDocumentCommand{\Var}{m}{\mathrm{Var}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
+\NewDocumentCommand{\Bias}{m}{\mathrm{Bias}\left[#1\right]}
+\NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\left[#1\right]}
 
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}

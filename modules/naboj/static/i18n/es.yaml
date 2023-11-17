@@ -1,0 +1,73 @@
+section:
+    problems:                   "Problemas"
+    solutions:                  "Soluciones"
+    answers:                    "Respuestas"
+    modulo:                     "Módulo"
+    evaluators:                 "TRANSLATE"
+competition:
+    name:
+        nominative:             "Náboj de Física"
+        genitive:               "Náboj de Física"
+    email:                      "info-es@physics.naboj.org"
+    website:                    "https://physics.naboj.org/"
+tearoff:
+    team:                       "Equipo"
+    bottom:                     "El equipo ha recibido todos los problemas."
+constants:
+    title:                      "Tabla de constantes"
+    instruction:                "Se recomienda usar estos valores propuestos para las constantes fisicoquímicas. \
+                                 No obstante, los resultados calculados con valores más precisos que los de estas \
+                                 constantes \\textbf{serán} aceptados."
+    constant:                   "constante"
+    symbol:                     "símbolo"
+    value:                      "valor"
+answers:
+    interval:                   "???"
+instructions:
+    title:                      "Instrucciones"
+instructions_online:
+    title:                      "Manual del concursante para naboj.online"
+envelope:
+    donotopen:                  "No abra este sobre antes de que comience la prueba."
+
+physics_constants:
+    amu:                        "unidad de masa atómica"
+    au:                         "unidad astronómica"
+    avogadro:                   "constante de Avogadro"
+    boltzmann:                  "constante de Boltzmann"
+    density_air:                "densidad del aire en CNPT"
+    density_helium:             "densidad del helio en CNPT"
+    density_water:              "densidad del agua en CNPT"
+    density_mercury:            "densidad del mercurio en CNPT"
+    density_gold:               "densidad del oro en CNPT"
+    elementary_charge:          "carga elemental"
+    gforce:                     "aceleración estandar debido a la gravedad"
+    gravity:                    "constante gravitacional"
+    heat_capacity_water:        "calor específico del agua"
+    heat_capacity_ice:          "calor específico del hielo"
+    heat_vaporization_water:    "calor latente de vaporización del agua"
+    heat_melting_ice:           "calor latente de fusión del hielo"
+    inch:                       "pulgada"
+    mass_earth:                 "masa de la Tierra"
+    mass_electron:              "masa en reposo del electrón"
+    mass_mars:                  "masa del Marte"
+    mass_proton:                "masa en reposo del protón"
+    mass_sun:                   "masa del Sol"
+    molar_mass_air:             "masa molar del aire"
+    molar_mass_gold:            "masa molar del oro"
+    parsec:                     "pársec"
+    permeability:               "permeabilidad del vacío"
+    permittivity:               "permitividad del vacío"
+    planck:                     "constante de Planck"
+    pressure_standard:          "presión estándar (atmosférica)"
+    puerperium:                 "puerperio"
+    radius_earth:               "radio de la Tierra"
+    radius_mars:                "radio del Marte"
+    radius_sun:                 "radio del Sol"
+    refraction_water:           "índice de refracción del agua"
+    solar_flux:                 "constante solar"
+    speed_light:                "velocidad de la luz"
+    speed_sound:                "velocidad del sonido"
+    stefan_boltzmann:           "constante de Stefan--Boltzmann"
+    temperature_sun:            "temperatura del Sol"
+    universal_gas:              "constante universal de los gases"

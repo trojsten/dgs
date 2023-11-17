@@ -1,4 +1,3 @@
-import pprint
 import _io
 import itertools
 from schema import Schema, Optional, Regex
@@ -10,7 +9,6 @@ import core.utilities.colour as c
 
 
 file = _io.TextIOWrapper
-
 
 
 class NabojValidator(FileSystemValidator):
@@ -48,7 +46,9 @@ class NabojValidator(FileSystemValidator):
 
     def perform_extra_checks(self):
         self._check_same_translations()
-        self._check_answers_extra()
+        self._check_presence('problem.md')
+        self._check_presence('solution.md')
+        self._check_presence('answer-extra.md', optional=True)
 
     def _check_same_translations(self) -> bool:
         if not self.tree['problems']:
@@ -61,12 +61,16 @@ class NabojValidator(FileSystemValidator):
                     print(f"Warning: problem {pid1} has translations {translations1} "
                           f"and {pid2} has translations {translations2}")
 
-    def _check_answers_extra(self):
+    def _check_presence(self, filename, *, optional: bool = False):
         for problem_id, problem in self.tree['problems'].items():
             translations = [x for x in problem.keys() if x in glob.languages.keys()]
-            has_extra = {trans: ('answer-extra.md' in problem[trans]) for trans in translations}
-            if 0 < len([x for x, y in has_extra.items() if y]) < len(translations):
-                print(f"Warning for problem {c.name(problem_id)}: "
-                      f"Either all or none of the translations should contain {c.path('answer-extra.md')}, "
-                      f"currently {' '.join([c.colour_boolean(x, y) for x, y in has_extra.items()])}")
+            present = {trans: (filename in problem[trans]) for trans in translations}
 
+            lp = len([x for x, y in present.items() if y])
+            # If there are all files present, we're good, and if this is an optional file, then also if none are present
+            ok = (lp == len(translations)) or (optional and lp == 0)
+            if not ok:
+                print(f"Warning for problem {c.name(problem_id):<30}: "
+                      f"{'Either all or none ' if optional else 'All '}"
+                      f"of the translations should contain {c.path(filename)}, "
+                      f"currently {' '.join([c.colour_boolean(x, y) for x, y in present.items()])}")
