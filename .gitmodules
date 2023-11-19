@@ -6,6 +6,10 @@
 	path = source/naboj/phys
 	url = git@github.com:TrojstenSK/naboj-physics
 	branch = master
+[submodule "source/naboj/test"]
+	path = source/naboj/test
+	url = git@github.com:TrojstenSK/dgs-naboj-testing
+	branch = master
 [submodule "source/seminar/FKS"]
 	path = source/seminar/FKS
 	url = git@github.com:TrojstenSK/FKS
@@ -23,9 +27,6 @@
 [submodule "source/seminar/FX"]
 	path = source/seminar/FX
 	url = git@github.com:TrojstenSK/FX-problems
-[submodule "source/naboj/test"]
-	path = source/naboj/test
-	url = git@github.com:TrojstenSK/dgs-naboj-testing
 [submodule "source/scholar/STA"]
 	path = source/scholar/STA
 	url = git@github.com:sesquideus/teaching-STA

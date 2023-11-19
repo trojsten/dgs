@@ -1,6 +1,8 @@
 import _io
 import itertools
-from schema import Schema, Optional, Regex
+import pprint
+
+from schema import Schema, Optional, Regex, Or
 
 import core.utilities.globals as glob
 from core.builder.validator import FileSystemValidator
@@ -8,7 +10,9 @@ from core.utilities.schema import valid_language
 import core.utilities.colour as c
 
 
-file = _io.TextIOWrapper
+file = 'file'
+link = 'link'
+file_or_link = Or(file, link)
 
 
 class NabojValidator(FileSystemValidator):
@@ -17,8 +21,8 @@ class NabojValidator(FileSystemValidator):
             str: {
                 valid_language: {
                     Optional('problem.md'): file,
-                    Optional('solution.md'): file,
-                    Optional('answer-extra.md'): file,
+                    Optional('solution.md'): file_or_link,
+                    Optional('answer-extra.md'): file_or_link,
                 },
                 'answer.md': file,
                 Optional('answer-interval.md'): file,
@@ -29,15 +33,15 @@ class NabojValidator(FileSystemValidator):
         'languages': {
             valid_language: {
                 'meta.yaml': file,
-                'intro.jtt': file,
-                'instructions-inner.jtt': file,
-                'evaluators.jtt': file,
+                'intro.jtt': file_or_link,
+                'instructions-inner.jtt': file_or_link,
+                'evaluators.jtt': file_or_link,
             }
         },
         'venues': {
             Regex(r'[a-z]+'): {
-                'instructions-inner.jtt': file,
-                'evaluators.jtt': file,
+                'instructions-inner.jtt': file_or_link,
+                'evaluators.jtt': file_or_link,
                 'meta.yaml': file,
             },
         },
@@ -45,10 +49,19 @@ class NabojValidator(FileSystemValidator):
     })
 
     def perform_extra_checks(self):
+        pprint.pprint(self.tree)
         self._check_same_translations()
         self._check_presence('problem.md')
         self._check_presence('solution.md')
         self._check_presence('answer-extra.md', optional=True)
+
+    @staticmethod
+    def _colour(what):
+        return {
+            None: c.err,
+            file: c.ok,
+            link: c.path,
+        }[what]
 
     def _check_same_translations(self) -> bool:
         if not self.tree['problems']:
@@ -61,16 +74,18 @@ class NabojValidator(FileSystemValidator):
                     print(f"Warning: problem {pid1} has translations {translations1} "
                           f"and {pid2} has translations {translations2}")
 
-    def _check_presence(self, filename, *, optional: bool = False):
+    def _check_presence(self, filename, *, optional: bool = False, debug: bool = False):
         for problem_id, problem in self.tree['problems'].items():
             translations = [x for x in problem.keys() if x in glob.languages.keys()]
-            present = {trans: (filename in problem[trans]) for trans in translations}
+            is_present = {
+                trans: problem[trans][filename] if filename in problem[trans] else None for trans in translations
+            }
 
-            lp = len([x for x, y in present.items() if y])
+            lp = len([x for x, y in is_present.items() if y])
             # If there are all files present, we're good, and if this is an optional file, then also if none are present
             ok = (lp == len(translations)) or (optional and lp == 0)
-            if not ok:
+            if debug or not ok:
                 print(f"Warning for problem {c.name(problem_id):<30}: "
                       f"{'Either all or none ' if optional else 'All '}"
                       f"of the translations should contain {c.path(filename)}, "
-                      f"currently {' '.join([c.colour_boolean(x, y) for x, y in present.items()])}")
+                      f"currently {' '.join([self._colour(y)(x) for x, y in is_present.items()])}")

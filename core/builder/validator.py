@@ -23,7 +23,10 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
                 child.name: self.scan(Path(child)) for child in path.iterdir() if child.name[0] not in self.IGNORED
             }
         else:
-            return open(path, 'r')
+            if path.is_symlink():
+                return 'link'
+            elif path.is_file():
+                return 'file'
 
     def validate(self) -> None:
         self.schema.validate(self.tree)

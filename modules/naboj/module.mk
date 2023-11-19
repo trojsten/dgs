@@ -27,7 +27,7 @@ build/naboj/%.tex: \
 
 define truepath
 	$$(subst $$(cdir),,$(1))
-endef 
+endef
 
 # % <competition>/<volume>/languages/<language>
 
@@ -64,21 +64,21 @@ build/naboj/%/build-venue: \
 build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-tearoff.jtt \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/tearoff.jtt \
 	modules/naboj/templates/tearoff/problem.jtt \
 	modules/naboj/templates/tearoff/bottom.jtt \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/envelopes.tex: \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/envelopes.jtt \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/online.jtt \
     build/naboj/$$*/build-language ;
 
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
@@ -86,6 +86,7 @@ build/naboj/%/online.tex: \
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-booklet.jtt \
+	modules/naboj/templates/answer.jtt \
 	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
