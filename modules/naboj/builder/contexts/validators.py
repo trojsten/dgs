@@ -19,7 +19,7 @@ class NabojValidator(FileSystemValidator):
         'problems': {
             str: {
                 valid_language: {
-                    Optional('problem.md'): file,
+                    Optional('problem.md'): file_or_link,
                     Optional('solution.md'): file_or_link,
                     Optional('answer-extra.md'): file_or_link,
                 },
@@ -38,9 +38,9 @@ class NabojValidator(FileSystemValidator):
             }
         },
         'venues': {
-            Regex(r'[a-z]+'): {
+            Regex(r'\w+'): {
                 'instructions-inner.jtt': file_or_link,
-                'evaluators.jtt': file_or_link,
+                'evaluators.jtt': link,
                 'meta.yaml': file,
             },
         },
@@ -77,7 +77,7 @@ class NabojValidator(FileSystemValidator):
                           f"and {pid2} has translations {translations2}")
 
     def _check_presence(self, filename, *, optional: bool = False):
-        for problem_id, problem in self.tree['problems'].items():
+        for problem_id, problem in sorted(self.tree['problems'].items()):
             translations = [x for x in problem.keys() if x in glob.languages.keys()]
             is_present = {
                 trans: problem[trans][filename] if filename in problem[trans] else None for trans in translations
@@ -89,5 +89,5 @@ class NabojValidator(FileSystemValidator):
             if self.debug or not ok:
                 print(f"Warning for problem {c.name(problem_id):<30}: "
                       f"{'Either all or none ' if optional else 'All '}"
-                      f"of the translations should contain {c.path(filename)}, "
-                      f"currently {' '.join([self._colour(y)(x) for x, y in is_present.items()])}")
+                      f"of the translations should contain file {c.path(filename)}, "
+                      f"but found {' '.join([self._colour(kind)(lang) for lang, kind in is_present.items()])}")

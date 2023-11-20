@@ -47,7 +47,6 @@ build/naboj/%/build-language: \
 	$(call prepare_arguments,language)
 	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
@@ -143,8 +142,8 @@ build/naboj/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.pdf)) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.svg))) \
-	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.svg))) \
-	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
@@ -153,6 +152,14 @@ build/naboj/%/pdf-prerequisites: \
 # <competition>/<volume>
 build/naboj/%/problems: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
+
+define RULE_TEMPLATE
+# build/naboj/%/problems/$(1): $(subst source/,build/,$(subst .md,.tex,$(wildcard source/naboj/$*/problems/*/$(1)/problem.md)))
+build/naboj/%/problems/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md)))
+	@echo
+endef
+LANGUAGES = sk en cs hu pl es
+$(foreach language,$(LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
 build/naboj/%/solutions: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
@@ -248,6 +255,7 @@ output/naboj/%/cover-print.pdf: \
 	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 # All targets for <language>
+# <competition>/<volume>
 output/naboj/%: \
 	output/naboj/%/answers.pdf \
 	output/naboj/%/constants.pdf \
@@ -267,6 +275,7 @@ output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) ;
 
 # Tearoffs, three problems per page, aligned for cutting
+# <competition>/<volume>/<venues>/<venue>
 output/naboj/%/tearoff.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/problem.md))))) \
 	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
@@ -285,7 +294,7 @@ output/naboj/%/envelopes.pdf: \
 
 output/naboj/%/instructions.pdf: \
 	build/naboj/%/instructions.tex \
-	$$(subst source/,build/,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/_extras/instructions-inner.tex)))) \
+	$$(subst source/,build/,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.tex)))) \
 	source/naboj/%/i18n
 	$(call double_xelatex,naboj)
 

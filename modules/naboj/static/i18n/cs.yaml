@@ -21,7 +21,8 @@ constants:
     symbol:                     "značka"
     value:                      "hodnota"
 answers:
-    interval:                   "Uznejte řešení v intervalu"
+    interval:                   "uznejte řešení v intervalu"
+    also:                       "uznejte taky"
 instructions:
     title:                      "Pokyny"
 instructions_online:
