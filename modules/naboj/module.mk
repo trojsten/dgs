@@ -1,3 +1,5 @@
+SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa
+
 .SECONDEXPANSION:
 
 # Build scripts for language and venue prerequisites
@@ -155,11 +157,14 @@ build/naboj/%/problems: \
 
 define RULE_TEMPLATE
 # build/naboj/%/problems/$(1): $(subst source/,build/,$(subst .md,.tex,$(wildcard source/naboj/$*/problems/*/$(1)/problem.md)))
-build/naboj/%/problems/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md)))
-	@echo
+build/naboj/%/problems/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) ;
+build/naboj/%/solutions/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
+build/naboj/%/answers/$(1): \
+	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) \
+	$$$$(addsuffix answer-interval.tex,$$$$(subst source/,build/,$$$$(foreach int,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-interval.md),$$$$(wildcard $$$$(dir $$$$(int))*/)))) ;
 endef
-LANGUAGES = sk en cs hu pl es
-$(foreach language,$(LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
+$(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
 build/naboj/%/solutions: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
