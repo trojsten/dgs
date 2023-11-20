@@ -9,7 +9,7 @@ from .base import ContextNaboj
 
 
 class ContextCompetition(ContextNaboj):
-    schema = Schema({
+    _schema = Schema({
         'id': string,
         'founded': And(int, lambda x: x >= 1950),
         'tearoff': {
@@ -45,7 +45,7 @@ class ContextCompetition(ContextNaboj):
 class ContextLanguage(ContextNaboj):
     target = 'language'
     subdir = 'languages'
-    schema = Schema({
+    _schema = Schema({
         'id': valid_language,
         'booklet': {
             'contents': {
@@ -70,7 +70,7 @@ class ContextLanguage(ContextNaboj):
 class ContextVenue(ContextNaboj):
     target = 'venue'
     subdir = 'venues'
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'code': Regex(r'[A-Z]{5}'),
         'name': And(str, len),
@@ -129,7 +129,7 @@ class ContextVenue(ContextNaboj):
 
 
 class ContextVolume(ContextNaboj):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': And(int, lambda x: x > 0),
         'date': datetime.date,

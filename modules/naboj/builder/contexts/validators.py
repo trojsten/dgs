@@ -1,4 +1,3 @@
-import _io
 import itertools
 import pprint
 
@@ -48,8 +47,11 @@ class NabojValidator(FileSystemValidator):
         'meta.yaml': file,
     })
 
+    def __init__(self, *path):
+        super().__init__(*path)
+        self.debug = False
+
     def perform_extra_checks(self):
-        pprint.pprint(self.tree)
         self._check_same_translations()
         self._check_presence('problem.md')
         self._check_presence('solution.md')
@@ -74,7 +76,7 @@ class NabojValidator(FileSystemValidator):
                     print(f"Warning: problem {pid1} has translations {translations1} "
                           f"and {pid2} has translations {translations2}")
 
-    def _check_presence(self, filename, *, optional: bool = False, debug: bool = False):
+    def _check_presence(self, filename, *, optional: bool = False):
         for problem_id, problem in self.tree['problems'].items():
             translations = [x for x in problem.keys() if x in glob.languages.keys()]
             is_present = {
@@ -84,7 +86,7 @@ class NabojValidator(FileSystemValidator):
             lp = len([x for x, y in is_present.items() if y])
             # If there are all files present, we're good, and if this is an optional file, then also if none are present
             ok = (lp == len(translations)) or (optional and lp == 0)
-            if debug or not ok:
+            if self.debug or not ok:
                 print(f"Warning for problem {c.name(problem_id):<30}: "
                       f"{'Either all or none ' if optional else 'All '}"
                       f"of the translations should contain {c.path(filename)}, "

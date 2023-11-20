@@ -1,7 +1,6 @@
 import pprint
 import argparse
 import argparsedirs
-import schema
 import logging
 
 from pathlib import Path
@@ -67,7 +66,7 @@ class BaseBuilder(metaclass=ABCMeta):
         self.context.print()
 
         logger.debug(c.act("Schema:"))
-        pprint.pprint(self.context.schema._schema)
+        pprint.pprint(self.context._schema._schema)
 
     def print_build_info(self) -> None:
         """ Prints build info """

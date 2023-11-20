@@ -11,7 +11,7 @@ from .i18n import ContextI18n, ContextI18nGlobal
 
 
 class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
-    schema = ContextNaboj.schema
+    _schema = ContextNaboj._schema
     validator_class = NabojValidator
 
     def populate(self, competition, volume, venue):
@@ -26,7 +26,7 @@ class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMet
 class BuildableContextLanguage(BuildableContextNaboj):
     target = 'language'
     subdir = 'languages'
-    schema = Schema({
+    _schema = Schema({
         'language': {
             'id': str,
             'polyglossia': str,
@@ -35,7 +35,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
     })
 
     def __init__(self, *args):
-        self.schema = sch.merge(super().schema, self.schema)
+        self._schema = sch.merge(super()._schema, self._schema)
         super().__init__(*args)
 
     def populate(self, competition, volume, language):
@@ -47,7 +47,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
 class BuildableContextVenue(BuildableContextNaboj):
     target = 'venue'
     subdir = 'venues'
-    schema = Schema({
+    _schema = Schema({
         'language': {
             'id': str,
             'polyglossia': str,

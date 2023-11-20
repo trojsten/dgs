@@ -1,8 +1,6 @@
 import jinja2
 import os
 import sys
-import itertools
-import logging
 from pathlib import Path
 
 from core.utilities import dicts, filters, colour as c, logger

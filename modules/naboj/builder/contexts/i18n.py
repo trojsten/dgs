@@ -6,7 +6,7 @@ from core.builder import context
 
 
 class ContextI18n(context.FileSystemContext):
-    schema = Schema({
+    _schema = Schema({
         'section': {
             'problems': str,
             'solutions': str,
@@ -67,7 +67,7 @@ class ContextI18n(context.FileSystemContext):
 
 
 class ContextI18nGlobal(context.FileSystemContext):
-    schema = Schema({})
+    _schema = Schema({})
 
     def node_path(self, competition):
         return Path(self.root, competition, '.static', 'i18n')

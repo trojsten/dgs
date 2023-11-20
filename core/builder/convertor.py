@@ -1,10 +1,6 @@
 import subprocess
-import sys
 import tempfile
-import yaml
 from typing import Callable
-
-sys.path.append('.')
 
 from core.utilities import colour as c
 from .classes import Locale, RegexFailure, RegexReplacement
@@ -100,7 +96,8 @@ class Convertor:
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
-            RegexReplacement(r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}", purpose="Replace code tag"),
+            RegexReplacement(r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}",
+                             purpose="Replace code tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
             RegexReplacement(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", purpose="Replace TODO tag"),
@@ -119,6 +116,7 @@ class Convertor:
         self.locale = self.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
+        self.file = None
 
         assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'"
 
@@ -138,13 +136,13 @@ class Convertor:
         self.post_regexes = self._filter_regexes(self.post_regexes)
         self.post_checks = self._filter_regexes(self.post_checks)
 
-    def _filter_regexes(self, regex_set: list) -> list:
+    def _filter_regexes(self, regex_set: dict[str, list]) -> list:
         return regex_set['all'] + regex_set[self.output_format]
 
     def run(self):
         try:
-            #fm, tm = frontmatter.parse(self.infile.read())
-            #self.infile.seek(0)
+            # fm, tm = frontmatter.parse(self.infile.read())
+            # self.infile.seek(0)
             self.file = self.file_operation(self.preprocess)(self.infile)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
@@ -157,7 +155,6 @@ class Convertor:
         except Exception as e:
             print("Unexpected exception occurred:")
             raise e
-            return -1
         else:
             return 0
 
@@ -221,7 +218,7 @@ class Convertor:
             "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
-#           "--webtex='eqn://'",
+            # "--webtex='eqn://'",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)

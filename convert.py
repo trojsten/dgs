@@ -3,8 +3,8 @@
 import argparse
 import sys
 
-from builder.convertor import Convertor
-from utilities import colour as c
+from core.builder.convertor import Convertor
+from core.utilities import colour as c
 
 
 class CLIInterface():
@@ -13,7 +13,7 @@ class CLIInterface():
         self.convertor = Convertor(self.args.format, self.args.locale, self.args.infile, self.args.outfile)
         result = self.convertor.run()
         if result == 0:
-            self.finish()
+            self.success()
         else:
             self.fail()
 
@@ -32,7 +32,7 @@ class CLIInterface():
         print(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
         sys.exit(-1)
 
-    def finish(self):
+    def success(self):
         if self.args.verbose:
             print(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
 

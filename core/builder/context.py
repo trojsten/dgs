@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Context(metaclass=ABCMeta):
     defaults = {}       # Defaults for every instance
-    schema = None       # Validation schema for the context, or None if it is not to be validated
+    _schema = None       # Validation schema for the context, or None if it is not to be validated
 
     @staticmethod
     def default(name, func=None, dfl=''):
@@ -33,14 +33,14 @@ class Context(metaclass=ABCMeta):
         return path
 
     def validate(self):
-        if self.schema is None:
+        if self._schema is None:
             logger.warning(f"No schema defined for {self.__class__.__name__}, skipping validation")
         else:
             try:
-                self.schema.validate(self.data)
+                self._schema.validate(self.data)
             except (SchemaMissingKeyError, SchemaWrongKeyError, SchemaError) as exc:
                 logger.error(f"Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
-                pprint.pprint(self.schema)
+                pprint.pprint(self._schema)
                 raise exc
 
     def add(self, *dictionaries, overwrite=True):
@@ -51,7 +51,7 @@ class Context(metaclass=ABCMeta):
     def absorb(self, *contexts, overwrite=True):
         """ Merge a list of other contexts into this context, overwriting existing keys """
         self.data = dicts.merge(self.data, *[ctx.data for ctx in contexts])
-        self.schema = schema.merge(self.schema, *[ctx.schema for ctx in contexts])
+        self._schema = schema.merge(self._schema, *[ctx._schema for ctx in contexts])
         return self
 
     def adopt(self, key, ctx):
@@ -59,20 +59,20 @@ class Context(metaclass=ABCMeta):
         assert isinstance(ctx, Context)
         self.data[key] = dicts.merge(self.data.get(key), ctx.data)
 
-        if self.schema is not None:
-            if ctx.schema is None:
+        if self._schema is not None:
+            if ctx._schema is None:
                 # If child has no schema, accept anything
-                self.schema._schema[key] = {object: object}
+                self._schema._schema[key] = {object: object}
             else:
                 # otherwise merge schema (use the last one)
-                self.schema._schema[key] = ctx.schema
+                self._schema._schema[key] = ctx._schema
         return self
 
     def add_list(self, key, ctxs):
         self.data[key] = [item.data for item in ctxs]
 
-        if self.__class__.schema is not None:
-            self.__class__.schema._schema[key] = [self.subcontext_class.schema]
+        if self.__class__._schema is not None:
+            self.__class__._schema._schema[key] = [self.subcontext_class._schema]
 
         return self
 
@@ -132,7 +132,7 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
     @abstractmethod
     def node_path(self, *args):
-        """ Return node path for id tuple -- empty for base context """
+        """ Return node path for id tuple -- empty for base context, must be implemented for children """
 
     @abstractmethod
     def populate(self, *path):

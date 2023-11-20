@@ -36,7 +36,7 @@ class ContextNaboj(context.FileSystemContext):
         'id': Regex(r'[a-z0-9-]+'),
         'number': int,
     })
-    schema = Schema({
+    _schema = Schema({
         'build': {
             'user': And(str, len),
             'dgs': {
@@ -51,8 +51,13 @@ class ContextNaboj(context.FileSystemContext):
         }
     })
 
-    def populate(self, competition: str):
-        # Add the hash of the current HEAD of the repository as "hash"
+    def populate(self, repo_root: str):
+        """
+        Add the build info to the context. This is useful for impressum and diagnostics
+        -   username of whoever built the current context
+        -   dgs branch and git hash
+        -   repo branch and git hash
+        """
         self.add({
             'build': {
                 'user': os.environ.get('USERNAME'),
@@ -61,8 +66,8 @@ class ContextNaboj(context.FileSystemContext):
                     'branch': sch.get_branch(),
                 },
                 'repo': {
-                    'hash': sch.get_last_commit_hash(self.node_path(competition)),
-                    'branch': sch.get_branch(self.node_path(competition)),
+                    'hash': sch.get_last_commit_hash(self.node_path(repo_root)),
+                    'branch': sch.get_branch(self.node_path(repo_root)),
                 },
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
             }
