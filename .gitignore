@@ -15,4 +15,5 @@ build/
 output/
 source/
 _*/
+.idea/*
 svg-inkscape/
