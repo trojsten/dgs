@@ -5,6 +5,11 @@ from schema import Schema, And, Or, Regex
 import core.utilities.globals as glob
 
 
+file = 'file'
+link = 'link'
+file_or_link = Or(file, link)
+
+
 def string(x: str) -> And:
     """ Is non-empty string """
     return And(str, len)

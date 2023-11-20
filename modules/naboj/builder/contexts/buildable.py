@@ -12,7 +12,7 @@ from .i18n import ContextI18n, ContextI18nGlobal
 
 class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
     _schema = ContextNaboj._schema
-    validator_class = NabojValidator
+    _validator_class = NabojValidator
 
     def populate(self, competition, volume, venue):
         self.validate_repo(competition, volume)

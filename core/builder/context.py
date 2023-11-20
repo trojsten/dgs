@@ -152,10 +152,10 @@ class BuildableContext(Context):
     Currently only useful for sanity checks.
     """
 
-    validator_class = None
+    _validator_class: None
 
     def validate_repo(self, *path):
-        self.validator_class(self.node_path(*path)).validate()
+        self._validator_class(self.node_path(*path)).validate()
 
 
 class ContextModule(Context):

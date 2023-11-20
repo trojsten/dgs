@@ -10,13 +10,14 @@ class BuilderSeminar(builder.BaseBuilder):
 
     def create_argument_parser(self):
         super().create_argument_parser()
-        self.parser.add_argument('-c', '--competition', choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old', 'testing'])
+        self.parser.add_argument('-c', '--competition',
+                                 choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old', 'testing'])
         self.parser.add_argument('-v', '--volume', type=int)
         self.parser.add_argument('-s', '--semester', type=int)
         self.parser.add_argument('-r', '--round', type=int)
 
     def id(self):
-        return (self.args.competition, self.args.volume, self.args.semester, self.args.round)
+        return self.args.competition, self.args.volume, self.args.semester, self.args.round
 
     def path(self):
         return (
@@ -29,14 +30,14 @@ class BuilderSeminar(builder.BaseBuilder):
 
 class BuilderVolume(BuilderSeminar):
     def id(self):
-        return (self.args.competition, self.args.volume)
+        return self.args.competition, self.args.volume
 
 
 class BuilderSemester(BuilderSeminar):
     def id(self):
-        return (self.args.competition, self.args.volume, self.args.semester)
+        return self.args.competition, self.args.volume, self.args.semester
 
 
 class BuilderRound(BuilderSeminar):
     def id(self):
-        return (self.args.competition, self.args.volume, self.args.semester, self.args.round)
+        return self.args.competition, self.args.volume, self.args.semester, self.args.round

@@ -6,10 +6,10 @@ import yaml
 
 from collections.abc import Iterable
 
-from core.utilities import dicts, colour as c, crawler
+from core.utilities import dicts, colour as c
 
 
-class Context():
+class Context:
     def __init__(self):
         self.data = {}
 
@@ -23,12 +23,12 @@ class Context():
         self.data[key] = dicts.merge(self.data.get(key), ctx.data)
         return self
 
-    def load_YAML(self, *args):
+    def load_yaml(self, *args):
+        filename = os.path.join(*args)
         try:
-            filename = os.path.join(*args)
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
             contents = {} if contents is None else contents
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             print(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             sys.exit(43)
 
@@ -36,7 +36,7 @@ class Context():
         return self
 
     def load_meta(self, *args):
-        return self.load_YAML(self.node_path(*args) / 'meta.yaml')
+        return self.load_yaml(self.node_path(*args) / 'meta.yaml')
 
     def node_path(self, *args):
         raise NotImplementedError("Child classes must implement node_path method")
@@ -53,18 +53,8 @@ class Context():
     def set_id(self):
         return self.add({'id': self.id})
 
-    def add_id(self, id):
-        return self.add({'id': id})
-
-    def add_children(self, subcontext_class, subcontext_key, *subcontext_args):
-        """ Use a Crawler to scan the filesystem and add children to this Context """
-        cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.children()]})
-
-    def add_subdirs(self, subcontext_class, subcontext_key, subcontext_args, root):
-        """ Use a Crawler to scan the filesystem and add subdirs to this Context (they do not have to contain meta.yaml) """
-        cr = crawler.Crawler(self.node_path(*root))
-        self.add({subcontext_key: [subcontext_class(*subcontext_args, child).data for child in cr.subdirs()]})
+    def add_id(self, new_id):
+        return self.add({'id': new_id})
 
 
 def is_prime(what: int) -> int:
@@ -74,7 +64,7 @@ def is_prime(what: int) -> int:
         return int(all(what % x != 0 for x in range(2, math.isqrt(what) + 1)))
 
 
-def split_mod(what: Iterable, count: int, first: int=0) -> list:
+def split_mod(what: Iterable, count: int, first: int = 0) -> list:
     result = [[] for _ in range(0, count)]
     for i, item in enumerate(what):
         result[(i + first) % count].append(item)
@@ -118,6 +108,3 @@ def numerate(objects, start=0):
         })
         num += 1
     return objects
-
-
-

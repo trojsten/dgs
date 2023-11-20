@@ -1,7 +1,7 @@
 from typing import Iterable, Dict
 
 
-def merge(parent: Dict, *children: Iterable[Dict], overwrite=True) -> Dict:
+def merge(parent: Dict, *children: dict, overwrite=True) -> Dict:
     for child in children:
         parent = merge_one(parent, child)
     return parent

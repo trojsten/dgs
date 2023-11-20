@@ -5,6 +5,7 @@ from abc import ABCMeta
 from schema import Schema, Optional, Use, And, Or
 
 from core.builder.context import FileSystemContext, BuildableContext, ContextModule
+from validators import SeminarRoundValidator
 
 
 class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
@@ -22,7 +23,7 @@ class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
 
 
 class ContextCompetition(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'short': And(str, len),
         'full': Schema({
@@ -59,7 +60,7 @@ class ContextCompetition(ContextSeminar):
 
 
 class ContextVolume(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': str,
         'number': int,
         Optional('categories'): [[], [str]],
@@ -72,7 +73,7 @@ class ContextVolume(ContextSeminar):
 
 
 class ContextSemester(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': And(int, lambda x: x in [1, 2]),
         'neuter': Schema({'nominative': str, 'genitive': str}),
@@ -98,9 +99,9 @@ class ContextSemester(ContextSeminar):
         })
 
 
-class ContextSemesterFull(ContextSemester):
+class ContextSemesterFull(ContextSemester, FileSystemContext, BuildableContext):
     def populate(self, competition, volume, semester):
-        self.add_children(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
+        self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
 
 class ContextRound(ContextSeminar):
@@ -111,7 +112,7 @@ class ContextRound(ContextSeminar):
         }
     }
 
-    schema = Schema({
+    _schema = Schema({
         'deadline': datetime.date,
         Optional('instagram'): Schema({
             'skin': Use(str, lambda x: x in ['orange', 'grey']),
@@ -133,7 +134,7 @@ class ContextProblem(ContextSeminar):
                      'name': str,
                      'gender': Or('f', 'm', '?'),
                  }])
-    schema = Schema({
+    _schema = Schema({
         'title': And(str, len),
         'categories': list,
         'number': And(int, lambda x: 1 <= x <= 8),
@@ -190,9 +191,13 @@ class ContextSemesterBooklet(ContextSeminar):
 
 
 class ContextBooklet(BuildableContext, ContextSeminar):
-    schema = Schema({})  # fix this
+    _schema = Schema({})  # fix this
+    _validator_class = SeminarRoundValidator
 
     def populate(self, competition, volume, semester, issue):
+        self.validate_repo(competition, volume, semester, issue)
+        super().populate(competition)
+
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(self.root, competition))
         self.adopt('volume', ContextVolume(self.root, competition, volume))

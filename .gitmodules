@@ -12,7 +12,7 @@
 	branch = master
 [submodule "source/seminar/FKS"]
 	path = source/seminar/FKS
-	url = git@github.com:TrojstenSK/FKS
+	url = git@github.com:TrojstenSK/fks
 	branch = master
 [submodule "source/seminar/testing"]
 	path = source/seminar/testing
