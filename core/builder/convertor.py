@@ -78,6 +78,7 @@ class Convertor:
             RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
         ],
         'html': [
+            # This is just a temporary workaround for Trojstenweb'đ inane choice of paths
             RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
@@ -93,7 +94,6 @@ class Convertor:
             RegexReplacement(r'^%.*$', r'', purpose="Comment"),
             RegexReplacement(r'(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
             RegexReplacement(r'(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
-            # Something to catch pictures without height set
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
@@ -105,10 +105,20 @@ class Convertor:
         ],
         'html': [
             RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
+            RegexReplacement(r"^@I\s*(.*)$", r'[kód](obrazky/\g<1>)', purpose="Replace code tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
             RegexReplacement(r"^@TODO\s*(.*)$", r"TODO: \g<1>", purpose="Replace TODO tag"),
         ],
+    }
+
+    pre_checks = {
+        'all': [
+            RegexFailure(r'\\!', error="No typographic corrections are allowed"),
+            RegexFailure(r'\\circ', error="No \\circ allowed"),
+        ],
+        'latex': [],
+        'html': [],
     }
 
     def __init__(self, output_format: str, locale_code: str, infile, outfile):
@@ -133,9 +143,10 @@ class Convertor:
             RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
+        self.pre_checks = self._filter_regexes(self.pre_checks)
         self.pre_regexes = self._filter_regexes(self.pre_regexes)
-        self.post_regexes = self._filter_regexes(self.post_regexes)
         self.post_checks = self._filter_regexes(self.post_checks)
+        self.post_regexes = self._filter_regexes(self.post_regexes)
 
     def _filter_regexes(self, regex_set: dict[str, list]) -> list:
         return regex_set['all'] + regex_set[self.output_format]
@@ -144,7 +155,8 @@ class Convertor:
         try:
             # fm, tm = frontmatter.parse(self.infile.read())
             # self.infile.seek(0)
-            self.file = self.file_operation(self.preprocess)(self.infile)
+            self.file = self.file_operation(self.pre_check)(self.infile)
+            self.file = self.file_operation(self.preprocess)(self.file)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
             self.file = self.file_operation(self.post_check)(self.file)
@@ -178,9 +190,6 @@ class Convertor:
             self.outfile.write(line)
         self.file.seek(0)
 
-    def preprocess(self, line):
-        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
-
     @staticmethod
     def process_line(line: str, regexes) -> str:
         for regex in regexes:
@@ -200,8 +209,14 @@ class Convertor:
             line = func(line, regex_set)
         return line
 
+    def preprocess(self, line):
+        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
+
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])
+
+    def pre_check(self, line):
+        return self.chain_process(line, [self.pre_checks], func=self.check_line)
 
     def post_check(self, line):
         return self.chain_process(line, [self.post_checks], func=self.check_line)

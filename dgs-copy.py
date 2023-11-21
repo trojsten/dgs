@@ -68,7 +68,7 @@ def main():
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
 
     # copy pictures
-    COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz']
+    COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz', 'py']
     copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
 
     fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \

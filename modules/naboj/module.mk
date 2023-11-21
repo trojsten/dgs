@@ -1,4 +1,4 @@
-SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa
+SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru
 
 .SECONDEXPANSION:
 
@@ -95,7 +95,7 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	source/naboj/$$*/intro.jtt \
 	build/naboj/$$*/build-language ;
 
 # Constants sheet
@@ -150,21 +150,29 @@ build/naboj/%/pdf-prerequisites: \
 	$$(wildcard source/naboj/$$*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
 
-# All problems
+# All problems, solutions and answers for every language, and overall
 # <competition>/<volume>
-build/naboj/%/problems: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
-
 define RULE_TEMPLATE
-# build/naboj/%/problems/$(1): $(subst source/,build/,$(subst .md,.tex,$(wildcard source/naboj/$*/problems/*/$(1)/problem.md)))
-build/naboj/%/problems/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) ;
-build/naboj/%/solutions/$(1): $$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
+build/naboj/%/problems/$(1): \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) ;
+
+build/naboj/%/solutions/$(1): \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
+
 build/naboj/%/answers/$(1): \
 	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) \
-	$$$$(addsuffix answer-interval.tex,$$$$(subst source/,build/,$$$$(foreach int,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-interval.md),$$$$(wildcard $$$$(dir $$$$(int))*/)))) ;
+	$$$$(addsuffix $(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md)))) ;
+
+build/naboj/%/$(1): \
+	build/naboj/%/problems/$(1) \
+	build/naboj/%/solutions/$(1) \
+	build/naboj/%/answers/$(1) ;
 endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
+
+build/naboj/%/problems: \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
 
 build/naboj/%/solutions: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
@@ -202,10 +210,8 @@ build/naboj/%/barcodes.pdf: \
 # Full booklet
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet.pdf: \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)
