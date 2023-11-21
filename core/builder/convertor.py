@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 from typing import Callable
+from pathlib import Path
 
 from core.utilities import colour as c
 from .classes import Locale, RegexFailure, RegexReplacement
@@ -78,7 +79,7 @@ class Convertor:
             RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
         ],
         'html': [
-            # This is just a temporary workaround for Trojstenweb'đ inane choice of paths
+            # This is just a temporary workaround for Trojstenweb's inane choice of paths
             RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
@@ -97,15 +98,12 @@ class Convertor:
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
-            RegexReplacement(r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}",
-                             purpose="Replace code tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
             RegexReplacement(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", purpose="Replace TODO tag"),
         ],
         'html': [
             RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
-            RegexReplacement(r"^@I\s*(.*)$", r'[kód](obrazky/\g<1>)', purpose="Replace code tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
             RegexReplacement(r"^@TODO\s*(.*)$", r"TODO: \g<1>", purpose="Replace TODO tag"),
@@ -141,6 +139,14 @@ class Convertor:
             RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
             RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
             RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
+        ]
+
+        self.pre_regexes['all'] += [
+            RegexReplacement(r'```{\.(?P<lang>\w)+ include=(?P<path>[^}]+)}', r'```{.\g<lang> include=\g<path>}',
+                             purpose="Ending align marker"),
+            RegexReplacement(r'```{\.(?P<lang>\w+) include=(?P<path>[^}]+)}',
+                             fr'```{{.\g<lang> include={Path(self.infile.name).parent}/\g<path>}}',
+                             purpose="Ending align marker"),
         ]
 
         self.pre_checks = self._filter_regexes(self.pre_checks)
@@ -231,9 +237,10 @@ class Convertor:
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
-            "--filter", "pandoc-minted",
             "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
             "--filter", "pandoc-eqnos",
+            "--filter", "pandoc-include-code",
+            "--filter", "pandoc-minted",
             # "--webtex='eqn://'",
             "--metadata", f"lang={self.languages[self.locale_code].locale}",
         ]
