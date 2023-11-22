@@ -1,5 +1,7 @@
 import os
 import subprocess
+
+import schema
 from schema import Schema, And, Or, Regex
 
 import core.utilities.globals as glob
@@ -10,17 +12,12 @@ link = 'link'
 file_or_link = Or(file, link)
 
 
-def string(x: str) -> And:
-    """ Is non-empty string """
-    return And(str, len)
+string = And(str, len)
+commit_hash = Regex(r'[a-f0-9]+')
 
 
 def valid_language(code: str) -> bool:
     return code in glob.languages.keys()
-
-
-def commit_hash(code: str) -> Regex:
-    return Regex(r'[a-f0-9]+')
 
 
 def check_output(command, *, cwd) -> str:
@@ -38,11 +35,11 @@ def get_branch(cwd=None) -> str:
 def merge(parent: Schema, *children: Schema) -> Schema:
     """ Merge an existing Schema with each in a list of child Schemas """
     for child in children:
-        parent = merge_one(parent, child)
+        parent = merge_one(parent, child, overwrite=True)
     return parent
 
 
-def merge_one(parent: Schema, child: Schema, *, overwrite: bool = True) -> Schema:
+def merge_one(parent: Schema, child: Schema, *, overwrite: bool = True, fuse: bool = True) -> Schema:
     """
     Merge a child Schema into a parent Schema, optionally overwriting any existing keys.
 
@@ -51,7 +48,9 @@ def merge_one(parent: Schema, child: Schema, *, overwrite: bool = True) -> Schem
     parent : Schema
     child : Schema
     overwrite : bool
-        Specifies whether existing keys should be overwritten or an exception should be raised
+        Specifies whether keys existing in the parent schema should be overwritten or an exception should be raised
+    fuse : bool
+        Specifies whether colliding keys should be fused or replaced
 
     Returns
     -------
@@ -65,7 +64,16 @@ def merge_one(parent: Schema, child: Schema, *, overwrite: bool = True) -> Schem
 
     for key in child._schema:
         if key in parent._schema:
-            parent._schema[key] = Or(parent._schema[key], child._schema[key])
+            if overwrite:
+                if fuse:
+                    parent._schema[key] = Or(parent._schema[key], child._schema[key])
+                else:
+                    parent._schema[key] = child._schema[key]
+            else:
+                if fuse:
+                    parent._schema[key] = child._schema[key]
+                else:
+                    raise schema.SchemaError(f"Key collision for {key}")
         else:
             parent._schema[key] = child._schema[key]
 

@@ -240,7 +240,7 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 output/naboj/%/answers.pdf: \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers.tex
 	$(call double_xelatex,naboj)

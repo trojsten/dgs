@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
+from typing import Any
 
 from core.utilities import dicts, colour as c, crawler, schema
 
@@ -28,7 +29,7 @@ class Context(metaclass=ABCMeta):
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
 
-    def ident(self, *path):
+    def ident(self, *path: Any) -> tuple[Any]:
         """ Transform initialization parameters to identifier """
         return path
 
@@ -50,8 +51,8 @@ class Context(metaclass=ABCMeta):
 
     def absorb(self, *contexts, overwrite=True):
         """ Merge a list of other contexts into this context, overwriting existing keys """
-        self.data = dicts.merge(self.data, *[ctx.data for ctx in contexts])
-        self._schema = schema.merge(self._schema, *[ctx._schema for ctx in contexts])
+        self.data = dicts.merge(self.data, *[ctx.data for ctx in contexts], overwrite=overwrite)
+        self._schema = schema.merge(self._schema, *[ctx._schema for ctx in contexts], overwrite=overwrite)
         return self
 
     def adopt(self, key, ctx):
@@ -66,14 +67,6 @@ class Context(metaclass=ABCMeta):
             else:
                 # otherwise merge schema (use the last one)
                 self._schema._schema[key] = ctx._schema
-        return self
-
-    def add_list(self, key, ctxs):
-        self.data[key] = [item.data for item in ctxs]
-
-        if self.__class__._schema is not None:
-            self.__class__._schema._schema[key] = [self._subcontext_class._schema]
-
         return self
 
     def print(self):
@@ -107,7 +100,7 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         self.validate()
 
     @staticmethod
-    def name(*path: str) -> str:
+    def name(*path: Any) -> str:
         return '/'.join(*path)
 
     def validate_repo(self, *path: str) -> None:
@@ -139,6 +132,14 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
     @abstractmethod
     def populate(self, *path):
         """ Fill the context with data from the filesystem """
+
+    def add_list(self, key, ctxs):
+        self.data[key] = [item.data for item in ctxs]
+
+        if self.__class__._schema is not None:
+            self.__class__._schema._schema[key] = [self._subcontext_class._schema]
+
+        return self
 
     def add_subdirs(self, *subcontext_args):
         logger.debug(f"Adding subdirs to {self.__class__.__name__}: "

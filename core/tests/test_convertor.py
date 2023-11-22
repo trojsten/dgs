@@ -81,7 +81,8 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
         # Pandoc can split lines but we cannot tell how, so we replace newlines with spaces
         output = output.replace('\n', ' ')
-        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output) is not None
+        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. '
+                        r'Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output) is not None
 
 
 class TestTags():
