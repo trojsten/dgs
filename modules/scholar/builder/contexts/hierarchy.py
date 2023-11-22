@@ -3,9 +3,6 @@ from schema import Schema, And
 
 from .base import ContextScholar
 
-import sys
-sys.path.append('.')
-
 from core.utilities.schema import valid_language
 
 

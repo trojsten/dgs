@@ -1,26 +1,25 @@
 import pytest
 import re
 import tempfile
-import sys
 
 from core.builder.convertor import Convertor
 
 
 @pytest.fixture
 def convert():
-    def _convert(format, language, string):
-        infile = tempfile.SpooledTemporaryFile(mode='w+')
-        outfile = tempfile.SpooledTemporaryFile(mode='w+')
+    def _convert(fmt, language, string):
+        infile = tempfile.NamedTemporaryFile(mode='w+')
+        outfile = tempfile.NamedTemporaryFile(mode='w+')
         infile.write(string)
         infile.seek(0)
-        Convertor(format, language, infile, outfile).run()
+        Convertor(fmt, language, infile, outfile).run()
         outfile.seek(0)
         return outfile.read()
 
     return _convert
 
 
-class TestQuotes():
+class TestQuotes:
     def test_math_plus(self, convert):
         assert convert('latex', 'sk', '"+"') == r'„+“' + '\n'
 
@@ -80,7 +79,9 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
+        # Pandoc can split lines but we cannot tell how, so we replace newlines with spaces
+        output = output.replace('\n', ' ')
+        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output) is not None
 
 
 class TestTags():

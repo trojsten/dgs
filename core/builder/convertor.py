@@ -142,8 +142,6 @@ class Convertor:
         ]
 
         self.pre_regexes['all'] += [
-            RegexReplacement(r'```{\.(?P<lang>\w)+ include=(?P<path>[^}]+)}', r'```{.\g<lang> include=\g<path>}',
-                             purpose="Ending align marker"),
             RegexReplacement(r'```{\.(?P<lang>\w+) include=(?P<path>[^}]+)}',
                              fr'```{{.\g<lang> include={Path(self.infile.name).parent}/\g<path>}}',
                              purpose="Ending align marker"),

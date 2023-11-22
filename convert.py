@@ -7,17 +7,17 @@ from core.builder.convertor import Convertor
 from core.utilities import colour as c
 
 
-class CLIInterface():
+class CLIInterface:
     def __init__(self):
         self.args = self.parse_arguments()
         self.convertor = Convertor(self.args.format, self.args.locale, self.args.infile, self.args.outfile)
-        result = self.convertor.run()
-        if result == 0:
+        if self.convertor.run() == 0:
             self.success()
         else:
             self.fail()
 
-    def parse_arguments(self):
+    @staticmethod
+    def parse_arguments():
         parser = argparse.ArgumentParser(
             description="DeGeŠ Markdown conversion utility",
         )
@@ -37,4 +37,5 @@ class CLIInterface():
             print(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
 
 
-CLIInterface()
+if __name__ == "__main__":
+    CLIInterface()
