@@ -8,14 +8,14 @@ from abc import ABCMeta, abstractmethod
 from schema import Schema, SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
 from typing import Any
 
-from core.utilities import dicts, colour as c, crawler, schema
+from core.utilities import dicts, colour as c, crawler, schema as sch
 
 logger = logging.getLogger(__name__)
 
 
 class Context(metaclass=ABCMeta):
     defaults = {}       # Defaults for every instance
-    _schema = None       # Validation schema for the context, or None if it is not to be validated
+    _schema = None      # Validation schema for the context, or None if it is not to be validated
 
     @staticmethod
     def default(name, func=None, dfl=''):
@@ -49,10 +49,10 @@ class Context(metaclass=ABCMeta):
         self.data = dicts.merge(self.data, *dictionaries, overwrite=overwrite)
         return self
 
-    def absorb(self, *contexts, overwrite=True):
+    def absorb(self, *contexts, conflict=sch.MergeFlags.OVERWRITE):
         """ Merge a list of other contexts into this context, overwriting existing keys """
-        self.data = dicts.merge(self.data, *[ctx.data for ctx in contexts], overwrite=overwrite)
-        self._schema = schema.merge(self._schema, *[ctx._schema for ctx in contexts], overwrite=overwrite)
+        self.data = dicts.merge(self.data, *[ctx.data for ctx in contexts], overwrite=True)
+        self._schema = sch.merge(self._schema, *[ctx._schema for ctx in contexts], conflict=conflict)
         return self
 
     def adopt(self, key, ctx):
@@ -89,7 +89,6 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
     _subcontext_class = None
     _validator_class: None
 
-
     def __init__(self, root, *path, **defaults):
         if self.arg_schema is not None:
             Schema(self.arg_schema).validate(path)
@@ -105,9 +104,15 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
     def validate_repo(self, *path: str) -> None:
         root = self.node_path(*path)
-        self._validator_class(root).validate()
-        print(f"File system structure at {c.path(root)} was successfully validated "
-              f"with {c.name(self._validator_class.__name__)}")
+        try:
+            self._validator_class(root).validate()
+            print(f"File system structure at {c.path(root)} was successfully validated "
+                  f"with {c.name(self._validator_class.__name__)}")
+        except SchemaError as e:
+            print(f"File system structure at {c.path(root)} {c.err('failed')} to validate against "
+                  f"{c.name(self._validator_class.__name__)}")
+            raise e
+
 
     def load_yaml(self, *args):
         filename = Path(*args)

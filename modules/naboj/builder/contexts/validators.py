@@ -26,7 +26,7 @@ class NabojValidator(FileSystemValidator):
                 'answer.md': file,
                 Optional('answer-interval.md'): file,
                 Optional('meta.yaml'): file,
-                Optional(Regex(r'[a-z0-9-]+\.(png|svg|gp|py|dat)')): file,
+                Optional(Regex(r'[\w-]+\.(png|svg|gp|py|dat)')): file,
             },
         },
         'languages': {
