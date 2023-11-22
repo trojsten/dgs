@@ -160,14 +160,14 @@ class ContextProblem(ContextSeminar):
 
 
 class ContextRoundFull(ContextRound):
-    subcontext_class = ContextProblem
+    _subcontext_class = ContextProblem
 
     def populate(self, competition, volume, semester, issue):
         super().populate(competition, volume, semester, issue)
         count = len(ContextVolume(self.root, competition, volume).data['categories'])
 
         self.add_list('problems', [
-            self.subcontext_class(self.root, competition, volume, semester, issue, problem)
+            self._subcontext_class(self.root, competition, volume, semester, issue, problem)
             for problem in range(1, count + 1)
         ])
 

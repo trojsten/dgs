@@ -10,7 +10,6 @@ class HandoutMixin:
     subdir = 'handouts'
 
 
-
 class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
     schema = Schema({
         'id': And(str, len),
@@ -21,19 +20,19 @@ class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
 
 
 class ContextHandoutIssue(HandoutMixin, ContextIssue):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': int,
         'title': And(str, len),
         'date': datetime.date,
     })
 
-    subcontext_key = 'problems'
-    subcontext_class = ContextHandoutProblem
+    _subcontext_key = 'problems'
+    _subcontext_class = ContextHandoutProblem
 
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
-    schema = Schema({})
+    _schema = Schema({})
 
-    issue_context_class = ContextHandoutIssue
+    _issue_context_class = ContextHandoutIssue
 

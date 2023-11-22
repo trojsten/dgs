@@ -10,7 +10,7 @@ from core.utilities.schema import valid_language
 
 
 class ContextCourse(ContextScholar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'title': And(str, len),
         'language': valid_language
@@ -22,7 +22,7 @@ class ContextCourse(ContextScholar):
 
 
 class ContextYear(ContextScholar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': int,
         'teacher': {

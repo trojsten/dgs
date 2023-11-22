@@ -72,13 +72,7 @@ class Context(metaclass=ABCMeta):
         self.data[key] = [item.data for item in ctxs]
 
         if self.__class__._schema is not None:
-            self.__class__._schema._schema[key] = [self.subcontext_class._schema]
-
-        return self
-
-    def override(self, key, ctx):
-        if key not in self.data:
-            self.data[key] = ctx[key]
+            self.__class__._schema._schema[key] = [self._subcontext_class._schema]
 
         return self
 
@@ -94,12 +88,14 @@ class Context(metaclass=ABCMeta):
 
 class FileSystemContext(Context, metaclass=abc.ABCMeta):
     """
-    Context that is reasonably well mapped to a repository path.
+    Context that is reasonably mapped to a repository path.
     Can load files, meta.yaml, has node_path
     """
     arg_schema = None
-    subcontext_key = None
-    subcontext_class = None
+    _subcontext_key = None
+    _subcontext_class = None
+    _validator_class: None
+
 
     def __init__(self, root, *path, **defaults):
         if self.arg_schema is not None:
@@ -111,8 +107,14 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         self.validate()
 
     @staticmethod
-    def name(*path):
+    def name(*path: str) -> str:
         return '/'.join(*path)
+
+    def validate_repo(self, *path: str) -> None:
+        root = self.node_path(*path)
+        self._validator_class(root).validate()
+        print(f"File system structure at {c.path(root)} was successfully validated "
+              f"with {c.name(self._validator_class.__name__)}")
 
     def load_yaml(self, *args):
         filename = Path(*args)
@@ -140,10 +142,10 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
     def add_subdirs(self, *subcontext_args):
         logger.debug(f"Adding subdirs to {self.__class__.__name__}: "
-                     f"{self.subcontext_class.__name__} with args {subcontext_args}")
+                     f"{self._subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
-        self.add_list(self.subcontext_key,
-                      [self.subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])
+        self.add_list(self._subcontext_key,
+                      [self._subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])
 
 
 class BuildableContext(Context):
@@ -151,11 +153,6 @@ class BuildableContext(Context):
     Only some contexts are meant to be built directly. This class provides a common ancestor.
     Currently only useful for sanity checks.
     """
-
-    _validator_class: None
-
-    def validate_repo(self, *path):
-        self._validator_class(self.node_path(*path)).validate()
 
 
 class ContextModule(Context):

@@ -2,8 +2,6 @@ import abc
 from schema import Schema
 from pathlib import Path
 
-import core.utilities.colour as c
-
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
     IGNORED = ['.git']
@@ -33,11 +31,10 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
     def validate(self) -> None:
         self.schema.validate(self.tree)
         self.perform_extra_checks()
-        print(f"File system structure at {c.path(self.root)} was successfully validated "
-              f"with {c.name(self.__class__.__name__)}")
 
     def perform_extra_checks(self) -> None:
         """
         Extra checks that are impossible or cumbersome to implement with schema.
         Runs *after* schema validation.
         """
+        pass

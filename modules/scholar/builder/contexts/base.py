@@ -2,14 +2,14 @@ from abc import ABCMeta
 from pathlib import Path
 
 from core.builder import context
-from core.utilities import colour as c
 
 
 class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
     target = None
     subdir = None
 
-    def as_tuple(self, course=None, year=None, kind=None, issue=None, *deeper):
+    @staticmethod
+    def as_tuple(course=None, year=None, kind=None, issue=None, *deeper):
         result = []
         if course is not None:
             assert isinstance(course, str)
@@ -29,4 +29,3 @@ class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
 
     def node_path(self, course=None, year=None, issue=None, *deeper):
         return Path(self.root, *self.as_tuple(course, year, self.subdir, issue), *deeper)
-

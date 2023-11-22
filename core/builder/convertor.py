@@ -28,8 +28,8 @@ class Convertor:
             # Change closing double quotation marks to the proper Unicode symbol
             RegexReplacement(r"''", r'”'),
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
-            RegexReplacement(r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
-                             r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
+                             r"\\insertPicture\g<options>{\g<stem>.pdf}"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
             RegexReplacement(r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
                              r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
