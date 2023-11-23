@@ -1,4 +1,4 @@
-(@ extends 'base.tex' @)
+(@ extends 'base.jtt' @)
 
 (@ block type @)handout(@ endblock @)
 (@ block typedir @)handouts(@ endblock @)
@@ -6,7 +6,7 @@
 (@ block style @)
     \fancypagestyle{handout}{
         \pagestyle{scholar}
-        \fancyhead[L]{\textit{Cvičenie č. (* issue.number *)}}
+        \fancyhead[L]{\textit{(* exercise.caption *) (* issue.number *)}}
         \fancyhead[R]{\textit{(* issue.date.strftime('%d. %m. %Y') *)}}
     }
 (@ endblock style @)

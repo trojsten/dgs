@@ -1,10 +1,10 @@
 .SECONDEXPANSION:
 
 build/scholar/%/build-handout: \
-	modules/scholar/templates/base.tex \
-	modules/scholar/templates/handout-base.tex \
-	modules/scholar/templates/handout-students.tex \
-	modules/scholar/templates/handout-solutions.tex \
+	modules/scholar/templates/base.jtt \
+	modules/scholar/templates/handout-base.jtt \
+	modules/scholar/templates/handout-students.jtt \
+	modules/scholar/templates/handout-solutions.jtt \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -12,10 +12,10 @@ build/scholar/%/build-handout: \
 	python3 modules/scholar/builder/handout.py 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-homework: \
-	modules/scholar/templates/base.tex \
-	modules/scholar/templates/homework-base.tex \
-	modules/scholar/templates/homework-students.tex \
-	modules/scholar/templates/homework-solutions.tex \
+	modules/scholar/templates/base.jtt \
+	modules/scholar/templates/homework-base.jtt \
+	modules/scholar/templates/homework-students.jtt \
+	modules/scholar/templates/homework-solutions.jtt \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -23,7 +23,7 @@ build/scholar/%/build-homework: \
 	python3 modules/scholar/builder/homework.py 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-lecture: \
-	modules/scholar/templates/lecture.tex \
+	modules/scholar/templates/lecture.jtt \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))

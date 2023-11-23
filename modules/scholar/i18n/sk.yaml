@@ -1,0 +1,18 @@
+captions:
+  problem:
+    singular: "úloha"
+    plural: "úlohy"
+  solution:
+    singular: "riešenie"
+    plural: "riešenia"
+
+homework:
+  title: "domáca úloha"
+  deadline: "termín odovzdania"
+  disclaimer:
+    foreword: "Vypracovanú úlohu odovzdajte na papieri alebo"
+    midword: "najneskôr do začiatku cvičenia"
+    aftword: "Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné."
+
+handout:
+  title: "cvičenie"

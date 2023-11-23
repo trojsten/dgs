@@ -1,4 +1,4 @@
-(@ extends 'base.tex' @)
+(@ extends 'base.jtt' @)
 
 (@ block type @)homework(@ endblock @)
 (@ block typedir @)homework(@ endblock @)
@@ -6,8 +6,8 @@
 (@ block style @)
     \fancypagestyle{homework}{
         \pagestyle{scholar}
-        \fancyhead[L]{\textit{Domáca úloha č. (* issue.number *)}}
-        \fancyhead[R]{\textit{Deadline (* issue.deadline.strftime('%d. %m. %Y') *)}}
+        \fancyhead[L]{\textit{(* i18n.homework.title|capitalize *) (* issue.number *)}}
+        \fancyhead[R]{\textit{(* i18n.homework.deadline|capitalize *) (* issue.deadline.strftime('%d. %m. %Y') *)}}
 
         \titleformat{\section}[block]{\Huge\bfseries\centering}{}{0pt}{}
         \titleformat{\subsection}[hang]{\Large\bfseries\vspace{4mm}\vspace*{-4mm}}{\arabic{subsection}. }{0pt}{}
@@ -22,12 +22,11 @@
 
 (@ block content @)
     \setcounter{section}{(* issue.number - 1 *)}
-    \section{Domáca úloha č. (* issue.number *)}
+    \section{(* i18n.homework.title|capitalize *) (* issue.number *)}
     \begin{center}
-        \textit{%
-            Vypracovanú úlohu odovzdajte na papieri alebo \href{mailto:(* year.teacher.email *)}{e-mailom}
-            najneskôr do začiatku cvičenia (* issue.deadline.strftime('%d. %m. %Y') *).
-            Odovzdaním čestne prehlasujete, že riešenia sú vaše vlastné.}
+        \textit{(* i18n.homework.disclaimer.foreword *)} \href{mailto:(* year.teacher.email *)}{(* year.teacher.email *)}
+        \textit{(* i18n.homework.disclaimer.midword *) (* issue.deadline.strftime('%d. %m. %Y') *)}.
+        \textit{(* i18n.homework.disclaimer.aftword *)}
     \end{center}
     (@ block sections @)
     (@ endblock sections @)

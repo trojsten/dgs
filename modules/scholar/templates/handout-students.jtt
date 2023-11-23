@@ -1,10 +1,10 @@
-(@ extends 'handout-base.tex' @)
+(@ extends 'handout-base.jtt' @)
 
 (@ block problems @)
     (@ if issue.problems @)
-        \subsection{Úlohy}
+        \subsection{(* captions.problems|capitalize *)}
         (@ for problem in issue.problems @)
-            \subsubsection{Úloha (* loop.index *)}
+            \subsubsection{(* captions.problem|capitalize *) (* loop.index *)}
             \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
             \protectedInput{\activeDirectory/problem.tex}
             (@ block solution scoped @)(@ endblock solution @)

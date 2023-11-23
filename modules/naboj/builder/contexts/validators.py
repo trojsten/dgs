@@ -1,5 +1,4 @@
 import itertools
-import pprint
 
 from schema import Schema, Optional, Regex, Or
 

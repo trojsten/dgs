@@ -113,7 +113,6 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
                   f"{c.name(self._validator_class.__name__)}")
             raise e
 
-
     def load_yaml(self, *args):
         filename = Path(*args)
         try:

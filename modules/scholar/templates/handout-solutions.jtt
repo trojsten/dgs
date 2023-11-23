@@ -1,7 +1,7 @@
-(@ extends 'handout-students.tex' @)
+(@ extends 'handout-students.jtt' @)
 
 (@ block solution @)
-    \paragraph{Riešenie}
+    \paragraph{(* captions.solution *)}
     \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
     \protectedInput{\activeDirectory/solution.tex}
 (@ endblock solution @)

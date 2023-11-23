@@ -1,11 +1,11 @@
-(@ extends 'handout-students.tex' @)
+(@ extends 'handout-students.jtt' @)
 
 (@ block solutions @)
     \newpage
     (@ if issue.problems @)
-        \subsection{Riešenia}
+        \subsection{(* captions.solutions|capitalize *)}
         (@ for problem in issue.problems @)
-            \subsubsection{Úloha (* loop.index *)}
+            \subsubsection{(* captions.problem|capitalize *) (* loop.index *)}
             \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
         (@ endfor @)
     (@ endif @)

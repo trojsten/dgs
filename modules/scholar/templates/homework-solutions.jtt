@@ -1,11 +1,11 @@
-(@ extends 'homework-students.tex' @)
+(@ extends 'homework-students.jtt' @)
 
 (@ block solution @)
-    \paragraph{Riešenie}
+    \paragraph{(* i18n.captions.solution.singular|capitalize *)}
     \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
 (@ endblock solution @)
 
 (@ block subsolution @)
-    \paragraph{Riešenie}
+    \paragraph{(* i18n.captions.solution.singular|capitalize *)}
     \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
 (@ endblock subsolution @)
