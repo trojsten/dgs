@@ -4,7 +4,7 @@ from contexts.homework import HomeworkMixin
 
 
 class BuilderHomework(HomeworkMixin, BuilderScholar):
-    root_context_class = ContextHomework
+    _root_context_class = ContextHomework
     templates = [
         'homework-students.jtt',
         'homework-solutions.jtt',

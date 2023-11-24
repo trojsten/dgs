@@ -6,8 +6,8 @@ from .buildable import ContextIssueBase
 
 
 class HomeworkMixin:
-    target = 'homework'
-    subdir = 'homework'
+    _target = 'homework'
+    _subdir = 'homework'
 
 
 class ContextHomeworkSubproblem(HomeworkMixin, ContextIssueSubSub):

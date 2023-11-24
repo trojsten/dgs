@@ -3,8 +3,8 @@ import context
 
 
 class BuilderCourse(builder.BuilderCourseBase):
-    target = 'course'
-    root_context_class = context.ContextCourse
+    _target = 'course'
+    _root_context_class = context.ContextCourse
 
     templates = [
         'course.tex',

@@ -6,12 +6,12 @@ from .buildable import ContextIssueBase
 
 
 class HandoutMixin:
-    target = 'handout'
-    subdir = 'handouts'
+    _target = 'handout'
+    _subdir = 'handouts'
 
 
 class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
     })
 

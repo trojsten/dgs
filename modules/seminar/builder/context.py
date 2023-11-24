@@ -191,7 +191,7 @@ class ContextSemesterBooklet(ContextSeminar):
 
 
 class ContextBooklet(BuildableContext, ContextSeminar):
-    _schema = Schema({})  # fix this
+    _schema = Schema({})  # nothing inherent to this context
     _validator_class = SeminarRoundValidator
 
     def populate(self, competition, volume, semester, issue):

@@ -5,8 +5,8 @@ from core.builder import context
 
 
 class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
-    target = None
-    subdir = None
+    _target = None
+    _subdir = None
 
     @staticmethod
     def as_tuple(course=None, year=None, kind=None, issue=None, *deeper):
@@ -25,7 +25,7 @@ class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
         return tuple(result)
 
     def ident(self, course=None, year=None, issue=None, *deeper):
-        return self.as_tuple(course, year, self.target, issue, *deeper)
+        return self.as_tuple(course, year, self._target, issue, *deeper)
 
     def node_path(self, course=None, year=None, issue=None, *deeper):
-        return Path(self.root, *self.as_tuple(course, year, self.subdir, issue), *deeper)
+        return Path(self.root, *self.as_tuple(course, year, self._subdir, issue), *deeper)

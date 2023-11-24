@@ -8,9 +8,9 @@ from core.utilities.schema import valid_language
 import core.utilities.colour as c
 
 
-file = 'file'
-link = 'link'
-file_or_link = Or(file, link)
+File = 'file'
+Link = 'link'
+FileOrLink = Or(File, Link)
 
 
 class NabojValidator(FileSystemValidator):
@@ -18,32 +18,32 @@ class NabojValidator(FileSystemValidator):
         'problems': {
             str: {
                 valid_language: {
-                    Optional('problem.md'): file_or_link,
-                    Optional('solution.md'): file_or_link,
-                    Optional('answer-extra.md'): file_or_link,
+                    Optional('problem.md'): FileOrLink,
+                    Optional('solution.md'): FileOrLink,
+                    Optional('answer-extra.md'): FileOrLink,
                 },
-                'answer.md': file,
-                Optional('answer-interval.md'): file,
-                Optional('meta.yaml'): file,
-                Optional(Regex(r'[\w-]+\.(png|svg|gp|py|dat)')): file,
+                'answer.md': File,
+                Optional('answer-interval.md'): File,
+                Optional('meta.yaml'): File,
+                Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
             },
         },
         'languages': {
             valid_language: {
-                'meta.yaml': file,
-                'intro.jtt': file_or_link,
-                'instructions-inner.jtt': file_or_link,
-                'evaluators.jtt': file_or_link,
+                'meta.yaml': File,
+                'intro.jtt': FileOrLink,
+                'instructions-inner.jtt': FileOrLink,
+                'evaluators.jtt': FileOrLink,
             }
         },
         'venues': {
             Regex(r'\w+'): {
-                'instructions-inner.jtt': file_or_link,
-                'evaluators.jtt': link,
-                'meta.yaml': file,
+                'instructions-inner.jtt': FileOrLink,
+                'evaluators.jtt': Link,
+                'meta.yaml': File,
             },
         },
-        'meta.yaml': file,
+        'meta.yaml': File,
     })
 
     def __init__(self, *path):
@@ -60,14 +60,12 @@ class NabojValidator(FileSystemValidator):
     def _colour(what):
         return {
             None: c.err,
-            file: c.ok,
-            link: c.path,
+            File: c.ok,
+            Link: c.path,
         }[what]
 
-    def _check_same_translations(self) -> bool:
-        if not self.tree['problems']:
-            return True
-        else:
+    def _check_same_translations(self) -> None:
+        if self.tree['problems']:
             for (pid1, problem1), (pid2, problem2) in itertools.pairwise(self.tree['problems'].items()):
                 translations1 = [x for x in problem1.keys() if x in glob.languages.keys()]
                 translations2 = [x for x in problem2.keys() if x in glob.languages.keys()]
@@ -89,4 +87,5 @@ class NabojValidator(FileSystemValidator):
                 print(f"Warning for problem {c.name(problem_id):<30}: "
                       f"{'Either all or none ' if optional else 'All '}"
                       f"of the translations should contain file {c.path(filename)}, "
-                      f"but found {' '.join([self._colour(kind)(lang) for lang, kind in is_present.items()])}")
+                      f"but I only found the green ones: "
+                      f"{' '.join([self._colour(kind)(lang) for lang, kind in is_present.items()])}")

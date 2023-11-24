@@ -4,14 +4,14 @@ from pathlib import Path
 sys.path.append('.')
 
 from core.builder.context import Context
-from core.utils import crawler
-
+from core.utilities import crawler
 
 
 # Homework and its subcontexts
 
 
 """ Single lecture contexts start here """
+
 
 class ContextScholarSingle(Context):
     @staticmethod

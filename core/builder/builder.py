@@ -41,7 +41,7 @@ class BaseBuilder(metaclass=ABCMeta):
         return self.parser
 
     def create_context(self):
-        self.context = self.root_context_class(self.launch_directory, *self.id())
+        self.context = self._root_context_class(self.launch_directory, *self.id())
 
     def full_name(self):
         return '/'.join(map(str, self.id()))
@@ -70,7 +70,8 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def print_build_info(self) -> None:
         """ Prints build info """
-        logger.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} {c.name(self.target)} {c.path(self.full_path())}")
+        logger.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} "
+                    f"{c.name(self._target)} {c.path(self.full_path())}")
 
     def print_dir_info(self) -> None:
         """ Prints directory info """
@@ -93,4 +94,4 @@ class BaseBuilder(metaclass=ABCMeta):
                                  outdir=self.output_directory,
                                  new_name=Path(template).with_suffix('.tex'))
 
-        logger.debug(f"{c.ok('Template builder on')} {c.name(self.target)} {c.path(self.full_name())} {c.ok('successful')}")
+        logger.debug(f"{c.ok('Template builder on')} {c.name(self._target)} {c.path(self.full_name())} {c.ok('successful')}")

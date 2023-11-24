@@ -4,7 +4,7 @@ from contexts.handout import HandoutMixin
 
 
 class BuilderHandout(HandoutMixin, BuilderScholar):
-    root_context_class = ContextHandout
+    _root_context_class = ContextHandout
     templates = [
         'handout-students.jtt',
         'handout-solutions.jtt',

@@ -84,15 +84,11 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
     Context that is reasonably mapped to a repository path.
     Can load files, meta.yaml, has node_path
     """
-    arg_schema = None
     _subcontext_key = None
     _subcontext_class = None
     _validator_class: None
 
     def __init__(self, root, *path, **defaults):
-        if self.arg_schema is not None:
-            Schema(self.arg_schema).validate(path)
-
         super().__init__(self.name(self.ident(*path)), **defaults)
         self.root = root
         self.populate(*path)
@@ -155,9 +151,15 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
 class BuildableContext(Context):
     """
-    Only some contexts are meant to be built directly. This class provides a common ancestor.
+    Only some contexts are meant to be built. This class provides a common ancestor.
     Currently only useful for sanity checks.
     """
+
+
+class BuildableFilesystemContext(FileSystemContext, BuildableContext, metaclass=abc.ABCMeta):
+    def __init__(self, root, *path, **defaults):
+        super().__init__(root, *path, **defaults)
+        self.validate_repo(*path)
 
 
 class ContextModule(Context):

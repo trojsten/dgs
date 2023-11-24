@@ -3,10 +3,10 @@ from modules.naboj.builder.contexts import BuildableContextLanguage
 
 
 class BuilderNabojLanguage(builder.BuilderNaboj):
-    target = 'language'
-    subdir = 'languages'
+    _target = 'language'
+    _subdir = 'languages'
 
-    root_context_class = BuildableContextLanguage
+    _root_context_class = BuildableContextLanguage
     templates = [
         'booklet.jtt',
         'answers.jtt',
@@ -25,7 +25,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         return self.args.competition, self.args.volume, self.args.language
 
     def path(self):
-        return self.args.competition, f'{self.args.volume:02d}', self.subdir, self.args.language
+        return self.args.competition, f'{self.args.volume:02d}', self._subdir, self.args.language
 
 
 BuilderNabojLanguage().build()

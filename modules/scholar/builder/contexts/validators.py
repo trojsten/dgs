@@ -4,11 +4,11 @@ from core.builder.validator import FileSystemValidator
 from core.utilities.schema import file
 
 
-class SeminarRoundValidator(FileSystemValidator):
+class ScholarHomeworkValidator(FileSystemValidator):
     _schema = Schema({
-        Regex(r'0[1-8]'): {
-            'problem.md': file,
-            'solution.md': file,
+        Regex(r'[\w-]+'): {
+            Optional('problem.md'): file,
+            Optional('solution.md'): file,
             Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): file,
             'meta.yaml': file,
         },
