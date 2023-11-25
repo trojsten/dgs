@@ -1,10 +1,10 @@
 import itertools
 
-from schema import Schema, Optional, Regex, Or
+from schema import Optional, Regex, Or
 
 import core.utilities.globals as glob
 from core.builder.validator import FileSystemValidator
-from core.utilities.schema import valid_language
+from core.utilities.schema import Schema, valid_language
 import core.utilities.colour as c
 
 

@@ -1,7 +1,6 @@
 import itertools
 from schema import Schema, Or
-from collections.abc import Iterable
-from typing import Any, Optional, Callable, Union, List, Dict
+from typing import Any, Callable, Union, List, Dict
 
 
 def roman(number: int) -> str:
@@ -26,7 +25,7 @@ def check_digit(team: str, problem: int) -> int:
 
 
 def get_check_digit(data: str) -> int:
-    assert type(data) == str
+    assert isinstance(data, str)
     try:
         digits = map(lambda x: int(x, 36), data)
     except ValueError as exc:
@@ -39,7 +38,7 @@ def get_check_digit(data: str) -> int:
 def plural(how_many, one, two, many):
     if how_many == 1:
         return one
-    if how_many > 2 and how_many < 5:
+    if 2 < how_many < 5:
         return two
     else:
         return many
@@ -82,6 +81,7 @@ def _nth(x: int) -> str:
                 case 3:
                     return "rd"
 
+
 def nth(x: int) -> str:
     return f"{x}{_nth(x)}"
 
@@ -123,7 +123,7 @@ def process_people(people: Union[List[Dict[str, str]], Dict[str, str]]) -> List[
         raise TypeError(f"Invalid people type: {type(people)}")
 
 
-def format_gender_suffix(people: Dict[str, Dict[str, str]], *, func: Callable = identity) -> str:
+def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = identity) -> str:
     """
     Format people metadata:
         -   if it is a dict, it should have name and gender, display that
@@ -146,7 +146,8 @@ def format_gender_suffix(people: Dict[str, Dict[str, str]], *, func: Callable = 
         elif people[0]['gender'] == '?':
             return r"\errorMessage{?}"
         else:
-            raise ValueError(f"Tried to use an undefined gender suffix '{people[0]['gender']}'. Define 'gender' key in meta.yaml")
+            raise ValueError(f"Tried to use an undefined gender suffix '{people[0]['gender']}'. "
+                             f"Define 'gender' key in meta.yaml")
 
 
 def format_people(people: Union[list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
@@ -157,4 +158,5 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
     """
 
     people = process_people(people)
-    return render_list([person['name'] if person['name'] != '' else r"\errorMessage{?}" for person in people], func=func, and_word=and_word)
+    return render_list([person['name'] if person['name'] != '' else r"\errorMessage{?}" for person in people],
+                       func=func, and_word=and_word)

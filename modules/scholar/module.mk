@@ -2,9 +2,7 @@
 
 build/scholar/%/build-handout: \
 	modules/scholar/templates/base.jtt \
-	modules/scholar/templates/handout-base.jtt \
-	modules/scholar/templates/handout-students.jtt \
-	modules/scholar/templates/handout-solutions.jtt \
+	$$(wildcard modules/scholar/templates/handout-*.jtt) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -13,9 +11,7 @@ build/scholar/%/build-handout: \
 
 build/scholar/%/build-homework: \
 	modules/scholar/templates/base.jtt \
-	modules/scholar/templates/homework-base.jtt \
-	modules/scholar/templates/homework-students.jtt \
-	modules/scholar/templates/homework-solutions.jtt \
+	$$(wildcard modules/scholar/templates/homework-*.jtt) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))

@@ -2,8 +2,9 @@ import datetime
 
 from pathlib import Path
 from abc import ABCMeta
-from schema import Schema, Optional, Use, And, Or
+from schema import Optional, Use, And, Or
 
+from core.utilities.schema import Schema
 from core.builder.context import FileSystemContext, BuildableContext, ContextModule
 from validators import SeminarRoundValidator
 
@@ -141,12 +142,11 @@ class ContextProblem(ContextSeminar):
         'id': str,
         'evaluation': persons,
         'solution': persons,
-        'points': Schema({
+        'points': {
             'description': And(int, lambda x: x >= 0),
             Optional('code'): And(int, lambda x: x >= 0),
             Optional('extra'): And(int, lambda x: x >= 0),
-        }),
-
+        },
     })
 
     def populate(self, competition, volume, semester, issue, problem):

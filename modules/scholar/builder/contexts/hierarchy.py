@@ -1,9 +1,9 @@
 from abc import ABCMeta
-from schema import Schema, And
+from schema import And
 
 from .base import ContextScholar
 
-from core.utilities.schema import valid_language
+from core.utilities.schema import Schema, valid_language
 
 
 class ContextCourse(ContextScholar):

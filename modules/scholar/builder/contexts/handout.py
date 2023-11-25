@@ -1,7 +1,8 @@
 import datetime
-from schema import Schema, And, Optional
+from schema import And
 
-from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
+from core.utilities.schema import Schema
+from .hierarchy import ContextIssue, ContextIssueSub
 from .buildable import ContextIssueBase
 
 
@@ -35,4 +36,3 @@ class ContextHandout(HandoutMixin, ContextIssueBase):
     _schema = Schema({})
 
     _issue_context_class = ContextHandoutIssue
-

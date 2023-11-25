@@ -4,7 +4,7 @@ from core.builder.validator import FileSystemValidator
 from core.utilities.schema import file
 
 
-class ScholarHomeworkValidator(FileSystemValidator):
+class ScholarValidator(FileSystemValidator):
     _schema = Schema({
         Regex(r'[\w-]+'): {
             Optional('problem.md'): file,

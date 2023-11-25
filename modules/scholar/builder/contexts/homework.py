@@ -1,6 +1,7 @@
 import datetime
-from schema import Schema, And, Optional
+from schema import And, Optional
 
+from core.utilities.schema import Schema
 from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
 from .buildable import ContextIssueBase
 

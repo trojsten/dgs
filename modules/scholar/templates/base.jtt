@@ -29,6 +29,7 @@
 \numberwithin{equation}{subsection}
 \numberwithin{figure}{subsection}
 \renewcommand\thesubsubsection{\thesubsection\alph{subsubsection}}
+\input{core/i18n/(* course.language *)/override.tex}
 
 (@ block style @)(@ endblock @)
 

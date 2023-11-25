@@ -13,8 +13,8 @@ class BuilderScholarBase(builder.BaseBuilder, metaclass=abc.ABCMeta):
 class BuilderScholar(BuilderScholarBase):
     _subdir = None
 
-    def create_argument_parser(self):
-        super().create_argument_parser()
+    def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('course', type=str)
         self.parser.add_argument('year', type=int)
         self.parser.add_argument('issue', type=int)

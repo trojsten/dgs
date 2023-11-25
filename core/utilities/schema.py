@@ -1,8 +1,9 @@
+import copy
 import os
-import subprocess
 import schema
 
-from schema import Schema, And, Or, Regex
+from typing import Self
+from schema import And, Or, Regex
 from enum import Enum
 
 import core.utilities.globals as glob
@@ -18,72 +19,70 @@ commit_hash = Regex(r'[a-f0-9]+')
 
 
 class MergeFlags(Enum):
-    IGNORE = 0
-    EXCEPTION = 1
-    OVERWRITE = 2
-    FUSE = 3
+    """
+    Conflict resolution algorithm for mergeing Schemas
+    """
+    KEEP = 0            # Keep parent values
+    EXCEPTION = 1       # Raise an exception
+    OVERWRITE = 2       # Keep child values
+    FUSE = 3            # Recursively fuse children Schemas
+    ALTERNATIVE = 4     # Replace with Or(self.schema[key], other.schema[key])
+
+
+class Schema(schema.Schema):
+    def _merge(self, other: Self, *, conflict: MergeFlags = MergeFlags.OVERWRITE):
+        """
+        Merge a child Schema into a parent Schema, optionally overwriting any existing keys.
+
+        Parameters
+        ----------
+        other : Schema
+        conflict : MergeFlags
+            Specifies what to do if a key is found both in parent and child:
+                IGNORE: keep the value of parent
+                EXCEPTION: throw an exception
+                OVERWRITE: keep the value of child, discarding the value of parent (default)
+                FUSE: allow both values from parent's and child's schema
+        """
+        assert isinstance(other, Schema), "Can only merge a Schema with another Schema"
+        for key in other.schema:
+            if key in self.schema:
+                match conflict:
+                    case MergeFlags.KEEP:
+                        pass
+                    case MergeFlags.EXCEPTION:
+                        raise schema.SchemaError(f"Key collision for {key}")
+                    case MergeFlags.OVERWRITE:
+                        self.schema[key] = other.schema[key]
+                    case MergeFlags.FUSE:
+                        self.schema[key] |= other.schema[key]
+                    case MergeFlags.ALTERNATIVE:
+                        self.schema[key] = Or(self.schema[key], other.schema[key])
+            else:
+                self.schema[key] = other.schema[key]
+        return self
+
+    def __or__(self, other: Self) -> Self:
+        sch = copy.deepcopy(self)
+        return sch._merge(other, conflict=MergeFlags.ALTERNATIVE)
+
+    def __and__(self, other: Self) -> Self:
+        sch = copy.deepcopy(self)
+        return sch._merge(other, conflict=MergeFlags.OVERWRITE)
+
+    def __add__(self, other) -> Self:
+        sch = copy.deepcopy(self)
+        return sch._merge(other, conflict=MergeFlags.FUSE)
+
+    def __ior__(self, other: Self):
+        return self._merge(other, conflict=MergeFlags.ALTERNATIVE)
+
+    def __iand__(self, other: Self):
+        return self._merge(other, conflict=MergeFlags.OVERWRITE)
+
+    def __iadd__(self, other: Self):
+        return self._merge(other, conflict=MergeFlags.FUSE)
 
 
 def valid_language(code: str) -> bool:
     return code in glob.languages.keys()
-
-
-def check_output(command, *, cwd) -> str:
-    return subprocess.check_output(command, cwd=cwd if cwd is not None else os.getcwd()).decode().rstrip("\n")
-
-
-def get_last_commit_hash(cwd=None) -> str:
-    return check_output(["git", "rev-parse", "--short", "--verify", "master"], cwd=cwd)
-
-
-def get_branch(cwd=None) -> str:
-    return check_output(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"], cwd=cwd)
-
-
-def merge(parent: Schema, *children: Schema, conflict: MergeFlags = MergeFlags.OVERWRITE) -> Schema:
-    """ Merge an existing Schema with each in a list of child Schemas """
-    for child in children:
-        parent = merge_one(parent, child, conflict=conflict)
-    return parent
-
-
-def merge_one(parent: Schema, child: Schema, *, conflict: MergeFlags = MergeFlags.OVERWRITE) -> Schema:
-    """
-    Merge a child Schema into a parent Schema, optionally overwriting any existing keys.
-
-    Parameters
-    ----------
-    parent : Schema
-    child : Schema
-    conflict : MergeFlags
-        Specifies what to do if a key is found both in parent and child:
-            IGNORE: keep the value of parent
-            EXCEPTION: throw an exception
-            OVERWRITE: keep the value of child, discarding the value of parent (default)
-            FUSE: allow both values from parent's and child's schema
-
-    Returns
-    -------
-    parent : Schema
-    """
-    if id(parent) == id(child):
-        return parent
-
-    if parent is None:
-        return child
-
-    for key in child._schema:
-        if key in parent._schema:
-            match conflict:
-                case MergeFlags.IGNORE:
-                    pass
-                case MergeFlags.EXCEPTION:
-                    raise schema.SchemaError(f"Key collision for {key}")
-                case MergeFlags.OVERWRITE:
-                    parent._schema[key] = child._schema[key]
-                case MergeFlags.FUSE:
-                    parent._schema[key] = Or(parent._schema[key], child._schema[key])
-        else:
-            parent._schema[key] = child._schema[key]
-
-    return parent

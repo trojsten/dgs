@@ -1,10 +1,13 @@
 import abc
-from schema import Schema
+
+from core.utilities.schema import Schema
 from pathlib import Path
 
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
     IGNORED = ['.git']
+    Link = 'link'
+    File = 'file'
     _schema: Schema | None = None
 
     @property
@@ -24,9 +27,9 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
             }
         else:
             if path.is_symlink():
-                return 'link'
+                return FileSystemValidator.Link
             elif path.is_file():
-                return 'file'
+                return FileSystemValidator.File
 
     def validate(self) -> None:
         self.schema.validate(self.tree)

@@ -17,8 +17,8 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
     ]
     i18n_templates = ['intro.jtt']
 
-    def create_argument_parser(self):
-        super().create_argument_parser()
+    def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('language', type=str)
 
     def id(self):

@@ -12,8 +12,8 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
     module = 'naboj'
     i18n_templates: [str] = []
 
-    def create_argument_parser(self):
-        super().create_argument_parser()
+    def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
         self.parser.add_argument('volume', type=int)
 

@@ -9,7 +9,7 @@ class BuilderS(builder.BaseBuilder):
     module = 'scholar'
 
     def create_argument_parser(self):
-        super().create_argument_parser()
+        super().add_arguments()
         self.parser.add_argument('course', type=str)
         self.parser.add_argument('year', type=int)
         self.parser.add_argument('issue', type=int)
@@ -25,7 +25,7 @@ class BuilderSingle(builder.BaseBuilder):
     module = 'scholar'
 
     def create_argument_parser(self):
-        super().create_argument_parser()
+        super().add_arguments()
         self.parser.add_argument('course', type=str, choices=['FKS'])
         self.parser.add_argument('lecture', type=str)
 

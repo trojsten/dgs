@@ -1,10 +1,11 @@
 import os
 import datetime
 from pathlib import Path
-from schema import Schema, And, Or, Regex
+from schema import And, Or, Regex
 
 from core.builder import context
-import core.utilities.schema as sch
+from core.builder.builder import get_last_commit_hash, get_branch
+from core.utilities.schema import Schema, valid_language, commit_hash
 
 
 class ContextNaboj(context.FileSystemContext):
@@ -20,7 +21,7 @@ class ContextNaboj(context.FileSystemContext):
         'contestants': str,
         'display_name': And(str, len),
         'in_school_symbol': Or(None, And(str, lambda x: len(x) == 1)),
-        'language': And(str, sch.valid_language),
+        'language': And(str, valid_language),
         'name': object,
         'number': object,
         'school': str,
@@ -40,11 +41,11 @@ class ContextNaboj(context.FileSystemContext):
         'build': {
             'user': And(str, len),
             'dgs': {
-                'hash': sch.commit_hash,
+                'hash': commit_hash,
                 'branch': str,
             },
             'repo': {
-                'hash': sch.commit_hash,
+                'hash': commit_hash,
                 'branch': str,
             },
             'timestamp': datetime.datetime,
@@ -62,12 +63,12 @@ class ContextNaboj(context.FileSystemContext):
             'build': {
                 'user': os.environ.get('USERNAME'),
                 'dgs': {
-                    'hash': sch.get_last_commit_hash(),
-                    'branch': sch.get_branch(),
+                    'hash': get_last_commit_hash(),
+                    'branch': get_branch(),
                 },
                 'repo': {
-                    'hash': sch.get_last_commit_hash(self.node_path(repo_root)),
-                    'branch': sch.get_branch(self.node_path(repo_root)),
+                    'hash': get_last_commit_hash(self.node_path(repo_root)),
+                    'branch': get_branch(self.node_path(repo_root)),
                 },
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
             }

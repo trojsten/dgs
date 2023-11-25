@@ -1,7 +1,7 @@
-from schema import Schema, Optional, Regex, Or
+from schema import Optional, Regex
 
 from core.builder.validator import FileSystemValidator
-from core.utilities.schema import file
+from core.utilities.schema import Schema, file
 
 
 class SeminarRoundValidator(FileSystemValidator):

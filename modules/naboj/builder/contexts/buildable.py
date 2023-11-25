@@ -1,13 +1,13 @@
 import abc
-import core.utilities.schema as sch
-from schema import Schema, And, Optional
+from schema import Optional
 
 import core.utilities.globals as glob
 from core.builder.context import BuildableFilesystemContext, ContextModule
+from core.utilities.schema import Schema
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
-from .i18n import ContextI18n, ContextI18nGlobal
+from .i18n import ContextI18nGlobal
 
 
 class BuildableContextNaboj(BuildableFilesystemContext, ContextNaboj, metaclass=abc.ABCMeta):
@@ -33,7 +33,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
     })
 
     def __init__(self, *args):
-        self._schema = sch.merge(super()._schema, self._schema)
+        self._schema = super()._schema | self._schema
         super().__init__(*args)
 
     def populate(self, competition, volume, language):
@@ -54,7 +54,7 @@ class BuildableContextVenue(BuildableContextNaboj):
     })
 
     def __init__(self, *args):
-        self.schema = sch.merge(super()._schema, self._schema)
+        self._schema = super()._schema | self._schema
         super().__init__(*args)
 
     def populate(self, competition, volume, venue):

@@ -6,7 +6,7 @@
 (@ block subtitle @)
     {
         \centering
-        \vspace*{-5mm}
+        \vspace*{-2.5em}
         Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)\\[2pt]
         (@ if round.deadlineAbroad is defined @) (pre zahraničie (* round.deadlineAbroad.strftime('%d. %m. %Y') *)(@ endif @)
     }
