@@ -1,4 +1,4 @@
-from schema import Schema, Optional, Regex, Or
+from enschema import Schema, Optional, Regex
 
 from core.builder.validator import FileSystemValidator
 from core.utilities.schema import file

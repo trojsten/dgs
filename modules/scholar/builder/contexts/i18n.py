@@ -1,6 +1,6 @@
 import yaml
 from pathlib import Path
-from schema import Schema
+from enschema import Schema
 
 from core.builder import context
 from core.utilities.schema import string

@@ -1,6 +1,6 @@
 import abc
 
-from core.utilities.schema import Schema
+from enschema import Schema
 from pathlib import Path
 
 

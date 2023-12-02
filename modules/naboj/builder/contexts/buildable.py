@@ -1,9 +1,8 @@
 import abc
-from schema import Optional
+from enschema import Schema, Optional
 
 import core.utilities.globals as glob
 from core.builder.context import BuildableFilesystemContext, ContextModule
-from core.utilities.schema import Schema
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue

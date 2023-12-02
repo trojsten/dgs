@@ -1,11 +1,11 @@
 import os
 import datetime
 from pathlib import Path
-from schema import And, Or, Regex
+from enschema import Schema, And, Or, Regex
 
 from core.builder import context
 from core.builder.builder import get_last_commit_hash, get_branch
-from core.utilities.schema import Schema, valid_language, commit_hash
+from core.utilities.schema import valid_language, commit_hash
 
 
 class ContextNaboj(context.FileSystemContext):

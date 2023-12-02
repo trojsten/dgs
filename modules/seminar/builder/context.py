@@ -2,9 +2,8 @@ import datetime
 
 from pathlib import Path
 from abc import ABCMeta
-from schema import Optional, Use, And, Or
+from enschema import Schema, Optional, Use, And, Or
 
-from core.utilities.schema import Schema
 from core.builder.context import FileSystemContext, BuildableContext, ContextModule
 from validators import SeminarRoundValidator
 

@@ -1,10 +1,10 @@
 import datetime
 import itertools
-from schema import And, Or, Optional, Regex
+from enschema import Schema, And, Or, Optional, Regex
 
 import core.utilities.globals as glob
 from core.utilities import lists
-from core.utilities.schema import Schema, string, valid_language
+from core.utilities.schema import string, valid_language
 from .base import ContextNaboj
 
 

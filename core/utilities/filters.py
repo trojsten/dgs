@@ -1,5 +1,5 @@
 import itertools
-from schema import Schema, Or
+from enschema import Schema, Or
 from typing import Any, Callable, Union, List, Dict
 
 

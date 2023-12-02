@@ -7,11 +7,11 @@ import yaml
 import logging
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
-from schema import SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
+from enschema import SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
 from typing import Any, Self
 
+from enschema import Schema
 from core.utilities import dicts, colour as c, crawler
-from core.utilities.schema import Schema
 
 logger = logging.getLogger(__name__)
 
