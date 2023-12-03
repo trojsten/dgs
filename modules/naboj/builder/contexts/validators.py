@@ -21,11 +21,12 @@ class NabojValidator(FileSystemValidator):
                     Optional('problem.md'): FileOrLink,
                     Optional('solution.md'): FileOrLink,
                     Optional('answer-extra.md'): FileOrLink,
+                    Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|fig\.tex)')): File,
                 },
                 'answer.md': File,
                 Optional('answer-interval.md'): File,
                 Optional('meta.yaml'): File,
-                Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
+                Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|fig\.tex)')): File,
             },
         },
         'languages': {

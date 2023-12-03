@@ -58,6 +58,7 @@
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}
+\RequirePackage{chemfig}
 
 \RequirePackage[all]{nowidow}
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch

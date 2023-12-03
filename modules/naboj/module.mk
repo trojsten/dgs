@@ -343,4 +343,4 @@ output/naboj/%/all: \
 
 output/naboj/%/copy: \
 	output/naboj/%
-	rsync -rzvhPL output/naboj/$*/ fks:/home/sesquideus/public_html/naboj/$(subst output/,,$*)
+	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)
