@@ -130,11 +130,11 @@ class Convertor:
         (self.quote_open, self.quote_close) = self.locale.quotes
 
         self.quotes_regexes = [
-            #RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),
-            #RegexReplacement(r'"(\b)', self.quote_open + r'\g<1>'),
-            #RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
-            #RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
-            #RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
+            RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),
+            RegexReplacement(r'"(\b)', self.quote_open + r'\g<1>'),
+            RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
+            RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
+            RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
         self.pre_regexes['all'] += [
@@ -210,7 +210,7 @@ class Convertor:
         return line
 
     def preprocess(self, line):
-        return self.chain_process(line, [self.pre_regexes])
+        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])

@@ -82,7 +82,6 @@
 
 \RequirePackage[english]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\selectlanguage{slovak}
 \RequirePackage{csquotes}
 %\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
 

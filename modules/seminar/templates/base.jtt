@@ -120,9 +120,9 @@
 % Include overrides specific to this seminar instance from its static file (in the repository)
 \input{core/i18n/(* competition.language *)/override.tex}
 \input{build/(* module.id *)/(* competition.id *)/.static/format-override.tex}
+\selectlanguage{slovak}
 
 (@ block specific @)(@ endblock @)
-
 (@ block format @)(@ endblock @)
 
 \newcounter{volume}

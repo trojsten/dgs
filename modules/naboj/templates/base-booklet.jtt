@@ -94,12 +94,9 @@
         \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
     }
 
-    \captionsetup[table]{name=(* i18n[language.id].crossref.tableTitle *)}
-    \captionsetup[figure]{name=(* i18n[language.id].crossref.figureTitle *)}
-
     \setcounter{secnumdepth}{0}
     \input{core/i18n/(* language.id *)/override.tex}
-    \setmainlanguage{(* language.polyglossia *)}
+    \selectlanguage{english}
 
     \pagestyle{naboj}
 (@ endblock @)

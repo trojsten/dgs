@@ -1,0 +1,9 @@
+\sisetup{
+    output-decimal-marker   = {(* i18n.siunitx.output_decimal_marker *)},
+    list-final-separator    = {(* i18n.siunitx.list_final_separator *)},
+    list-pair-separator     = {(* i18n.siunitx.list_pair_separator *)},
+}
+
+\captionsetup*[table]{name=(* i18n.caption.table *)}
+\captionsetup*[figure]{name=(* i18n.caption.figure *)}
+\captionsetup*[equation]{name=(* i18n.caption.equation *)}
