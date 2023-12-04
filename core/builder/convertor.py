@@ -112,7 +112,6 @@ class Convertor:
 
     pre_checks = {
         'all': [
-            RegexFailure(r'\\!', error="No typographic corrections are allowed"),
             RegexFailure(r'\\circ', error="No \\circ allowed"),
         ],
         'latex': [],

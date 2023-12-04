@@ -3,17 +3,6 @@
 \ExplSyntaxOn
 \makeatletter
 
-\let\tmp\phi
-\let\phi\varphi
-\let\varphi\tmp
-\let\tmp\epsilon
-\let\epsilon\varepsilon
-\let\varepsilon\tmp
-
-% Patch \left and \right with package mleftright
-\let\left\mleft
-\let\right\mright
-
 \NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}
 
 \cs_new_protected:Npn \dgs_split_diff:nnn #1 #2 #3 {
@@ -36,8 +25,9 @@
 }
 
 \newcommand\insert@separator[1]{\itemdelim@ #1}
-
 \seq_new:N \l_split_args_seq
+
+\ExplSyntaxOff
 
 % Section: differentials
 
@@ -62,6 +52,7 @@
 
 \NewDocumentCommand{\frac@}{}{}
 
+\ExplSyntaxOn
 \NewDocumentCommand{\SetDerivativeFrac@}{m}{
     \renewcommand{\frac@}{\str_case:nnF{#1}{%
             {d}{\dfrac}%
@@ -70,6 +61,7 @@
             {n}{\nicefrac}%
     }{\frac}}%
 }
+\ExplSyntaxOff
 
 \NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
     \SetDerivativeFrac@{#1}
@@ -89,6 +81,7 @@
     }%
 }
 
+\ExplSyntaxOn
 \NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
     \renewcommand{\frac@}{\str_case:nnF{#1}{%
             {d}{\dfrac}%
@@ -102,6 +95,8 @@
         \frac@{#3^{#2}}{#3#4^{#2}}%
     }%
 }
+\ExplSyntaxOff
+
 % \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
 \NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff>{#3}{#4}}
 \NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff>{#3}{#4}}
@@ -385,4 +380,13 @@
 
 \NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
 
-\ExplSyntaxOff
+\let\tmp\phi
+\let\phi\varphi
+\let\varphi\tmp
+\let\tmp\epsilon
+\let\epsilon\varepsilon
+\let\varepsilon\tmp
+
+% Patch \left and \right with package mleftright
+\let\left\mleft
+\let\right\mright
