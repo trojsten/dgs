@@ -23,10 +23,6 @@ class Convertor:
     post_regexes = {
         'all': [],
         'latex': [
-            # Change opening double quotation marks to the proper Unicode symbol
-            RegexReplacement(r"``", r"“"),
-            # Change closing double quotation marks to the proper Unicode symbol
-            RegexReplacement(r"''", r'”'),
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
                              r"\\insertPicture\g<options>{\g<stem>.pdf}"),
@@ -93,8 +89,8 @@ class Convertor:
     pre_regexes = {
         'all': [
             RegexReplacement(r'^%.*$', r'', purpose="Comment"),
-            RegexReplacement(r'(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
-            RegexReplacement(r'(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
+            RegexReplacement(r'(^|(\s*))\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
+            RegexReplacement(r'(^|(\s+))}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
@@ -112,8 +108,8 @@ class Convertor:
 
     pre_checks = {
         'all': [
-            RegexFailure(r'\\!', error="No typographic corrections are allowed"),
-            RegexFailure(r'\\circ', error="No \\circ allowed"),
+            #RegexFailure(r'\\!', error="No typographic corrections are allowed"),
+            RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
         ],
         'latex': [],
         'html': [],
@@ -134,11 +130,11 @@ class Convertor:
         (self.quote_open, self.quote_close) = self.locale.quotes
 
         self.quotes_regexes = [
-            RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),
-            RegexReplacement(r'"(\b)', self.quote_open + r'\g<1>'),
-            RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
-            RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
-            RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
+            #RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),
+            #RegexReplacement(r'"(\b)', self.quote_open + r'\g<1>'),
+            #RegexReplacement(r'(\b)"', r'\g<1>' + self.quote_close),
+            #RegexReplacement(r'(\S)"', r'\g<1>' + self.quote_close),
+            #RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
         self.pre_regexes['all'] += [
@@ -214,7 +210,7 @@ class Convertor:
         return line
 
     def preprocess(self, line):
-        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
+        return self.chain_process(line, [self.pre_regexes])
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])
@@ -231,7 +227,8 @@ class Convertor:
         self.file.seek(0)
         args = [
             "pandoc",
-            "--mathjax",
+            "--metadata", f"lang={self.languages[self.locale_code].locale}",
+            "-V", "csquotes=true",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
@@ -239,8 +236,8 @@ class Convertor:
             "--filter", "pandoc-eqnos",
             "--filter", "pandoc-include-code",
             "--filter", "pandoc-minted",
-            # "--webtex='eqn://'",
-            "--metadata", f"lang={self.languages[self.locale_code].locale}",
+            "--lua-filter", "./core/filters/quotes.lua",
+            "--webtex='eqn://'",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
 

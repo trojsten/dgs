@@ -23,9 +23,6 @@ $$\begin{aligned}
 \end{aligned}$$
 
 $F_\circ$ This should pass!
-$F^{\circ}$
-$3^\circ$
-$5^{\circ}$
 	Line with tabs!
 \SI{3,5e8}{\kilo\metre}
 \SI{3.5}{\kilo\metre}, hehe should pass

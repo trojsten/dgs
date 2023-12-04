@@ -80,9 +80,10 @@
     urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
 
-\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage[english]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\setdefaultlanguage{slovak}
+\selectlanguage{slovak}
+\RequirePackage{csquotes}
 %\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
