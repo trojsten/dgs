@@ -39,8 +39,6 @@ class NabojValidator(FileSystemValidator):
         },
         'venues': {
             Regex(r'\w+'): {
-                'instructions-inner.jtt': FileOrLink,
-                'evaluators.jtt': Link,
                 'meta.yaml': File,
             },
         },

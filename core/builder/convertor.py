@@ -140,7 +140,7 @@ class Convertor:
         self.pre_regexes['all'] += [
             RegexReplacement(r'```{\.(?P<lang>\w+) include=(?P<path>[^}]+)}',
                              fr'```{{.\g<lang> include={Path(self.infile.name).parent}/\g<path>}}',
-                             purpose="Ending align marker"),
+                             purpose="Include code listing"),
         ]
 
         self.pre_checks = self._filter_regexes(self.pre_checks)
@@ -210,7 +210,8 @@ class Convertor:
         return line
 
     def preprocess(self, line):
-        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
+        #return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
+        return self.chain_process(line, [self.pre_regexes])
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])

@@ -82,7 +82,11 @@
 
 \RequirePackage[english]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\RequirePackage{csquotes}
+\RequirePackage[
+    autostyle,
+    french=guillemets,
+    czech=quotes,
+]{csquotes}
 %\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}

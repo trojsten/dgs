@@ -1,5 +1,7 @@
 import datetime
 import itertools
+import pprint
+
 from enschema import Schema, And, Or, Optional, Regex
 
 import core.utilities.globals as glob
@@ -43,8 +45,8 @@ class ContextCompetition(ContextNaboj):
 
 
 class ContextLanguage(ContextNaboj):
-    target = 'language'
-    subdir = 'languages'
+    _target = 'language'
+    _subdir = 'languages'
     _schema = Schema({
         'id': valid_language,
         'booklet': {
@@ -55,21 +57,21 @@ class ContextLanguage(ContextNaboj):
                 'answers': bool,
             }
         },
-        'polyglossia': lambda x: x in [lang['polyglossia'] for lang in glob.languages.values()],
+        'name': lambda x: x in [lang['name'] for lang in glob.languages.values()],
         'rtl': bool,
     })
 
     def populate(self, competition, volume, language):
         super().populate(competition)
-        self.load_meta(competition, volume, self.subdir, language) \
+        self.load_meta(competition, volume, language) \
             .add_id(language)
-        self.add({'polyglossia': glob.languages[language]['polyglossia']})
+        self.add({'name': glob.languages[language]['name']})
         self.add({'rtl': glob.languages[language].get('rtl', False)}),
 
 
 class ContextVenue(ContextNaboj):
-    target = 'venue'
-    subdir = 'venues'
+    _target = 'venue'
+    _subdir = 'venues'
     _schema = Schema({
         'id': And(str, len),
         'code': Regex(r'[A-Z]{5}'),
@@ -113,7 +115,7 @@ class ContextVenue(ContextNaboj):
         super().populate(competition)
         comp = ContextCompetition(self.root, competition)
         vol = ContextVolume(self.root, competition, volume)
-        self.load_meta(competition, volume, self.subdir, venue) \
+        self.load_meta(competition, volume, venue) \
             .add_id(venue)
         self._add_extra_teams(comp, vol)
         self.add({

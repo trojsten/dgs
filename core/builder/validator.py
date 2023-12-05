@@ -1,7 +1,11 @@
 import abc
+import logging
+import pprint
 
-from enschema import Schema
+from enschema import Schema, SchemaError
 from pathlib import Path
+
+log = logging.getLogger('dgs')
 
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
@@ -32,8 +36,14 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
                 return FileSystemValidator.File
 
     def validate(self) -> None:
-        self.schema.validate(self.tree)
-        self.perform_extra_checks()
+        try:
+            self.schema.validate(self.tree)
+            self.perform_extra_checks()
+        except SchemaError as e:
+            log.error(f"Could not validate file system tree")
+            pprint.pprint(self.tree)
+            log.error(f"against schema\n\n{self.schema}\n")
+            raise e
 
     def perform_extra_checks(self) -> None:
         """

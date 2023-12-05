@@ -1,5 +1,4 @@
 import abc
-from enschema import Schema, Optional
 
 import core.utilities.globals as glob
 from core.builder.context import BuildableFilesystemContext, ContextModule
@@ -21,15 +20,9 @@ class BuildableContextNaboj(BuildableFilesystemContext, ContextNaboj, metaclass=
 
 
 class BuildableContextLanguage(BuildableContextNaboj):
-    target = 'language'
-    subdir = 'languages'
-    _schema = Schema({
-        'language': {
-            'id': str,
-            'polyglossia': str,
-            Optional('rtl', default=False): bool,
-        }
-    })
+    _target = 'language'
+    _subdir = 'languages'
+    _schema = glob.LanguageSchema
 
     def __init__(self, *args):
         self._schema = super()._schema | self._schema
@@ -42,15 +35,9 @@ class BuildableContextLanguage(BuildableContextNaboj):
 
 
 class BuildableContextVenue(BuildableContextNaboj):
-    target = 'venue'
-    subdir = 'venues'
-    _schema = Schema({
-        'language': {
-            'id': str,
-            'polyglossia': str,
-            Optional('rtl', default=False): bool,
-        }
-    })
+    _target = 'venue'
+    _subdir = 'venues'
+    _schema = glob.LanguageSchema
 
     def __init__(self, *args):
         self._schema = super()._schema | self._schema
@@ -58,12 +45,13 @@ class BuildableContextVenue(BuildableContextNaboj):
 
     def populate(self, competition, volume, venue):
         super().populate(competition, volume)
-        self.adopt('venue', ContextVenue(self.root, competition, volume, venue).override('start', self.data['volume']))
+        self.adopt('venue', ContextVenue(self.root, competition, volume, venue)
+                   .override('start', self.data['volume']['start']))
         self.adopt('i18n', ContextI18nGlobal(self.root, competition))
         self.add({
             'language': {
-                'id': self.data['venue']['language'],
-            } | glob.languages[self.data['venue']['language']]
+                            'id': self.data['venue']['language'],
+                        } | glob.languages[self.data['venue']['language']]
         })
 
         if 'start' not in self.data['venue']:

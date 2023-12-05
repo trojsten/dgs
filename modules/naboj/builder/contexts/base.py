@@ -9,8 +9,8 @@ from core.utilities.schema import valid_language, commit_hash
 
 
 class ContextNaboj(context.FileSystemContext):
-    target = None
-    subdir = None
+    _target = None
+    _subdir = None
     competitions = ['phys', 'chem', 'test']
     team = Schema({
         'id': And(int, lambda x: 0 <= x <= 9999),
@@ -82,13 +82,16 @@ class ContextNaboj(context.FileSystemContext):
             result.append(competition)
             if volume is not None:
                 result.append(f'{volume:02d}')
-                if self.target is not None and issue is not None:
+                if self._target is not None and issue is not None:
                     result.append(sub)
                     result.append(issue)
         return tuple(result)
 
     def ident(self, competition=None, volume=None, issue=None):
-        return self.as_tuple(competition, volume, self.target, issue)
+        return self.as_tuple(competition, volume, self._target, issue)
 
-    def node_path(self, competition=None, volume=None, target=None, issue=None):
-        return Path(self.root, *self.as_tuple(competition, volume, self.subdir, issue))
+    def node_path(self, competition=None, volume=None, issue=None):
+        return Path(self.root, *self.as_tuple(competition, volume, self._subdir, issue))
+
+    def validate_repo(self, competition=None, volume=None, *args) -> None:
+        super().validate_repo(competition, volume)

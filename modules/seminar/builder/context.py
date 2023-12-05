@@ -4,6 +4,7 @@ from pathlib import Path
 from abc import ABCMeta
 from enschema import Schema, Optional, Use, And, Or
 
+from core.utilities.schema import valid_language
 from core.builder.context import FileSystemContext, BuildableContext, ContextModule
 from validators import SeminarRoundValidator
 
@@ -35,7 +36,7 @@ class ContextCompetition(ContextSeminar):
             'web': And(str, len),  # set this to valid URL
             'submit': And(str, len),  # and here too
         }),
-        'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
+        'language': valid_language,
         'categories': [[], [And(str, len)]],
         'founded': int,
         Optional('email'): str,

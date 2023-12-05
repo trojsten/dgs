@@ -11,9 +11,9 @@ from enschema import SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, An
 from typing import Any, Self
 
 from enschema import Schema
-from core.utilities import dicts, colour as c, crawler
+from core.utilities import dicts, colour as c, crawler, logger
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger('dgs')
 
 
 class Context(metaclass=ABCMeta):
@@ -42,13 +42,15 @@ class Context(metaclass=ABCMeta):
 
     def validate(self):
         if self._schema is None:
-            logger.warning(f"No validation schema defined for {self.__class__.__name__}, skipping validation")
+            log.warning(f"No validation schema defined for {self.__class__.__name__}, skipping validation")
         else:
             try:
                 self._schema.validate(self.data)
             except (SchemaMissingKeyError, SchemaWrongKeyError, SchemaError) as exc:
-                logger.error(f"Failed to validate {c.name(self.__class__.__name__)} {c.path(self.id)}")
-                pprint.pprint(self._schema)
+                log.error(f"Failed to validate {c.name(self.__class__.__name__)} at {c.path(self.id)}")
+                pprint.pprint(self.data)
+                log.error("Against")
+                pprint.pprint(self._schema.schema)
                 raise exc
 
     def add(self, *dictionaries, overwrite=True):
@@ -76,6 +78,10 @@ class Context(metaclass=ABCMeta):
             )
         return self
 
+    def override(self, key, ctx):
+        self.data[key] = ctx
+        return self
+
     def print(self):
         pprint.pprint(self.data, width=120)
 
@@ -88,8 +94,11 @@ class Context(metaclass=ABCMeta):
 
 class FileSystemContext(Context, metaclass=abc.ABCMeta):
     """
-    Context that is reasonably mapped to a repository path.
-    Can load files, meta.yaml, has node_path
+    Context that is reasonably mapped to a file system path, ideally inside a git repository.
+    Typical traits are
+        - can extract its structure from the directory tree
+        - can load meta.yaml files with extra properties at all levels
+        - has node_path that maps properties back to file system
     """
     _subcontext_key: str = None
     _subcontext_class: typing.ClassVar = None
@@ -106,33 +115,34 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         return '/'.join(*path)
 
     def validate_repo(self, *path: str) -> None:
+        log.debug(f"Validating repository at {c.path(self.node_path(*path))}")
         root = self.node_path(*path)
         if self._validator_class is None:
-            logger.warning(f"No file system validator class defined for {c.name(self.__class__.__name__)}, skipping")
+            log.warning(f"No file system validator class defined for {c.name(self.__class__.__name__)}, skipping")
         else:
             try:
                 self._validator_class(root).validate()
-                print(f"File system structure at {c.path(root)} was successfully validated "
-                      f"with {c.name(self._validator_class.__name__)}")
-            except SchemaError as e:
-                print(f"File system structure at {c.path(root)} {c.err('failed')} to validate against "
-                      f"{c.name(self._validator_class.__name__)}")
+                log.info(f"File system structure at {c.path(root)} was successfully validated "
+                         f"with {c.name(self._validator_class.__name__)}")
+            except (SchemaError, SchemaMissingKeyError) as e:
+                log.critical(f"File system structure at {c.path(root)} {c.err('failed')} to validate against "
+                             f"{c.name(self._validator_class.__name__)}")
                 raise e
 
     def load_yaml(self, *args):
         filename = Path(*args)
+        log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(filename)}")
         try:
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
             contents = {} if contents is None else contents
         except FileNotFoundError as e:
-            logger.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
+            log.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
 
         self.data = contents
         return self
 
     def load_meta(self, *path):
-        logger.debug(f"Loading meta for {self.__class__.__name__} from {path}")
         return self.load_yaml(self.node_path(*path) / 'meta.yaml')
 
     @abstractmethod
@@ -147,12 +157,12 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         self.data[key] = [item.data for item in ctxs]
 
         if self.__class__._schema is not None:
-            self.__class__._schema._schema[key] = [self._subcontext_class._schema]
+            self.__class__._schema.schema[key] = [self._subcontext_class._schema]
 
         return self
 
     def add_subdirs(self, *subcontext_args):
-        logger.debug(f"Adding subdirs to {self.__class__.__name__}: "
+        log.debug(f"Adding subdirs to {self.__class__.__name__}: "
                      f"{self._subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
         self.add_list(self._subcontext_key,

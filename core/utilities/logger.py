@@ -17,12 +17,9 @@ class DeGeSFormatter(logging.Formatter):
             'CRITICAL': c.critical,
         }[record.levelname]
 
-        if record.levelname in ['INFO', 'DEBUG']:
-            return record.cf(record.msg)
-        else:
-            return f"[{record.cf(record.levelname)}] {record.msg}"
+        return f"[{record.cf(record.levelname)}] {record.msg}"
 
-    def formatTime(self, record, format):
+    def formatTime(self, record, datefmt=None):
         ct = self.converter(record.created)
         return f"{datetime.strftime('%H:%M:%S', ct)}.{int(record.msecs):03d}"
 
@@ -34,8 +31,11 @@ def setupLog(name, **kwargs):
     handler.setFormatter(formatter)
 
     log = logging.getLogger(name)
-    log.setLevel(logging.INFO)
+    log.setLevel(logging.DEBUG)
     log.addHandler(handler)
     log.propagate = False
 
     return log
+
+
+setupLog('dgs')

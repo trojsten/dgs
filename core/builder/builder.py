@@ -10,11 +10,12 @@ import subprocess
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 
-from core.utilities import colour as c, crawler, logger
+from core.utilities import colour as c, crawler
 from core.builder import jinja
 from core.builder.context import BuildableContext
 
-logger = logger.setupLog(__name__)
+
+log = logging.getLogger('dgs')
 
 
 def empty_if_none(string):
@@ -47,7 +48,7 @@ class BaseBuilder(metaclass=ABCMeta):
         self.launch_directory = Path(self.args.launch)
         self.template_root = Path(self.args.template_root)
         self.output_directory = Path(self.args.output) if self.args.output else None
-        logger.setLevel(logging.INFO if self.args.debug else logging.INFO)
+        log.setLevel(logging.DEBUG if self.args.debug else logging.INFO)
         self.context = self._root_context_class(self.launch_directory, *self.id())
 
     def add_arguments(self):
@@ -75,23 +76,23 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def print_debug_info(self) -> None:
         """ Prints debug info """
-        logger.debug(c.act("Content templates:"))
+        log.debug(c.act("Content templates:"))
         pprint.pprint(self.templates)
 
-        logger.debug(c.act("Context:"))
+        log.debug(c.act("Context:"))
         self.context.print()
 
-        logger.debug(c.act("Schema:"))
+        log.debug(c.act("Schema:"))
         pprint.pprint(self.context.schema)
 
     def print_build_info(self) -> None:
         """ Prints build info """
-        logger.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} "
+        log.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} "
                     f"{c.name(self._target)} {c.path(self.full_path())}")
 
     def print_dir_info(self) -> None:
         """ Prints directory info """
-        logger.debug(f"{c.act('Directory structure:')}")
+        log.debug(f"{c.act('Directory structure:')}")
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def build(self) -> None:
@@ -110,4 +111,4 @@ class BaseBuilder(metaclass=ABCMeta):
                                  outdir=self.output_directory,
                                  new_name=Path(template).with_suffix('.tex'))
 
-        logger.debug(f"{c.ok('Template builder on')} {c.name(self._target)} {c.path(self.full_name())} {c.ok('successful')}")
+        log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} {c.path(self.full_name())} {c.ok('successful')}")
