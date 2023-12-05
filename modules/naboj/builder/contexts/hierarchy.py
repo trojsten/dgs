@@ -96,7 +96,7 @@ class ContextVenue(ContextNaboj):
                 'contact_phone': "",
                 'contestants': "unknown",
                 'display_name': f"Extra set {999 - code}",
-                'in_school_symbol': "",
+                'in_school_symbol': None,
                 'language': self.data['language'],
                 'name': "",
                 'number': 0,
@@ -105,9 +105,10 @@ class ContextVenue(ContextNaboj):
                 'school_id': 0,
                 'school_name': "",
                 'status': 'R',
-                'venue': venue.data['id'],
-                'venue_code': venue.data['code'],
-                'venue_id': venue.data['id'],
+                'venue': self.data['id'],
+                'venue_code': self.data['code'],
+                'venue_id': 0,
+                #'venue_id': self.data['id'], # Currently there is a collision with venue.id from web!!! Fix later
             })
             code += 1
 

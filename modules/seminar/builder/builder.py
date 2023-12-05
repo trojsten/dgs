@@ -11,7 +11,7 @@ class BuilderSeminar(builder.BaseBuilder):
     def add_arguments(self):
         super().add_arguments()
         self.parser.add_argument('-c', '--competition',
-                                 choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old', 'testing'])
+                                 choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old', 'test'])
         self.parser.add_argument('-v', '--volume', type=int)
         self.parser.add_argument('-s', '--semester', type=int)
         self.parser.add_argument('-r', '--round', type=int)

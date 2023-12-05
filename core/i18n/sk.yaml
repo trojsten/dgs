@@ -1,0 +1,23 @@
+quotes:
+  id: slovak
+  extra: null
+
+figure:
+  title:
+    - Obrázok
+    - Obrázky
+
+table:
+  title:
+    - Tabuľka
+    - Tabuľky
+
+equation:
+  title:
+    - Rovnica
+    - Rovnice
+
+siunitx:
+  output_decimal_marker: ,
+  list_final_separator: a
+  list_pair_separator: a

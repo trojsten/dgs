@@ -1,0 +1,12 @@
+\selectlanguage{(* i18n.id *)}
+\setquotestyle(* i18n.quotes.extra|default:'' *){(* i18n.quotes.id *)}
+
+\sisetup{
+    output-decimal-marker   = {(* i18n.siunitx.output_decimal_marker *)},
+    list-final-separator    = {\text{ (* i18n.siunitx.list_final_separator *) }},
+    list-pair-separator     = {\text{ (* i18n.siunitx.list_pair_separator *) }},
+}
+
+\captionsetup*[table]{name=(* i18n.caption.table *)}
+\captionsetup*[figure]{name=(* i18n.caption.figure *)}
+\captionsetup*[equation]{name=(* i18n.caption.equation *)}
