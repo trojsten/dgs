@@ -1,6 +1,6 @@
 import abc
 
-import core.utilities.globals as glob
+from core import i18n
 from core.builder.context import BuildableFilesystemContext, ContextModule
 from .validators import NabojValidator
 from .base import ContextNaboj
@@ -22,7 +22,7 @@ class BuildableContextNaboj(BuildableFilesystemContext, ContextNaboj, metaclass=
 class BuildableContextLanguage(BuildableContextNaboj):
     _target = 'language'
     _subdir = 'languages'
-    _schema = glob.LanguageSchema
+    _schema = i18n.LanguageSchema
 
     def __init__(self, *args):
         self._schema = super()._schema | self._schema
@@ -37,7 +37,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
 class BuildableContextVenue(BuildableContextNaboj):
     _target = 'venue'
     _subdir = 'venues'
-    _schema = glob.LanguageSchema
+    _schema = i18n.LanguageSchema
 
     def __init__(self, *args):
         self._schema = super()._schema | self._schema
@@ -51,7 +51,7 @@ class BuildableContextVenue(BuildableContextNaboj):
         self.add({
             'language': {
                             'id': self.data['venue']['language'],
-                        } | glob.languages[self.data['venue']['language']]
+                        } | i18n.languages[self.data['venue']['language']]
         })
 
         if 'start' not in self.data['venue']:

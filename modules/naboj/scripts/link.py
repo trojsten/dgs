@@ -11,8 +11,7 @@ from pathlib import Path
 
 sys.path.append('.')
 
-import core.utilities.schema as sch
-import core.utilities.globals as globs
+from core import i18n
 
 
 class Linker:
@@ -23,8 +22,8 @@ class Linker:
         self.argparser.add_argument('root', action=argparsedirs.ReadableDir)
         self.argparser.add_argument('competition', type=str)
         self.argparser.add_argument('volume', type=int)
-        self.argparser.add_argument('from_lang', type=str, choices=globs.languages.keys())
-        self.argparser.add_argument('to_lang', type=str, choices=globs.languages.keys())
+        self.argparser.add_argument('from_lang', type=str, choices=i18n.languages.keys())
+        self.argparser.add_argument('to_lang', type=str, choices=i18n.languages.keys())
         self.argparser.add_argument('--problems', action='store_true')
         self.argparser.add_argument('--solutions', action='store_true')
         self.argparser.add_argument('--answer-extra', action='store_true')

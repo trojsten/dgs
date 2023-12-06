@@ -3,7 +3,6 @@
 import argparse
 import sys
 
-from core import i18n
 from core.builder.convertor import Convertor
 from core.utilities import colour as c
 
@@ -23,7 +22,7 @@ class CLIInterface:
             description="DeGeŠ Markdown conversion utility",
         )
         parser.add_argument('format',   choices=['latex', 'html'])
-        parser.add_argument('locale',   choices=i18n.languages.keys())
+        parser.add_argument('locale',   choices=Convertor.languages.keys())
         parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
         parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
         parser.add_argument('--verbose', action='store_true')

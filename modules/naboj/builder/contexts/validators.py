@@ -2,7 +2,7 @@ import itertools
 
 from enschema import Schema, Regex, Or, Optional
 
-import core.utilities.globals as glob
+from core import i18n
 from core.builder.validator import FileSystemValidator
 from core.utilities.schema import valid_language
 import core.utilities.colour as c
@@ -66,15 +66,15 @@ class NabojValidator(FileSystemValidator):
     def _check_same_translations(self) -> None:
         if self.tree['problems']:
             for (pid1, problem1), (pid2, problem2) in itertools.pairwise(self.tree['problems'].items()):
-                translations1 = [x for x in problem1.keys() if x in glob.languages.keys()]
-                translations2 = [x for x in problem2.keys() if x in glob.languages.keys()]
+                translations1 = [x for x in problem1.keys() if x in i18n.languages.keys()]
+                translations2 = [x for x in problem2.keys() if x in i18n.languages.keys()]
                 if translations1 != translations2:
                     print(f"Warning: problem {pid1} has translations {translations1} "
                           f"and {pid2} has translations {translations2}")
 
     def _check_presence(self, filename, *, optional: bool = False):
         for problem_id, problem in sorted(self.tree['problems'].items()):
-            translations = [x for x in problem.keys() if x in glob.languages.keys()]
+            translations = [x for x in problem.keys() if x in i18n.languages.keys()]
             is_present = {
                 trans: problem[trans][filename] if filename in problem[trans] else None for trans in translations
             }

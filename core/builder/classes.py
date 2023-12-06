@@ -1,16 +1,6 @@
 import re
 
 
-class Locale:
-    def __init__(self, name, locale, quotes, **extras):
-        self.name = name
-        self.locale = locale
-        self.quotes = quotes
-
-        for k, v in extras.items():
-            self.__setattr__(k, v)
-
-
 class RegexFailure:
     def __init__(self, pattern: str, *, error: str, flags: re.RegexFlag = re.NOFLAG):
         self.pattern = re.compile(pattern, flags=flags)

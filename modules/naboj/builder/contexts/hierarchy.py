@@ -4,16 +4,15 @@ import pprint
 
 from enschema import Schema, And, Or, Optional, Regex
 
-import core.utilities.globals as glob
+from core import i18n
 from core.utilities import lists
-from core.utilities.schema import string, valid_language
+from core.utilities.schema import string, valid_language, valid_language_name
 from .base import ContextNaboj
 
 
 class ContextCompetition(ContextNaboj):
     _schema = Schema({
         'id': string,
-        'founded': And(int, lambda x: x >= 1950),
         'tearoff': {
             'per_page': int,
             'height': int,
@@ -57,7 +56,7 @@ class ContextLanguage(ContextNaboj):
                 'answers': bool,
             }
         },
-        'name': lambda x: x in [lang['name'] for lang in glob.languages.values()],
+        'name': valid_language_name,
         'rtl': bool,
     })
 
@@ -65,8 +64,8 @@ class ContextLanguage(ContextNaboj):
         super().populate(competition)
         self.load_meta(competition, volume, language) \
             .add_id(language)
-        self.add({'name': glob.languages[language]['name']})
-        self.add({'rtl': glob.languages[language].get('rtl', False)}),
+        self.add({'name': i18n.languages[language].name})
+        self.add({'rtl': i18n.languages[language].rtl}),
 
 
 class ContextVenue(ContextNaboj):
@@ -141,7 +140,6 @@ class ContextVolume(ContextNaboj):
         'constants': dict,
         'table': int,
         'start': And(int, lambda x: 0 <= x < 1440),
-        'year': And(int, lambda x: x >= 1950),
     })
 
     def populate(self, competition, volume):
@@ -152,6 +150,5 @@ class ContextVolume(ContextNaboj):
             .add_number(volume)
 
         self.add(dict(
-            year=self.data['number'] + comp.data['founded'] - 1,
             problems=lists.add_numbers(self.data['problems'], itertools.count(1)),
         ))

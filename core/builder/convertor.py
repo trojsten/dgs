@@ -4,22 +4,11 @@ from typing import Callable
 from pathlib import Path
 
 from core.utilities import colour as c
-from .classes import Locale, RegexFailure, RegexReplacement
+from .classes import RegexFailure, RegexReplacement
+from core import i18n
 
 
 class Convertor:
-    languages = {
-        'sk':   Locale('slovak',    'sk-SK', ('„', '“'), figure='Obrázok', table='Tabuľka'),
-        'en':   Locale('english',   'en-US', ('“', '”'), figure='Figure', table='Table'),
-        'cs':   Locale('czech',     'cs-CZ', ('„', '“'), figure='Obrázek', table='Tabulka'),
-        'ru':   Locale('russian',   'ru-RU', ('«', '»'), figure=''),
-        'pl':   Locale('polish',    'pl-PL', ('„', '“'), figure=''),
-        'hu':   Locale('hungarian', 'hu-HU', ('„', '“'), figure=''),
-        'fr':   Locale('french',    'fr-FR', ('«\u202F', '\u202F»'), figure=''),
-        'es':   Locale('spanish',   'es-ES', ('«', '»'), figure='Cuadro', table=''),
-        'qq':   Locale('test',      'sk-SK', ('(', ')'), figure='Obrázok', table='Obrázok'),
-    }
-
     post_regexes = {
         'all': [],
         'latex': [
@@ -118,7 +107,7 @@ class Convertor:
     def __init__(self, output_format: str, locale_code: str, infile, outfile):
         self.output_format = output_format
         self.locale_code = locale_code
-        self.locale = self.languages[locale_code]
+        self.locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
         self.file = None
@@ -228,7 +217,7 @@ class Convertor:
         self.file.seek(0)
         args = [
             "pandoc",
-            "--metadata", f"lang={self.languages[self.locale_code].locale}",
+            "--metadata", f"lang={self.locale.id}",
             "-V", "csquotes=true",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",

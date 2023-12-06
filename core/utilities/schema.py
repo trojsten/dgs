@@ -1,6 +1,6 @@
 from enschema import And, Or, Regex
 
-import core.utilities.globals as glob
+from core import i18n
 
 
 file = 'file'
@@ -13,4 +13,8 @@ commit_hash = Regex(r'[a-f0-9]+')
 
 
 def valid_language(code: str) -> bool:
-    return code in glob.languages.keys()
+    return code in i18n.languages.keys()
+
+
+def valid_language_name(name: str) -> bool:
+    return name in [lang.name for lang in i18n.languages.values()]
