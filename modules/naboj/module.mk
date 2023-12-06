@@ -288,12 +288,8 @@ output/naboj/%/languages: \
 # Tearoffs, three problems per page, aligned for cutting
 # <competition>/<volume>/<venues>/<venue>
 output/naboj/%/tearoff.pdf: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/*/problem.md))))) \
-	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.jpg)))) \
-	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.png)))) \
-	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../languages/*/*/*.pdf)))) \
-	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.svg))))) \
-	$$(subst source/,build/,$$(subst $(cdir),,$$(abspath $$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/../../languages/*/*/*.gp))))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../problems)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	build/naboj/%/barcodes.pdf \
 	build/naboj/%/tearoff.tex
 	$(call double_xelatex,naboj)
