@@ -80,13 +80,12 @@ endef
 include modules/*/module.mk
 
 build/core/i18n/%.tex: \
-	core/i18n/%.yaml \
 	core/templates/override.jtt
 	@mkdir -p $(dir $@)
-	python3 core/builder/i18n.py 'core/i18n/' 'core/templates/' sk -o $(dir $@)
+	python3 core/builder/i18n.py 'core/i18n/' 'core/templates/' $* -o $(dir $@)
 
 build/core/i18n: \
-	$$(core/i18n/*.yaml);
+	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
