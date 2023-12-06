@@ -1,5 +1,3 @@
-SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru
-
 .SECONDEXPANSION:
 
 # Build scripts for language and venue prerequisites

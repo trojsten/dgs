@@ -11,5 +11,5 @@ class BuilderVolume(builder.BuilderSeminar):
     _target = 'volume'
 
 
-BuilderVolume().build()
+BuilderVolume().build_templates()
 

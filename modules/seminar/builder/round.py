@@ -14,4 +14,4 @@ class BuilderRound(builder.BuilderSeminar):
     ]
 
 
-BuilderRound().build()
+BuilderRound().build_templates()

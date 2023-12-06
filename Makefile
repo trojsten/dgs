@@ -1,6 +1,8 @@
 # Remove all stupid builtin rules and variables
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
 
+SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru
+
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
@@ -76,6 +78,15 @@ define _copy
 endef
 
 include modules/*/module.mk
+
+build/core/i18n/%.tex: \
+	core/i18n/%.yaml \
+	core/templates/override.jtt
+	@mkdir -p $(dir $@)
+	python3 core/builder/i18n.py 'core/i18n/' 'core/templates/' sk -o $(dir $@)
+
+build/core/i18n: \
+	$$(core/i18n/*.yaml);
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!

@@ -24,9 +24,9 @@ class BuildableContextLanguage(BuildableContextNaboj):
     _subdir = 'languages'
     _schema = i18n.LanguageSchema
 
-    def __init__(self, *args):
+    def __init__(self, root, *args):
         self._schema = super()._schema | self._schema
-        super().__init__(*args)
+        super().__init__(root, *args)
 
     def populate(self, competition, volume, language):
         super().populate(competition, volume)
@@ -39,9 +39,9 @@ class BuildableContextVenue(BuildableContextNaboj):
     _subdir = 'venues'
     _schema = i18n.LanguageSchema
 
-    def __init__(self, *args):
+    def __init__(self, root, *args):
         self._schema = super()._schema | self._schema
-        super().__init__(*args)
+        super().__init__(root, *args)
 
     def populate(self, competition, volume, venue):
         super().populate(competition, volume)

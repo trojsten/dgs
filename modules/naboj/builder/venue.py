@@ -6,7 +6,6 @@ sys.path.append('.')
 
 import builder
 import core.builder.jinja as jinja
-import core.utilities.logger as logger
 from modules.naboj.builder.contexts import BuildableContextVenue
 
 
@@ -31,14 +30,14 @@ class BuilderNabojVenue(builder.BuilderNaboj):
         super().add_arguments()
         self.parser.add_argument('venue', type=str)
 
-    def id(self):
+    def id(self) -> tuple:
         return self.args.competition, self.args.volume, self.args.venue
 
-    def path(self):
+    def path(self) -> tuple:
         return self.args.competition, f'{self.args.volume:02d}', self._subdir, self.args.venue
 
-    def build(self):
-        super().build()
+    def build_templates(self):
+        super().build_templates()
 
         for template in self.language_templates:
             path = self.path()
@@ -49,4 +48,4 @@ class BuilderNabojVenue(builder.BuilderNaboj):
             )
 
 
-BuilderNabojVenue().build()
+BuilderNabojVenue().build_templates()

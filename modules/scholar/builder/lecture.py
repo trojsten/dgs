@@ -19,4 +19,4 @@ class BuilderLecture(builder.BuilderCourseBase):
         return (self.args.course, self.args.lecture)
 
 
-BuilderLecture().build()
+BuilderLecture().build_templates()

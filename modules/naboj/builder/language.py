@@ -28,4 +28,4 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         return self.args.competition, f'{self.args.volume:02d}', self._subdir, self.args.language
 
 
-BuilderNabojLanguage().build()
+BuilderNabojLanguage().build_templates()

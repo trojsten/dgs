@@ -17,8 +17,8 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
         self.parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
         self.parser.add_argument('volume', type=int)
 
-    def build(self):
-        super().build()
+    def build_templates(self):
+        super().build_templates()
         for template in self.i18n_templates:
             jinja.print_template(
                 Path(self.launch_directory, *self.path()), template, self.context.data,

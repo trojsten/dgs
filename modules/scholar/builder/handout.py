@@ -12,4 +12,4 @@ class BuilderHandout(HandoutMixin, BuilderScholar):
     ]
 
 
-BuilderHandout().build()
+BuilderHandout().build_templates()

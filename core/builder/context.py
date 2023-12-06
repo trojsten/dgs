@@ -13,7 +13,7 @@ from typing import Any, Self
 from enschema import Schema
 from core.utilities import dicts, colour as c, crawler, logger
 
-log = logging.getLogger('dgs')
+log = logger.setupLog('dgs')
 
 
 class Context(metaclass=ABCMeta):
@@ -175,10 +175,18 @@ class BuildableContext(Context):
     Currently only useful for sanity checks.
     """
 
+    def __init__(self, root, *args, **kwargs):
+        super().__init__(root)
+
+    @abstractmethod
+    def populate(self, *args, **kwargs):
+        pass
+
 
 class BuildableFilesystemContext(FileSystemContext, BuildableContext, metaclass=abc.ABCMeta):
     def __init__(self, root, *path, **defaults):
         super().__init__(root, *path, **defaults)
+        # A filesystem context needs to validate its repository upon creation
         self.validate_repo(*path)
 
 

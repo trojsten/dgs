@@ -18,4 +18,4 @@ class BuilderCourse(builder.BuilderCourseBase):
         return self.args.course,
 
 
-BuilderCourse().build()
+BuilderCourse().build_templates()

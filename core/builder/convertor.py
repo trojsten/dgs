@@ -14,7 +14,8 @@ class Convertor:
         'latex': [
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
-                             r"\\insertPicture\g<options>{\g<stem>.pdf}"),
+                             r"\\insertPicture\g<options>{\g<stem>.pdf}",
+                             purpose=r"Change \includegraphics to protected \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
             RegexReplacement(r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
                              r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
@@ -97,7 +98,6 @@ class Convertor:
 
     pre_checks = {
         'all': [
-            #RegexFailure(r'\\!', error="No typographic corrections are allowed"),
             RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
         ],
         'latex': [],
@@ -106,8 +106,8 @@ class Convertor:
 
     def __init__(self, output_format: str, locale_code: str, infile, outfile):
         self.output_format = output_format
-        self.locale_code = locale_code
-        self.locale = i18n.languages[locale_code]
+        self.locale_code: str = locale_code
+        self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
         self.file = None
@@ -199,7 +199,7 @@ class Convertor:
         return line
 
     def preprocess(self, line):
-        #return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
+        # return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
         return self.chain_process(line, [self.pre_regexes])
 
     def postprocess(self, line):

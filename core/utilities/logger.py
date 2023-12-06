@@ -36,6 +36,3 @@ def setupLog(name, **kwargs):
     log.propagate = False
 
     return log
-
-
-setupLog('dgs')

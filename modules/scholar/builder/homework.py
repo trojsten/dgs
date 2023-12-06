@@ -11,4 +11,4 @@ class BuilderHomework(HomeworkMixin, BuilderScholar):
     ]
 
 
-BuilderHomework().build()
+BuilderHomework().build_templates()

@@ -18,6 +18,6 @@ equation:
     - Rovnice
 
 siunitx:
-  output_decimal_marker: ,
+  output_decimal_marker: ","
   list_final_separator: a
   list_pair_separator: a

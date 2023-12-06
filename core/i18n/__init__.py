@@ -8,9 +8,35 @@ class Locale:
         self.locale = locale
         self.quotes = quotes
         self.rtl = rtl
+        self.quotes_extra = extras.get('quotes_extra', '')
 
         for k, v in extras.items():
             self.__setattr__(k, v)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'locale': self.locale,
+            'quotes': {
+                'open': self.quotes[0],
+                'close': self.quotes[1],
+                'id': self.name,
+                'extra': self.quotes_extra,
+            },
+            'rtl': self.rtl,
+            'figure': self.figure,
+            'figures': self.figures,
+            'table': self.table,
+            'tables': self.tables,
+            'equation': self.equation,
+            'equations': self.equations,
+            'siunitx': {
+                'output_decimal_marker': ',',
+                'list_final_separator': 'a',
+                'list_pair_separator': 'a',
+            }
+        }
 
 
 
@@ -53,7 +79,10 @@ languages = [
            table='tabuľka', tables='tabuľky',
            equation='rovnica', equations='rovnice'),
 ]
+
+
 languages = {locale.id: locale for locale in languages}
+
 
 LanguageSchema = Schema({
     'language': {
