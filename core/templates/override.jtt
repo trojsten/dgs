@@ -1,4 +1,4 @@
-\selectlanguage{(* i18n.id *)}
+\selectlanguage{(* i18n.name *)}
 \setquotestyle[(* i18n.quotes.extra|default('') *)]{(* i18n.quotes.id *)}
 
 \sisetup{

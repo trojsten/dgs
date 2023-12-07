@@ -95,7 +95,7 @@
     }
 
     \setcounter{secnumdepth}{0}
-    \input{core/i18n/(* language.id *)/override.tex}
+    \input{build/core/i18n/(* language.id *).tex}
 
     \pagestyle{naboj}
 (@ endblock @)

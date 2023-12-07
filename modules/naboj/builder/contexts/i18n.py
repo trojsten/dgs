@@ -48,19 +48,12 @@ class ContextI18n(context.FileSystemContext):
         'physics_constants': {
             str: str
         },
-        'crossref': {
-            'tblPrefix': str,
-            'figPrefix': str,
-            'eqnPrefix': str,
-            'figureTitle': str,
-            'tableTitle': str,
-        }
     })
 
     def populate(self, competition, language):
         self.load_yaml(self.root, competition, '.static', 'i18n', language + '.yaml')
-        contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
-        self.add({'crossref': contents})
+        #contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
+        #self.add({'crossref': contents})
 
     def node_path(self, competition=None, language=None):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')
