@@ -18,3 +18,7 @@
     \addcontentsline{toc}{subsection}{\protect\numberline{\thesubsection}#1}%
     \subsectionmark{#1}%
 }
+
+% Fix chemfig's collision with babel where -- is interpreted before chemfig
+\pretocmd\schemestart{\shorthandoff{-}}{}{}
+\apptocmd\schemestop{\shorthandon{-}}{}{}

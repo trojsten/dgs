@@ -2,16 +2,25 @@ from enschema import Schema, Optional
 
 
 class Locale:
-    def __init__(self, code, name, locale, quotes, *, rtl=False, **extras):
+    def __init__(self, code, name, locale, quotes, *,
+                 rtl=False, **extras):
         self.id = code
         self.name = name
         self.locale = locale
         self.quotes = quotes
         self.rtl = rtl
-        self.quotes_extra = extras.get('quotes_extra', '')
+        self.figure = extras.get('figure', '??')
+        self.figures = extras.get('figures', '??')
+        self.table = extras.get('table', '??')
+        self.tables = extras.get('tables', '??')
+        self.equation = extras.get('equation', '??')
+        self.equations = extras.get('equations', '??')
+        self.listing = extras.get('listing', '??')
+        self.listings = extras.get('listings', '??')
+        self.section = extras.get('section', '??')
+        self.sections = extras.get('sections', '??')
 
-        for k, v in extras.items():
-            self.__setattr__(k, v)
+        self.quotes_extra = extras.get('quotes_extra', '')
 
     def as_dict(self):
         return {
@@ -31,13 +40,16 @@ class Locale:
             'tables': self.tables,
             'equation': self.equation,
             'equations': self.equations,
+            'listing': self.listing,
+            'listings': self.listings,
+            'section': self.section,
+            'sections': self.sections,
             'siunitx': {
                 'output_decimal_marker': ',',
                 'list_final_separator': 'a',
                 'list_pair_separator': 'a',
             }
         }
-
 
 
 languages = [

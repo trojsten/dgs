@@ -14,7 +14,6 @@ from core.utilities import colour as c, crawler
 from core.builder import jinja
 from core.builder.context import BuildableContext
 
-
 log = logging.getLogger('dgs')
 
 
@@ -109,16 +108,19 @@ class BaseBuilder(metaclass=ABCMeta):
         log.debug(f"{c.act('Directory structure:')}")
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
-    def output_path(self, template_name, context_name) -> Path:
+    def output_path(self, template_name, *, override_name=None) -> Path:
         """ Default output naming scheme, can be overridden """
         path = Path(template_name)
         if path.suffix in self.suffix_map:
-            return path.with_suffix(self.suffix_map.get(path.suffix))
+            if override_name is None:
+                return path.with_suffix(self.suffix_map.get(path.suffix))
+            else:
+                return Path(override_name).with_suffix(self.suffix_map.get(path.suffix))
         else:
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
-    def build_templates(self, *, new_name: str = None, new_suffix: str = None) -> None:
+    def build_templates(self, *, new_name: str = None) -> None:
         assert isinstance(self.context, BuildableContext), \
             c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
 
@@ -133,7 +135,7 @@ class BaseBuilder(metaclass=ABCMeta):
         for template in self.templates:
             jinja.print_template(self.template_root, template, self.context.data,
                                  outdir=self.output_directory,
-                                 new_name=self.output_path(template, None) if new_name is None else f"{new_name}.tex")
+                                 new_name=self.output_path(template, override_name=new_name))
 
         log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} "
                   f"{c.path(self.full_name())} {c.ok('successful')}")

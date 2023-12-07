@@ -10,7 +10,7 @@ from core import i18n
 
 class BuildableContextCoreI18n(BuildableContext):
     def __init__(self, root, language):
-        super().__init__(root, language)
+        super().__init__(language)
         self.populate(language)
 
     def populate(self, language):
@@ -23,7 +23,7 @@ class BuilderI18n(BaseBuilder):
     _target = 'global i18n'
     _root_context_class = BuildableContextCoreI18n
 
-    templates = ['override.jtt']
+    templates = ['override.jtt', 'crossref.jyt']
 
     def add_arguments(self):
         super().add_arguments()
