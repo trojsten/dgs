@@ -12,11 +12,11 @@ from validators import SeminarRoundValidator
 class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
     def ident(self, competition=None, volume=None, semester=None, issue=None, problem=None):
         return (
-            self.default(competition),
-            self.default(volume, lambda x: f'{x:02d}'),
-            self.default(semester, str),
-            self.default(issue, str),
-            self.default(problem, lambda x: f'{x:02d}'),
+            self._default(competition),
+            self._default(volume, lambda x: f'{x:02d}'),
+            self._default(semester, str),
+            self._default(issue, str),
+            self._default(problem, lambda x: f'{x:02d}'),
         )
 
     def node_path(self, competition=None, volume=None, semester=None, issue=None, problem=None):

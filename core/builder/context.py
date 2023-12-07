@@ -25,7 +25,7 @@ class Context(metaclass=ABCMeta):
         return self._schema
 
     @staticmethod
-    def default(name, func=None, dfl=''):
+    def _default(name, func=None, dfl=''):
         if name is None:
             return dfl
         else:
@@ -35,6 +35,9 @@ class Context(metaclass=ABCMeta):
         self.id = new_id
         self.data = copy.deepcopy(self.defaults)
         self.add(defaults)
+
+    def __str__(self):
+        return f"<{self.__class__.__name__} named '{self.id}'>"
 
     def ident(self, *path: Any) -> tuple[Any]:
         """ Transform initialization parameters to identifier """

@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 
 sys.path.append('.')
 
@@ -39,5 +38,5 @@ class BuilderI18n(BaseBuilder):
     def build_templates(self, *, new_name: str = None):
         super().build_templates(new_name=self.args.language)
 
-b = BuilderI18n()
-b.build_templates()
+
+BuilderI18n().build_templates()
