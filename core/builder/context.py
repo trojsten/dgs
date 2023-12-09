@@ -171,7 +171,7 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
     def add_subdirs(self, *subcontext_args):
         log.debug(f"Adding subdirs to {self.__class__.__name__}: "
-                     f"{self._subcontext_class.__name__} with args {subcontext_args}")
+                  f"{self._subcontext_class.__name__} with args {subcontext_args}")
         cr = crawler.Crawler(self.node_path(*subcontext_args))
         self.add_list(self._subcontext_key,
                       [self._subcontext_class(self.root, *subcontext_args, child) for child in cr.subdirs()])

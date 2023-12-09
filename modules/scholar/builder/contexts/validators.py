@@ -10,7 +10,7 @@ class ScholarValidator(FileSystemValidator):
             Optional('problem.md'): File,
             Optional('solution.md'): File,
             Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
-            #'meta.yaml': File,
+            'meta.yaml': File,
         },
         Optional('text.md'): File,
         'meta.yaml': File,
