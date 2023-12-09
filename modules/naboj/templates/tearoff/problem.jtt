@@ -5,7 +5,7 @@
 \setcounter{figure}{0}%
 
 (@ block activate @)
-    \input{core/i18n/(* team.language *)/override.tex}
+    \input{build/core/i18n/(* team.language *).tex}
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 (@ endblock activate @)
 

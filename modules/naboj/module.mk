@@ -286,7 +286,7 @@ output/naboj/%/languages: \
 # Tearoffs, three problems per page, aligned for cutting
 # <competition>/<volume>/<venues>/<venue>
 output/naboj/%/tearoff.pdf: \
-	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../problems)) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(abspath $$(wildcard source/naboj/$$*/../../problems/*/*/problem.md)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	build/naboj/%/barcodes.pdf \
 	build/naboj/%/tearoff.tex

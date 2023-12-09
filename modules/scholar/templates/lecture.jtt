@@ -1,7 +1,7 @@
 \documentclass[12pt, twoside]{dgs}
 
 \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* lecture.id *)}%
-\input{core/i18n/slovak/override.tex}
+\input{build/core/i18n//* i18n.language *).tex}
 \input{build/scholar/(* course.id *)/.static/format-override.tex}
 
 \setcounter{secnumdepth}{3}

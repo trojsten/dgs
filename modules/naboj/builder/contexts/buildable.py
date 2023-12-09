@@ -1,14 +1,14 @@
 import abc
 
 from core import i18n
-from core.builder.context import BuildableFilesystemContext, ContextModule
+from core.builder.context import BuildableFileSystemContext, ContextModule
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
 from .i18n import ContextI18nGlobal
 
 
-class BuildableContextNaboj(BuildableFilesystemContext, ContextNaboj, metaclass=abc.ABCMeta):
+class BuildableContextNaboj(BuildableFileSystemContext, ContextNaboj, metaclass=abc.ABCMeta):
     _schema = ContextNaboj._schema
     _validator_class = NabojValidator
 
@@ -49,9 +49,7 @@ class BuildableContextVenue(BuildableContextNaboj):
                    .override('start', self.data['volume']['start']))
         self.adopt('i18n', ContextI18nGlobal(self.root, competition))
         self.add({
-            'language': {
-                            'id': self.data['venue']['language'],
-                        } | i18n.languages[self.data['venue']['language']]
+            'language': i18n.languages[self.data['venue']['language']].as_dict()
         })
 
         if 'start' not in self.data['venue']:

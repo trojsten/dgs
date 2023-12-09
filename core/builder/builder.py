@@ -38,11 +38,15 @@ class BaseBuilder(metaclass=ABCMeta):
     templates = []
     _target: str = None
     _root_context_class: typing.ClassVar = None
+    default_suffix_map = {
+        '.jtt': '.tex',
+        '.jyt': '.yaml',
+    }
 
     def __init__(self, *, suffix_map: dict[str, str] = None):
         """
         suffix_map: translates template suffixes to rendered template suffixes
-                    also provides a default for dgs
+                    and also provides a default for dgs
         """
         self.parser = argparse.ArgumentParser(description="Build a dgs LaTeX template set from repository")
         self.add_core_arguments()
@@ -53,11 +57,8 @@ class BaseBuilder(metaclass=ABCMeta):
         self.launch_directory = Path(self.args.launch)
         self.template_root = Path(self.args.template_root)
         self.output_directory = Path(self.args.output) if self.args.output else None
-        self.context = self._root_context_class(self.launch_directory, *self.id())
-        self.suffix_map = {
-            '.jtt': '.tex',
-            '.jyt': '.yaml',
-        } if suffix_map is None else suffix_map
+        self.context = self._root_context_class(self.launch_directory, *self.ident())
+        self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
 
     def add_core_arguments(self) -> None:
         """ Create the default ArgumentParser """
@@ -73,14 +74,14 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def full_name(self) -> str:
         """ Full name of the builder for log reporting """
-        return '/'.join(map(str, self.id()))
+        return '/'.join(map(str, self.ident()))
 
     def full_path(self):
         """ Full path of the builder """
         return Path(self.launch_directory, *self.path())
 
     @abstractmethod
-    def id(self):
+    def ident(self):
         """ Return the id tuple """
 
     @abstractmethod
@@ -96,20 +97,21 @@ class BaseBuilder(metaclass=ABCMeta):
         self.context.print()
 
         log.debug(c.act("Schema:"))
-        pprint.pprint(self.context.schema)
+        print(self.context.schema)
 
     def print_build_info(self) -> None:
-        """ Prints build info """
+        """ Prints build info for progress reports """
         log.info(f"{c.act('Invoking')} {c.name(self.module)} {c.act('template builder on')} "
-                 f"{c.name(self._target)} {c.path(self.full_path())}")
+                 f"{c.meta(self._target)} {c.name(self.full_name())} at {c.path(self.full_path())}")
 
     def print_dir_info(self) -> None:
-        """ Prints directory info """
+        """ Prints directory tree info (probably only useful for debugging) """
         log.debug(f"{c.act('Directory structure:')}")
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
     def output_path(self, template_name, *, override_name=None) -> Path:
-        """ Default output naming scheme, can be overridden """
+        """
+        Default output naming scheme:  can be overridden """
         path = Path(template_name)
         if path.suffix in self.suffix_map:
             if override_name is None:
@@ -149,4 +151,4 @@ class BaseBuilder(metaclass=ABCMeta):
             for template in self.templates:
                 jinja.print_template(self.template_root, template, context.data,
                                      outdir=self.output_directory,
-                                     new_name=f"{context.id}.tex")
+                                     new_name=f"{context.name}.tex")

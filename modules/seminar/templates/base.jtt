@@ -119,7 +119,7 @@
 
 % Include overrides specific to this seminar instance from its static file (in the repository)
 \input{build/(* module.id *)/(* competition.id *)/.static/format-override.tex}
-\input{core/i18n/(* competition.language *)/override.tex}
+\input{build/core/i18n/(* competition.language *).tex}
 
 (@ block specific @)(@ endblock @)
 (@ block format @)(@ endblock @)

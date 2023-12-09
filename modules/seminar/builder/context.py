@@ -5,7 +5,7 @@ from abc import ABCMeta
 from enschema import Schema, Optional, Use, And, Or
 
 from core.utilities.schema import valid_language
-from core.builder.context import FileSystemContext, BuildableContext, ContextModule
+from core.builder.context import FileSystemContext, BuildableFileSystemContext, ContextModule
 from validators import SeminarRoundValidator
 
 
@@ -100,7 +100,7 @@ class ContextSemester(ContextSeminar):
         })
 
 
-class ContextSemesterFull(ContextSemester, FileSystemContext, BuildableContext):
+class ContextSemesterFull(ContextSemester, BuildableFileSystemContext):
     def populate(self, competition, volume, semester):
         self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
@@ -175,14 +175,14 @@ class ContextRoundFull(ContextRound):
 """ Buildable contexts """
 
 
-class ContextVolumeBooklet(ContextSeminar):
+class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume):
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(root, competition))
         self.adopt('volume', ContextVolume(root, competition, volume))
 
 
-class ContextSemesterBooklet(ContextSeminar):
+class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume, semester):
         self.adopt('module', ContextModule('seminar'))
         self.adopt('competition', ContextCompetition(root, competition))
@@ -190,12 +190,11 @@ class ContextSemesterBooklet(ContextSeminar):
         self.adopt('semester', ContextSemesterFull(root, competition, volume, semester))
 
 
-class ContextBooklet(BuildableContext, ContextSeminar):
+class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
     _schema = Schema({})  # nothing inherent to this context
     _validator_class = SeminarRoundValidator
 
     def populate(self, competition, volume, semester, issue):
-        self.validate_repo(competition, volume, semester, issue)
         super().populate(competition)
 
         self.adopt('module', ContextModule('seminar'))

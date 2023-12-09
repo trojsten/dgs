@@ -3,11 +3,11 @@ from pathlib import Path
 
 sys.path.append('.')
 
-from core.builder.context import FileSystemContext, BuildableFilesystemContext
+from core.builder.context import FileSystemContext, BuildableFileSystemContext
 from core.utilities import crawler
 
 
-class ContextScholarSingle(BuildableFilesystemContext):
+class ContextScholarSingle(BuildableFileSystemContext):
     @staticmethod
     def node_path(root, course='', lecture='', part='', problem=''):
         return Path(root, course, lecture, part, problem)

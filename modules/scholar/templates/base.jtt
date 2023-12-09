@@ -1,8 +1,6 @@
 \documentclass[12pt, twoside]{dgs}
 
 \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/}%
-\input{core/i18n/sk/override.tex}
-
 \input{build/scholar/(* course.id *)/.static/format-override.tex}
 
 \setcounter{secnumdepth}{3}
@@ -29,7 +27,7 @@
 \numberwithin{equation}{subsection}
 \numberwithin{figure}{subsection}
 \renewcommand\thesubsubsection{\thesubsection\alph{subsubsection}}
-\input{core/i18n/(* course.language *)/override.tex}
+\input{build/core/i18n/(* course.language *).tex}
 
 (@ block style @)(@ endblock @)
 

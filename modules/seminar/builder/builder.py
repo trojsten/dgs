@@ -16,7 +16,7 @@ class BuilderSeminar(builder.BaseBuilder):
         self.parser.add_argument('-s', '--semester', type=int)
         self.parser.add_argument('-r', '--round', type=int)
 
-    def id(self):
+    def ident(self):
         return self.args.competition, self.args.volume, self.args.semester, self.args.round
 
     def path(self):

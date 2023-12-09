@@ -30,7 +30,7 @@ class Locale:
             'quotes': {
                 'open': self.quotes[0],
                 'close': self.quotes[1],
-                'id': self.name,
+                'babel_id': self.name,
                 'extra': self.quotes_extra,
             },
             'rtl': self.rtl,
@@ -104,6 +104,27 @@ LanguageSchema = Schema({
         'id': str,
         'name': str,
         'locale': str,
+        'quotes': {
+            'open': str,
+            'close': str,
+            'babel_id': str,
+            Optional('extra'): str,
+        },
+        Optional('figure'): str,
+        Optional('figures'): str,
+        Optional('table'): str,
+        Optional('tables'): str,
+        Optional('equation'): str,
+        Optional('equations'): str,
+        Optional('listing'): str,
+        Optional('listings'): str,
+        Optional('section'): str,
+        Optional('sections'): str,
         Optional('rtl', default=False): bool,
+        'siunitx': {
+            'list_pair_separator': str,
+            'list_final_separator': str,
+            'output_decimal_marker': str,
+        }
     }
 })

@@ -4,13 +4,11 @@ import pprint
 import typing
 
 import yaml
-import logging
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
-from enschema import SchemaWrongKeyError, SchemaMissingKeyError, SchemaError, And
+from enschema import Schema, SchemaMissingKeyError, SchemaError, And
 from typing import Any, Self
 
-from enschema import Schema
 from core.utilities import dicts, colour as c, crawler, logger
 
 log = logger.setupLog('dgs')
@@ -31,28 +29,35 @@ class Context(metaclass=ABCMeta):
         else:
             return name if func is None else func(name)
 
-    def __init__(self, new_id=None, **defaults):
+    def __init__(self, new_id=None, *, defaults: dict = None):
         self.id = new_id
         self.data = copy.deepcopy(self.defaults)
-        self.add(defaults)
+
+        if defaults is not None:
+            self.add(defaults)
 
     def __str__(self):
         return f"<{self.__class__.__name__} named '{self.id}'>"
 
     def ident(self, *path: Any) -> tuple[Any]:
-        """ Transform initialization parameters to identifier """
+        """
+        Transform initialization parameters to identifier. By default, this is just the same tuple.
+        """
         return path
 
-    def validate(self):
+    def validate(self) -> None:
+        """
+        Validate the data against the schema, if provided
+        """
         if self._schema is None:
             log.warning(f"No validation schema defined for {self.__class__.__name__}, skipping validation")
         else:
             try:
                 self._schema.validate(self.data)
-            except (SchemaMissingKeyError, SchemaWrongKeyError, SchemaError) as exc:
+            except SchemaError as exc:
                 log.error(f"Failed to validate {c.name(self.__class__.__name__)} at {c.path(self.id)}")
                 pprint.pprint(self.data)
-                log.error("Against")
+                log.error("against")
                 pprint.pprint(self._schema.schema)
                 raise exc
 
@@ -186,7 +191,7 @@ class BuildableContext(Context):
         pass
 
 
-class BuildableFilesystemContext(FileSystemContext, BuildableContext, metaclass=abc.ABCMeta):
+class BuildableFileSystemContext(FileSystemContext, BuildableContext, metaclass=abc.ABCMeta):
     def __init__(self, root, *path, **defaults):
         super().__init__(root, *path, **defaults)
         # A filesystem context needs to validate its repository upon creation
