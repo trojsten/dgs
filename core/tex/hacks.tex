@@ -27,7 +27,11 @@
 \apptocmd\schemestop{\shorthandon{-}}{}{}
 
 \usetikzlibrary{decorations.markings}
-\setchemfig{atom sep=8mm, bond style={line width=1pt}}
+\setchemfig{
+    atom sep=8mm,
+    bond style={line width=1pt},
+    schemestart code=\chemnameinit{},
+}
 \tikzset{
   over line/.style={
     white,

@@ -14,7 +14,7 @@ class BuilderCourse(builder.BuilderCourseBase):
         super().add_arguments()
         self.parser.add_argument('course', type=str)
 
-    def id(self):
+    def ident(self):
         return self.args.course,
 
 

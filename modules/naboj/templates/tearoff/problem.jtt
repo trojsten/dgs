@@ -38,7 +38,7 @@
         \rotatebox{90}{%
             \hspace{(* competition.tearoff.barcode_space *)mm}
             \includegraphics[%
-                width=50mm, height=14mm,
+                width=50mm, height=12mm,
                 keepaspectratio=false,
                 page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
                 \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%

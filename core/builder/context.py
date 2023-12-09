@@ -155,7 +155,7 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
 
     @abstractmethod
     def node_path(self, *args):
-        """ Return node path for id tuple -- empty for base context, must be implemented for children """
+        """ Return node path for the ident tuple -- empty for base context, must be implemented for children """
 
     @abstractmethod
     def populate(self, *path):

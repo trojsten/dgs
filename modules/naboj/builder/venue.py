@@ -30,7 +30,7 @@ class BuilderNabojVenue(builder.BuilderNaboj):
         super().add_arguments()
         self.parser.add_argument('venue', type=str)
 
-    def id(self) -> tuple:
+    def ident(self) -> tuple:
         return self.args.competition, self.args.volume, self.args.venue
 
     def path(self) -> tuple:

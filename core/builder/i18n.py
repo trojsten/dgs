@@ -29,11 +29,11 @@ class BuilderI18n(BaseBuilder):
         super().add_arguments()
         self.parser.add_argument('language', type=str, choices=i18n.languages.keys())
 
-    def id(self) -> tuple:
+    def ident(self) -> tuple:
         return self.args.language,
 
     def path(self) -> tuple:
-        return self.id()
+        return self.ident()
 
     def build_templates(self, *, new_name: str = None):
         super().build_templates(new_name=self.args.language)
