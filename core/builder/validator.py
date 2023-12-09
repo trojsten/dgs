@@ -2,16 +2,21 @@ import abc
 import logging
 import pprint
 
-from enschema import Schema, SchemaError
+from enschema import Schema, SchemaError, And, Or, Regex
 from pathlib import Path
 
 log = logging.getLogger('dgs')
 
+Link = 'link'
+File = 'file'
+FileOrLink = Or(File, Link)
+String = And(str, len)
+CommitHash = Regex(r'[a-f0-9]+')
+
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
     IGNORED = ['.git']
-    Link = 'link'
-    File = 'file'
+
     _schema: Schema | None = None
 
     @property
@@ -31,9 +36,9 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
             }
         else:
             if path.is_symlink():
-                return FileSystemValidator.Link
+                return Link
             elif path.is_file():
-                return FileSystemValidator.File
+                return File
 
     def validate(self) -> None:
         try:
@@ -42,7 +47,7 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         except SchemaError as e:
             log.error(f"Could not validate file system tree")
             pprint.pprint(self.tree)
-            log.error(f"against schema\n\n{self.schema}\n")
+            log.error(f"against schema\n{self.schema}")
             raise e
 
     def perform_extra_checks(self) -> None:

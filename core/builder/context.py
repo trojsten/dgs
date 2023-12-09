@@ -29,7 +29,7 @@ class Context(metaclass=ABCMeta):
         else:
             return name if func is None else func(name)
 
-    def __init__(self, new_id=None, *, defaults: dict = None):
+    def __init__(self, new_id=None, **defaults: dict):
         self.id = new_id
         self.data = copy.deepcopy(self.defaults)
 

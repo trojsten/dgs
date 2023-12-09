@@ -1,16 +1,11 @@
 import itertools
 
-from enschema import Schema, Regex, Or, Optional
+from enschema import Schema, Regex, Optional
 
 from core import i18n
-from core.builder.validator import FileSystemValidator
+from core.builder.validator import FileSystemValidator, File, Link, FileOrLink
 from core.utilities.schema import valid_language
 import core.utilities.colour as c
-
-
-File = 'file'
-Link = 'link'
-FileOrLink = Or(File, Link)
 
 
 class NabojValidator(FileSystemValidator):

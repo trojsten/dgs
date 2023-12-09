@@ -19,7 +19,7 @@ class BuilderScholar(BuilderScholarBase):
         self.parser.add_argument('year', type=int)
         self.parser.add_argument('issue', type=int)
 
-    def id(self):
+    def ident(self):
         return self.args.course, self.args.year, self.args.issue
 
     def path(self):

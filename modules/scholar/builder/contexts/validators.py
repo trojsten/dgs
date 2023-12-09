@@ -1,16 +1,17 @@
 from enschema import Schema, Optional, Regex
 
-from core.builder.validator import FileSystemValidator
-from core.utilities.schema import file
+from core.builder.validator import FileSystemValidator, File
 
 
 class ScholarValidator(FileSystemValidator):
     _schema = Schema({
-        Regex(r'[\w-]+'): {
-            Optional('problem.md'): file,
-            Optional('solution.md'): file,
-            Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): file,
-            'meta.yaml': file,
+        Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
+        Optional(Regex(r'[\w-]+')): {
+            Optional('problem.md'): File,
+            Optional('solution.md'): File,
+            Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
+            #'meta.yaml': File,
         },
-        'meta.yaml': file,
+        Optional('text.md'): File,
+        'meta.yaml': File,
     })

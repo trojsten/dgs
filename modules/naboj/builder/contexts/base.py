@@ -5,7 +5,7 @@ from enschema import Schema, And, Or, Regex
 
 from core.builder import context
 from core.builder.builder import get_last_commit_hash, get_branch
-from core.utilities.schema import valid_language, commit_hash
+from core.utilities.schema import valid_language, CommitHash
 
 
 class ContextNaboj(context.FileSystemContext):
@@ -41,11 +41,11 @@ class ContextNaboj(context.FileSystemContext):
         'build': {
             'user': And(str, len),
             'dgs': {
-                'hash': commit_hash,
+                'hash': CommitHash,
                 'branch': str,
             },
             'repo': {
-                'hash': commit_hash,
+                'hash': CommitHash,
                 'branch': str,
             },
             'timestamp': datetime.datetime,

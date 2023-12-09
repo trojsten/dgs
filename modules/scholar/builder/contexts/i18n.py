@@ -1,48 +1,38 @@
-import yaml
 from pathlib import Path
 from enschema import Schema
 
 from core.builder import context
-from core.utilities.schema import string
+from core.builder.validator import String
 
 
 class ContextI18n(context.FileSystemContext):
     _schema = Schema({
         'captions': {
             'problem': {
-                'singular': string,
-                'plural': string,
+                'singular': String,
+                'plural': String,
             },
             'solution': {
-                'singular': string,
-                'plural': string,
+                'singular': String,
+                'plural': String,
             },
         },
         'homework': {
-            'title': string,
-            'deadline': string,
+            'title': String,
+            'deadline': String,
             'disclaimer': {
-                'foreword': string,
-                'midword': string,
-                'aftword': string,
+                'foreword': String,
+                'midword': String,
+                'aftword': String,
             },
         },
         'handout': {
-            'title': string,
+            'title': String,
         },
-        'crossref': {
-            'tblPrefix': str,
-            'figPrefix': str,
-            'eqnPrefix': str,
-            'figureTitle': str,
-            'tableTitle': str,
-        }
     })
 
     def populate(self, language):
         self.load_yaml('modules', 'scholar', 'i18n', language + '.yaml')
-        contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
-        self.add({'crossref': contents})
 
     def node_path(self, competition=None, language=None):
         return Path('modules', 'scholar', 'i18n', language + '.yaml')

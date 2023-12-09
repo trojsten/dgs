@@ -6,7 +6,7 @@
 (@ block style @)
     \fancypagestyle{handout}{
         \pagestyle{scholar}
-        \fancyhead[L]{\textit{(* exercise.caption *) (* issue.number *)}}
+        \fancyhead[L]{\textit{(* i18n.handout.title|capitalize *) (* issue.number *)}}
         \fancyhead[R]{\textit{(* issue.date.strftime('%d. %m. %Y') *)}}
     }
 (@ endblock style @)

@@ -3,9 +3,9 @@
 (@ block solutions @)
     \newpage
     (@ if issue.problems @)
-        \subsection{(* captions.solutions|capitalize *)}
+        \subsection{(* i18n.captions.solution.plural|capitalize *)}
         (@ for problem in issue.problems @)
-            \subsubsection{(* captions.problem|capitalize *) (* loop.index *)}
+            \subsubsection{(* i18n.captions.problem.singular|capitalize *) (* loop.index *)}
             \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
         (@ endfor @)
     (@ endif @)
