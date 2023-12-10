@@ -218,7 +218,6 @@ class Convertor:
         self.file.seek(0)
         args = [
             "pandoc",
-            "--webtex='eqn://'" if self.math == 'webtex' else "--mathjax",
             "--metadata", f"lang={self.locale.id}",
             "-V", "csquotes=true",
             "--from", "markdown+smart",
@@ -232,6 +231,11 @@ class Convertor:
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
+        if self.output_format == 'html':
+            args += [
+                "--webtex='eqn://'" if self.math == 'webtex' else "--mathjax",
+            ]
+
         subprocess.run(args, stdin=self.file, stdout=out)
 
         out.seek(0)

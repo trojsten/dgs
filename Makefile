@@ -165,6 +165,12 @@ output/%.jpg: source/%.jpg
 output/%.html: source/%.md
 	$(call pandochtml,sk)
 
+# DeGeŠ convert Markdown to HTML (for web)
+output/%.html: source/%.md
+	$(call pandochtml,sk)
+	./wr -input $@ -template core/tex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
+	mv $@.conv $@
+
 .SECONDEXPANSION:
 
 # Copy Gnuplot file to build, along with all of its possible .dat prerequisites
