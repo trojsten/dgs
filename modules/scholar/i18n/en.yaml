@@ -1,0 +1,18 @@
+captions:
+  problem:
+    singular: "problem"
+    plural: "problems"
+  solution:
+    singular: "solution"
+    plural: "solutions"
+
+homework:
+  title: "exercise sheet"
+  deadline: "deadline"
+  disclaimer:
+    foreword: "Submit your solutions on paper or by email to"
+    midword: "before the beginning of the exercise"
+    aftword: "By submitting you declare that the solutions are your original work."
+
+handout:
+  title: "handout"

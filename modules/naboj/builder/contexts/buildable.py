@@ -1,59 +1,59 @@
-import pprint
 import abc
-import core.utilities.schema as sch
-from schema import Schema, And, Optional
 
-import core.utilities.globals as glob
-from core.builder.context import BuildableContext, ContextModule
+from core import i18n
+from core.builder.context import BuildableFileSystemContext, ContextModule
+from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
-from .i18n import ContextI18n, ContextI18nGlobal
+from .i18n import ContextI18nGlobal
 
 
-class BuildableContextNaboj(BuildableContext, ContextNaboj, metaclass=abc.ABCMeta):
-    schema = ContextNaboj.schema
+class BuildableContextNaboj(BuildableFileSystemContext, ContextNaboj, metaclass=abc.ABCMeta):
+    _schema = ContextNaboj._schema
+    _validator_class = NabojValidator
 
-    def populate(self, competition, volume, venue):
+    def populate(self, competition, volume):
         super().populate(competition)
-        self.adopt('module', ContextModule('naboj'))
-        self.adopt('competition', ContextCompetition(self.root, competition))
-        self.adopt('volume', ContextVolume(self.root, competition, volume))
+        self.adopt(
+            module=ContextModule('naboj'),
+            competition=ContextCompetition(self.root, competition),
+            volume=ContextVolume(self.root, competition, volume),
+        )
 
 
 class BuildableContextLanguage(BuildableContextNaboj):
-    target = 'language'
-    subdir = 'languages'
+    _target = 'language'
+    _subdir = 'languages'
+    _schema = i18n.LanguageSchema
+
+    def __init__(self, root, *args):
+        self._schema = super()._schema | self._schema
+        super().__init__(root, *args)
 
     def populate(self, competition, volume, language):
-        super().populate(competition, volume, language)
-        self.adopt('language', ContextLanguage(self.root, competition, volume, language))
-        self.adopt('i18n', ContextI18nGlobal(self.root, competition))
+        super().populate(competition, volume)
+        self.adopt(
+            language=ContextLanguage(self.root, competition, volume, language),
+            i18n=ContextI18nGlobal(self.root, competition),
+        )
 
 
 class BuildableContextVenue(BuildableContextNaboj):
-    target = 'venue'
-    subdir = 'venues'
-    schema = Schema({
-        'language': {
-            'id': str,
-            'polyglossia': str,
-            Optional('rtl'): bool,
-        }
-    })
+    _target = 'venue'
+    _subdir = 'venues'
+    _schema = i18n.LanguageSchema
 
-    def __init__(self, *args):
-        self.schema = sch.merge(super().schema, self.schema)
-        super().__init__(*args)
+    def __init__(self, root, *args):
+        self._schema = super()._schema | self._schema
+        super().__init__(root, *args)
 
     def populate(self, competition, volume, venue):
-        super().populate(competition, volume, venue)
-        self.adopt('venue', ContextVenue(self.root, competition, volume, venue).override('start', self.data['volume']))
-        self.adopt('i18n', ContextI18nGlobal(self.root, competition))
-        self.add({
-            'language': {
-                'id': self.data['venue']['language'],
-            } | glob.languages[self.data['venue']['language']]
-        })
+        super().populate(competition, volume)
+        self.adopt(
+            venue=ContextVenue(self.root, competition, volume, venue)
+                               .override('start', self.data['volume']['start']),
+            i18n=ContextI18nGlobal(self.root, competition)
+        ).add(language=i18n.languages[self.data['venue']['language']].as_dict())
 
-        if not 'start' in self.data['venue']:
+        if 'start' not in self.data['venue']:
             self.data['venue']['start'] = self.data['volume']['start']

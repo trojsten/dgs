@@ -4,11 +4,11 @@ from contexts.homework import HomeworkMixin
 
 
 class BuilderHomework(HomeworkMixin, BuilderScholar):
-    root_context_class = ContextHomework
+    _root_context_class = ContextHomework
     templates = [
-        'homework-students.tex',
-        'homework-solutions.tex',
+        'homework-students.jtt',
+        'homework-solutions.jtt',
     ]
 
 
-BuilderHomework().build()
+BuilderHomework().build_templates()

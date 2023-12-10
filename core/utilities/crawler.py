@@ -3,7 +3,7 @@ from pathlib import Path
 
 from core.utilities import colour as c
 
-logger = logging.getLogger('root')
+log = logging.getLogger('dgs')
 
 
 class Crawler():
@@ -11,15 +11,16 @@ class Crawler():
         self.step = 4
         self.root = root
 
-    def is_node(self, path):
-        return (path.is_dir() and path.name != '.' and Path(path, 'meta.yaml').is_file())
+    @staticmethod
+    def is_node(path):
+        return path.is_dir() and path.name != '.' and Path(path, 'meta.yaml').is_file()
 
     @staticmethod
     def is_leaf(path):
         return path.is_file()
 
     def print_path(self, path=None, offset=0):
-        if path == None:
+        if path is None:
             path = Path(self.root)
 
         if self.is_node(path):

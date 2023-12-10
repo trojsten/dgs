@@ -33,7 +33,7 @@
                 \includegraphics[keepaspectratio=true, height=6mm]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
             }%
         }%
-        \fancyhead[C]{\textit{(* volume.number *). (* i18n[language.id].competition.name.nominative *), (* volume.number + competition.founded - 1 *)}}
+        \fancyhead[C]{\textit{(* volume.number *). (* i18n[language.id].competition.name.nominative *), (* volume.date.strftime('%Y') *)}}
         \fancyfoot[LO,RE]{\href{mailto:(* i18n[language.id].competition.email *)}{\texttt{(* i18n[language.id].competition.email *)}}}
         \fancyfoot[C]{\small \thepage}
         \fancyfoot[LE,RO]{\URL{(* i18n[language.id].competition.website *)}}
@@ -94,12 +94,8 @@
         \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
     }
 
-    \captionsetup[table]{name=(* i18n[language.id].caption.table *)}
-    \captionsetup[figure]{name=(* i18n[language.id].caption.figure *)}
-
     \setcounter{secnumdepth}{0}
-    \input{core/i18n/(* language.id *)/override.tex}
-    \setmainlanguage{(* language.polyglossia *)}
+    \input{build/core/i18n/(* language.id *).tex}
 
     \pagestyle{naboj}
 (@ endblock @)

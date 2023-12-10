@@ -1,10 +1,8 @@
 import itertools
 from typing import Iterable, Callable, List, Dict, Any
 
-from core.utilities import dicts
 
-
-def add_numbers(items: List[Any], numbers: Iterable=itertools.count()) -> List[Dict]:
+def add_numbers(items: List[Any], numbers: Iterable = itertools.count()) -> List[Dict]:
     """
     Take a list `items` and return a list of dictionaries with number included.
 
@@ -20,7 +18,7 @@ def add_numbers(items: List[Any], numbers: Iterable=itertools.count()) -> List[D
     List[Dict]
         A list of dictionaries in format {'number': int, 'id': item}
     """
-    assert type(items) == list
+    assert isinstance(items, list), f"Cannot add numbers to {type(list)}"
 
     result = []
     for item in items:
@@ -31,12 +29,10 @@ def add_numbers(items: List[Any], numbers: Iterable=itertools.count()) -> List[D
     return result
 
 
-def numerate(items: Dict, numbers: Iterable=itertools.count()) -> List[Dict]:
+def numerate(items: dict, numbers: Iterable = itertools.count()) -> dict:
     for item in items:
-        assert type(item) == dict
-        dicts.merge(item, {
-            'number': next(numbers)
-        })
+        assert isinstance(item, dict)
+        item |= {'number': next(numbers)}
     return items
 
 

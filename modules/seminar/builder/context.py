@@ -2,27 +2,29 @@ import datetime
 
 from pathlib import Path
 from abc import ABCMeta
-from schema import Schema, Optional, Use, And, Or
+from enschema import Schema, Optional, Use, And, Or
 
-from core.builder.context import FileSystemContext, BuildableContext, ContextModule
+from core.utilities.schema import valid_language
+from core.builder.context import FileSystemContext, BuildableFileSystemContext, ContextModule
+from validators import SeminarRoundValidator
 
 
 class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
-    def ident(self, competition=None, volume=None, semester=None, round=None, problem=None):
+    def ident(self, competition=None, volume=None, semester=None, issue=None, problem=None):
         return (
-            self.default(competition),
-            self.default(volume, lambda x: f'{x:02d}'),
-            self.default(semester, str),
-            self.default(round, str),
-            self.default(problem, lambda x: f'{x:02d}'),
+            self._default(competition),
+            self._default(volume, lambda x: f'{x:02d}'),
+            self._default(semester, str),
+            self._default(issue, str),
+            self._default(problem, lambda x: f'{x:02d}'),
         )
 
-    def node_path(self, competition=None, volume=None, semester=None, round=None, problem=None):
-        return Path(self.root, *self.ident(competition, volume, semester, round, problem))
+    def node_path(self, competition=None, volume=None, semester=None, issue=None, problem=None):
+        return Path(self.root, *self.ident(competition, volume, semester, issue, problem))
 
 
 class ContextCompetition(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'short': And(str, len),
         'full': Schema({
@@ -31,10 +33,10 @@ class ContextCompetition(ContextSeminar):
             Optional('locative'): And(str, len),
         }),
         'urls': Schema({
-            'web': And(str, len),       # set this to valid URL
-            'submit': And(str, len),    # and here too
+            'web': And(str, len),  # set this to valid URL
+            'submit': And(str, len),  # and here too
         }),
-        'language': And(Use(str), lambda x: x in ['sk', 'cs', 'en', 'pl', 'hu', 'es', 'ru', 'de']),
+        'language': valid_language,
         'categories': [[], [And(str, len)]],
         'founded': int,
         Optional('email'): str,
@@ -59,7 +61,7 @@ class ContextCompetition(ContextSeminar):
 
 
 class ContextVolume(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': str,
         'number': int,
         Optional('categories'): [[], [str]],
@@ -72,7 +74,7 @@ class ContextVolume(ContextSeminar):
 
 
 class ContextSemester(ContextSeminar):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': And(int, lambda x: x in [1, 2]),
         'neuter': Schema({'nominative': str, 'genitive': str}),
@@ -80,27 +82,27 @@ class ContextSemester(ContextSeminar):
     })
 
     def populate(self, competition, volume, semester):
-        self.id = str(semester)
+        self._id = str(semester)
         self.load_meta(competition, volume, semester) \
             .add_id(self.id) \
             .add_number(semester)
         # Add fancy names for the semesters
         # Maybe this should be a Jinja filter...?
-        self.add({
-            'neuter': {
+        self.add(
+            neuter={
                 'nominative': ['zimné', 'letné'][semester - 1],
                 'genitive': ['zimného', 'letného'][semester - 1],
             },
-            'feminine': {
+            feminine={
                 'nominative': ['zimná', 'letná'][semester - 1],
                 'genitive': ['zimnej', 'letnej'][semester - 1],
             },
-        })
+        )
 
 
-class ContextSemesterFull(ContextSemester):
-    def populate(self, root, competition, volume, semester):
-        self.add_children(ContextRoundFull, 'rounds', (root, competition, volume, semester))
+class ContextSemesterFull(ContextSemester, BuildableFileSystemContext):
+    def populate(self, competition, volume, semester):
+        self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
 
 class ContextRound(ContextSeminar):
@@ -111,7 +113,7 @@ class ContextRound(ContextSeminar):
         }
     }
 
-    schema = Schema({
+    _schema = Schema({
         'deadline': datetime.date,
         Optional('instagram'): Schema({
             'skin': Use(str, lambda x: x in ['orange', 'grey']),
@@ -121,80 +123,88 @@ class ContextRound(ContextSeminar):
         'number': int,
     })
 
-    def populate(self, competition, volume, semester, round):
-        self.load_meta(competition, volume, semester, round) \
-            .add_id(str(round)) \
-            .add_number(round)
+    def populate(self, competition, volume, semester, issue):
+        self.load_meta(competition, volume, semester, issue) \
+            .add_id(str(issue)) \
+            .add_number(issue)
 
 
 class ContextProblem(ContextSeminar):
     persons = Or('',
-        [{
-            'name': str,
-            'gender': Or('f', 'm', '?'),
-        }]
-    )
-    schema = Schema({
+                 [{
+                     'name': str,
+                     'gender': Or('f', 'm', '?'),
+                 }])
+    _schema = Schema({
         'title': And(str, len),
         'categories': list,
-        'number': And(int, lambda x: x >= 1 and x <= 8),
+        'number': And(int, lambda x: 1 <= x <= 8),
         'id': str,
         'evaluation': persons,
         'solution': persons,
-        'points': Schema({
+        'points': {
             'description': And(int, lambda x: x >= 0),
             Optional('code'): And(int, lambda x: x >= 0),
             Optional('extra'): And(int, lambda x: x >= 0),
-        }),
-
+        },
     })
 
-    def populate(self, competition, volume, semester, round, problem):
-        self.load_meta(competition, volume, semester, round, problem) \
+    def populate(self, competition, volume, semester, issue, problem):
+        self.load_meta(competition, volume, semester, issue, problem) \
             .add_id(f'{problem:02d}') \
             .add_number(problem)
 
         vol = ContextVolume(self.root, competition, volume)
         categories = vol.data['categories']
-        self.add({'categories': categories[problem - 1]})
+        self.add(categories=categories[problem - 1])
 
 
 class ContextRoundFull(ContextRound):
-    subcontext_class = ContextProblem
+    _subcontext_class = ContextProblem
 
-    def populate(self, competition, volume, semester, round):
-        super().populate(competition, volume, semester, round)
+    def populate(self, competition, volume, semester, issue):
+        super().populate(competition, volume, semester, issue)
         count = len(ContextVolume(self.root, competition, volume).data['categories'])
 
         self.add_list('problems', [
-            self.subcontext_class(self.root, competition, volume, semester, round, problem)
+            self._subcontext_class(self.root, competition, volume, semester, issue, problem)
             for problem in range(1, count + 1)
         ])
+
 
 """ Buildable contexts """
 
 
-class ContextVolumeBooklet(ContextSeminar):
+class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume):
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(root, competition),
+            volume=ContextVolume(root, competition, volume),
+        )
 
 
-class ContextSemesterBooklet(ContextSeminar):
+class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume, semester):
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
-        self.adopt('semester', ContextSemesterFull(root, competition, volume, semester))
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(root, competition),
+            volume=ContextVolume(root, competition, volume),
+            semester=ContextSemesterFull(root, competition, volume, semester),
+        )
 
 
-class ContextBooklet(BuildableContext, ContextSeminar):
-    schema = Schema({})  # fix this
+class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
+    _schema = Schema({})  # nothing inherent to this context
+    _validator_class = SeminarRoundValidator
 
-    def populate(self, competition, volume, semester, round):
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(self.root, competition))
-        self.adopt('volume', ContextVolume(self.root, competition, volume))
-        self.adopt('semester', ContextSemester(self.root, competition, volume, semester))
-        self.adopt('round', ContextRoundFull(self.root, competition, volume, semester, round))
+    def populate(self, competition, volume, semester, issue):
+        super().populate(competition)
+
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(self.root, competition),
+            volume=ContextVolume(self.root, competition, volume),
+            semester=ContextSemester(self.root, competition, volume, semester),
+            round=ContextRoundFull(self.root, competition, volume, semester, issue),
+        )

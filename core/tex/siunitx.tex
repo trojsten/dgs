@@ -9,12 +9,9 @@
     input-decimal-markers       = {.},
     exponent-product            = \cdot,                        % \times for 5×10^7, \cdot for 5.1O^7
     number-unit-product         = {\ },                         % a non-breakable space between numbers and units
-    output-decimal-marker       = {\text{.}},                   % decimal dot
     range-units                 = single,
     range-phrase                = {\text{ -- }},                % 5 -- 10 m/s
     list-units                  = single,                       %
-    list-pair-separator         = {\text{\ and\ }},             % 5 a 10 m/s
-    list-final-separator        = {\text{\ and\ }},             % 5, 7 a 10 m/s
     retain-explicit-plus        = true,
 }
 
@@ -30,17 +27,22 @@
 \DeclareSIUnit{\mile}{mi}
 
 \DeclareSIUnit{\au}{au}
+\DeclareSIUnit{\parsec}{pc}
+\DeclareSIUnit{\lightyear}{ly}
+\DeclareSIUnit{\mag}{\!\ensuremath{^\mathrm{m}}}
+\DeclareSIUnit{\textarcsecond}{as}
+\DeclareSIUnit{\solarmass}{\ensuremath{\mathrm{M}_\Sun}}
+\DeclareSIUnit{\solarluminosity}{\ensuremath{\mathrm{L}_\Sun}}
+\DeclareSIUnit{\earthmass}{\ensuremath{\mathrm{M}_\Earth}}
+
 \DeclareSIUnit{\byte}{B}
 \DeclareSIUnit{\litre}{l}
 \DeclareSIUnit{\celsius}{\text{°}C}
 \DeclareSIUnit{\fahrenheit}{\text{°}F}
-\DeclareSIUnit{\parsec}{pc}
+
 \DeclareSIUnit{\pixel}{px}
 \DeclareSIUnit{\eur}{€}
-\DeclareSIUnit{\mag}{\!\ensuremath{^\mathrm{m}}}
-\DeclareSIUnit{\solarmass}{\ensuremath{\mathrm{M}_\Sun}}
-\DeclareSIUnit{\solarluminosity}{\ensuremath{\mathrm{L}_\Sun}}
-\DeclareSIUnit{\earthmass}{\ensuremath{\mathrm{M}_\Earth}}
-\DeclareSIUnit{\lightyear}{ly}
 \DeclareSIUnit{\atmosphere}{atm}
 \DeclareSIUnit{\atomicmass}{u}
+
+\DeclareSIUnit{\molar}{M}

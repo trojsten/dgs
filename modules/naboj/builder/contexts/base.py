@@ -1,18 +1,20 @@
 import os
 import datetime
 from pathlib import Path
-from schema import Schema, Optional, And, Or, Regex
+from enschema import Schema, And, Or, Regex
 
 from core.builder import context
-import core.utilities.schema as sch
+from core.builder.builder import get_last_commit_hash, get_branch
+from core.utilities.schema import valid_language
+from core.builder.validator import CommitHash, String
 
 
 class ContextNaboj(context.FileSystemContext):
-    target = None
-    subdir = None
+    _target = None
+    _subdir = None
     competitions = ['phys', 'chem', 'test']
     team = Schema({
-        'id': And(int, lambda x: x >= 0 and x <= 9999),
+        'id': And(int, lambda x: 0 <= x <= 9999),
         'code': str,
         'contact_email': And(str, len),
         'contact_name': And(str, len),
@@ -20,7 +22,7 @@ class ContextNaboj(context.FileSystemContext):
         'contestants': str,
         'display_name': And(str, len),
         'in_school_symbol': Or(None, And(str, lambda x: len(x) == 1)),
-        'language': And(str, sch.valid_language),
+        'language': And(str, valid_language),
         'name': object,
         'number': object,
         'school': str,
@@ -36,37 +38,42 @@ class ContextNaboj(context.FileSystemContext):
         'id': Regex(r'[a-z0-9-]+'),
         'number': int,
     })
-    schema = Schema({
+    _schema = Schema({
         'build': {
             'user': And(str, len),
             'dgs': {
-                'hash': sch.commit_hash,
+                'hash': CommitHash,
                 'branch': str,
             },
             'repo': {
-                'hash': sch.commit_hash,
+                'hash': CommitHash,
                 'branch': str,
             },
             'timestamp': datetime.datetime,
         }
     })
 
-    def populate(self, competition: str):
-        # Add the hash of the current HEAD of the repository as "hash"
-        self.add({
-            'build': {
+    def populate(self, repo_root: str):
+        """
+        Add the build info to the context. This is useful for impressum and diagnostics
+        -   username of whoever built the current context
+        -   dgs branch and git hash
+        -   repo branch and git hash
+        """
+        self.add(
+            build={
                 'user': os.environ.get('USERNAME'),
                 'dgs': {
-                    'hash': sch.get_last_commit_hash(),
-                    'branch': sch.get_branch(),
+                    'hash': get_last_commit_hash(),
+                    'branch': get_branch(),
                 },
                 'repo': {
-                    'hash': sch.get_last_commit_hash(self.node_path(competition)),
-                    'branch': sch.get_branch(self.node_path(competition)),
+                    'hash': get_last_commit_hash(self.node_path(repo_root)),
+                    'branch': get_branch(self.node_path(repo_root)),
                 },
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
-            }
-        })
+            },
+        )
 
     def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
         assert competition in ContextNaboj.competitions
@@ -76,14 +83,16 @@ class ContextNaboj(context.FileSystemContext):
             result.append(competition)
             if volume is not None:
                 result.append(f'{volume:02d}')
-                if self.target is not None:
+                if self._target is not None and issue is not None:
                     result.append(sub)
-                    if issue is not None:
-                        result.append(issue)
+                    result.append(issue)
         return tuple(result)
 
     def ident(self, competition=None, volume=None, issue=None):
-        return self.as_tuple(competition, volume, self.target, issue)
+        return self.as_tuple(competition, volume, self._target, issue)
 
-    def node_path(self, competition=None, volume=None, target=None, issue=None):
-        return Path(self.root, *self.as_tuple(competition, volume, self.subdir, issue))
+    def node_path(self, competition=None, volume=None, issue=None):
+        return Path(self.root, *self.as_tuple(competition, volume, self._subdir, issue))
+
+    def validate_repo(self, competition=None, volume=None, *args) -> None:
+        super().validate_repo(competition, volume)

@@ -9,6 +9,7 @@ python_version = "3.12"
 [dev-packages]
 pytest = "*"
 "flake8" = "*"
+ipython = "*"
 
 [packages]
 pyyaml = "*"
@@ -27,3 +28,4 @@ argparsedirs = "*"
 schema = "*"
 pandoc-minted = "*"
 pygments = "*"
+enschema = "*"

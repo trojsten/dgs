@@ -1,0 +1,12 @@
+(@ extends 'handout-students.jtt' @)
+
+(@ block solutions @)
+    \newpage
+    (@ if issue.problems @)
+        \subsection{(* i18n.captions.solution.plural|capitalize *)}
+        (@ for problem in issue.problems @)
+            \subsubsection{(* i18n.captions.problem.singular|capitalize *) (* loop.index *)}
+            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+        (@ endfor @)
+    (@ endif @)
+(@ endblock solutions @)

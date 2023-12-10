@@ -58,6 +58,7 @@
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}
+\RequirePackage{chemfig}
 
 \RequirePackage[all]{nowidow}
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
@@ -79,9 +80,21 @@
     urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
 
-\RequirePackage{polyglossia}                                % multi-language support
+\RequirePackage[
+    slovak,
+    czech,
+    german,
+    french,
+    russian,
+    polish,
+    spanish,
+    english
+]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\setdefaultlanguage{slovak}
+\RequirePackage{cleveref}
+\RequirePackage[
+    autostyle,
+]{csquotes}
 %\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
@@ -152,7 +165,7 @@
 
 \input{core/tex/fonts.tex}
 \input{core/tex/utilities.tex}
-\input{core/tex/math/include.tex}
+\input{core/tex/math.tex}
 \input{core/tex/hacks.tex}
 \input{core/tex/symbols.tex}
 \input{core/tex/siunitx.tex}

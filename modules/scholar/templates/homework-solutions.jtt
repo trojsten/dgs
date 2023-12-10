@@ -1,0 +1,11 @@
+(@ extends 'homework-students.jtt' @)
+
+(@ block solution @)
+    \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
+    \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+(@ endblock solution @)
+
+(@ block subsolution @)
+    \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
+    \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
+(@ endblock subsolution @)

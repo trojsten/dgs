@@ -1,10 +1,8 @@
 .SECONDEXPANSION:
 
 build/scholar/%/build-handout: \
-	modules/scholar/templates/base.tex \
-	modules/scholar/templates/handout-base.tex \
-	modules/scholar/templates/handout-students.tex \
-	modules/scholar/templates/handout-solutions.tex \
+	modules/scholar/templates/base.jtt \
+	$$(wildcard modules/scholar/templates/handout-*.jtt) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -12,10 +10,8 @@ build/scholar/%/build-handout: \
 	python3 modules/scholar/builder/handout.py 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-homework: \
-	modules/scholar/templates/base.tex \
-	modules/scholar/templates/homework-base.tex \
-	modules/scholar/templates/homework-students.tex \
-	modules/scholar/templates/homework-solutions.tex \
+	modules/scholar/templates/base.jtt \
+	$$(wildcard modules/scholar/templates/homework-*.jtt) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -23,7 +19,7 @@ build/scholar/%/build-homework: \
 	python3 modules/scholar/builder/homework.py 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-lecture: \
-	modules/scholar/templates/lecture.tex \
+	modules/scholar/templates/lecture.jtt \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -62,7 +58,8 @@ build/scholar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*/*.gp))) \
-	source/scholar/$$*/meta.yaml ;
+	source/scholar/$$*/meta.yaml \
+	build/core/i18n ;
 
 build/scholar/%/handout: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \

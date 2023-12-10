@@ -1,0 +1,19 @@
+\selectlanguage{(* i18n.name *)}
+\setquotestyle[(* i18n.quotes.extra|default('') *)]{(* i18n.quotes.babel_id *)}
+
+\sisetup{
+    output-decimal-marker   = {(* i18n.siunitx.output_decimal_marker *)},
+    list-final-separator    = {\text{ (* i18n.siunitx.list_final_separator *) }},
+    list-pair-separator     = {\text{ (* i18n.siunitx.list_pair_separator *) }},
+}
+
+\captionsetup*[table]{name=(* i18n.table|capitalize *)}
+\captionsetup*[figure]{name=(* i18n.figure|capitalize *)}
+\captionsetup*[equation]{name=(* i18n.equation|capitalize *)}
+
+\crefname{table}{(* i18n.table *)}{(* i18n.tables *)}
+\Crefname{table}{(* i18n.table|capitalize *)}{(* i18n.tables|capitalize *)}
+\crefname{figure}{(* i18n.figure *)}{(* i18n.figures *)}
+\Crefname{figure}{(* i18n.figure|capitalize *)}{(* i18n.figures|capitalize *)}
+\crefname{equation}{(* i18n.equation *)}{(* i18n.equations *)}
+\Crefname{equation}{(* i18n.equation|capitalize *)}{(* i18n.equations|capitalize *)}

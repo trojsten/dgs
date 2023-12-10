@@ -1,21 +1,18 @@
+import yaml
 from pathlib import Path
-from schema import Schema
+from enschema import Schema
 
 from core.builder import context
 
 
 class ContextI18n(context.FileSystemContext):
-    schema = Schema({
+    _schema = Schema({
         'section': {
             'problems': str,
             'solutions': str,
             'answers': str,
             'modulo': str,
             'evaluators': str,
-        },
-        'caption': {
-            'table': str,
-            'figure': str,
         },
         'competition': {
             'name': {
@@ -35,6 +32,9 @@ class ContextI18n(context.FileSystemContext):
             'symbol': str,
             'value': str,
         },
+        'answers': {
+            'interval': str,
+        },
         'tearoff': {
             'team': str,
             'bottom': str,
@@ -51,18 +51,22 @@ class ContextI18n(context.FileSystemContext):
     })
 
     def populate(self, competition, language):
-        self.load_YAML(self.root, competition, '.static', 'i18n', language + '.yaml')
+        self.load_yaml(self.root, competition, '.static', 'i18n', language + '.yaml')
+        #contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
+        #self.add({'crossref': contents})
 
     def node_path(self, competition=None, language=None):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')
 
 
 class ContextI18nGlobal(context.FileSystemContext):
-    schema = Schema({})
+    _schema = Schema({})
 
     def node_path(self, competition):
         return Path(self.root, competition, '.static', 'i18n')
 
     def populate(self, competition):
-        for language in [x.stem for x in self.node_path(competition).glob('*.yaml')]:
-            self.adopt(language, ContextI18n(self.root, competition, language))
+        self.adopt(**{
+            language: ContextI18n(self.root, competition, language)
+            for language in [x.stem for x in self.node_path(competition).glob('*.yaml')]
+        })

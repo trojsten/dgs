@@ -1,18 +1,17 @@
 import datetime
-from schema import Schema, And, Optional
+from enschema import Schema, And
 
-from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
+from .hierarchy import ContextIssue, ContextIssueSub
 from .buildable import ContextIssueBase
 
 
 class HandoutMixin:
-    target = 'handout'
-    subdir = 'handouts'
-
+    _target = 'handout'
+    _subdir = 'handouts'
 
 
 class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
     })
 
@@ -21,19 +20,18 @@ class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
 
 
 class ContextHandoutIssue(HandoutMixin, ContextIssue):
-    schema = Schema({
+    _schema = Schema({
         'id': And(str, len),
         'number': int,
         'title': And(str, len),
         'date': datetime.date,
     })
 
-    subcontext_key = 'problems'
-    subcontext_class = ContextHandoutProblem
+    _subcontext_key = 'problems'
+    _subcontext_class = ContextHandoutProblem
 
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
-    schema = Schema({})
+    _schema = Schema({})
 
-    issue_context_class = ContextHandoutIssue
-
+    _issue_context_class = ContextHandoutIssue

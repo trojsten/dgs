@@ -71,3 +71,7 @@ def leaf(what):
 
 def meta(what):
     return colour(what, Fore.LIGHTYELLOW_EX)
+
+
+def colour_boolean(text, value):
+    return ok(text) if value else err(text)

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import builder
 import context
 
@@ -11,4 +12,3 @@ class BuilderSemester(builder.BuilderSemester):
 
 
 BuilderSemester().build()
-

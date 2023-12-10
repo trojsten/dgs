@@ -1,6 +1,8 @@
 \makeatletter
 
+% Fix bug in pandoc
 \providecommand{\tightlist}{}
+
 % Render percent sign with nice font, not ugly Computer modern
 \mathcode`\%="7025
 \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
@@ -11,10 +13,39 @@
 
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
 
+% Force float placement for figures to H
 \floatplacement{figure}{H}
 
 \newcommand\invisiblesubsection[1]{%
     \refstepcounter{subsection}%
     \addcontentsline{toc}{subsection}{\protect\numberline{\thesubsection}#1}%
     \subsectionmark{#1}%
+}
+
+% Fix chemfig's collision with babel where -- is interpreted before chemfig
+\pretocmd\schemestart{\shorthandoff{-}}{}{}
+\apptocmd\schemestop{\shorthandon{-}}{}{}
+
+\usetikzlibrary{decorations.markings}
+\setchemfig{
+    atom sep=8mm,
+    bond style={line width=1pt},
+    schemestart code=\chemnameinit{},
+}
+\tikzset{
+  over line/.style={
+    white,
+    double=black,
+    double distance=\the\pgflinewidth,
+    line width=1.5pt,
+  },
+  under line/.style={
+    decoration={
+      markings,
+      mark connection node=mid node,
+      mark=at position #1 with {}
+      {\node[transform shape,minimum size=3pt] (mid node) {};}
+    },
+    decorate
+  }
 }

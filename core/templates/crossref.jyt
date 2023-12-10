@@ -1,0 +1,8 @@
+figureTitle: "(* i18n.figure *)"
+tableTitle: "(* i18n.table *)"
+listingTitle: "(* i18n.listing *)"
+figPrefix: ["(* i18n.figure *)", "(* i18n.figures *)"]
+tblPrefix: ["(* i18n.table *)", "(* i18n.tables *)"]
+eqnPrefix: ["(* i18n.equation *)", "(* i18n.equations *)"]
+lstPrefix: ["(* i18n.listing *)", "(* i18n.listings *)"]
+secPrefix: ["(* i18n.section *)", "(* i18n.sections *)"]

@@ -4,12 +4,12 @@ from contexts.handout import HandoutMixin
 
 
 class BuilderHandout(HandoutMixin, BuilderScholar):
-    root_context_class = ContextHandout
+    _root_context_class = ContextHandout
     templates = [
-        'handout-students.tex',
-        'handout-solutions.tex',
-        'handout-solved.tex',
+        'handout-students.jtt',
+        'handout-solutions.jtt',
+        'handout-solved.jtt',
     ]
 
 
-BuilderHandout().build()
+BuilderHandout().build_templates()

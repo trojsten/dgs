@@ -18,7 +18,7 @@
         \pagestyle{problems}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
@@ -29,7 +29,7 @@
             }%
             \label{ssc:(* problem.id*)-problem}%
             \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/problem.tex}%
+            \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -42,7 +42,7 @@
             \setcounter{equation}{0}%
             \setcounter{table}{0}%
             \setcounter{figure}{0}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
@@ -53,7 +53,7 @@
             }%
             \label{ssc:(* problem.id*)-solution}%
             \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/solution.tex}%
+            \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -63,7 +63,7 @@
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
             \setcounter{problem}{(* problem.number *)}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
@@ -74,7 +74,8 @@
             }%
             \label{ssc:(* problem.id*)-answer}%
             \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/answer.tex}%
+            \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
+            \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}
         (@ endfor @)
     (@ endif @)
     (@ include 'footer.jtt' @)

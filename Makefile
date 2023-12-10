@@ -1,6 +1,8 @@
 # Remove all stupid builtin rules and variables
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
 
+SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru
+
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
@@ -41,11 +43,11 @@ endef
 
 # _pandoc(language, format, pretty_format)
 define _pandoc
-	@echo -e '$(c_action)[pandoc] Converting \
+	@echo -e '$(c_action)[convert] Converting \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$<$(c_action) to \
-		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/convert.py $(2) $(1) $< $@ || exit 1;
+	python3 convert.py $(2) $(1) $< $@ || exit 1;
 endef
 
 # pandoctex(language)
@@ -76,6 +78,14 @@ define _copy
 endef
 
 include modules/*/module.mk
+
+build/core/i18n/%.tex: \
+	core/templates/override.jtt
+	@mkdir -p $(dir $@)
+	python3 core/builder/i18n.py 'core/i18n/' 'core/templates/' $* -o $(dir $@)
+
+build/core/i18n: \
+	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!

@@ -3,7 +3,7 @@ import sys
 
 sys.path.append('.')
 
-from core.utilities import context
+from core.builder import context
 
 
 class ContextScholar(context.Context):
@@ -20,21 +20,23 @@ class ContextScholar(context.Context):
 class ContextScholarBase(ContextScholar):
     def __init__(self, root, course, year):
         super().__init__()
-        self.absorb('module', ContextModule('scholar'))
-        self.absorb('course', ContextCourse(root, course))
-        self.absorb('year', ContextYear(root, course, year))
+        self.adopt(
+            module=ContextModule('scholar'),
+            course=ContextCourse(root, course),
+            year=ContextYear(root, course, year),
+        )
 
 
 class ContextHomework(ContextScholarBase):
     def __init__(self, root, course, year, issue):
         super().__init__(root, course, year)
-        self.absorb('issue', ContextIssue(root, course, year, 'homework', issue))
+        self.adopt(issue=ContextIssue(root, course, year, 'homework', issue))
 
 
 class ContextHandout(ContextScholarBase):
     def __init__(self, root, course, year, issue):
         super().__init__(root, course, year)
-        self.absorb('issue', ContextIssue(root, course, year, 'handouts', issue))
+        self.adopt(issue=ContextIssue(root, course, year, 'handouts', issue))
 
 
 class ContextModule(ContextScholar):

@@ -10,13 +10,13 @@ class BuilderLecture(builder.BuilderCourseBase):
         'lecture.tex',
     ]
 
-    def create_argument_parser(self):
-        super().create_argument_parser()
+    def add_arguments(self):
+        super().add_arguments()
         self.parser.add_argument('course', type=str)
         self.parser.add_argument('lecture', type=str)
 
-    def id(self):
+    def ident(self):
         return (self.args.course, self.args.lecture)
 
 
-BuilderLecture().build()
+BuilderLecture().build_templates()

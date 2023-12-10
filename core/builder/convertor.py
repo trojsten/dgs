@@ -1,38 +1,21 @@
 import subprocess
-import sys
 import tempfile
-import yaml
 from typing import Callable
-
-sys.path.append('.')
+from pathlib import Path
 
 from core.utilities import colour as c
-from .classes import Locale, RegexFailure, RegexReplacement
+from .classes import RegexFailure, RegexReplacement
+from core import i18n
 
 
 class Convertor:
-    languages = {
-        'sk':   Locale('slovak',    'sk-SK', ('„', '“'), figure='Obrázok', table='Tabuľka'),
-        'en':   Locale('english',   'en-US', ('“', '”'), figure='Figure', table='Table'),
-        'cs':   Locale('czech',     'cs-CZ', ('„', '“'), figure='Obrázek', table='Tabulka'),
-        'ru':   Locale('russian',   'ru-RU', ('«', '»'), figure=''),
-        'pl':   Locale('polish',    'pl-PL', ('„', '“'), figure=''),
-        'hu':   Locale('hungarian', 'hu-HU', ('„', '“'), figure=''),
-        'fr':   Locale('french',    'fr-FR', ('«\u202F', '\u202F»'), figure=''),
-        'es':   Locale('spanish',   'es-ES', ('«', '»'), figure='Cuadro', table=''),
-        'qq':   Locale('test',      'sk-SK', ('(', ')'), figure='Obrázok', table='Obrázok'),
-    }
-
     post_regexes = {
         'all': [],
         'latex': [
-            # Change opening double quotation marks to the proper Unicode symbol
-            RegexReplacement(r"``", r"“"),
-            # Change closing double quotation marks to the proper Unicode symbol
-            RegexReplacement(r"''", r'”'),
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
-            RegexReplacement(r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
-                             r"\\insertPicture[\g<options>]{\g<stem>.pdf}"),
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
+                             r"\\insertPicture\g<options>{\g<stem>.pdf}",
+                             purpose=r"Change \includegraphics to protected \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
             RegexReplacement(r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
                              r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
@@ -82,6 +65,7 @@ class Convertor:
             RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
         ],
         'html': [
+            # This is just a temporary workaround for Trojstenweb's inane choice of paths
             RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
@@ -95,12 +79,11 @@ class Convertor:
     pre_regexes = {
         'all': [
             RegexReplacement(r'^%.*$', r'', purpose="Comment"),
-            RegexReplacement(r'^(\s*)\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
-            RegexReplacement(r'^(\s*)}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
+            RegexReplacement(r'(^|(\s*))\$\${', r'\g<1>$$\n\g<1>\\begin{aligned}', purpose="Beginning align marker"),
+            RegexReplacement(r'(^|(\s+))}\$\$', r'\g<1>\\end{aligned}\n\g<1>$$', purpose="Ending align marker"),
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
-            RegexReplacement(r"^@I\s*(.*)$", r"\\inputminted{python}{\\activeDirectory/\g<1>}", purpose="Replace code tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
             RegexReplacement(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", purpose="Replace TODO tag"),
@@ -113,12 +96,21 @@ class Convertor:
         ],
     }
 
+    pre_checks = {
+        'all': [
+            RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
+        ],
+        'latex': [],
+        'html': [],
+    }
+
     def __init__(self, output_format: str, locale_code: str, infile, outfile):
         self.output_format = output_format
-        self.locale_code = locale_code
-        self.locale = self.languages[locale_code]
+        self.locale_code: str = locale_code
+        self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
+        self.file = None
 
         assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'"
 
@@ -134,18 +126,26 @@ class Convertor:
             RegexReplacement(r'"(\S)', self.quote_open + r'\g<1>'),
         ]
 
-        self.pre_regexes = self._filter_regexes(self.pre_regexes)
-        self.post_regexes = self._filter_regexes(self.post_regexes)
-        self.post_checks = self._filter_regexes(self.post_checks)
+        self.pre_regexes['all'] += [
+            RegexReplacement(r'```{\.(?P<lang>\w+) include=(?P<path>[^}]+)}',
+                             fr'```{{.\g<lang> include={Path(self.infile.name).parent}/\g<path>}}',
+                             purpose="Include code listing"),
+        ]
 
-    def _filter_regexes(self, regex_set: list) -> list:
+        self.pre_checks = self._filter_regexes(self.pre_checks)
+        self.pre_regexes = self._filter_regexes(self.pre_regexes)
+        self.post_checks = self._filter_regexes(self.post_checks)
+        self.post_regexes = self._filter_regexes(self.post_regexes)
+
+    def _filter_regexes(self, regex_set: dict[str, list]) -> list:
         return regex_set['all'] + regex_set[self.output_format]
 
     def run(self):
         try:
-            #fm, tm = frontmatter.parse(self.infile.read())
-            #self.infile.seek(0)
-            self.file = self.file_operation(self.preprocess)(self.infile)
+            # fm, tm = frontmatter.parse(self.infile.read())
+            # self.infile.seek(0)
+            self.file = self.file_operation(self.pre_check)(self.infile)
+            self.file = self.file_operation(self.preprocess)(self.file)
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
             self.file = self.file_operation(self.post_check)(self.file)
@@ -157,7 +157,6 @@ class Convertor:
         except Exception as e:
             print("Unexpected exception occurred:")
             raise e
-            return -1
         else:
             return 0
 
@@ -180,9 +179,6 @@ class Convertor:
             self.outfile.write(line)
         self.file.seek(0)
 
-    def preprocess(self, line):
-        return self.chain_process(line, [self.pre_regexes, self.quotes_regexes])
-
     @staticmethod
     def process_line(line: str, regexes) -> str:
         for regex in regexes:
@@ -202,8 +198,15 @@ class Convertor:
             line = func(line, regex_set)
         return line
 
+    def preprocess(self, line):
+        # return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
+        return self.chain_process(line, [self.pre_regexes])
+
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])
+
+    def pre_check(self, line):
+        return self.chain_process(line, [self.pre_checks], func=self.check_line)
 
     def post_check(self, line):
         return self.chain_process(line, [self.post_checks], func=self.check_line)
@@ -214,15 +217,19 @@ class Convertor:
         self.file.seek(0)
         args = [
             "pandoc",
-            "--mathjax",
+            "--metadata", f"lang={self.locale.id}",
+            "-V", "csquotes=true",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
-            "--filter", "pandoc-minted",
-            "--filter", "pandoc-crossref", "-M", f"crossrefYaml=core/i18n/{self.locale_code}/crossref.yaml",
+            "--filter", "pandoc-crossref",
+            "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
+            "-M", "cref=true",
             "--filter", "pandoc-eqnos",
-#           "--webtex='eqn://'",
-            "--metadata", f"lang={self.languages[self.locale_code].locale}",
+            "--filter", "pandoc-include-code",
+            "--filter", "pandoc-minted",
+            "--lua-filter", "./core/filters/quotes.lua",
+            "--webtex='eqn://'",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
 

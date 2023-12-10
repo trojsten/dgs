@@ -1,0 +1,33 @@
+(@ extends 'base.jtt' @)
+
+(@ block type @)homework(@ endblock @)
+(@ block typedir @)homework(@ endblock @)
+
+(@ block style @)
+    \fancypagestyle{homework}{
+        \pagestyle{scholar}
+        \fancyhead[L]{\textit{(* i18n.homework.title|capitalize *) (* issue.number *)}}
+        \fancyhead[R]{\textit{(* i18n.homework.deadline|capitalize *) (* issue.deadline.strftime('%d. %m. %Y') *)}}
+
+        \titleformat{\section}[block]{\Huge\bfseries\centering}{}{0pt}{}
+        \titleformat{\subsection}[hang]{\Large\bfseries\vspace{4mm}\vspace*{-4mm}}{\arabic{subsection}. }{0pt}{}
+        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
+        \titlespacing{\section}{0pt}{6mm}{2mm}
+        \titlespacing{\subsection}{0pt}{0mm}{0mm}
+        \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
+        \titlespacing{\paragraph}{0pt}{2mm}{0pt}
+    }
+(@ endblock style @)
+
+(@ block content @)
+    \setcounter{section}{(* issue.number - 1 *)}
+    \section{(* i18n.homework.title|capitalize *) (* issue.number *)}
+    \begin{center}
+        \textit{(* i18n.homework.disclaimer.foreword *)} \href{mailto:(* year.teacher.email *)}{(* year.teacher.email *)}
+        \textit{(* i18n.homework.disclaimer.midword *) (* issue.deadline.strftime('%d. %m. %Y') *)}.
+        \textit{(* i18n.homework.disclaimer.aftword *)}
+    \end{center}
+    (@ block sections @)
+    (@ endblock sections @)
+(@ endblock content @)

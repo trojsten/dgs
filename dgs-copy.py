@@ -6,8 +6,8 @@ import argparse
 from typing import Tuple
 
 
-VERSION = "3.03"
-DATE = "2022-11-29"
+VERSION = "3.04"
+DATE = "2023-11-22"
 
 
 def fire(query):
@@ -30,6 +30,9 @@ def problem_count(seminar: str, volume: int) -> Tuple[str, int]:
     return sr, count
 
 
+COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz', 'py']
+
+
 def main():
     parser = argparse.ArgumentParser(description="Copy a DeGeŠ round to www-archiv")
     parser.add_argument('seminar', choices=['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX', 'Suši'])
@@ -42,15 +45,13 @@ def main():
     args = parser.parse_args()
 
     # SuŠi hack
-    round = 100 if args.round == 'outdoor' else int(args.round)
-
-    seminar_remote = args.seminar
+    issue = 100 if args.round == 'outdoor' else int(args.round)
 
     # FKS hack: volumes <= 37 are now marked as "FKS-old"
     seminar_remote, count = problem_count(args.seminar, args.volume)
 
-    path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{round}"
-    path_fragment_remote = f"{seminar_remote}/{args.volume}/{args.part}/{round}"
+    path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{issue}"
+    path_fragment_remote = f"{seminar_remote}/{args.volume}/{args.part}/{issue}"
 
     # delete the temporary directory if present
     os.system("rm -rf tasks")
@@ -59,25 +60,27 @@ def main():
     for local, remote in (('problem', 'zadania'), ('solution', 'vzoraky')):
         for problem in range(1, count + 1):
             pfl = f"{path_fragment_local}/{problem:02d}"
-            fire(f"mkdir -p tasks/{path_fragment_remote}/{remote}/html && " \
-                f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html " \
-                f"tasks/{path_fragment_remote}/{remote}/html/prikl{problem}.html")
+            fire(f"mkdir -p tasks/{path_fragment_remote}/{remote}/html && "
+                 f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html "
+                 f"tasks/{path_fragment_remote}/{remote}/html/prikl{problem}.html")
 
     # copy pdf files
-    fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/problems.pdf tasks/{path_fragment_remote}/zadania/zadania.pdf")
-    fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
+    fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/problems.pdf "
+         f"tasks/{path_fragment_remote}/zadania/zadania.pdf")
+    fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf "
+         f"tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
 
     # copy pictures
-    COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz']
     copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
 
-    fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && " \
-        rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) " \
-        rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
+    fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && "
+         rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) "
+         rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server
     if not args.dry_run:
-        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 tasks {args.user}@ksp:/var/www-archiv/trojstenweb/")
+        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 "
+             f"tasks {args.user}@ksp:/var/www-archiv/trojstenweb/")
 
     # delete the temporary structure
     fire("rm -rf tasks")

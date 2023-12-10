@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append('.')
 
-from core.utilities import context
+from core.builder import context
 
 
 class ContextPoetry(context.Context):

@@ -1,0 +1,20 @@
+(@ extends 'base.jtt' @)
+
+(@ block type @)handout(@ endblock @)
+(@ block typedir @)handouts(@ endblock @)
+
+(@ block style @)
+    \fancypagestyle{handout}{
+        \pagestyle{scholar}
+        \fancyhead[L]{\textit{(* i18n.handout.title|capitalize *) (* issue.number *)}}
+        \fancyhead[R]{\textit{(* issue.date.strftime('%d. %m. %Y') *)}}
+    }
+(@ endblock style @)
+
+(@ block content @)
+    \setcounter{section}{(* issue.number - 1 *)}
+    \section{(* issue.title *)(@ block subtitle @)(@ endblock subtitle @)}
+    \invisiblesubsection{Text}
+    \protectedInput{\activeDirectory/text.tex}
+    (@ block problems @)(@ endblock problems @)
+(@ endblock content @)

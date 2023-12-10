@@ -20,14 +20,14 @@ endef
 define prepare_arguments_round
 	$(call _prepare_arguments)
 	python3 ./modules/seminar/builder/$(1).py 'source/seminar/' 'modules/seminar/templates/' \
-		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)'
+		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $@)
 	$(call _prepare_arguments)
 	python3 ./modules/seminar/builder/volume.py 'source/seminar/' 'source/seminar/$*/' \
-		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)'
+		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)' || exit 1;
 
 build/seminar/%/semester.tex: \
 	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
@@ -59,7 +59,8 @@ build/seminar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
-	source/seminar/$$*/meta.yaml ;
+	source/seminar/$$*/meta.yaml \
+	build/core/i18n ;
 
 output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
@@ -148,6 +149,7 @@ output/seminar/%/solutions: \
 output/seminar/%: \
 	output/seminar/$$*/problems \
 	output/seminar/$$*/solutions ;
+#	output/seminar/$$*/instagram ;
 
 .PHONY:
 
