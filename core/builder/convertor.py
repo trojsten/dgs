@@ -104,12 +104,13 @@ class Convertor:
         'html': [],
     }
 
-    def __init__(self, output_format: str, locale_code: str, infile, outfile):
+    def __init__(self, output_format: str, locale_code: str, infile, outfile, **options):
         self.output_format = output_format
         self.locale_code: str = locale_code
         self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
+        self.math = options.get('math', 'mathjax')
         self.file = None
 
         assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'"
@@ -217,6 +218,7 @@ class Convertor:
         self.file.seek(0)
         args = [
             "pandoc",
+            "--webtex='eqn://'" if self.math == 'webtex' else "--mathjax",
             "--metadata", f"lang={self.locale.id}",
             "-V", "csquotes=true",
             "--from", "markdown+smart",
@@ -229,7 +231,6 @@ class Convertor:
             "--filter", "pandoc-include-code",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
-            #"--webtex='eqn://'",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
 

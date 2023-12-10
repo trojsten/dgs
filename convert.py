@@ -11,7 +11,8 @@ from core.utilities import colour as c
 class CLIInterface:
     def __init__(self):
         self.args = self.parse_arguments()
-        self.convertor = Convertor(self.args.format, self.args.locale, self.args.infile, self.args.outfile)
+        self.convertor = Convertor(self.args.format, self.args.locale, self.args.infile, self.args.outfile,
+                                   math=self.args.math)
         if self.convertor.run() == 0:
             self.success()
         else:
@@ -26,6 +27,7 @@ class CLIInterface:
         parser.add_argument('locale',   choices=i18n.languages.keys())
         parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
         parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+        parser.add_argument('--math',   type=str, choices=['webtex', 'mathjax'], default='mathjax')
         parser.add_argument('--verbose', action='store_true')
         return parser.parse_args()
 
