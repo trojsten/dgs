@@ -21,7 +21,7 @@ class BuilderNabojLanguage(builder.BuilderNaboj):
         super().add_arguments()
         self.parser.add_argument('language', type=str)
 
-    def id(self):
+    def ident(self):
         return self.args.competition, self.args.volume, self.args.language
 
     def path(self):

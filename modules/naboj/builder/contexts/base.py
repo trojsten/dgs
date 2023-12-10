@@ -5,7 +5,8 @@ from enschema import Schema, And, Or, Regex
 
 from core.builder import context
 from core.builder.builder import get_last_commit_hash, get_branch
-from core.utilities.schema import valid_language, CommitHash
+from core.utilities.schema import valid_language
+from core.builder.validator import CommitHash, String
 
 
 class ContextNaboj(context.FileSystemContext):

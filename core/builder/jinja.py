@@ -4,7 +4,7 @@ import sys
 import logging
 from pathlib import Path
 
-from core.utilities import dicts, filters, colour as c
+from core.utilities import filters, colour as c
 
 log = logging.getLogger('dgs')
 

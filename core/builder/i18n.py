@@ -14,7 +14,7 @@ class BuildableContextCoreI18n(BuildableContext):
         self.populate(language)
 
     def populate(self, language):
-        self.data = {'i18n': i18n.languages[language].as_dict()}
+        self._data = {'i18n': i18n.languages[language].as_dict()}
         self.add_id(language)
 
 

@@ -16,6 +16,7 @@ class ContextIssueBase(BuildableFileSystemContext, ContextScholar, metaclass=ABC
             module=ContextModule('scholar'),
             course=ContextCourse(self.root, course),
             year=ContextYear(self.root, course, year),
-            i18n=ContextI18n(self.root, self.data['course']['language']),
             issue=self._issue_context_class(self.root, course, year, issue),
+        ).adopt(
+            i18n=ContextI18n(self.root, self.data['course']['language']),
         )

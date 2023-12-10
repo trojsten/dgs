@@ -15,7 +15,7 @@ class BuilderLecture(builder.BuilderCourseBase):
         self.parser.add_argument('course', type=str)
         self.parser.add_argument('lecture', type=str)
 
-    def id(self):
+    def ident(self):
         return (self.args.course, self.args.lecture)
 
 

@@ -1,5 +1,5 @@
 \selectlanguage{(* i18n.name *)}
-\setquotestyle[(* i18n.quotes.extra|default('') *)]{(* i18n.quotes.id *)}
+\setquotestyle[(* i18n.quotes.extra|default('') *)]{(* i18n.quotes.babel_id *)}
 
 \sisetup{
     output-decimal-marker   = {(* i18n.siunitx.output_decimal_marker *)},

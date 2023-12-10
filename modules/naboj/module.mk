@@ -146,7 +146,8 @@ build/naboj/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/meta.yaml) \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) ;
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) \
+	build/core/i18n ;
 
 # All problems, solutions and answers for every language, and overall
 # <competition>/<volume>
@@ -328,8 +329,9 @@ output/naboj/%: \
 
 # All targets for all venues
 # <competition>/<volume>
-output/naboj/%/venues: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)), $$(dir)) ;
+output/naboj/%/venues:
+#	$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)) ;
+	@echo $(subst source/,output/,$(wildcard source/naboj/$*/venues/*)) ;
 
 output/naboj/%/all: \
 	output/naboj/%/languages \

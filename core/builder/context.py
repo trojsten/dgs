@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 from enschema import Schema, SchemaMissingKeyError, SchemaError, And
 from typing import Any, Self
 
-from core.utilities import dicts, colour as c, crawler, logger
+from core.utilities import colour as c, crawler, logger
 
 log = logger.setupLog('dgs')
 
@@ -80,7 +80,11 @@ class Context(metaclass=ABCMeta):
         """ Adopt a new child context `ctx` under the key `key` """
         for key, ctx in ctxs.items():
             assert isinstance(ctx, Context)
-            self.data[key] = dicts.merge(self.data.get(key), ctx.data)
+
+            if key in self.data:
+                self.data[key] |= ctx.data
+            else:
+                self.data[key] = copy.deepcopy(ctx.data)
 
             if self._schema is not None:
                 # If child has no schema, accept anything, otherwise merge

@@ -6,13 +6,14 @@ from enschema import Schema, And, Or, Optional, Regex
 
 from core import i18n
 from core.utilities import lists
-from core.utilities.schema import string, valid_language, valid_language_name
+from core.utilities.schema import valid_language, valid_language_name
+from core.builder.validator import String
 from .base import ContextNaboj
 
 
 class ContextCompetition(ContextNaboj):
     _schema = Schema({
-        'id': string,
+        'id': String,
         'tearoff': {
             'per_page': int,
             'height': int,
@@ -22,8 +23,8 @@ class ContextCompetition(ContextNaboj):
             'inner': int,
         },
         'organisation': {
-            'name': string,
-            'address': string,
+            'name': String,
+            'address': String,
         },
         'constants': {
             str: {
@@ -33,7 +34,7 @@ class ContextCompetition(ContextNaboj):
                 Optional('siextra'): str,
             }
         },
-        'URL': string,
+        'URL': String,
         'hacks': dict,
     })
 

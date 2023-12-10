@@ -58,7 +58,8 @@ build/scholar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*/*.gp))) \
-	source/scholar/$$*/meta.yaml ;
+	source/scholar/$$*/meta.yaml \
+	build/core/i18n ;
 
 build/scholar/%/handout: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
