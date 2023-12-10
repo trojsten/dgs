@@ -229,7 +229,7 @@ class Convertor:
             "--filter", "pandoc-include-code",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
-            "--webtex='eqn://'",
+            #"--webtex='eqn://'",
         ]
         subprocess.run(args, stdin=self.file, stdout=out)
 
