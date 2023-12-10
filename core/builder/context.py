@@ -1,13 +1,12 @@
 import abc
 import copy
 import pprint
-import typing
 
 import yaml
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from enschema import Schema, SchemaMissingKeyError, SchemaError, And
-from typing import Any, Self
+from typing import Any, Self, ClassVar
 
 from core.utilities import colour as c, crawler, logger
 
@@ -15,10 +14,10 @@ log = logger.setupLog('dgs')
 
 
 class Context(metaclass=ABCMeta):
-    defaults = {}                   # Defaults for every instance
+    defaults = {}                  # Defaults for every instance
     _schema: Schema | None = None  # Validation schema for the context, or None if it is not to be validated
     _id: str = None
-    _data: dict = None
+    _data: dict[str, Any] = None
 
     @property
     def schema(self) -> Schema:
@@ -93,8 +92,8 @@ class Context(metaclass=ABCMeta):
                 )
         return self
 
-    def override(self, key, ctx):
-        self.data[key] = ctx
+    def override(self, key, new_value):
+        self.data[key] = new_value
         return self
 
     def print(self):
@@ -137,8 +136,8 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         - has node_path that maps properties back to file system
     """
     _subcontext_key: str = None
-    _subcontext_class: typing.ClassVar = None
-    _validator_class: typing.ClassVar = None
+    _subcontext_class: ClassVar = None
+    _validator_class: ClassVar = None
 
     def __init__(self, root, *path, **defaults):
         super().__init__(self.name(self.ident(*path)), **defaults)
