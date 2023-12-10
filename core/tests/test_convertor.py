@@ -20,6 +20,7 @@ def convert():
 
 
 class DisabledTestQuotes:
+    """ These tests are currently disabled: we have switched to `csquotes` """
     def test_math_plus(self, convert):
         assert convert('latex', 'sk', '"+"') == r'„+“' + '\n'
 
@@ -46,7 +47,8 @@ class DisabledTestQuotes:
         assert convert('latex', 'en', 'Ale "to" je "dobré", "nie."?') == r'Ale “to” je “dobré”, “nie.”?' + '\n'
 
     def test_french_interpunction(self, convert):
-        assert convert('latex', 'fr', 'Ale "to" je "dobré", "nie."?') == r'Ale «\,to\,» je «\,dobré\,», «\,nie.\,»?' + '\n'
+        assert (convert('latex', 'fr', 'Ale "to" je "dobré", "nie."?') ==
+                r'Ale «\,to\,» je «\,dobré\,», «\,nie.\,»?' + '\n')
 
     def test_spanish_interpunction(self, convert):
         assert convert('latex', 'es', 'Ale "to" je "dobré", "nie."?') == r'Ale «to» je «dobré», «nie.»?' + '\n'
@@ -56,7 +58,7 @@ class DisabledTestQuotes:
         assert output == r'Máme “dačo” a “niečo”. “Čo také?” \emph{“Asi nič.”}' + '\n'
 
 
-class TestImages():
+class TestImages:
     def test_image_latex(self, convert):
         output = convert('latex', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
         assert r'\insertPicture[width=\textwidth,height=47mm]{ryba.pdf}' in output
@@ -67,11 +69,12 @@ class TestImages():
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm\]{subor\.png}', output) is not None
+        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{subor\.png}', output) is not None
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert re.match(r'<figure>.*<img.*src=".*ryba.svg".*<figcaption.*Masívna ryba.*</figcaption>.*</figure>', output, flags=re.DOTALL) is not None
+        assert re.match(r'<figure>.*<img.*src=".*ryba.svg".*<figcaption.*Masívna ryba.*</figcaption>.*</figure>',
+                        output, flags=re.DOTALL) is not None
 
     def test_image_html_multiline(self, convert):
         output = convert('html', 'sk', """
@@ -79,13 +82,13 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        # Pandoc can split lines but we cannot tell how, so we replace newlines with spaces
+        # Pandoc can split lines, but we cannot tell how, so we replace newlines with spaces
         output = output.replace('\n', ' ')
         assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. '
                         r'Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output) is not None
 
 
-class TestTags():
+class TestTags:
     def test_h_latex(self, convert):
         output = convert('latex', 'en', '@H this should not be seen!')
         assert output == '\n'
@@ -104,7 +107,7 @@ class TestTags():
 
     def test_e_latex(self, convert):
         output = convert('latex', 'sk', '@E error')
-        assert re.match(r'\\errorMessage\{error\}\n', output) is not None
+        assert re.match(r'\\errorMessage\{error}\n', output) is not None
 
     def test_e_html(self, convert):
         output = convert('html', 'sk', '@E error')
@@ -112,4 +115,4 @@ class TestTags():
 
     def test_aligned(self, convert):
         output = convert('latex', 'sk', '$${\na\n}$$')
-        assert re.match(r'\\\[.*\\begin\{aligned\}\na\n\\end\{aligned\}.*\\\]', output, flags=re.DOTALL) is not None
+        assert re.match(r'\\\[.*\\begin\{aligned}\na\n\\end\{aligned}.*\\]', output, flags=re.DOTALL) is not None

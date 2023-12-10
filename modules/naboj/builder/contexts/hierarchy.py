@@ -63,9 +63,11 @@ class ContextLanguage(ContextNaboj):
     def populate(self, competition, volume, language):
         super().populate(competition)
         self.load_meta(competition, volume, language) \
-            .add_id(language)
-        self.add({'name': i18n.languages[language].name})
-        self.add({'rtl': i18n.languages[language].rtl}),
+            .add_id(language) \
+            .add(
+                name=i18n.languages[language].name,
+                rtl=i18n.languages[language].rtl,
+            )
 
 
 class ContextVenue(ContextNaboj):
@@ -118,16 +120,16 @@ class ContextVenue(ContextNaboj):
         self.load_meta(competition, volume, venue) \
             .add_id(venue)
         self._add_extra_teams(comp, vol)
-        self.add({
-            'teams': lists.numerate(self.data.get('teams'), itertools.count(0)),
-            'teams_grouped': lists.split_div(
+        self.add(
+            teams=lists.numerate(self.data.get('teams'), itertools.count(0)),
+            teams_grouped=lists.split_div(
                 lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page']
             ),
-            'problems_modulo': lists.split_mod(
+            problems_modulo=lists.split_mod(
                 lists.add_numbers([x['id'] for x in vol.data['problems']], itertools.count(1)),
                 self.data['evaluators'], first=1,
             ),
-        })
+        )
 
 
 class ContextVolume(ContextNaboj):
@@ -144,11 +146,8 @@ class ContextVolume(ContextNaboj):
 
     def populate(self, competition, volume):
         super().populate(competition)
-        comp = ContextCompetition(self.root, competition)
         self.load_meta(competition, volume) \
             .add_id(f'{volume:02d}') \
             .add_number(volume)
 
-        self.add(dict(
-            problems=lists.add_numbers(self.data['problems'], itertools.count(1)),
-        ))
+        self.add(problems=lists.add_numbers(self.data['problems'], itertools.count(1)))

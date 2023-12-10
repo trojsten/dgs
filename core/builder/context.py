@@ -16,11 +16,21 @@ log = logger.setupLog('dgs')
 
 class Context(metaclass=ABCMeta):
     defaults = {}                   # Defaults for every instance
-    _schema: Schema = None  # Validation schema for the context, or None if it is not to be validated
+    _schema: Schema | None = None  # Validation schema for the context, or None if it is not to be validated
+    _id: str = None
+    _data: dict = None
 
     @property
     def schema(self) -> Schema:
         return self._schema
+
+    @property
+    def data(self) -> dict:
+        return self._data
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     @staticmethod
     def _default(name, func=None, dfl=''):
@@ -29,12 +39,12 @@ class Context(metaclass=ABCMeta):
         else:
             return name if func is None else func(name)
 
-    def __init__(self, new_id=None, **defaults: dict):
-        self.id = new_id
-        self.data = copy.deepcopy(self.defaults)
+    def __init__(self, new_id=None, **defaults):
+        self._id = new_id
+        self._data = copy.deepcopy(self.defaults)
 
         if defaults is not None:
-            self.add(defaults)
+            self.add(**defaults)
 
     def __str__(self):
         return f"<{self.__class__.__name__} named '{self.id}'>"
@@ -61,29 +71,22 @@ class Context(metaclass=ABCMeta):
                 pprint.pprint(self._schema.schema)
                 raise exc
 
-    def add(self, *dictionaries, overwrite=True):
-        """ Merge a list of dictionaries into this context, overwriting existing keys """
-        self.data = dicts.merge(self.data, *dictionaries, overwrite=overwrite)
+    def add(self, **kwargs):
+        """ Merge extra key-value pairs into this context, overwriting existing keys """
+        self._data |= kwargs
         return self
 
-    def absorb(self, *contexts: Self):
-        """ Merge a list of other contexts into this context, overwriting existing keys """
-        for ctx in contexts:
-            self.data |= ctx.data
-            if self._schema is not None:
-                self._schema |= ctx.schema
-        return self
-
-    def adopt(self, key, ctx):
+    def adopt(self, **ctxs: 'Context') -> Self:
         """ Adopt a new child context `ctx` under the key `key` """
-        assert isinstance(ctx, Context)
-        self.data[key] = dicts.merge(self.data.get(key), ctx.data)
+        for key, ctx in ctxs.items():
+            assert isinstance(ctx, Context)
+            self.data[key] = dicts.merge(self.data.get(key), ctx.data)
 
-        if self._schema is not None:
-            # If child has no schema, accept anything, otherwise merge
-            self._schema |= Schema(
-                {key: {object: object} if ctx._schema is None else ctx._schema}
-            )
+            if self._schema is not None:
+                # If child has no schema, accept anything, otherwise merge
+                self._schema |= Schema(
+                    {key: {object: object} if ctx._schema is None else ctx._schema}
+                )
         return self
 
     def override(self, key, ctx):
@@ -94,10 +97,31 @@ class Context(metaclass=ABCMeta):
         pprint.pprint(self.data, width=120)
 
     def add_number(self, number):
-        return self.add({'number': number})
+        return self.add(number=number)
 
     def add_id(self, new_id):
-        return self.add({'id': new_id})
+        return self.add(id=new_id)
+
+    def __eq__(self, other):
+        return self.data == other.data and self.id == other.id
+
+    def __ior__(self, other):
+        if not isinstance(other, Context):
+            return NotImplemented
+        else:
+            self._data |= other.data
+
+            if self.schema is None or other.schema is None:
+                self._schema = None
+            else:
+                self._schema |= other.schema
+
+        return self
+
+    def __or__(self, other):
+        new = copy.deepcopy(self)
+        new |= other
+        return new
 
 
 class FileSystemContext(Context, metaclass=abc.ABCMeta):
@@ -142,15 +166,15 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(filename)}")
         try:
             contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
-            contents = {} if contents is None else contents
+            self._data = {} if contents is None else contents
         except FileNotFoundError as e:
             log.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
             raise e
 
-        self.data = contents
         return self
 
     def load_meta(self, *path):
+        """ Shorthand for loading the node_path meta.yaml file """
         return self.load_yaml(self.node_path(*path) / 'meta.yaml')
 
     @abstractmethod

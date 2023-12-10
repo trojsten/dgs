@@ -14,9 +14,11 @@ class BuildableContextNaboj(BuildableFileSystemContext, ContextNaboj, metaclass=
 
     def populate(self, competition, volume):
         super().populate(competition)
-        self.adopt('module', ContextModule('naboj'))
-        self.adopt('competition', ContextCompetition(self.root, competition))
-        self.adopt('volume', ContextVolume(self.root, competition, volume))
+        self.adopt(
+            module=ContextModule('naboj'),
+            competition=ContextCompetition(self.root, competition),
+            volume=ContextVolume(self.root, competition, volume),
+        )
 
 
 class BuildableContextLanguage(BuildableContextNaboj):
@@ -30,8 +32,10 @@ class BuildableContextLanguage(BuildableContextNaboj):
 
     def populate(self, competition, volume, language):
         super().populate(competition, volume)
-        self.adopt('language', ContextLanguage(self.root, competition, volume, language))
-        self.adopt('i18n', ContextI18nGlobal(self.root, competition))
+        self.adopt(
+            language=ContextLanguage(self.root, competition, volume, language),
+            i18n=ContextI18nGlobal(self.root, competition),
+        )
 
 
 class BuildableContextVenue(BuildableContextNaboj):
@@ -45,12 +49,11 @@ class BuildableContextVenue(BuildableContextNaboj):
 
     def populate(self, competition, volume, venue):
         super().populate(competition, volume)
-        self.adopt('venue', ContextVenue(self.root, competition, volume, venue)
-                   .override('start', self.data['volume']['start']))
-        self.adopt('i18n', ContextI18nGlobal(self.root, competition))
-        self.add({
-            'language': i18n.languages[self.data['venue']['language']].as_dict()
-        })
+        self.adopt(
+            venue=ContextVenue(self.root, competition, volume, venue)
+                               .override('start', self.data['volume']['start']),
+            i18n=ContextI18nGlobal(self.root, competition)
+        ).add(language=i18n.languages[self.data['venue']['language']].as_dict())
 
         if 'start' not in self.data['venue']:
             self.data['venue']['start'] = self.data['volume']['start']

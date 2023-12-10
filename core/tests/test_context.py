@@ -1,5 +1,4 @@
 import pytest
-import math
 
 from core.builder.context import Context
 
@@ -8,34 +7,40 @@ from core.builder.context import Context
 def context_empty():
     return Context()
 
+
 @pytest.fixture
 def context_defaults():
     return Context(foo='bar', baz=5)
+
 
 @pytest.fixture
 def context_two():
     return Context(foo='hotel', qux=7)
 
+
 @pytest.fixture
 def context_old():
     return Context(boss='Dušan', pictures='Plyš', htr='Kvík')
+
 
 @pytest.fixture
 def context_new():
     return Context(boss='Marcel', pictures='Terka', nothing='Nina')
 
+
 @pytest.fixture
 def context_override(context_empty, context_old, context_new):
-    context_empty.adopt('fks', context_old)
-    context_empty.adopt('fks', context_new)
+    context_empty.adopt(fks=context_old)
+    context_empty.adopt(fks=context_new)
     return context_empty
+
 
 @pytest.fixture
 def context_numbered():
     return Context(id=123, number=456)
 
 
-class TestContext():
+class TestContext:
     def test_empty(self, context_empty):
         assert context_empty.data == {}
 
@@ -75,5 +80,14 @@ class TestContext():
         assert context_defaults.data['number'] == 666
 
     def test_add(self, context_defaults, context_two):
-        context_defaults.absorb(context_two)
+        context_defaults |= context_two
         assert context_defaults.data == dict(foo='hotel', baz=5, qux=7)
+
+    def test_ior(self):
+        first = Context('fks', boss='Matúš', coffee='Nina')
+        second = Context('htr', pictures='Terka', htr='Kvík', iy='Krto')
+        assert first | second == Context('fks', boss='Matúš', coffee='Nina', pictures='Terka', htr='Kvík', iy='Krto')
+
+    def test_or(self):
+        """ Note that or'ed contexts retain the parent's name but override items with child's """
+        assert Context('foo', bar='mitzvah') | Context('baz', bar='baron') == Context('foo', bar='baron')

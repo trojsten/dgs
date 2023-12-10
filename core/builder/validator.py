@@ -17,7 +17,7 @@ CommitHash = Regex(r'[a-f0-9]+')
 class FileSystemValidator(metaclass=abc.ABCMeta):
     IGNORED = ['.git']
 
-    _schema: Schema | None = None
+    _schema: Schema = None
 
     @property
     def schema(self) -> Schema:
@@ -27,7 +27,7 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         self.root = Path(root)
         self.tree = self.scan(self.root)
 
-    def scan(self, path):
+    def scan(self, path) -> str | dict | None:
         if path.name in self.IGNORED:
             return None
         if path.is_dir():
@@ -41,6 +41,9 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
                 return File
 
     def validate(self) -> None:
+        """
+        Validate the tree, re-raising the corresponding SchemaError if anything is out of order
+        """
         try:
             self.schema.validate(self.tree)
             self.perform_extra_checks()
@@ -53,6 +56,6 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
     def perform_extra_checks(self) -> None:
         """
         Extra checks that are impossible or cumbersome to implement with schema.
-        Runs *after* schema validation.
+        Runs *after* schema validation. By default, this is a no-op.
         """
         pass

@@ -59,8 +59,8 @@ class ContextNaboj(context.FileSystemContext):
         -   dgs branch and git hash
         -   repo branch and git hash
         """
-        self.add({
-            'build': {
+        self.add(
+            build={
                 'user': os.environ.get('USERNAME'),
                 'dgs': {
                     'hash': get_last_commit_hash(),
@@ -71,8 +71,8 @@ class ContextNaboj(context.FileSystemContext):
                     'branch': get_branch(self.node_path(repo_root)),
                 },
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
-            }
-        })
+            },
+        )
 
     def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
         assert competition in ContextNaboj.competitions

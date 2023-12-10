@@ -66,5 +66,7 @@ class ContextI18nGlobal(context.FileSystemContext):
         return Path(self.root, competition, '.static', 'i18n')
 
     def populate(self, competition):
-        for language in [x.stem for x in self.node_path(competition).glob('*.yaml')]:
-            self.adopt(language, ContextI18n(self.root, competition, language))
+        self.adopt(**{
+            language: ContextI18n(self.root, competition, language)
+            for language in [x.stem for x in self.node_path(competition).glob('*.yaml')]
+        })

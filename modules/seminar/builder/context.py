@@ -82,22 +82,22 @@ class ContextSemester(ContextSeminar):
     })
 
     def populate(self, competition, volume, semester):
-        self.id = str(semester)
+        self._id = str(semester)
         self.load_meta(competition, volume, semester) \
             .add_id(self.id) \
             .add_number(semester)
         # Add fancy names for the semesters
         # Maybe this should be a Jinja filter...?
-        self.add({
-            'neuter': {
+        self.add(
+            neuter={
                 'nominative': ['zimné', 'letné'][semester - 1],
                 'genitive': ['zimného', 'letného'][semester - 1],
             },
-            'feminine': {
+            feminine={
                 'nominative': ['zimná', 'letná'][semester - 1],
                 'genitive': ['zimnej', 'letnej'][semester - 1],
             },
-        })
+        )
 
 
 class ContextSemesterFull(ContextSemester, BuildableFileSystemContext):
@@ -156,7 +156,7 @@ class ContextProblem(ContextSeminar):
 
         vol = ContextVolume(self.root, competition, volume)
         categories = vol.data['categories']
-        self.add({'categories': categories[problem - 1]})
+        self.add(categories=categories[problem - 1])
 
 
 class ContextRoundFull(ContextRound):
@@ -177,17 +177,21 @@ class ContextRoundFull(ContextRound):
 
 class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume):
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(root, competition),
+            volume=ContextVolume(root, competition, volume),
+        )
 
 
 class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, root, competition, volume, semester):
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(root, competition))
-        self.adopt('volume', ContextVolume(root, competition, volume))
-        self.adopt('semester', ContextSemesterFull(root, competition, volume, semester))
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(root, competition),
+            volume=ContextVolume(root, competition, volume),
+            semester=ContextSemesterFull(root, competition, volume, semester),
+        )
 
 
 class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
@@ -197,8 +201,10 @@ class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
     def populate(self, competition, volume, semester, issue):
         super().populate(competition)
 
-        self.adopt('module', ContextModule('seminar'))
-        self.adopt('competition', ContextCompetition(self.root, competition))
-        self.adopt('volume', ContextVolume(self.root, competition, volume))
-        self.adopt('semester', ContextSemester(self.root, competition, volume, semester))
-        self.adopt('round', ContextRoundFull(self.root, competition, volume, semester, issue))
+        self.adopt(
+            module=ContextModule('seminar'),
+            competition=ContextCompetition(self.root, competition),
+            volume=ContextVolume(self.root, competition, volume),
+            semester=ContextSemester(self.root, competition, volume, semester),
+            round=ContextRoundFull(self.root, competition, volume, semester, issue),
+        )
