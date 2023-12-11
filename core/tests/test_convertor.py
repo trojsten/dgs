@@ -19,8 +19,8 @@ def convert():
     return _convert
 
 
-class DisabledTestQuotes:
-    """ These tests are currently disabled: we have switched to `csquotes` """
+@pytest.mark.skip(reason="We have switched to \\enquote for LaTeX, HTML port underway")
+class TestQuotes:
     def test_math_plus(self, convert):
         assert convert('latex', 'sk', '"+"') == r'„+“' + '\n'
 
