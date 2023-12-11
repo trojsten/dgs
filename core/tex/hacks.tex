@@ -49,3 +49,26 @@
     decorate
   }
 }
+
+\usepackage{tikz,stackengine}
+\usepackage{graphicx}
+\usepackage{chemfig}
+\usepackage{mhchem}
+\setstackEOL{\\}
+
+\NewDocumentCommand{\JigsawSide}{m}{
+    (0.5,0.5) --
+    (0.0,#1*0.00) .. controls (0.0,#1*0.00) and (0.4,#1*-0.04) ..
+    (0.4,#1*0.04) .. controls (0.4,#1*0.11) and (0.2,#1*0.26) ..
+    (0.5,#1*0.26) .. controls (0.8,#1*0.26) and (0.6,#1*0.11) ..
+    (0.6,#1*0.04) .. controls (0.6,#1*-0.04) and (1.0,#1*0.00) ..
+    (1.0,#1*0.00)
+}
+\NewDocumentCommand{\JigsawPiece}{O{white} m m m m m}{
+    \draw[#1,postaction={fill=white}]
+    \JigsawSide{#2}[rotate around={90:(0.5,0.5)}]
+    \JigsawSide{#3}[rotate around={180:(0.5,0.5)}]
+    \JigsawSide{#4}[rotate around={270:(0.5,0.5)}]
+    \JigsawSide{#5} -- cycle;
+    \node [black] at (.5,.5) {\Centerstack{#6}};
+}
