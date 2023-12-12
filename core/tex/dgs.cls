@@ -22,31 +22,32 @@
     %showframe                                              % display visual frame (must be turned off for production)
 ]{geometry}
 
+\RequirePackage{tikz}
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{mleftright}
-\RequirePackage{siunitx}
+\RequirePackage{siunitx}                                    % SI units
 \RequirePackage{xparse}
-\RequirePackage{enumitem}
-\RequirePackage{minted}
+\RequirePackage{enumitem}                                   % sets properties for itemize, enumerate, description...
+\RequirePackage{minted}                                     % nice rendering of included code
 \RequirePackage{lastpage}
-\RequirePackage{wasysym}
+\RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
 \RequirePackage{pdftexcmds}
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
 \RequirePackage{xcolor}
 \RequirePackage{float}
-\RequirePackage{caption}
+\RequirePackage{caption}                                    % fancy formatting of figure and table captions
 \RequirePackage{booktabs}
 \RequirePackage{titlesec}
-\RequirePackage{leftidx}
+\RequirePackage{leftidx}                                    % left subscript and superscript
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
-\RequirePackage{cancel}
+\RequirePackage{cancel}                                     % cancellation of terms in mathematical expressions
 \RequirePackage{multicol}
-\RequirePackage{fancyhdr}
+\RequirePackage{fancyhdr}                                   % fancy header and footer
 \RequirePackage{hyphenat}
 \RequirePackage{nicefrac}
 \RequirePackage{pifont}
@@ -57,10 +58,10 @@
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
-\RequirePackage[version=4]{mhchem}
-\RequirePackage{chemfig}
+\RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage{chemfig}                                    % complex chemical formulae
 
-\RequirePackage[all]{nowidow}
+\RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
 \RequirePackage[mathlf]{MinionPro}
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
@@ -75,7 +76,7 @@
 \definecolor{orange}{RGB}{255, 128, 0}
 
 \RequirePackage[
-    colorlinks              = true,
+    colorlinks              = true,                         % use coloured links
     linkcolor               = colour-link,                  % custom Trojsten link colour
     urlcolor                = colour-url,                   % custom Trojsten URL link colour
 ]{hyperref}
@@ -92,11 +93,9 @@
     shorthands=off,
 ]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\RequirePackage{cleveref}
-\RequirePackage[
-    autostyle,
-]{csquotes}
-%\RequirePackage{bidi}                                      % keep this off unless building Parsi or Hebrew
+\RequirePackage{cleveref}                                   % clever references
+\RequirePackage[autostyle]{csquotes}                        % propr localized quotation marks
+%\RequirePackage{bidi}                                      % bidirecitonal support, keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 

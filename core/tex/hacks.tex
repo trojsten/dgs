@@ -1,9 +1,9 @@
 \makeatletter
 
-% Fix bug in pandoc
+% fix bug in pandoc where lists are not rendered
 \providecommand{\tightlist}{}
 
-% Render percent sign with nice font, not ugly Computer modern
+% force rendering the percent sign with nice font, not ugly Computer modern
 \mathcode`\%="7025
 \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
 
@@ -13,16 +13,13 @@
 
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
 
-% Force float placement for figures to H
-\floatplacement{figure}{H}
-
 \newcommand\invisiblesubsection[1]{%
     \refstepcounter{subsection}%
     \addcontentsline{toc}{subsection}{\protect\numberline{\thesubsection}#1}%
     \subsectionmark{#1}%
 }
 
-% Fix chemfig's collision with babel where -- is interpreted before chemfig
+% fix chemfig's collision with babel where "--" is interpreted before chemfig
 \pretocmd\schemestart{\shorthandoff{-}}{}{}
 \apptocmd\schemestop{\shorthandon{-}}{}{}
 
@@ -50,10 +47,7 @@
   }
 }
 
-\usepackage{tikz,stackengine}
-\usepackage{graphicx}
-\usepackage{chemfig}
-\usepackage{mhchem}
+\usepackage{stackengine}
 \setstackEOL{\\}
 
 \NewDocumentCommand{\JigsawSide}{m}{
