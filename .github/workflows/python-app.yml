@@ -41,11 +41,6 @@ jobs:
         wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.6.4/pandoc-crossref-Linux-2.9.2.1.tar.xz
         tar -xf pandoc-crossref-Linux-2.9.2.1.tar.xz
         mv ./pandoc-crossref "/usr/local/bin/pandoc-crossref"
-    - name: "Set up pandoc-include-code"
-      run: |
-        wget https://github.com/owickstrom/pandoc-include-code/releases/download/v1.2.0.2/pandoc-include-code-linux-ghc8-pandoc-1-19.tar.gz
-        tar -xf pandoc-include-code-linux-ghc8-pandoc-1-19.tar.gz
-        mv ./pandoc-include-code "/usr/local/bin/pandoc-include-code"
     - name: "Clone FontPro"
       uses: actions/checkout@master
       with:
