@@ -128,8 +128,8 @@ class Convertor:
         ]
 
         self.pre_regexes['all'] += [
-            RegexReplacement(r'```{\.(?P<lang>\w+) include=(?P<path>[^}]+)}',
-                             fr'```{{.\g<lang> include={Path(self.infile.name).parent}/\g<path>}}',
+            RegexReplacement(r'^!include (?P<path>[\w]+)',
+                             fr'!include {Path(self.infile.name).parent}/\g<path>',
                              purpose="Include code listing"),
         ]
 
@@ -226,9 +226,9 @@ class Convertor:
             "--to", self.output_format,
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
-            "-M", "cref=true",
+            #"-M", "cref=true",
             "--filter", "pandoc-eqnos",
-            "--filter", "pandoc-include-code",
+            "--filter", "pandoc-include",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
