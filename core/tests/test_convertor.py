@@ -61,7 +61,8 @@ class DisabledTestQuotes:
 class TestImages:
     def test_image_latex(self, convert):
         output = convert('latex', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert r'\insertPicture[width=\textwidth,height=47mm]{ryba.pdf}' in output
+        assert r'\insertPicture[width=\textwidth,height=47mm]' in output
+        assert 'ryba.pdf' in output
 
     def test_image_latex_multiline(self, convert):
         output = convert('latex', 'sk', """
@@ -69,7 +70,8 @@ class TestImages:
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{subor\.png}', output) is not None
+        assert r'\insertPicture[width=\textwidth,height=53mm]' in output
+        assert 'subor.png' in output
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')

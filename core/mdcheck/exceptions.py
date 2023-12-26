@@ -18,3 +18,10 @@ class EncodingError(Exception):
     def __init__(self, message):
         super().__init__(message)
         self.message    = message
+
+
+class MarkdownError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+

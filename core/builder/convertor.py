@@ -128,9 +128,7 @@ class Convertor:
         ]
 
         self.pre_regexes['all'] += [
-            RegexReplacement(r'^!include (?P<path>[\w]+)',
-                             fr'!include {Path(self.infile.name).parent}/\g<path>',
-                             purpose="Include code listing"),
+            # Currently nothing
         ]
 
         self.pre_checks = self._filter_regexes(self.pre_checks)
@@ -229,6 +227,7 @@ class Convertor:
             #"-M", "cref=true",
             "--filter", "pandoc-eqnos",
             "--filter", "pandoc-include",
+            "-M", f"include-entry={Path(self.infile.name).parent}/",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]

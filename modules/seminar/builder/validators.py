@@ -8,7 +8,7 @@ class SeminarRoundValidator(FileSystemValidator):
         Regex(r'0[1-8]'): {
             'problem.md': File,
             'solution.md': File,
-            Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat)')): File,
+            Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|cpp|dat)')): File,
             'meta.yaml': File,
         },
         'meta.yaml': File,

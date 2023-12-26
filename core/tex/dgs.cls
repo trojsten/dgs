@@ -88,7 +88,8 @@
     russian,
     polish,
     spanish,
-    english
+    english,
+    shorthands=off,
 ]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
 \RequirePackage{cleveref}

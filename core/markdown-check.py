@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse, os, sys, re, copy
+import subprocess
+import tempfile
 
 from pathlib import Path
 
@@ -57,10 +59,10 @@ class StyleEnforcer():
 
     def check(self):
         for filename in self.args.infiles:
-            if self.check_markdown_file(filename):
-                pass
+            self.check_markdown(filename)
+            self.check_lines(filename)
 
-    def check_markdown_file(self, file):
+    def check_lines(self, file):
         path = Path(file.name)
         problem_id = Path(file.name).parent.stem
 
@@ -94,6 +96,19 @@ class StyleEnforcer():
 
         if self.args.verbose and ok:
             print(f"File {c.path(file.name)} {c.ok('OK')}")
+        return ok
+
+    def check_markdown(self, file):
+        path = Path(file.name)
+        output = tempfile.SpooledTemporaryFile()
+        out = subprocess.check_output(['pandoc', '--from', 'markdown+smart', '--to', 'native', path], encoding='utf-8').split("\n")
+
+        for line in out:
+            try:
+                if matches := re.match(r'.*(Format "tex").*(?P<si>\\\\(SI|num){.*}{.*})', line):
+                    raise exceptions.MarkdownError(f"Raw siunitx token \"{matches.group('si')}\"")
+            except exceptions.MarkdownError as e:
+                print(e.message)
 
     def check_line(self, checker, file, number, line, *, cfunc=c.err):
         if self.commented.match(line):
