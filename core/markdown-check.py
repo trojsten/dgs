@@ -24,8 +24,8 @@ class StyleEnforcer():
 
         self.line_errors = [
             check.FailIfFound(r'\t', "Tab instead of spaces"),
-            check.CommaSpace(),
-#            check.SemicolonSpace(),
+            check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
+            check.FailIfFound(r'(?!\\ang{);[^\s]', "Semicolon not followed by whitespace"),
             check.ParenthesesSpace(),
             check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
             check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
@@ -117,8 +117,12 @@ class StyleEnforcer():
 
         for line in out:
             try:
-                if matches := re.match(r'.*(Format "tex").*(?P<si>\\\\(SI|num|SIrange|numrange|ang)({[^\}]+})+)', line):
-                    raise exceptions.MarkdownError(f"Raw siunitx token \"{matches.group('si')}\"")
+                if matches := re.search(r'(Format "tex").*(?P<si>\\\\(SI|SIrange|SIlist|num|numrange|numlist|ang)({[^\}]+})+)', line):
+                    si = matches.group('si')
+                    raise exceptions.MarkdownError(f"Raw siunitx token \"{si}\"")
+#                if matches := re.search(r'Math InlineMath ".*[^ ](?P<symbol>=|\\approx|\\cdot|\\doteq|\+)[^ ].*"', line):
+#                    symbol = matches.group('symbol')
+#                    raise exceptions.MarkdownError(f"Missing space around \"{symbol}\"")
             except exceptions.MarkdownError as e:
                 print(f"File {c.path(path)}: {c.err(e.message)}")
 

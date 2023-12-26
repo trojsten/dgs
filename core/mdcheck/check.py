@@ -132,11 +132,11 @@ class ParenthesesSpace():
     re_left_space = re.compile(r'(\\left)?\( ')
 
     def check(self, module, path, line):
-        if search := self.re_left_space.search(line):
-            raise exceptions.SingleLineError("Space after left parenthesis", line, search.start())
+        if match := self.re_left_space.search(line):
+            raise exceptions.SingleLineError("Space after left parenthesis", line, match.start())
 
-        if search := self.re_right_space.search(line):
-            raise exceptions.SingleLineError("Space before right parenthesis", line, search.start() + 1)
+        if match := self.re_right_space.search(line):
+            raise exceptions.SingleLineError("Space before right parenthesis", line, match.start() + 1)
 
 
 class Parentheses():
@@ -153,22 +153,6 @@ class Parentheses():
 
         if search := self.re_right.search(line):
             raise exceptions.SingleLineError("Consider using \\right)", line, search.start())
-
-
-class CommaSpace():
-    re_fail = re.compile(r',[^\s^]')
-
-    def check(self, module, path, line):
-        if search := self.re_fail.search(line):
-            raise exceptions.SingleLineError("Comma not followed by whitespace", line, search.start())
-
-
-class SemicolonSpace():
-    re_fail = re.compile(r'(?!\\ang{);[^\s]')
-
-    def check(self, module, path, line):
-        if search := self.re_fail.search(line):
-            raise exceptions.SingleLineError("Semicolon not followed by whitespace", line, search.start())
 
 
 class SIExponents():
@@ -193,11 +177,6 @@ class DoubleSpace():
     def check(self, module, path, line):
         if search := self.re_double_space.search(line):
             raise exceptions.SingleLineError('Double spaces', line, search.end())
-
-
-class EquationReference():
-    def check(self, module, path, line):
-        return True
 
 
 """
