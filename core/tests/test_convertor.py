@@ -19,7 +19,8 @@ def convert():
     return _convert
 
 
-class DisabledTestQuotes:
+@pytest.mark.xfail
+class TestQuotes:
     """ These tests are currently disabled: we have switched to `csquotes` """
     def test_math_plus(self, convert):
         assert convert('latex', 'sk', '"+"') == r'„+“' + '\n'
@@ -61,7 +62,7 @@ class DisabledTestQuotes:
 class TestImages:
     def test_image_latex(self, convert):
         output = convert('latex', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert r'\insertPicture[width=\textwidth,height=47mm]' in output
+        assert re.search(r'\\insertPicture\[width=\\textwidth,height=47mm]{.*}', output) is not None
         assert 'ryba.pdf' in output
 
     def test_image_latex_multiline(self, convert):
@@ -70,7 +71,7 @@ class TestImages:
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
-        assert r'\insertPicture[width=\textwidth,height=53mm]' in output
+        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{.*}', output) is not None
         assert 'subor.png' in output
 
     def test_image_html(self, convert):
