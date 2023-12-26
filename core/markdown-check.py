@@ -15,7 +15,7 @@ class StyleEnforcer():
         self.parser = argparse.ArgumentParser(
             description="DeGeŠ Markdown style checker",
         )
-        self.parser.add_argument('infiles', nargs='+', type=argparse.FileType('r'), default=[sys.stdin])
+        self.parser.add_argument('infiles', nargs='+', type=Path, default=[sys.stdin])
         self.parser.add_argument('-v', '--verbose', action='store_true')
         self.parser.add_argument('-w', '--warnings', action='store_true')
         self.args = self.parser.parse_args()
@@ -27,7 +27,7 @@ class StyleEnforcer():
             check.CommaSpace(),
 #            check.SemicolonSpace(),
             check.ParenthesesSpace(),
-            check.FailIfFound(r'[ \t]$', "Trailing whitespace"),
+            check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
             check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
             check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
             check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
@@ -35,7 +35,7 @@ class StyleEnforcer():
             check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
             check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
             check.FailIfFound(r'{\s+[^\s]', "Left brace { followed by whitespace"),
-            check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace"),
+            check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
             check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
             check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
             check.FailIfFound(r'\\,', "You should not use typographic corrections"),
@@ -50,6 +50,7 @@ class StyleEnforcer():
             check.LineLength(),
             check.PlusSpaces(),
             check.DoubleDollars(),
+            check.Reference(),
         ]
 
         self.line_warnings = [
@@ -58,21 +59,31 @@ class StyleEnforcer():
         ]
 
     def check(self):
-        for filename in self.args.infiles:
-            self.check_markdown(filename)
-            self.check_lines(filename)
+        for path in self.args.infiles:
+            self.check_markdown(path)
+            self.check_markdown_file(path)
 
-    def check_lines(self, file):
-        path = Path(file.name)
-        problem_id = Path(file.name).parent.stem
+    def check_label(self, module, path, label):
+        if module == 'naboj':
+            volume, problem, language, filename = path.parts()[-4:-1]
+            print(volume, problem, language, filename)
+            #if matched := re.match(fr'#(eq|fig|tbl):(?P<problem>[]):[\w]+', label):
+        elif module == 'seminar':
+            volume, semester, round, problem = filename.split[2:5]
+            assert re.search(fr'#eq:(?P<id>{volume:02d}{semester:1d}{round:1d}{problem:02d}):(?P<title>[\w]+)', label)
+
+
+    def check_markdown_file(self, path):
+        module = path.parts[1]
+        problem_id = path.parent.stem
 
         self.problem_errors = [
-            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-            check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+            #check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+            #check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
         ]
 
         self.solution_errors = [
-            check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+            #check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
         ]
 
         try:
@@ -88,36 +99,37 @@ class StyleEnforcer():
         if path.name == 'solution.md':
             line_errors += self.solution_errors
 
-        for number, line in enumerate(file):
-            ok = all([self.check_line(checker, file, number, line) for checker in line_errors])
+        with open(path, 'r') as file:
+            ok = None
+            for number, line in enumerate(file):
+                ok = all([self.check_line(checker, module, path, number, line) for checker in line_errors])
 
-            if self.args.warnings:
-                ok &= all([self.check_line(checker, file, number, line, cfunc=c.warn) for checker in self.line_warnings])
+                if self.args.warnings:
+                    ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn) for checker in self.line_warnings])
 
-        if self.args.verbose and ok:
-            print(f"File {c.path(file.name)} {c.ok('OK')}")
-        return ok
+            if self.args.verbose and ok:
+                print(f"File {c.path(file.name)} {c.ok('OK')}")
+            return ok
 
-    def check_markdown(self, file):
-        path = Path(file.name)
+    def check_markdown(self, path):
         output = tempfile.SpooledTemporaryFile()
         out = subprocess.check_output(['pandoc', '--from', 'markdown+smart', '--to', 'native', path], encoding='utf-8').split("\n")
 
         for line in out:
             try:
-                if matches := re.match(r'.*(Format "tex").*(?P<si>\\\\(SI|num){.*}{.*})', line):
+                if matches := re.match(r'.*(Format "tex").*(?P<si>\\\\(SI|num|SIrange|numrange|ang)({[^\}]+})+)', line):
                     raise exceptions.MarkdownError(f"Raw siunitx token \"{matches.group('si')}\"")
             except exceptions.MarkdownError as e:
-                print(e.message)
+                print(f"File {c.path(path)}: {c.err(e.message)}")
 
-    def check_line(self, checker, file, number, line, *, cfunc=c.err):
+    def check_line(self, checker, module, path, number, line, *, cfunc=c.err):
         if self.commented.match(line):
             return True
         try:
-            checker.check(line)
+            checker.check(module, path, line)
             return True
         except exceptions.SingleLineError as e:
-            print(f"File {c.path(file.name)} line {c.num(number + 1)}: {cfunc(e.message)}")
+            print(f"File {c.path(path)} line {c.num(number + 1)}: {cfunc(e.message)}")
             print(line, end='' if line[-1] == '\n' else '\n')
             print('-' * (e.column) + '^')
             return False

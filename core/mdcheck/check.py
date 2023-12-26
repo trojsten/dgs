@@ -1,45 +1,85 @@
 from abc import ABCMeta, abstractmethod
 import re
+import logging
 import codecs
 
 from mdcheck import exceptions
 
 
+log = logging.getLogger('root')
+log.setLevel(logging.WARNING)
+
+
+
 class LineChecker(metaclass=ABCMeta):
     @abstractmethod
-    def check(self, line):
+    def check(self, module, path, line):
         pass
 
 
 class FailIfFound(LineChecker):
-    def __init__(self, regex, message, *, offset=0):
+    """ Simply fails if `regex` matches the line """
+    def __init__(self, regex, message, *, offset: int = 0):
         self.regex = re.compile(regex)
         self.message = message
         self.offset = offset
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.regex.search(line):
             raise exceptions.SingleLineError(self.message, line, search.start() + self.offset)
 
 
 class LineLength(LineChecker):
-    def check(self, line):
+    """ Fails if line length is more than 119 characters """
+    def check(self, module, path, line):
         if len(line) > 120:
             raise exceptions.SingleLineError("Line too long", line, 119)
 
 
-class EqualsSpaces():
+class Reference(LineChecker):
+    """ Check pandoc reference labels for tables, equations and figures """
+    re_reference = re.compile(r'{#(?P<kind>(eq|fig|tbl)):(?P<sub>[^}]+)}')
+
+    def check(self, module, path, line):
+        # Only process lines that can be identified as references"
+        if match := self.re_reference.search(line):
+            log.debug(f"Found reference label {line}")
+            kind = match.group('kind')
+            sub = match.group('sub')
+            match module:
+                case 'seminar':
+                    # Parse filename structure in `seminar`
+                    volume, semester, round, problem = path.parts[-5:-1]
+                    file_id = f"{volume}{semester}{round}{problem}"
+                    if re.match(fr'{file_id}:[\w]+', sub):
+                        logging.debug(f"Correct label in {line}")
+                    else:
+                        raise exceptions.SingleLineError("Nonconforming label", line, match.start() + 6)
+                case 'naboj':
+                    # Parse filename structure in `naboj`
+                    problem_id = path.parts[5]
+                    # Problems should have empty sublabel, solutions named sublabels
+                    if (path.stem == 'problem' and re.match(fr'{problem_id}', sub)) or \
+                       (path.stem == 'solution' and re.match(fr'{problem_id}:[a-zA-Z0-9_]+', sub)):
+                        logging.debug(f"Correct label in {line}")
+                    else:
+                        raise exceptions.SingleLineError("Invalid label", line, match.start() + 6)
+                case _:
+                    raise ValueError(f'Unsupported module {module}')
+
+
+class EqualsSpaces(LineChecker):
     re_equal_spaces = re.compile(r'(?!\\(?:SI|num|si)\[[\w-]+| |\{| &|(#eq:[a-z-]+ )?height)(=|\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll)(?! |\}|& |[\w-]+(,|\])|[0-9]+mm|$)')
 
-    def check(self, line):
-        if search := self.re_equal_spaces.search(line):
-            raise exceptions.SingleLineError(f'Spaces missing around "{search.group(0)}"', line, search.end() - 1)
+    def check(self, module, path, line):
+        if match := self.re_equal_spaces.search(line):
+            raise exceptions.SingleLineError(f'Spaces missing around "{match.group(0)}"', line, match.end() - 1)
 
 
 class CdotSpaces():
     re_cdot = re.compile(r'[^ ]\\cdot[^$]')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_cdot.search(line):
             raise exceptions.SingleLineError("Spaces missing around \\cdot", line, search.start() + 1)
 
@@ -50,9 +90,9 @@ class PlusSpaces():
     re_plus_unary = re.compile(r'[(\[]\+[^ ]')
     re_plus_spaces = re.compile(r'[^ ]\+[^ ]')
 
-    re_plus = re.compile('(?<! |"|\(|\[|\{|\$)(\+)(?! |"|\)|\]|\})')
+    re_plus = re.compile(r'(?<! |"|\(|\[|\{|\$)(\+)(?! |"|\)|\]|\})')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_plus.search(line):
             raise exceptions.SingleLineError('Spaces missing around "+"', line, search.end() - 2)
 
@@ -67,7 +107,7 @@ class DoubleDollars():
     re_aligned_begin = re.compile(r'^\$\$ ?\\begin\{aligned\}')
     re_aligned_end = re.compile(r'^\\end\{aligned\} ?\$\$')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_dollars_ref_missing_space.search(line):
             raise exceptions.SingleLineError('Reference missing a space', line, search.start() + 4)
 
@@ -91,7 +131,7 @@ class ParenthesesSpace():
     re_right_space = re.compile(r'[^ ] +(\\right)?\)')
     re_left_space = re.compile(r'(\\left)?\( ')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_left_space.search(line):
             raise exceptions.SingleLineError("Space after left parenthesis", line, search.start())
 
@@ -104,7 +144,7 @@ class Parentheses():
     re_left = re.compile(r'(?<!left)\(')
     re_right = re.compile(r'(?<!right)\)')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if self.re_image.match(line):
             return
 
@@ -118,7 +158,7 @@ class Parentheses():
 class CommaSpace():
     re_fail = re.compile(r',[^\s^]')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError("Comma not followed by whitespace", line, search.start())
 
@@ -126,7 +166,7 @@ class CommaSpace():
 class SemicolonSpace():
     re_fail = re.compile(r'(?!\\ang{);[^\s]')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError("Semicolon not followed by whitespace", line, search.start())
 
@@ -134,7 +174,7 @@ class SemicolonSpace():
 class SIExponents():
     re_fail = re.compile(r'(?P<command>\\ang|\\SI|\\SIlist|\\SIrange){[^}]*(\\cdot|\\times|\^)[^}]*}')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError(f"Use e notation instead of TeX inside {search.group('command')}",
                 line, search.start() + len(search.group('command')) + 1)
@@ -142,21 +182,21 @@ class SIExponents():
 class ConflictMarkers():
     re_fail = re.compile(r'(<<<<<<<|=======|>>>>>>>)')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_fail.search(line):
             raise exceptions.SingleLineError(f"Git conflict markers found!", line, search.start())
 
 
 class DoubleSpace():
-    re_double_space = re.compile('.*\w  +\w')
+    re_double_space = re.compile(r'.*\w  +\w')
 
-    def check(self, line):
+    def check(self, module, path, line):
         if search := self.re_double_space.search(line):
             raise exceptions.SingleLineError('Double spaces', line, search.end())
 
 
 class EquationReference():
-    def check(self, line):
+    def check(self, module, path, line):
         return True
 
 
@@ -165,7 +205,7 @@ class LineTooLong(SingleLineChecker):
     def __init__(self):
         super().__init__('Line too long', 120)
 
-    def check(self, line):
+    def check(self, module, path, line):
         return len(line) > 120 and line[0] != '@'
 
 
