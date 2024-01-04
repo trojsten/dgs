@@ -91,7 +91,6 @@
     polish,
     spanish,
     english,
-    shorthands=off,
 ]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
 \RequirePackage{cleveref}                                   % clever references
