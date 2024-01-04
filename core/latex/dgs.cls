@@ -82,6 +82,7 @@
 ]{hyperref}
 
 \RequirePackage[
+    shorthands=off,
     slovak,
     czech,
     german,
@@ -163,9 +164,9 @@
     \RenewExpandableDocumentCommand{\activeDirectory}{}{#1}%
 }
 
-\input{core/tex/fonts.tex}
-\input{core/tex/utilities.tex}
-\input{core/tex/math.tex}
-\input{core/tex/hacks.tex}
-\input{core/tex/symbols.tex}
-\input{core/tex/siunitx.tex}
+\input{core/latex/fonts.tex}
+\input{core/latex/utilities.tex}
+\input{core/latex/math.tex}
+\input{core/latex/hacks.tex}
+\input{core/latex/symbols.tex}
+\input{core/latex/siunitx.tex}

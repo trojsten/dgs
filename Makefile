@@ -166,10 +166,10 @@ output/%.html: source/%.md
 	$(call pandochtml,sk)
 
 # DeGeŠ convert Markdown to HTML (for web)
-output/%.html: source/%.md
-	$(call pandochtml,sk)
-	./wr -input $@ -template core/tex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
-	mv $@.conv $@
+#output/%.html: source/%.md
+#	$(call pandochtml,sk)
+#	./wr -input $@ -template core/latex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
+#	mv $@.conv $@
 
 .SECONDEXPANSION:
 

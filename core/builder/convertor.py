@@ -105,7 +105,7 @@ class Convertor:
     }
 
     def __init__(self, output_format: str, locale_code: str, infile, outfile, **options):
-        self.output_format = output_format
+        self.output_format: str = output_format
         self.locale_code: str = locale_code
         self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile

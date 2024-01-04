@@ -3,7 +3,7 @@
 DIR=$(dirname $0)
 TEXHOME=`kpsewhich -var-value=TEXMFHOME`
 mkdir -p $TEXHOME/tex/latex/
-ln -s $PWD/core/tex/dgs.cls $TEXHOME/tex/latex/dgs.cls
+ln -s $PWD/core/latex/dgs.cls $TEXHOME/tex/latex/dgs.cls
 
 sudo apt install texlive-full texlive-fonts-extra pandoc librsvg2-bin
 
