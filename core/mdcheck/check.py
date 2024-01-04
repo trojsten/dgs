@@ -30,7 +30,7 @@ class FailIfFound(LineChecker):
 
 
 class LineLength(LineChecker):
-    """ Fails if line length is more than 119 characters """
+    """ Fails if line length is more than 120 characters """
     def check(self, module, path, line):
         if len(line) > 120:
             raise exceptions.SingleLineError("Line too long", line, 119)
