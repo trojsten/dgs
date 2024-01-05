@@ -19,10 +19,6 @@
     \subsectionmark{#1}%
 }
 
-% fix chemfig's collision with babel where "--" is interpreted before chemfig
-\pretocmd\schemestart{\shorthandoff{-}}{}{}
-\apptocmd\schemestop{\shorthandon{-}}{}{}
-
 \usetikzlibrary{decorations.markings}
 \setchemfig{
     atom sep=8mm,
