@@ -30,6 +30,10 @@ class NabojValidator(FileSystemValidator):
                 'intro.jtt': FileOrLink,
                 'instructions-inner.jtt': FileOrLink,
                 'evaluators.jtt': FileOrLink,
+                Optional('instructions-online-inner.md'): FileOrLink,
+                Optional('pictures'): {
+                    Optional(Regex(r'.*\.png')): FileOrLink,
+                }
             }
         },
         'venues': {
@@ -75,6 +79,7 @@ class NabojValidator(FileSystemValidator):
             }
 
             lp = len([x for x, y in is_present.items() if y])
+
             # If there are all files present, we're good, and if this is an optional file, then also if none are present
             ok = (lp == len(translations)) or (optional and lp == 0)
             if self.debug or not ok:
