@@ -50,6 +50,7 @@
 \usepackage{stackengine}
 \setstackEOL{\\}
 
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
 \NewDocumentCommand{\JigsawSide}{m}{
     (0.5,0.5) --
     (0.0,#1*0.00) .. controls (0.0,#1*0.00) and (0.4,#1*-0.04) ..
