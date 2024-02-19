@@ -68,6 +68,11 @@
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
 
+\tolerance=1000
+\emergencystretch=3pt
+\hyphenpenalty=1000
+\exhyphenpenalty=100
+
 \AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
 %\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
 
