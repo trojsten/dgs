@@ -1,2 +1,2 @@
-from .homework import ContextHomework
-from .handout import ContextHandout
+from .homework import ContextHomework, HomeworkMixin
+from .handout import ContextHandout, HandoutMixin

@@ -4,12 +4,9 @@ import argparse
 import argparsedirs
 import subprocess
 import os
-import sys
 import glob
 
 from pathlib import Path
-
-sys.path.append('.')
 
 from core import i18n
 
@@ -58,10 +55,10 @@ class Linker:
         else:
             try:
                 subprocess.run(["ln", "-s", relative_target, file], cwd=cwd, check=True)
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 print(f"Failed to create {relative_target} in {cwd}")
                 pass
 
+
 os.chdir('.')
 Linker().link()
-

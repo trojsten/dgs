@@ -45,7 +45,7 @@ build/naboj/%/build-language: \
 	source/naboj/$$*/meta.yaml \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml
 	$(call prepare_arguments,language)
-	python3 modules/naboj/builder/language.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python -m modules.naboj.builder.language 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/build-venue: \
@@ -55,7 +55,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
-	python3 modules/naboj/builder/venue.py 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python -n modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 ### Input files ###################################################################################
 
@@ -124,7 +124,7 @@ build/naboj/%/instructions-online-inner.tex: \
 	$(eval language := $(word 4,$(subst /, ,$*)))
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 core/pandoc-convert.py latex $(language) $< $@ || exit 1;
+	python core/pandoc-convert.py latex $(language) $< $@ || exit 1;
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>

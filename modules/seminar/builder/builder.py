@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append('.')
-
 from core.builder import builder
 
 

@@ -1,6 +1,5 @@
-from builder import BuilderScholar
-from contexts import ContextHandout
-from contexts.handout import HandoutMixin
+from modules.scholar.builder.builder import BuilderScholar
+from modules.scholar.builder.contexts import ContextHandout, HandoutMixin
 
 
 class BuilderHandout(HandoutMixin, BuilderScholar):

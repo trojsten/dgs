@@ -1,12 +1,9 @@
 import abc
-import sys
 
-sys.path.append('.')
-
-from core.builder import builder
+from core.builder.builder import BaseBuilder
 
 
-class BuilderScholarBase(builder.BaseBuilder, metaclass=abc.ABCMeta):
+class BuilderScholarBase(BaseBuilder, metaclass=abc.ABCMeta):
     module = 'scholar'
 
 
@@ -26,6 +23,6 @@ class BuilderScholar(BuilderScholarBase):
         return self.args.course, f'{self.args.year:04d}', self._subdir, f'{self.args.issue:02d}'
 
 
-class BuilderCourseBase(BuilderScholarBase):
+class BuilderCourseBase(BuilderScholarBase, metaclass=abc.ABCMeta):
     def path(self):
-        return self.id()
+        return self.ident()

@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-import builder
-import context
+from modules.seminar.builder import builder, context
 
 
 class BuilderRound(builder.BuilderSeminar):

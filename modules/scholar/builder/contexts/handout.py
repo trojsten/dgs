@@ -33,5 +33,4 @@ class ContextHandoutIssue(HandoutMixin, ContextIssue):
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
     _schema = Schema({})
-
     _issue_context_class = ContextHandoutIssue

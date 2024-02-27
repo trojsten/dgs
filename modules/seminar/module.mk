@@ -12,21 +12,21 @@ endef
 # _prepare_arguments_semester(builder)
 define prepare_arguments_semester
 	$(call _prepare_arguments)
-	python3 ./modules/seminar/builder/$(1).py 'source/seminar/' 'modules/seminar/templates/' \
+	python -m modules.seminar.builder.$(1) 'source/seminar/' 'modules/seminar/templates/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
 endef
 
 # _prepare_arguments_round(builder)
 define prepare_arguments_round
 	$(call _prepare_arguments)
-	python3 ./modules/seminar/builder/$(1).py 'source/seminar/' 'modules/seminar/templates/' \
+	python -m modules.seminar.builder.$(1) 'source/seminar/' 'modules/seminar/templates/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $@)
 	$(call _prepare_arguments)
-	python3 ./modules/seminar/builder/volume.py 'source/seminar/' 'source/seminar/$*/' \
+	python -m modules.seminar.builder.volume 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)' || exit 1;
 
 build/seminar/%/semester.tex: \
@@ -156,4 +156,4 @@ output/seminar/%: \
 output/seminar/%/copy: \
 	output/seminar/%/
 	$(eval words := $(subst /, ,$*))
-	python3 ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) $(user)
+	python ./dgs-copy.py $(word 1,$(words)) $(word 2,$(words)) $(word 3,$(words)) $(word 4,$(words)) $(user)

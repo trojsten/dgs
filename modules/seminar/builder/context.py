@@ -6,7 +6,7 @@ from enschema import Schema, Optional, Use, And, Or
 
 from core.utilities.schema import valid_language
 from core.builder.context import FileSystemContext, BuildableFileSystemContext, ContextModule
-from validators import SeminarRoundValidator
+from modules.seminar.builder.validators import SeminarRoundValidator
 
 
 class ContextSeminar(FileSystemContext, metaclass=ABCMeta):

@@ -1,8 +1,8 @@
-import builder
+from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextLanguage
 
 
-class BuilderNabojLanguage(builder.BuilderNaboj):
+class BuilderNabojLanguage(BuilderNaboj):
     _target = 'language'
     _subdir = 'languages'
 

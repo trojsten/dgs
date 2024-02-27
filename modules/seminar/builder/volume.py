@@ -1,5 +1,4 @@
-import builder
-import context
+from modules.seminar.builder import builder, context
 
 
 class BuilderVolume(builder.BuilderSeminar):
@@ -12,4 +11,3 @@ class BuilderVolume(builder.BuilderSeminar):
 
 
 BuilderVolume().build_templates()
-

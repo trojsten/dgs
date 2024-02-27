@@ -1,14 +1,13 @@
 import pprint
 import argparse
-import typing
-
 import argparsedirs
 import logging
 import os
 import subprocess
 
-from pathlib import Path
 from abc import abstractmethod, ABCMeta
+from pathlib import Path
+from typing import Any, ClassVar
 
 from core.utilities import colour as c, crawler
 from core.builder import jinja
@@ -34,10 +33,29 @@ def get_branch(cwd=None) -> str:
 
 
 class BaseBuilder(metaclass=ABCMeta):
+    """
+    The abstract base class for all Builders. A Builder provides an abstraction for
+    -   reading and validating the content file system structures
+    -   reading and validating the templates
+    -   building the context tree (generally a subclass of Context)
+    -   rendering the context into the templates
+
+    The script should only define and instantiate a builder, then run it with
+    >>> class Builder(BaseBuilder):
+    >>>     def add_arguments(self) -> None:
+    >>>         ...
+    >>>
+    >>>     def ident(self) -> tuple[Any, ...]:
+    >>>         return (self.year, self.issue)
+    >>>
+
+    >>>
+    >>> Builder().build_templates()
+    """
     module = None
     templates = []
     _target: str = None
-    _root_context_class: typing.ClassVar = None
+    _root_context_class: ClassVar = None
     default_suffix_map = {
         '.jtt': '.tex',
         '.jyt': '.yaml',
@@ -46,7 +64,7 @@ class BaseBuilder(metaclass=ABCMeta):
     def __init__(self, *, suffix_map: dict[str, str] = None):
         """
         suffix_map: translates template suffixes to rendered template suffixes
-                    and also provides a default for dgs
+                    and also provides defaults for dgs
         """
         self.parser = argparse.ArgumentParser(description="Build a dgs LaTeX template set from repository")
         self.add_core_arguments()
@@ -76,16 +94,16 @@ class BaseBuilder(metaclass=ABCMeta):
         """ Full name of the builder for log reporting """
         return '/'.join(map(str, self.ident()))
 
-    def full_path(self):
+    def full_path(self) -> Path:
         """ Full path of the builder """
         return Path(self.launch_directory, *self.path())
 
     @abstractmethod
-    def ident(self):
+    def ident(self) -> tuple[str]:
         """ Return the id tuple """
 
     @abstractmethod
-    def path(self):
+    def path(self) -> tuple[str]:
         """ Return the root path for this builder """
 
     def print_debug_info(self) -> None:

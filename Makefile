@@ -47,7 +47,7 @@ define _pandoc
 		$(c_extension)Markdown$(c_action) file $(c_filename)$<$(c_action) to \
 		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-	python3 convert.py $(2) $(1) $< $@ || exit 1;
+	python convert.py $(2) $(1) $< $@ || exit 1;
 endef
 
 # pandoctex(language)
@@ -82,7 +82,7 @@ include modules/*/module.mk
 build/core/i18n/%.tex: \
 	core/templates/override.jtt
 	@mkdir -p $(dir $@)
-	python3 core/builder/i18n.py 'core/i18n/' 'core/templates/' $* -o $(dir $@)
+	python -m core.builder.i18n 'core/i18n/' 'core/templates/' $* -o $(dir $@)
 
 build/core/i18n: \
 	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;

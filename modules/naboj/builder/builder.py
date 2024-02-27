@@ -1,15 +1,15 @@
 import abc
-import sys
 from pathlib import Path
-
-sys.path.append('.')
 
 from core.builder import builder
 import core.builder.jinja as jinja
 
 
 class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
-    module = 'naboj'
+    """
+    The Builder for the Náboj competitions.
+    """
+    module: str = 'naboj'
     i18n_templates: [str] = []
 
     def add_arguments(self):

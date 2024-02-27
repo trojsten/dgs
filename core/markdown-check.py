@@ -1,8 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import argparse, os, sys, re, copy
+import argparse
+import sys
+import re
+import copy
 import subprocess
-import tempfile
 
 from pathlib import Path
 
@@ -10,7 +12,7 @@ from mdcheck import check, exceptions
 from utilities import colour as c
 
 
-class StyleEnforcer():
+class StyleEnforcer:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             description="DeGeŠ Markdown style checker",
@@ -42,7 +44,8 @@ class StyleEnforcer():
             check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
-            check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}', "Omit parentheses in simple functions"),
+            check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
+                              "Omit parentheses in simple functions"),
             check.ConflictMarkers(),
             check.EqualsSpaces(),
             check.CdotSpaces(),
@@ -55,7 +58,7 @@ class StyleEnforcer():
 
         self.line_warnings = [
             check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
-            #check.Parentheses(),
+            # check.Parentheses(),
         ]
 
     def check(self):
@@ -65,25 +68,25 @@ class StyleEnforcer():
 
     def check_label(self, module, path, label):
         if module == 'naboj':
-            volume, problem, language, filename = path.parts()[-4:-1]
-            print(volume, problem, language, filename)
-            #if matched := re.match(fr'#(eq|fig|tbl):(?P<problem>[]):[\w]+', label):
+            volume_id, problem_id, language, filename = path.parts()[-4:-1]
+            print(volume_id, problem_id, language, filename)
+            # if matched := re.match(fr'#(eq|fig|tbl):(?P<problem>[]):[\w]+', label):
         elif module == 'seminar':
-            volume, semester, round, problem = filename.split[2:5]
-            assert re.search(fr'#eq:(?P<id>{volume:02d}{semester:1d}{round:1d}{problem:02d}):(?P<title>[\w]+)', label)
-
+            volume_id, semester_id, round_id, problem_id = path.split[2:5]
+            assert re.search(
+                fr'#eq:(?P<id>{volume_id:02d}{semester_id:1d}{round_id:1d}{problem_id:02d}):(?P<title>\w+)', label)
 
     def check_markdown_file(self, path):
         module = path.parts[1]
         problem_id = path.parent.stem
 
         self.problem_errors = [
-            #check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-            #check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+            # check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
+            # check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
         ]
 
         self.solution_errors = [
-            #check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+            # check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
         ]
 
         try:
@@ -105,19 +108,21 @@ class StyleEnforcer():
                 ok = all([self.check_line(checker, module, path, number, line) for checker in line_errors])
 
                 if self.args.warnings:
-                    ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn) for checker in self.line_warnings])
+                    ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn)
+                               for checker in self.line_warnings])
 
             if self.args.verbose and ok:
                 print(f"File {c.path(file.name)} {c.ok('OK')}")
             return ok
 
     def check_markdown(self, path):
-        output = tempfile.SpooledTemporaryFile()
-        out = subprocess.check_output(['pandoc', '--from', 'markdown+smart', '--to', 'native', path], encoding='utf-8').split("\n")
+        out = subprocess.check_output(['pandoc', '--from', 'markdown+smart', '--to', 'native', path],
+                                      encoding='utf-8').split("\n")
 
         for line in out:
             try:
-                if matches := re.search(r'(Format "tex").*(?P<si>\\\\(SI|SIrange|SIlist|num|numrange|numlist|ang)({[^\}]+})+)', line):
+                if matches := re.search(
+                        r'(Format "tex").*(?P<si>\\\\(SI|SIrange|SIlist|num|numrange|numlist|ang)({[^}]+})+)', line):
                     si = matches.group('si')
                     raise exceptions.MarkdownError(f"Raw siunitx token \"{si}\"")
 #                if matches := re.search(r'Math InlineMath ".*[^ ](?P<symbol>=|\\approx|\\cdot|\\doteq|\+)[^ ].*"', line):
@@ -135,7 +140,7 @@ class StyleEnforcer():
         except exceptions.SingleLineError as e:
             print(f"File {c.path(path)} line {c.num(number + 1)}: {cfunc(e.message)}")
             print(line, end='' if line[-1] == '\n' else '\n')
-            print('-' * (e.column) + '^')
+            print('-' * e.column + '^')
             return False
 
 

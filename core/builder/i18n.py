@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append('.')
-
 from core.builder.builder import BaseBuilder
 from core.builder.context import BuildableFileSystemContext, BuildableContext
 

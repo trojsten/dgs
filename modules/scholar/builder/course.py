@@ -1,10 +1,10 @@
-import builder
-import context
+from modules.scholar.builder.builder import BuilderCourseBase
+from modules.scholar.builder.contexts.hierarchy import ContextCourse
 
 
-class BuilderCourse(builder.BuilderCourseBase):
+class BuilderCourse(BuilderCourseBase):
     _target = 'course'
-    _root_context_class = context.ContextCourse
+    _root_context_class = ContextCourse
 
     templates = [
         'course.tex',
@@ -15,7 +15,7 @@ class BuilderCourse(builder.BuilderCourseBase):
         self.parser.add_argument('course', type=str)
 
     def ident(self):
-        return self.args.course,
+        return (self.args.course,)
 
 
 BuilderCourse().build_templates()

@@ -1,8 +1,5 @@
 import logging
-import sys
 from pathlib import Path
-
-sys.path.append('.')
 
 import builder
 import core.builder.jinja as jinja
