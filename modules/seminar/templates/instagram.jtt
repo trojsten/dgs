@@ -8,7 +8,7 @@
     \pdfpagewidth=\pagesize \pdfpageheight=\pagesize % for PDF output
     \paperwidth=\pagesize \paperheight=\pagesize     % for TikZ
 
-    \definecolor{link-dark}{RGB}{120, 207, 252}
+    \definecolor{link-grey}{RGB}{120, 207, 252}
     \definecolor{link-orange}{RGB}{0, 137, 162}
 
     \AddToShipoutPictureBG{
