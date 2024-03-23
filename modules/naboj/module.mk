@@ -55,7 +55,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
-	python -n modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 ### Input files ###################################################################################
 

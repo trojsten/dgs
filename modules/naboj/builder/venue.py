@@ -1,15 +1,15 @@
 import logging
 from pathlib import Path
 
-import builder
 import core.builder.jinja as jinja
+from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextVenue
 
 
 log = logging.getLogger('dgs')
 
 
-class BuilderNabojVenue(builder.BuilderNaboj):
+class BuilderNabojVenue(BuilderNaboj):
     _target = 'venue'
     _subdir = 'venues'
 
