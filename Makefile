@@ -9,12 +9,12 @@ cdir := $(dir $(path))
 version   = '4.03'
 date      = '2023-09-14'
 
-c_error		:= $(shell tput sgr0; tput bold; tput setaf 1)
-c_action	:= $(shell tput sgr0; tput bold; tput setaf 4)
-c_filename	:= $(shell tput sgr0; tput setaf 5)
+c_error     := $(shell tput sgr0; tput bold; tput setaf 1)
+c_action    := $(shell tput sgr0; tput bold; tput setaf 4)
+c_filename  := $(shell tput sgr0; tput setaf 5)
 c_extension := $(shell tput sgr0; tput bold; tput setaf 2)
-c_special	:= $(shell tput sgr0; tput setaf 3)
-c_default	:= $(shell tput sgr0; tput setaf 7)
+c_special   := $(shell tput sgr0; tput setaf 3)
+c_default   := $(shell tput sgr0; tput setaf 7)
 
 
 # Remove all default suffixes
