@@ -86,13 +86,13 @@ class Convertor:
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
-            RegexReplacement(r"^@TODO\s*(.*)$", r"\\todoMessage{\g<1>}", purpose="Replace TODO tag"),
+            RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"\\todoMessage{\g<2>}", purpose="Replace TODO tag"),
         ],
         'html': [
             RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
-            RegexReplacement(r"^@TODO\s*(.*)$", r"TODO: \g<1>", purpose="Replace TODO tag"),
+            RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
         ],
     }
 
