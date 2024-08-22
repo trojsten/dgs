@@ -62,7 +62,7 @@ languages = [
            figure='figure', figures='figures',
            table='table', tables='tables',
            equation='equation', equations='equations',
-           section='section', sections='sections'),
+           section='section', sections='sectionss'),
     Locale('cs', 'czech', 'cs-CZ', ('„', '“'),
            figure='obrázek', figures='obrázky',
            table='tabulka', tables='tabulky',
