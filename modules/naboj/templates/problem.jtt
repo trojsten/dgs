@@ -1,0 +1,16 @@
+\hypersetup{linkcolor=black}%
+\setcounter{equation}{0}%
+\setcounter{table}{0}%
+\setcounter{figure}{0}%
+\setcounter{problem}{(* problem.number *)}%
+\setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
+\subsection{%
+    \texorpdfstring{%
+        \hyperref[sec:(* problem.id *):answer]{(* problem.number *)}%
+    }{%
+        (* problem.number *). (* problem.id *)%
+    }%
+}%
+\label{sec:(* problem.id *):problem}%
+\hypersetup{linkcolor=colour-link}%
+\protectedInput{\activeDirectory/(* language.id *)/problem.tex}%

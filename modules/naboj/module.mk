@@ -211,6 +211,9 @@ build/naboj/%/barcodes.pdf: \
 output/naboj/%/booklet.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
+	build/naboj/%/problems \
+	build/naboj/%/solutions \
+	build/naboj/%/answers \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

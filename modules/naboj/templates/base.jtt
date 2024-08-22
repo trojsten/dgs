@@ -9,6 +9,8 @@
 \renewcommand{\theequation}{\arabic{problem}.\arabic{equation}}
 \renewcommand{\thefigure}{\arabic{problem}.\arabic{figure}}
 \renewcommand{\thetable}{\arabic{problem}.\arabic{table}}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{subsection}}
 
 \begin{document}
     (@ block content @)(@ endblock @)

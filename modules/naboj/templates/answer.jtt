@@ -1,7 +1,17 @@
-\setcounter{volume}{(* volume.number *)}%
+\hypersetup{linkcolor=black}%
+\setcounter{equation}{0}%
+\setcounter{table}{0}%
+\setcounter{figure}{0}%
 \setcounter{problem}{(* problem.number *)}%
 \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
-\subsection{(* problem.number *)}%
+\subsection{%
+    \texorpdfstring{%
+        \hyperref[sec:(* problem.id *):solution]{(* problem.number *)}%
+    }{%
+        (* problem.number *). (* problem.id *)%
+    }%
+}%
+\label{sec:(* problem.id *):answer}%
 \protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
 (@ if path_exists("build/{}/{}/{}/problems/{}/{}/answer-extra.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
 \!\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%

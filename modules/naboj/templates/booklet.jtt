@@ -17,19 +17,7 @@
         \section{(* i18n[language.id].section.problems *)}
         \pagestyle{problems}
         (@ for problem in volume.problems @)%
-            \setcounter{problem}{(* problem.number *)}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
-            \hypersetup{linkcolor=black}%
-            \subsection{%
-                \texorpdfstring{%
-                    \hyperref[sec:(* problem.id *):answer]{(* problem.number *)}%
-                }{%
-                    (* problem.number *). (* problem.id *)%
-                }%
-            }%
-            \label{sec:(* problem.id *):problem}%
-            \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
+            (@ include 'problem.jtt' @)%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -38,22 +26,7 @@
         \section{(* i18n[language.id].section.solutions *)}
         \pagestyle{solutions}
         (@ for problem in volume.problems @)%
-            \setcounter{problem}{(* problem.number *)}%
-            \setcounter{equation}{0}%
-            \setcounter{table}{0}%
-            \setcounter{figure}{0}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
-            \hypersetup{linkcolor=black}%
-            \subsection{%
-                \texorpdfstring{%
-                    \hyperref[sec:(* problem.id *):problem]{(* problem.number *)}%
-                }{%
-                    (* problem.number *). (* problem.id *)%
-                }%
-            }%
-            \label{sec:(* problem.id *):solution}%
-            \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
+            (@ include 'solution.jtt' @)%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -62,20 +35,8 @@
         \section{(* i18n[language.id].section.answers *)}
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
-            \setcounter{problem}{(* problem.number *)}%
-            \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
-            \hypersetup{linkcolor=black}%
-            \subsection{%
-                \texorpdfstring{%
-                    \hyperref[sec:(* problem.id *):solution]{(* problem.number *)}%
-                }{%
-                    (* problem.number *). (* problem.id *)%
-                }%
-            }%
-            \label{sec:(* problem.id *):answer}%
-            \hypersetup{linkcolor=colour-link}%
-            \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
-            \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}
+%            \hypersetup{linkcolor=black}%
+            (@ include 'answer.jtt' @)%
         (@ endfor @)
     (@ endif @)
     (@ include 'footer.jtt' @)
