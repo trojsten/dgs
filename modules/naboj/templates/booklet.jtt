@@ -22,12 +22,12 @@
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
-                    \hyperref[ssc:(* problem.id *)-answer]{(* problem.number *)}%
+                    \hyperref[sec:(* problem.id *):answer]{(* problem.number *)}%
                 }{%
                     (* problem.number *). (* problem.id *)%
                 }%
             }%
-            \label{ssc:(* problem.id*)-problem}%
+            \label{sec:(* problem.id *):problem}%
             \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
         (@ endfor @)
@@ -46,12 +46,12 @@
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
-                    \hyperref[ssc:(* problem.id *)-problem]{(* problem.number *)}%
+                    \hyperref[sec:(* problem.id *):problem]{(* problem.number *)}%
                 }{%
                     (* problem.number *). (* problem.id *)%
                 }%
             }%
-            \label{ssc:(* problem.id*)-solution}%
+            \label{sec:(* problem.id *):solution}%
             \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
         (@ endfor @)
@@ -67,12 +67,12 @@
             \hypersetup{linkcolor=black}%
             \subsection{%
                 \texorpdfstring{%
-                    \hyperref[ssc:(* problem.id *)-solution]{(* problem.number *)}%
+                    \hyperref[sec:(* problem.id *):solution]{(* problem.number *)}%
                 }{%
                     (* problem.number *). (* problem.id *)%
                 }%
             }%
-            \label{ssc:(* problem.id*)-answer}%
+            \label{sec:(* problem.id *):answer}%
             \hypersetup{linkcolor=colour-link}%
             \protectedInput{\activeDirectory/(* language.id *)/answer.tex}
             \tryInput{\activeDirectory/(* language.id *)/answer-extra.tex}

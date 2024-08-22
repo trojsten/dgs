@@ -63,7 +63,7 @@
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
-\RequirePackage[mathlf]{MinionPro}
+\RequirePackage[minionint, mathlf]{MinionPro}
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}

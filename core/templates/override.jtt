@@ -15,5 +15,7 @@
 \Crefname{table}{(* i18n.table|capitalize *)}{(* i18n.tables|capitalize *)}
 \crefname{figure}{(* i18n.figure *)}{(* i18n.figures *)}
 \Crefname{figure}{(* i18n.figure|capitalize *)}{(* i18n.figures|capitalize *)}
+\crefname{section}{(* i18n.section *)}{(* i18n.sections *)}
+\Crefname{section}{(* i18n.section|capitalize *)}{(* i18n.sections|capitalize *)}
 \crefname{equation}{(* i18n.equation *)}{(* i18n.equations *)}
 \Crefname{equation}{(* i18n.equation|capitalize *)}{(* i18n.equations|capitalize *)}

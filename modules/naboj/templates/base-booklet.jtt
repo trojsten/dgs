@@ -94,7 +94,7 @@
         \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
     }
 
-    \setcounter{secnumdepth}{0}
+    \setcounter{secnumdepth}{3}
     \input{build/core/i18n/(* language.id *).tex}
 
     \pagestyle{naboj}

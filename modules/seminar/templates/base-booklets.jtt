@@ -42,7 +42,7 @@
                     (* round.number *).(* problem.number *) (* problem.title *)%
                 }%
             }%
-            \label{sec:(* volume.id *)(* semester.id *)(* round.id *)(* problem.id *)-(* kind *)}
+            \label{sec:(* volume.id *)(* semester.id *)(* round.id *)(* problem.id *):(* kind *)}
         }%
         (@ block problem_again @)(@ endblock @)
         \protectedInput{\activeDirectory/(* kind *).tex}%

@@ -9,16 +9,16 @@ class Locale:
         self.locale = locale
         self.quotes = quotes
         self.rtl = rtl
-        self.figure = extras.get('figure', '??')
-        self.figures = extras.get('figures', '??')
-        self.table = extras.get('table', '??')
-        self.tables = extras.get('tables', '??')
-        self.equation = extras.get('equation', '??')
-        self.equations = extras.get('equations', '??')
-        self.listing = extras.get('listing', '??')
-        self.listings = extras.get('listings', '??')
-        self.section = extras.get('section', '??')
-        self.sections = extras.get('sections', '??')
+        self.figure = extras.get('figure', '<figure>')
+        self.figures = extras.get('figures', '<figures>')
+        self.table = extras.get('table', '<table>')
+        self.tables = extras.get('tables', '<tables>')
+        self.equation = extras.get('equation', '<equation>')
+        self.equations = extras.get('equations', '<equations>')
+        self.listing = extras.get('listing', '<listing>')
+        self.listings = extras.get('listings', '<listings>')
+        self.section = extras.get('section', '<section>')
+        self.sections = extras.get('sections', '<sections>')
 
         self.quotes_extra = extras.get('quotes_extra', '')
 
@@ -56,11 +56,13 @@ languages = [
     Locale('sk', 'slovak', 'sk-SK', ('„', '“'),
            figure='obrázok', figures='obrázky',
            table='tabuľka', tables='tabuľky',
-           equation='rovnica', equations='rovnice'),
+           equation='rovnica', equations='rovnice',
+           section='úloha', sections='úlohy'),
     Locale('en', 'english', 'en-US', ('“', '”'),
            figure='figure', figures='figures',
            table='table', tables='tables',
-           equation='equation', equations='equations'),
+           equation='equation', equations='equations',
+           section='section', sections='sections'),
     Locale('cs', 'czech', 'cs-CZ', ('„', '“'),
            figure='obrázek', figures='obrázky',
            table='tabulka', tables='tabulky',
@@ -97,7 +99,6 @@ languages = [
 
 
 languages = {locale.id: locale for locale in languages}
-
 
 LanguageSchema = Schema({
     'language': {
