@@ -34,6 +34,7 @@ class ContextI18n(context.FileSystemContext):
         },
         'answers': {
             'interval': str,
+            'also': str,
         },
         'tearoff': {
             'team': str,
