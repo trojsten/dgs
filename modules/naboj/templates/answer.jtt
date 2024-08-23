@@ -18,4 +18,8 @@
 (@- endif -@)%
 (@- if path_exists("build/{}/{}/{}/problems/{}/{}/answer-interval.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
 \!\textit{, (* i18n[language.id].answers.interval *)} \tryInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
-(@ endif @)
+(@- elif path_exists("build/{}/{}/{}/problems/{}/{}/answer-interval.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+(@- if path_exists("build/{}/{}/{}/problems/{}/{}/answer-also.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+\!\textit{, (* i18n[language.id].answers.also *)} \tryInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
+(@- endif -@)
+(@- endif -@)
