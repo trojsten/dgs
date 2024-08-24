@@ -6,7 +6,7 @@
 \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 \subsection{%
     \texorpdfstring{%
-        \hyperref[sec:(* problem.id *):solution]{(* problem.number *)}%
+        (@ if target=='booklet' @)\hyperref[sec:(* problem.id *):solution]{(* problem.number *)}(@ else @)(* problem.number *)(@ endif @)%
     }{%
         (* problem.number *). (* problem.id *)%
     }%

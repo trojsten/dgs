@@ -1,10 +1,12 @@
 (@ extends 'base-booklet.jtt' @)
 
+(@ set target = 'answers' @)
+
 (@ block content @)
     \section{(* i18n[language.id].section.answers *)}
     \pagestyle{answers}
     (@ for problem in volume.problems @)%
-        (@ include 'answer.jtt' @)
+        (@ include 'answer.jtt' @)%
     (@ endfor @)
     (@ include 'footer.jtt' @)
 (@ endblock @)

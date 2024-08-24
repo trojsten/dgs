@@ -44,6 +44,7 @@ class StyleEnforcer:
             check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
+            check.FailIfFound(r'[“”’–—]', "Do not use fancy Unicode dashes or quotation marks"),
             check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
                               "Omit parentheses in simple functions"),
             check.ConflictMarkers(),

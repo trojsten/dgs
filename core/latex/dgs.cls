@@ -81,12 +81,6 @@
 \definecolor{orange}{RGB}{255, 128, 0}
 
 \RequirePackage[
-    colorlinks              = true,                         % use coloured links
-    linkcolor               = colour-link,                  % custom Trojsten link colour
-    urlcolor                = colour-url,                   % custom Trojsten URL link colour
-]{hyperref}
-
-\RequirePackage[
     shorthands=off,
     slovak,
     czech,
@@ -98,11 +92,17 @@
     english,
 ]{babel}                                      % multi-language support
 \RequirePackage{xunicode}
-\RequirePackage{cleveref}                                   % clever references
 \RequirePackage[autostyle]{csquotes}                        % propr localized quotation marks
 %\RequirePackage{bidi}                                      % bidirecitonal support, keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
+
+\RequirePackage[
+    colorlinks              = true,                         % use coloured links
+    linkcolor               = colour-link,                  % custom Trojsten link colour
+    urlcolor                = colour-url,                   % custom Trojsten URL link colour
+]{hyperref}
+\RequirePackage{cleveref}                                   % clever references
 
 % paragraph settings -- formatting paragraphs and list environments
 \linespread{1.0}

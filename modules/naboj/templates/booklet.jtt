@@ -1,5 +1,7 @@
 (@ extends 'base-booklet.jtt' @)
 
+(@ set target = 'booklet' @)
+
 (@ block content @)
     \setcounter{volume}{(* volume.number *)}%
     \pagestyle{naboj}
@@ -37,7 +39,7 @@
         (@ for problem in volume.problems @)%
 %            \hypersetup{linkcolor=black}%
             (@ include 'answer.jtt' @)%
-        (@ endfor @)
-    (@ endif @)
+        (@ endfor @)%
+    (@ endif @)%
     (@ include 'footer.jtt' @)
 (@ endblock @)
