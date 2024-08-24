@@ -19,6 +19,7 @@ class NabojValidator(FileSystemValidator):
                     Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|fig\.tex)')): File,
                 },
                 'answer.md': File,
+                Optional('answer-also.md'): File,
                 Optional('answer-interval.md'): File,
                 Optional('meta.yaml'): File,
                 Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|fig\.tex)')): File,

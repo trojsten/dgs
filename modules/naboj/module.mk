@@ -15,6 +15,11 @@ build/naboj/%/answer.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
+build/naboj/%/answer-also.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
 build/naboj/%/answer-interval.tex: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
@@ -161,6 +166,7 @@ build/naboj/%/solutions/$(1): \
 build/naboj/%/answers/$(1): \
 	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) \
+	$$$$(addsuffix $(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md)))) \
 	$$$$(addsuffix $(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md)))) ;
 
 build/naboj/%/$(1): \
@@ -179,6 +185,7 @@ build/naboj/%/solutions: \
 build/naboj/%/answers: \
 	$$(addsuffix answer.tex,$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/))) \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) \
+	$$(addsuffix answer-also.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-also.md),$$(wildcard $$(dir $$(int))*/)))) \
 	$$(addsuffix answer-interval.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-interval.md),$$(wildcard $$(dir $$(int))*/)))) ;
 
 ### Venues ######################################
