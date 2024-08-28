@@ -1,12 +1,22 @@
 import os
 import datetime
 from pathlib import Path
-from enschema import Schema, And, Or, Regex
+from enschema import Schema, And, Or, Regex, Optional
 
 from core.builder import context
 from core.builder.builder import get_last_commit_hash, get_branch
 from core.utilities.schema import valid_language
 from core.builder.validator import CommitHash, String
+
+
+def valid_tag(tag: str):
+    return tag in [
+        'elegant', 'troll', 'trick', 'silly', 'unreal', 'creative',
+        'circuit', 'resistance', 'rlc', 'elmag',
+        'kinematics', 'uam',
+        'paaa', 'cog',
+        'calorimetry', 'thermo-process', 'optics', 'blackbody', 'nuclear'
+    ]
 
 
 class ContextNaboj(context.FileSystemContext):
@@ -36,6 +46,8 @@ class ContextNaboj(context.FileSystemContext):
     })
     problem = Schema({
         'id': Regex(r'[a-z0-9-]+'),
+        Optional('tags'): [str],
+        Optional('author'): [valid_tag],
         'number': int,
     })
     _schema = Schema({

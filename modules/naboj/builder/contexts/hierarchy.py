@@ -34,7 +34,7 @@ class ContextCompetition(ContextNaboj):
                 Optional('siextra'): str,
             }
         },
-        'URL': String,
+        'url': String,
         'hacks': dict,
     })
 

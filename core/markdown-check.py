@@ -36,7 +36,7 @@ class StyleEnforcer:
             check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
             check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
             check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
-            check.FailIfFound(r'{\s+[^\s]', "Left brace { followed by whitespace"),
+            check.FailIfFound(r'(?<!\\text){\s+[^\s]', "Left brace { followed by whitespace"),
             check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
             check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
             check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
@@ -79,15 +79,15 @@ class StyleEnforcer:
 
     def check_markdown_file(self, path):
         module = path.parts[1]
-        problem_id = path.parent.stem
+        problem_id = path.parents[1].stem
 
         self.problem_errors = [
-            # check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id})', "Label does not match file name"),
-            # check.FailIfFound(fr'(#|@)(eq|fig|sec):{problem_id}[^ ]', "Non-empty label in problem"),
+            check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
+            check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):{problem_id}[^ ]\}}', "Non-empty label in problem"),
         ]
 
         self.solution_errors = [
-            # check.FailIfFound(fr'(#|@)(eq|fig|sec):(?!{problem_id}:)', "Label does not match file name"),
+            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):(?!{problem_id}:)}}', "Label does not match file name"),
         ]
 
         try:
