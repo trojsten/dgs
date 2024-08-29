@@ -44,7 +44,10 @@ class StyleEnforcer:
             check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
-            check.FailIfFound(r'[“”’–—]', "Do not use fancy Unicode dashes or quotation marks"),
+            check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),
+            check.FailIfFound(r'\\int\b', "Use \\Int[]{}{} instead"),
+            check.FailIfFound(r'\\implies', "Use \\Implies instead"),
+            check.FailIfFound(r'[“”’–—]', "Do not use fancy Unicode dashes or quotation marks in the source"),
             check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
                               "Omit parentheses in simple functions"),
             check.ConflictMarkers(),
@@ -87,7 +90,12 @@ class StyleEnforcer:
         ]
 
         self.solution_errors = [
-            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):(?!{problem_id}:)}}', "Label does not match file name"),
+            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
+            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):{problem_id}[^:]\}}', "Empty or mismatching label in solution"),
+        ]
+
+        self.answer_errors = [
+            check.FailIfFound(r'\\frac\b', "Use \\dfrac in answers")
         ]
 
         try:
@@ -102,6 +110,9 @@ class StyleEnforcer:
 
         if path.name == 'solution.md':
             line_errors += self.solution_errors
+
+        if path.name == 'answer.md':
+            line_errors += self.answer_errors
 
         with open(path, 'r') as file:
             ok = None
