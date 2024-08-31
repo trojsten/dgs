@@ -30,16 +30,20 @@ class NabojValidator(FileSystemValidator):
                 'meta.yaml': File,
                 'intro.jtt': FileOrLink,
                 'instructions-inner.jtt': FileOrLink,
-                'evaluators.jtt': FileOrLink,
-                Optional('instructions-online-inner.md'): FileOrLink,
-                Optional('pictures'): {
-                    Optional(Regex(r'.*\.png')): FileOrLink,
+                Optional('evaluators.jtt'): FileOrLink,
+                Optional('online'): {
+                    'language.png': FileOrLink,
+                    'signin.png': FileOrLink,
+                    'welcome.png': FileOrLink,
+                    'problems.png': FileOrLink,
+                    'instructions-online-inner.md': FileOrLink,
                 }
             }
         },
         'venues': {
-            Regex(r'\w+'): {
+            Optional(Regex(r'\w+')): {
                 'meta.yaml': File,
+                Optional('instructions-inner.tex'): FileOrLink,
             },
         },
         'meta.yaml': File,
