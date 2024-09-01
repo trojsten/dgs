@@ -29,7 +29,7 @@ class NabojValidator(FileSystemValidator):
             valid_language: {
                 'meta.yaml': File,
                 'intro.jtt': FileOrLink,
-                'instructions-inner.jtt': FileOrLink,
+                Optional('instructions-inner.jtt'): FileOrLink,
                 Optional('evaluators.jtt'): FileOrLink,
                 Optional('online'): {
                     'language.png': FileOrLink,
@@ -40,7 +40,7 @@ class NabojValidator(FileSystemValidator):
                 }
             }
         },
-        'venues': {
+        Optional('venues'): {
             Optional(Regex(r'\w+')): {
                 'meta.yaml': File,
                 Optional('instructions-inner.tex'): FileOrLink,
