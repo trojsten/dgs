@@ -35,7 +35,6 @@ class ContextCompetition(ContextNaboj):
             }
         },
         'url': String,
-        'founded': int,
         'hacks': dict,
     })
 
