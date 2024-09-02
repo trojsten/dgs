@@ -139,7 +139,7 @@ class ContextVolume(ContextNaboj):
         'id': And(str, len),
         'number': And(int, lambda x: x > 0),
         'date': datetime.date,
-        'orgs': [str],
+        'authors': [str],
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,
