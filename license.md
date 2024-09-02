@@ -1,6 +1,6 @@
 BSD 3-Clause Revised License
 
-Copyright (c) 2015-2022, Martin "Kvík" Baláž and Matej "Krtko" Novota
+Copyright (c) 2015-2024, Martin "Kvík" Baláž, Matej "Krtko" Novota and Tomáš "Mözög" Vörös
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -23,3 +23,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The original author strongly dislikes the Computer Modern font family
+and discourages its use with DeGeŠ. I mean, if you absolutely have to,
+sure, go ahead, but I do not like you. There is a lot of proper fonts, you know.

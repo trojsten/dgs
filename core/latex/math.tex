@@ -32,20 +32,26 @@
 % Section: differentials
 
 % Regular upright differential
-\NewDocumentCommand{\diff}{}{\mathop{}\!\mathrm{d}}
+\NewDocumentCommand{\diff@}{}{\mathop{}\!\mathrm{d}}
 % Partial differential
-\NewDocumentCommand{\pdiff}{}{\mathop{}\!\partial}
+\NewDocumentCommand{\pdiff@}{}{\mathop{}\!\partial}
 % Finite differential
-\NewDocumentCommand{\fdiff}{}{\mathop{}\!\Delta}
+\NewDocumentCommand{\fdiff@}{}{\mathop{}\!\Delta}
 % Small delta differential
-\NewDocumentCommand{\udiff}{}{\mathop{}\!\delta}
+\NewDocumentCommand{\udiff@}{}{\mathop{}\!\delta}
 
-% Power differential
+% Power differential (rewrite this to one common function \diff@...)
 \NewDocumentCommand{\Diff}{o}{%
-    \IfNoValueTF{#1}{\diff}{\diff^{#1}}%
+    \IfNoValueTF{#1}{\diff@}{\diff@^{#1}}%
 }
 \NewDocumentCommand{\PDiff}{o}{%
-    \IfNoValueTF{#1}{\pdiff}{\pdiff^{#1}}%
+    \IfNoValueTF{#1}{\pdiff@}{\pdiff@^{#1}}%
+}
+\NewDocumentCommand{\FDiff}{o}{%
+    \IfNoValueTF{#1}{\fdiff@}{\fdiff@^{#1}}%
+}
+\NewDocumentCommand{\UDiff}{o}{%
+    \IfNoValueTF{#1}{\udiff@}{\udiff@^{#1}}%
 }
 
 % Inner derivative with any differential symbol
@@ -82,7 +88,7 @@
 }
 
 \ExplSyntaxOn
-\NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff} m}{%
+\NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff@} m}{%
     \renewcommand{\frac@}{\str_case:nnF{#1}{%
             {d}{\dfrac}%
             {t}{\tfrac}%
@@ -98,30 +104,30 @@
 \ExplSyntaxOff
 
 % \Derivative[order]{what}{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff>{#3}{#4}}
-\NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff>{#3}{#4}}
-\NewDocumentCommand{\FDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\fdiff>{#3}{#4}}
-\NewDocumentCommand{\UDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\udiff>{#3}{#4}}
+\NewDocumentCommand{\Derivative}{d<> o m m}{\Derivative@<#1>[#2]<\diff@>{#3}{#4}}
+\NewDocumentCommand{\PDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\pdiff@>{#3}{#4}}
+\NewDocumentCommand{\FDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\fdiff@>{#3}{#4}}
+\NewDocumentCommand{\UDerivative}{d<> o m m}{\Derivative@<#1>[#2]<\udiff@>{#3}{#4}}
 \newcommand*\Drv{\Derivative}
 \newcommand*\PDrv{\PDerivative}
 \newcommand*\FDrv{\FDerivative}
 \newcommand*\UDrv{\UDerivative}
 
 % \DerivativeEmpty[order]{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\diff>{#3}}
-\NewDocumentCommand{\PDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\pdiff>{#3}}
-\NewDocumentCommand{\FDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\fdiff>{#3}}
-\NewDocumentCommand{\UDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\udiff>{#3}}
+\NewDocumentCommand{\DerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\diff@>{#3}}
+\NewDocumentCommand{\PDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\pdiff@>{#3}}
+\NewDocumentCommand{\FDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\fdiff@>{#3}}
+\NewDocumentCommand{\UDerivativeEmpty}{d<> o m}{\DerivativeEmpty@<#1>[#2]<\udiff@>{#3}}
 \newcommand*\DrvE{\DerivativeEmpty}
 \newcommand*\PDrvE{\PDerivativeEmpty}
 \newcommand*\FDrvE{\FDerivativeEmpty}
 \newcommand*\UDrvE{\UDerivativeEmpty}
 
 % \DerivativeParentheses{what}{by-what} + shorthands for Partial, Finite and Delta
-\NewDocumentCommand{\DerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\diff>{#3}{#4}}
-\NewDocumentCommand{\PDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\pdiff>{#3}{#4}}
-\NewDocumentCommand{\FDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\fdiff>{#3}{#4}}
-\NewDocumentCommand{\UDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\udiff>{#3}{#4}}
+\NewDocumentCommand{\DerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\diff@>{#3}{#4}}
+\NewDocumentCommand{\PDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\pdiff@>{#3}{#4}}
+\NewDocumentCommand{\FDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\fdiff@>{#3}{#4}}
+\NewDocumentCommand{\UDerivativeParen}{d<> o m m}{\DerivativeParentheses@<#1>[#2]<\udiff@>{#3}{#4}}
 \newcommand*\DrvP{\DerivativeParen}
 \newcommand*\PDrvP{\PDerivativeParen}
 \newcommand*\FDrvP{\FDerivativeParen}
@@ -147,7 +153,7 @@
 % {integrand}
 % {differential}
 % [operation] between integrand and differential, such as \cdot or \times
-\NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff#4}
+\NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff@#4}
 
 % Basic integral from #1 to #2 of #3 with respect to #4
 % Usage \Int[0][1]{x^2}{x}
@@ -168,7 +174,7 @@
 % Loop integrals
 
 % Generic loop integral
-\NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff#3}
+\NewDocumentCommand{\OInt@}{O{} m m d<>}{\oint\limits_{#1}#2#4\diff@#3}
 % Loop integral over #1
 \NewDocumentCommand{\OInt}{O{} m m}{\OInt@[#1]{#2}{#3}<>}
 % Loop integral over #1 of dot product of #2 and d#3 (for instance magnetic B dl)
@@ -180,10 +186,10 @@
 
 % Generic 2D integral
 % [lower bound][upper bound]{integrand}{differential 1}{differential 2}
-\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff#4\diff#5}
-\NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\left(#3\right)\diff#4\diff#5}
+\NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff@#4\diff@#5}
+\NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\left(#3\right)\diff@#4\diff@#5}
 % Surface integral over single differential
-\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
 \NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
@@ -193,7 +199,7 @@
 \NewDocumentCommand{\IIntCV}{O{} O{} m m}{\IIntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
 % Surface integral over single differential
-\NewDocumentCommand{\OIIntI@}{O{} O{} m m O{}}{\oiint\limits_{#1}^{#2}#3#5\diff#4}
+\NewDocumentCommand{\OIIntI@}{O{} O{} m m O{}}{\oiint\limits_{#1}^{#2}#3#5\diff@#4}
 \NewDocumentCommand{\OIIntI}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\OIIntD}{O{} O{} m m}{\OIIntI@[#1][#2]{#3}{#4}[\cdot]}
@@ -207,10 +213,10 @@
 % Generic 3D integral
 
 % [lower][upper]{integrand}{diff_1}{diff_2}{diff_3}
-\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff#4\diff#5\diff#6}
+\NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff@#4\diff@#5\diff@#6}
 % Volume integral over single differential
 % [lower limit][upper limit]{integrand}[differential power]{differential}
-\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff^{#4}#5}
+\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
 \NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#5}[][#4]}
 \NewDocumentCommand{\IIIntV}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}[3]{#4}[]}
 \NewDocumentCommand{\IIIntPV}{O{} O{} m m}{\IIIntI@[#1][#2]{\left(#3\right)}[3]{#4}[]}
@@ -350,7 +356,7 @@
 \NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
 
 % Number set
-\NewDocumentCommand{\Set}{m O{} O{}}{%
+\NewDocumentCommand{\Set}{m O{} O{}}{%;;
     \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
 }
 
