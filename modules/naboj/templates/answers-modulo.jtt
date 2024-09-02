@@ -1,5 +1,7 @@
 (@ extends 'base-booklet.jtt' @)
 
+(@ set target = 'answers' @)
+
 (@ block content @)
     \thispagestyle{first}
     \afterpage{\globaldefs=1\restoregeometry}

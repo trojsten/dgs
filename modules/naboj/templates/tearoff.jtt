@@ -1,5 +1,7 @@
 (@ extends 'base-tearoff.jtt' @)
 
+(@ set target = 'tearoff' @)
+
 (@ block content @)
     \newgeometry{
         left        = 12mm,

@@ -40,7 +40,7 @@ class StyleEnforcer:
             check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
             check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
             check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
-            check.FailIfFound(r'\\,', "You should not use typographic corrections"),
+            check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
             check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),

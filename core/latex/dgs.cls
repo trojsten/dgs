@@ -109,6 +109,7 @@
 
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{1em plus 0.1em}
+\setlength{\arraycolsep}{2pt}
 
 \setstretch{1.0}
 

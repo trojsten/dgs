@@ -140,6 +140,8 @@ build/naboj/%/instructions-online.tex: \
 # PDF prerequisites (pictures, graphs, meta files)
 # % <competition>/<volume>
 build/naboj/%/pdf-prerequisites: \
+	core/latex/dgs.cls \
+	$$(wildcard core/latex/*.tex) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.jpg)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.png)) \
