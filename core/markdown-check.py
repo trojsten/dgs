@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-import re
+import regex
 import copy
 import subprocess
 
@@ -23,12 +23,12 @@ class StyleEnforcer:
         self.parser.add_argument('--only', nargs='+', type=str)
         self.args = self.parser.parse_args()
 
-        self.commented = re.compile(r'^%')
+        self.commented = regex.compile(r'^%')
 
         self.line_errors = {
             'tab': check.FailIfFound(r'\t', "Tab instead of spaces"),
             'cws': check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
-            'sws': check.FailIfFound(r'(?!\\ang{);[^\s]', "Semicolon not followed by whitespace"),
+            'sws': check.FailIfFound(r'(?<!\\ang{;?|\\SIlist{[0-9.e;]+|\\Coord{[0-9.e;]+);[^\s]', "Semicolon not followed by whitespace"),
             'pas': check.ParenthesesSpace(),
             'tws': check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
             'spb': check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),

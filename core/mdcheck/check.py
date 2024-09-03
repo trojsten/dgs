@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-import re
+import regex as re
 import logging
 import codecs
 
