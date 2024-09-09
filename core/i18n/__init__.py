@@ -135,6 +135,7 @@ LanguageSchema = Schema({
             'babel_id': str,
             Optional('extra'): str,
         },
+        'andw': str,
         'figure': str,
         'figures': str,
         'table': str,

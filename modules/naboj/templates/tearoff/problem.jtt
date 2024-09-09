@@ -15,7 +15,7 @@
             \vspace{0pt}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* team.code *) (* problem.number *). (* problem.id *)}}%
             \setlength{\parskip}{6pt}
-            \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
+            \protectedInput{\activeDirectory/(* team.language *)/problem.tex}%
         (@ endblock main @)
     \end{minipage}%
     \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.149\linewidth}
