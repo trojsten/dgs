@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-import regex
+import regex as re
 import copy
 import subprocess
 
@@ -21,9 +21,10 @@ class StyleEnforcer:
         self.parser.add_argument('-v', '--verbose', action='store_true')
         self.parser.add_argument('-w', '--warnings', action='store_true')
         self.parser.add_argument('--only', nargs='+', type=str)
+        self.parser.add_argument('--markdown', action='store_true')
         self.args = self.parser.parse_args()
 
-        self.commented = regex.compile(r'^%')
+        self.commented = re.compile(r'^%')
 
         self.line_errors = {
             'tab': check.FailIfFound(r'\t', "Tab instead of spaces"),
@@ -73,7 +74,8 @@ class StyleEnforcer:
 
     def check(self):
         for path in self.args.infiles:
-            #self.check_markdown(path)
+            if self.args.markdown:
+                self.check_markdown(path)
             self.check_markdown_file(path)
 
     def check_label(self, module, path, label):
@@ -143,7 +145,7 @@ class StyleEnforcer:
         for line in out:
             try:
                 if matches := re.search(
-                        r'(Format "tex").*(?P<si>\\\\(SI|SIrange|SIlist|num|numrange|numlist|ang)({[^}]+})+)', line):
+                        r'(Format "tex").*(?P<si>\\\\(SI|SIrange|SIlist|num|numrange|numlist|ang|si)({[^}]+})+)', line):
                     si = matches.group('si')
                     raise exceptions.MarkdownError(f"Raw siunitx token \"{si}\"")
 #                if matches := re.search(r'Math InlineMath ".*[^ ](?P<symbol>=|\\approx|\\cdot|\\doteq|\+)[^ ].*"', line):
