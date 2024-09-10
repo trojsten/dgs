@@ -294,12 +294,17 @@
 \NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
 \NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
 
-\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}}
-\NewDocumentCommand{\Exp}{m}{e^{#1}}
-\NewDocumentCommand{\LogTen}{}{\log_{10}}
-\NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}
-\NewDocumentCommand{\MustEqual}{}{\Must{=}}
-\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}
+\NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}} % Limits
+\NewDocumentCommand{\Exp}{m}{e^{#1}}                            % Nicer exponential
+\NewDocumentCommand{\LogTen}{}{\log_{10}}                       % Logarithm with base 10
+\NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}                 % Stacked "!"
+\NewDocumentCommand{\MustEqual}{}{\Must{=}}                     % Must equal
+\NewDocumentCommand{\MustBeLess}{}{\Must{<}}                    % Must be <
+\NewDocumentCommand{\MustBeGreater}{}{\Must{>}}                 % Must be >
+\NewDocumentCommand{\MustBeLessOrEqual}{}{\Must{\leq}}          % Must be <=
+\NewDocumentCommand{\MustBeGreaterOrEqual}{}{\Must{\geq}}       % Must be >=
+\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}    % Definition
+\NewDocumentCommand{\Assign}{}{\coloneqq}                       % Assignment with :=
 
 % Nuclide[A][Z]{symbol}
 % \Nuclide[235][92]{U} for uranium
