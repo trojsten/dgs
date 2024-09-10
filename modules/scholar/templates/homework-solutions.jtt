@@ -2,10 +2,12 @@
 
 (@ block solution @)
     \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
-    \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+    \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
+    \protectedInput{\activeDirectory/solution.tex}
 (@ endblock solution @)
 
 (@ block subsolution @)
     \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
-    \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/solution.tex}
+    \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)/(* subproblem.id *)}%
+    \protectedInput{\activeDirectory/solution.tex}
 (@ endblock subsolution @)
