@@ -138,7 +138,17 @@ class ContextVolume(ContextNaboj):
         'id': And(str, len),
         'number': And(int, lambda x: x > 0),
         'date': datetime.date,
-        'authors': [str],
+        'authors': {
+            'problems': [str],
+            'pictures': [str],
+            'editor': [str],
+        },
+        Optional('venues'): {
+            str: {
+                'head': str,
+                'name': str,
+            }
+        },
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,

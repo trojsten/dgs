@@ -1,8 +1,9 @@
 import yaml
 from pathlib import Path
-from enschema import Schema
+from enschema import Schema, Optional
 
 from core.builder import context
+from core.i18n import languages
 
 
 class ContextI18n(context.FileSystemContext):
@@ -47,14 +48,28 @@ class ContextI18n(context.FileSystemContext):
             'title': str,
         },
         'physics_constants': {
-            str: str
+            str: str,
+        },
+        'globals': {
+            'rtl': bool,
+            'quotes': {
+                'open': str,
+                'close': str,
+                'babel_id': str,
+                Optional('extra'): str,
+            },
+            'siunitx': {
+                'output_decimal_marker': str,
+                'list_final_separator': str,
+                'list_pair_separator': str,
+            },
+            str: str,
         },
     })
 
     def populate(self, competition, language):
         self.load_yaml(self.root, competition, '.static', 'i18n', language + '.yaml')
-        #contents = yaml.load(open(Path('core', 'i18n', language, 'crossref.yaml'), 'r'), Loader=yaml.SafeLoader)
-        #self.add({'crossref': contents})
+        self.add(globals=languages[language].as_dict())
 
     def node_path(self, competition=None, language=None):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')

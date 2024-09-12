@@ -1,8 +1,15 @@
-    \vfill
-    {
-        \color{white}
-        \hfill built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
+\vfill
+{
+    \subsubsection*{Autori úloh}
+        (* volume.authors.problems|format_list(and_word=i18n[language.id].globals.andw) *)
+    \subsubsection*{Obrázky}
+        (* volume.authors.pictures|format_list(and_word=i18n[language.id].globals.andw) *)
+    \subsubsection*{Technická úprava}
+        (* volume.authors.editor|format_list(and_word=i18n[language.id].globals.andw) *)
 
-        \hfill at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
-    }
+    \color{gray}
+    \tiny
+    \hfill built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
 
+    \hfill at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
+}
