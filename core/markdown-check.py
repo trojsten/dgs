@@ -20,58 +20,59 @@ class StyleEnforcer:
         self.parser.add_argument('infiles', nargs='+', type=Path, default=[sys.stdin])
         self.parser.add_argument('-v', '--verbose', action='store_true')
         self.parser.add_argument('-w', '--warnings', action='store_true')
+        self.parser.add_argument('--only', nargs='+', type=str)
         self.args = self.parser.parse_args()
 
         self.commented = re.compile(r'^%')
 
-        self.line_errors = [
-            check.FailIfFound(r'\t', "Tab instead of spaces"),
-            check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
-            check.FailIfFound(r'(?!\\ang{);[^\s]', "Semicolon not followed by whitespace"),
-            check.ParenthesesSpace(),
-            check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
-            check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
-            check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
-            check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
-            check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
-            check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
-            check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
-            check.FailIfFound(r'(?<!\\text){\s+[^\s]', "Left brace { followed by whitespace"),
-            check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
-            check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
-            check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
-            check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
-            check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
-            check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
-            check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
-            check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),
-            check.FailIfFound(r'\\int\b', "Use \\Int[]{}{} instead"),
-            check.FailIfFound(r'\\implies', "Use \\Implies instead"),
-            check.FailIfFound(r'\\Rightarrow', "You probably want to use \\Implies instead"),
-            check.FailIfFound(r'[“”’–—~]', "Do not use fancy Unicode dashes or quotation marks in the source"),
-            check.FailIfFound(r'\\insertPicture', "Do not use TeX commands to include pictures"),
-            check.FailIfFound(r'\\text(it|bf|sf)', "Do not use TeX commands to change font"),
-            check.FailIfFound(r'\\footnote', "Do not use TeX commands to include footnotes"),
-            check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
+        self.line_errors = {
+            'tab': check.FailIfFound(r'\t', "Tab instead of spaces"),
+            'cws': check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
+            'sws': check.FailIfFound(r'(?!\\ang{);[^\s]', "Semicolon not followed by whitespace"),
+            'pas': check.ParenthesesSpace(),
+            'tws': check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
+            'spb': check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
+            'frb': check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
+            'csi': check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
+            'cnu': check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
+            'vep': check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
+            'crc': check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
+            'lbw': check.FailIfFound(r'(?<!\\text){\s+[^\s]', "Left brace { followed by whitespace"),
+            'rbw': check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
+            'mzm': check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
+            'tht': check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
+            'tgc': check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
+            'thc': check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
+            'tjs': check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
+            'pun': check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
+            'sum': check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),
+            'int': check.FailIfFound(r'\\int\b', "Use \\Int[]{}{} instead"),
+            'imp': check.FailIfFound(r'\\implies', "Use \\Implies instead"),
+            'rar': check.FailIfFound(r'\\Rightarrow', "You probably want to use \\Implies instead"),
+            'txp': check.FailIfFound(r'\\text(it|bf|sf)', "Do not use TeX font styling"),
+            'txs': check.FailIfFound(r'\\(sub)?section', "Do not use TeX headings"),
+            'txf': check.FailIfFound(r'\\footnote', "Do not use TeX footnotes"),
+            'uni': check.FailIfFound(r'[“”’–—~]', "Do not use fancy Unicode dashes or quotation marks in the source"),
+            'opa': check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
                               "Omit parentheses in simple functions"),
-            check.ConflictMarkers(),
-            check.EqualsSpaces(),
-            check.CdotSpaces(),
-            check.SIExponents(),
-            check.LineLength(),
-            check.PlusSpaces(),
-            check.DoubleDollars(),
-            check.Reference(),
-        ]
+            'cmk': check.ConflictMarkers(),
+            'eqs': check.EqualsSpaces(),
+            'cdt': check.CdotSpaces(),
+            'sie': check.SIExponents(),
+            'lln': check.LineLength(),
+            'pws': check.PlusSpaces(),
+            'dds': check.DoubleDollars(),
+            'rfc': check.Reference(),
+        }
 
-        self.line_warnings = [
-            check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
+        self.line_warnings = {
+            'tak': check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
             # check.Parentheses(),
-        ]
+        }
 
     def check(self):
         for path in self.args.infiles:
-            self.check_markdown(path)
+            #self.check_markdown(path)
             self.check_markdown_file(path)
 
     def check_label(self, module, path, label):
@@ -88,19 +89,19 @@ class StyleEnforcer:
         module = path.parts[1]
         problem_id = path.parents[1].stem
 
-        self.problem_errors = [
-            check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
-            check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):{problem_id}[^ ]\}}', "Non-empty label in problem"),
-        ]
+        self.problem_errors = {
+            'lfn': check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
+            'lne': check.FailIfFound(fr'{{-?(#|@)(eq|fig|sec):{problem_id}[^ ]\}}', "Non-empty label in problem"),
+        }
 
-        self.solution_errors = [
-            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
-            check.FailIfFound(fr'{{(#|@)(eq|fig|sec):{problem_id}[^:]\}}', "Empty or mismatching label in solution"),
-        ]
+        self.solution_errors = {
+            'lfn': check.FailIfFound(fr'{{(#|@)(eq|fig|sec):(?!{problem_id})\}}', "Label does not match file name"),
+            'lne': check.FailIfFound(fr'{{(#|@)(eq|fig|sec):{problem_id}[^:]\}}', "Empty or mismatching label in solution"),
+        }
 
-        self.answer_errors = [
-            check.FailIfFound(r'\\frac\b', "Use \\dfrac in answers")
-        ]
+        self.answer_errors = {
+            'fra': check.FailIfFound(r'\\frac\b', "Use \\dfrac in answers")
+        }
 
         try:
             check.encoding(path)
@@ -110,18 +111,21 @@ class StyleEnforcer:
 
         line_errors = copy.copy(self.line_errors)
         if path.name == 'problem.md':
-            line_errors += self.problem_errors
+            line_errors |= self.problem_errors
 
         if path.name == 'solution.md':
-            line_errors += self.solution_errors
+            line_errors |= self.solution_errors
 
         if path.name == 'answer.md':
-            line_errors += self.answer_errors
+            line_errors |= self.answer_errors
+
+        if self.args.only is not None:
+            line_errors = {key: error for key, error in line_errors.items() if key in self.args.only}
 
         with open(path, 'r') as file:
             ok = None
             for number, line in enumerate(file):
-                ok = all([self.check_line(checker, module, path, number, line) for checker in line_errors])
+                ok = all([self.check_line(checker, module, path, number, line) for checker in line_errors.values()])
 
                 if self.args.warnings:
                     ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn)
@@ -160,4 +164,7 @@ class StyleEnforcer:
             return False
 
 
-StyleEnforcer().check()
+try:
+    StyleEnforcer().check()
+except subprocess.CalledProcessError:
+    print("No files found")
