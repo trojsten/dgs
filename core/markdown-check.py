@@ -52,6 +52,7 @@ class StyleEnforcer:
             'txp': check.FailIfFound(r'\\text(it|bf|sf)', "Do not use TeX font styling"),
             'txs': check.FailIfFound(r'\\(sub)?section', "Do not use TeX headings"),
             'txf': check.FailIfFound(r'\\footnote', "Do not use TeX footnotes"),
+            'lip': check.FailIfFound(r'\\insertPicture', "Do not use legacy custom figure commands"),
             'uni': check.FailIfFound(r'[“”’–—~]', "Do not use fancy Unicode dashes or quotation marks in the source"),
             'opa': check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
                               "Omit parentheses in simple functions"),
