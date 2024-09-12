@@ -44,7 +44,7 @@ class StyleEnforcer:
             'tgc': check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
             'thc': check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             'tjs': check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
-            'pun': check.FailIfFound(r'\\text(rm)?\{[.,;]\}', "No need to enclose punctuation in \\text"),
+            'pun': check.FailIfFound(r'\\text(rm)?\{[.,; ]+\}', "No need to enclose punctuation in \\text"),
             'sum': check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),
             'int': check.FailIfFound(r'\\int\b', "Use \\Int[]{}{} instead"),
             'imp': check.FailIfFound(r'\\implies', "Use \\Implies instead"),

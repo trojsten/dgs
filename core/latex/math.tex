@@ -40,18 +40,18 @@
 % Small delta differential
 \NewDocumentCommand{\udiff@}{}{\mathop{}\!\delta}
 
-% Power differential (rewrite this to one common function \diff@...)
-\NewDocumentCommand{\Diff}{o}{%
-    \IfNoValueTF{#1}{\diff@}{\diff@^{#1}}%
+% Differential, optionally with power
+\NewDocumentCommand{\Diff}{o m}{%
+    \IfNoValueTF{#1}{\diff@}{\diff@^{#1}} #2%
 }
-\NewDocumentCommand{\PDiff}{o}{%
-    \IfNoValueTF{#1}{\pdiff@}{\pdiff@^{#1}}%
+\NewDocumentCommand{\PDiff}{o m}{%
+    \IfNoValueTF{#1}{\pdiff@}{\pdiff@^{#1}} #2%
 }
-\NewDocumentCommand{\FDiff}{o}{%
-    \IfNoValueTF{#1}{\fdiff@}{\fdiff@^{#1}}%
+\NewDocumentCommand{\FDiff}{o m}{%
+    \IfNoValueTF{#1}{\fdiff@}{\fdiff@^{#1}} #2%
 }
-\NewDocumentCommand{\UDiff}{o}{%
-    \IfNoValueTF{#1}{\udiff@}{\udiff@^{#1}}%
+\NewDocumentCommand{\UDiff}{o m}{%
+    \IfNoValueTF{#1}{\udiff@}{\udiff@^{#1}} #2%
 }
 
 % Inner derivative with any differential symbol
