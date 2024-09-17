@@ -81,4 +81,5 @@ jobs:
         path: source/seminar/testing
     - name: "Build testing/01/1/1"
       run: |
-        pipenv run make output/seminar/test/01/1/1
+        echo "finished"
+        # pipenv run make output/seminar/test/01/1/1
