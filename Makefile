@@ -1,7 +1,7 @@
 # Remove all stupid builtin rules and variables
 MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
 
-SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru
+SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa
 
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
