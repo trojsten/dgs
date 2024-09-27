@@ -5,8 +5,9 @@
     (@ if issue.problems @)
         \subsection{(* i18n.captions.solution.plural|capitalize *)}
         (@ for problem in issue.problems @)
+            \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
             \subsubsection{(* i18n.captions.problem.singular|capitalize *) (* loop.index *)}
-            \protectedInput{\activeDirectory/(* problem.id *)/solution.tex}
+            \protectedInput{\activeDirectory/solution.tex}
         (@ endfor @)
     (@ endif @)
 (@ endblock solutions @)
