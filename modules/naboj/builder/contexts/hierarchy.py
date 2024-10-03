@@ -141,7 +141,7 @@ class ContextVolume(ContextNaboj):
         'authors': {
             'problems': [str],
             'pictures': [str],
-            'editor': [str],
+            'editors': [str],
         },
         Optional('venues'): {
             str: {

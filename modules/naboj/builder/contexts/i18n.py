@@ -37,6 +37,11 @@ class ContextI18n(context.FileSystemContext):
             'interval': str,
             'also': str,
         },
+        'people': {
+            'authors': str,
+            'pictures': str,
+            'editors': str,
+        },
         'tearoff': {
             'team': str,
             'bottom': str,

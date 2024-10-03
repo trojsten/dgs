@@ -1,15 +1,25 @@
+(@ macro list(title, people) @)
+    \subsubsection*{(* title|capitalize *)}
+    \begin{multicols}{3}
+        \begin{itemize}[label={}, itemsep=-1mm]
+            (@ for person in people @)
+                \item (* person *)
+            (@ endfor @)
+            (@ if people|length % 3 == 1 @)\item(@ endif @)
+            (@ if people|length % 3 >= 1 @)\item(@ endif @)
+        \end{itemize}
+    \end{multicols}
+(@ endmacro @)
+
 \vfill
 {
-    \subsubsection*{Autori úloh}
-        (* volume.authors.problems|format_list(and_word=i18n[language.id].globals.andw) *)
-    \subsubsection*{Obrázky}
-        (* volume.authors.pictures|format_list(and_word=i18n[language.id].globals.andw) *)
-    \subsubsection*{Technická úprava}
-        (* volume.authors.editor|format_list(and_word=i18n[language.id].globals.andw) *)
+    (* list(i18n[language.id].people.authors, volume.authors.problems) *)
+    (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
+    (* list(i18n[language.id].people.editors, volume.authors.editors) *)
 
     \color{gray}
     \tiny
-    \hfill built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
-
-    \hfill at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
+    \hfill
+    built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
+    at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
 }
