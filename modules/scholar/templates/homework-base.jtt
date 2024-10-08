@@ -10,8 +10,8 @@
         \fancyhead[R]{\textit{(* i18n.homework.deadline|capitalize *) (* issue.deadline.strftime('%d. %m. %Y') *)}}
 
         \titleformat{\section}[block]{\Huge\bfseries\centering}{}{0pt}{}
-        \titleformat{\subsection}[hang]{\Large\bfseries\vspace{4mm}\vspace*{-4mm}}{\arabic{subsection}. }{0pt}{}
-        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titleformat{\subsection}[hang]{\Large\bfseries\vspace{4mm}\vspace*{-4mm}}{\arabic{section}.\arabic{subsection}\quad}{0pt}{}
+        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{\arabic{section}.\arabic{subsection}\alph{subsubsection}\quad}[]
         \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
         \titlespacing{\section}{0pt}{6mm}{2mm}
         \titlespacing{\subsection}{0pt}{0mm}{0mm}
