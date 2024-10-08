@@ -24,8 +24,10 @@
     \setcounter{section}{(* issue.number - 1 *)}
     \section{(* i18n.homework.title|capitalize *) (* issue.number *)}
     \begin{center}
-        \textit{(* i18n.homework.disclaimer.foreword *)} \href{mailto:(* year.teacher.email *)}{\texttt{(* year.teacher.email *)}}
-        \textit{(* i18n.homework.disclaimer.midword *) (* issue.deadline.strftime('%d. %m. %Y') *)}.
+        %\textit{(* i18n.homework.disclaimer.foreword *)} \href{mailto:(* year.teacher.email *)}{\texttt{(* year.teacher.email *)}}
+        \textit{(* i18n.homework.disclaimer.foreword *)}
+        %\textit{(* i18n.homework.disclaimer.midword *) (* issue.deadline.strftime('%d. %m. %Y') *)}.
+        \textit{(* issue.deadline.strftime('%d. %m. %Y') *)}.
         \textit{(* i18n.homework.disclaimer.aftword *)}
     \end{center}
     (@ block sections @)
