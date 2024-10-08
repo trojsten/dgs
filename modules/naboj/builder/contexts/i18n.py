@@ -55,6 +55,9 @@ class ContextI18n(context.FileSystemContext):
         'physics_constants': {
             str: str,
         },
+        'venues': {
+            str: str,
+        },
         'globals': {
             'rtl': bool,
             'quotes': {
