@@ -291,6 +291,7 @@
 % Text with double spaces on both sides
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
 
+% Shorthands for floor and ceiling functions
 \NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
 \NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
 
@@ -395,6 +396,7 @@
 \NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
 
 \NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
+\NewDocumentCommand{\Binomial}{m m}{\binom {#1} {#2}}
 
 \let\tmp\phi
 \let\phi\varphi
@@ -414,4 +416,4 @@
 
 \NewDocumentCommand{\OneQuarter}{}{\text{¼}}
 \NewDocumentCommand{\ThreeQuarters}{}{\text{¾}}
-% (and more but later)
+% (and maybe more but later)
