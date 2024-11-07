@@ -8,5 +8,4 @@
     (@ for problem in volume.problems @)%
         (@ include 'answer.jtt' @)%
     (@ endfor @)
-    (@ include 'footer.jtt' @)
 (@ endblock @)

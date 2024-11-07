@@ -18,5 +18,4 @@
             (@ include 'answer.jtt' @)
         (@ endfor @)
     (@ endfor @)
-    (@ include 'footer.jtt' @)
 (@ endblock @)
