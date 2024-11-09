@@ -16,10 +16,7 @@
     (* list(i18n[language.id].people.authors, volume.authors.problems) *)
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
-
-    \color{gray}
-    \tiny
-    \hfill
-    built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
-    at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
+    (@ with colocolor='gray' @)
+        (@ include 'colophon.jtt' @)
+    (@ endwith @)
 }

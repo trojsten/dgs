@@ -90,6 +90,7 @@ build/naboj/%/online.tex: \
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/footer.jtt \
+	modules/naboj/templates/colophon.jtt \
 	modules/naboj/templates/base-booklet.jtt \
 	modules/naboj/templates/answer.jtt \
 	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \

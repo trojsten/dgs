@@ -1,0 +1,3 @@
+\color{(* colocolor or 'white' *)} \tiny \hfill
+built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
+at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}%
