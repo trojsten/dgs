@@ -65,6 +65,19 @@ build/naboj/%/build-venue: \
 ### Input files ###################################################################################
 
 # % <competition>/<volume>/venues/<venue>
+build/naboj/%/envelopes.tex: \
+	modules/naboj/templates/envelopes.jtt \
+	build/naboj/$$*/build-venue ;
+
+# Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
+# % <competition>/<volume>/languages/<language>
+build/naboj/%/online.tex: \
+	modules/naboj/templates/base.jtt \
+	modules/naboj/templates/base-booklet.jtt \
+	modules/naboj/templates/online.jtt \
+    build/naboj/$$*/build-language ;
+
+# % <competition>/<volume>/languages/<language>
 build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.jtt \
 	modules/naboj/templates/base-tearoff.jtt \
@@ -73,19 +86,6 @@ build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/tearoff/bottom.jtt \
 	build/naboj/$$*/build-venue ;
 
-# % <competition>/<volume>/venues/<venue>
-build/naboj/%/envelopes.tex: \
-	modules/naboj/templates/envelopes.jtt \
-	build/naboj/$$*/build-venue ;
-
-# % <competition>/<volume>/languages/<language>
-build/naboj/%/online.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/online.jtt \
-    build/naboj/$$*/build-language ;
-
-# Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.jtt \

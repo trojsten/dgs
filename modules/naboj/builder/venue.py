@@ -15,8 +15,6 @@ class BuilderNabojVenue(BuilderNaboj):
 
     _root_context_class = BuildableContextVenue
     templates = [
-        'barcodes.jtt',
-        'tearoff.jtt',
         'envelopes.jtt',
         'instructions.jtt',
         'answers-modulo.jtt',

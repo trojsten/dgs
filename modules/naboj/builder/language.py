@@ -14,6 +14,7 @@ class BuilderNabojLanguage(BuilderNaboj):
         'cover.jtt',
         'instructions-online.jtt',
         'online.jtt',
+        'tearoff.jtt',
     ]
     i18n_templates = ['intro.jtt']
 

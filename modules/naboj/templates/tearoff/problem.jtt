@@ -5,7 +5,7 @@
 \setcounter{figure}{0}%
 
 (@ block activate @)
-    \input{build/core/i18n/(* team.language *).tex}
+    \input{build/core/i18n/(* language.id *).tex}
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 (@ endblock activate @)
 
@@ -13,9 +13,9 @@
     \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.85\linewidth}%
         (@ block main @)
             \vspace{0pt}%
-            \subsection{\texorpdfstring{(* problem.number *)}{(* team.code *) (* problem.number *). (* problem.id *)}}%
+            \subsection{\texorpdfstring{(* problem.number *)}{(* language.id *): (* problem.number *). (* problem.id *)}}%
             \setlength{\parskip}{6pt}
-            \protectedInput{\activeDirectory/(* team.language *)/problem.tex}%
+            \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
         (@ endblock main @)
     \end{minipage}%
     \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.149\linewidth}
@@ -23,34 +23,10 @@
         \hspace{4mm}%
         \rotatebox{90}{%
             \hspace{(* competition.tearoff.team_space *)mm}%
-            \textsf{%
-                \fontsize{18}{0}\selectfont (* team.code[:4] *)%
-                \colorbox{(@ if team.venue_code[4] == 'S' @)black(@ else @)white(@ endif @)}{%
-                    \textcolor{(@ if team.venue_code[4] == 'S' @)white(@ else @)black(@ endif @)}{%
-                        \textbf{\fontsize{28}{0}\selectfont (* team.code[4:] *)}%
-                    }%
-                }%
-                \fontsize{18}{0}\selectfont(@ block probnum2 @)(* '%02d'|format(problem.number) *)(@ endblock probnum2 @)%
-                \fontsize{18}{0}\selectfont(@ block checkdigit @)(* '%01d'|format(checkdigit(team.code, problem.number)) *)(@ endblock checkdigit @)%
-            }%
         }%
         \hspace{2pt}
         \rotatebox{90}{%
-            \hspace{(* competition.tearoff.barcode_space *)mm}
-            \includegraphics[%
-                width=50mm, height=12mm,
-                keepaspectratio=false,
-                page=(@ block page @)(* team.number * (volume.problems|length + 1) + problem.number *)(@ endblock page @)]{%
-                \rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/barcodes.pdf%
-            }%
-            \hspace{(* competition.tearoff.barcode_space *)mm}
         }%
     \end{minipage}
-
-    {
-        \small (* i18n.get(team.language).tearoff.team *) \textbf{(* team.code *)}: %
-        (* team.school|truncate(90, false) *)%
-        (@ if team.in_school_symbol @)~\textbf{(* team.in_school_symbol *)}(@ endif @)%
-    }
 \end{minipage}%
 

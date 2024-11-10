@@ -8,7 +8,7 @@
     \centering
     \vspace*{(* competition.tearoff.bottomsep *)mm}
     \LARGE
-    \textit{(* i18n.get(team.language).tearoff.bottom *)}
+    \textit{(* i18n[language.id].tearoff.bottom *)}
 (@ endblock main @)
 
 (@ block probnum2 @)(* '%02d'|format(0) *)(@ endblock probnum2 @)

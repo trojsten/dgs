@@ -4,6 +4,8 @@
 
 (@ block content @)
     \newgeometry{
+        paperwidth  = 210mm,
+        paperheight = 99mm,
         left        = 12mm,
         right       = 5mm,
         bottom      = 3mm,
@@ -12,16 +14,9 @@
     \pagenumbering{gobble}
     \pagestyle{tearoff}
 
-    (@ for team_group in venue.teams_grouped @)
-        (@ for problem in volume.problems @)
-            (@ for team in team_group @)%
-                (@ include 'tearoff/problem.jtt' @)
-                (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
-            (@ endfor @)
-        (@ endfor @)
-        (@ for team in team_group @)%
-            (@ include 'tearoff/bottom.jtt' @)
-            (@ if loop.last @)\newpage(@ else @)\vspace*{-1mm}(@ endif @)
-        (@ endfor @)
+    (@ for problem in volume.problems @)
+        (@ include 'tearoff/problem.jtt' @)
+        \newpage
     (@ endfor @)
+    (@ include 'tearoff/bottom.jtt' @)
 (@ endblock @)
