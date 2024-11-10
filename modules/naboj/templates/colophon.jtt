@@ -1,4 +1,6 @@
 \color{(* colocolor or 'white' *)} \tiny \hfill
-built by (* build.user *) with dgs \texttt{(* build.dgs.branch *): (* build.dgs.hash *)}
-at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *) from branch \texttt{(* build.repo.branch *): (* build.repo.hash *)}
+(* competition.name *), volume (* competition.volume *): booklet
+built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.hash *)}
+at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)
+from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.hash *)}
 

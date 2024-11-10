@@ -16,7 +16,7 @@
     (* list(i18n[language.id].people.authors, volume.authors.problems) *)
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
-    (@ with colocolor='gray' @)
+    (@ with colocolor='lightgray' @)
         (@ include 'colophon.jtt' @)
     (@ endwith @)
 }
