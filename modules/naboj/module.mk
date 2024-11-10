@@ -84,7 +84,7 @@ build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/tearoff.jtt \
 	modules/naboj/templates/tearoff/problem.jtt \
 	modules/naboj/templates/tearoff/bottom.jtt \
-	build/naboj/$$*/build-venue ;
+	build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
@@ -247,6 +247,12 @@ output/naboj/%/online.pdf: \
 	$(call double_xelatex,naboj)
 	pdftk $@ burst output $(dir $@)/%02d.pdf
 
+# % <competition>/<volume>
+output/naboj/%/languages/tearoffs.zip: \
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/tearoff.pdf)
+	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
+	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
+
 output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
@@ -296,14 +302,14 @@ output/naboj/%/booklets: \
 # All targets for all languages
 # <competition>/<volume>
 output/naboj/%/languages: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) ;
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) \
+	$$@/tearoffs.zip ;
 
 # Tearoffs, three problems per page, aligned for cutting
 # <competition>/<volume>/<venues>/<venue>
 output/naboj/%/tearoff.pdf: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(subst $$(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../problems/*/*/problem.md))))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
-	build/naboj/%/barcodes.pdf \
 	build/naboj/%/tearoff.tex
 	$(call double_xelatex,naboj)
 
@@ -336,7 +342,6 @@ output/naboj/%/answers-modulo.pdf: \
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
-	output/naboj/%/tearoff.pdf \
 	output/naboj/%/instructions.pdf \
 	output/naboj/%/answers-modulo.pdf \
 	output/naboj/%/envelopes.pdf ;

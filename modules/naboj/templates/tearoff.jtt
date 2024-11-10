@@ -3,9 +3,10 @@
 (@ set target = 'tearoff' @)
 
 (@ block content @)
+    \eject
+    \pdfpagewidth=210mm
+    \pdfpageheight=99mm
     \newgeometry{
-        paperwidth  = 210mm,
-        paperheight = 99mm,
         left        = 12mm,
         right       = 5mm,
         bottom      = 3mm,

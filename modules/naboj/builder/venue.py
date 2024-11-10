@@ -1,12 +1,8 @@
-import logging
 from pathlib import Path
 
 import core.builder.jinja as jinja
 from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextVenue
-
-
-log = logging.getLogger('dgs')
 
 
 class BuilderNabojVenue(BuilderNaboj):
