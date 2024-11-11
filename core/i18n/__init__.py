@@ -82,7 +82,7 @@ languages = [
            table='таблица', tables='таблицы',
            equation='уравнение', equations='уравнения'),
     Locale('de', 'german', 'de-AT', ('„', '“'),
-           figure='ausbildung', figures='ausbildungen',
+           figure='abbildung', figures='abbildungen',
            table='tabelle', tables='tabellen',
            equation='gleichung', equations='gleichungen',
            andw='und',
