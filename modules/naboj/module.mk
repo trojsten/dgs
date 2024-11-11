@@ -236,6 +236,12 @@ output/naboj/%/booklet-print.pdf: \
 	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
 	mv output/naboj/$*/booklet-book.pdf $@
 
+output/naboj/%/answers.pdf: \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
+	build/naboj/%/answers.tex
+	$(call double_xelatex,naboj)
+
 # "Virtual tearoffs" for online version, one problem per page
 # % <competition>/<volume>/venues/<venue>
 output/naboj/%/online.pdf: \
@@ -246,23 +252,6 @@ output/naboj/%/online.pdf: \
 	build/naboj/%/online.tex
 	$(call double_xelatex,naboj)
 	pdftk $@ burst output $(dir $@)/%02d.pdf
-
-# % <competition>/<volume>
-output/naboj/%/languages/tearoffs.zip: \
-	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/tearoff.pdf)
-	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
-	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
-
-output/naboj/%/html: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
-
-output/naboj/%/answers.pdf: \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
-	build/naboj/%/answers.tex
-	$(call double_xelatex,naboj)
 
 output/naboj/%/constants.pdf: \
 	build/naboj/%/constants.tex \
@@ -284,6 +273,25 @@ output/naboj/%/cover-print.pdf: \
 	output/naboj/%/cover.pdf
 	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
+# Tearoffs, three problems per page, aligned for cutting
+# <competition>/<volume>/<languages>/<language>
+output/naboj/%/tearoff.pdf: \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
+	build/naboj/%/tearoff.tex
+	$(call double_xelatex,naboj)
+
+# % <competition>/<volume>
+output/naboj/%/languages/tearoffs.zip: \
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)/tearoff.pdf)
+	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
+	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
+
+output/naboj/%/html: \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
+
 # All targets for <language>
 # <competition>/<volume>
 output/naboj/%: \
@@ -304,14 +312,6 @@ output/naboj/%/booklets: \
 output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) \
 	$$@/tearoffs.zip ;
-
-# Tearoffs, three problems per page, aligned for cutting
-# <competition>/<volume>/<venues>/<venue>
-output/naboj/%/tearoff.pdf: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(subst $$(cdir),,$$(abspath $$(wildcard source/naboj/$$*/../../problems/*/*/problem.md))))) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
-	build/naboj/%/tearoff.tex
-	$(call double_xelatex,naboj)
 
 # Envelope cover
 output/naboj/%/envelopes.pdf: \
@@ -342,19 +342,14 @@ output/naboj/%/answers-modulo.pdf: \
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
+	output/naboj/%/booklet-print.pdf \
+	output/naboj/%/tearoff.pdf \
 	output/naboj/%/instructions.pdf \
 	output/naboj/%/answers-modulo.pdf \
 	output/naboj/%/envelopes.pdf ;
 
-# All targets for all venues
-# <competition>/<volume>
-output/naboj/%/venues:
-#	$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)) ;
-	@echo $(subst source/,output/,$(wildcard source/naboj/$*/venues/*)) ;
-
-output/naboj/%/all: \
-	output/naboj/%/languages \
-	output/naboj/%/venues ;
+output/naboj/%: \
+	output/naboj/%/languages ;
 
 output/naboj/%/copy: \
 	output/naboj/%
