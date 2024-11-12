@@ -286,6 +286,7 @@ output/naboj/%: \
 	output/naboj/%/constants.pdf \
 	output/naboj/%/cover-print.pdf \
 	output/naboj/%/booklet.pdf \
+	output/naboj/%/tearoff.pdf \
 	output/naboj/%/evaluation.pdf \
 	output/naboj/%/booklet-print.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
@@ -326,8 +327,6 @@ output/naboj/%/answers-modulo.pdf: \
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
 output/naboj/%: \
-	output/naboj/%/booklet-print.pdf \
-	output/naboj/%/tearoff.pdf \
 	output/naboj/%/instructions.pdf \
 	output/naboj/%/answers-modulo.pdf ;
 
@@ -336,6 +335,8 @@ output/naboj/%: \
 output/naboj/%/venues: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)),$$(dir)) ;
 
+# Entire volume
+# <competition>/<volume>
 output/naboj/%/all: \
 	output/naboj/%/languages \
 	output/naboj/%/venues ;

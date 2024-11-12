@@ -32,7 +32,7 @@ class BuilderNabojVenue(BuilderNaboj):
         for template in self.language_templates:
             path = self.path()
             jinja.print_template(
-                Path(self.launch_directory, path[0], path[1], 'languages', 'sk'), template, self.context.data,
+                Path(self.launch_directory, path[0], path[1], 'languages', self.context.data['venue']['language']), template, self.context.data,
                 outdir=self.output_directory,
                 new_name=Path(template).with_suffix('.tex'),
             )
