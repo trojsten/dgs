@@ -79,40 +79,11 @@ class ContextVenue(ContextNaboj):
         'code': Regex(r'[A-Z]{5}'),
         'name': And(str, len),
         'language': valid_language,
-        'teams': [ContextNaboj.team],
-        'teams_grouped': [[ContextNaboj.team]],
         'problems_modulo': [[ContextNaboj.problem]],
         Optional('orgs'): [And(str, len)],
         'evaluators': int,
         'start': And(int, lambda x: 0 <= x < 1440),
     })
-
-    def _add_extra_teams(self, competition, venue):
-        code = 0
-        while len(self.data['teams']) % competition.data['tearoff']['per_page'] != 0:
-            self.data['teams'].append({
-                'id': 0,
-                'code': f'SKBAS{999 - code}',
-                'contact_email': "none@none.none",
-                'contact_name': "Unnamed",
-                'contact_phone': "",
-                'contestants': "unknown",
-                'display_name': f"Extra set {999 - code}",
-                'in_school_symbol': None,
-                'language': self.data['language'],
-                'name': "",
-                'number': 0,
-                'school': f"Extra set {999 - code}",
-                'school_address': "",
-                'school_id': 0,
-                'school_name': f"Extra set {999 - code}",
-                'status': 'R',
-                'venue': self.data['id'],
-                'venue_code': self.data['code'],
-                'venue_id': 0,
-                #'venue_id': self.data['id'], # Currently there is a collision with venue.id from web!!! Fix later
-            })
-            code += 1
 
     def populate(self, competition, volume, venue):
         super().populate(competition)
@@ -120,12 +91,7 @@ class ContextVenue(ContextNaboj):
         vol = ContextVolume(self.root, competition, volume)
         self.load_meta(competition, volume, venue) \
             .add_id(venue)
-        self._add_extra_teams(comp, vol)
         self.add(
-            teams=lists.numerate(self.data.get('teams'), itertools.count(0)),
-            teams_grouped=lists.split_div(
-                lists.numerate(self.data.get('teams')), comp.data['tearoff']['per_page']
-            ),
             problems_modulo=lists.split_mod(
                 lists.add_numbers([x['id'] for x in vol.data['problems']], itertools.count(1)),
                 self.data['evaluators'], first=1,

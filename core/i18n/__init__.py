@@ -115,7 +115,7 @@ languages = [
            figure='figure', figures='figures',              ### must be present for validation
            table='table', tables='tables',
            equation='equation', equations='equations',
-           section='section', sections='sectionss'),
+           section='section', sections='sections'),
     Locale('qq', 'test', 'sk-SK', ('(', ')'),
            figure='obrázok', figures='obrázky',
            table='tabuľka', tables='tabuľky',

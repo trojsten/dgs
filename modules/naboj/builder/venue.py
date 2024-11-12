@@ -11,11 +11,10 @@ class BuilderNabojVenue(BuilderNaboj):
 
     _root_context_class = BuildableContextVenue
     templates = [
-        'envelopes.jtt',
         'instructions.jtt',
         'answers-modulo.jtt',
     ]
-    language_templates = ['instructions-inner.jtt', 'evaluators.jtt']
+    language_templates = ['instructions-inner.jtt']
 
     def add_arguments(self):
         super().add_arguments()

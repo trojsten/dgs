@@ -21,6 +21,7 @@ class StyleEnforcer:
         self.parser.add_argument('-v', '--verbose', action='store_true')
         self.parser.add_argument('-w', '--warnings', action='store_true')
         self.parser.add_argument('--only', nargs='+', type=str)
+        self.parser.add_argument('--ignore', nargs='+', type=str)
         self.parser.add_argument('--markdown', action='store_true')
         self.args = self.parser.parse_args()
 
@@ -29,12 +30,13 @@ class StyleEnforcer:
         self.line_errors = {
             'tab': check.FailIfFound(r'\t', "Tab instead of spaces"),
             'cws': check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
-            'sws': check.FailIfFound(r'(?<!\\ang{;?|\\SIlist{[0-9.e;]+|\\Coord{[0-9.e;]+);[^\s]', "Semicolon not followed by whitespace"),
+            'sws': check.FailIfFound(r'(?<!\\ang{;?|\\qtylist{[0-9.e;]+|\\Coord{[0-9.e;]+);[^\s]', "Semicolon not followed by whitespace"),
             'pas': check.ParenthesesSpace(),
             'tws': check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
             'spb': check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
             'frb': check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
-            'csi': check.FailIfFound(r'(?:SI\{[^},]*),', "Comma in \\SI expression", offset=0),
+            'csi': check.FailIfFound(r'(?:qty\{[^},]*),', "Comma in \\qty expression", offset=0),
+            'osi': check.FailIfFound(r'\\SI', "Use \\qty instead of SI"),
             'cnu': check.FailIfFound(r'(?:\\num\{[^},]*),', "Comma in \\num expression"),
             'vep': check.FailIfFound(r'\\varepsilon', "\\varepsilon is not allowed, use plain \\epsilon"),
             'crc': check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
@@ -124,6 +126,10 @@ class StyleEnforcer:
 
         if self.args.only is not None:
             line_errors = {key: error for key, error in line_errors.items() if key in self.args.only}
+
+        if self.args.ignore is not None:
+            for key in self.args.ignore:
+                del line_errors[key]
 
         with open(path, 'r') as file:
             ok = None

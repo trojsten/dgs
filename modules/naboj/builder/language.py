@@ -14,9 +14,10 @@ class BuilderNabojLanguage(BuilderNaboj):
         'cover.jtt',
         'instructions-online.jtt',
         'online.jtt',
+        'evaluation.jtt',
         'tearoff.jtt',
     ]
-    i18n_templates = ['intro.jtt']
+    i18n_templates = ['intro.jtt', 'evaluators.jtt']
 
     def add_arguments(self):
         super().add_arguments()

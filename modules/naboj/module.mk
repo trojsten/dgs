@@ -64,11 +64,6 @@ build/naboj/%/build-venue: \
 
 ### Input files ###################################################################################
 
-# % <competition>/<volume>/venues/<venue>
-build/naboj/%/envelopes.tex: \
-	modules/naboj/templates/envelopes.jtt \
-	build/naboj/$$*/build-venue ;
-
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
@@ -112,18 +107,19 @@ build/naboj/%/constants.tex: \
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions-inner.tex: \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
-	build/naboj/$$*/build-language ;
-
-build/naboj/%/evaluators.tex: \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.md))) \
 	build/naboj/$$*/build-venue ;
 
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions.tex: \
-	modules/naboj/templates/$$(notdir $$@) \
+	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
+
+# % <competition>/<volume>/languages/<language>
+build/naboj/%/evaluators.tex: \
+	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	build/naboj/$$*/build-language ;
 
 # Instructions before the online competition (content)
 build/naboj/%/instructions-online-inner.tex: \
@@ -200,19 +196,6 @@ build/naboj/%/answers-modulo.tex: \
 	modules/naboj/templates/answers-modulo.jtt \
 	build/naboj/$$*/build-venue ;
 
-# Barcodes in text format
-build/naboj/%/barcodes.tex: \
-	build/naboj/$$*/build-venue ;
-
-# Barcodes text -> PDF, one per page
-build/naboj/%/barcodes.pdf: \
-	build/naboj/%/barcodes.tex
-	@echo -e '$(c_action)Creating barcode PDF file $(c_filename)$@$(c_action):$(c_default)'
-	barcode -e "128" -i $< -g "120x30" -p "120x30mm" -n -o $(subst .tex,.ps,$<)
-	ps2pdf $(subst .tex,.ps,$<) $@.big
-	pdfcrop $@.big $@
-
-
 
 ### Output files ##################################################################################
 ### Languages ###################################
@@ -258,6 +241,10 @@ output/naboj/%/constants.pdf: \
 	source/naboj/%/i18n
 	$(call double_xelatex,naboj)
 
+output/naboj/%/evaluation.pdf: \
+	build/naboj/%/evaluators.tex
+	$(call double_xelatex,naboj)
+
 output/naboj/%/instructions-online.pdf: \
 	build/naboj/%/pdf-prerequisites \
 	build/naboj/%/instructions-online.tex \
@@ -299,6 +286,7 @@ output/naboj/%: \
 	output/naboj/%/constants.pdf \
 	output/naboj/%/cover-print.pdf \
 	output/naboj/%/booklet.pdf \
+	output/naboj/%/evaluation.pdf \
 	output/naboj/%/booklet-print.pdf ;
 #	output/naboj/$$*/instructions-online.pdf \
 #	output/naboj/$$*/online.pdf ;
@@ -313,15 +301,11 @@ output/naboj/%/languages: \
 	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/languages/*)),$$(dir)) \
 	$$@/tearoffs.zip ;
 
-# Envelope cover
-output/naboj/%/envelopes.pdf: \
-	build/naboj/%/envelopes.tex
-	$(call double_xelatex,naboj)
-
+# <competition>/<volume>/venues/<venue>
 output/naboj/%/instructions.pdf: \
 	build/naboj/%/instructions.tex \
 	$$(subst source/,build/,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.tex)))) \
-	source/naboj/%/i18n
+	build/naboj/$$*/build-venue
 	$(call double_xelatex,naboj)
 
 # <competition>/<volume>/venues/<venue>
@@ -334,9 +318,9 @@ output/naboj/%/answers-modulo.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers-modulo.tex \
-	build/naboj/%/evaluators.tex
+	build/naboj/$$*/build-venue \
+	build/core/i18n ;
 	$(call double_xelatex,naboj)
-
 
 
 # All targets for <venue>
@@ -345,11 +329,16 @@ output/naboj/%: \
 	output/naboj/%/booklet-print.pdf \
 	output/naboj/%/tearoff.pdf \
 	output/naboj/%/instructions.pdf \
-	output/naboj/%/answers-modulo.pdf \
-	output/naboj/%/envelopes.pdf ;
+	output/naboj/%/answers-modulo.pdf ;
 
-output/naboj/%: \
-	output/naboj/%/languages ;
+# All targets for all venues
+# <competition>/<volume>
+output/naboj/%/venues: \
+	$$(foreach dir,$$(subst source/,output/,$$(wildcard source/naboj/$$*/venues/*)),$$(dir)) ;
+
+output/naboj/%/all: \
+	output/naboj/%/languages \
+	output/naboj/%/venues ;
 
 output/naboj/%/copy: \
 	output/naboj/%

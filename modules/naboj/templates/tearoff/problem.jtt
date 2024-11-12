@@ -10,7 +10,7 @@
 (@ endblock activate @)
 
 \begin{minipage}[t][(* competition.tearoff.height *)mm][t]{\textwidth}%
-    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.85\linewidth}%
+    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.86\linewidth}%
         (@ block main @)
             \vspace{0pt}%
             \subsection{\texorpdfstring{(* problem.number *)}{(* language.id *): (* problem.number *). (* problem.id *)}}%
@@ -18,7 +18,7 @@
             \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
         (@ endblock main @)
     \end{minipage}%
-    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.149\linewidth}
+    \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.139\linewidth}
         \vspace{0mm}%
         \hspace{4mm}%
         \rotatebox{90}{%

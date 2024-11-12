@@ -1,0 +1,13 @@
+(@ extends 'base-booklet.jtt' @)
+
+(@ block content @)
+    \fancypagestyle{instructions}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].instructions.title *)}}
+        \fancyfoot[C]{}
+    }
+    \pagestyle{instructions}
+
+    \section{(* i18n[language.id].instructions.title *)}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/evaluators.tex}
+(@ endblock @)
