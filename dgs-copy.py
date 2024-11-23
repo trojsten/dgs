@@ -39,7 +39,6 @@ def main():
     parser.add_argument('volume', type=int)
     parser.add_argument('part', type=int, choices=[1, 2])
     parser.add_argument('round', choices=['1', '2', '3', 'outdoor'])
-    parser.add_argument('user', type=str)
     parser.add_argument('-d', '--dry-run', action='store_true')
 
     args = parser.parse_args()
