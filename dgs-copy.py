@@ -6,8 +6,8 @@ import argparse
 from typing import Tuple
 
 
-VERSION = "3.04"
-DATE = "2023-11-22"
+VERSION = "4.0"
+DATE = "2024-11-23"
 
 
 def fire(query):
@@ -80,7 +80,7 @@ def main():
     # rsync everything to server
     if not args.dry_run:
         fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 "
-             f"tasks {args.user}@ksp:/var/www-archiv/trojstenweb/")
+             f"tasks trojstenweb@ksp:/var/www/trojstenweb/")
 
     # delete the temporary structure
     fire("rm -rf tasks")

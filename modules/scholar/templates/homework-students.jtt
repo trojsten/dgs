@@ -2,6 +2,7 @@
 
 (@ block sections @)
     (@ for problem in issue.problems @)
+        \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
         \subsection{%
             \texorpdfstring{%
                 (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
@@ -10,7 +11,7 @@
             }%
         }
         \label{sec:(* problem.id *)}
-        \tryInput{\activeDirectory/(* problem.id *)/problem.tex}
+        \protectedInput{\activeDirectory/problem.tex}
         (@ if problem.subproblems|length == 0 @)
             (@ block solution scoped @)(@ endblock solution @)
         (@ endif @)
