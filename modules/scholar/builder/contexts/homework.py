@@ -3,6 +3,7 @@ from enschema import Schema, And, Optional
 
 from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
 from .buildable import ContextIssueBase
+from .validators import HomeworkValidator
 
 
 class HomeworkMixin:
@@ -39,5 +40,6 @@ class ContextHomeworkIssue(HomeworkMixin, ContextIssue):
 
 
 class ContextHomework(HomeworkMixin, ContextIssueBase):
-    _issue_context_class = ContextHomeworkIssue
     _schema = Schema({})
+    _validator_class = HomeworkValidator
+    _issue_context_class = ContextHomeworkIssue

@@ -3,6 +3,7 @@ from enschema import Schema, And
 
 from .hierarchy import ContextIssue, ContextIssueSub
 from .buildable import ContextIssueBase
+from .validators import HandoutValidator
 
 
 class HandoutMixin:
@@ -33,4 +34,5 @@ class ContextHandoutIssue(HandoutMixin, ContextIssue):
 
 class ContextHandout(HandoutMixin, ContextIssueBase):
     _schema = Schema({})
+    _validator_class = HandoutValidator
     _issue_context_class = ContextHandoutIssue
