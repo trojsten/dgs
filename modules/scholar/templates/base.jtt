@@ -15,7 +15,7 @@
     \titleformat{\section}[block]{\vspace*{-10mm}\Huge\bfseries\centering}{\Roman{section}. }{0pt}{}
     \titleformat{\subsection}[hang]{\LARGE\bfseries\vspace{4mm}\vspace*{-4mm}}{}{0pt}{}
     \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
-    \titleformat{\paragraph}[hang]{\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
     \titleformat{\subparagraph}[hang]{\it\bfseries}{}{0pt}{}[]
     \titlespacing{\section}{0pt}{6mm}{2mm}
     \titlespacing{\subsection}{0pt}{6mm}{4mm}

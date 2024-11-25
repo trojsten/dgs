@@ -7,7 +7,7 @@
 (@ endblock solution @)
 
 (@ block subsolution @)
-    \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
+    \paragraph{(* i18n.captions.solution.singular|capitalize *)}
     \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)/(* subproblem.id *)}%
     \protectedInput{\activeDirectory/solution.tex}
 (@ endblock subsolution @)

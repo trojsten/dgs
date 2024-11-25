@@ -8,7 +8,7 @@
                 (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
             }{%
                 \thesubsection{} (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
-            }%
+            }
         }
         \label{sec:(* problem.id *)}
         \protectedInput{\activeDirectory/problem.tex}
@@ -25,7 +25,8 @@
                     }%
                 }
                 \label{sec:(* problem.id*)-(* subproblem.id *)}
-                \protectedInput{\activeDirectory/(* problem.id *)/(* subproblem.id *)/problem.tex}
+                \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}
+                \protectedInput{\activeDirectory/(* subproblem.id *)/problem.tex}
                 (@ block subsolution scoped @)(@ endblock subsolution @)
             (@ endfor @)
         (@ endif @)
