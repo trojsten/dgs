@@ -90,7 +90,11 @@ build/core/i18n: \
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
 build/%.tex: source/%.md
+ifdef lang
+	$(call pandoctex,$(lang))
+else
 	$(call pandoctex,sk)
+endif
 
 # Copy TeX files from source to build
 build/%.tex: source/%.tex
