@@ -278,13 +278,20 @@
 \NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
 \NewDocumentCommand{\EvalP}{m m O{}}{\left(#1\right)_{#2}^{#3}}
 \NewDocumentCommand{\EvalB}{m m O{}}{\left[#1\right]_{#2}^{#3}}
-% Expected value
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATISTICS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Distribution #1 of variable #2 with parameters #3
+\NewDocumentCommand{\Distribution}{m m m}{#1\left(#2 \mid #3\right)}
+
+% Statistics
 \NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
 \NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
 \NewDocumentCommand{\Var}{m}{\mathrm{Var}\left(#1\right)}
 \NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\left({#1}\right)}
 \NewDocumentCommand{\Bias}{m}{\mathrm{Bias}\left({#1}\right)}
+\NewDocumentCommand{\Binomial}{m m}{\binom {#1} {#2}}
 
 % Text with spaces on both sides
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
@@ -350,12 +357,6 @@
 
 \NewDocumentCommand{\Angle}{}{\sphericalangle}
 
-% Astronomical magnitudes
-\NewDocumentCommand{\Mag}{m}{\ensuremath{{#1}^{\mathrm{m}}}}
-
-% Distribution #1 of variable #2 with parameters #3
-\NewDocumentCommand{\Distribution}{m m m}{#1\left(#2 \mid #3\right)}
-
 % Asymptotic notations
 \NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
@@ -395,8 +396,8 @@
 
 \NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
 
+% Defaults for multi-notation
 \NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
-\NewDocumentCommand{\Binomial}{m m}{\binom {#1} {#2}}
 
 \let\tmp\phi
 \let\phi\varphi

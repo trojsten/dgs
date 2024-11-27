@@ -13,11 +13,11 @@ class Crawler():
 
     @staticmethod
     def is_node(path):
-        return path.is_dir() and path.name != '.' and Path(path, 'meta.yaml').is_file()
+        return path.is_dir() and path.basename[0] != '.' and Path(path, 'meta.yaml').is_file()
 
     @staticmethod
     def is_leaf(path):
-        return path.is_file()
+        return path.is_file() and path.basename[0] != '.'
 
     def print_path(self, path=None, offset=0):
         if path is None:
@@ -32,6 +32,7 @@ class Crawler():
                 colour = c.meta if path.name == 'meta.yaml' else c.leaf
 
         print(f"{' ' * offset * self.step}{colour(path.name)}")
+
         if self.is_node(path):
             for child in sorted(path.iterdir()):
                 self.print_path(child, offset + 1)
@@ -40,7 +41,8 @@ class Crawler():
         return [child.name for child in sorted(self.root.iterdir()) if self.is_node(child)]
 
     def subdirs(self):
-        return [child.name for child in sorted(self.root.iterdir()) if child.is_dir()]
+        """ DeGeŠ should ignore all directories starting with '.' """
+        return [child.name for child in sorted(self.root.iterdir()) if child.is_dir() and not child.name.startswith('.')]
 
     def __str__(self):
         return f"Crawler at {self.root}"
