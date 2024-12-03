@@ -26,4 +26,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The original author strongly dislikes the Computer Modern font family
 and discourages its use with DeGeŠ. I mean, if you absolutely have to,
-sure, go ahead, but I do not like you. There is a lot of proper fonts, you know.
+sure, go ahead, but I will not like you.
+There are a lot of properly designed and pretty fonts, you know.
