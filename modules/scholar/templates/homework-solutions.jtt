@@ -1,7 +1,7 @@
 (@ extends 'homework-students.jtt' @)
 
 (@ block solution @)
-    \subsubsection{(* i18n.captions.solution.singular|capitalize *)}
+    \paragraph{(* i18n.captions.solution.singular|capitalize *)}
     \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
     \protectedInput{\activeDirectory/solution.tex}
 (@ endblock solution @)

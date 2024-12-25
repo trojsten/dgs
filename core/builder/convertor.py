@@ -225,8 +225,8 @@ class Convertor:
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             #"-M", "cref=true",
             "--filter", "pandoc-eqnos",
-            #"--filter", "pandoc-include",
-            #"-M", f"include-entry={Path(self.infile.name).parent}/",
+            "--filter", "pandoc-include",
+            "-M", f"include-entry={Path(self.infile.name).parent}/",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
