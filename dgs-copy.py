@@ -72,6 +72,7 @@ def main():
     # copy pictures
     copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
 
+    # stupid hack to make it work with trojstenweb
     fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && "
          rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) "
          rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")

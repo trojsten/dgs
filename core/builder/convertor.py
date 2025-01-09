@@ -227,6 +227,7 @@ class Convertor:
             "--filter", "pandoc-eqnos",
             "--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
+            "-M", f"rewrite-path=false",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
