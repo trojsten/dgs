@@ -273,6 +273,8 @@
 \DeclareMathOperator{\sinc}{sinc}
 % Haversine
 \DeclareMathOperator{\hav}{hav}
+% Error function
+\DeclareMathOperator{\erf}{erf}
 
 % Evaluation at point
 \NewDocumentCommand{\Eval}{m m O{}}{\left.#1\right|_{#2}^{#3}}
@@ -282,7 +284,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATISTICS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Distribution #1 of variable #2 with parameters #3
-\NewDocumentCommand{\Distribution}{m m m}{#1\left(#2 \mid #3\right)}
+\NewDocumentCommand{\Distribution}{m o m}{#1\left(\IfNoValueTF{#2}{}{#2 \mid}#3\right)}
 
 % Statistics
 \NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
@@ -294,8 +296,10 @@
 \NewDocumentCommand{\Binomial}{m m}{\binom {#1} {#2}}
 
 % Text with spaces on both sides
+\NewDocumentCommand{\Text}{m}{\ \text{#1}\ }
+% Text with quad spaces on both sides
 \NewDocumentCommand{\QText}{m}{\quad\text{#1}\quad}
-% Text with double spaces on both sides
+% Text with double quad spaces on both sides
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
 
 % Shorthands for floor and ceiling functions
