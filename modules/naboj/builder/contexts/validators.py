@@ -14,6 +14,7 @@ class NabojValidator(FileSystemValidator):
             str: {
                 valid_language: {
                     Optional('problem.md'): FileOrLink,
+                    Optional('problem-extra.md'): FileOrLink,
                     Optional('solution.md'): FileOrLink,
                     Optional('answer-extra.md'): FileOrLink,
                     Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|fig\.tex)')): File,

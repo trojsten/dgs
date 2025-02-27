@@ -4,7 +4,7 @@ name = "pypi"
 url = "https://pypi.org/simple"
 
 [requires]
-python_version = "3.12"
+python_version = "3.13"
 
 [dev-packages]
 pytest = "*"
