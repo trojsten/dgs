@@ -108,6 +108,7 @@ class ContextVolume(ContextNaboj):
             'problems': [str],
             'pictures': [str],
             'editors': [str],
+            'head': str,
         },
         Optional('venues'): {
             str: {

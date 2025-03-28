@@ -5,7 +5,7 @@
 (@ block content @)
     \eject
     \pdfpagewidth=210mm
-    \pdfpageheight=99mm
+    \pdfpageheight=(* 297 / competition.tearoff.per_page *)mm
     \newgeometry{
         left        = 12mm,
         right       = 5mm,
