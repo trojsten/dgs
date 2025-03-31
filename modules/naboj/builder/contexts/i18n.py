@@ -45,6 +45,7 @@ class ContextI18n(context.FileSystemContext):
         'tearoff': {
             'team': str,
             'bottom': str,
+            'instruction': str,
         },
         'instructions': {
             'title': str,

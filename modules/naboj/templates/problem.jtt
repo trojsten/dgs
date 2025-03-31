@@ -14,3 +14,6 @@
 \label{sec:(* problem.id *):problem}%
 \hypersetup{linkcolor=colour-link}%
 \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
+\IfFileExists{\activeDirectory/(* language.id *)/problem-extra.tex}{%
+    \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
+}{}%

@@ -112,6 +112,14 @@ build/%.pdf: source/%.svg
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
+build/%.xdv: source/%.tikz
+	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@)
+
+build/%.pdf: build/%.xdv
+	dvisvgm -o $@ $<
+
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
 	@echo -e '$(c_action)[gnuplot] Rendering file $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'

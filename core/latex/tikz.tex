@@ -1,0 +1,33 @@
+\documentclass{article}
+
+\usepackage{tikz}
+\usetikzlibrary{matrix}
+
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mleftright}
+\RequirePackage{siunitx}
+\RequirePackage[weather]{ifsym}
+
+\RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
+\RequirePackage{mathtools}
+\RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage{chemfig}                                    % complex chemical formulae
+
+\RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
+\RequirePackage[minionint, mathlf]{MinionPro}
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage[f]{esvect}
+\RequirePackage{accents}
+
+\input{core/latex/fonts.tex}
+\input{core/latex/utilities.tex}
+\input{core/latex/math.tex}
+\input{core/latex/symbols.tex}
+\input{core/latex/siunitx.tex}
+
+\begin{document}
+    \begin{tikzpicture}
+        \input{/home/kvik/dgs/source/naboj/chem/03/problems/sudoku/sudoku.tikz}
+    \end{tikzpicture}
+\end{document}

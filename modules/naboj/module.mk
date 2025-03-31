@@ -10,6 +10,11 @@ source/naboj/%/i18n: \
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
 
+build/naboj/%/problem-extra.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
 build/naboj/%/answer.tex: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
@@ -158,7 +163,8 @@ build/naboj/%/pdf-prerequisites: \
 # <competition>/<volume>
 define RULE_TEMPLATE
 build/naboj/%/problems/$(1): \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) ;
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem-extra.md))) ;
 
 build/naboj/%/solutions/$(1): \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;

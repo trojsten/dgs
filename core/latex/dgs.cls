@@ -23,6 +23,7 @@
 ]{geometry}
 
 \RequirePackage{tikz}
+\RequirePackage{nicematrix}
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{mleftright}
@@ -60,6 +61,7 @@
 \RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
 \RequirePackage{chemfig}                                    % complex chemical formulae
+\RequirePackage{plimsoll}
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
@@ -75,6 +77,8 @@
 
 \AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
 %\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
+
+\setminted{fontsize=\footnotesize}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
