@@ -1,7 +1,8 @@
-\documentclass{article}
+% Wrapper for producing standalone tikz figures, for PDF or SVG output
 
-\usepackage{tikz}
-\usetikzlibrary{matrix}
+\documentclass{standalone}
+
+\RequirePackage{tikz}
 
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
@@ -11,7 +12,7 @@
 
 \RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
 \RequirePackage{mathtools}
-\RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage[version=4]{mhchem}                          % simple chemical formulae
 \RequirePackage{chemfig}                                    % complex chemical formulae
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
@@ -26,8 +27,11 @@
 \input{core/latex/symbols.tex}
 \input{core/latex/siunitx.tex}
 
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{matrix, backgrounds, fit, positioning}
+
 \begin{document}
     \begin{tikzpicture}
-        \input{/home/kvik/dgs/source/naboj/chem/03/problems/sudoku/sudoku.tikz}
+        (@ include tikzfile.name @)
     \end{tikzpicture}
 \end{document}
