@@ -1,0 +1,5 @@
+(@ extends 'standalone.jtt' @)
+
+(@ block content @)
+    (* text *)
+(@ endblock content @)

@@ -36,7 +36,9 @@ class MissingVariablesError(Exception):
 
 
 class Renderer:
-    def __init__(self, directory):
+    def __init__(self, template_root):
+        self.template_root = template_root
+
         self.env = jinja2.Environment(
             block_start_string='(@',
             block_end_string='@)',
@@ -48,8 +50,8 @@ class Renderer:
             line_comment_prefix='%#',
             trim_blocks=True,
             autoescape=False,
-            undefined=jinja2.StrictUndefined,
-            loader=jinja2.FileSystemLoader(directory),
+            undefined=CollectUndefined,
+            loader=jinja2.FileSystemLoader(self.template_root),
         )
 
         self.env.filters |= {
@@ -72,19 +74,16 @@ class Renderer:
 
 
     def render(self,
-               root: Path,
                template: Path,
                context: dict[str, Any],
                *,
-               outdir: Optional[Path] = None,
-               new_name: Path = None):
+               outfile: Optional[Path] = None):
+        template_path = self.template_root / template
 
-        template_path = root / template
-
-        if outdir is None:
+        if outfile is None:
             output_path = sys.stdout
         else:
-            output_path = open(Path(outdir / (template if new_name is None else new_name)), 'w')
+            output_path = outfile
 
         try:
             log.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")

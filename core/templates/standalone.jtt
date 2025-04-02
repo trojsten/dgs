@@ -9,6 +9,7 @@
 \RequirePackage{mleftright}
 \RequirePackage{siunitx}
 \RequirePackage[weather]{ifsym}
+\RequirePackage{nicematrix}
 
 \RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
 \RequirePackage{mathtools}
@@ -31,7 +32,5 @@
 \usetikzlibrary{matrix, backgrounds, fit, positioning}
 
 \begin{document}
-    \begin{tikzpicture}
-        (@ include tikzfile.name @)
-    \end{tikzpicture}
+    (* content *)
 \end{document}

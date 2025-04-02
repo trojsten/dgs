@@ -13,7 +13,7 @@ class Convertor:
         'all': [],
         'latex': [
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
-            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp|tikz)}",
                              r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)

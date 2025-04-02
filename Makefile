@@ -47,7 +47,7 @@ define _pandoc
 		$(c_extension)Markdown$(c_action) file $(c_filename)$<$(c_action) to \
 		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-	python convert.py $(2) $(1) $< $@ || exit 1;
+	python pandoc.py --format $(2) $(1) $< $@ || exit 1;
 endef
 
 # pandoctex(language)
@@ -100,6 +100,10 @@ endif
 build/%.tex: source/%.tex
 	$(call _copy,TeX)
 
+# Standalone TeX file from .chem.tex
+build/%.tikz.tex: source/%.tikz
+	./standalone.py $(lang) $< $@
+
 # Copy py files from source to build
 build/%.py: source/%.py
 	$(call _copy,Python)
@@ -112,13 +116,20 @@ build/%.pdf: source/%.svg
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
-build/%.xdv: source/%.tikz
-	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+build/%.xdv: build/%.tikz.tex
+	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@)
+	@texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
 
-build/%.pdf: build/%.xdv
-	dvisvgm -o $@ $<
+build/%.pdf: build/%.tikz.tex
+	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	@texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	@texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+
+build/%.svg: build/%.xdv
+	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	dvisvgm --no-fonts -o $@ $<
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
