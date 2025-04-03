@@ -140,7 +140,7 @@ def environment(directory):
     return env
 
 
-def print_template(root: Path, template: Path, context: dict, *, outdir=None, new_name=None):
+def print_tesmplate(root: Path, template: Path, context: dict, *, outdir=None, new_name=None):
     """ Print a Jinja2 template with provided context """
     template_path = Path(root, template)
     template_path = root / template

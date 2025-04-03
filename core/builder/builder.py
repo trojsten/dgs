@@ -78,6 +78,9 @@ class BaseBuilder(metaclass=ABCMeta):
         self.context = self._root_context_class(self.launch_directory, *self.ident())
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
 
+        self.renderer = jinja.Renderer(self.template_root)
+
+
     def add_core_arguments(self) -> None:
         """ Create the default ArgumentParser """
         self.parser.add_argument('launch', action=argparsedirs.ReadableDir)
@@ -153,9 +156,8 @@ class BaseBuilder(metaclass=ABCMeta):
             self.print_dir_info()
 
         for template in self.templates:
-            jinja.print_template(self.template_root, template, self.context.data,
-                                 outdir=self.output_directory,
-                                 new_name=self.output_path(template, override_name=new_name))
+            outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
+            self.renderer.render(template, self.context.data, outfile=outfile)
 
         log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} "
                   f"{c.path(self.full_name())} {c.ok('successful')}")

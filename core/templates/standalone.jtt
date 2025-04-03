@@ -1,6 +1,6 @@
 % Wrapper for producing standalone tikz figures, for PDF or SVG output
 
-\documentclass{standalone}
+\documentclass[border={2pt 2pt 14pt 2pt}]{standalone}
 
 \RequirePackage{tikz}
 
@@ -21,6 +21,20 @@
 \RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
+\RequirePackage{caption}
+\RequirePackage{cleveref}
+
+\RequirePackage[
+    shorthands=off,
+    slovak,
+    czech,
+    english,
+    german,
+    french,
+    polish,
+    spanish,
+]{babel}                                                    % multi-language support
+\RequirePackage[autostyle]{csquotes}                        % proper localized quotation marks
 
 \input{core/latex/fonts.tex}
 \input{core/latex/utilities.tex}
@@ -28,8 +42,34 @@
 \input{core/latex/symbols.tex}
 \input{core/latex/siunitx.tex}
 
+\input{build/core/i18n/(* lang *).tex}
+
 \usetikzlibrary{decorations.markings}
 \usetikzlibrary{matrix, backgrounds, fit, positioning}
+
+\setchemfig{
+    atom sep=7mm,
+    bond style={line width=1pt},
+    bond join=true,
+    schemestart code=\chemnameinit{},
+}
+\tikzset{
+  over line/.style={
+    white,
+    double=black,
+    double distance=\the\pgflinewidth,
+    line width=1.5pt,
+  },
+  under line/.style={
+    decoration={
+      markings,
+      mark connection node=mid node,
+      mark=at position #1 with {}
+      {\node[transform shape,minimum size=3pt] (mid node) {};}
+    },
+    decorate
+  }
+}
 
 \begin{document}
     (* content *)

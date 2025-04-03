@@ -20,30 +20,6 @@
 }
 
 
-\setchemfig{
-    atom sep=8mm,
-    bond style={line width=1pt},
-    schemestart code=\chemnameinit{},
-}
-\tikzset{
-  over line/.style={
-    white,
-    double=black,
-    double distance=\the\pgflinewidth,
-    line width=1.5pt,
-  },
-  under line/.style={
-    decoration={
-      markings,
-      mark connection node=mid node,
-      mark=at position #1 with {}
-      {\node[transform shape,minimum size=3pt] (mid node) {};}
-    },
-    decorate
-  }
-}
-
-
 % Force [H] float placement
 \floatplacement{figure}{H}
 

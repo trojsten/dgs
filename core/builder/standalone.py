@@ -16,7 +16,7 @@ class StandaloneRenderer:
         self.template_root = Path('core/templates/')
 
         content = '    '.join(infile.readlines())
-        self.context = Context(content=content)
+        self.context = Context(content=content, lang=self.locale_code)
 
         self.jinja = Renderer(self.template_root)
 

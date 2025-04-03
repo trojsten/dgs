@@ -101,7 +101,9 @@ build/%.tex: source/%.tex
 	$(call _copy,TeX)
 
 # Standalone TeX file from .chem.tex
-build/%.tikz.tex: source/%.tikz
+build/%.tikz.tex: \
+	source/%.tikz \
+	core/templates/standalone.jtt
 	./standalone.py $(lang) $< $@
 
 # Copy py files from source to build
