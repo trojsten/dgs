@@ -2,7 +2,9 @@
 
 (@ block probnum @)0(@ endblock probnum @)
 
-(@ block activate @)(@ endblock activate @)
+(@ block activate @)
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/}%
+(@ endblock activate @)
 
 (@ block main @)
     \centering
