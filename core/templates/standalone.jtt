@@ -1,6 +1,6 @@
 % Wrapper for producing standalone tikz figures, for PDF or SVG output
 
-\documentclass[border={2pt 2pt 14pt 2pt}]{standalone}
+\documentclass[border={5pt 5pt 15pt 5pt}]{standalone}
 
 \RequirePackage{tikz}
 
