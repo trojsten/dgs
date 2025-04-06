@@ -61,9 +61,7 @@ class Convertor:
     }
 
     post_checks = {
-        'all': [
-            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
-        ],
+        'all': [],
         'html': [
             # This is just a temporary workaround for Trojstenweb's inane choice of paths
             RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
@@ -98,6 +96,7 @@ class Convertor:
 
     pre_checks = {
         'all': [
+            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
             RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
         ],
         'latex': [],
