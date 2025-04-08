@@ -37,7 +37,6 @@
         \section{(* i18n[language.id].section.answers *)}
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
-%            \hypersetup{linkcolor=black}%
             (@ include 'answer.jtt' @)%
         (@ endfor @)%
     (@ endif @)%

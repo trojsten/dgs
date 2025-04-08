@@ -60,8 +60,8 @@
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage{chemmacros}
 \RequirePackage{chemfig}                                    % complex chemical formulae
-\RequirePackage{plimsoll}
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
