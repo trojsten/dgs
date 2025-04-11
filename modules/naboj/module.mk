@@ -35,6 +35,11 @@ build/naboj/%.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
+build/naboj/%.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
 define truepath
 	$$(subst $$(cdir),,$(1))
 endef
@@ -185,7 +190,8 @@ endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
 build/naboj/%/problems: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem-extra.md))) ;
 
 build/naboj/%/solutions: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
@@ -204,8 +210,6 @@ build/naboj/%/answers-modulo.tex: \
 	modules/naboj/templates/answers-modulo.jtt \
 	build/naboj/$$*/build-venue ;
 
-
-### Output files ##################################################################################
 ### Languages ###################################
 
 # Full booklet
