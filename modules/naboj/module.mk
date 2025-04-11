@@ -35,6 +35,11 @@ build/naboj/%.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
+build/naboj/%.tex: \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call pandoctex,$(language))
+
 define truepath
 	$$(subst $$(cdir),,$(1))
 endef
@@ -132,7 +137,7 @@ build/naboj/%/instructions-online-inner.tex: \
 	$(eval language := $(word 4,$(subst /, ,$*)))
 	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	python core/pandoc-convert.py latex $(language) $< $@ || exit 1;
+	python core/pandoc.py --format latex $(language) $< $@ || exit 1;
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>
@@ -151,6 +156,8 @@ build/naboj/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.png)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.pdf)) \
 	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.pdf)) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.tikz))) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.tikz))) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*.gp))) \
@@ -183,7 +190,8 @@ endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
 build/naboj/%/problems: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) ;
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem-extra.md))) ;
 
 build/naboj/%/solutions: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
@@ -202,8 +210,6 @@ build/naboj/%/answers-modulo.tex: \
 	modules/naboj/templates/answers-modulo.jtt \
 	build/naboj/$$*/build-venue ;
 
-
-### Output files ##################################################################################
 ### Languages ###################################
 
 # Full booklet
