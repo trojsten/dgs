@@ -88,6 +88,7 @@ build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base-tearoff.jtt \
 	modules/naboj/templates/tearoff.jtt \
 	modules/naboj/templates/tearoff/problem.jtt \
+	modules/naboj/templates/tearoff/problem-extra.jtt \
 	modules/naboj/templates/tearoff/bottom.jtt \
 	build/naboj/$$*/build-language ;
 

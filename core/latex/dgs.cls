@@ -22,6 +22,7 @@
     %showframe                                              % display visual frame (must be turned off for production)
 ]{geometry}
 
+\RequirePackage[table]{xcolor}
 \RequirePackage{tikz}
 \RequirePackage{nicematrix}
 \RequirePackage{amsmath}
@@ -36,7 +37,6 @@
 \RequirePackage{pdftexcmds}
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
-\RequirePackage{xcolor}
 \RequirePackage{float}
 \RequirePackage{caption}                                    % fancy formatting of figure and table captions
 \RequirePackage{booktabs}

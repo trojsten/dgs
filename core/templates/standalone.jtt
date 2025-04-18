@@ -2,6 +2,7 @@
 
 \documentclass[border={15pt 5pt 15pt 5pt}]{standalone}
 
+\RequirePackage[table]{xcolor}
 \RequirePackage{tikz}
 
 \RequirePackage{amsmath}
