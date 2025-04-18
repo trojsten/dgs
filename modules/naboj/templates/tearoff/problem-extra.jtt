@@ -1,0 +1,19 @@
+(@ block activate @)
+    \input{build/core/i18n/(* language.id *).tex}
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
+(@ endblock activate @)
+
+\IfFileExists{\activeDirectory/(* language.id *)/problem-extra.tex}{%
+    \newpage%
+    \begin{minipage}[t][(* competition.tearoff.height *)mm][t]{\textwidth}%
+        \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.86\linewidth}%
+            \subsection{\texorpdfstring{(* problem.number *)*}{(* language.id *): (* problem.number *)*. (* problem.id *)-extra}}
+            ~
+            \vfill
+            \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
+            \vfill
+            ~
+        \end{minipage}%
+    \end{minipage}%
+}{}
+

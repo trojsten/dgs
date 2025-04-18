@@ -22,6 +22,7 @@
     %showframe                                              % display visual frame (must be turned off for production)
 ]{geometry}
 
+\RequirePackage[table]{xcolor}
 \RequirePackage{tikz}
 \RequirePackage{nicematrix}
 \RequirePackage{amsmath}
@@ -36,7 +37,6 @@
 \RequirePackage{pdftexcmds}
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
-\RequirePackage{xcolor}
 \RequirePackage{float}
 \RequirePackage{caption}                                    % fancy formatting of figure and table captions
 \RequirePackage{booktabs}
@@ -60,8 +60,8 @@
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
 \RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage{chemmacros}
 \RequirePackage{chemfig}                                    % complex chemical formulae
-\RequirePackage{plimsoll}
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
@@ -94,10 +94,10 @@
     polish,
     spanish,
     english,
-]{babel}                                      % multi-language support
+]{babel}                                                    % multi-language support
 \RequirePackage{xunicode}
-\RequirePackage[autostyle]{csquotes}                        % propr localized quotation marks
-%\RequirePackage{bidi}                                      % bidirecitonal support, keep this off unless building Parsi or Hebrew
+\RequirePackage[autostyle]{csquotes}                        % proper localized quotation marks
+%\RequirePackage{bidi}                                      % bi-directional support, keep this off unless building Parsi or Hebrew
 
 \RequirePackage[nodisplayskipstretch]{setspace}
 

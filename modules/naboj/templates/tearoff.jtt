@@ -20,4 +20,7 @@
         \newpage
     (@ endfor @)
     (@ include 'tearoff/bottom.jtt' @)
+    (@ for problem in volume.problems @)
+        (@ include 'tearoff/problem-extra.jtt' @)
+    (@ endfor @)
 (@ endblock @)

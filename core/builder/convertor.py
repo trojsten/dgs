@@ -13,7 +13,7 @@ class Convertor:
         'all': [],
         'latex': [
             # Change \includegraphics to protected \insertPicture (SVG and GP are converted to PDF)
-            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp|tikz)}",
                              r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
@@ -61,9 +61,7 @@ class Convertor:
     }
 
     post_checks = {
-        'all': [
-            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
-        ],
+        'all': [],
         'html': [
             # This is just a temporary workaround for Trojstenweb's inane choice of paths
             RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
@@ -98,6 +96,7 @@ class Convertor:
 
     pre_checks = {
         'all': [
+            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
             RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
         ],
         'latex': [],

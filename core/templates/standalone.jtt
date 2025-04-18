@@ -1,0 +1,79 @@
+% Wrapper for producing standalone tikz figures, for PDF or SVG output
+
+\documentclass[border={15pt 5pt 15pt 5pt}]{standalone}
+
+\RequirePackage[table]{xcolor}
+\RequirePackage{tikz}
+
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mleftright}
+\RequirePackage{siunitx}
+\RequirePackage[weather]{ifsym}
+\RequirePackage{nicematrix}
+
+\RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
+\RequirePackage{mathtools}
+\RequirePackage[version=4]{mhchem}                          % simple chemical formulae
+\RequirePackage{chemformula}
+\RequirePackage{chemmacros}
+\RequirePackage{chemfig}                                    % complex chemical formulae
+
+\RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
+\RequirePackage[minionint, mathlf]{MinionPro}
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage[f]{esvect}
+\RequirePackage{accents}
+\RequirePackage{caption}
+\RequirePackage{cleveref}
+
+\RequirePackage[
+    shorthands=off,
+    slovak,
+    czech,
+    english,
+    german,
+    french,
+    polish,
+    spanish,
+]{babel}                                                    % multi-language support
+\RequirePackage[autostyle]{csquotes}                        % proper localized quotation marks
+
+\input{core/latex/fonts.tex}
+\input{core/latex/utilities.tex}
+\input{core/latex/math.tex}
+\input{core/latex/symbols.tex}
+\input{core/latex/siunitx.tex}
+
+\input{build/core/i18n/(* lang *).tex}
+
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{matrix, backgrounds, fit, positioning}
+
+\setchemfig{
+    atom sep=7mm,
+    bond style={line width=1pt},
+    bond join=true,
+    schemestart code=\chemnameinit{},
+}
+\tikzset{
+  over line/.style={
+    white,
+    double=black,
+    double distance=\the\pgflinewidth,
+    line width=1.5pt,
+  },
+  under line/.style={
+    decoration={
+      markings,
+      mark connection node=mid node,
+      mark=at position #1 with {}
+      {\node[transform shape,minimum size=3pt] (mid node) {};}
+    },
+    decorate
+  }
+}
+
+\begin{document}
+    (* content *)
+\end{document}
