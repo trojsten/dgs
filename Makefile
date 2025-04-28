@@ -100,6 +100,13 @@ endif
 build/%.tex: source/%.tex
 	$(call _copy,TeX)
 
+build/%.md: source/%.md
+	@echo -e '$(c_action)[jinja] Rendering \
+		$(c_extension)Markdown$(c_action) template $(c_filename)$<$(c_action) to \
+		$(c_extension)$(3)$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
+	@mkdir -p $(dir $@)
+	python jinja.py --format $(2) $(1) $< $@ || exit 1;
+
 # Standalone TeX file from .chem.tex
 build/%.tikz.tex: \
 	source/%.tikz \

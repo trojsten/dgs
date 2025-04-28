@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from enschema import Schema, SchemaMissingKeyError, SchemaError, And
-from typing import Any, Self, ClassVar
+from typing import Any, Self, ClassVar, Optional
 
 from core.utilities import colour as c, crawler, logger
 
@@ -14,8 +14,8 @@ log = logger.setupLog('dgs')
 
 
 class Context(metaclass=ABCMeta):
-    defaults = {}                  # Defaults for every instance
-    _schema: Schema | None = None  # Validation schema for the context, or None if it is not to be validated
+    _defaults: dict[str, Any] = {}      # Defaults for every instance
+    _schema: Schema | None = None       # Validation schema for the context, or None if it is not to be validated
     _id: str = None
     _data: dict[str, Any] = None
 
@@ -40,7 +40,7 @@ class Context(metaclass=ABCMeta):
 
     def __init__(self, new_id=None, **defaults):
         self._id = new_id
-        self._data = copy.deepcopy(self.defaults)
+        self._data = copy.deepcopy(self._defaults)
 
         if defaults is not None:
             self.add(**defaults)
@@ -127,7 +127,24 @@ class Context(metaclass=ABCMeta):
         return new
 
 
-class FileSystemContext(Context, metaclass=abc.ABCMeta):
+class FileContext(Context):
+    """
+    A Context that is loaded from a file (currently only YAML).
+    """
+    def load_yaml(self, *args):
+        filename = Path(*args)
+        log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(filename)}")
+        try:
+            contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
+            self._data = {} if contents is None else contents
+        except FileNotFoundError as e:
+            log.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
+            raise e
+
+        return self
+
+
+class FileSystemContext(FileContext, metaclass=abc.ABCMeta):
     """
     Context that is reasonably mapped to a file system path, ideally inside a git repository.
     Typical traits are
@@ -164,17 +181,6 @@ class FileSystemContext(Context, metaclass=abc.ABCMeta):
                              f"{c.name(self._validator_class.__name__)}")
                 raise e
 
-    def load_yaml(self, *args):
-        filename = Path(*args)
-        log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(filename)}")
-        try:
-            contents = yaml.load(open(filename, 'r'), Loader=yaml.SafeLoader)
-            self._data = {} if contents is None else contents
-        except FileNotFoundError as e:
-            log.critical(c.err("[FATAL] Could not load YAML file"), c.path(filename))
-            raise e
-
-        return self
 
     def load_meta(self, *path):
         """ Shorthand for loading the node_path meta.yaml file """
