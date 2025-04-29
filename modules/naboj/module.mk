@@ -30,10 +30,9 @@ build/naboj/%/answer-interval.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
-build/naboj/%.tex: \
-	source/naboj/%.md
+build/naboj/%.md: source/naboj/%.md
 	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call pandoctex,$(language))
+	$(call _jinja,sk)
 
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))

@@ -29,8 +29,10 @@ class ContextCompetition(ContextNaboj):
         'constants': {
             str: {
                 'symbol': str,
-                'value': Or(str, int, float),
+                'value': Or(int, float),
                 'unit': str,
+                'exact': Or(int, float),
+                'digits': int,
                 Optional('siextra'): str,
             }
         },

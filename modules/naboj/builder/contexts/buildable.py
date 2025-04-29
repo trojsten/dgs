@@ -1,7 +1,8 @@
 import abc
 
 from core import i18n
-from core.builder.context import BuildableFileSystemContext, ContextModule
+from core.builder.context.buildable import BuildableFileSystemContext
+from core.builder.context.module import ContextModule
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue

@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 from core.utilities import colour as c, crawler
 from core.builder import jinja
-from core.builder.context import BuildableContext
+from core.builder.context.buildable import BuildableContext
 
 log = logging.getLogger('dgs')
 

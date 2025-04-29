@@ -1,5 +1,5 @@
 from core.builder.builder import BaseBuilder
-from core.builder.context import BuildableFileSystemContext, BuildableContext
+from core.builder.context.buildable import BuildableContext
 
 from core import i18n
 

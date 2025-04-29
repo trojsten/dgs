@@ -105,3 +105,12 @@ class StaticRenderer(JinjaRenderer):
             'textbf': core.utilities.filters.textbf,
             'path_exists': lambda x: os.path.exists(x),
         }
+
+
+class MarkdownRenderer(JinjaRenderer):
+    def __init__(self, template_root, **kwargs):
+        super().__init__(template_root, **kwargs)
+
+        self.env.filters |= {
+            'qty': core.utilities.filters.qty,
+        }
