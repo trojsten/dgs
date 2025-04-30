@@ -8,7 +8,7 @@ from typing import Optional
 from core import cli
 from core.builder.context.context import Context
 from core.builder.context.file import FileContext
-from core.builder.jinja import JinjaRenderer
+from core.builder.jinja import JinjaRenderer, MarkdownRenderer
 
 from core.builder.context.constant import PhysicsConstant
 
@@ -19,7 +19,7 @@ class JinjaConvertor:
                  outfile: Optional[Path],
                  *,
                  context: Context):
-        self.renderer = JinjaRenderer(Path(infile.name).parent)
+        self.renderer = MarkdownRenderer(Path(infile.name).parent)
         self.infile: Path = Path(infile.name).name
         self.outfile: Optional[Path] = outfile
         self.context: Context = context

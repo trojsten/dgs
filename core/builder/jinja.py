@@ -1,3 +1,5 @@
+import math
+
 import jinja2
 import os
 import sys
@@ -112,5 +114,29 @@ class MarkdownRenderer(JinjaRenderer):
         super().__init__(template_root, **kwargs)
 
         self.env.filters |= {
-            'qty': core.utilities.filters.qty,
+            #'qty': core.utilities.filters.qty,
+            'num': core.utilities.filters.num,
+        }
+
+        self.env.globals |= {
+            'sin': math.sin,
+            'cos': math.cos,
+            'tan': math.tan,
+            'asin': math.asin,
+            'acos': math.acos,
+            'atan': math.atan,
+            'atan2': math.atan2,
+            'ceil': math.ceil,
+            'floor': math.floor,
+            'sqrt': math.sqrt,
+            'cbrt': math.cbrt,
+            'rad': math.radians,
+            'deg': math.degrees,
+            'gamma': math.gamma,
+            'ln': math.log,
+            'log': math.log,
+            'log10': math.log10,
+            'log2': math.log2,
+            'exp': math.exp,
+            'pow': math.pow,
         }

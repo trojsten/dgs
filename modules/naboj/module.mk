@@ -10,12 +10,28 @@ source/naboj/%/i18n: \
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
 
-build/naboj/%/problem-extra.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call pandoctex,$(language))
+define truepath
+	$(subst $(cdir),,$(1))
+endef
 
-build/naboj/%/answer.tex: \
+# <competition>/<volume>/problems/<problem>/<language>
+build/naboj/%/problem.md: \
+	source/naboj/%/problem.md
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
+
+build/naboj/%/solution.md: \
+	source/naboj/%/solution.md
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
+
+# <competition>/<volume>/problems/<problem>/<language>
+build/naboj/%/answer.md: \
+	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
+	$(eval language := $(word 5,$(subst /, ,$*)))
+	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml))
+
+build/naboj/%/problem-extra.tex: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
@@ -30,18 +46,10 @@ build/naboj/%/answer-interval.tex: \
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
-build/naboj/%.md: source/naboj/%.md
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call _jinja,sk)
-
 build/naboj/%.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
-
-define truepath
-	$$(subst $$(cdir),,$(1))
-endef
 
 # % <competition>/<volume>/languages/<language>
 
@@ -178,7 +186,7 @@ build/naboj/%/solutions/$(1): \
 
 build/naboj/%/answers/$(1): \
 	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) \
+	$$$$(addsuffix $(1)/answer-extra.tex,$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md)))) \
 	$$$$(addsuffix $(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md)))) \
 	$$$$(addsuffix $(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md)))) ;
 

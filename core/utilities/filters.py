@@ -160,3 +160,7 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
     people = process_people(people)
     return render_list([person['name'] if person['name'] != '' else r"\errorMessage{?}" for person in people],
                        func=func, and_word=and_word)
+
+
+def num(x: float, precision: int):
+    return rf"\num{{{x:.{precision}f}}}"

@@ -11,11 +11,14 @@ class PhysicsConstant:
         self.si_extra = kwargs.get('siextra', None)
 
     @property
-    def full(self, format: str = None):
-        if format is None:
-            format = f'.{self.digits}g'
+    def full(self):
+        return self.format()
+
+    def format(self, fmt: str = None):
+        if fmt is None:
+            fmt = f'.{self.digits}g'
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
-        return rf"\qty{siextra}{{{self.exact:{format}}}}{{{self.unit}}}"
+        return rf"\qty{siextra}{{{self.exact:{fmt}}}}{{{self.unit}}}"
 
     def __str__(self):
         return self.full
