@@ -2,11 +2,11 @@ import yaml
 from pathlib import Path
 from enschema import Schema, Optional
 
-from core.builder.context.tree import FileSystemContext
+from core.builder.context.tree import FileSystemTreeContext
 from core.i18n import languages
 
 
-class ContextI18n(FileSystemContext):
+class ContextI18n(FileSystemTreeContext):
     _schema = Schema({
         'section': {
             'problems': str,
@@ -84,7 +84,7 @@ class ContextI18n(FileSystemContext):
         return Path(self.root, competition, '.static', 'i18n', language + '.yaml')
 
 
-class ContextI18nGlobal(FileSystemContext):
+class ContextI18nGlobal(FileSystemTreeContext):
     _schema = Schema({})
 
     def node_path(self, competition):

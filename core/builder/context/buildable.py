@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 
 from .context import Context
-from .tree import FileSystemContext
+from .tree import FileSystemTreeContext
 
 
 class BuildableContext(Context):
@@ -18,7 +18,7 @@ class BuildableContext(Context):
         pass
 
 
-class BuildableFileSystemContext(FileSystemContext, BuildableContext, ABC):
+class BuildableFileSystemTreeContext(FileSystemTreeContext, BuildableContext, ABC):
     def __init__(self, root, *path, **defaults):
         super().__init__(root, *path, **defaults)
         # A filesystem context needs to validate its repository upon creation

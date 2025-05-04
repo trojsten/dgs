@@ -37,10 +37,13 @@ class CLIInterface(cli.CLIInterface):
     def build_convertor(self, args, **kwargs):
         context = FileContext('context', Path(self.args.context.name))
         constants = FileContext('constants', Path('/home/kvik/dgs/source/naboj/phys/meta.yaml'))
-        ctx = Context('cont', **context.data['values'])\
-                .add(const={
-                    name: PhysicsConstant(name, **data) for name, data in constants.data['constants'].items()
-                })
+        ctx = Context('cont')
+        if 'values' in context.data:
+            ctx.add(**context.data['values'])
+
+        ctx.add(const={
+            name: PhysicsConstant(name, **data) for name, data in constants.data['constants'].items()
+        })
         return JinjaConvertor(self.args.infile, self.args.outfile, context=ctx)
 
     def add_extra_arguments(self):

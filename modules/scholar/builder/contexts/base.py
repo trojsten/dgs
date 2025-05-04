@@ -4,7 +4,7 @@ from pathlib import Path
 from core.builder import context
 
 
-class ContextScholar(context.FileSystemContext, metaclass=ABCMeta):
+class ContextScholar(context.FileSystemTreeContext, metaclass=ABCMeta):
     _target = None
     _subdir = None
 

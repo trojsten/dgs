@@ -14,18 +14,18 @@ define truepath
 	$(subst $(cdir),,$(1))
 endef
 
+# TODO: for some reason these two do not work if combined into one!
 # <competition>/<volume>/problems/<problem>/<language>
 build/naboj/%/problem.md: \
-	source/naboj/%/problem.md
+	$$(call truepath,$$(abspath source/naboj/$$*/$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
 
 build/naboj/%/solution.md: \
-	source/naboj/%/solution.md
+	$$(call truepath,$$(abspath source/naboj/$$*/$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
 
-# <competition>/<volume>/problems/<problem>/<language>
 build/naboj/%/answer.md: \
 	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))

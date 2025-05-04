@@ -44,7 +44,7 @@ build/seminar/%/invite.tex: \
 	$(call prepare_arguments_semester,invite)
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
-	modules/seminar/templates/$$(notdir $$@) \
+	modules/seminar/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_round,round)
@@ -71,7 +71,7 @@ output/seminar/%/html-prerequisites: \
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.jtt \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/problem.md)) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/problems.tex
 	$(call double_xelatex,seminar)

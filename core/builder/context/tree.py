@@ -11,7 +11,7 @@ from .context import Context
 log = logging.getLogger('dgs')
 
 
-class FileSystemContext(Context, ABC):
+class FileSystemTreeContext(Context, ABC):
     """
     Context that is reasonably mapped to a file system tree, ideally inside a git repository.
     The directory tree is considered to be mappable to a `FileSystemContext`

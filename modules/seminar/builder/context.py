@@ -5,11 +5,11 @@ from abc import ABCMeta
 from enschema import Schema, Optional, Use, And, Or
 
 from core.utilities.schema import valid_language
-from core.builder.context import FileSystemContext, BuildableFileSystemContext, ContextModule
+from core.builder.context import FileSystemTreeContext, BuildableFileSystemTreeContext, ContextModule
 from modules.seminar.builder.validators import SeminarRoundValidator
 
 
-class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
+class ContextSeminar(FileSystemTreeContext, metaclass=ABCMeta):
     def ident(self, competition=None, volume=None, semester=None, issue=None, problem=None):
         return (
             self._default(competition),
@@ -100,7 +100,7 @@ class ContextSemester(ContextSeminar):
         )
 
 
-class ContextSemesterFull(ContextSemester, BuildableFileSystemContext):
+class ContextSemesterFull(ContextSemester, BuildableFileSystemTreeContext):
     def populate(self, competition, volume, semester):
         self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
@@ -175,7 +175,7 @@ class ContextRoundFull(ContextRound):
 """ Buildable contexts """
 
 
-class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextVolumeBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     def populate(self, root, competition, volume):
         self.adopt(
             module=ContextModule('seminar'),
@@ -184,7 +184,7 @@ class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
         )
 
 
-class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextSemesterBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     def populate(self, root, competition, volume, semester):
         self.adopt(
             module=ContextModule('seminar'),
@@ -194,7 +194,7 @@ class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
         )
 
 
-class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     _schema = Schema({})  # nothing inherent to this context
     _validator_class = SeminarRoundValidator
 

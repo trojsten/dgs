@@ -104,7 +104,7 @@ class ContextVenue(ContextNaboj):
 class ContextVolume(ContextNaboj):
     _schema = Schema({
         'id': And(str, len),
-        'number': And(int, lambda x: x > 0),
+        'number': And(int, lambda x: x >= 0),
         'date': datetime.date,
         'authors': {
             'problems': [str],

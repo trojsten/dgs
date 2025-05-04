@@ -2,10 +2,10 @@ import abc
 
 from pathlib import Path
 
-from core.builder.context import BuildableFileSystemContext
+from core.builder.context import BuildableFileSystemTreeContext
 
 
-class ContextScholarSingle(BuildableFileSystemContext, metaclass=abc.ABCMeta):
+class ContextScholarSingle(BuildableFileSystemTreeContext, metaclass=abc.ABCMeta):
     @staticmethod
     def node_path(root, course='', lecture='', part='', problem=''):
         return Path(root, course, lecture, part, problem)

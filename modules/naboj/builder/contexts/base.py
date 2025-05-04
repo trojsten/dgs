@@ -3,7 +3,7 @@ import datetime
 from pathlib import Path
 from enschema import Schema, And, Or, Regex, Optional
 
-from core.builder.context.tree import FileSystemContext
+from core.builder.context.tree import FileSystemTreeContext
 from core.builder.builder import get_last_commit_hash, get_branch
 from core.utilities.schema import valid_language
 from core.builder.validator import CommitHash, String
@@ -19,7 +19,7 @@ def valid_tag(tag: str):
     ]
 
 
-class ContextNaboj(FileSystemContext):
+class ContextNaboj(FileSystemTreeContext):
     _target = None
     _subdir = None
     competitions = ['phys', 'chem', 'test']
