@@ -71,7 +71,7 @@ output/seminar/%/html-prerequisites: \
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.jtt \
-	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/problem.md)) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/problems.tex
 	$(call double_xelatex,seminar)

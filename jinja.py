@@ -18,13 +18,15 @@ class JinjaConvertor:
                  infile: Path,
                  outfile: Optional[Path],
                  *,
-                 context: Context):
+                 context: Context,
+                 debug: bool = False):
         self.renderer = MarkdownRenderer(Path(infile.name).parent)
         self.infile: Path = Path(infile.name).name
         self.outfile: Optional[Path] = outfile
         self.context: Context = context
 
-        #pprint.pprint(context.data)
+        if debug:
+            pprint.pprint(context.data)
 
     def run(self):
         self.renderer.render(self.infile, self.context.data, outfile=self.outfile)
@@ -44,10 +46,10 @@ class CLIInterface(cli.CLIInterface):
         ctx.add(const={
             name: PhysicsConstant(name, **data) for name, data in constants.data['constants'].items()
         })
-        return JinjaConvertor(self.args.infile, self.args.outfile, context=ctx)
+        return JinjaConvertor(self.args.infile, self.args.outfile, context=ctx, debug=self.args.debug)
 
     def add_extra_arguments(self):
-        self.parser.add_argument('context', type=argparse.FileType('r'))
+        self.parser.add_argument('--context', type=argparse.FileType('r'))
 
 
 if __name__ == "__main__":
