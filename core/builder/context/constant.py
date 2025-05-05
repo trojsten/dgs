@@ -57,7 +57,7 @@ class PhysicsConstant:
 
     @property
     def full_exact(self):
-        return self._format(self.exact, 'g')
+        return self._format(self.exact, '.15g')
 
     def __str__(self):
         return self.full
