@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
-from typing import Callable
+from tempfile import SpooledTemporaryFile
+from typing import Callable, TextIO
 from pathlib import Path
 
 from core.utilities import colour as c
@@ -82,24 +83,24 @@ class Convertor:
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
-            RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Replace LaTeX-only lines"),
-            RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove any HTML-only tag"),
+            RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Keep LaTeX-only lines"),
+            RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"\\todoMessage{\g<2>}", purpose="Replace TODO tag"),
         ],
         'html': [
             RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
-            RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
-            RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
+            RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove LaTeX-only lines"),
+            RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Keep HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
-            RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to SI for old failing web"),
-            RegexReplacement(r"\\unit", r"\\si", purpose="Revert to SI for old failing web"),
+            RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to old siunitx syntax for old failing web"),
+            RegexReplacement(r"\\unit", r"\\si", purpose="Revert to old siunitx syntax for old failing web"),
         ],
     }
 
     pre_checks = {
         'all': [
             RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
-            RegexFailure(r'\^\\circ|\^{\\circ}', error="No \\circ allowed in exponents"),
+            RegexFailure(r'\^\\circ|\^{\\circ}', error=r"No \circ allowed in exponents"),
         ],
         'latex': [],
         'html': [],
@@ -114,7 +115,7 @@ class Convertor:
         self.math = options.get('math', 'mathjax')
         self.file = None
 
-        assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'"
+        assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'!"
 
         # regexes = yaml.safe_load(open('core/builder/regexes.yaml', 'rb'))
 
@@ -142,8 +143,6 @@ class Convertor:
 
     def run(self):
         try:
-            # fm, tm = frontmatter.parse(self.infile.read())
-            # self.infile.seek(0)
             self.file = self.file_operation(self.pre_check)(self.infile)
             self.file = self.file_operation(self.preprocess)(self.file)
             self.file = self.call_pandoc()
@@ -162,11 +161,9 @@ class Convertor:
 
     @staticmethod
     def file_operation(function: Callable) -> Callable:
-        """
-            Decorator: apply a function to every line of a file
-        """
-        def inner(f):
-            out = tempfile.SpooledTemporaryFile(mode='w+')
+        """Decorator: apply a function to every line of a file"""
+        def inner(f: SpooledTemporaryFile[str]) -> SpooledTemporaryFile[str]:
+            out = SpooledTemporaryFile(mode='w+')
             for line in f:
                 out.write(function(line))
             out.seek(0)
