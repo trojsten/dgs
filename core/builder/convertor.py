@@ -91,6 +91,8 @@ class Convertor:
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove any LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Replace HTML tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
+            RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to SI for old failing web"),
+            RegexReplacement(r"\\unit", r"\\si", purpose="Revert to SI for old failing web"),
         ],
     }
 
