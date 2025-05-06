@@ -8,7 +8,7 @@ from typing import Optional
 from core import cli
 from core.builder.context.context import Context
 from core.builder.context.file import FileContext
-from core.builder.jinja import JinjaRenderer, MarkdownRenderer
+from core.builder.jinja import MarkdownJinjaRenderer
 
 from core.builder.context.constant import PhysicsConstant
 
@@ -20,8 +20,8 @@ class JinjaConvertor:
                  *,
                  context: Context,
                  debug: bool = False):
-        self.renderer = MarkdownRenderer(Path(infile.name).parent)
-        self.infile: Path = Path(infile.name).name
+        self.renderer = MarkdownJinjaRenderer(Path(infile.name).parent)
+        self.infile: Path = Path(infile.name)
         self.outfile: Optional[Path] = outfile
         self.context: Context = context
 
@@ -29,7 +29,7 @@ class JinjaConvertor:
             pprint.pprint(context.data)
 
     def run(self):
-        self.renderer.render(self.infile, self.context.data, outfile=self.outfile)
+        self.renderer.render(self.infile.name, self.context.data, outfile=self.outfile)
         return 0
 
 
@@ -38,13 +38,13 @@ class CLIInterface(cli.CLIInterface):
 
     def build_convertor(self, args, **kwargs):
         context = FileContext('context', Path(self.args.context.name))
-        constants = FileContext('constants', Path('/home/kvik/dgs/source/naboj/phys/meta.yaml'))
+        constants = FileContext('constants', Path('core/data/constants.yaml'))
         ctx = Context('cont')
         if 'values' in context.data:
             ctx.add(**context.data['values'])
 
         ctx.add(const={
-            name: PhysicsConstant(name, **data) for name, data in constants.data['constants'].items()
+            name: PhysicsConstant(name, **data) for name, data in constants.data.items()
         })
         return JinjaConvertor(self.args.infile, self.args.outfile, context=ctx, debug=self.args.debug)
 

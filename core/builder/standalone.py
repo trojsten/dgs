@@ -17,7 +17,6 @@ class StandaloneRenderer:
 
         content = '    '.join(infile.readlines())
         self.context = Context(content=content, lang=self.locale_code)
-
         self.jinja = StaticRenderer(self.template_root)
 
     def run(self):

@@ -19,6 +19,7 @@
             \toprule
                 (* i18n[language.id].constants.constant *) & (* i18n[language.id].constants.symbol *) & (* i18n[language.id].constants.value *) \\
             \midrule
+            (#
             (@ for field in volume.constants.values() @)
                 (@ for id in field @)
                     (@ with constant = competition.constants.get(id) @)
@@ -45,6 +46,7 @@
                 (@ endfor @)
                 (@ if not loop.last @)\midrule(@ endif @)
             (@ endfor @)
+            #)
             \bottomrule
         \end{tabular*}
     \end{figure}

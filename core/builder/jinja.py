@@ -102,14 +102,13 @@ class StaticRenderer(JinjaRenderer):
         }
 
         self.env.globals |= {
-            'checkdigit': core.utilities.filters.check_digit,
             'plural': core.utilities.filters.plural,
             'textbf': core.utilities.filters.textbf,
             'path_exists': lambda x: os.path.exists(x),
         }
 
 
-class MarkdownRenderer(JinjaRenderer):
+class MarkdownJinjaRenderer(JinjaRenderer):
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, **kwargs)
 
@@ -139,4 +138,6 @@ class MarkdownRenderer(JinjaRenderer):
             'log2': math.log2,
             'exp': math.exp,
             'pow': math.pow,
+            'ktoc': lambda x: x - 273.15,
+            'ctok': lambda x: x + 273.15,
         }
