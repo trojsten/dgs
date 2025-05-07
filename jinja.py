@@ -5,6 +5,9 @@ import pprint
 from pathlib import Path
 from typing import Optional
 
+import enschema
+from enschema import Schema, Or
+
 from core import cli
 from core.builder.context.context import Context
 from core.builder.context.file import FileContext
@@ -33,12 +36,25 @@ class JinjaConvertor:
         return 0
 
 
+class ConstantsContext(FileContext):
+    _schema = Schema({
+        str: {
+            'symbol': str,
+            'value': Or(int, float),
+            'unit': str,
+            'exact': Or(int, float),
+            'digits': int,
+            enschema.Optional('siextra'): str,
+        }
+    })
+
+
 class CLIInterface(cli.CLIInterface):
     description = "DeGeŠ Jinja convertor"
 
     def build_convertor(self, args, **kwargs):
         context = FileContext('context', Path(self.args.context.name))
-        constants = FileContext('constants', Path('core/data/constants.yaml'))
+        constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
 
         ctx = Context('cont')
         if 'values' in context.data:
