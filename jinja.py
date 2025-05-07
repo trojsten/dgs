@@ -39,9 +39,16 @@ class CLIInterface(cli.CLIInterface):
     def build_convertor(self, args, **kwargs):
         context = FileContext('context', Path(self.args.context.name))
         constants = FileContext('constants', Path('core/data/constants.yaml'))
+
         ctx = Context('cont')
         if 'values' in context.data:
-            ctx.add(**context.data['values'])
+            values = context.data['values']
+
+            for key, value in values.items():
+                if isinstance(value, dict):
+                    values[key] = PhysicsConstant(key, **value)
+
+            ctx.add(**values)
 
         ctx.add(const={
             name: PhysicsConstant(name, **data) for name, data in constants.data.items()

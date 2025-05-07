@@ -2,6 +2,9 @@ import datetime
 
 from pathlib import Path
 from abc import ABCMeta
+from typing import Any
+
+from schema import Literal
 from enschema import Schema, Optional, Use, And, Or
 
 from core.utilities.schema import valid_language
@@ -44,10 +47,10 @@ class ContextCompetition(ContextSeminar):
         'head': Schema({
             'name': Or(
                 And(str, len),
-                {
+                Schema({
                     'name': And(str, len),
                     'surname': And(str, len)
-                },
+                }),
             ),
             'email': And(str, len),  # change this to email
             'phone': And(str, len),  # change this to phone regex
@@ -130,15 +133,15 @@ class ContextRound(ContextSeminar):
 
 
 class ContextProblem(ContextSeminar):
-    persons = Or('',
-                 [{
+    persons = Or(Schema(Literal('')),
+                 Schema([{
                      'name': str,
-                     'gender': Or('f', 'm', '?'),
-                 }])
+                     'gender': Or(Literal('m'), Literal('f'), Literal('?')),
+                 }]))
     _schema = Schema({
         'title': And(str, len),
         'categories': list,
-        'number': And(int, lambda x: 1 <= x <= 8),
+        'number': And(int, lambda x: 1 <= x),
         'id': str,
         'evaluation': persons,
         'solution': persons,
@@ -147,6 +150,7 @@ class ContextProblem(ContextSeminar):
             Optional('code'): And(int, lambda x: x >= 0),
             Optional('extra'): And(int, lambda x: x >= 0),
         },
+        Optional('values'): {str: Or(str, dict)},
     })
 
     def populate(self, competition, volume, semester, issue, problem):
