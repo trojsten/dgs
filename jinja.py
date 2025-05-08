@@ -72,7 +72,7 @@ class CLIInterface(cli.CLIInterface):
         return JinjaConvertor(self.args.infile, self.args.outfile, context=ctx, debug=self.args.debug)
 
     def add_extra_arguments(self):
-        self.parser.add_argument('--context', type=argparse.FileType('r'))
+        self.parser.add_argument('-C', '--context', type=argparse.FileType('r'))
 
 
 if __name__ == "__main__":

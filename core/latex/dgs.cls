@@ -59,6 +59,7 @@
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
+
 \RequirePackage[
     shorthands=off,
     slovak,
@@ -69,12 +70,10 @@
     spanish,
     russian,
     english,
-]{babel} 
+]{babel}
 \RequirePackage{chemmacros}
 \RequirePackage[version=4]{mhchem}
-\chemsetup{
-  formula = mhchem
-}
+\chemsetup{formula=mhchem}                                  % avoid a conflict with Russian babel
 \RequirePackage{chemfig}                                    % complex chemical formulae
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines

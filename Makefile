@@ -101,17 +101,18 @@ build/core/i18n: \
 build/%.md: \
 	source/%.md \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call _jinja,xx,$(abspath $(dir $<)/meta.yaml))
 
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
 build/%.tex: build/%.md
-	$(call pandoctex,$(lang))
+	$(call pandoctex,xx)
 
-# Standalone TeX file from .chem.tex
+# Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
 	source/%.tikz \
 	core/templates/standalone.jtt
+	@mkdir -p $(dir $@)
 	./standalone.py $(lang) $< $@
 
 # Copy py files from source to build

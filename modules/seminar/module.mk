@@ -23,6 +23,15 @@ define prepare_arguments_round
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
+# Jinja template rendering md to md
+build/%.md: \
+	source/%.md \
+	source/$$(dir $$*)/meta.yaml
+	$(call _jinja,sk,$(abspath $(dir $<)/meta.yaml))
+
+build/seminar/%.tex: build/seminar/%.md
+	$(call pandoctex,sk)
+
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $$@)
 	$(call _prepare_arguments)

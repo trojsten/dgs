@@ -15,36 +15,44 @@ define truepath
 endef
 
 # TODO: for some reason these two do not work if combined into one!
-# <competition>/<volume>/problems/<problem>/<language>
-build/naboj/%/problem.md: \
-	$$(call truepath,$$(abspath source/naboj/$$*/$$(notdir $$@)))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
-
-build/naboj/%/solution.md: \
-	$$(call truepath,$$(abspath source/naboj/$$*/$$(notdir $$@)))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call _jinja,$(language),$(abspath $(dir $<)/../meta.yaml))
 
 build/naboj/%/answer.md: \
 	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml))
 
-build/naboj/%/problem-extra.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
+build/naboj/%/answer.tex: \
+	build/naboj/$$*/answer.md
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
-build/naboj/%/answer-also.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call pandoctex,$(language))
+# Rules for files that are always translated
+# <competition>/<volume>/problems/<problem>/<language>
+define TRANSLATABLE
+build/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$$$$(notdir $$$$@)))
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml))
 
-build/naboj/%/answer-interval.tex: \
-	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../$$(subst .tex,.md,$$(notdir $$@))))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call pandoctex,$(language))
+build/naboj/%/$(1).tex: \
+	build/naboj/$$$$*/$(1).md
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandoctex,$$(language))
+endef
+$(foreach filename,problem solution answer-extra,$(eval $(call TRANSLATABLE,$(filename))))
+
+define NONTRANSLATABLE_ANSWERS
+build/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$$$$(notdir $$$@)))
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
+
+build/naboj/%/answer.tex: \
+	build/naboj/$$$$*/$(1).md
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandoctex,$$(language))
+endef
+$(foreach filename,answer answer-also answer-interval,$(eval $(call NONTRANSLATABLE_ANSWERS,$(filename))))
 
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
@@ -185,10 +193,7 @@ build/naboj/%/solutions/$(1): \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
 
 build/naboj/%/answers/$(1): \
-	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
-	$$$$(addsuffix $(1)/answer-extra.tex,$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md)))) \
-	$$$$(addsuffix $(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md)))) \
-	$$$$(addsuffix $(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(dir $$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md)))) ;
+	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) ;
 
 build/naboj/%/$(1): \
 	build/naboj/%/problems/$(1) \
