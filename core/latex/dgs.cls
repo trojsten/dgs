@@ -59,8 +59,22 @@
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
 \RequirePackage{framed}
-\RequirePackage[version=4]{mhchem}                          % chemical formulae in math in \ce{...}
+\RequirePackage[
+    shorthands=off,
+    slovak,
+    czech,
+    german,
+    french,
+    polish,
+    spanish,
+    russian,
+    english,
+]{babel} 
 \RequirePackage{chemmacros}
+\RequirePackage[version=4]{mhchem}
+\chemsetup{
+  formula = mhchem
+}
 \RequirePackage{chemfig}                                    % complex chemical formulae
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
@@ -84,17 +98,6 @@
 \definecolor{colour-link}{RGB}{0, 137, 162}
 \definecolor{orange}{RGB}{255, 128, 0}
 
-\RequirePackage[
-    shorthands=off,
-    slovak,
-    czech,
-    german,
-    french,
-    russian,
-    polish,
-    spanish,
-    english,
-]{babel}                                                    % multi-language support
 \RequirePackage{xunicode}
 \RequirePackage[autostyle]{csquotes}                        % proper localized quotation marks
 %\RequirePackage{bidi}                                      % bi-directional support, keep this off unless building Parsi or Hebrew
