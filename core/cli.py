@@ -33,7 +33,8 @@ class CLIInterface:
         self.parser.add_argument('locale',   choices=i18n.languages.keys())
         self.parser.add_argument('infile',   nargs='?', type=argparse.FileType('r'), default=sys.stdin)
         self.parser.add_argument('outfile',  nargs='?', type=argparse.FileType('w'), default=sys.stdout)
-        self.parser.add_argument('--verbose', action='store_true')
+        self.parser.add_argument('-v', '--verbose', action='store_true')
+        self.parser.add_argument('-d', '--debug', action='store_true')
 
     @staticmethod
     def add_extra_arguments():

@@ -50,6 +50,16 @@ define _pandoc
 	python pandoc.py --format $(2) $(1) $< $@ || exit 1;
 endef
 
+# lang
+# meta file
+define _jinja
+	@echo -e '$(c_action)[jinja] Rendering \
+		$(c_extension)Markdown$(c_action) template $(c_filename)$<$(c_action) to \
+		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
+	@mkdir -p $(dir $@)
+	python jinja.py $(1) $< $@ --context $(2) || exit 1;
+endef
+
 # pandoctex(language)
 # Converts a file from Markdown to LaTeX
 define pandoctex
@@ -87,23 +97,22 @@ build/core/i18n/%.tex: \
 build/core/i18n: \
 	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;
 
+# Jinja template rendering md to md
+build/%.md: \
+	source/%.md \
+	$$(abspath source/$$(dir $$*)/meta.yaml)
+	$(call _jinja,xx,$(abspath $(dir $<)/meta.yaml))
+
 # DeGeŠ convert Markdown file to TeX (for XeLaTeX)
 # THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
-build/%.tex: source/%.md
-ifdef lang
-	$(call pandoctex,$(lang))
-else
-	$(call pandoctex,sk)
-endif
+build/%.tex: build/%.md
+	$(call pandoctex,xx)
 
-# Copy TeX files from source to build
-build/%.tex: source/%.tex
-	$(call _copy,TeX)
-
-# Standalone TeX file from .chem.tex
+# Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
 	source/%.tikz \
 	core/templates/standalone.jtt
+	@mkdir -p $(dir $@)
 	./standalone.py $(lang) $< $@
 
 # Copy py files from source to build

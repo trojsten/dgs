@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from core import i18n
-from core.builder.jinja import Renderer
+from core.builder.jinja import StaticRenderer
 from core.builder.context import Context
 
 
@@ -17,8 +17,7 @@ class StandaloneRenderer:
 
         content = '    '.join(infile.readlines())
         self.context = Context(content=content, lang=self.locale_code)
-
-        self.jinja = Renderer(self.template_root)
+        self.jinja = StaticRenderer(self.template_root)
 
     def run(self):
         self.jinja.render(self.template, self.context.data, outfile=self.outfile)

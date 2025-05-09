@@ -1,3 +1,5 @@
+import math
+
 import jinja2
 import os
 import sys
@@ -6,6 +8,7 @@ from pathlib import Path
 
 from typing import Any, Optional
 
+import core
 from core.utilities import filters, colour as c
 
 log = logging.getLogger('dgs')
@@ -35,46 +38,30 @@ class MissingVariablesError(Exception):
         return f"Missing variables: {self.missing}"
 
 
-class Renderer:
-    def __init__(self, template_root):
+class JinjaRenderer:
+    def __init__(self,
+                 template_root,
+                 **kwargs):
         self.template_root = template_root
 
         self.env = jinja2.Environment(
-            block_start_string='(@',
-            block_end_string='@)',
-            variable_start_string='(*',
-            variable_end_string='*)',
-            comment_start_string='(#',
-            comment_end_string='#)',
-            line_statement_prefix='%%',
-            line_comment_prefix='%#',
+            block_start_string=kwargs.get('block_start_string', '(@'),
+            block_end_string=kwargs.get('block_end_string', '@)'),
+            variable_start_string=kwargs.get('variable_start_string', '(*'),
+            variable_end_string=kwargs.get('variable_end_string', '*)'),
+            comment_start_string=kwargs.get('comment_start_string', '(#'),
+            comment_end_string=kwargs.get('comment_end_string', '#)'),
+            line_statement_prefix=kwargs.get('line_statement_prefix', '%%'),
+            line_comment_prefix=kwargs.get('line_comment_prefix', '%#'),
             trim_blocks=True,
             autoescape=False,
             undefined=CollectUndefined,
             loader=jinja2.FileSystemLoader(self.template_root),
+            **kwargs
         )
 
-        self.env.filters |= {
-            'roman': filters.roman,
-            'format_list': filters.render_list,
-            'format_people': filters.format_people,
-            'format_gender_suffix': filters.format_gender_suffix,
-            'isotex': filters.isotex,
-            'plural': filters.plural,
-            'nth': filters.nth,
-            'upnth': filters.upnth,
-        }
-
-        self.env.globals |= {
-            'checkdigit': filters.check_digit,
-            'plural': filters.plural,
-            'textbf': filters.textbf,
-            'path_exists': lambda x: os.path.exists(x),
-        }
-
-
     def render(self,
-               template: Path,
+               template: str,
                context: dict[str, Any],
                *,
                outfile: Optional[Path] = None):
@@ -97,3 +84,60 @@ class Renderer:
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
             raise e
+
+
+class StaticRenderer(JinjaRenderer):
+    def __init__(self, template_root, **kwargs):
+        super().__init__(template_root, **kwargs)
+
+        self.env.filters |= {
+            'roman': core.utilities.filters.roman,
+            'format_list': core.utilities.filters.render_list,
+            'format_people': core.utilities.filters.format_people,
+            'format_gender_suffix': core.utilities.filters.format_gender_suffix,
+            'isotex': core.utilities.filters.isotex,
+            'plural': core.utilities.filters.plural,
+            'nth': core.utilities.filters.nth,
+            'upnth': core.utilities.filters.upnth,
+        }
+
+        self.env.globals |= {
+            'plural': core.utilities.filters.plural,
+            'textbf': core.utilities.filters.textbf,
+            'path_exists': lambda x: os.path.exists(x),
+        }
+
+
+class MarkdownJinjaRenderer(JinjaRenderer):
+    def __init__(self, template_root, **kwargs):
+        super().__init__(template_root, **kwargs)
+
+        self.env.filters |= {
+            #'qty': core.utilities.filters.qty,
+            'num': core.utilities.filters.num,
+        }
+
+        self.env.globals |= {
+            'sin': math.sin,
+            'cos': math.cos,
+            'tan': math.tan,
+            'asin': math.asin,
+            'acos': math.acos,
+            'atan': math.atan,
+            'atan2': math.atan2,
+            'ceil': math.ceil,
+            'floor': math.floor,
+            'sqrt': math.sqrt,
+            'cbrt': math.cbrt,
+            'rad': math.radians,
+            'deg': math.degrees,
+            'gamma': math.gamma,
+            'ln': math.log,
+            'log': math.log,
+            'log10': math.log10,
+            'log2': math.log2,
+            'exp': math.exp,
+            'pow': math.pow,
+            'ktoc': lambda x: x - 273.15,
+            'ctok': lambda x: x + 273.15,
+        }

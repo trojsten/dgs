@@ -20,7 +20,7 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
     def build_templates(self):
         super().build_templates()
 
-        renderer = jinja.Renderer(Path(self.launch_directory, *self.path()))
+        renderer = jinja.StaticRenderer(Path(self.launch_directory, *self.path()))
 
         for template in self.i18n_templates:
             outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')

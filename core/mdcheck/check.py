@@ -203,4 +203,3 @@ def encoding(filename):
         return True
     except UnicodeDecodeError:
         raise exceptions.EncodingError(f'{filename} is not a UTF-8 file')
-

@@ -1,4 +1,3 @@
-import itertools
 from enschema import Schema, Or
 from typing import Any, Callable, Union, List, Dict
 
@@ -18,21 +17,6 @@ def roman(number: int) -> str:
         result += nums[i] * count
         number -= ints[i] * count
     return result
-
-
-def check_digit(team: str, problem: int) -> int:
-    return get_check_digit(f'{team}{problem:02d}')
-
-
-def get_check_digit(data: str) -> int:
-    assert isinstance(data, str)
-    try:
-        digits = map(lambda x: int(x, 36), data)
-    except ValueError as exc:
-        raise ValueError(f"Found invalid character in barcode: {exc}") from exc
-
-    checksum = [d * w for d, w in zip(digits, itertools.cycle([7, 3, 1]))]
-    return sum(checksum) % 10
 
 
 def plural(how_many, one, two, many):
@@ -160,3 +144,7 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
     people = process_people(people)
     return render_list([person['name'] if person['name'] != '' else r"\errorMessage{?}" for person in people],
                        func=func, and_word=and_word)
+
+
+def num(x: float, precision: int):
+    return rf"\num{{{x:.{precision}f}}}"

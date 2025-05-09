@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 from core.utilities import colour as c, crawler
 from core.builder import jinja
-from core.builder.context import BuildableContext
+from core.builder.context.buildable import BuildableContext
 
 log = logging.getLogger('dgs')
 
@@ -78,7 +78,7 @@ class BaseBuilder(metaclass=ABCMeta):
         self.context = self._root_context_class(self.launch_directory, *self.ident())
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
 
-        self.renderer = jinja.Renderer(self.template_root)
+        self.renderer = jinja.StaticRenderer(self.template_root)
 
 
     def add_core_arguments(self) -> None:

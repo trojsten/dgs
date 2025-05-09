@@ -1,8 +1,7 @@
 import datetime
 import itertools
-import pprint
 
-from enschema import Schema, And, Or, Optional, Regex
+from enschema import Schema, And, Optional, Regex
 
 from core import i18n
 from core.utilities import lists
@@ -25,14 +24,6 @@ class ContextCompetition(ContextNaboj):
         'organisation': {
             'name': String,
             'address': String,
-        },
-        'constants': {
-            str: {
-                'symbol': str,
-                'value': Or(str, int, float),
-                'unit': str,
-                Optional('siextra'): str,
-            }
         },
         'url': String,
         'hacks': dict,
@@ -102,7 +93,7 @@ class ContextVenue(ContextNaboj):
 class ContextVolume(ContextNaboj):
     _schema = Schema({
         'id': And(str, len),
-        'number': And(int, lambda x: x > 0),
+        'number': And(int, lambda x: x >= 0),
         'date': datetime.date,
         'authors': {
             'problems': [str],

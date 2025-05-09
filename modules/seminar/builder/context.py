@@ -2,14 +2,17 @@ import datetime
 
 from pathlib import Path
 from abc import ABCMeta
+from typing import Any
+
+from schema import Literal
 from enschema import Schema, Optional, Use, And, Or
 
 from core.utilities.schema import valid_language
-from core.builder.context import FileSystemContext, BuildableFileSystemContext, ContextModule
+from core.builder.context import FileSystemTreeContext, BuildableFileSystemTreeContext, ContextModule
 from modules.seminar.builder.validators import SeminarRoundValidator
 
 
-class ContextSeminar(FileSystemContext, metaclass=ABCMeta):
+class ContextSeminar(FileSystemTreeContext, metaclass=ABCMeta):
     def ident(self, competition=None, volume=None, semester=None, issue=None, problem=None):
         return (
             self._default(competition),
@@ -44,10 +47,10 @@ class ContextCompetition(ContextSeminar):
         'head': Schema({
             'name': Or(
                 And(str, len),
-                {
+                Schema({
                     'name': And(str, len),
                     'surname': And(str, len)
-                },
+                }),
             ),
             'email': And(str, len),  # change this to email
             'phone': And(str, len),  # change this to phone regex
@@ -100,7 +103,7 @@ class ContextSemester(ContextSeminar):
         )
 
 
-class ContextSemesterFull(ContextSemester, BuildableFileSystemContext):
+class ContextSemesterFull(ContextSemester, BuildableFileSystemTreeContext):
     def populate(self, competition, volume, semester):
         self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
 
@@ -130,15 +133,15 @@ class ContextRound(ContextSeminar):
 
 
 class ContextProblem(ContextSeminar):
-    persons = Or('',
-                 [{
+    persons = Or(Schema(Literal('')),
+                 Schema([{
                      'name': str,
-                     'gender': Or('f', 'm', '?'),
-                 }])
+                     'gender': Or(Literal('m'), Literal('f'), Literal('?')),
+                 }]))
     _schema = Schema({
         'title': And(str, len),
         'categories': list,
-        'number': And(int, lambda x: 1 <= x <= 8),
+        'number': And(int, lambda x: 1 <= x),
         'id': str,
         'evaluation': persons,
         'solution': persons,
@@ -147,6 +150,7 @@ class ContextProblem(ContextSeminar):
             Optional('code'): And(int, lambda x: x >= 0),
             Optional('extra'): And(int, lambda x: x >= 0),
         },
+        Optional('values'): {str: Or(str, dict)},
     })
 
     def populate(self, competition, volume, semester, issue, problem):
@@ -175,7 +179,7 @@ class ContextRoundFull(ContextRound):
 """ Buildable contexts """
 
 
-class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextVolumeBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     def populate(self, root, competition, volume):
         self.adopt(
             module=ContextModule('seminar'),
@@ -184,7 +188,7 @@ class ContextVolumeBooklet(BuildableFileSystemContext, ContextSeminar):
         )
 
 
-class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextSemesterBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     def populate(self, root, competition, volume, semester):
         self.adopt(
             module=ContextModule('seminar'),
@@ -194,7 +198,7 @@ class ContextSemesterBooklet(BuildableFileSystemContext, ContextSeminar):
         )
 
 
-class ContextBooklet(BuildableFileSystemContext, ContextSeminar):
+class ContextBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     _schema = Schema({})  # nothing inherent to this context
     _validator_class = SeminarRoundValidator
 

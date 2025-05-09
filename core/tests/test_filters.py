@@ -1,7 +1,8 @@
 import datetime
 import pytest
 
-from core.utilities.filters import render_list, roman, textbf, textit, isotex, plural, get_check_digit, format_gender_suffix, format_people
+from core.utilities.filters import (render_list, roman, textbf, textit, isotex, plural,
+                                    format_gender_suffix, format_people)
 
 
 class TestRender():
@@ -100,23 +101,6 @@ class TestRoman():
 
     def test_roman_2022(self):
         assert roman(2022) == 'MMXXII'
-
-
-class TestCheckDigit():
-    def test_bad_string(self):
-        with pytest.raises(ValueError) as exc:
-            get_check_digit("Číž")
-        assert "invalid literal for int()" in str(exc.value)
-
-    def test_dict_error(self):
-        with pytest.raises(AssertionError):
-            get_check_digit({})
-
-    def test_creation_1(self):
-        assert get_check_digit("6739") == 9
-
-    def test_creation_1(self):
-        assert get_check_digit("PRASA") == 2
 
 
 class TestGenderSuffix:

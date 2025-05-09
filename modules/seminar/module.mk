@@ -23,8 +23,17 @@ define prepare_arguments_round
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
+# Jinja template rendering md to md
+build/%.md: \
+	source/%.md \
+	source/$$(dir $$*)/meta.yaml
+	$(call _jinja,sk,$(abspath $(dir $<)/meta.yaml))
+
+build/seminar/%.tex: build/seminar/%.md
+	$(call pandoctex,sk)
+
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
-	modules/seminar/templates/$$(notdir $@)
+	modules/seminar/templates/$$(notdir $$@)
 	$(call _prepare_arguments)
 	python -m modules.seminar.builder.volume 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)' || exit 1;
@@ -39,12 +48,12 @@ build/seminar/%/semester.tex: \
 	$(call prepare_arguments_semester,semester)
 
 build/seminar/%/invite.tex: \
-	modules/seminar/templates/$$(notdir $@) \
+	modules/seminar/templates/$$(notdir $$@) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_semester,invite)
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
-	modules/seminar/templates/$$(notdir $@) \
+	modules/seminar/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_round,round)
@@ -125,7 +134,7 @@ output/seminar/%/instagram: \
 output/seminar/%/html-problems: \
 	output/seminar/$$*/html-prerequisites \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md))) ;
-	
+
 output/seminar/%/html-solutions:\
 	output/seminar/$$*/html-prerequisites \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md))) ;

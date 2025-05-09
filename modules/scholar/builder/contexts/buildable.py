@@ -1,12 +1,12 @@
 from abc import ABCMeta
 
-from core.builder.context import ContextModule, BuildableFileSystemContext
+from core.builder.context import ContextModule, BuildableFileSystemTreeContext
 from .base import ContextScholar
 from .hierarchy import ContextCourse, ContextYear
 from .i18n import ContextI18n
 
 
-class ContextIssueBase(BuildableFileSystemContext, ContextScholar, metaclass=ABCMeta):
+class ContextIssueBase(BuildableFileSystemTreeContext, ContextScholar, metaclass=ABCMeta):
     _issue_context_class = None
 
     def populate(self, course: str, year: int, issue: int):

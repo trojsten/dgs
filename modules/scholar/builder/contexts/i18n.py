@@ -5,7 +5,7 @@ from core.builder import context
 from core.builder.validator import String
 
 
-class ContextI18n(context.FileSystemContext):
+class ContextI18n(context.FileSystemTreeContext):
     _schema = Schema({
         'captions': {
             'problem': {
@@ -32,13 +32,13 @@ class ContextI18n(context.FileSystemContext):
     })
 
     def populate(self, language):
-        self.load_yaml('modules', 'scholar', 'i18n', language + '.yaml')
+        self.load_yaml(Path('modules', 'scholar', 'i18n', language + '.yaml'))
 
     def node_path(self, competition=None, language=None):
         return Path('modules', 'scholar', 'i18n', language + '.yaml')
 
 
-class ContextI18nGlobal(context.FileSystemContext):
+class ContextI18nGlobal(context.FileSystemTreeContext):
     _schema = Schema({})
 
     def node_path(self):

@@ -22,10 +22,10 @@ jobs:
     - uses: siacodelabs/setup-pandoc@v1
       with:
           xelatex: true
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -38,8 +38,8 @@ jobs:
         version: 1.0
     - name: "Set up pandoc-crossref"
       run: |
-        wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.6.4/pandoc-crossref-Linux-2.9.2.1.tar.xz
-        tar -xf pandoc-crossref-Linux-2.9.2.1.tar.xz
+        wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.16.0a/pandoc-crossref-Linux.tar.xz
+        tar -xf pandoc-crossref-Linux.tar.xz
         mv ./pandoc-crossref "/usr/local/bin/pandoc-crossref"
     - name: "Clone FontPro"
       uses: actions/checkout@master
