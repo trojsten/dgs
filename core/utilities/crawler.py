@@ -12,11 +12,11 @@ class Crawler():
         self.root = root
 
     @staticmethod
-    def is_node(path):
-        return path.is_dir() and path.basename[0] != '.' and Path(path, 'meta.yaml').is_file()
+    def is_node(path: Path) -> bool:
+        return path.is_dir() and path.name[0] != '.' and Path(path, 'meta.yaml').is_file()
 
     @staticmethod
-    def is_leaf(path):
+    def is_leaf(path: Path) -> bool:
         return path.is_file() and path.basename[0] != '.'
 
     def print_path(self, path=None, offset=0):

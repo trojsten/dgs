@@ -161,14 +161,3 @@ class BaseBuilder(metaclass=ABCMeta):
 
         log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} "
                   f"{c.path(self.full_name())} {c.ok('successful')}")
-
-    def build_contexts(self) -> None:
-        for context in self.contexts:
-            assert isinstance(context, BuildableContext), \
-                c.err(f"Builder's context class {context} is {self.context.__class__.__name__}, "
-                      f"which is not a buildable context!")
-
-            for template in self.templates:
-                jinja.print_template(self.template_root, template, context.data,
-                                     outdir=self.output_directory,
-                                     new_name=f"{context.name}.tex")

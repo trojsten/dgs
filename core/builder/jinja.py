@@ -1,17 +1,14 @@
 import math
-
 import jinja2
 import os
 import sys
-import logging
-from pathlib import Path
 
-from typing import Any, Optional
+from typing import Any, Optional, TextIO
 
 import core
-from core.utilities import filters, colour as c
+from core.utilities import filters, colour as c, logger
 
-log = logging.getLogger('dgs')
+log = logger.setupLog('dgs')
 
 
 class CollectUndefined(jinja2.StrictUndefined):
@@ -64,7 +61,7 @@ class JinjaRenderer:
                template: str,
                context: dict[str, Any],
                *,
-               outfile: Optional[Path] = None):
+               outfile: Optional[TextIO] = None):
         template_path = self.template_root / template
 
         if outfile is None:

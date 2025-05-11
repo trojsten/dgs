@@ -1,4 +1,9 @@
+import logging
+
+from core.utilities import logger
 from modules.seminar.builder import builder, context
+
+log = logging.getLogger('dgs')
 
 
 class BuilderRound(builder.BuilderSeminar):
