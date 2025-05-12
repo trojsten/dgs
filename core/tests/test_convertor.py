@@ -61,6 +61,8 @@ class TestQuotes:
 class TestImages:
     def test_image_latex(self, convert):
         output = convert('latex', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
+        output = output.replace('\n', ' ')
+        print(output)
         assert re.search(r'\\insertPicture\[width=\\textwidth,height=47mm]{.*}', output) is not None
         assert 'ryba.pdf' in output
 
@@ -70,14 +72,18 @@ class TestImages:
 Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
+        output = output.replace('\n', ' ')
+        print(output)
         assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{.*}', output) is not None
         assert 'subor.png' in output
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert re.match(r'<figure>.*</figure>', output, flags=re.DOTALL) is not None
-        assert re.match(r'.*<img.* src=".*ryba\.svg"', output, flags=re.DOTALL) is not None
-        assert re.match(r'.*<figcaption.*>.*Masívna ryba.*</figcaption>', output, flags=re.DOTALL) is not None
+        output = output.replace('\n', ' ')
+        print(output)
+        assert re.match(r'<figure>.*</figure>', output) is not None
+        assert re.match(r'.*<img.* src=".*ryba\.svg"', output) is not None
+        assert re.match(r'.*<figcaption.*>.*Masívna ryba.*</figcaption>', output) is not None
 
     def test_image_html_multiline(self, convert):
         output = convert('html', 'sk', """
@@ -86,6 +92,7 @@ Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
         output = output.replace('\n', ' ')
+        print(output)
         assert re.match(r'<figure>.*</figure>', output) is not None
         assert re.match(r'.*<img.* src=".*subor\.png"', output) is not None
         assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\.', output) is not None
