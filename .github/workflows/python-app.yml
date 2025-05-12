@@ -73,7 +73,7 @@ jobs:
         pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pipenv run python -m pytest -s
+        pipenv run python -m pytest -s -v
     - name: "Clone testing repository"
       uses: actions/checkout@master
       with:
