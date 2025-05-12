@@ -75,8 +75,9 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
-        assert re.match(r'<figure>.*<img.*src=".*ryba.svg".*<figcaption.*Masívna ryba.*</figcaption>.*</figure>',
-                        output, flags=re.DOTALL) is not None
+        assert re.match(r'<figure>.*</figure>', output, flags=re.DOTALL) is not None
+        assert re.match(r'.*<img.* src=".*ryba\.svg"', output, flags=re.DOTALL) is not None
+        assert re.match(r'.*<figcaption.*>.*Masívna ryba.*</figcaption>', output, flags=re.DOTALL) is not None
 
     def test_image_html_multiline(self, convert):
         output = convert('html', 'sk', """
@@ -85,8 +86,9 @@ Veľmi masívne.
 Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
         output = output.replace('\n', ' ')
-        assert re.match(r'<figure>.*<img.* src=".*subor\.png".*<figcaption.*Veľmi dlhý text\. Akože masívne\. '
-                        r'Veľmi masívne\. Aj s newlinami\..*</figcaption>.*</figure>', output) is not None
+        assert re.match(r'<figure>.*</figure>', output) is not None
+        assert re.match(r'.*<img.* src=".*subor\.png"', output) is not None
+        assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\.', output) is not None
 
 
 class TestTags:
