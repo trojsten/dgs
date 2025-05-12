@@ -81,7 +81,7 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
         output = output.replace('\n', ' ')
         print(output)
-        assert re.match(r'<figure>.*</figure>', output) is not None
+        assert re.match(r'<figure.*>.*</figure>', output) is not None
         assert re.match(r'.*<img.* src=".*ryba\.svg"', output) is not None
         assert re.match(r'.*<figcaption.*>.*Masívna ryba.*</figcaption>', output) is not None
 
@@ -93,7 +93,7 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
 """)
         output = output.replace('\n', ' ')
         print(output)
-        assert re.match(r'<figure>.*</figure>', output) is not None
+        assert re.match(r'<figure.*>.*</figure>', output) is not None
         assert re.match(r'.*<img.* src=".*subor\.png"', output) is not None
         assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\.', output) is not None
 
