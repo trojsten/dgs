@@ -1,6 +1,7 @@
 import itertools
 
 from enschema import Schema, Regex, Optional
+from schema import Forbidden
 
 from core import i18n
 from core.builder.validator import FileSystemValidator, File, Link, FileOrLink
@@ -18,11 +19,13 @@ class NabojValidator(FileSystemValidator):
                     Optional('solution.md'): FileOrLink,
                     Optional('answer-extra.md'): FileOrLink,
                     Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|tikz|tex)')): File,
+                    Forbidden(Regex(r'\s')): File,  # Reject anything containing whitespace
                 },
                 'answer.md': File,
                 Optional('answer-also.md'): File,
                 Optional('answer-interval.md'): File,
                 Optional('meta.yaml'): File,
+                Forbidden(Regex(r'\s')): File,  # Reject anything containing whitespace
                 Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|tikz|tex|md)')): File,
             },
         },
@@ -86,7 +89,8 @@ class NabojValidator(FileSystemValidator):
 
             lp = len([x for x, y in is_present.items() if y])
 
-            # If there are all files present, we're good, and if this is an optional file, then also if none are present
+            # If there are all files present, we're good.
+            # If this is an optional file, then also if none are present, but nothing in between
             ok = (lp == len(translations)) or (optional and lp == 0)
             if self.debug or not ok:
                 print(f"Warning for problem {c.name(problem_id):<30}: "
