@@ -186,7 +186,7 @@ build/naboj/%/pdf-prerequisites: \
 # <competition>/<volume>
 define RULE_TEMPLATE
 build/naboj/%/problems/$(1): \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md)))
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem-extra.md))) ;
 
 build/naboj/%/solutions/$(1): \
