@@ -4,18 +4,18 @@ import logging
 import pprint
 import yaml
 
-from typing import Any, Self
+from typing import Any, Self, Optional
 from pathlib import Path
 from enschema import Schema, SchemaError
 
-from core.utilities import colour as c, crawler, logger
+from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
 
 
 class Context(abc.ABC):
     _defaults: dict[str, Any] = {}      # Defaults for every instance
-    _schema: Schema | None = None       # Validation schema for the context, or None if it is not to be validated
+    _schema: Optional[Schema] = None       # Validation schema for the context, or None if it is not to be validated
     _id: str = None
     _data: dict[str, Any] = None
 
@@ -49,6 +49,9 @@ class Context(abc.ABC):
         return f"<{self.__class__.__name__} named '{self.id}'>"
 
     def load_yaml(self, path: Path):
+        """
+        Load context metadata from a YAML file. Replace with an empty dictionary if empty.
+        """
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(path)}")
         try:
             contents = yaml.load(open(path, 'r'), Loader=yaml.SafeLoader)
@@ -58,7 +61,8 @@ class Context(abc.ABC):
             raise e
 
         return self
-    def ident(self, *path: Any) -> tuple[Any]:
+
+    def ident(self, *path: Any) -> tuple[Any, ...]:
         """
         Transform initialization parameters to identifier. By default, this is just the same tuple.
         """
@@ -74,19 +78,24 @@ class Context(abc.ABC):
             try:
                 self._schema.validate(self.data)
             except SchemaError as exc:
-                log.error(f"Failed to validate {c.name(self.__class__.__name__)} at {c.path(self.id)}")
+                log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)}"
+                          f"{c.err('at')} {c.path(self.id)}")
                 pprint.pprint(self.data)
                 log.error("against")
-                pprint.pprint(self._schema.schema)
+                pprint.pprint(self.schema.schema)
                 raise exc
 
     def add(self, **kwargs):
-        """ Merge extra key-value pairs into this context, overwriting existing keys """
+        """
+        Merge extra key-value pairs into this context, overwriting existing keys.
+        """
         self._data |= kwargs
         return self
 
     def adopt(self, **ctxs: 'Context') -> Self:
-        """ Adopt a new child context `ctx` under the key `key` """
+        """
+        Adopt new child contexts `ctxs` from a dictionary of child contexts.
+        """
         for key, ctx in ctxs.items():
             assert isinstance(ctx, Context)
 
