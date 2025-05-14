@@ -14,7 +14,7 @@ class BuilderNabojVenue(BuilderNaboj):
         'instructions.jtt',
         'answers-modulo.jtt',
     ]
-    language_templates = ['instructions-inner.jtt']
+    language_templates = []
 
     def add_arguments(self):
         super().add_arguments()
@@ -28,14 +28,12 @@ class BuilderNabojVenue(BuilderNaboj):
 
     def build_templates(self):
         super().build_templates()
+        renderer = jinja.StaticRenderer(Path(self.launch_directory, *self.path()))
 
         for template in self.language_templates:
             path = self.path()
-            jinja.print_template(
-                Path(self.launch_directory, path[0], path[1], 'languages', self.context.data['venue']['language']), template, self.context.data,
-                outdir=self.output_directory,
-                new_name=Path(template).with_suffix('.tex'),
-            )
+            outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')
+            renderer.render(template, self.context.data['venue']['language'], outfile=outfile)
 
 
 BuilderNabojVenue().build_templates()

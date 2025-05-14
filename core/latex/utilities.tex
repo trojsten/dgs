@@ -28,11 +28,13 @@
 }
 
 \NewDocumentCommand{\insertPicture}{O{} m}{%
-    \IfFileExists{\activeDirectory/#2}{%
-        \includegraphics[#1]{\activeDirectory/#2}%
-    }{%
-        \includegraphics[#1]{example-image}%
-    }%
+    \begin{center}
+        \IfFileExists{\activeDirectory/#2}{%
+            \includegraphics[#1]{\activeDirectory/#2}%
+        }{%
+            \includegraphics[#1]{example-image}%
+        }%
+    \end{center}
 }
 
 % \exampleIO[verbatim input][verbatim output]
@@ -80,4 +82,3 @@
 \char_set_catcode_end_line:n{`\^^M}
 
 \ExplSyntaxOff
-

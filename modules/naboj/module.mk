@@ -39,7 +39,7 @@ build/naboj/%/$(1).tex: \
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
-$(foreach filename,problem solution answer-extra,$(eval $(call TRANSLATABLE,$(filename))))
+$(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRANSLATABLE,$(filename))))
 
 define NONTRANSLATABLE_ANSWERS
 build/naboj/%/$(1).md: \
@@ -186,7 +186,7 @@ build/naboj/%/pdf-prerequisites: \
 # <competition>/<volume>
 define RULE_TEMPLATE
 build/naboj/%/problems/$(1): \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md)))
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem-extra.md))) ;
 
 build/naboj/%/solutions/$(1): \
@@ -202,6 +202,7 @@ build/naboj/%/$(1): \
 endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
+# % <competition>/<volume>
 build/naboj/%/problems: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem-extra.md))) ;
@@ -211,9 +212,9 @@ build/naboj/%/solutions: \
 
 build/naboj/%/answers: \
 	$$(addsuffix answer.tex,$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) \
 	$$(addsuffix answer-also.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-also.md),$$(wildcard $$(dir $$(int))*/)))) \
-	$$(addsuffix answer-interval.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-interval.md),$$(wildcard $$(dir $$(int))*/)))) ;
+	$$(addsuffix answer-interval.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-interval.md),$$(wildcard $$(dir $$(int))*/)))) \
+	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) ;
 
 ### Venues ######################################
 
