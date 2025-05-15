@@ -43,7 +43,7 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRA
 
 define NONTRANSLATABLE_ANSWERS
 build/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$$$$(notdir $$$@)))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$$$$(notdir $$$$@)))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 

@@ -42,14 +42,14 @@ class JinjaRenderer:
         self.template_root = template_root
 
         self.env = jinja2.Environment(
-            block_start_string=kwargs.get('block_start_string', '(@'),
-            block_end_string=kwargs.get('block_end_string', '@)'),
-            variable_start_string=kwargs.get('variable_start_string', '(*'),
-            variable_end_string=kwargs.get('variable_end_string', '*)'),
-            comment_start_string=kwargs.get('comment_start_string', '(#'),
-            comment_end_string=kwargs.get('comment_end_string', '#)'),
-            line_statement_prefix=kwargs.get('line_statement_prefix', '%%'),
-            line_comment_prefix=kwargs.get('line_comment_prefix', '%#'),
+            block_start_string=kwargs.pop('block_start_string', '(@'),
+            block_end_string=kwargs.pop('block_end_string', '@)'),
+            variable_start_string=kwargs.pop('variable_start_string', '(*'),
+            variable_end_string=kwargs.pop('variable_end_string', '*)'),
+            comment_start_string=kwargs.pop('comment_start_string', '(#'),
+            comment_end_string=kwargs.pop('comment_end_string', '#)'),
+            line_statement_prefix=kwargs.pop('line_statement_prefix', '%%'),
+            line_comment_prefix=kwargs.pop('line_comment_prefix', '%#'),
             trim_blocks=True,
             autoescape=False,
             undefined=CollectUndefined,
@@ -107,7 +107,7 @@ class StaticRenderer(JinjaRenderer):
 
 class MarkdownJinjaRenderer(JinjaRenderer):
     def __init__(self, template_root, **kwargs):
-        super().__init__(template_root, **kwargs)
+        super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
             #'qty': core.utilities.filters.qty,
