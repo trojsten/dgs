@@ -112,6 +112,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.env.filters |= {
             #'qty': core.utilities.filters.qty,
             'num': core.utilities.filters.num,
+            'float': core.utilities.filters.float
         }
 
         self.env.globals |= {

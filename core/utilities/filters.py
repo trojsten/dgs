@@ -148,3 +148,7 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
 
 def num(x: float, precision: int):
     return rf"\num{{{x:.{precision}f}}}"
+
+
+def float(x: float, precision: int):
+    return rf"{x:.{precision}f}"

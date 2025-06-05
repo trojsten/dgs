@@ -54,7 +54,7 @@ gforce:
     value:      10
     exact:      9.80665
     unit:       "\\metre\\per\\second\\squared"
-    digits:     1
+    digits:     0
 
 radius_earth:
     symbol:     "R_{\\oplus}"
