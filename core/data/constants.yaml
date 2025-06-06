@@ -58,9 +58,9 @@ gforce:
 
 radius_earth:
     symbol:     "R_{\\oplus}"
-    value:      6378
-    exact:      6378
-    unit:       "\\kilo\\metre"
+    value:      6378000
+    exact:      6378000
+    unit:       "\\metre"
     digits:     4
 
 mass_earth:

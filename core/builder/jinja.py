@@ -112,7 +112,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.env.filters |= {
             #'qty': core.utilities.filters.qty,
             'num': core.utilities.filters.num,
-            'float': core.utilities.filters.float
+            'float': core.utilities.filters.float,
+            'exp': core.utilities.filters.exp,
         }
 
         self.env.globals |= {
@@ -136,6 +137,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'log2': math.log2,
             'exp': math.exp,
             'pow': math.pow,
+            'pi': math.pi,
             'ktoc': lambda x: x - 273.15,
             'ctok': lambda x: x + 273.15,
         }

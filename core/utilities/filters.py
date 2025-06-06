@@ -152,3 +152,7 @@ def num(x: float, precision: int):
 
 def float(x: float, precision: int):
     return rf"{x:.{precision}f}"
+
+
+def exp(x: float, precision: int):
+    return rf"{x:.{precision}g}"
