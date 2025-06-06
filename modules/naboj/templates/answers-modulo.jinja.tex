@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.jtt' @)
+(@ extends 'base-booklet.jinja.tex' @)
 
 (@ set target = 'answers' @)
 
@@ -16,7 +16,7 @@
         \newpage
         \section{(* i18n[language.id].section.modulo *) (* loop.index0 *)}
         (@ for problem in modulo @)
-            (@ include 'answer.jtt' @)
+            (@ include 'answer.jinja.tex' @)
         (@ endfor @)
 
     (@ endfor @)

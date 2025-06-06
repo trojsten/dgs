@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.jtt' @)
+(@ extends 'base-booklet.jinja.tex' @)
 
 (@ set target = 'answers' @)
 
@@ -6,6 +6,6 @@
     \section{(* i18n[language.id].section.answers *)}
     \pagestyle{answers}
     (@ for problem in volume.problems @)%
-        (@ include 'answer.jtt' @)%
+        (@ include 'blocks/answer.jinja.tex' @)%
     (@ endfor @)
 (@ endblock @)

@@ -134,11 +134,11 @@ class BaseBuilder(metaclass=ABCMeta):
         """
         Default output naming scheme:  can be overridden """
         path = Path(template_name)
-        if path.suffix in self.suffix_map:
+        if path.suffixes[-2] == '.jinja':
             if override_name is None:
-                return path.with_suffix(self.suffix_map.get(path.suffix))
+                return path.with_suffix(path.suffixes[-1])
             else:
-                return Path(override_name).with_suffix(self.suffix_map.get(path.suffix))
+                return Path(override_name).with_suffix(path.suffixes[-1])
         else:
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")

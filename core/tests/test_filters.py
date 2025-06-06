@@ -141,7 +141,7 @@ class TestPeople:
         assert format_people(['Tom', 'Jerry']) == 'Tom a Jerry'
 
     def test_string_many(self):
-        assert format_people(['Terka', 'zub', 'zub', 'zub']) == 'Terka, zub, zub a zub'
+        assert format_people(['Mözög', 'pipka', 'pipka', 'pipka']) == 'Mözög, pipka, pipka a pipka'
 
     def test_single_dict(self):
         assert format_people(dict(name='Adam', gender='m')) == 'Adam'
