@@ -92,42 +92,42 @@ build/naboj/%/build-venue: \
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/online.jtt \
+	modules/naboj/templates/base.jinja.tex \
+	modules/naboj/templates/base-booklet.jinja.tex \
+	modules/naboj/templates/online.jinja.tex \
     build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/tearoff.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/base-tearoff.jtt \
-	modules/naboj/templates/tearoff.jtt \
-	modules/naboj/templates/tearoff/problem.jtt \
-	modules/naboj/templates/tearoff/problem-extra.jtt \
-	modules/naboj/templates/tearoff/bottom.jtt \
+	modules/naboj/templates/base.jinja.tex \
+	modules/naboj/templates/base-tearoff.jinja.tex \
+	modules/naboj/templates/tearoff.jinja.tex \
+	modules/naboj/templates/tearoff/problem.jinja.tex \
+	modules/naboj/templates/tearoff/problem-extra.jinja.tex \
+	modules/naboj/templates/tearoff/bottom.jinja.tex \
 	build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/footer.jtt \
-	modules/naboj/templates/colophon.jtt \
-	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/answer.jtt \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/base.jinja.tex \
+	modules/naboj/templates/footer.jinja.tex \
+	modules/naboj/templates/colophon.jinja.tex \
+	modules/naboj/templates/base-booklet.jinja.tex \
+	modules/naboj/templates/answer.jinja.tex \
+	modules/naboj/templates/$$(subst .tex,.jinja.tex,$$(notdir $$@)) \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
-	source/naboj/$$*/intro.jtt \
+	source/naboj/$$*/intro.jinja.tex \
 	build/naboj/$$*/build-language ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/constants.tex: \
-	modules/naboj/templates/constants.jtt \
+	modules/naboj/templates/constants.jinja.tex \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)
@@ -139,12 +139,12 @@ build/naboj/%/instructions-inner.tex: \
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions.tex: \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jinja.tex,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/evaluators.tex: \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	source/naboj/$$*/$$(subst .tex,.jinja.tex,$$(notdir $$@)) \
 	build/naboj/$$*/build-language ;
 
 # Instructions before the online competition (content)
@@ -220,8 +220,8 @@ build/naboj/%/answers: \
 
 # Answers-modulo
 build/naboj/%/answers-modulo.tex: \
-	modules/naboj/templates/answer.jtt \
-	modules/naboj/templates/answers-modulo.jtt \
+	modules/naboj/templates/answer.jinja.tex \
+	modules/naboj/templates/answers-modulo.jinja.tex \
 	build/naboj/$$*/build-venue ;
 
 ### Languages ###################################

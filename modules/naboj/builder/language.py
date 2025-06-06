@@ -8,14 +8,14 @@ class BuilderNabojLanguage(BuilderNaboj):
 
     _root_context_class = BuildableContextLanguage
     templates = [
-        'booklet.jtt',
-        'answers.jtt',
-        'constants.jtt',
-        'cover.jtt',
-        'instructions-online.jtt',
-        'online.jtt',
-        'evaluation.jtt',
-        'tearoff.jtt',
+        'booklet.jinja.tex',
+        'answers.jinja.tex',
+        'constants.jinja.tex',
+        'cover.jinja.tex',
+        'instructions-online.jinja.tex',
+        'online.jinja.tex',
+        'evaluation.jinja.tex',
+        'tearoff.jinja.tex',
     ]
     i18n_templates = ['intro.jtt', 'evaluators.jtt']
 

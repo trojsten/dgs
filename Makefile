@@ -90,7 +90,7 @@ endef
 include modules/*/module.mk
 
 build/core/i18n/%.tex: \
-	core/templates/override.jtt
+	core/templates/override.jinja.tex
 	@mkdir -p $(dir $@)
 	python -m core.builder.i18n 'core/i18n/' 'core/templates/' $* -o $(dir $@)
 
@@ -111,7 +111,7 @@ build/%.tex: build/%.md
 # Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
 	source/%.tikz \
-	core/templates/standalone.jtt
+	core/templates/standalone.jinja.tex
 	@mkdir -p $(dir $@)
 	./standalone.py $(lang) $< $@
 
