@@ -26,6 +26,13 @@ def context_simple():
     }
 
 
+def render_to_temporary(what, renderer, context_simple) -> list[str]:
+    output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
+    renderer.render(what, context_simple, outfile=output)
+    output.seek(0)
+    return output.readlines()
+
+
 class TestConstant:
     def test_does_it_render(self, temp_renderer, context_simple) -> None:
         x = NamedTemporaryFile(delete=False, delete_on_close=False)
@@ -39,11 +46,14 @@ class TestConstant:
 
         assert output.readlines() == ['hello\n']
 
+    def test_does_it_render_anything(self, renderer, context_simple) -> None:
+        assert render_to_temporary('simplest.txt', renderer, context_simple) == ['hello\n']
+
     def test_does_it_render_a_constant(self, renderer, context_simple) -> None:
-        output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
-        renderer.render('constant.txt', context_simple, outfile=output)
-        output.seek(0)
-        assert output.readlines() == ['5\n']
+        assert render_to_temporary('constant.txt', renderer, context_simple) == ['5\n']
+
+    def test_does_it_render_a_float(self, renderer, context_simple) -> None:
+        assert render_to_temporary('float.txt', renderer, context_simple) == ['2.718\n']
 
 
 #    def test_does_it_render_a_constant(self, renderer, context_simple) -> None:
@@ -59,8 +69,11 @@ def jinja_convertor(path):
     MarkdownJinjaRenderer(Path('core/tests/snippets'))
 
 
+# ToDo this is just copied from above
 class TestJinjaConvertor:
-    def test_does_it_render(self, temp_renderer, context_simple) -> None:
+    def test_does_it_render(self, renderer, context_simple) -> None:
         output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
         renderer.render('constant.txt', context_simple, outfile=output)
         output.seek(0)
+
+        assert output.readlines() == ['5\n']
