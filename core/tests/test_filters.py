@@ -1,8 +1,8 @@
 import datetime
 import pytest
 
-from core.filters.latex import (nth, render_list, roman, textbf, textit, isotex, plural,
-                                format_gender_suffix, format_people)
+from core.filters.latex import render_list, textbf, textit, isotex, format_gender_suffix, format_people
+from core.filters.numbers import nth, roman, plural
 
 
 class TestRender():
@@ -50,7 +50,7 @@ def word_feminine():
     return "kategóri"
 
 
-class TestPlural():
+class TestPlural:
     def test_one(self, word_masculine):
         assert word_masculine + plural(1, "", "e", "ov") == "plyš"
 
@@ -87,25 +87,24 @@ class TestRoman:
         with pytest.raises(ValueError):
             roman(123456)
 
-    def test_roman_1(self):
-        assert roman(1) == 'I'
-
-    def test_roman_1234(self):
-        assert roman(1234) == 'MCCXXXIV'
-
-    def test_roman_49(self):
-        assert roman(49) == 'XLIX'
-
-    def test_roman_1990(self):
-        assert roman(1990) == 'MCMXC'
-
-    def test_roman_2022(self):
-        assert roman(2022) == 'MMXXII'
+    @pytest.mark.parametrize("ara,rom", [
+        pytest.param(1, 'I'),
+        pytest.param(2, 'II'),
+        pytest.param(3, 'III'),
+        pytest.param(9, 'IX'),
+        pytest.param(49, 'XLIX'),
+        pytest.param(949, 'CMXLIX'),
+        pytest.param(1234, 'MCCXXXIV'),
+        pytest.param(1990, 'MCMXC'),
+        pytest.param(2022, 'MMXXII'),
+    ])
+    def test_roman(self, ara, rom):
+        assert roman(ara) == rom
 
 
 class TestGenderSuffix:
     def test_undefined(self):
-        """ A string fails in singular case, undefined gender """
+        """ A string fails in singular case, gender is undefined """
         assert format_gender_suffix('Adam') == r'\errorMessage{?}'
 
     def test_many_strings(self):
@@ -174,46 +173,23 @@ class TestPeople:
 
 
 class TestNth:
-    def test_zeroth(self):
-        assert nth(0) == "0th"
-
-    def test_first(self):
-        assert nth(1) == "1st"
-
-    def test_second(self):
-        assert nth(2) == "2nd"
-
-    def test_third(self):
-        assert nth(3) == "3rd"
-
-    def test_fourth(self):
-        assert nth(4) == "4th"
-
-    def test_tenth(self):
-        assert nth(10) == "10th"
-
-    def test_eleventh(self):
-        assert nth(11) == "11th"
-
-    def test_twelfth(self):
-        assert nth(12) == "12th"
-
-    def test_thirteenth(self):
-        assert nth(13) == "13th"
-
-    def test_sixteenth(self):
-        assert nth(16) == "16th"
-
-    def test_twentyfirst(self):
-        assert nth(21) == "21st"
-
-    def test_thirtythird(self):
-        assert nth(33) == "33rd"
-
-    def test_101(self):
-        assert nth(101) == "101st"
-
-    def test_183(self):
-        assert nth(183) == "183rd"
-
-
+    @pytest.mark.parametrize("number,ordinal", [
+        pytest.param(0, '0th'),
+        pytest.param(1, '1st'),
+        pytest.param(2, '2nd'),
+        pytest.param(3, '3rd'),
+        pytest.param(4, '4th'),
+        pytest.param(10, '10th'),
+        pytest.param(11, '11th'),
+        pytest.param(12, '12th'),
+        pytest.param(13, '13th'),
+        pytest.param(16, '16th'),
+        pytest.param(21, '21st'),
+        pytest.param(33, '33rd'),
+        pytest.param(101, '101st'),
+        pytest.param(183, '183rd'),
+        pytest.param(111, '111th'),
+        pytest.param(341, '341st'),
+    ])
+    def test_nth(self, number, ordinal):
+        assert nth(number) == ordinal

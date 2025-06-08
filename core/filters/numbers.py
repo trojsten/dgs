@@ -59,7 +59,7 @@ def float(x: float, precision: int):
     return rf"{x:.{precision}f}"
 
 
-def exp(x: float, precision: int = None):
+def sci(x: float, precision: int = None):
     """
     Format a float in the exponential form
     """

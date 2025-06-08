@@ -2,7 +2,7 @@ from typing import Any, Union, Callable
 
 from enschema import Schema, Or
 
-from .numbers import exp
+from .numbers import sci
 
 
 def isotex(date):
@@ -92,7 +92,7 @@ def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = 
                              f"Define 'gender' key in meta.yaml")
 
 
-def format_people(people: Union[list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
+def format_people(people: Union[str, list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
     """
     Fully format a list of people
     Parameters
@@ -106,6 +106,6 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
 
 def num(x: float, precision: int):
     """ Format as a `siunitx` \num{} input"""
-    return rf'\num{{{exp(x, precision)}}}'
+    return rf'\num{{{sci(x, precision)}}}'
 
 

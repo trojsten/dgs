@@ -113,7 +113,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             #'qty': latex.qty,
             'num': latex.num,
             'float': numbers.float,
-            'exp': numbers.exp,
+            'sci': numbers.sci,
         }
 
         self.env.globals |= {

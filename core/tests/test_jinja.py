@@ -1,7 +1,8 @@
 from pathlib import Path
-from tempfile import SpooledTemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 
 import pytest
+import regex as re
 
 from core.builder.jinja import MarkdownJinjaRenderer
 from jinja import JinjaConvertor, CLIInterface
@@ -25,6 +26,7 @@ def context_simple():
         'large': 123456789,
         'giga': 1e9,
         'your_mom': 3.14e15,
+        'small': 2.4433e-19,
     }
 
 def create_temporary_file(string):
@@ -51,13 +53,16 @@ def render_string_to_temporary(string, renderer, context) -> list[str]:
 
 
 class TestConstant:
-    def test_does_it_render(self, temp_renderer, context_simple) -> None:
-        ntf = create_temporary_file('hello')
-        assert render_to_temporary(ntf, temp_renderer, context_simple) == ['hello\n']
-
-    def test_does_it_render_complex(self, temp_renderer, context_simple) -> None:
-        ntf = create_temporary_file(r'(§ large §) < (§ giga|exp §)')
-        assert render_to_temporary(ntf, temp_renderer, context_simple) == ['123456789 < e+09\n']
+    @pytest.mark.parametrize("source,result", [
+        pytest.param('hello', 'hello', id='hello'),
+        pytest.param(r'(§ large §) < (§ giga|sci §)', r'123456789 < e\+?09\n', id='complex'),
+        pytest.param('(§ your_mom|sci(5) §)', r'3.14e\+?15\n?', id='sci5'),
+        pytest.param('(§ small|sci(4) §)', r'2.443e-19\n?', id='sci-small'),
+    ])
+    def test_render(self, source, result, temp_renderer, context_simple) -> None:
+        ntf = create_temporary_file(source)
+        rr = re.compile(result)
+        assert rr.match(render_to_temporary(ntf, temp_renderer, context_simple)[0])
 
     def test_does_it_render_anything(self, renderer, context_simple) -> None:
         assert render_string_to_temporary('simplest.txt', renderer, context_simple) == ['hello\n']
