@@ -1,8 +1,8 @@
 import datetime
 import pytest
 
-from core.utilities.filters import (render_list, roman, textbf, textit, isotex, plural,
-                                    format_gender_suffix, format_people)
+from core.filters.latex import (nth, render_list, roman, textbf, textit, isotex, plural,
+                                format_gender_suffix, format_people)
 
 
 class TestRender():
@@ -70,20 +70,20 @@ class TestPlural():
         assert word_feminine + plural(7, "a", "e", "e") == "kategórie"
 
 
-class TestRoman():
-    def test_roman_str(self):
+class TestRoman:
+    def test_str_fails(self):
         with pytest.raises(TypeError):
             roman('ryba')
 
-    def test_roman_float(self):
+    def test_float_fails(self):
         with pytest.raises(TypeError):
             roman(3.0)
 
-    def test_roman_zero(self):
+    def test_zero_fails(self):
         with pytest.raises(ValueError):
             roman(0)
 
-    def test_roman_too_big(self):
+    def test_too_big_fails(self):
         with pytest.raises(ValueError):
             roman(123456)
 
@@ -109,7 +109,7 @@ class TestGenderSuffix:
         assert format_gender_suffix('Adam') == r'\errorMessage{?}'
 
     def test_many_strings(self):
-        """ This should not fail: if plural, suffix is invariably 'i' (at least in Slovak) """
+        """ This should not fail: if plural, the suffix is invariably 'i' (at least in Slovak) """
         assert format_gender_suffix(['Pat', 'Mat']) == 'i'
 
     def test_invalid_gender(self):
@@ -121,7 +121,7 @@ class TestGenderSuffix:
         assert format_gender_suffix(dict(name="Adam", gender='m')) == ''
 
     def test_single_dict_n(self):
-        assert format_gender_suffix(dict(name="Tete", gender='n')) == 'o'
+        assert format_gender_suffix(dict(name="Kaj", gender='n')) == 'o'
 
     def test_single_dict_f(self):
         assert format_gender_suffix(dict(name="Viki", gender='f')) == 'a'
@@ -171,3 +171,49 @@ class TestPeople:
                 {'name': 'Emmika', 'gender': 'f'},
             ], func=textit, and_word='et'
         ) == r'\textit{Kika} et \textit{Emmika}'
+
+
+class TestNth:
+    def test_zeroth(self):
+        assert nth(0) == "0th"
+
+    def test_first(self):
+        assert nth(1) == "1st"
+
+    def test_second(self):
+        assert nth(2) == "2nd"
+
+    def test_third(self):
+        assert nth(3) == "3rd"
+
+    def test_fourth(self):
+        assert nth(4) == "4th"
+
+    def test_tenth(self):
+        assert nth(10) == "10th"
+
+    def test_eleventh(self):
+        assert nth(11) == "11th"
+
+    def test_twelfth(self):
+        assert nth(12) == "12th"
+
+    def test_thirteenth(self):
+        assert nth(13) == "13th"
+
+    def test_sixteenth(self):
+        assert nth(16) == "16th"
+
+    def test_twentyfirst(self):
+        assert nth(21) == "21st"
+
+    def test_thirtythird(self):
+        assert nth(33) == "33rd"
+
+    def test_101(self):
+        assert nth(101) == "101st"
+
+    def test_183(self):
+        assert nth(183) == "183rd"
+
+

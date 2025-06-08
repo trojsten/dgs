@@ -53,7 +53,7 @@ build/seminar/%/invite.tex: \
 	$(call prepare_arguments_semester,invite)
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
-	modules/seminar/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/seminar/templates/$$(subst .tex,.jinja.tex,$$(notdir $$@)) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_round,round)
@@ -79,21 +79,21 @@ output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
 
 output/seminar/%/problems.pdf: \
-	modules/seminar/templates/problems.jtt \
+	modules/seminar/templates/problems.jinja.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/problems.tex
 	$(call double_xelatex,seminar)
 
 output/seminar/%/solutions.pdf: \
-	modules/seminar/templates/solutions.jtt \
+	modules/seminar/templates/solutions.jinja.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/solutions.tex
 	$(call double_xelatex,seminar)
 
 output/seminar/%/solutions-full.pdf: \
-	modules/seminar/templates/solutions-full.jtt \
+	modules/seminar/templates/solutions-full.jinja.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/solution.md))) \
 	build/seminar/$$*/pdf-prerequisites \
@@ -101,20 +101,20 @@ output/seminar/%/solutions-full.pdf: \
 	$(call double_xelatex,seminar)
 
 output/seminar/%/instagram.pdf: \
-	modules/seminar/templates/instagram.jtt \
+	modules/seminar/templates/instagram.jinja.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/instagram.tex
 	$(call double_xelatex,seminar)
 
 output/seminar/%/semester.pdf: \
-	modules/seminar/templates/semester.jtt \
+	modules/seminar/templates/semester.jinja.tex \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/semester.tex
 	$(call double_xelatex,seminar)
 
-output/seminar/%/invite.pdf:\
+output/seminar/%/invite.pdf: \
 	source/seminar/$$*/meta.yaml \
 	build/seminar/$$*/invite.tex
 	$(call double_xelatex,seminar)

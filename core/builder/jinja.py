@@ -5,8 +5,8 @@ import sys
 
 from typing import Any, Optional, TextIO
 
-import core
-from core.utilities import filters, colour as c, logger
+from core.utilities import colour as c, logger
+from core.filters import latex, numbers
 
 log = logger.setupLog('dgs')
 
@@ -88,19 +88,19 @@ class StaticRenderer(JinjaRenderer):
         super().__init__(template_root, **kwargs)
 
         self.env.filters |= {
-            'roman': core.utilities.filters.roman,
-            'format_list': core.utilities.filters.render_list,
-            'format_people': core.utilities.filters.format_people,
-            'format_gender_suffix': core.utilities.filters.format_gender_suffix,
-            'isotex': core.utilities.filters.isotex,
-            'plural': core.utilities.filters.plural,
-            'nth': core.utilities.filters.nth,
-            'upnth': core.utilities.filters.upnth,
+            'roman': numbers.roman,
+            'format_list': latex.render_list,
+            'format_people': latex.format_people,
+            'format_gender_suffix': latex.format_gender_suffix,
+            'isotex': latex.isotex,
+            'plural': numbers.plural,
+            'nth': numbers.nth,
+            'upnth': latex.upnth,
         }
 
         self.env.globals |= {
-            'plural': core.utilities.filters.plural,
-            'textbf': core.utilities.filters.textbf,
+            'plural': numbers.plural,
+            'textbf': latex.textbf,
             'path_exists': lambda x: os.path.exists(x),
         }
 
@@ -110,9 +110,10 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
-            #'qty': core.utilities.filters.qty,
-            'num': core.utilities.filters.num,
-            'float': core.utilities.filters.float
+            #'qty': latex.qty,
+            'num': latex.num,
+            'float': numbers.float,
+            'exp': numbers.exp,
         }
 
         self.env.globals |= {
@@ -136,6 +137,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'log2': math.log2,
             'exp': math.exp,
             'pow': math.pow,
+            'pi': math.pi,
             'ktoc': lambda x: x - 273.15,
             'ctok': lambda x: x + 273.15,
         }

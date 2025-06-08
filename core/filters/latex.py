@@ -1,31 +1,8 @@
+from typing import Any, Union, Callable
+
 from enschema import Schema, Or
-from typing import Any, Callable, Union, List, Dict
 
-
-def roman(number: int) -> str:
-    if not type(number) == int:
-        raise TypeError("Only integers between 1 and 3999 can be formatted as Roman numerals")
-
-    if number <= 0 or number > 4000:
-        raise ValueError(f"Argument must be between 1 and 3999, got {number}")
-
-    ints = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
-    nums = ('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I')
-    result = ""
-    for i in range(len(ints)):
-        count = int(number / ints[i])
-        result += nums[i] * count
-        number -= ints[i] * count
-    return result
-
-
-def plural(how_many, one, two, many):
-    if how_many == 1:
-        return one
-    if 2 < how_many < 5:
-        return two
-    else:
-        return many
+from .numbers import exp
 
 
 def isotex(date):
@@ -45,29 +22,9 @@ def wrap(x: str, format_str: str) -> str:
 
 
 def identity(x: Any) -> Any:
+    """Identitfy helper function"""
     return x
 
-
-def _nth(x: int) -> str:
-    assert isinstance(x, int)
-    assert x >= 0
-    if x % 10 in [0, 4, 5, 6, 7, 8, 9]:
-        return "th"
-    else:
-        if (x % 100) // 10 == 1:
-            return "th"
-        else:
-            match x % 10:
-                case 1:
-                    return "st"
-                case 2:
-                    return "nd"
-                case 3:
-                    return "rd"
-
-
-def nth(x: int) -> str:
-    return f"{x}{_nth(x)}"
 
 
 def upnth(x: int) -> str:
@@ -89,7 +46,7 @@ def render_list(items: Union[list, Any], *, func: Callable = identity, and_word:
     return ' '.join(items)
 
 
-def process_people(people: Union[List[Dict[str, str]], Dict[str, str]]) -> List[Dict[str, str]]:
+def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[dict[str, str]]:
     """
     Pre-process people metadata:
         - if a dict, wrap it in a list
@@ -121,16 +78,17 @@ def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = 
     if len(people) > 1:
         return "i"
     else:
-        if people[0]['gender'] == 'm':
+        person = people[0]
+        if person['gender'] == 'm':
             return ""
-        elif people[0]['gender'] == 'f':
+        elif person['gender'] == 'f':
             return "a"
-        elif people[0]['gender'] == 'n':
+        elif person['gender'] == 'n':
             return "o"
-        elif people[0]['gender'] == '?':
+        elif person['gender'] == '?':
             return r"\errorMessage{?}"
         else:
-            raise ValueError(f"Tried to use an undefined gender suffix '{people[0]['gender']}'. "
+            raise ValueError(f"Tried to use an undefined gender suffix '{person['gender']}'. "
                              f"Define 'gender' key in meta.yaml")
 
 
@@ -147,8 +105,7 @@ def format_people(people: Union[list, dict], *, func: Callable = identity, and_w
 
 
 def num(x: float, precision: int):
-    return rf"\num{{{x:.{precision}f}}}"
+    """ Format as a `siunitx` \num{} input"""
+    return rf'\num{{{exp(x, precision)}}}'
 
 
-def float(x: float, precision: int):
-    return rf"{x:.{precision}f}"
