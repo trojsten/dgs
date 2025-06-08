@@ -58,11 +58,16 @@ class TestConstant:
         pytest.param(r'(§ large §) < (§ giga|sci §)', r'123456789 < e\+?09\n', id='complex'),
         pytest.param('(§ your_mom|sci(5) §)', r'3.14e\+?15\n?', id='sci5'),
         pytest.param('(§ small|sci(4) §)', r'2.443e-19\n?', id='sci-small'),
+        pytest.param('(§ (small * your_mom * five**5)|sci(5) §)', r'2.3975\n?', id='complex-expression'),
+        pytest.param('(§ cos(1)|float(5) §)', r'0.54030\n?', id='cos(1)'),
+        pytest.param('(§ cos(1)|num(5) §)', r'\\num{0.5403}\n?', id='cos(1) num'),
     ])
     def test_render(self, source, result, temp_renderer, context_simple) -> None:
         ntf = create_temporary_file(source)
         rr = re.compile(result)
-        assert rr.match(render_to_temporary(ntf, temp_renderer, context_simple)[0])
+        output = render_to_temporary(ntf, temp_renderer, context_simple)[0]
+        assert rr.match(output), output
+
 
     def test_does_it_render_anything(self, renderer, context_simple) -> None:
         assert render_string_to_temporary('simplest.txt', renderer, context_simple) == ['hello\n']

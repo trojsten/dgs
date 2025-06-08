@@ -2,7 +2,7 @@ from typing import Any, Union, Callable
 
 from enschema import Schema, Or
 
-from .numbers import sci
+from .numbers import sci, _nth
 
 
 def isotex(date):
@@ -22,22 +22,40 @@ def wrap(x: str, format_str: str) -> str:
 
 
 def identity(x: Any) -> Any:
-    """Identitfy helper function"""
+    """Identity helper function"""
     return x
 
 
 
 def upnth(x: int) -> str:
+    """
+    Superscripted nth for LaTeX
+    """
     return rf"${x}^{{\mathrm{{{_nth(x)}}}}}$"
 
 
-def render_list(items: Union[list, Any], *, func: Callable = identity, and_word: str = 'a') -> str:
+def render_list(items: Union[list, Any],
+                *,
+                func: Callable = identity,
+                and_word: str = 'a',
+                oxford_comma: bool = False) -> str:
+    """
+    Render a list of items, optionally with a function `func` applied to every item, joined by spaces with commas.
+
+    Parameters:
+        `func`
+            function to apply to every item
+        `and_word`
+            word to insert before the last item
+        `oxford_comma`
+            if True, insert a comma before the "and" word
+    """
     if not isinstance(items, list):
         items = [items]
 
     items = list(map(func, items))
 
-    for i, item in enumerate(items[:-2]):
+    for i, item in enumerate(items[:(-1 if oxford_comma else -2)]):
         items[i] = f"{item},"
 
     if len(items) > 1:

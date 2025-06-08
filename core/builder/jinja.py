@@ -106,11 +106,14 @@ class StaticRenderer(JinjaRenderer):
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
+    """
+    A Jinja2 renderer for pre-rendering Markdown files.
+    Includes mathematical functions, basic constants, and number formatting filters.
+    """
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
-            #'qty': latex.qty,
             'num': latex.num,
             'float': numbers.float,
             'sci': numbers.sci,
@@ -138,6 +141,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'exp': math.exp,
             'pow': math.pow,
             'pi': math.pi,
-            'ktoc': lambda x: x - 273.15,
-            'ctok': lambda x: x + 273.15,
+            'tau': math.tau,
+            'euler': 2.718281828459045235360287471352,
+            'KtoC': lambda x: x - 273.15,
+            'CtoK': lambda x: x + 273.15,
         }

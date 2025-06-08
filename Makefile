@@ -6,8 +6,8 @@ SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 
-version   = '4.03'
-date      = '2023-09-14'
+version   = '5.0-alpha'
+date      = '2025-06-08'
 
 c_error     := $(shell tput sgr0; tput bold; tput setaf 1)
 c_action    := $(shell tput sgr0; tput bold; tput setaf 4)

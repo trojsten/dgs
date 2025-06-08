@@ -30,6 +30,10 @@ class TestRender():
     def test_render_list_f(self):
         assert render_list(["x", "y", "z"], func=lambda x: f'f({x})') == r"f(x), f(y) a f(z)"
 
+    def test_render_list_f_oxford(self):
+        assert (render_list(["x", "y", "z"], and_word="und", oxford_comma=True, func=lambda x: f'f({x})') ==
+                r"f(x), f(y), und f(z)")
+
 
 class TestIsotex():
     def test_one(self):
