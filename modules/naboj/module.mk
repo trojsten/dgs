@@ -102,19 +102,19 @@ build/naboj/%/tearoff.tex: \
 	modules/naboj/templates/base.jtex \
 	modules/naboj/templates/base-tearoff.jtex \
 	modules/naboj/templates/tearoff.jtex \
-	modules/naboj/templates/tearoff/problem.jtex \
-	modules/naboj/templates/tearoff/problem-extra.jtex \
-	modules/naboj/templates/tearoff/bottom.jtex \
+	modules/naboj/templates/blocks/tearoff/problem.jtex \
+	modules/naboj/templates/blocks/tearoff/problem-extra.jtex \
+	modules/naboj/templates/blocks/tearoff/bottom.jtex \
+	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml \
 	build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
 	modules/naboj/templates/base.jtex \
-	modules/naboj/templates/footer.jtex \
-	modules/naboj/templates/colophon.jtex \
 	modules/naboj/templates/base-booklet.jtex \
-	modules/naboj/templates/answer.jtex \
-	modules/naboj/templates/$$(subst .tex,.jtex,$$(notdir $$@)) \
+	modules/naboj/templates/blocks/answer.jtex \
+	modules/naboj/templates/blocks/booklet/footer.jtex \
+	modules/naboj/templates/blocks/colophon.jtex \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 

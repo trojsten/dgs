@@ -42,9 +42,10 @@ class PhysicsConstant:
         if self.value == 0:
             logarithm = 1
         else:
-            logarithm = int(-math.log10(abs(self.value)))
+            logarithm = math.floor(math.log10(abs(self.value)))
 
-        return math.trunc(self.value * (10 ** (digits + logarithm)) + 0.5) / (10 ** (digits + logarithm))
+        precision = digits - logarithm - 1
+        return math.trunc(self.value * (10 ** precision) + 0.5) / (10 ** precision)
 
     @property
     def approx(self):
@@ -76,7 +77,7 @@ class PhysicsConstant:
     @property
     def full_value(self):
         r"""
-        Property for full, value values.
+        Property for full, exact values.
         Use as (* const.name.full_value *). This will render
         ```
         constant:

@@ -145,6 +145,9 @@ class BaseBuilder(metaclass=ABCMeta):
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
     def build_templates(self, *, new_name: str = None) -> None:
+        """
+        Build all templates for this builder.
+        """
         assert isinstance(self.context, BuildableContext), \
             c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
 
@@ -157,7 +160,6 @@ class BaseBuilder(metaclass=ABCMeta):
             self.print_dir_info()
 
         for template in self.templates:
-            print(self.output_directory / self.output_path(template, override_name=new_name))
             outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
             self.renderer.render(template, self.context.data, outfile=outfile)
 

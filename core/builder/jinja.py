@@ -48,7 +48,7 @@ class JinjaRenderer:
             variable_end_string=kwargs.pop('variable_end_string', '*)'),
             comment_start_string=kwargs.pop('comment_start_string', '(#'),
             comment_end_string=kwargs.pop('comment_end_string', '#)'),
-            line_statement_prefix=kwargs.pop('line_statement_prefix', '%%'),
+            line_statement_prefix=kwargs.pop('line_statement_prefix', '@J'),
             line_comment_prefix=kwargs.pop('line_comment_prefix', '%#'),
             trim_blocks=True,
             autoescape=False,

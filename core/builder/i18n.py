@@ -19,7 +19,7 @@ class BuilderI18n(BaseBuilder):
     _target = 'global i18n'
     _root_context_class = BuildableContextCoreI18n
 
-    templates = ['override.jtex', 'crossref.jinja.yaml']
+    templates = ['override.jtex', 'crossref.jyaml']
 
     def add_arguments(self):
         super().add_arguments()
