@@ -11,8 +11,8 @@ class BuilderNabojVenue(BuilderNaboj):
 
     _root_context_class = BuildableContextVenue
     templates = [
-        'instructions.jinja.tex',
-        'answers-modulo.jinja.tex',
+        'instructions.jtex',
+        'answers-modulo.jtex',
     ]
     language_templates = []
 

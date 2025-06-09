@@ -9,10 +9,10 @@ class BuilderRound(builder.BuilderSeminar):
     _root_context_class = context.ContextBooklet
     _target = 'round'
     templates = [
-        'problems.jinja.tex',
-        'solutions.jinja.tex',
-        'solutions-full.jinja.tex',
-        'instagram.jinja.tex',
+        'problems.jtex',
+        'solutions.jtex',
+        'solutions-full.jtex',
+        'instagram.jtex',
     ]
 
 

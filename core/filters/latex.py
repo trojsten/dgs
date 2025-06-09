@@ -2,7 +2,7 @@ from typing import Any, Union, Callable
 
 from enschema import Schema, Or
 
-from .numbers import sci, _nth
+from .numbers import _nth, format_float, format_sci
 
 
 def isotex(date):
@@ -124,6 +124,9 @@ def format_people(people: Union[str, list, dict], *, func: Callable = identity, 
 
 def num(x: float, precision: int):
     """ Format as a `siunitx` \num{} input"""
-    return rf'\num{{{sci(x, precision)}}}'
+    return rf'\num{{{format_float(x, precision)}}}'
 
 
+def numsci(x: float, precision: int):
+    """ Format as a `siunitx` \num{} input"""
+    return rf'\num{{{format_sci(x, precision)}}}'

@@ -1,4 +1,4 @@
-(@ extends 'base-tearoff.jinja.tex' @)
+(@ extends 'base-tearoff.jtex' @)
 
 (@ set target = 'tearoff' @)
 
@@ -16,11 +16,11 @@
     \pagestyle{tearoff}
 
     (@ for problem in volume.problems @)
-        (@ include 'blocks/tearoff/problem.jinja.tex' @)
+        (@ include 'blocks/tearoff/problem.jtex' @)
         \newpage
     (@ endfor @)
-    (@ include 'blocks/tearoff/bottom.jinja.tex' @)
+    (@ include 'blocks/tearoff/bottom.jtex' @)
     (@ for problem in volume.problems @)
-        (@ include 'blocks/tearoff/problem-extra.jinja.tex' @)
+        (@ include 'blocks/tearoff/problem-extra.jtex' @)
     (@ endfor @)
 (@ endblock @)

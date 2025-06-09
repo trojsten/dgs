@@ -84,6 +84,10 @@ class JinjaRenderer:
 
 
 class StaticRenderer(JinjaRenderer):
+    """
+    A Jinja2 renderer for pre-rendering static TeX content from the modules.
+    Includes ad hoc utility functions.
+    """
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, **kwargs)
 
@@ -107,16 +111,17 @@ class StaticRenderer(JinjaRenderer):
 
 class MarkdownJinjaRenderer(JinjaRenderer):
     """
-    A Jinja2 renderer for pre-rendering Markdown files.
+    A Jinja2 renderer for pre-rendering dynamic Markdown files.
     Includes mathematical functions, basic constants, and number formatting filters.
     """
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
+            'float': numbers.format_float,
+            'sci': numbers.format_sci,
             'num': latex.num,
-            'float': numbers.float,
-            'sci': numbers.sci,
+            'numsci': latex.numsci,
         }
 
         self.env.globals |= {

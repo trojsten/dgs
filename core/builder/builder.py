@@ -57,8 +57,8 @@ class BaseBuilder(metaclass=ABCMeta):
     _target: str = None
     _root_context_class: ClassVar = None
     default_suffix_map = {
-        '.jtt': '.tex',
-        '.jyt': '.yaml',
+        '.jtex': '.tex',
+        '.jyaml': '.yaml',
     }
 
     def __init__(self, *, suffix_map: dict[str, str] = None):
@@ -132,13 +132,14 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def output_path(self, template_name, *, override_name=None) -> Path:
         """
-        Default output naming scheme:  can be overridden """
+        Get the output path for a template. By default, just removes `.jinja`.
+        """
         path = Path(template_name)
-        if path.suffixes[-2] == '.jinja':
+        if path.suffix in self.suffix_map:
             if override_name is None:
-                return path.with_suffix(path.suffixes[-1])
+                return path.with_suffix(self.suffix_map.get(path.suffix))
             else:
-                return Path(override_name).with_suffix(path.suffixes[-1])
+                return Path(override_name).with_suffix(self.suffix_map.get(path.suffix))
         else:
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")
@@ -156,6 +157,7 @@ class BaseBuilder(metaclass=ABCMeta):
             self.print_dir_info()
 
         for template in self.templates:
+            print(self.output_directory / self.output_path(template, override_name=new_name))
             outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
             self.renderer.render(template, self.context.data, outfile=outfile)
 

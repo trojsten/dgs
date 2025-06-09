@@ -6,7 +6,7 @@ from core.builder.context import Context
 
 
 class StandaloneRenderer:
-    template = 'standalone.jinja.tex'
+    template = 'standalone.jtex'
 
     def __init__(self, locale_code: str, infile, outfile, **options):
         self.locale_code: str = locale_code

@@ -1,4 +1,4 @@
-(@ extends 'base-booklet.jinja.tex' @)
+(@ extends 'base-booklet.jtex' @)
 
 (@ set target = 'booklet' @)
 
@@ -19,7 +19,7 @@
         \section{(* i18n[language.id].section.problems *)}
         \pagestyle{problems}
         (@ for problem in volume.problems @)%
-            (@ include 'blocks/problem.jinja.tex' @)%
+            (@ include 'blocks/problem.jtex' @)%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -28,7 +28,7 @@
         \section{(* i18n[language.id].section.solutions *)}
         \pagestyle{solutions}
         (@ for problem in volume.problems @)%
-            (@ include 'blocks/solution.jinja.tex' @)%
+            (@ include 'blocks/solution.jtex' @)%
         (@ endfor @)
         \newpage
     (@ endif @)
@@ -37,8 +37,8 @@
         \section{(* i18n[language.id].section.answers *)}
         \pagestyle{answers}
         (@ for problem in volume.problems @)%
-            (@ include 'blocks/answer.jinja.tex' @)%
+            (@ include 'blocks/answer.jtex' @)%
         (@ endfor @)%
     (@ endif @)%
-    (@ include 'blocks/booklet/footer.jinja.tex' @)
+    (@ include 'blocks/booklet/footer.jtex' @)
 (@ endblock @)

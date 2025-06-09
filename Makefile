@@ -81,6 +81,7 @@ define double_xelatex
 endef
 
 # copy(extension)
+# Just copies a file, also creating the target directory
 define _copy
 	@echo -e '$(c_action)Copying $(c_extension)$(1)$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
@@ -90,32 +91,35 @@ endef
 include modules/*/module.mk
 
 build/core/i18n/%.tex: \
-	core/templates/override.jinja.tex
+	core/templates/override.jtex
 	@mkdir -p $(dir $@)
 	python -m core.builder.i18n 'core/i18n/' 'core/templates/' $* -o $(dir $@)
 
 build/core/i18n: \
 	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;
 
-# Jinja template rendering md to md
-build/%.md: \
+# Jinja template: render Markdown to Markdown. XFAIL: this should never be called!
+# This rule is here just for debugging -- should be used if no language is provided
+render/%.md: \
 	source/%.md \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
 	$(call _jinja,xx,$(abspath $(dir $<)/meta.yaml))
 
-# DeGeŠ convert Markdown file to TeX (for XeLaTeX)
-# THIS IS CURRENTLY HARDCODED TO WORK IN SLOVAK ONLY, OVERRIDE THIS IN MODULE!
-build/%.tex: build/%.md
+# Pandoc: render Markdown to TeX. XFAIL: this should never be called!
+# This rule is here just for debugging -- should be used if no language is provided
+build/%.tex: \
+	render/%.md
 	$(call pandoctex,xx)
 
 # Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
 	source/%.tikz \
-	core/templates/standalone.jinja.tex
+	core/templates/standalone.jtex
 	@mkdir -p $(dir $@)
 	./standalone.py $(lang) $< $@
 
 # Copy py files from source to build
+# These most probably should not be rendered by Jinja (ToDo verify)
 build/%.py: source/%.py
 	$(call _copy,Python)
 
@@ -128,15 +132,17 @@ build/%.pdf: source/%.svg
 	mv $@-crop $@
 
 build/%.xdv: build/%.tikz.tex
-	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to ' \
+			 '$(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	@texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
+	texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
 
 build/%.pdf: build/%.tikz.tex
-	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to ' \
+			 '$(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	@texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
-	@texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
 build/%.svg: build/%.xdv
 	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'

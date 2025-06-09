@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import argparse
 import pprint
+from abc import ABC
 
 from pathlib import Path
 from typing import Optional
 
-import enschema
-from enschema import Schema, Or
+from enschema import Schema, Or, Optional as Opt
 
 from core import cli
 from core.builder.context.context import Context
@@ -39,17 +39,20 @@ class JinjaConvertor:
 class ConstantsContext(FileContext):
     _schema = Schema({
         str: {
-            'symbol': str,
+            'symbol': str,                              # TeX-formatted unit
             'value': Or(int, float),
-            'unit': str,
-            'exact': Or(int, float),
-            'digits': int,
-            enschema.Optional('siextra'): str,
+            'unit': str,                                # `siunitx`-formatted unit
+            'digits': int,                              # Digits to be used in approximations
+            Opt('siextra'): str,                        # Extra `siunitx` data to be included as \qty[siextra]{...}{...}
+            Opt('force_f', default=False): bool,        # Force '.f' format specifier
         }
     })
 
 
-class CLIInterface(cli.CLIInterface):
+class CLIInterface(cli.CLIInterface, ABC):
+    """
+    Abstract base class for DGS CLI interfaces
+    """
     description = "DeGeŠ Jinja convertor"
 
     def build_context(self) -> Context:

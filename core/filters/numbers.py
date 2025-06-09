@@ -5,6 +5,20 @@ Filters for work with numbers. Feel free to extend.
 import regex as re
 
 
+NumberWithExtraOne = re.compile(r'1\.?e[+-]?[0-9]+')
+
+def cut_extra_one(num: str) -> str:
+    """
+    A helper function to remove extra leading "1" from numbers in scientific notation.
+    "1e15" becomes "e15" so that `siunitx` does not render it as 1 · 10^15, but just 10^15.
+    """
+    if NumberWithExtraOne.match(num):
+        return num[1:]
+    else:
+        return num
+
+
+
 def roman(number: int) -> str:
     """ Render a number in Roman numerals """
     if not type(number) == int:
@@ -55,24 +69,17 @@ def nth(x: int) -> str:
     return f"{x}{_nth(x)}"
 
 
-def float(x: float, precision: int):
+def format_float(x: float, precision: int = None):
     return rf"{x:.{precision}f}"
 
 
-def sci(x: float, precision: int = None):
+def format_sci(x: float, precision: int = None):
     """
     Format a float in the exponential form
     """
-    number = re.compile(r'1\.?e[+-]?[0-9]+')
-
     if precision is None:
         printed = rf"{x:g}"
     else:
         printed = rf"{x:.{precision}g}"
 
-    # If there is only 1 in the mantissa, kill it
-    if number.match(printed):
-        return printed[1:]
-    else:
-        return printed
-
+    return cut_extra_one(printed)

@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import sys
 
 from abc import abstractmethod
 
 from core import i18n
 from core.utilities import colour as c
+
+log = logging.getLogger('dgs')
 
 
 class CLIInterface:
@@ -17,6 +20,9 @@ class CLIInterface:
         self.add_default_arguments()
         self.add_extra_arguments()
         self.args = self.parser.parse_args()
+
+        if self.args.debug:
+            log.setLevel(logging.DEBUG)
 
         self.convertor = self.build_convertor(self.args)
 

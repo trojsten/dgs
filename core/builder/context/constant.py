@@ -1,48 +1,50 @@
 import math
 
+from core.filters.numbers import cut_extra_one
+
 
 class PhysicsConstant:
     def __init__(self, name, **kwargs):
         self.name = name
         self.value = float(kwargs['value'])
-        self.exact = float(kwargs.get('exact', self.value))
         self.unit = kwargs.get('unit', None)
         self.digits = kwargs.get('digits', 3)
         self.si_extra = kwargs.get('siextra', None)
 
     def format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
-        return self._format(self.exact, fmt)
+        return self._format(self.value, fmt)
 
     def _format(self, value: float, fmt: str = None):
         if fmt is None:
             fmt = f'.{self.digits}g'
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
 
+        svalue = cut_extra_one(f'{value:{fmt}}')
+
         if self.unit is None:
-            return rf"\num{siextra}{{{value:{fmt}}}}"
+            return rf"\num{siextra}{{{svalue}}}"
         elif self.unit == r"\degree":
-            return rf"\ang{siextra}{{{value:{fmt}}}}"
+            return rf"\ang{siextra}{{{svalue}}}"
         else:
-            return rf"\qty{siextra}{{{value:{fmt}}}}{{{self.unit}}}"
+            return rf"\qty{siextra}{{{svalue}}}{{{self.unit}}}"
 
     def approximate(self, digits: int = None):
         """
         Return an approximate value of the constant (not just formatted output, but truly rounded).
         This is primarily useful for common rounded values, such as g = 10 m/s^2 or m_e = 9.11e-31 kg.
-        Note that this representation might not be exact due to machine precision,
+        Note that this representation might not be value due to machine precision,
         and will have to be passed through `format` again to render correctly.
         """
         if digits is None:
             digits = self.digits
 
-
-        if self.exact == 0:
+        if self.value == 0:
             logarithm = 1
         else:
-            logarithm = int(-math.log10(abs(self.exact)))
+            logarithm = int(-math.log10(abs(self.value)))
 
-        return math.trunc(self.exact * (10 ** (digits + logarithm)) + 0.5) / (10 ** (digits + logarithm))
+        return math.trunc(self.value * (10 ** (digits + logarithm)) + 0.5) / (10 ** (digits + logarithm))
 
     @property
     def approx(self):
@@ -72,10 +74,10 @@ class PhysicsConstant:
         return self._format(self.approximate())
 
     @property
-    def full_exact(self):
+    def full_value(self):
         r"""
-        Property for full, exact values.
-        Use as (* const.name.full_exact *). This will render
+        Property for full, value values.
+        Use as (* const.name.full_value *). This will render
         ```
         constant:
             value: 1.2345e-6
@@ -84,7 +86,7 @@ class PhysicsConstant:
         ```
         as \qty{1.2345e-6}{\kilo\gram} regardless of `digits`.
         """
-        return self._format(self.exact, '.15g')
+        return self._format(self.value, '.15g')
 
     def __str__(self):
         return self.full
