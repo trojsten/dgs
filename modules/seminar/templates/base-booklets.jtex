@@ -1,10 +1,13 @@
 (@ extends 'base.jtex' @)
 
 (@ block content @)
+    \loadgeometry{main}
     \thispagestyle{seminar-booklet-first}
 
-    \loadgeometry{firstpage}
-    \afterpage{\globaldefs=1\restoregeometry}
+    \afterpage{%
+        \globaldefs=1
+        \restoregeometry
+    }%
 
     \pagestyle{seminar-booklet-body}
 
@@ -14,6 +17,8 @@
             časti -- termín (* round.deadline.strftime('%d. %m. %Y') *)%
         }%
     }
+
+    \vspace*{4mm}
 
     \section{%
         \texorpdfstring{%

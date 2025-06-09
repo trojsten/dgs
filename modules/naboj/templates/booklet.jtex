@@ -5,12 +5,10 @@
 (@ block content @)
     \setcounter{volume}{(* volume.number *)}%
     \pagestyle{naboj}
-    \loadgeometry{main}
 
     (@ if language.booklet.contents.intro @)
         \thispagestyle{first}
-        \loadgeometry{firstpage}
-        \afterpage{\aftergroup\restoregeometry}
+        \vspace*{8mm}
         \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/intro.tex}
         \newpage
     (@ endif @)

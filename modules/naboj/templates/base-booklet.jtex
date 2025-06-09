@@ -8,24 +8,11 @@
         right                   = 15mm,
         top                     = 15mm,
         bottom                  = 15mm,
-        headheight              = 75pt,
-        headsep                 = 16pt,
-        footskip                = 32pt,
-        includeheadfoot,
-    }
-    \savegeometry{firstpage}
-
-    \newgeometry{
-        left                    = 15mm,
-        right                   = 15mm,
-        top                     = 15mm,
-        bottom                  = 15mm,
         headheight              = 20pt,
         headsep                 = 16pt,
         footskip                = 32pt,
         includeheadfoot,
     }
-    \savegeometry{main}
 
     \fancypagestyle{naboj}{%
         \fancyhead[LO,RE]{%
