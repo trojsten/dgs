@@ -7,18 +7,28 @@
 ### Fundamental
 planck:
     symbol:     "h"
+    aliases:    ['h']
     value:      6.62607015e-34
+    unit:       "\\joule\\second"
+    digits:     4
+
+planck_bar:
+    symbol:     "\\hbar"
+    aliases:    ['hbar']
+    value:      1.054571817e-34
     unit:       "\\joule\\second"
     digits:     4
 
 speed_light:
     symbol:     "c"
+    aliases:    ['c']
     value:      299792458
     unit:       "\\metre\\per\\second"
     digits:     1
 
 gravity:
     symbol:     "G"
+    aliases:    ['G']
     value:      6.67430e-11
     unit:       "\\newton\\metre\\squared\\per\\kilo\\gram\\squared"
     digits:     3
@@ -27,11 +37,12 @@ gravity:
 inch:
     symbol:     "\\mathrm{in}"
     value:      0.0254
-    unit:       "\\milli\\metre"
+    unit:       "\\metre"
     digits:     3
 
 foot:
     symbol:     "\\mathrm{ft}"
+    aliases:    ['ft']
     value:      0.3048
     unit:       "\\metre"
     digits:     4
@@ -45,9 +56,11 @@ mile:
 ################## Astronomy
 gforce:
     symbol:     "g"
+    aliases:    ['g']
     value:      9.80665
     unit:       "\\metre\\per\\second\\squared"
     digits:     1
+    force_f:    true
 
 radius_earth:
     symbol:     "R_{\\oplus}"
@@ -129,6 +142,7 @@ au:
 
 parsec:
     symbol:     "\\mathrm{pc}"
+    aliases:    ['pc']
     value:      30856775814913673
     unit:       "\\metre"
     digits:     4
@@ -187,30 +201,35 @@ speed_sound:
 
 permittivity:
     symbol:     "\\epsilon_0"
+    aliases:    ['eps0']
     value:      8.8541878188e-12
     unit:       "\\farad\\per\\metre"
     digits:     4
 
 permeability:
     symbol:     "\\mu_0"
+    aliases:    ['mu0']
     value:      1.25663706127e-6
     unit:       "\\henry\\per\\metre"
     digits:     3
 
 elementary_charge:
     symbol:     "e"
+    aliases:    ['e']
     value:      1.602176634e-19
     unit:       "\\coulomb"
     digits:     2
 
 mass_electron:
     symbol:     "m_e"
+    aliases:    ['m_e']
     value:      9.1093837139e-31
     unit:       "\\kilo\\gram"
     digits:     3
 
 mass_proton:
     symbol:     "m_p"
+    aliases:    ['m_p']
     value:      1.67262192595e-27
     unit:       "\\kilo\\gram"
     digits:     3
@@ -314,4 +333,3 @@ thermal_expansion_water:
     unit:       "\\per\\kelvin"
     siextra:    "per-mode=reciprocal"
     digits:     2
-

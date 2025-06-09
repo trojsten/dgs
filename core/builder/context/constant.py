@@ -4,19 +4,26 @@ from core.filters.numbers import cut_extra_one
 
 
 class PhysicsConstant:
+    """
+    Represents a stored physical constant for comfortable and reproducible use in texts.
+    """
     def __init__(self, name, **kwargs):
         self.name = name
         self.value = float(kwargs['value'])
         self.unit = kwargs.get('unit', None)
         self.digits = kwargs.get('digits', 3)
+        self.aliases = kwargs.get('aliases', [])
         self.si_extra = kwargs.get('siextra', None)
+        self.force_f: bool = kwargs.get('force_f', False)
 
     def format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
         return self._format(self.value, fmt)
 
     def _format(self, value: float, fmt: str = None):
-        if fmt is None:
+        if self.force_f:
+            fmt = f'.{self.digits - 1}f'
+        elif fmt is None:
             fmt = f'.{self.digits}g'
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
 

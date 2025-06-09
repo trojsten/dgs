@@ -39,6 +39,9 @@ def context_constants():
     }
 
 def create_temporary_file(string):
+    """
+    Create a named temporary file with string content for use in tests
+    """
     ntf = NamedTemporaryFile('w+')
     with open(ntf.name, 'w') as file:
         file.write(string)
@@ -119,12 +122,6 @@ class TestConstant:
 #        renderer.render('constant.txt', context_simple, outfile=output)
 #        output.seek(0)
 #        assert output.readlines() == [r'\qty{}{}']
-
-
-@pytest.fixture
-def jinja_convertor(path):
-    return JinjaConvertor(path)
-    MarkdownJinjaRenderer(Path('core/tests/snippets'))
 
 
 # ToDo this is just copied from above

@@ -41,8 +41,9 @@ class ConstantsContext(FileContext):
         str: {
             'symbol': str,                              # TeX-formatted unit
             'value': Or(int, float),
-            'unit': str,                                # `siunitx`-formatted unit
+            'unit': Or(str, None),                      # `siunitx`-formatted unit
             'digits': int,                              # Digits to be used in approximations
+            Opt('aliases'): [str],
             Opt('siextra'): str,                        # Extra `siunitx` data to be included as \qty[siextra]{...}{...}
             Opt('force_f', default=False): bool,        # Force '.f' format specifier
         }
@@ -58,6 +59,7 @@ class CLIInterface(cli.CLIInterface, ABC):
     def build_context(self) -> Context:
         context = FileContext('context', Path(self.args.context.name))
         constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
+        constants.validate()
 
         ctx = Context('cont')
         if 'values' in context.data:
@@ -68,8 +70,11 @@ class CLIInterface(cli.CLIInterface, ABC):
                     values[key] = PhysicsConstant(key, **value)
 
             ctx.add(**values)
+
         ctx.add(const={
-            name: PhysicsConstant(name, **data) for name, data in constants.data.items()
+            alias: PhysicsConstant(name, **data)
+            for name, data in constants.data.items()        # Create and add all defined constants
+            for alias in [name] + data.get('aliases', [])   # Also include all available aliases for them
         })
 
         return ctx
