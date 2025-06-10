@@ -43,9 +43,10 @@ class ConstantsContext(FileContext):
             'value': Or(int, float),
             'unit': Or(str, None),                      # `siunitx`-formatted unit
             'digits': int,                              # Digits to be used in approximations
-            Opt('aliases'): [str],
+            Opt('aliases'): [str],                      # A list of aliases, globally unique (but it is not enforced)
             Opt('siextra'): str,                        # Extra `siunitx` data to be included as \qty[siextra]{...}{...}
             Opt('force_f', default=False): bool,        # Force '.f' format specifier
+            Opt('exact', default=False): bool,          # Set to true if the value is exact
         }
     })
 
@@ -87,4 +88,4 @@ class CLIInterface(cli.CLIInterface, ABC):
 
 
 if __name__ == "__main__":
-    CLIInterface()
+    CLIInterface().run()

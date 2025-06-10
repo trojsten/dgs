@@ -26,10 +26,6 @@ class CLIInterface:
 
         self.convertor = self.build_convertor(self.args)
 
-        if self.convertor.run() == 0:
-            self.success()
-        else:
-            self.fail()
 
     @abstractmethod
     def build_convertor(self, args, **kwargs):
@@ -45,6 +41,12 @@ class CLIInterface:
     @staticmethod
     def add_extra_arguments():
         pass
+
+    def run(self) -> None:
+        if self.convertor.run() == 0:
+            self.success()
+        else:
+            self.fail()
 
     def fail(self):
         print(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")

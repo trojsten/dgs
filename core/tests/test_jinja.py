@@ -124,11 +124,11 @@ class TestConstant:
 #        assert output.readlines() == [r'\qty{}{}']
 
 
-# ToDo this is just copied from above
-class TestJinjaConvertor:
-    def test_does_it_render(self, renderer, context_simple) -> None:
-        output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
-        renderer.render('constant.txt', context_simple, outfile=output)
-        output.seek(0)
+@pytest.fixture
+def cli():
+    return CLIInterface()
 
-        assert output.readlines() == ['5\n']
+
+class TestJinjaCLI:
+    def test_constants(self, cli):
+        cli.run()

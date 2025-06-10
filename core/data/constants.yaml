@@ -23,6 +23,7 @@ speed_light:
     symbol:     "c"
     aliases:    ['c']
     value:      299792458
+    exact:      true
     unit:       "\\metre\\per\\second"
     digits:     1
 
@@ -37,6 +38,7 @@ gravity:
 inch:
     symbol:     "\\mathrm{in}"
     value:      0.0254
+    exact:      true
     unit:       "\\metre"
     digits:     3
 
@@ -44,6 +46,7 @@ foot:
     symbol:     "\\mathrm{ft}"
     aliases:    ['ft']
     value:      0.3048
+    exact:      true
     unit:       "\\metre"
     digits:     4
 
@@ -51,6 +54,7 @@ mile:
     symbol:     "\\mathrm{mi}"
     value:      1609.344
     unit:       "\\metre"
+    exact:      true
     digits:     2
 
 ################## Astronomy
@@ -119,6 +123,7 @@ tropical_year:
 day:
     symbol:     "d"
     value:      86400
+    exact:      true
     unit:       "\\second"
     digits:     5
 

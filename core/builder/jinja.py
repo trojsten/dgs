@@ -1,3 +1,4 @@
+import functools
 import math
 import jinja2
 import os
@@ -122,6 +123,10 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'sci': numbers.format_sci,
             'num': latex.num,
             'numsci': latex.numsci,
+        } | {
+            f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
+        } | {
+            f'g{prec:d}': functools.partial(numbers.format_sci, precision=prec) for prec in range(0, 10)
         }
 
         self.env.globals |= {
