@@ -2,7 +2,7 @@ from typing import Any, Union, Callable
 
 from enschema import Schema, Or
 
-from .numbers import _nth, format_float, format_sci
+from .numbers import _nth, format_float, format_general
 
 
 def isotex(date):
@@ -127,6 +127,6 @@ def num(x: float, precision: int):
     return rf'\num{{{format_float(x, precision)}}}'
 
 
-def numsci(x: float, precision: int):
+def num_general(x: float, precision: int):
     """ Format as a `siunitx` \num{} input"""
-    return rf'\num{{{format_sci(x, precision)}}}'
+    return rf'\num{{{format_general(x, precision)}}}'

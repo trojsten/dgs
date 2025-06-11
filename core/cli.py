@@ -49,9 +49,9 @@ class CLIInterface:
             self.fail()
 
     def fail(self):
-        print(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
+        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
         sys.exit(-1)
 
     def success(self):
         if self.args.verbose:
-            print(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
+            log.info(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")

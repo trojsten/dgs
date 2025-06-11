@@ -73,7 +73,7 @@ def format_float(x: float, precision: int = None):
     return rf"{x:.{precision}f}"
 
 
-def format_sci(x: float, precision: int = None):
+def format_general(x: float, precision: int = None):
     """
     Format a float in the exponential form
     """

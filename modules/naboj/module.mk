@@ -30,7 +30,7 @@ build/naboj/%/answer.tex: \
 # <competition>/<volume>/problems/<problem>/<language>
 define TRANSLATABLE
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$$$$(notdir $$$$@)))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml))
 
@@ -43,11 +43,11 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRA
 
 define NONTRANSLATABLE_ANSWERS
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$$$$(notdir $$$$@)))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
-build/naboj/%/answer.tex: \
+build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
@@ -315,8 +315,6 @@ output/naboj/%: \
 	output/naboj/%/tearoff.pdf \
 	output/naboj/%/evaluation.pdf \
 	output/naboj/%/booklet-print.pdf ;
-#	output/naboj/$$*/instructions-online.pdf \
-#	output/naboj/$$*/online.pdf ;
 
 # <competition>/<volume>
 output/naboj/%/booklets: \

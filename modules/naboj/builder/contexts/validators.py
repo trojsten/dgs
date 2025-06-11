@@ -32,9 +32,9 @@ class NabojValidator(FileSystemValidator):
         'languages': {
             valid_language: {
                 'meta.yaml': File,
-                'intro.jtt': FileOrLink,
-                Optional('instructions-inner.jtt'): FileOrLink,
-                Optional('evaluators.jtt'): FileOrLink,
+                'intro.jtex': FileOrLink,
+                Optional('instructions-inner.jtex'): FileOrLink,
+                Optional('evaluators.jtex'): FileOrLink,
                 Optional('online'): {
                     'language.png': FileOrLink,
                     'signin.png': FileOrLink,

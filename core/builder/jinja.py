@@ -120,13 +120,15 @@ class MarkdownJinjaRenderer(JinjaRenderer):
 
         self.env.filters |= {
             'float': numbers.format_float,
-            'sci': numbers.format_sci,
+            'gen': numbers.format_general,
             'num': latex.num,
-            'numsci': latex.numsci,
+            'numgen': latex.num_general,
         } | {
+            # Shorthands for float: (§ a|f4 §) == (§ |float(4) §)
             f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
         } | {
-            f'g{prec:d}': functools.partial(numbers.format_sci, precision=prec) for prec in range(0, 10)
+            # Shorthands for general: (§ a|g4 §) == (§ |sci(4) §)
+            f'g{prec:d}': functools.partial(numbers.format_general, precision=prec) for prec in range(0, 10)
         }
 
         self.env.globals |= {

@@ -17,7 +17,7 @@ class BuilderNabojLanguage(BuilderNaboj):
         'evaluation.jtex',
         'tearoff.jtex',
     ]
-    i18n_templates = ['intro.jtt', 'evaluators.jtt']
+    i18n_templates = ['intro.jtex', 'evaluators.jtex']
 
     def add_arguments(self):
         super().add_arguments()
