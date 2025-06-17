@@ -1,4 +1,5 @@
 import math
+import numbers
 
 from core.filters.numbers import cut_extra_one
 
@@ -77,6 +78,16 @@ class PhysicsConstant:
         """
         return self.format()
 
+    def fullf(self, precision: int = None) -> str:
+        if precision is None:
+            precision = self.digits
+        return self.format(f'.{precision}f')
+
+    def fullg(self, precision: int = 3) -> str:
+        if precision is None:
+            precision = self.digits
+        return self.format(f'.{precision}g')
+
     @property
     def full_approx(self):
         return self._format(self.approximate())
@@ -101,3 +112,27 @@ class PhysicsConstant:
 
     def __repr__(self):
         return self.full
+
+    def __add__(self, other):
+        if self.unit == other.unit:
+            return PhysicsConstant(name="computed", value=self.value + other.value, unit=self.unit)
+        else:
+            raise ValueError("Cannot add constants: incompatible units")
+
+    def __sub__(self, other):
+        if self.unit == other.unit:
+            return PhysicsConstant(name="computed", value=self.value - other.value, unit=self.unit)
+        else:
+            raise ValueError("Cannot add constants: incompatible units")
+
+    def __mul__(self, value):
+        if isinstance(value, numbers.Number):
+            return PhysicsConstant(name="computed", value=self.value * value, unit=self.unit)
+        else:
+            raise NotImplementedError("Currently you can only multiply constants by scalars")
+
+    def __truediv__(self, value):
+        if isinstance(value, numbers.Number):
+            return PhysicsConstant(name="computed", value=self.value / value, unit=self.unit)
+        else:
+            raise NotImplementedError("Currently you can only divide constants by scalars")

@@ -1,14 +1,20 @@
 # Each constant should define
 #   symbol:     TeX-formatted preferred symbol.
-#   value:      Exact numerical representation. If exact value is not known, provide a reasonable approximation. Force `!!float` if necessary.
+#   value:      exact numerical representation. If exact value is not known, provide a reasonable approximation.
+#               Force `!!float` if necessary.
 #   unit:       TeX / `siunitx`-formatted unit.
-#   digits:     Preferred precision (integer, valid digits)
+#   digits:     preferred precision (integer, valid digits)
+# Optionally you can specify
+#   exact:      Marks whether the value is exact
+#   aliases:    a list of short strings that can be used as the identifier in templates
+#               for instance `const.G` instead of `const.gravity`.
 
 ### Fundamental
 planck:
     symbol:     "h"
     aliases:    ['h']
     value:      6.62607015e-34
+    exact:      true
     unit:       "\\joule\\second"
     digits:     4
 
@@ -16,6 +22,7 @@ planck_bar:
     symbol:     "\\hbar"
     aliases:    ['hbar']
     value:      1.054571817e-34
+    exact:      true
     unit:       "\\joule\\second"
     digits:     4
 
@@ -68,8 +75,8 @@ gforce:
 
 radius_earth:
     symbol:     "R_{\\oplus}"
-    value:      6378
-    unit:       "\\kilo\\metre"
+    value:      6378000
+    unit:       "\\metre"
     digits:     4
 
 mass_earth:
@@ -110,8 +117,8 @@ temperature_sun:
 
 radius_mars:
     symbol:     "R_\\Mars"
-    value:      3390
-    unit:       "\\kilo\\metre"
+    value:      3390000
+    unit:       "\\metre"
     digits:     4
 
 tropical_year:
