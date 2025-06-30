@@ -98,7 +98,7 @@ class PhysicsConstant:
         Property for full, exact values.
         Use as (* const.name.full_value *). This will render
         ```
-        constant:
+        title:
             value: 1.2345e-6
             unit: "\\kilo\\gram"
             digits: 3
@@ -129,10 +129,10 @@ class PhysicsConstant:
         if isinstance(value, numbers.Number):
             return PhysicsConstant(name="computed", value=self.value * value, unit=self.unit)
         else:
-            raise NotImplementedError("Currently you can only multiply constants by scalars")
+            raise NotImplementedError("Currently it is only possible to multiply constants by scalars")
 
     def __truediv__(self, value):
         if isinstance(value, numbers.Number):
             return PhysicsConstant(name="computed", value=self.value / value, unit=self.unit)
         else:
-            raise NotImplementedError("Currently you can only divide constants by scalars")
+            raise NotImplementedError("Currently it is only possible to divide constants by scalars")
