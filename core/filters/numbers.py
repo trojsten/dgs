@@ -18,7 +18,6 @@ def cut_extra_one(num: str) -> str:
         return num
 
 
-
 def roman(number: int) -> str:
     """ Render a number in Roman numerals """
     if not type(number) == int:

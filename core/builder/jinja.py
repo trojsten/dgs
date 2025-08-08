@@ -119,17 +119,24 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
-            'float': numbers.format_float,
-            'gen': numbers.format_general,
+            'f': numbers.format_float,
+            'g': numbers.format_general,
             'num': latex.num,
             'numgen': latex.num_general,
         } | {
-            # Shorthands for float: (§ a|f4 §) == (§ |float(4) §)
+            # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
             f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
         } | {
-            # Shorthands for general: (§ a|g4 §) == (§ |sci(4) §)
+            # Shorthands for general: (§ a|g4 §) == (§ a|gen(4) §)
             f'g{prec:d}': functools.partial(numbers.format_general, precision=prec) for prec in range(0, 10)
+        } | {
+            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            f'nf{prec:d}': functools.partial(latex.num, precision=prec) for prec in range(0, 10)
+        } | {
+            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
         }
+
 
         self.env.globals |= {
             'sin': math.sin,

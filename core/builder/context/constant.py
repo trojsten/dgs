@@ -89,6 +89,10 @@ class PhysicsConstant:
         return self.format(f'.{precision}g')
 
     @property
+    def full_exact(self):
+        return self._format(self.value, '99g')
+
+    @property
     def full_approx(self):
         return self._format(self.approximate())
 
