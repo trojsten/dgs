@@ -214,12 +214,16 @@ output/%.html: source/%.md
 .SECONDEXPANSION:
 
 # Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/%.gp:\
+	source/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat)) \
+	$$(abspath source/$$(dir $$*)/meta.yaml)
+	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml))
+
 build/%.gp:\
-	source/%.gp\
+	render/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat))
-	@mkdir -p $(dir $@)
-	@echo -e '$(c_action)Copying gnuplot file $(c_filename)$<$(c_action):$(c_default)'
-	cp $< $@
+	$(call _copy,gnuplot)
 
 %/copy-static: \
 	$$(wildcard $$(subst build/,source/,$$*)/.static/*)
