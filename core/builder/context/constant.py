@@ -15,6 +15,7 @@ class PhysicsConstant:
         self.digits = kwargs.get('digits', 3)
         self.aliases = kwargs.get('aliases', [])
         self.si_extra = kwargs.get('siextra', None)
+        self.symbol = kwargs.get('symbol', None)
         self.force_f: bool = kwargs.get('force_f', False)
 
     def format(self, fmt: str = None):
@@ -87,6 +88,16 @@ class PhysicsConstant:
         if precision is None:
             precision = self.digits
         return self.format(f'.{precision}g')
+
+    @property
+    def equals(self) -> str:
+        return rf"{self.symbol} = {self.full}"
+
+    @property
+    def deg(self) -> str:
+        assert self.unit == r'\radian', \
+            f"Only angles can be converted to degrees, got {self.unit}"
+        return rf"\ang{{{math.degrees(self.value):{self.digits}f}}}"
 
     @property
     def full_exact(self):

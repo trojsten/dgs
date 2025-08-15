@@ -367,4 +367,5 @@ output/naboj/%/all: \
 
 output/naboj/%/copy: \
 	output/naboj/%
-	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)
+	rclone sync ~/dgs/output/naboj/phys/28/languages/sk/booklet.pdf naboj:/
+#	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)
