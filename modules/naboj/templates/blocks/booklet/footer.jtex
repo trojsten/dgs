@@ -1,5 +1,6 @@
 (@ macro list(title, people) @)
     \subsubsection*{(* title|capitalize *)}
+    \setlength{\columnsep}{-15mm}
     \begin{multicols}{3}
         \begin{itemize}[label={}, itemsep=-1mm]
             (@ for person in people @)

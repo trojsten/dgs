@@ -42,7 +42,7 @@ class PhysicsConstant:
         """
         Return an approximate value of the constant (not just formatted output, but truly rounded).
         This is primarily useful for common rounded values, such as g = 10 m/s^2 or m_e = 9.11e-31 kg.
-        Note that this representation might not be value due to machine precision,
+        Note that this representation might not be exact due to machine precision,
         and will have to be passed through `format` again to render correctly.
         """
         if digits is None:
@@ -80,18 +80,36 @@ class PhysicsConstant:
         return self.format()
 
     def fullf(self, precision: int = None) -> str:
+        """
+        Full, with f formatting
+        """
         if precision is None:
             precision = self.digits
         return self.format(f'.{precision}f')
 
     def fullg(self, precision: int = 3) -> str:
+        """
+        Full, with g formatting
+        """
         if precision is None:
             precision = self.digits
         return self.format(f'.{precision}g')
 
     @property
     def equals(self) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
         return rf"{self.symbol} = {self.full}"
+
+    @property
+    def equalsf(self) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self.symbol} = {self.format('f')}"
 
     @property
     def deg(self) -> str:
