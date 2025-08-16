@@ -10,4 +10,4 @@ class CLIInterface(cli.CLIInterface):
 
 
 if __name__ == "__main__":
-    CLIInterface().run()
+    CLIInterface()
