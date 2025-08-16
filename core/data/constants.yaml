@@ -64,6 +64,20 @@ mile:
     exact:      true
     digits:     2
 
+us_pint:
+    symbol:     "\\mathrm{p}"
+    value:      0.000473176473
+    unit:       "\\metre\\cubed"
+    digits:     3
+
+pound:
+    symbol:     "\\mathrm{lb}"
+    aliases:    ['lb']
+    value:      0.45359237
+    unit:       "\\kilo\\gram"
+    digits:     4
+
+
 ################## Astronomy
 gforce:
     symbol:     "g"
