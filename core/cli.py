@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import sys
 
 from abc import abstractmethod
 
 from core import i18n
 from core.utilities import colour as c
+
+log = logging.getLogger('dgs')
 
 
 class CLIInterface:
@@ -18,12 +21,11 @@ class CLIInterface:
         self.add_extra_arguments()
         self.args = self.parser.parse_args()
 
+        if self.args.debug:
+            log.setLevel(logging.DEBUG)
+
         self.convertor = self.build_convertor(self.args)
 
-        if self.convertor.run() == 0:
-            self.success()
-        else:
-            self.fail()
 
     @abstractmethod
     def build_convertor(self, args, **kwargs):
@@ -40,10 +42,16 @@ class CLIInterface:
     def add_extra_arguments():
         pass
 
+    def run(self) -> None:
+        if self.convertor.run() == 0:
+            self.success()
+        else:
+            self.fail()
+
     def fail(self):
-        print(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
+        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
         sys.exit(-1)
 
     def success(self):
         if self.args.verbose:
-            print(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")
+            log.info(f"convert: {c.ok('success')} on {c.path(self.args.infile.name)}")

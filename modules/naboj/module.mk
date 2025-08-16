@@ -16,39 +16,39 @@ endef
 
 # TODO: for some reason these two do not work if combined into one!
 
-build/naboj/%/answer.md: \
+render/naboj/%/answer.md: \
 	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml))
 
 build/naboj/%/answer.tex: \
-	build/naboj/$$*/answer.md
+	render/naboj/$$*/answer.md
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
 define TRANSLATABLE
-build/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$$$$(notdir $$$$@)))
+render/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml))
 
 build/naboj/%/$(1).tex: \
-	build/naboj/$$$$*/$(1).md
+	render/naboj/$$$$*/$(1).md
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
 $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRANSLATABLE,$(filename))))
 
 define NONTRANSLATABLE_ANSWERS
-build/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$$$$(notdir $$$$@)))
+render/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
-build/naboj/%/answer.tex: \
-	build/naboj/$$$$*/$(1).md
+build/naboj/%/$(1).tex: \
+	render/naboj/$$$$*/$(1).md
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
@@ -92,42 +92,42 @@ build/naboj/%/build-venue: \
 # Language-specific documents: booklet, answer sheet, answer sheet for evaluators, booklet cover
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/online.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/online.jtt \
+	modules/naboj/templates/base.jtex \
+	modules/naboj/templates/base-booklet.jtex \
+	modules/naboj/templates/online.jtex \
     build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/tearoff.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/base-tearoff.jtt \
-	modules/naboj/templates/tearoff.jtt \
-	modules/naboj/templates/tearoff/problem.jtt \
-	modules/naboj/templates/tearoff/problem-extra.jtt \
-	modules/naboj/templates/tearoff/bottom.jtt \
+	modules/naboj/templates/base.jtex \
+	modules/naboj/templates/base-tearoff.jtex \
+	modules/naboj/templates/tearoff.jtex \
+	modules/naboj/templates/blocks/tearoff/problem.jtex \
+	modules/naboj/templates/blocks/tearoff/problem-extra.jtex \
+	modules/naboj/templates/blocks/tearoff/bottom.jtex \
+	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml \
 	build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
-	modules/naboj/templates/base.jtt \
-	modules/naboj/templates/footer.jtt \
-	modules/naboj/templates/colophon.jtt \
-	modules/naboj/templates/base-booklet.jtt \
-	modules/naboj/templates/answer.jtt \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/base.jtex \
+	modules/naboj/templates/base-booklet.jtex \
+	modules/naboj/templates/blocks/answer.jtex \
+	modules/naboj/templates/blocks/booklet/footer.jtex \
+	modules/naboj/templates/blocks/colophon.jtex \
 	build/naboj/$$*/build-language \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) ;
 
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/intro.tex: \
-	source/naboj/$$*/intro.jtt \
+	source/naboj/$$*/intro.jtex \
 	build/naboj/$$*/build-language ;
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/constants.tex: \
-	modules/naboj/templates/constants.jtt \
+	modules/naboj/templates/constants.jtex \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)
@@ -139,12 +139,12 @@ build/naboj/%/instructions-inner.tex: \
 # Instructions to be put on the table before the competition (full document)
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions.tex: \
-	modules/naboj/templates/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	modules/naboj/templates/$$(subst .tex,.jtex,$$(notdir $$@)) \
 	build/naboj/$$*/build-venue ;
 
 # % <competition>/<volume>/languages/<language>
 build/naboj/%/evaluators.tex: \
-	source/naboj/$$*/$$(subst .tex,.jtt,$$(notdir $$@)) \
+	source/naboj/$$*/$$(subst .tex,.jtex,$$(notdir $$@)) \
 	build/naboj/$$*/build-language ;
 
 # Instructions before the online competition (content)
@@ -220,8 +220,8 @@ build/naboj/%/answers: \
 
 # Answers-modulo
 build/naboj/%/answers-modulo.tex: \
-	modules/naboj/templates/answer.jtt \
-	modules/naboj/templates/answers-modulo.jtt \
+	modules/naboj/templates/answer.jtex \
+	modules/naboj/templates/answers-modulo.jtex \
 	build/naboj/$$*/build-venue ;
 
 ### Languages ###################################
@@ -315,8 +315,6 @@ output/naboj/%: \
 	output/naboj/%/tearoff.pdf \
 	output/naboj/%/evaluation.pdf \
 	output/naboj/%/booklet-print.pdf ;
-#	output/naboj/$$*/instructions-online.pdf \
-#	output/naboj/$$*/online.pdf ;
 
 # <competition>/<volume>
 output/naboj/%/booklets: \
@@ -369,4 +367,5 @@ output/naboj/%/all: \
 
 output/naboj/%/copy: \
 	output/naboj/%
-	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)
+	rclone sync ~/dgs/output/naboj/phys/28/languages/sk/booklet.pdf naboj:/
+#	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)

@@ -1,0 +1,13 @@
+(@ extends 'base-booklet.jtex' @)
+
+(@ block content @)
+    \fancypagestyle{instructions}{%
+        \pagestyle{naboj}
+        \fancyhead[LE,RO]{\textit{(* i18n[language.id].instructions.title *)}}
+        \fancyfoot[C]{}
+    }
+    \pagestyle{instructions}
+
+    \section{(* i18n[language.id].instructions.title *)}
+    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/instructions-inner.tex}
+(@ endblock @)

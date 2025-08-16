@@ -1,0 +1,31 @@
+(@ extends 'base-booklet.jtex' @)
+
+(@ block extras @)
+    \newgeometry{
+        paper       = a4paper,
+        left        = 20mm,
+        right       = 20mm,
+        bottom      = 20mm,
+        top         = 20mm,
+        headheight  = 0pt,
+        footskip    = 0pt,
+    }
+(@ endblock @)
+
+(@ block content @)
+    \pagestyle{empty}
+    \begin{center}
+        \null
+        \vfill
+        \includegraphics[keepaspectratio=true, height=40mm]{build/(* module.id *)/(* competition.id *)/.static/logo/barcode.pdf}
+    \end{center}
+    \newpage
+    \begin{center}
+        \vspace*{20mm}
+        \includegraphics[keepaspectratio=true, height=80mm]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}
+        \vfill
+        \fontsize{60}{25}\selectfont
+        (* volume.date.strftime('%Y') *)
+    \end{center}
+(@ endblock @)
+

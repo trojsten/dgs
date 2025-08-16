@@ -1,3 +1,4 @@
+import functools
 import math
 import jinja2
 import os
@@ -5,8 +6,8 @@ import sys
 
 from typing import Any, Optional, TextIO
 
-import core
-from core.utilities import filters, colour as c, logger
+from core.utilities import colour as c, logger
+from core.filters import latex, numbers
 
 log = logger.setupLog('dgs')
 
@@ -48,7 +49,7 @@ class JinjaRenderer:
             variable_end_string=kwargs.pop('variable_end_string', '*)'),
             comment_start_string=kwargs.pop('comment_start_string', '(#'),
             comment_end_string=kwargs.pop('comment_end_string', '#)'),
-            line_statement_prefix=kwargs.pop('line_statement_prefix', '%%'),
+            line_statement_prefix=kwargs.pop('line_statement_prefix', '@J'),
             line_comment_prefix=kwargs.pop('line_comment_prefix', '%#'),
             trim_blocks=True,
             autoescape=False,
@@ -84,37 +85,58 @@ class JinjaRenderer:
 
 
 class StaticRenderer(JinjaRenderer):
+    """
+    A Jinja2 renderer for pre-rendering static TeX content from the modules.
+    Includes ad hoc utility functions.
+    """
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, **kwargs)
 
         self.env.filters |= {
-            'roman': core.utilities.filters.roman,
-            'format_list': core.utilities.filters.render_list,
-            'format_people': core.utilities.filters.format_people,
-            'format_gender_suffix': core.utilities.filters.format_gender_suffix,
-            'isotex': core.utilities.filters.isotex,
-            'plural': core.utilities.filters.plural,
-            'nth': core.utilities.filters.nth,
-            'upnth': core.utilities.filters.upnth,
+            'roman': numbers.roman,
+            'format_list': latex.render_list,
+            'format_people': latex.format_people,
+            'format_gender_suffix': latex.format_gender_suffix,
+            'isotex': latex.isotex,
+            'plural': numbers.plural,
+            'nth': numbers.nth,
+            'upnth': latex.upnth,
         }
 
         self.env.globals |= {
-            'plural': core.utilities.filters.plural,
-            'textbf': core.utilities.filters.textbf,
+            'plural': numbers.plural,
+            'textbf': latex.textbf,
             'path_exists': lambda x: os.path.exists(x),
         }
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
+    """
+    A Jinja2 renderer for pre-rendering dynamic Markdown files.
+    Includes mathematical functions, basic constants, and number formatting filters.
+    """
     def __init__(self, template_root, **kwargs):
         super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
 
         self.env.filters |= {
-            #'qty': core.utilities.filters.qty,
-            'num': core.utilities.filters.num,
-            'float': core.utilities.filters.float,
-            'exp': core.utilities.filters.exp,
+            'f': numbers.format_float,
+            'g': numbers.format_general,
+            'num': latex.num,
+            'numgen': latex.num_general,
+        } | {
+            # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
+            f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
+        } | {
+            # Shorthands for general: (§ a|g4 §) == (§ a|gen(4) §)
+            f'g{prec:d}': functools.partial(numbers.format_general, precision=prec) for prec in range(0, 10)
+        } | {
+            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            f'nf{prec:d}': functools.partial(latex.num, precision=prec) for prec in range(0, 10)
+        } | {
+            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
         }
+
 
         self.env.globals |= {
             'sin': math.sin,
@@ -138,6 +160,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'exp': math.exp,
             'pow': math.pow,
             'pi': math.pi,
-            'ktoc': lambda x: x - 273.15,
-            'ctok': lambda x: x + 273.15,
+            'tau': math.tau,
+            'euler': 2.718281828459045235360287471352,
+            'KtoC': lambda x: x - 273.15,
+            'CtoK': lambda x: x + 273.15,
         }

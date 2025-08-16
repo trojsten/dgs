@@ -1,0 +1,11 @@
+(@ extends 'base-booklet.jtex' @)
+
+(@ set target = 'answers' @)
+
+(@ block content @)
+    \section{(* i18n[language.id].section.answers *)}
+    \pagestyle{answers}
+    (@ for problem in volume.problems @)%
+        (@ include 'blocks/answer.jtex' @)%
+    (@ endfor @)
+(@ endblock @)

@@ -8,16 +8,16 @@ class BuilderNabojLanguage(BuilderNaboj):
 
     _root_context_class = BuildableContextLanguage
     templates = [
-        'booklet.jtt',
-        'answers.jtt',
-        'constants.jtt',
-        'cover.jtt',
-        'instructions-online.jtt',
-        'online.jtt',
-        'evaluation.jtt',
-        'tearoff.jtt',
+        'booklet.jtex',
+        'answers.jtex',
+        'constants.jtex',
+        'cover.jtex',
+        'instructions-online.jtex',
+        'online.jtex',
+        'evaluation.jtex',
+        'tearoff.jtex',
     ]
-    i18n_templates = ['intro.jtt', 'evaluators.jtt']
+    i18n_templates = ['intro.jtex', 'evaluators.jtex']
 
     def add_arguments(self):
         super().add_arguments()

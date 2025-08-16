@@ -294,6 +294,7 @@
 \NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\left({#1}\right)}
 \NewDocumentCommand{\Bias}{m}{\mathrm{Bias}\left({#1}\right)}
 \NewDocumentCommand{\Binomial}{m m}{\binom{#1}{#2}}
+\NewDocumentCommand{\Dimen}{m}{\left[#1\right]}
 
 % Text with spaces on both sides
 \NewDocumentCommand{\Text}{m}{\ \text{#1}\ }
@@ -308,13 +309,15 @@
 
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}} % Limits
 \NewDocumentCommand{\Exp}{m}{e^{#1}}                            % Nicer exponential
-\NewDocumentCommand{\LogTen}{}{\log_{10}}                       % Logarithm with base 10
+\NewDocumentCommand{\Log}{O{} m}{\log_{#1}{#2}}
 \NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}                 % Stacked "!"
 \NewDocumentCommand{\MustEqual}{}{\Must{=}}                     % Must equal
-\NewDocumentCommand{\MustBeLess}{}{\Must{<}}                    % Must be <
-\NewDocumentCommand{\MustBeGreater}{}{\Must{>}}                 % Must be >
-\NewDocumentCommand{\MustBeLessOrEqual}{}{\Must{\leq}}          % Must be <=
-\NewDocumentCommand{\MustBeGreaterOrEqual}{}{\Must{\geq}}       % Must be >=
+\NewDocumentCommand{\MustBeL}{}{\Must{<}}                       % Must be <
+\NewDocumentCommand{\MustBeLL}{}{\Must{\ll}}                    % Must be \ll
+\NewDocumentCommand{\MustBeG}{}{\Must{>}}                       % Must be >
+\NewDocumentCommand{\MustBeGG}{}{\Must{\gg}}                    % Must be \gg
+\NewDocumentCommand{\MustBeLeq}{}{\Must{\leq}}                  % Must be <=
+\NewDocumentCommand{\MustBeGeq}{}{\Must{\geq}}                  % Must be >=
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}    % Definition
 \NewDocumentCommand{\Assign}{}{\coloneqq}                       % Assignment with :=
 

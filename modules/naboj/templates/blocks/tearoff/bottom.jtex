@@ -1,0 +1,17 @@
+(@ extends 'blocks/tearoff/problem.jtex' @)
+
+(@ block probnum @)0(@ endblock probnum @)
+
+(@ block activate @)
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/}%
+(@ endblock activate @)
+
+(@ block main @)
+    \centering
+    \vspace*{(* competition.tearoff.bottomsep *)mm}
+    \LARGE
+    \textit{(* i18n[language.id].tearoff.bottom *)}
+    \\[2mm]
+    \small
+    \textit{(* i18n[language.id].tearoff.instruction *)}
+(@ endblock main @)

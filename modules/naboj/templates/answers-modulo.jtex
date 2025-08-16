@@ -1,0 +1,24 @@
+(@ extends 'base-booklet.jtex' @)
+
+(@ set target = 'answers' @)
+
+(@ block content @)
+    \thispagestyle{first}
+    \afterpage{\globaldefs=1\restoregeometry}
+
+    \vspace*{19mm}
+
+    \section{(* i18n[language.id].section.answers *)}
+    \pagestyle{answers}
+    \protectedInput{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* venue.language *)/evaluators.tex}
+
+    (@ for modulo in venue.problems_modulo @)
+        \newpage
+        \section{(* i18n[language.id].section.modulo *) (* loop.index0 *)}
+        (@ for problem in modulo @)
+            (@ include 'answer.jtex' @)
+        (@ endfor @)
+
+    (@ endfor @)
+
+(@ endblock @)

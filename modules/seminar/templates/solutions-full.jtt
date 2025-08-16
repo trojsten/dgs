@@ -1,6 +1,0 @@
-(@ extends 'solutions.jtt' @)
-
-(@ block problem_again @)
-    \protectedInput{\activeDirectory/problem.tex}%
-    \hline
-(@ endblock @)

@@ -1,0 +1,29 @@
+(@ extends 'base.jtex' @)
+
+(@ block specific @)
+    \geometry{paper=c5paper, landscape}
+(@ endblock @)
+
+(@ block content @)
+    \pagestyle{empty}
+    \centering
+
+    (@ for team in venue.teams @)
+        \includegraphics[keepaspectratio=true, height=70mm]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
+        \vspace*{5mm}
+
+        \fontsize{60}{0}\selectfont%
+        (* team.code[:4] *)%
+        \fontsize{80}{0}\selectfont%
+        (* team.code[4:] *)%
+
+        \vspace{5mm}
+        \fontsize{15}{0}\selectfont
+        (* team.display_name *)
+
+        \vspace{15mm}
+        \normalsize
+        (* i18n.get(team.language).envelope.donotopen *)
+        \newpage
+    (@ endfor @)
+(@ endblock @)

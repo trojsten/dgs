@@ -13,6 +13,7 @@
 *.dblite
 .idea/
 build/
+render/
 output/
 source/
 _*/

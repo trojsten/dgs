@@ -5,6 +5,9 @@ from core.utilities import colour as c
 
 
 class DeGeSFormatter(logging.Formatter):
+    """
+    Global logging formatter, please use everywhere unless there is some very compelling reason not to.
+    """
     def __init__(self):
         super().__init__('[{levelname}] {message}', "%H:%M:%S", '{')
 
@@ -31,7 +34,7 @@ def setupLog(name, **kwargs):
     handler.setFormatter(formatter)
 
     log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     log.addHandler(handler)
     log.propagate = False
 

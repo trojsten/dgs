@@ -15,6 +15,9 @@ class BuildableContext(Context):
 
     @abstractmethod
     def populate(self, *args, **kwargs):
+        """
+        Populate the buildable context with data. No default behaviour; must be implemented in the derived class.
+        """
         pass
 
 

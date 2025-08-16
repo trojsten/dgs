@@ -25,7 +25,7 @@ def context_old():
 
 @pytest.fixture
 def context_new():
-    return Context(boss='Marcel', pictures='Terka', nothing='Nina')
+    return Context(boss='Marcel', pictures='KatkaN', nothing='Nina')
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ class TestContext:
         assert context_defaults.data == {'foo': 'bar', 'baz': 5}
 
     def test_adopt_override(self, context_override):
-        assert context_override.data['fks']['pictures'] == 'Terka'
+        assert context_override.data['fks']['pictures'] == 'KatkaN'
 
     def test_adopt_no_override(self, context_override):
         assert context_override.data['fks']['htr'] == 'Kvík'
@@ -61,7 +61,7 @@ class TestContext:
         assert context_override.data['fks']['nothing'] == 'Nina'
 
     def test_adopt_full(self, context_override):
-        assert context_override.data == dict(fks=dict(boss='Marcel', pictures='Terka', htr='Kvík', nothing='Nina'))
+        assert context_override.data == dict(fks=dict(boss='Marcel', pictures='KatkaN', htr='Kvík', nothing='Nina'))
 
     def test_add_id(self, context_defaults):
         context_defaults.add_id(4)
@@ -85,8 +85,8 @@ class TestContext:
 
     def test_ior(self):
         first = Context('fks', boss='Matúš', coffee='Nina')
-        second = Context('htr', pictures='Terka', htr='Kvík', iy='Krto')
-        assert first | second == Context('fks', boss='Matúš', coffee='Nina', pictures='Terka', htr='Kvík', iy='Krto')
+        second = Context('htr', pictures='KatkaN', htr='Kvík', iy='Krto')
+        assert first | second == Context('fks', boss='Matúš', coffee='Nina', pictures='KatkaN', htr='Kvík', iy='Krto')
 
     def test_or(self):
         """ Note that or'ed contexts retain the parent's name but override items with child's """

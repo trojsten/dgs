@@ -1,0 +1,13 @@
+(@ extends 'base-booklets.jtex' @)
+
+(@ set kind = 'solution' @)
+(@ set kind_verbose = 'riešenia' @)
+
+(@ block heading_inner @)
+    (@ if problem.solution @)%
+        vzorák (* problem.solution|format_people(func=textbf) *)%
+    (@- endif -@)%
+    (@- if problem.evaluation -@)%
+        , opravoval(* problem.evaluation|format_gender_suffix *) (* problem.evaluation|format_people(func=textbf) *)%
+    (@ endif @)%
+(@ endblock heading_inner @)

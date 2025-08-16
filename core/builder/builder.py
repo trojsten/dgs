@@ -57,8 +57,8 @@ class BaseBuilder(metaclass=ABCMeta):
     _target: str = None
     _root_context_class: ClassVar = None
     default_suffix_map = {
-        '.jtt': '.tex',
-        '.jyt': '.yaml',
+        '.jtex': '.tex',
+        '.jyaml': '.yaml',
     }
 
     def __init__(self, *, suffix_map: dict[str, str] = None):
@@ -132,7 +132,8 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def output_path(self, template_name, *, override_name=None) -> Path:
         """
-        Default output naming scheme:  can be overridden """
+        Get the output path for a template. By default, just removes `.jinja`.
+        """
         path = Path(template_name)
         if path.suffix in self.suffix_map:
             if override_name is None:
@@ -144,6 +145,9 @@ class BaseBuilder(metaclass=ABCMeta):
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
     def build_templates(self, *, new_name: str = None) -> None:
+        """
+        Build all templates for this builder.
+        """
         assert isinstance(self.context, BuildableContext), \
             c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
 

@@ -1,8 +1,8 @@
 import datetime
 import pytest
 
-from core.utilities.filters import (render_list, roman, textbf, textit, isotex, plural,
-                                    format_gender_suffix, format_people)
+from core.filters.latex import render_list, textbf, textit, isotex, format_gender_suffix, format_people
+from core.filters.numbers import nth, roman, plural
 
 
 class TestRender():
@@ -30,6 +30,10 @@ class TestRender():
     def test_render_list_f(self):
         assert render_list(["x", "y", "z"], func=lambda x: f'f({x})') == r"f(x), f(y) a f(z)"
 
+    def test_render_list_f_oxford(self):
+        assert (render_list(["x", "y", "z"], and_word="und", oxford_comma=True, func=lambda x: f'f({x})') ==
+                r"f(x), f(y), und f(z)")
+
 
 class TestIsotex():
     def test_one(self):
@@ -50,7 +54,7 @@ def word_feminine():
     return "kategóri"
 
 
-class TestPlural():
+class TestPlural:
     def test_one(self, word_masculine):
         assert word_masculine + plural(1, "", "e", "ov") == "plyš"
 
@@ -70,46 +74,45 @@ class TestPlural():
         assert word_feminine + plural(7, "a", "e", "e") == "kategórie"
 
 
-class TestRoman():
-    def test_roman_str(self):
+class TestRoman:
+    def test_str_fails(self):
         with pytest.raises(TypeError):
             roman('ryba')
 
-    def test_roman_float(self):
+    def test_float_fails(self):
         with pytest.raises(TypeError):
             roman(3.0)
 
-    def test_roman_zero(self):
+    def test_zero_fails(self):
         with pytest.raises(ValueError):
             roman(0)
 
-    def test_roman_too_big(self):
+    def test_too_big_fails(self):
         with pytest.raises(ValueError):
             roman(123456)
 
-    def test_roman_1(self):
-        assert roman(1) == 'I'
-
-    def test_roman_1234(self):
-        assert roman(1234) == 'MCCXXXIV'
-
-    def test_roman_49(self):
-        assert roman(49) == 'XLIX'
-
-    def test_roman_1990(self):
-        assert roman(1990) == 'MCMXC'
-
-    def test_roman_2022(self):
-        assert roman(2022) == 'MMXXII'
+    @pytest.mark.parametrize("ara,rom", [
+        pytest.param(1, 'I'),
+        pytest.param(2, 'II'),
+        pytest.param(3, 'III'),
+        pytest.param(9, 'IX'),
+        pytest.param(49, 'XLIX'),
+        pytest.param(949, 'CMXLIX'),
+        pytest.param(1234, 'MCCXXXIV'),
+        pytest.param(1990, 'MCMXC'),
+        pytest.param(2022, 'MMXXII'),
+    ])
+    def test_roman(self, ara, rom):
+        assert roman(ara) == rom
 
 
 class TestGenderSuffix:
     def test_undefined(self):
-        """ A string fails in singular case, undefined gender """
+        """ A string fails in singular case, gender is undefined """
         assert format_gender_suffix('Adam') == r'\errorMessage{?}'
 
     def test_many_strings(self):
-        """ This should not fail: if plural, suffix is invariably 'i' (at least in Slovak) """
+        """ This should not fail: if plural, the suffix is invariably 'i' (at least in Slovak) """
         assert format_gender_suffix(['Pat', 'Mat']) == 'i'
 
     def test_invalid_gender(self):
@@ -121,7 +124,7 @@ class TestGenderSuffix:
         assert format_gender_suffix(dict(name="Adam", gender='m')) == ''
 
     def test_single_dict_n(self):
-        assert format_gender_suffix(dict(name="Tete", gender='n')) == 'o'
+        assert format_gender_suffix(dict(name="Kaj", gender='n')) == 'o'
 
     def test_single_dict_f(self):
         assert format_gender_suffix(dict(name="Viki", gender='f')) == 'a'
@@ -141,7 +144,7 @@ class TestPeople:
         assert format_people(['Tom', 'Jerry']) == 'Tom a Jerry'
 
     def test_string_many(self):
-        assert format_people(['Terka', 'zub', 'zub', 'zub']) == 'Terka, zub, zub a zub'
+        assert format_people(['Mözög', 'pipka', 'pipka', 'pipka']) == 'Mözög, pipka, pipka a pipka'
 
     def test_single_dict(self):
         assert format_people(dict(name='Adam', gender='m')) == 'Adam'
@@ -171,3 +174,26 @@ class TestPeople:
                 {'name': 'Emmika', 'gender': 'f'},
             ], func=textit, and_word='et'
         ) == r'\textit{Kika} et \textit{Emmika}'
+
+
+class TestNth:
+    @pytest.mark.parametrize("number,ordinal", [
+        pytest.param(0, '0th'),
+        pytest.param(1, '1st'),
+        pytest.param(2, '2nd'),
+        pytest.param(3, '3rd'),
+        pytest.param(4, '4th'),
+        pytest.param(10, '10th'),
+        pytest.param(11, '11th'),
+        pytest.param(12, '12th'),
+        pytest.param(13, '13th'),
+        pytest.param(16, '16th'),
+        pytest.param(21, '21st'),
+        pytest.param(33, '33rd'),
+        pytest.param(101, '101st'),
+        pytest.param(183, '183rd'),
+        pytest.param(111, '111th'),
+        pytest.param(341, '341st'),
+    ])
+    def test_nth(self, number, ordinal):
+        assert nth(number) == ordinal

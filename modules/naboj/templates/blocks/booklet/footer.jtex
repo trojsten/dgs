@@ -1,0 +1,23 @@
+(@ macro list(title, people) @)
+    \subsubsection*{(* title|capitalize *)}
+    \setlength{\columnsep}{-15mm}
+    \begin{multicols}{3}
+        \begin{itemize}[label={}, itemsep=-1mm]
+            (@ for person in people @)
+                \item (* person *)
+            (@ endfor @)
+            (@ if people|length % 3 == 1 @)\item(@ endif @)
+            (@ if people|length % 3 >= 1 @)\item(@ endif @)
+        \end{itemize}
+    \end{multicols}
+(@ endmacro @)
+
+\vfill
+{
+    (* list(i18n[language.id].people.authors, volume.authors.problems) *)
+    (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
+    (* list(i18n[language.id].people.editors, volume.authors.editors) *)
+    (@ with colocolor='lightgray' @)
+        (@ include 'blocks/colophon.jtex' @)
+    (@ endwith @)
+}
