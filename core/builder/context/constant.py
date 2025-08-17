@@ -1,6 +1,8 @@
 import math
 import numbers
 
+from pint import UnitRegistry as u
+
 from core.filters.numbers import cut_extra_one
 
 
@@ -10,13 +12,15 @@ class PhysicsConstant:
     """
     def __init__(self, name, **kwargs):
         self.name = name
-        self.value = float(kwargs['value'])
-        self.unit = kwargs.get('unit', None)
+        magnitude = float(kwargs['value'])
+        unit = kwargs.get('unit', None)
+        self.value = u.Quantity(magnitude, unit)
         self.digits = kwargs.get('digits', 3)
         self.aliases = kwargs.get('aliases', [])
         self.si_extra = kwargs.get('siextra', None)
         self.symbol = kwargs.get('symbol', None)
         self.force_f: bool = kwargs.get('force_f', False)
+        print(self.full)
 
     def format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
@@ -30,10 +34,11 @@ class PhysicsConstant:
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
 
         svalue = cut_extra_one(f'{value:{fmt}}')
+        print(self.value.units)
 
-        if self.unit is None:
+        if self.value.units == "":
             return rf"\num{siextra}{{{svalue}}}"
-        elif self.unit == r"\degree":
+        elif self.value.units == u.radians:
             return rf"\ang{siextra}{{{svalue}}}"
         else:
             return rf"\qty{siextra}{{{svalue}}}{{{self.unit}}}"
