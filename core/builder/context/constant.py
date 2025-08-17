@@ -6,21 +6,76 @@ from pint import UnitRegistry as u
 from core.filters.numbers import cut_extra_one
 
 
-class PhysicsConstant:
+class PhysicsQuantity:
+    """
+    Represents a physics quantity for comfortable and reproducible use in calculations and texts.
+    """
+
+    def __init__(self,
+                 quantity: u.Quantity,
+                 *,
+                 symbol: str = None,
+                 si_extra: str = None,
+                 force_f: bool = False):
+        self.quantity = quantity
+        self.symbol = symbol
+        self.si_extra = si_extra
+        self.force_f = force_f
+
+    @staticmethod
+    def construct(magnitude, unit):
+        """
+        Construct from magnitude and unit.
+        """
+        return PhysicsQuantity(u.Quantity(magnitude, unit)),
+
+    def __add__(self, other):
+        return PhysicsQuantity(self.quantity + other.quantity)
+
+    def __radd__(self, other):
+        return other + self
+
+    def __sub__(self, other):
+        return PhysicsQuantity(self.quantity - other.quantity)
+
+    def __rsub__(self, other):
+        return other - self
+
+    def __mul__(self, other):
+        if isinstance(other, PhysicsQuantity):
+            return PhysicsQuantity(self.quantity * other.quantity)
+        elif isinstance(other, numbers.Number):
+            return PhysicsQuantity(self.quantity * other)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        return other * self
+
+    def __truediv__(self, other):
+        if isinstance(other, PhysicsQuantity):
+            return PhysicsQuantity(self.quantity / other.quantity)
+        elif isinstance(other, numbers.Number):
+            return PhysicsQuantity(self.quantity / other)
+        else:
+            return NotImplemented
+
+    def __str__(self):
+        return str(self.quantity)
+
+
+class PhysicsConstant(PhysicsQuantity):
     """
     Represents a stored physical constant for comfortable and reproducible use in texts.
     """
-    def __init__(self, name, **kwargs):
+    def __init__(self,
+                 name: str,
+                 quantity: u.Quantity,
+                 **kwargs):
         self.name = name
-        magnitude = float(kwargs['value'])
-        unit = kwargs.get('unit', None)
-        self.value = u.Quantity(magnitude, unit)
-        self.digits = kwargs.get('digits', 3)
-        self.aliases = kwargs.get('aliases', [])
-        self.si_extra = kwargs.get('siextra', None)
-        self.symbol = kwargs.get('symbol', None)
-        self.force_f: bool = kwargs.get('force_f', False)
-        print(self.full)
+        self.digits = kwargs.pop('digits', 3)
+        self.aliases = kwargs.pop('aliases', [])
+        super().__init__(quantity, **kwargs)
 
     def format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
@@ -34,7 +89,8 @@ class PhysicsConstant:
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
 
         svalue = cut_extra_one(f'{value:{fmt}}')
-        print(self.value.units)
+
+        return f"{self.quantity:Lx}"
 
         if self.value.units == "":
             return rf"\num{siextra}{{{svalue}}}"
@@ -143,7 +199,7 @@ class PhysicsConstant:
         ```
         as \qty{1.2345e-6}{\kilo\gram} regardless of `digits`.
         """
-        return self._format(self.value, '.15g')
+        return self._format(self.quantity.magnitude, '.15g')
 
     def __str__(self):
         return self.full

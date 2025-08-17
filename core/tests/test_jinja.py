@@ -8,6 +8,8 @@ from core.builder.context import PhysicsConstant
 from core.builder.jinja import MarkdownJinjaRenderer
 from jinja import JinjaConvertor, CLIInterface
 
+from pint import UnitRegistry as u
+
 
 @pytest.fixture
 def temp_renderer():
@@ -33,9 +35,9 @@ def context_simple():
 @pytest.fixture
 def context_constants():
     return {
-        'c': PhysicsConstant('speed_of_light', value=299792458, digits=3, unit=r'\metre\per\second'),
-        'g': PhysicsConstant('gforce', value=9.80665, digits=1, unit=r'\metre\per\second\squared'),
-        'G': PhysicsConstant('gravity', value=6.67430e-11, digits=4, unit=r'\newton\metre\squared\per\kilo\gram\squared'),
+        'c': PhysicsConstant('speed_of_light', u.Quantity(299792458, 'metre / second'), digits=3),
+        'g': PhysicsConstant('gforce', u.Quantity(9.80665, 'metre / second^2'), digits=1),
+        'G': PhysicsConstant('gravity', u.Quantity(6.67430e-11, 'newton / metre squared / kilogram squared'),  digits=4),
     }
 
 def create_temporary_file(string):
