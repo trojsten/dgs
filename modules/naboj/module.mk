@@ -231,9 +231,9 @@ build/naboj/%/answers-modulo.tex: \
 output/naboj/%/booklet.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
-	build/naboj/%/problems \
-	build/naboj/%/solutions \
-	build/naboj/%/answers \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

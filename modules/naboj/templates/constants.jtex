@@ -19,23 +19,22 @@
             \toprule
                 (* i18n[language.id].constants.constant *) & (* i18n[language.id].constants.symbol *) & (* i18n[language.id].constants.value *) \\
             \midrule
-            (#
             (@ for field in volume.constants.values() @)
                 (@ for id in field @)
-                    (@ with constant = competition.constants.get(id) @)
+                    (@ with constant = constants.get(id) @)
                         (@ if constant is not none @)
                             (@ if id in i18n[language.id].physics_constants @)
                                 (* i18n[language.id].physics_constants.get(id) *)
                             (@ else @)
                                 \bf \textcolor{red}{No translation provided for <}\verb|(* id *)|\textcolor{red}{>}
                             (@ endif @) &
-                            (@ if 'symbol' in constant @)
+                            (@ if constant.symbol is defined @)
                                 $(* constant.symbol *)$
                             (@ else @)
                                 <no symbol defined>
                             (@ endif @) &
-                            (@ if 'value' in constant and 'symbol' in constant @)
-                                $\qty[(@ if 'siextra' in constant @)(* constant.siextra *)(@ endif @)]{(* constant.value *)}{(* constant.unit *)}$
+                            (@ if constant.value is defined and constant.symbol is defined @)
+                                (* constant.full *)
                             (@ else @)
                                 \textbf{\textcolor{red}{no value or unit defined}}
                             (@ endif @) \\
@@ -46,7 +45,6 @@
                 (@ endfor @)
                 (@ if not loop.last @)\midrule(@ endif @)
             (@ endfor @)
-            #)
             \bottomrule
         \end{tabular*}
     \end{figure}

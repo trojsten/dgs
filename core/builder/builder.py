@@ -114,7 +114,7 @@ class BaseBuilder(metaclass=ABCMeta):
         log.debug(c.act("Content templates:"))
         pprint.pprint(self.templates)
 
-        log.debug(c.act("Context:"))
+        log.debug(c.act(f"Context ({self.context.__class__.__qualname__}):"))
         self.context.print()
 
         log.debug(c.act("Schema:"))

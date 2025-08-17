@@ -1,4 +1,4 @@
-from typing import Any, Union, Callable
+from typing import Any, Union, Callable, Optional
 
 from enschema import Schema, Or
 
@@ -122,11 +122,11 @@ def format_people(people: Union[str, list, dict], *, func: Callable = identity, 
                        func=func, and_word=and_word)
 
 
-def num(x: float, precision: int):
+def num(x: float, precision: Optional[int] = None):
     """ Format as a `siunitx` \num{} input"""
     return rf'\num{{{format_float(x, precision)}}}'
 
 
-def num_general(x: float, precision: int):
+def num_general(x: float, precision: Optional[int] = None):
     """ Format as a `siunitx` \num{} input"""
     return rf'\num{{{format_general(x, precision)}}}'

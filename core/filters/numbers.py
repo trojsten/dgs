@@ -60,7 +60,10 @@ def nth(x: int) -> str:
 
 def format_float(x: float, precision: int = None):
     if isinstance(x, numbers.Number):
-        return rf"{x:.{precision}f}"
+        if precision is None:
+            return rf"{x:f}"
+        else:
+            return rf"{x:.{precision}f}"
     elif isinstance(x, PhysicsConstant):
         return x.fullf(precision)
     else:

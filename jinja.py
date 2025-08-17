@@ -38,17 +38,17 @@ class JinjaConvertor:
 
 class ConstantsContext(FileContext):
     _schema = Schema({
-        str: {
-            'symbol': str,                              # TeX-formatted unit
-            'value': Or(int, float),
-            'unit': Or(str, None),                      # `siunitx`-formatted unit
-            'digits': int,                              # Digits to be used in approximations
-            Opt('aliases'): [str],                      # A list of aliases, globally unique (but it is not enforced)
-            Opt('siextra'): str,                        # Extra `siunitx` data to be included as \qty[siextra]{...}{...}
-            Opt('force_f', default=False): bool,        # Force '.f' format specifier
-            Opt('exact', default=False): bool,          # Set to true if the value is exact
-        }
+        str: PhysicsConstant,
     })
+
+    def __init__(self, new_id: str, path: Path, **defaults):
+        super().__init__(new_id, path, **defaults)
+        self.add(**{
+            alias: PhysicsConstant(name, **data)
+            for name, data in self.data.items()  # Create and add all defined constants
+            for alias in [name] + data.get('aliases', [])  # Also include all available aliases for them
+        })
+
 
 
 class CLIInterface(cli.CLIInterface, ABC):
@@ -72,12 +72,7 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             ctx.add(**values)
 
-        ctx.add(const={
-            alias: PhysicsConstant(name, **data)
-            for name, data in constants.data.items()        # Create and add all defined constants
-            for alias in [name] + data.get('aliases', [])   # Also include all available aliases for them
-        })
-
+        ctx.adopt(const=constants)
         return ctx
 
     def build_convertor(self, args, **kwargs):
