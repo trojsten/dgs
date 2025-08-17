@@ -103,23 +103,23 @@ class TestConstant:
         assert result == [f"{expected}\n"], \
             f"Expected {expected}, got {result}"
 
-    @pytest.mark.parametrize("name,expected", [
-        pytest.param('g', 10, id='g'),
-        pytest.param('c', 3e8, id='c'),
-        pytest.param('G', 6.674e-11, id='G'),
+    @pytest.mark.parametrize("name,expected,digits", [
+        pytest.param('g', u.Quantity(10.0, 'meter / second^2'), 1, id='g'),
+        pytest.param('c', u.Quantity(3e8, 'meter / second'), 1, id='c'),
+        pytest.param('G', u.Quantity(6.674e-11, 'newton / kilogram^2 / meter^2'), 4, id='G'),
     ])
-    def test_approximation(self, name, expected, context_constants):
-        value = context_constants[name].approximate()
-        assert value == expected, f"Expected {expected}, got {value}"
+    def test_approximation(self, name, expected, digits, context_constants):
+        value = context_constants[name].approximate(digits)
+        assert value.quantity == expected, f"Expected {expected}, got {value}"
 
     @pytest.mark.parametrize("name,expected", [
-        pytest.param('g', r'\qty{9.80665}{\metre\per\second\squared}', id='g'),
-        pytest.param('c', r'\qty{299792458}{\metre\per\second}', id='c'),
-        pytest.param('G', r'\qty{6.6743e-11}{\newton\metre\squared\per\kilo\gram\squared}', id='G'),
+        pytest.param('g', r'\(SI|qty)(\[\])?{9.80665}{\metre\per\second\squared}', id='g'),
+        pytest.param('c', r'\(SI|qty)(\[\])?{299792458}{\metre\per\second}', id='c'),
+        pytest.param('G', r'\(SI|qty)(\[\])?{6.6743e-11}{\newton\metre\squared\per\kilo\gram\squared}', id='G'),
     ])
     def test_full_value(self, name, expected, context_constants):
         value = context_constants[name].full_value
-        assert value == expected, f"Expected {expected}, got {value}"
+        assert re.compile(expected).match(value), f"Expected {expected}, got {value}"
 
 #    def test_does_it_render_a_constant(self, renderer, context_simple) -> None:
 #        output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)

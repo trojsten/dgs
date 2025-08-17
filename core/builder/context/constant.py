@@ -1,5 +1,6 @@
 import math
 import numbers
+from typing import Optional
 
 from pint import UnitRegistry as u
 
@@ -63,6 +64,22 @@ class PhysicsQuantity:
     def __str__(self):
         return str(self.quantity)
 
+    def approximate(self, digits: int):
+        """
+        Return an approximate value of the constant (not just formatted output, but truly rounded).
+        This is primarily useful for common rounded values, such as g = 10 m/s^2 or m_e = 9.11e-31 kg.
+        Note that this representation might not be exact due to machine precision,
+        and will have to be passed through `format` again to render correctly.
+        """
+        if self.quantity.magnitude == 0:
+            logarithm = 1
+        else:
+            logarithm = math.floor(math.log10(abs(self.quantity.magnitude)))
+
+        precision = digits - logarithm - 1
+        magnitude = math.trunc(self.quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
+
+        return PhysicsQuantity(u.Quantity(magnitude, self.quantity.units))
 
 class PhysicsConstant(PhysicsQuantity):
     """
@@ -99,23 +116,6 @@ class PhysicsConstant(PhysicsQuantity):
         else:
             return rf"\qty{siextra}{{{svalue}}}{{{self.unit}}}"
 
-    def approximate(self, digits: int = None):
-        """
-        Return an approximate value of the constant (not just formatted output, but truly rounded).
-        This is primarily useful for common rounded values, such as g = 10 m/s^2 or m_e = 9.11e-31 kg.
-        Note that this representation might not be exact due to machine precision,
-        and will have to be passed through `format` again to render correctly.
-        """
-        if digits is None:
-            digits = self.digits
-
-        if self.value == 0:
-            logarithm = 1
-        else:
-            logarithm = math.floor(math.log10(abs(self.value)))
-
-        precision = digits - logarithm - 1
-        return math.trunc(self.value * (10 ** precision) + 0.5) / (10 ** precision)
 
     @property
     def approx(self):
