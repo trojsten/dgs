@@ -1,21 +1,11 @@
 """
 Filters for work with numbers. Feel free to extend.
 """
+import numbers
 
-import regex as re
+from core.builder.context import PhysicsConstant
+from .hacks import cut_extra_one
 
-
-NumberWithExtraOne = re.compile(r'1\.?e[+-]?[0-9]+')
-
-def cut_extra_one(num: str) -> str:
-    """
-    A helper function to remove extra leading "1" from numbers in scientific notation.
-    "1e15" becomes "e15" so that `siunitx` does not render it as 1 · 10^15, but just 10^15.
-    """
-    if NumberWithExtraOne.match(num):
-        return num[1:]
-    else:
-        return num
 
 
 def roman(number: int) -> str:
@@ -69,16 +59,29 @@ def nth(x: int) -> str:
 
 
 def format_float(x: float, precision: int = None):
-    return rf"{x:.{precision}f}"
+    if isinstance(x, numbers.Number):
+        if precision is None:
+            return rf"{x:f}"
+        else:
+            return rf"{x:.{precision}f}"
+    elif isinstance(x, PhysicsConstant):
+        return x.fullf(precision)
+    else:
+        raise TypeError(f"Cannot handle type {x}")
 
 
 def format_general(x: float, precision: int = None):
     """
     Format a float in the exponential form
     """
-    if precision is None:
-        printed = rf"{x:g}"
+    if isinstance(x, numbers.Number):
+        if precision is None:
+            printed = rf"{x:g}"
+        else:
+            printed = rf"{x:.{precision}g}"
+    elif isinstance(x, PhysicsConstant):
+        printed = x.fullg(precision)
     else:
-        printed = rf"{x:.{precision}g}"
+        raise TypeError(f"Cannot handle type {x}")
 
     return cut_extra_one(printed)

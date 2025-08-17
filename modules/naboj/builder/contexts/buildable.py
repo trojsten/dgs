@@ -1,8 +1,10 @@
 import abc
+from pathlib import Path
 
 from core import i18n
 from core.builder.context.buildable import BuildableFileSystemTreeContext
 from core.builder.context.module import ContextModule
+from jinja import ConstantsContext
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
@@ -36,6 +38,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
         self.adopt(
             language=ContextLanguage(self.root, competition, volume, language),
             i18n=ContextI18nGlobal(self.root, competition),
+            constants=ConstantsContext('constants', Path('core/data/constants.yaml'))
         )
 
 

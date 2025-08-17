@@ -121,8 +121,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.env.filters |= {
             'f': numbers.format_float,
             'g': numbers.format_general,
-            'num': latex.num,
-            'numgen': latex.num_general,
+            'nf': functools.partial(latex.num),
+            'ng': functools.partial(latex.num_general),
         } | {
             # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
             f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
@@ -130,10 +130,10 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             # Shorthands for general: (§ a|g4 §) == (§ a|gen(4) §)
             f'g{prec:d}': functools.partial(numbers.format_general, precision=prec) for prec in range(0, 10)
         } | {
-            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            # Shorthands for num-float: (§ a|g4 §) == (§ a|numgen(4) §)
             f'nf{prec:d}': functools.partial(latex.num, precision=prec) for prec in range(0, 10)
         } | {
-            # Shorthands for general: (§ a|g4 §) == (§ a|numgen(4) §)
+            # Shorthands for num-general: (§ a|g4 §) == (§ a|numgen(4) §)
             f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
         }
 

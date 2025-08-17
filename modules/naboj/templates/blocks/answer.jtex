@@ -14,10 +14,10 @@
 \label{sec:(* problem.id *):answer}%
 \protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
 (@ if path_exists("build/{}/{}/{}/problems/{}/{}/answer-extra.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
-\!\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
+\!\textit{, }\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
 (@- endif -@)%
 (@- if path_exists("build/{}/{}/{}/problems/{}/{}/answer-interval.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
-\!\textit{, (* i18n[language.id].answers.interval *)} \tryInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
+\!\textit{, (* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
 (@- elif path_exists("build/{}/{}/{}/problems/{}/{}/answer-also.tex".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
-\!\textit{, (* i18n[language.id].answers.also *)} \tryInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
+\!\textit{, (* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
 (@- endif -@)

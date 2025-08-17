@@ -311,13 +311,14 @@
 \NewDocumentCommand{\Exp}{m}{e^{#1}}                            % Nicer exponential
 \NewDocumentCommand{\Log}{O{} m}{\log_{#1}{#2}}
 \NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}                 % Stacked "!"
+\NewDocumentCommand{\MustEq}{}{\Must{=}}                        % Must equal
 \NewDocumentCommand{\MustEqual}{}{\Must{=}}                     % Must equal
-\NewDocumentCommand{\MustBeL}{}{\Must{<}}                       % Must be <
-\NewDocumentCommand{\MustBeLL}{}{\Must{\ll}}                    % Must be \ll
-\NewDocumentCommand{\MustBeG}{}{\Must{>}}                       % Must be >
-\NewDocumentCommand{\MustBeGG}{}{\Must{\gg}}                    % Must be \gg
-\NewDocumentCommand{\MustBeLeq}{}{\Must{\leq}}                  % Must be <=
-\NewDocumentCommand{\MustBeGeq}{}{\Must{\geq}}                  % Must be >=
+\NewDocumentCommand{\MustL}{}{\Must{<}}                         % Must be <
+\NewDocumentCommand{\MustLL}{}{\Must{\ll}}                      % Must be \ll
+\NewDocumentCommand{\MustG}{}{\Must{>}}                         % Must be >
+\NewDocumentCommand{\MustGG}{}{\Must{\gg}}                      % Must be \gg
+\NewDocumentCommand{\MustLeq}{}{\Must{\leq}}                    % Must be <=
+\NewDocumentCommand{\MustGeq}{}{\Must{\geq}}                    % Must be >=
 \NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}    % Definition
 \NewDocumentCommand{\Assign}{}{\coloneqq}                       % Assignment with :=
 

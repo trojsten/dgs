@@ -4,7 +4,7 @@ from typing import Optional
 
 from pint import UnitRegistry as u
 
-from core.filters.numbers import cut_extra_one
+from core.filters.hacks import cut_extra_one
 
 
 class PhysicsQuantity:
@@ -100,7 +100,7 @@ class PhysicsConstant(PhysicsQuantity):
 
     def _format(self, value: float, fmt: str = None):
         if self.force_f:
-            fmt = f'.{self.digits - 1}f'
+            fmt = f'.{self.digits}f'
         elif fmt is None:
             fmt = f'.{self.digits}g'
         siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
@@ -148,7 +148,7 @@ class PhysicsConstant(PhysicsQuantity):
             precision = self.digits
         return self.format(f'.{precision}f')
 
-    def fullg(self, precision: int = 3) -> str:
+    def fullg(self, precision: int = None) -> str:
         """
         Full, with g formatting
         """
@@ -224,6 +224,9 @@ class PhysicsConstant(PhysicsQuantity):
             return PhysicsConstant(name="computed", value=self.value * value, unit=self.unit)
         else:
             raise NotImplementedError("Currently it is only possible to multiply constants by scalars")
+
+    def __rmul__(self, value):
+        return self.__mul__(value)
 
     def __truediv__(self, value):
         if isinstance(value, numbers.Number):
