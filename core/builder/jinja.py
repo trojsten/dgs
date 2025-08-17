@@ -121,8 +121,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.env.filters |= {
             'f': numbers.format_float,
             'g': numbers.format_general,
-            'nf': functools.partial(latex.num),
-            'ng': functools.partial(latex.num_general),
+            'nf': latex.num,
+            'ng': latex.num_general,
         } | {
             # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
             f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)

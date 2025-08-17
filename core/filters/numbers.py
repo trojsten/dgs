@@ -5,7 +5,7 @@ import numbers
 
 from core.builder.context import PhysicsConstant
 from .hacks import cut_extra_one
-
+from ..builder.context.constant import PhysicsQuantity
 
 
 def roman(number: int) -> str:
@@ -64,10 +64,10 @@ def format_float(x: float, precision: int = None):
             return rf"{x:f}"
         else:
             return rf"{x:.{precision}f}"
-    elif isinstance(x, PhysicsConstant):
+    elif isinstance(x, PhysicsQuantity):
         return x.fullf(precision)
     else:
-        raise TypeError(f"Cannot handle type {x}")
+        raise TypeError(f"Cannot handle type {type(x)} ({x})")
 
 
 def format_general(x: float, precision: int = None):
@@ -79,9 +79,9 @@ def format_general(x: float, precision: int = None):
             printed = rf"{x:g}"
         else:
             printed = rf"{x:.{precision}g}"
-    elif isinstance(x, PhysicsConstant):
+    elif isinstance(x, PhysicsQuantity):
         printed = x.fullg(precision)
     else:
-        raise TypeError(f"Cannot handle type {x}")
+        raise TypeError(f"Cannot handle type {type(x)} ({x})")
 
     return cut_extra_one(printed)

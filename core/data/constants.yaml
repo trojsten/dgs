@@ -184,7 +184,7 @@ avogadro:
     symbol:     "N_A"
     value:      6.02214076e+23
     unit:       "1 / mole"
-    siextra:    "per-mode=reciprocal"
+    si_extra:   "per-mode=reciprocal"
     digits:     4
 
 universal_gas:
@@ -357,5 +357,5 @@ thermal_expansion_water:
     symbol:     "\\beta_{\\ce{H2O}}"
     value:      1.8e-4
     unit:       "1 / kelvin"
-    siextra:    "per-mode=reciprocal"
+    si_extra:   "per-mode=reciprocal"
     digits:     2

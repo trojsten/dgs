@@ -44,7 +44,7 @@ class ConstantsContext(FileContext):
     def __init__(self, new_id: str, path: Path, **defaults):
         super().__init__(new_id, path, **defaults)
         self.add(**{
-            alias: PhysicsConstant(name, **data)
+            alias: PhysicsConstant.construct(name, **data)
             for name, data in self.data.items()  # Create and add all defined constants
             for alias in [name] + data.get('aliases', [])  # Also include all available aliases for them
         })
@@ -66,9 +66,9 @@ class CLIInterface(cli.CLIInterface, ABC):
         if 'values' in context.data:
             values = context.data['values']
 
-            for key, value in values.items():
-                if isinstance(value, dict):
-                    values[key] = PhysicsConstant(key, **value)
+            for key, params in values.items():
+                if isinstance(params, dict):
+                    values[key] = PhysicsConstant.construct(key, **params)
 
             ctx.add(**values)
 
