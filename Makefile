@@ -238,7 +238,7 @@ output/%/clean:
 output/%/distclean: \
 	output/%/clean
 	rm -rf build/$*/
-
+	rm -rf render/$*/
 
 clean:
 	@echo -e '$(c_action)Clean:$(c_default)'
