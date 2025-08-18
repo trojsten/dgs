@@ -83,24 +83,27 @@ gforce:
     symbol:     "g"
     aliases:    ['g']
     value:      9.80665
-    unit:       "metre / second squared"
+    unit:       "metre / s^2"
     digits:     1
     force_f:    true
 
 radius_earth:
     symbol:     "R_{\\oplus}"
+    aliases:    ['r_E']
     value:      6378000
     unit:       "metre"
     digits:     4
 
 mass_earth:
     symbol:     "M_{\\oplus}"
+    aliases:    ['m_E']
     value:      5.972168e+24
     unit:       "kilogram"
     digits:     2
 
 eccentricity_earth:
     symbol:     "e_{\\Earth}"
+    aliases:    ['e_E']
     value:      0.0167086
     unit:       ~
     digits:     2

@@ -3,11 +3,15 @@ import math
 import jinja2
 import os
 import sys
+import numpy as np
 
 from typing import Any, Optional, TextIO
 
+from core.builder.context.quantity import PhysicsQuantity
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
+
+from pint import UnitRegistry as u
 
 log = logger.setupLog('dgs')
 
@@ -110,6 +114,13 @@ class StaticRenderer(JinjaRenderer):
         }
 
 
+def construct_unit(magnitude, unit):
+    print(magnitude, unit)
+    q = PhysicsQuantity.construct(magnitude, unit)
+    print(q)
+    return q
+
+
 class MarkdownJinjaRenderer(JinjaRenderer):
     """
     A Jinja2 renderer for pre-rendering dynamic Markdown files.
@@ -137,31 +148,30 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
         }
 
-
         self.env.globals |= {
-            'sin': math.sin,
-            'cos': math.cos,
-            'tan': math.tan,
-            'asin': math.asin,
-            'acos': math.acos,
-            'atan': math.atan,
-            'atan2': math.atan2,
-            'ceil': math.ceil,
-            'floor': math.floor,
-            'sqrt': math.sqrt,
-            'cbrt': math.cbrt,
-            'rad': math.radians,
-            'deg': math.degrees,
+            'sin': np.sin,
+            'cos': np.cos,
+            'tan': np.tan,
+            'asin': np.asin,
+            'acos': np.acos,
+            'atan': np.atan,
+            'atan2': np.atan2,
+            'ceil': np.ceil,
+            'floor': np.floor,
+            'sqrt': lambda x: (x ** 0.5),
+            'cbrt': np.cbrt,
+            'rad': np.radians,
+            'deg': np.degrees,
             'gamma': math.gamma,
-            'ln': math.log,
-            'log': math.log,
-            'log10': math.log10,
-            'log2': math.log2,
-            'exp': math.exp,
-            'pow': math.pow,
-            'pi': math.pi,
+            'log': np.log,
+            'log10': np.log10,
+            'log2': np.log2,
+            'exp': np.exp,
+            'pow': np.pow,
+            'pi': np.pi,
             'tau': math.tau,
-            'euler': 2.718281828459045235360287471352,
+            'euler': math.e,
             'KtoC': lambda x: x - 273.15,
             'CtoK': lambda x: x + 273.15,
+            'u': construct_unit,
         }

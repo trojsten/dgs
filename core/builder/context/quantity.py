@@ -1,8 +1,13 @@
 import math
 import numbers
+import re
 from typing import Optional
 
+import numpy as np
+import pint
 from pint import UnitRegistry as u
+
+from core.filters.hacks import cut_extra_one
 
 
 class PhysicsQuantity:
@@ -29,16 +34,26 @@ class PhysicsQuantity:
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
     def __add__(self, other):
-        return PhysicsQuantity(self.quantity + other.quantity)
+        if isinstance(other, PhysicsQuantity):
+            return PhysicsQuantity(self.quantity + other.quantity)
+        elif isinstance(other, numbers.Number):
+            return PhysicsQuantity(self.quantity + other)
+        else:
+            raise TypeError(f"Cannot __add__ with {type(other)} ({other})")
 
     def __radd__(self, other):
-        return other + self
+        return self + other
 
     def __sub__(self, other):
-        return PhysicsQuantity(self.quantity - other.quantity)
+        if isinstance(other, PhysicsQuantity):
+            return PhysicsQuantity(self.quantity - other.quantity)
+        elif isinstance(other, numbers.Number):
+            return PhysicsQuantity(self.quantity - other)
+        else:
+            raise TypeError(f"Cannot __sub__ with {type(other)} ({other})")
 
     def __rsub__(self, other):
-        return other - self
+        return -(self - other)
 
     def __mul__(self, other):
         if isinstance(other, PhysicsQuantity):
@@ -49,18 +64,27 @@ class PhysicsQuantity:
             return NotImplemented
 
     def __rmul__(self, other):
-        return other * self
+        return self * other
+
+    def __pow__(self, exponent):
+        return PhysicsQuantity(self.quantity ** exponent)
 
     def __truediv__(self, other):
         if isinstance(other, PhysicsQuantity):
             return PhysicsQuantity(self.quantity / other.quantity)
-        elif isinstance(other, numbers.Number):
+        elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
             return PhysicsQuantity(self.quantity / other)
         else:
-            return NotImplemented
+            raise TypeError(f"Cannot __truediv__ type {type(other)} ({other})")
+
+    def __rtruediv__(self, other):
+        return PhysicsQuantity(other / self.quantity)
+
+    def __neg__(self):
+        return PhysicsQuantity(-self.quantity)
 
     def __str__(self):
-        return str(self.quantity)
+        return self._format()
 
     @property
     def mag(self):
@@ -71,6 +95,21 @@ class PhysicsQuantity:
     def unit(self):
         """ Return the internal unit. """
         return self.quantity.units
+
+    def to(self, what):
+        return PhysicsQuantity(self.quantity.to(what))
+
+    def simplify(self):
+        return PhysicsQuantity(self.quantity.to_base_units())
+
+    def sin(self):
+        return PhysicsQuantity(np.sin(self.quantity))
+
+    def cos(self):
+        return PhysicsQuantity(np.cos(self.quantity))
+
+    def degrees(self):
+        return PhysicsQuantity(np.degrees(self.quantity))
 
     def approximate(self, digits: int):
         """
@@ -89,9 +128,23 @@ class PhysicsQuantity:
 
         return PhysicsQuantity(u.Quantity(magnitude, self.quantity.units))
 
-    def format(self, fmt: str = None):
+    def _format(self, fmt: str = None, *, si_extra: str = None):
         """Return a formatted string representation, by default a `g` one."""
-        return f"{self.quantity:Lx}"
+        # print(f"Formatting {self.quantity} with fmt = {fmt}")
+
+        if fmt is None:
+            fmt = 'g'
+
+        if si_extra is None:
+            si_extra = ''
+        else:
+            si_extra = f'[{si_extra}]'
+
+        pint_output = f"{self.quantity:Lx}"
+        unit = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
+        magnitude = cut_extra_one(f'{self.quantity.magnitude:{fmt}}')
+        result = rf'\qty{si_extra}{{{magnitude}}}{{{unit.group('unit')}}}'
+        return result
 
     def fullf(self, precision: int = None) -> str:
         """
@@ -99,8 +152,28 @@ class PhysicsQuantity:
         """
         if precision is None:
             precision = self.digits
-        return self.format(f'.{precision}f')
+        return self._format(f'.{precision}f')
 
-    def to(self, new_unit: str):
-        self.quantity = self.quantity.to(new_unit)
-        return self
+    def fullg(self, precision: int = None) -> str:
+        """
+        Full, with f formatting
+        """
+        if precision is None:
+            precision = self.digits
+        return self._format(f'.{precision}g')
+
+    @property
+    def equals(self) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self.symbol} = {self.full}"
+
+    @property
+    def equalsf(self) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self.symbol} = {self.format('f')}"

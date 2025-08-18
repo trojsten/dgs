@@ -26,23 +26,13 @@ class PhysicsConstant(PhysicsQuantity):
         unit = kwargs.pop('unit')
         return PhysicsConstant(name, u.Quantity(magnitude, unit), **kwargs)
 
-    def _format(self, fmt: str = None):
+    def format(self, fmt: str = None):
         if self.force_f:
             fmt = f'.{self.digits}f'
         elif fmt is None:
             fmt = f'.{self.digits}g'
-        siextra = '' if self.si_extra is None else f'[{self.si_extra}]'
 
-        svalue = cut_extra_one(f'{self.value:{fmt}}')
-
-        return f"{self.quantity:Lx}"
-
-        if self.value.units == "":
-            return rf"\num{siextra}{{{svalue}}}"
-        elif self.value.units == u.radians:
-            return rf"\ang{siextra}{{{svalue}}}"
-        else:
-            return rf"\qty{siextra}{{{svalue}}}{{{self.unit}}}"
+        return self._format(fmt, si_extra=self.si_extra)
 
     @property
     def approx(self):
@@ -75,22 +65,6 @@ class PhysicsConstant(PhysicsQuantity):
         if precision is None:
             precision = self.digits
         return self.format(f'.{precision}g')
-
-    @property
-    def equals(self) -> str:
-        """
-        Full form with symbol and equal sign,
-        `<symbol> = <full>`
-        """
-        return rf"{self.symbol} = {self.full}"
-
-    @property
-    def equalsf(self) -> str:
-        """
-        Full form with symbol and equal sign,
-        `<symbol> = <full>`
-        """
-        return rf"{self.symbol} = {self.format('f')}"
 
     @property
     def deg(self) -> str:
