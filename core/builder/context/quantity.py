@@ -141,9 +141,11 @@ class PhysicsQuantity:
             si_extra = f'[{si_extra}]'
 
         pint_output = f"{self.quantity:Lx}"
-        unit = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
+        si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self.quantity.magnitude:{fmt}}')
-        result = rf'\qty{si_extra}{{{magnitude}}}{{{unit.group('unit')}}}'
+        unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
+        unit = re.sub(r'\\delta_degree_Celsius', r'\\celsius', unit)
+        result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
         return result
 
     def fullf(self, precision: int = None) -> str:

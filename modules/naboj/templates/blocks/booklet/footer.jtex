@@ -17,6 +17,10 @@
     (* list(i18n[language.id].people.authors, volume.authors.problems) *)
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
+
+    \textit{O fyzickú a duševnú pohodu autorov zbierky
+    sa starali Mgr. Jakub Hluško a COOP Jednota Zázrivá.}
+
     (@ with colocolor='lightgray' @)
         (@ include 'blocks/colophon.jtex' @)
     (@ endwith @)

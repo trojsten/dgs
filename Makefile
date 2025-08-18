@@ -247,5 +247,6 @@ clean:
 distclean: clean
 	@echo -e '$(c_action)Dist clean:$(c_default)'
 	rm -rf output/
+	rm -rf render/
 
 .PHONY: clean distclean hello

@@ -115,10 +115,7 @@ class StaticRenderer(JinjaRenderer):
 
 
 def construct_unit(magnitude, unit):
-    print(magnitude, unit)
-    q = PhysicsQuantity.construct(magnitude, unit)
-    print(q)
-    return q
+    return PhysicsQuantity.construct(magnitude, unit)
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
