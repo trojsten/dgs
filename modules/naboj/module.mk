@@ -30,7 +30,8 @@ build/naboj/%/answer.tex: \
 # <competition>/<volume>/problems/<problem>/<language>
 define TRANSLATABLE
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml))
 

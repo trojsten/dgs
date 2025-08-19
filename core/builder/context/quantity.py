@@ -113,6 +113,9 @@ class PhysicsQuantity:
     def cos(self):
         return PhysicsQuantity(np.cos(self.quantity))
 
+    def log(self):
+        return PhysicsQuantity(np.log(self.quantity))
+
     def degrees(self):
         return PhysicsQuantity(np.degrees(self.quantity))
 
@@ -148,7 +151,7 @@ class PhysicsQuantity:
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self.quantity.magnitude:{fmt}}')
         unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
-        unit = re.sub(r'\\delta_degree_Celsius', r'\\celsius', unit)
+        unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
         result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
         return result
 
