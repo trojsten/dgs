@@ -3,6 +3,7 @@ from typing import Any, Union, Callable, Optional
 from enschema import Schema, Or
 
 from .numbers import _nth, format_float, format_general
+from ..builder.context.quantity import PhysicsQuantity
 
 
 def isotex(date):
@@ -130,3 +131,11 @@ def num(x: float, precision: Optional[int] = None):
 def num_general(x: float, precision: Optional[int] = None):
     """ Format as a `siunitx` \num{} input"""
     return rf'\num{{{format_general(x, precision)}}}'
+
+
+def equals_float(q: PhysicsQuantity, precision: Optional[int] = None):
+    return q.equals_float(precision)
+
+
+def equals_general(q: PhysicsQuantity, precision: Optional[int] = None):
+    return q.equals_general(precision)

@@ -18,3 +18,4 @@ The authors would like to express gratitude to
 - Joseph Wright, for the wonderful `siunitx` package, which has made our life with LaTeX orders of magnitude easier;
 - Christian Tellechea for `chemfig`, which allowed Náboj Chemistry to escape the Microsoft hell;
 - Sebastian Schubert for `FontPro`, which did the same for the seventh circle of Computer Modern.
+- Hernan Grecco for `pint`, which finally solved the long-standing problems of physics templating.

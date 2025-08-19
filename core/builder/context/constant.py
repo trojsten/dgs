@@ -42,22 +42,6 @@ class PhysicsConstant(PhysicsQuantity):
         """
         return self.approximate(self.digits)
 
-    @property
-    def full(self):
-        r"""
-        Property for full, default-formatted values.
-        Use as (* const.name.full *). This will render
-        ```
-        constant:
-            value: 1.2345e-6
-            unit: "\\kilo\\gram"
-            digits: 3
-        ```
-        as \qty{1.23e-6}{\kilo\gram}.
-        """
-        return self.format()
-
-
     def fullg(self, precision: int = None) -> str:
         """
         Full, with g formatting
@@ -65,12 +49,6 @@ class PhysicsConstant(PhysicsQuantity):
         if precision is None:
             precision = self.digits
         return self.format(f'.{precision}g')
-
-    @property
-    def deg(self) -> str:
-        assert self.unit == r'\radian', \
-            f"Only angles can be converted to degrees, got {self.unit}"
-        return rf"\ang{{{math.degrees(self.value):{self.digits}f}}}"
 
     @property
     def full_exact(self):

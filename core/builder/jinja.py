@@ -114,8 +114,8 @@ class StaticRenderer(JinjaRenderer):
         }
 
 
-def construct_unit(magnitude, unit):
-    return PhysicsQuantity.construct(magnitude, unit)
+def construct_unit(magnitude, unit, *, symbol: Optional[str] = None):
+    return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
@@ -131,6 +131,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'g': numbers.format_general,
             'nf': latex.num,
             'ng': latex.num_general,
+            'ef': latex.equals_float,
+            'eg': latex.equals_general,
         } | {
             # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
             f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
@@ -143,6 +145,10 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         } | {
             # Shorthands for num-general: (§ a|g4 §) == (§ a|numgen(4) §)
             f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
+        } | {
+            f'ef{prec:d}': functools.partial(latex.equals_float, precision=prec) for prec in range(0, 10)
+        } | {
+            f'eg{prec:d}': functools.partial(latex.equals_general, precision=prec) for prec in range(0, 10)
         }
 
         self.env.globals |= {

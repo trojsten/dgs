@@ -96,8 +96,13 @@ class PhysicsQuantity:
         """ Return the internal unit. """
         return self.quantity.units
 
+    @property
+    def sym(self):
+        """ Return the internal symbol (shorthand). """
+        return self.symbol
+
     def to(self, what):
-        return PhysicsQuantity(self.quantity.to(what))
+        return PhysicsQuantity(self.quantity.to(what), symbol=self.symbol, si_extra=self.si_extra)
 
     def simplify(self):
         return PhysicsQuantity(self.quantity.to_base_units())
@@ -125,7 +130,6 @@ class PhysicsQuantity:
 
         precision = digits - logarithm - 1
         magnitude = math.trunc(self.quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
-
         return PhysicsQuantity(u.Quantity(magnitude, self.quantity.units))
 
     def _format(self, fmt: str = None, *, si_extra: str = None):
@@ -147,6 +151,21 @@ class PhysicsQuantity:
         unit = re.sub(r'\\delta_degree_Celsius', r'\\celsius', unit)
         result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
         return result
+
+    @property
+    def full(self):
+        r"""
+        Property for full, default-formatted values.
+        Use as (* const.name.full *). This will render
+        ```
+        constant:
+            value: 1.2345e-6
+            unit: "\\kilo\\gram"
+            digits: 3
+        ```
+        as \qty{1.23e-6}{\kilo\gram}.
+        """
+        return self._format()
 
     def fullf(self, precision: int = None) -> str:
         """
@@ -173,9 +192,22 @@ class PhysicsQuantity:
         return rf"{self.symbol} = {self.full}"
 
     @property
-    def equalsf(self) -> str:
+    def eq(self) -> str:
+        """
+        Shorthand for `equals`
+        """
+        return self.equals
+
+    def equals_float(self, precision: Optional[int]) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self.symbol} = {self.format('f')}"
+        return rf"{self.symbol} = {self._format(f'.{precision}f')}"
+
+    def equals_general(self, precision: Optional[int]) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self.symbol} = {self._format(f'.{precision}g')}"
