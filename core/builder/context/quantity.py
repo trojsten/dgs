@@ -113,6 +113,12 @@ class PhysicsQuantity:
     def cos(self):
         return PhysicsQuantity(np.cos(self.quantity))
 
+    def arcsin(self):
+        return PhysicsQuantity(np.arcsin(self.quantity))
+
+    def arccos(self):
+        return PhysicsQuantity(np.arccos(self.quantity))
+
     def log(self):
         return PhysicsQuantity(np.log(self.quantity))
 
