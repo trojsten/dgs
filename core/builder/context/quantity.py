@@ -21,7 +21,7 @@ class PhysicsQuantity:
                  symbol: str = None,
                  si_extra: str = None,
                  force_f: bool = False):
-        self.quantity = quantity
+        self._quantity = quantity
         self.symbol = symbol
         self.si_extra = si_extra
         self.force_f = force_f
@@ -35,9 +35,9 @@ class PhysicsQuantity:
 
     def __add__(self, other):
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self.quantity + other.quantity)
+            return PhysicsQuantity(self._quantity + other._quantity)
         elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self.quantity + other)
+            return PhysicsQuantity(self._quantity + other)
         else:
             raise TypeError(f"Cannot __add__ with {type(other)} ({other})")
 
@@ -46,9 +46,9 @@ class PhysicsQuantity:
 
     def __sub__(self, other):
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self.quantity - other.quantity)
+            return PhysicsQuantity(self._quantity - other._quantity)
         elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self.quantity - other)
+            return PhysicsQuantity(self._quantity - other)
         else:
             raise TypeError(f"Cannot __sub__ with {type(other)} ({other})")
 
@@ -57,9 +57,9 @@ class PhysicsQuantity:
 
     def __mul__(self, other):
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self.quantity * other.quantity)
+            return PhysicsQuantity(self._quantity * other._quantity)
         elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self.quantity * other)
+            return PhysicsQuantity(self._quantity * other)
         else:
             return NotImplemented
 
@@ -67,21 +67,21 @@ class PhysicsQuantity:
         return self * other
 
     def __pow__(self, exponent):
-        return PhysicsQuantity(self.quantity ** exponent)
+        return PhysicsQuantity(self._quantity ** exponent)
 
     def __truediv__(self, other):
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self.quantity / other.quantity)
+            return PhysicsQuantity(self._quantity / other._quantity)
         elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
-            return PhysicsQuantity(self.quantity / other)
+            return PhysicsQuantity(self._quantity / other)
         else:
             raise TypeError(f"Cannot __truediv__ type {type(other)} ({other})")
 
     def __rtruediv__(self, other):
-        return PhysicsQuantity(other / self.quantity)
+        return PhysicsQuantity(other / self._quantity)
 
     def __neg__(self):
-        return PhysicsQuantity(-self.quantity)
+        return PhysicsQuantity(-self._quantity)
 
     def __str__(self):
         return self._format()
@@ -89,12 +89,12 @@ class PhysicsQuantity:
     @property
     def mag(self):
         """ Return the internal magnitude. """
-        return self.quantity.magnitude
+        return self._quantity.magnitude
 
     @property
     def unit(self):
         """ Return the internal unit. """
-        return self.quantity.units
+        return self._quantity.units
 
     @property
     def sym(self):
@@ -102,28 +102,28 @@ class PhysicsQuantity:
         return self.symbol
 
     def to(self, what):
-        return PhysicsQuantity(self.quantity.to(what), symbol=self.symbol, si_extra=self.si_extra)
+        return PhysicsQuantity(self._quantity.to(what), symbol=self.symbol, si_extra=self.si_extra)
 
     def simplify(self):
-        return PhysicsQuantity(self.quantity.to_base_units())
+        return PhysicsQuantity(self._quantity.to_base_units())
 
     def sin(self):
-        return PhysicsQuantity(np.sin(self.quantity))
+        return PhysicsQuantity(np.sin(self._quantity))
 
     def cos(self):
-        return PhysicsQuantity(np.cos(self.quantity))
+        return PhysicsQuantity(np.cos(self._quantity))
 
     def arcsin(self):
-        return PhysicsQuantity(np.arcsin(self.quantity))
+        return PhysicsQuantity(np.arcsin(self._quantity))
 
     def arccos(self):
-        return PhysicsQuantity(np.arccos(self.quantity))
+        return PhysicsQuantity(np.arccos(self._quantity))
 
     def log(self):
-        return PhysicsQuantity(np.log(self.quantity))
+        return PhysicsQuantity(np.log(self._quantity))
 
     def degrees(self):
-        return PhysicsQuantity(np.degrees(self.quantity))
+        return PhysicsQuantity(np.degrees(self._quantity))
 
     def approximate(self, digits: int):
         """
@@ -132,14 +132,14 @@ class PhysicsQuantity:
         Note that this representation might not be exact due to machine precision,
         and will have to be passed through `format` again to render correctly.
         """
-        if self.quantity.magnitude == 0:
+        if self._quantity.magnitude == 0:
             logarithm = 1
         else:
-            logarithm = math.floor(math.log10(abs(self.quantity.magnitude)))
+            logarithm = math.floor(math.log10(abs(self._quantity.magnitude)))
 
         precision = digits - logarithm - 1
-        magnitude = math.trunc(self.quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
-        return PhysicsQuantity(u.Quantity(magnitude, self.quantity.units))
+        magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
+        return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units))
 
     def _format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
@@ -153,9 +153,9 @@ class PhysicsQuantity:
         else:
             si_extra = f'[{self.si_extra}]'
 
-        pint_output = f"{self.quantity:Lx}"
+        pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
-        magnitude = cut_extra_one(f'{self.quantity.magnitude:{fmt}}')
+        magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
         unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
         unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
         result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'

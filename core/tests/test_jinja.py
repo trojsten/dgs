@@ -110,7 +110,7 @@ class TestConstant:
     ])
     def test_approximation(self, name, expected, digits, context_constants):
         value = context_constants[name].approximate(digits)
-        assert value.quantity == expected, f"Expected {expected}, got {value}"
+        assert value._quantity == expected, f"Expected {expected}, got {value}"
 
     @pytest.mark.parametrize("name,expected", [
         pytest.param('g', r'(SI|qty)(\[\])?{9.80665}{\\metre\\per\\second\\squared}', id='g'),

@@ -32,7 +32,7 @@ class PhysicsConstant(PhysicsQuantity):
         elif fmt is None:
             fmt = f'.{self.digits}g'
 
-        return self._format(fmt, si_extra=self.si_extra)
+        return self._format(fmt)
 
     @property
     def approx(self):
@@ -71,7 +71,7 @@ class PhysicsConstant(PhysicsQuantity):
         ```
         as \qty{1.2345e-6}{\kilo\gram} regardless of `digits`.
         """
-        return self._format(self.quantity.magnitude, '.15g')
+        return self._format(self._quantity.magnitude, '.15g')
 
     def __str__(self):
         return self.full
