@@ -141,17 +141,17 @@ class PhysicsQuantity:
         magnitude = math.trunc(self.quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
         return PhysicsQuantity(u.Quantity(magnitude, self.quantity.units))
 
-    def _format(self, fmt: str = None, *, si_extra: str = None):
+    def _format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
         # print(f"Formatting {self.quantity} with fmt = {fmt}")
 
         if fmt is None:
             fmt = 'g'
 
-        if si_extra is None:
+        if self.si_extra is None:
             si_extra = ''
         else:
-            si_extra = f'[{si_extra}]'
+            si_extra = f'[{self.si_extra}]'
 
         pint_output = f"{self.quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
