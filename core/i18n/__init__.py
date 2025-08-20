@@ -120,6 +120,7 @@ languages = [
            figure='obrázok', figures='obrázky',
            table='tabuľka', tables='tabuľky',
            equation='rovnica', equations='rovnice'),
+    Locale('uk', 'ukrainian', 'uk-UK', ('«', '»')),
 ]
 
 

@@ -5,11 +5,9 @@ from pathlib import Path
 from enschema import Schema, And, Optional, Regex
 
 from core import i18n
-from core.builder.context import PhysicsConstant, Context
 from core.utilities import lists
 from core.utilities.schema import valid_language, valid_language_name
 from core.builder.validator import String
-from jinja import ConstantsContext
 from .base import ContextNaboj
 
 
@@ -110,6 +108,7 @@ class ContextVolume(ContextNaboj):
                 'name': str,
             }
         },
+        'workshop': str,
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,
