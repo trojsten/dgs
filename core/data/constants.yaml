@@ -1,6 +1,6 @@
 # Each constant should define
 #   symbol:     TeX-formatted preferred symbol.
-#   value:      exact numerical representation. If exact value is not known, provide a reasonable approximation.
+#   magnitude:  exact numerical representation. If exact value is not known, provide a reasonable approximation.
 #               Force `!!float` if necessary.
 #   unit:       TeX / `siunitx`-formatted unit.
 #   digits:     preferred precision (integer, valid digits)
@@ -13,7 +13,7 @@
 planck:
     symbol:     "h"
     aliases:    ['h']
-    value:      6.62607015e-34
+    magnitude:  6.62607015e-34
     exact:      true
     unit:       "joule second"
     digits:     4
@@ -21,7 +21,7 @@ planck:
 planck_bar:
     symbol:     "\\hbar"
     aliases:    ['hbar']
-    value:      1.054571817e-34
+    magnitude:  1.054571817e-34
     exact:      true
     unit:       "joule second"
     digits:     4
@@ -29,7 +29,7 @@ planck_bar:
 speed_light:
     symbol:     "c"
     aliases:    ['c']
-    value:      299792458
+    magnitude:  299792458
     exact:      true
     unit:       "metre / second"
     digits:     1
@@ -37,14 +37,14 @@ speed_light:
 gravity:
     symbol:     "G"
     aliases:    ['G']
-    value:      6.67430e-11
+    magnitude:  6.67430e-11
     unit:       "newton metre squared / kilogram squared"
     digits:     3
 
 ### Imperial
 inch:
     symbol:     "\\mathrm{in}"
-    value:      0.0254
+    magnitude:  0.0254
     exact:      true
     unit:       "metre"
     digits:     3
@@ -52,28 +52,28 @@ inch:
 foot:
     symbol:     "\\mathrm{ft}"
     aliases:    ['ft']
-    value:      0.3048
+    magnitude:  0.3048
     exact:      true
     unit:       "metre"
     digits:     4
 
 mile:
     symbol:     "\\mathrm{mi}"
-    value:      1609.344
+    magnitude:  1609.344
     unit:       "metre"
     exact:      true
     digits:     2
 
 us_pint:
     symbol:     "\\mathrm{p}"
-    value:      473.176473
+    magnitude:  473.176473
     unit:       "millilitre"
     digits:     3
 
 pound:
     symbol:     "\\mathrm{lb}"
     aliases:    ['lb']
-    value:      0.45359237
+    magnitude:  0.45359237
     unit:       "kilogram"
     digits:     4
 
@@ -82,7 +82,7 @@ pound:
 gforce:
     symbol:     "g"
     aliases:    ['g']
-    value:      9.80665
+    magnitude:  9.80665
     unit:       "metre / s^2"
     digits:     1
     force_f:    true
@@ -90,139 +90,139 @@ gforce:
 radius_earth:
     symbol:     "R_{\\oplus}"
     aliases:    ['r_E']
-    value:      6378000
+    magnitude:  6378000
     unit:       "metre"
     digits:     4
 
 mass_earth:
     symbol:     "M_{\\oplus}"
     aliases:    ['m_E']
-    value:      5.972168e+24
+    magnitude:  5.972168e+24
     unit:       "kilogram"
     digits:     2
 
 eccentricity_earth:
     symbol:     "e_{\\Earth}"
     aliases:    ['e_E']
-    value:      0.0167086
+    magnitude:  0.0167086
     unit:       ~
     digits:     2
 
 obliquity_earth:
     symbol:     "\\epsilon_{\\Earth}"
-    value:      0.40909263
+    magnitude:  0.40909263
     unit:       "radian"
     digits:     3
 
 radius_sun:
     symbol:     "R_{\\odot}"
-    value:      6.957e+8
+    magnitude:  6.957e+8
     unit:       "metre"
     digits:     2
 
 mass_sun:
     symbol:     "M_{\\odot}"
-    value:      1.988475e+30
+    magnitude:  1.988475e+30
     unit:       "kilogram"
     digits:     2
 
 temperature_sun:
     symbol:     "T_{\\odot}"
-    value:      5777
+    magnitude:  5777
     unit:       "kelvin"
     digits:     4
 
 radius_mars:
     symbol:     "R_\\Mars"
-    value:      3390000
+    magnitude:  3390000
     unit:       "metre"
     digits:     4
 
 tropical_year:
     symbol:     "y"
-    value:      31556926
+    magnitude:  31556926
     unit:       "second"
     digits:     5
 
 day:
     symbol:     "d"
-    value:      86400
+    magnitude:  86400
     exact:      true
     unit:       "second"
     digits:     5
 
 day_sidereal:
     symbol:     "d"
-    value:      86164.0905
+    magnitude:  86164.0905
     unit:       "second"
     digits:     5
 
 mass_mars:
     symbol:     "M_\\Mars"
-    value:      6.417e+23
+    magnitude:  6.417e+23
     unit:       "kilogram"
     digits:     2
 
 au:
     symbol:     "\\mathrm{au}"
-    value:      1.49597870700e+11
+    magnitude:  1.49597870700e+11
     unit:       "metre"
     digits:     2
 
 parsec:
     symbol:     "\\mathrm{pc}"
     aliases:    ['pc']
-    value:      30856775814913673
+    magnitude:  30856775814913673
     unit:       "metre"
     digits:     4
 
 solar_flux:
     symbol:     "F_{\\odot}"
-    value:      1366
+    magnitude:  1366
     unit:       "watt per metre squared"
     digits:     4
 
 ##################### Gas
 avogadro:
     symbol:     "N_A"
-    value:      6.02214076e+23
+    magnitude:  6.02214076e+23
     unit:       "1 / mole"
     si_extra:   "per-mode=reciprocal"
     digits:     4
 
 universal_gas:
     symbol:     "R"
-    value:      8.31446261815324
+    magnitude:  8.31446261815324
     unit:       "joule / kelvin / mole"
     digits:     3
 
 boltzmann:
     symbol:     "k_B"
-    value:      1.380649e-23
+    magnitude:  1.380649e-23
     unit:       "joule / kelvin"
     digits:     3
 
 stefan_boltzmann:
     symbol:     "\\sigma"
-    value:      5.670374419e-8
+    magnitude:  5.670374419e-8
     unit:       "watt / metre squared / kelvin^4"
     digits:     3
 
 pressure_standard:
     symbol:     "p_0"
-    value:      101325
+    magnitude:  101325
     unit:       "pascal"
     digits:     2
 
 temperature_standard:
     symbol:     "T_0"
-    value:      0
+    magnitude:  0
     unit:       "celsius"
     digits:     1
 
 speed_sound:
     symbol:     "c_s"
-    value:      343
+    magnitude:  343
     unit:       "metre / second"
     digits:     3
 
@@ -231,41 +231,41 @@ speed_sound:
 permittivity:
     symbol:     "\\epsilon_0"
     aliases:    ['eps0']
-    value:      8.8541878188e-12
+    magnitude:  8.8541878188e-12
     unit:       "farad / metre"
     digits:     4
 
 permeability:
     symbol:     "\\mu_0"
     aliases:    ['mu0']
-    value:      1.25663706127e-6
+    magnitude:  1.25663706127e-6
     unit:       "henry / metre"
     digits:     3
 
 elementary_charge:
     symbol:     "e"
     aliases:    ['e']
-    value:      1.602176634e-19
+    magnitude:  1.602176634e-19
     unit:       "coulomb"
     digits:     2
 
 mass_electron:
     symbol:     "m_e"
     aliases:    ['m_e']
-    value:      9.1093837139e-31
+    magnitude:  9.1093837139e-31
     unit:       "kilogram"
     digits:     3
 
 mass_proton:
     symbol:     "m_p"
     aliases:    ['m_p']
-    value:      1.67262192595e-27
+    magnitude:  1.67262192595e-27
     unit:       "kilogram"
     digits:     3
 
 amu:
     symbol:     "u"
-    value:      1.6605390689e-27
+    magnitude:  1.6605390689e-27
     unit:       "kilogram"
     digits:     3
 
@@ -273,92 +273,92 @@ amu:
 
 refraction_water:
     symbol:     "n_{\\ce{H2O}}"
-    value:      1.333
+    magnitude:  1.333
     unit:       ~
     digits:     4
 
 ### Material
 density_air:
     symbol:     "\\rho_a"
-    value:      1.28
+    magnitude:  1.28
     unit:       "kilogram / metre cubed"
     digits:     2
 
 density_water:
     symbol:     "\\rho_{\\ce{H2O}}"
-    value:      998
+    magnitude:  998
     unit:       "kilogram / metre cubed"
     digits:     2
 
 density_ice:
     symbol:     "\\rho_{\\ce{H2O}}"
-    value:      916
+    magnitude:  916
     unit:       "kilogram / metre cubed"
     digits:     3
 
 density_helium:
     symbol:     "\\rho_{\\ce{He}}"
-    value:      0.18
+    magnitude:  0.18
     unit:       "kilogram / metre cubed"
     digits:     3
 
 density_mercury:
     symbol:     "\\rho_{\\ce{Hg}}"
-    value:      13546
+    magnitude:  13546
     unit:       "kilogram / metre cubed"
     digits:     3
 
 density_gold:
     symbol:     "\\rho_{\\ce{Au}}"
-    value:      19283
+    magnitude:  19283
     unit:       "kilogram / metre cubed"
     digits:     3
 
 molar_mass_gold:
     symbol:     "M_{\\ce{Au}}"
-    value:      196.966570
+    magnitude:  196.966570
     unit:       "gram / mole"
     digits:     3
 
 molar_mass_air:
     symbol:     "M_{\\mathrm{a}}"
-    value:      28.9647
+    magnitude:  28.9647
     unit:       "gram / mole"
     digits:     2
 
 surface_tension_water:
     symbol:     "\\sigma"
-    value:      0.072
+    magnitude:  0.072
     unit:       "newton / metre"
     digits:     2
 
 heat_capacity_water:
     symbol:     "c_{\\ce{H2O}}"
-    value:      4180
+    magnitude:  4180
     unit:       "joule / kilogram / kelvin"
     digits:     3
 
 heat_vaporization_water:
     symbol:     "l_{\\ce{H2O}}"
-    value:      2260
+    magnitude:  2260
     unit:       "kilojoule / kilogram"
     digits:     2
 
 heat_capacity_ice:
     symbol:     "c_\\text{\\Snow}"
-    value:      2093
+    magnitude:  2093
     unit:       "joule / kilogram / kelvin"
     digits:     4
 
 heat_melting_ice:
     symbol:     "l_\\text{\\Snow}"
-    value:      334000
+    magnitude:  334000
     unit:       "J / kg"
     digits:     3
 
 thermal_expansion_water:
     symbol:     "\\beta_{\\ce{H2O}}"
-    value:      1.8e-4
+    magnitude:  1.8e-4
     unit:       "1 / kelvin"
     si_extra:   "per-mode=reciprocal"
     digits:     2
