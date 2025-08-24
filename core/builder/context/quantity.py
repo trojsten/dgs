@@ -22,7 +22,7 @@ class PhysicsQuantity:
                  si_extra: str = None,
                  force_f: bool = False):
         self._quantity = quantity
-        self.symbol = symbol
+        self._symbol = symbol
         self.si_extra = si_extra
         self.force_f = force_f
 
@@ -86,6 +86,9 @@ class PhysicsQuantity:
     def __str__(self):
         return self._format()
 
+    def __eq__(self, other):
+        return self._quantity == other._quantity
+
     @property
     def mag(self):
         """ Return the internal magnitude. """
@@ -99,10 +102,10 @@ class PhysicsQuantity:
     @property
     def sym(self):
         """ Return the internal symbol (shorthand). """
-        return self.symbol
+        return self._symbol
 
     def to(self, what):
-        return PhysicsQuantity(self._quantity.to(what), symbol=self.symbol, si_extra=self.si_extra)
+        return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)
 
     def simplify(self):
         return PhysicsQuantity(self._quantity.to_base_units())
@@ -115,6 +118,9 @@ class PhysicsQuantity:
 
     def arcsin(self):
         return PhysicsQuantity(np.arcsin(self._quantity))
+
+    def arctan(self):
+        return PhysicsQuantity(np.arctan(self._quantity))
 
     def arccos(self):
         return PhysicsQuantity(np.arccos(self._quantity))
@@ -139,7 +145,7 @@ class PhysicsQuantity:
 
         precision = digits - logarithm - 1
         magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
-        return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units))
+        return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
     def _format(self, fmt: str = None):
         """Return a formatted string representation, by default a `g` one."""
@@ -198,7 +204,7 @@ class PhysicsQuantity:
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self.symbol} = {self.full}"
+        return rf"{self._symbol} = {self.full}"
 
     @property
     def eq(self) -> str:
@@ -212,11 +218,11 @@ class PhysicsQuantity:
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self.symbol} = {self._format(f'.{precision}f')}"
+        return rf"{self._symbol} = {self._format(f'.{precision}f')}"
 
     def equals_general(self, precision: Optional[int]) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self.symbol} = {self._format(f'.{precision}g')}"
+        return rf"{self._symbol} = {self._format(f'.{precision}g')}"

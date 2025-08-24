@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import numbers
 import pprint
 from abc import ABC
 
@@ -68,7 +69,12 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             for key, params in values.items():
                 if isinstance(params, dict):
-                    values[key] = PhysicsConstant.construct(key, **params)
+                    symbol = params.pop('symbol', key)
+                    values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
+                elif isinstance(params, str) or isinstance(params, numbers.Number):
+                    values[key] = params
+                else:
+                    raise TypeError(f"Unsupported type {type(params)} ({params})")
 
             ctx.add(**values)
 

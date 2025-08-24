@@ -11,8 +11,6 @@ from core.builder.context.quantity import PhysicsQuantity
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
-from pint import UnitRegistry as u
-
 log = logger.setupLog('dgs')
 
 
@@ -146,12 +144,15 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             # Shorthands for num-general: (§ a|g4 §) == (§ a|numgen(4) §)
             f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
         } | {
+            # Shorthands for equals (float)
             f'ef{prec:d}': functools.partial(latex.equals_float, precision=prec) for prec in range(0, 10)
         } | {
+            # Shorthands for equals (general)
             f'eg{prec:d}': functools.partial(latex.equals_general, precision=prec) for prec in range(0, 10)
         }
 
         self.env.globals |= {
+            'u': construct_unit,
             'sin': np.sin,
             'cos': np.cos,
             'tan': np.tan,
@@ -176,5 +177,4 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'euler': math.e,
             'KtoC': lambda x: x - 273.15,
             'CtoK': lambda x: x + 273.15,
-            'u': construct_unit,
         }

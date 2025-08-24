@@ -45,8 +45,8 @@ class BaseBuilder(metaclass=ABCMeta):
     >>>     def add_arguments(self) -> None:
     >>>         ...
     >>>
-    >>>     def ident(self) -> tuple[Any, ...]:
-    >>>         return (self.year, self.issue)
+    >>>     def ident(self) -> tuple[Any]:
+    >>>         return self.year, self.issue
     >>>
 
     >>>

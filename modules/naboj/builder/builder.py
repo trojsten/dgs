@@ -1,5 +1,6 @@
 import abc
 from pathlib import Path
+from typing import Optional
 
 from core.builder import builder
 import core.builder.jinja as jinja
@@ -17,7 +18,7 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
         self.parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
         self.parser.add_argument('volume', type=int)
 
-    def build_templates(self):
+    def build_templates(self, *, new_name: Optional[str] = None) -> None:
         super().build_templates()
 
         renderer = jinja.StaticRenderer(Path(self.launch_directory, *self.path()))

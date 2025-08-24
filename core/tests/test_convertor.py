@@ -69,11 +69,11 @@ class TestImages:
         output = convert('latex', 'sk', """
 ![Veľmi dlhý text. Akože masívne.
 Veľmi masívne.
-Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
+Aj s newlinami.](file.png){#fig:long height=53mm}
 """)
         output = output.replace('\n', ' ')
         assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{.*}', output) is not None
-        assert 'subor.png' in output
+        assert 'file.png' in output
 
     def test_image_html(self, convert):
         output = convert('html', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
@@ -86,11 +86,11 @@ Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
         output = convert('html', 'sk', """
 ![Veľmi dlhý text. Akože masívne.
 Veľmi masívne.
-Aj s newlinami.](subor.png){#fig:dlhy height=53mm}
+Aj s newlinami.](file.png){#fig:long height=53mm}
 """)
         output = output.replace('\n', ' ')
         assert re.match(r'<figure.*>.*</figure>', output) is not None
-        assert re.match(r'.*<img.* src=".*subor\.png".* />', output) is not None
+        assert re.match(r'.*<img.* src=".*file\.png".* />', output) is not None
         assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\.', output) is not None
 
 

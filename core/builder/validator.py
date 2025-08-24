@@ -1,6 +1,7 @@
 import abc
 import logging
 import pprint
+import regex as re
 
 from enschema import Schema, SchemaError, And, Or, Regex
 from pathlib import Path
@@ -15,7 +16,9 @@ CommitHash = Regex(r'[a-f0-9]+')
 
 
 class FileSystemValidator(metaclass=abc.ABCMeta):
-    IGNORED = ['.git']
+    # Paths to ignore within the file structure.
+    # Currently, it is a list of strings, but might be converted to regexes later.
+    IGNORED: [re.Pattern] = [r'\.git']
 
     _schema: Schema = None
 
@@ -28,7 +31,7 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         self.tree = self.scan(self.root)
 
     def scan(self, path) -> str | dict | None:
-        if path.name in self.IGNORED:
+        if any(ignored.match(path.name) for ignored in self.IGNORED):
             return None
         if path.is_dir():
             return {
@@ -39,10 +42,12 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
                 return Link
             elif path.is_file():
                 return File
+            else:
+                return None
 
     def validate(self) -> None:
         """
-        Validate the tree, re-raising the corresponding SchemaError if anything is out of order
+        Validate the tree, re-raising the corresponding SchemaError if anything is amiss
         """
         try:
             self.schema.validate(self.tree)
