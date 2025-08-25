@@ -161,7 +161,7 @@ class BaseBuilder(metaclass=ABCMeta):
 
         for template in self.templates:
             outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
-            self.renderer.render(template, self.context.data, outfile=outfile)
+            self.renderer.render(Path(template), self.context.data, outfile=outfile)
 
         log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} "
                   f"{c.path(self.full_name())} {c.ok('successful')}")

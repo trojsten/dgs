@@ -25,4 +25,4 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
 
         for template in self.i18n_templates:
             outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')
-            renderer.render(template, self.context.data, outfile=outfile)
+            renderer.render(Path(template), self.context.data, outfile=outfile)

@@ -21,5 +21,7 @@ class StandaloneRenderer:
         self.run()
 
     def run(self):
-        self.jinja.render(self.template, self.context.data, outfile=self.outfile)
+        self.jinja.render(Path(self.template),
+                          self.context.data,
+                          outfile=self.outfile)
         return 0

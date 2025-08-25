@@ -37,6 +37,7 @@ class FileSystemTreeContext(Context, ABC):
         return '/'.join(*path)
 
     def validate_repo(self, *path: str) -> None:
+        """ Validate the file system structure, including meta files """
         log.debug(f"Validating repository at {c.path(self.node_path(*path))}")
         root = self.node_path(*path)
         if self._validator_class is None:

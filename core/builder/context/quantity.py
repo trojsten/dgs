@@ -172,7 +172,11 @@ class PhysicsQuantity:
         magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
         unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
         unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
-        result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
+
+        if unit == '':
+            result = rf'\num{si_extra}{{{magnitude}}}'
+        else:
+            result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
         return result
 
     @property

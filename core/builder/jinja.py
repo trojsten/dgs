@@ -1,5 +1,7 @@
 import functools
 import math
+from pathlib import Path
+
 import jinja2
 import os
 import sys
@@ -39,11 +41,12 @@ class MissingVariablesError(Exception):
 
 
 class JinjaRenderer:
+    """
+    A wrapper class for rendering Jinja2 templates.
+    Supports custom tag delimiters
+    """
     def __init__(self,
-                 template_root,
                  **kwargs):
-        self.template_root = template_root
-
         self.env = jinja2.Environment(
             block_start_string=kwargs.pop('block_start_string', '(@'),
             block_end_string=kwargs.pop('block_end_string', '@)'),
@@ -56,26 +59,45 @@ class JinjaRenderer:
             trim_blocks=True,
             autoescape=False,
             undefined=CollectUndefined,
-            loader=jinja2.FileSystemLoader(self.template_root),
+            loader=jinja2.DictLoader({'template': kwargs.pop('template', '')}),
             **kwargs
         )
 
+    @staticmethod
+    def __default_to_stdout(outfile: Optional[TextIO]):
+        if outfile is None:
+            return sys.stdout
+        else:
+            return outfile
+
+    def render_in_memory(self,
+                         context: dict[str, Any],
+                         *,
+                         outfile: Optional[TextIO] = None) -> str:
+        """
+        Render in memory
+        """
+        output_path = self.__default_to_stdout(outfile)
+
+        try:
+            log.info(f"Rendering a template to {c.path(output_path.name)}")
+            return self.env.get_template('template').render(**context)
+        except jinja2.exceptions.UndefinedError as e:
+            log.critical(f"Missing required variable from context: {c.err(e)}")
+            raise e
+
     def render(self,
-               template: str,
+               template: Path,
                context: dict[str, Any],
                *,
                outfile: Optional[TextIO] = None):
         template_path = self.template_root / template
-
-        if outfile is None:
-            output_path = sys.stdout
-        else:
-            output_path = outfile
+        output_path = self.__default_to_stdout(outfile)
 
         try:
             log.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
             print(
-                self.env.get_template(template).render(context),
+                self.env.get_template(template.name).render(context),
                 file=output_path,
             )
         except jinja2.exceptions.TemplateNotFound as e:
@@ -91,8 +113,8 @@ class StaticRenderer(JinjaRenderer):
     A Jinja2 renderer for pre-rendering static TeX content from the modules.
     Includes ad hoc utility functions.
     """
-    def __init__(self, template_root, **kwargs):
-        super().__init__(template_root, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.env.filters |= {
             'roman': numbers.roman,
@@ -121,35 +143,29 @@ class MarkdownJinjaRenderer(JinjaRenderer):
     A Jinja2 renderer for pre-rendering dynamic Markdown files.
     Includes mathematical functions, basic constants, and number formatting filters.
     """
-    def __init__(self, template_root, **kwargs):
-        super().__init__(template_root, variable_start_string='(§', variable_end_string='§)', **kwargs)
+    @staticmethod
+    def __generate_functions(func, tag):
+        return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(0, 10)}
 
-        self.env.filters |= {
+    def __init__(self, **kwargs):
+        super().__init__(variable_start_string='(§',
+                         variable_end_string='§)',
+                         **kwargs)
+
+        self.env.filters |= ({
             'f': numbers.format_float,
             'g': numbers.format_general,
-            'nf': latex.num,
+            'nf': latex.num_float,
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
-        } | {
-            # Shorthands for float: (§ a|f4 §) == (§ a|float(4) §)
-            f'f{prec:d}': functools.partial(numbers.format_float, precision=prec) for prec in range(0, 10)
-        } | {
-            # Shorthands for general: (§ a|g4 §) == (§ a|gen(4) §)
-            f'g{prec:d}': functools.partial(numbers.format_general, precision=prec) for prec in range(0, 10)
-        } | {
-            # Shorthands for num-float: (§ a|g4 §) == (§ a|numgen(4) §)
-            f'nf{prec:d}': functools.partial(latex.num, precision=prec) for prec in range(0, 10)
-        } | {
-            # Shorthands for num-general: (§ a|g4 §) == (§ a|numgen(4) §)
-            f'ng{prec:d}': functools.partial(latex.num_general, precision=prec) for prec in range(0, 10)
-        } | {
-            # Shorthands for equals (float)
-            f'ef{prec:d}': functools.partial(latex.equals_float, precision=prec) for prec in range(0, 10)
-        } | {
-            # Shorthands for equals (general)
-            f'eg{prec:d}': functools.partial(latex.equals_general, precision=prec) for prec in range(0, 10)
-        }
+        } |
+        self.__generate_functions(numbers.format_float, 'f') |
+        self.__generate_functions(numbers.format_general, 'g') |
+        self.__generate_functions(latex.num_float, 'nf') |
+        self.__generate_functions(latex.num_general, 'ng') |
+        self.__generate_functions(latex.equals_float, 'ef') |
+        self.__generate_functions(latex.equals_general, 'eg'))
 
         self.env.globals |= {
             'u': construct_unit,

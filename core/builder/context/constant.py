@@ -19,7 +19,7 @@ class PhysicsConstant(PhysicsQuantity):
 
     @staticmethod
     def construct(name, **kwargs):
-        magnitude = kwargs.pop('magnitude') # FixMe
+        magnitude = kwargs.pop('magnitude')
         unit = kwargs.pop('unit')
         return PhysicsConstant(name, u.Quantity(magnitude, unit), **kwargs)
 
