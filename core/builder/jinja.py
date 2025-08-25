@@ -9,11 +9,14 @@ import numpy as np
 
 from typing import Any, Optional, TextIO
 
-from core.builder.context.quantity import PhysicsQuantity
+from jinja2 import DictLoader
+
+from core.builder.context.quantity import construct_quantity
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
 log = logger.setupLog('dgs')
+
 
 
 class CollectUndefined(jinja2.StrictUndefined):
@@ -43,9 +46,11 @@ class MissingVariablesError(Exception):
 class JinjaRenderer:
     """
     A wrapper class for rendering Jinja2 templates.
-    Supports custom tag delimiters
+    Supports custom tag delimiters and emits strict warnings everywhere.
     """
     def __init__(self,
+                 *,
+                 loader: jinja2.BaseLoader,
                  **kwargs):
         self.env = jinja2.Environment(
             block_start_string=kwargs.pop('block_start_string', '(@'),
@@ -59,12 +64,12 @@ class JinjaRenderer:
             trim_blocks=True,
             autoescape=False,
             undefined=CollectUndefined,
-            loader=jinja2.DictLoader({'template': kwargs.pop('template', '')}),
-            **kwargs
+            loader=loader,
+            **kwargs,
         )
 
     @staticmethod
-    def __default_to_stdout(outfile: Optional[TextIO]):
+    def _default_to_stdout(outfile: Optional[TextIO]):
         if outfile is None:
             return sys.stdout
         else:
@@ -77,7 +82,7 @@ class JinjaRenderer:
         """
         Render in memory
         """
-        output_path = self.__default_to_stdout(outfile)
+        output_path = self._default_to_stdout(outfile)
 
         try:
             log.info(f"Rendering a template to {c.path(output_path.name)}")
@@ -86,26 +91,6 @@ class JinjaRenderer:
             log.critical(f"Missing required variable from context: {c.err(e)}")
             raise e
 
-    def render(self,
-               template: Path,
-               context: dict[str, Any],
-               *,
-               outfile: Optional[TextIO] = None):
-        template_path = self.template_root / template
-        output_path = self.__default_to_stdout(outfile)
-
-        try:
-            log.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
-            print(
-                self.env.get_template(template.name).render(context),
-                file=output_path,
-            )
-        except jinja2.exceptions.TemplateNotFound as e:
-            log.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
-            raise e
-        except jinja2.exceptions.UndefinedError as e:
-            log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
-            raise e
 
 
 class StaticRenderer(JinjaRenderer):
@@ -113,8 +98,9 @@ class StaticRenderer(JinjaRenderer):
     A Jinja2 renderer for pre-rendering static TeX content from the modules.
     Includes ad hoc utility functions.
     """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, template_root: Path, **kwargs):
+        super().__init__(loader=jinja2.FileSystemLoader(template_root), **kwargs)
+        self.template_root = template_root
 
         self.env.filters |= {
             'roman': numbers.roman,
@@ -133,22 +119,41 @@ class StaticRenderer(JinjaRenderer):
             'path_exists': lambda x: os.path.exists(x),
         }
 
+    def render(self,
+               template: Path,
+               context: dict[str, Any],
+               *,
+               outfile: Optional[TextIO] = None):
+        template_path = self.template_root / template
+        output_path = self._default_to_stdout(outfile)
 
-def construct_unit(magnitude, unit, *, symbol: Optional[str] = None):
-    return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
+        try:
+            log.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
+            print(
+                self.env.get_template(template.name).render(context),
+                file=output_path,
+            )
+        except jinja2.exceptions.TemplateNotFound as e:
+            log.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
+            raise e
+        except jinja2.exceptions.UndefinedError as e:
+            log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
+            raise e
+
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
     """
-    A Jinja2 renderer for pre-rendering dynamic Markdown files.
+    A Jinja2 renderer for pre-rendering dynamically added Markdown files.
     Includes mathematical functions, basic constants, and number formatting filters.
     """
     @staticmethod
     def __generate_functions(func, tag):
         return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(0, 10)}
 
-    def __init__(self, **kwargs):
-        super().__init__(variable_start_string='(§',
+    def __init__(self, *, template, **kwargs):
+        super().__init__(loader=DictLoader({'template': template}),
+                         variable_start_string='(§',
                          variable_end_string='§)',
                          **kwargs)
 
@@ -168,7 +173,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_functions(latex.equals_general, 'eg'))
 
         self.env.globals |= {
-            'u': construct_unit,
+            'u': construct_quantity,
             'sin': np.sin,
             'cos': np.cos,
             'tan': np.tan,

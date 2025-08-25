@@ -1,5 +1,5 @@
 # Remove all stupid builtin rules and variables
-MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa
 
@@ -57,7 +57,7 @@ define _jinja
 		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-	python jinja.py $(1) $< $@ --context $(2) || exit 1;
+    python jinja.py $(1) $< $@ --context $(2) --preamble $(3) || exit 1;
 endef
 
 # pandoctex(language)

@@ -58,30 +58,28 @@ class JinjaConvertor:
         self.outfile: Optional[Path] = outfile
         self.context: Context = context
 
-        self.tmp = SpooledTemporaryFile(mode="w+")
+        with SpooledTemporaryFile(mode="w+") as tmp:
+            # If there is a preamble, prepend it to the actual file
+            if preamble is not None:
+                # FixME prepend preamble_prepend to every line (default '@J set ')
+                shutil.copyfileobj(preamble, tmp)
 
-        # If there is a preamble, prepend it to the actual file
-        if preamble is not None:
-            # FixME prepend preamble_prepend to every line (default '@J set ')
-            shutil.copyfileobj(preamble, self.tmp)
+            # Always copy the actual template
+            shutil.copyfileobj(template, tmp)
+            tmp.seek(0)
 
-        # Always copy the actual template
-        shutil.copyfileobj(template, self.tmp)
-        self.tmp.seek(0)
+            if debug:
+                log.debug(f"{c.debug('Template to render into')}:")
+                print(tmp.read())
+                tmp.seek(0)
 
-        if debug:
-            log.debug(f"{c.debug('Template to render into')}:")
-            print(self.tmp.read())
-            self.tmp.seek(0)
+                log.debug(f"{c.debug('Context data')}:")
+                pprint.pprint(context.data)
 
-            log.debug(f"{c.debug('Context data')}:")
-            pprint.pprint(context.data)
-
-        self.renderer = MarkdownJinjaRenderer(template=self.tmp.read())
+            self.renderer = MarkdownJinjaRenderer(template=tmp.read())
 
     def run(self):
-        print(self.renderer.render_in_memory(self.context.data), file=self.outfile)
-        self.tmp.close()
+        print(self.renderer.render_in_memory(self.context.data, outfile=self.outfile), file=self.outfile)
         return 0
 
 

@@ -9,6 +9,8 @@ from abc import abstractmethod, ABCMeta
 from pathlib import Path
 from typing import Any, ClassVar
 
+from core.builder.context import Context
+from core.builder.jinja import JinjaRenderer
 from core.utilities import colour as c, crawler
 from core.builder import jinja
 from core.builder.context.buildable import BuildableContext
@@ -55,13 +57,16 @@ class BaseBuilder(metaclass=ABCMeta):
     module = None
     templates = []
     _target: str = None
-    _root_context_class: ClassVar = None
+    _root_context_class: ClassVar[type[Context]] = None
+    _renderer_class: ClassVar[type[JinjaRenderer]] = None
     default_suffix_map = {
         '.jtex': '.tex',
         '.jyaml': '.yaml',
     }
 
-    def __init__(self, *, suffix_map: dict[str, str] = None):
+    def __init__(self,
+                 *,
+                 suffix_map: dict[str, str] = None):
         """
         suffix_map: translates template suffixes to rendered template suffixes
                     and also provides defaults for dgs
@@ -77,8 +82,6 @@ class BaseBuilder(metaclass=ABCMeta):
         self.output_directory = Path(self.args.output) if self.args.output else None
         self.context = self._root_context_class(self.launch_directory, *self.ident())
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
-
-        self.renderer = jinja.StaticRenderer(self.template_root)
 
 
     def add_core_arguments(self) -> None:

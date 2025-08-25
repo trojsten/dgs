@@ -238,3 +238,8 @@ class PhysicsQuantity:
         `<symbol> = <full>`
         """
         return rf"{self._symbol} = {self._format(f'.{precision}g')}"
+
+
+def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
+    return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
+

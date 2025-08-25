@@ -19,7 +19,7 @@ endef
 render/naboj/%/answer.md: \
 	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
 	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml))
+	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
 
 build/naboj/%/answer.tex: \
 	render/naboj/$$*/answer.md
@@ -33,7 +33,8 @@ render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml))
+	touch $$(abspath $$(dir $$<)/../preamble.md)
+	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml),$$(abspath $$(dir $$<)/../preamble.md))
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md
@@ -44,9 +45,11 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRA
 
 define NONTRANSLATABLE_ANSWERS
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/meta.yaml))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
+	touch $$(abspath $$(dir $$<)/preamble.md)
+	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md
