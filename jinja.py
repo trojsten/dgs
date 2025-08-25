@@ -17,6 +17,22 @@ from core.builder.jinja import MarkdownJinjaRenderer
 from core.builder.context.constant import PhysicsConstant
 
 
+VALID_TAGS: dict[str, str] = {
+    'kinematics': 'kinematics',
+    'statics': 'statics',
+    'electrostatics': 'electrostatics',
+    'uam': 'uniformly accelerated motion',
+    'thermodynamics': 'thermodynamics',
+    'buoyancy': 'buoyancy',
+    'troll': 'a problem with a trivial solution',
+    'elegant': 'short but interesting problem',
+}
+
+
+def valid_tag(tag: str) -> bool:
+    return tag in VALID_TAGS
+
+
 class JinjaConvertor:
     def __init__(self,
                  infile: Path,
@@ -51,6 +67,13 @@ class ConstantsContext(FileContext):
         })
 
 
+class StandaloneContext(FileContext):
+    _schema = Schema({
+        'authors': list[str],
+        'tags': list[valid_tag],
+        Opt('values'): dict[str, PhysicsConstant],
+    })
+
 
 class CLIInterface(cli.CLIInterface, ABC):
     """
@@ -59,7 +82,7 @@ class CLIInterface(cli.CLIInterface, ABC):
     description = "DeGeŠ Jinja convertor"
 
     def build_context(self) -> Context:
-        context = FileContext('context', Path(self.args.context.name))
+        context = StandaloneContext(self.args.context.name, Path(self.args.context.name))
         constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
         constants.validate()
 
@@ -79,6 +102,7 @@ class CLIInterface(cli.CLIInterface, ABC):
             ctx.add(**values)
 
         ctx.adopt(const=constants)
+        context.validate()
         return ctx
 
     def build_convertor(self, args, **kwargs):

@@ -25,7 +25,7 @@ def check_output(command, *, cwd) -> str:
 
 
 def get_last_commit_hash(cwd=None) -> str:
-    return check_output(["git", "rev-parse", "--short", "--verify", "master"], cwd=cwd)
+    return check_output(["git", "rev-parse", "--short", "--verify", "HEAD"], cwd=cwd)
 
 
 def get_branch(cwd=None) -> str:

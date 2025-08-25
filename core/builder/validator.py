@@ -31,7 +31,7 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         self.tree = self.scan(self.root)
 
     def scan(self, path) -> str | dict | None:
-        if any(ignored.match(path.name) for ignored in self.IGNORED):
+        if any(ignored.match(path.name) for ignored in [re.compile(r) for r in self.IGNORED]):
             return None
         if path.is_dir():
             return {

@@ -86,6 +86,9 @@ class PhysicsQuantity:
     def __str__(self):
         return self._format()
 
+    def __repr__(self):
+        return f"{self.__class__.__name__} ({self._quantity})"
+
     def __eq__(self, other):
         return self._quantity == other._quantity
 
@@ -98,6 +101,11 @@ class PhysicsQuantity:
     def unit(self):
         """ Return the internal unit. """
         return self._quantity.units
+
+    @property
+    def symbol(self):
+        """ Return the internal symbol. """
+        return self._symbol
 
     @property
     def sym(self):

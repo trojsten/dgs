@@ -1,9 +1,6 @@
-import math
-
 from pint import UnitRegistry as u
 
 from core.builder.context.quantity import PhysicsQuantity
-from core.filters.hacks import cut_extra_one
 
 
 class PhysicsConstant(PhysicsQuantity):

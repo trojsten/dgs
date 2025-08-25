@@ -78,8 +78,8 @@ class Context(abc.ABC):
             try:
                 self._schema.validate(self.data)
             except SchemaError as exc:
-                log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)}"
-                          f"{c.err('at')} {c.path(self.id)}")
+                log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)} "
+                          f"{c.path(self.id)}")
                 pprint.pprint(self.data)
                 log.error("against")
                 pprint.pprint(self.schema.schema)
