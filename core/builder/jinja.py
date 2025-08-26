@@ -35,6 +35,7 @@ class CollectUndefined(jinja2.StrictUndefined):
 
 
 class MissingVariablesError(Exception):
+    """ Jinja error emitted when variables used in the template are missing from the context. """
     def __init__(self, missing, *args):
         super().__init__(*args)
         self.missing = missing
@@ -68,29 +69,22 @@ class JinjaRenderer:
             **kwargs,
         )
 
-    @staticmethod
-    def _default_to_stdout(outfile: Optional[TextIO]):
-        if outfile is None:
-            return sys.stdout
-        else:
-            return outfile
-
-    def render_in_memory(self,
-                         context: dict[str, Any],
-                         *,
-                         outfile: Optional[TextIO] = None) -> str:
+    def render(self,
+               context: dict[str, Any],
+               *,
+               outfile: Optional[TextIO] = sys.stdout) -> None:
         """
         Render in memory
         """
-        output_path = self._default_to_stdout(outfile)
-
         try:
-            log.info(f"Rendering a template to {c.path(output_path.name)}")
-            return self.env.get_template('template').render(**context)
+            log.info(f"Rendering a template to {c.path(outfile.name)}")
+            print(
+                self.env.get_template('template').render(**context),
+                file=outfile,
+            )
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context: {c.err(e)}")
             raise e
-
 
 
 class StaticRenderer(JinjaRenderer):
@@ -98,7 +92,7 @@ class StaticRenderer(JinjaRenderer):
     A Jinja2 renderer for pre-rendering static TeX content from the modules.
     Includes ad hoc utility functions.
     """
-    def __init__(self, template_root: Path, **kwargs):
+    def __init__(self, template_root: os.PathLike, **kwargs):
         super().__init__(loader=jinja2.FileSystemLoader(template_root), **kwargs)
         self.template_root = template_root
 
@@ -123,15 +117,17 @@ class StaticRenderer(JinjaRenderer):
                template: Path,
                context: dict[str, Any],
                *,
-               outfile: Optional[TextIO] = None):
+               outfile: Optional[TextIO] = sys.stdout) -> None:
+        """
+        Render the template to outfile (or stdout if None)
+        """
         template_path = self.template_root / template
-        output_path = self._default_to_stdout(outfile)
 
         try:
-            log.info(f"Rendering template {c.path(template_path)} to {c.path(output_path.name)}")
+            log.info(f"Rendering template {c.path(template_path)} to {c.path(outfile.name)}")
             print(
                 self.env.get_template(template.name).render(context),
-                file=output_path,
+                file=outfile,
             )
         except jinja2.exceptions.TemplateNotFound as e:
             log.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
@@ -139,7 +135,6 @@ class StaticRenderer(JinjaRenderer):
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
             raise e
-
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):

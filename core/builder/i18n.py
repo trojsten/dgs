@@ -2,6 +2,7 @@ from core.builder.builder import BaseBuilder
 from core.builder.context.buildable import BuildableContext
 
 from core import i18n
+from core.builder.jinja import StaticRenderer
 
 
 class BuildableContextCoreI18n(BuildableContext):
@@ -20,6 +21,10 @@ class BuilderI18n(BaseBuilder):
     _root_context_class = BuildableContextCoreI18n
 
     templates = ['override.jtex', 'crossref.jyaml']
+
+    def __init__(self):
+        super().__init__()
+        self.renderer = StaticRenderer(self.template_root)
 
     def add_arguments(self):
         super().add_arguments()

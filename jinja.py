@@ -79,7 +79,7 @@ class JinjaConvertor:
             self.renderer = MarkdownJinjaRenderer(template=tmp.read())
 
     def run(self):
-        print(self.renderer.render_in_memory(self.context.data, outfile=self.outfile), file=self.outfile)
+        self.renderer.render(self.context.data, outfile=self.outfile)
         return 0
 
 
@@ -136,14 +136,19 @@ class CLIInterface(cli.CLIInterface, ABC):
         return ctx
 
     def build_convertor(self, args, **kwargs):
+        if Path(self.args.preamble).exists():
+            preamble = open(self.args.preamble, 'r')
+        else:
+            preamble = None
+
         return JinjaConvertor(self.args.infile, self.args.outfile,
                               context=self.build_context(),
-                              preamble=self.args.preamble,
+                              preamble=preamble,
                               debug=self.args.debug)
 
     def add_extra_arguments(self):
         self.parser.add_argument('-C', '--context', type=argparse.FileType('r'))
-        self.parser.add_argument('-P', '--preamble', type=argparse.FileType('r'))
+        self.parser.add_argument('-P', '--preamble', type=str)
 
 
 if __name__ == "__main__":

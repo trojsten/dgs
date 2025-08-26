@@ -152,7 +152,7 @@ build/%.svg: build/%.xdv
 build/%.pdf: build/%.gp
 	@echo -e '$(c_action)[gnuplot] Rendering $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(dir $@); gnuplot -e "set terminal pdf font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cd $(dir $@); gnuplot -e "set terminal pdf font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 
 # Copy PDF file (for XeLaTeX)
 build/%.pdf: source/%.pdf
@@ -194,7 +194,7 @@ output/%.py: source/%.py
 output/%.png: build/%.gp
 	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal png font 'TeX Gyre Pagella, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal png font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 	cp $(subst output/,build/,$@) $@
 
 # Copy JPG (for web)
@@ -218,7 +218,7 @@ render/%.gp:\
 	source/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat)) \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
 
 build/%.gp:\
 	render/%.gp \

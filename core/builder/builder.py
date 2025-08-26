@@ -37,10 +37,10 @@ def get_branch(cwd=None) -> str:
 class BaseBuilder(metaclass=ABCMeta):
     """
     The abstract base class for all Builders. A Builder provides an abstraction for
-    -   reading and validating the content file system structures
-    -   reading and validating the templates
-    -   building the context tree (generally a subclass of Context)
-    -   rendering the context into the templates
+    - reading and validating the content file system structures
+    - reading and validating the templates
+    - building the context tree (generally a subclass of Context)
+    - rendering the context into the templates
 
     The script should only define and instantiate a builder, then run it with
     >>> class Builder(BaseBuilder):
@@ -82,7 +82,6 @@ class BaseBuilder(metaclass=ABCMeta):
         self.output_directory = Path(self.args.output) if self.args.output else None
         self.context = self._root_context_class(self.launch_directory, *self.ident())
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
-
 
     def add_core_arguments(self) -> None:
         """ Create the default ArgumentParser """
