@@ -1,12 +1,15 @@
+\vspace*{6mm}
 \hrule
+\vspace*{6mm}
 \color{(* colocolor or 'white' *)} \fontsize{8}{5} \selectfont \hfill
-(* i18n[language.id].competition.name.nominative *), volume (* volume.number *),
+(* i18n[language.id].competition.name.nominative *) (* volume.number *),
 (* language.id *) ((* language.name *)):
 booklet built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.hash *)}
 at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)
 from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.hash *)}
 
 {
+\color{black}
 \begin{center}
     \copyright Náboj Physics international team, (* volume.date.strftime('%Y') *).
     \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}

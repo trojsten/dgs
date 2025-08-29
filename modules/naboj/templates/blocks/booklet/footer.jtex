@@ -18,7 +18,6 @@
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
 
-    \vspace*{6mm}
     (@ with colocolor='lightgray' @)
         (@ include 'blocks/colophon.jtex' @)
     (@ endwith @)

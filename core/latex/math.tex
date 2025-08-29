@@ -371,8 +371,12 @@
 \NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
 
 % Number set
-\NewDocumentCommand{\Set}{m O{} O{}}{%;;
+\NewDocumentCommand{\Set}{m O{} O{}}{%
     \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+}
+
+\NewDocumentCommand{\Seq}{m O{} O{}}{%
+    \left(#1\right)\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
 }
 
 % Operation to be done on both side of an equation
