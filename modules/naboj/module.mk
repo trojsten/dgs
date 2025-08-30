@@ -46,7 +46,7 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRA
 define NONTRANSLATABLE_ANSWERS
 render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/meta.yaml))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	touch $$(abspath $$(dir $$<)/preamble.md)
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
