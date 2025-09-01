@@ -87,7 +87,7 @@ class PhysicsQuantity:
         return PhysicsQuantity(other / self._quantity)
 
     def __xor__(self, other):
-        return QuantityRange(self.quantity, other.quantity)
+        return QuantityRange(self, other)
 
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
@@ -192,7 +192,11 @@ class PhysicsQuantity:
 
     @staticmethod
     def format_si_extra(si_extra) -> str:
-        siextraf = ', '.join(f'{key}={value}' for key, value in si_extra)
+        """
+        Format a dictionary of si extra attributes as a string inside square brackets.
+        If nothing is provided, return an empty string instead.
+        """
+        siextraf = ', '.join(f'{key}={value}' for key, value in si_extra.items())
         siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
         return siextraf
 
@@ -293,13 +297,13 @@ class QuantityRange:
         minr = self.minimum.format_struct()
         maxr = self.maximum.format_struct()
 
-        si_extra = PhysicsQuantity.format_si_extra(self.si_extra)
+        si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         minf = f'{{{minr['magnitude']}}}'
         maxf = f'{{{maxr['magnitude']}}}'
         unitf = f'{{{minr["unit"]}}}'
 
         cmd = 'qtyrange'
-        return rf'\{cmd}{siextraf}{minf}{maxf}{unitf}'
+        return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
 
 
 class QuantityList:
@@ -322,9 +326,8 @@ class QuantityList:
         self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
 
         unitf = f'{{{fqs[0]['unit']}}}'
-        siextraf = ', '.join(f'{key}={value}' for key, value in self.si_extra)
-        siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
+        si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         magf = f'{{{self.magnitudes}}}'
 
-        return rf'\{cmd}{siextraf}{magf}{unitf}'
+        return rf'\{cmd}{si_extraf}{magf}{unitf}'
 

@@ -25,8 +25,13 @@ def mass_brutal():
 
 
 @pytest.fixture
-def length():
-    return PhysicsQuantity.construct(2, 'm', symbol='L')
+def length1():
+    return PhysicsQuantity.construct(2, 'm', symbol='L_1')
+
+
+@pytest.fixture
+def length2():
+    return PhysicsQuantity.construct(320, 'cm', symbol='L_2')
 
 
 class TestExpression:
@@ -37,9 +42,9 @@ class TestExpression:
             f"Expected {expected}, computed {computed}"
 
 
-    def test_sum_fails(self, mass1, length):
+    def test_sum_fails(self, mass1, length1):
         with pytest.raises(pint.errors.DimensionalityError):
-            _ = mass1 + length
+            _ = mass1 + length1
 
 
 class TestAngles:
@@ -54,6 +59,16 @@ class TestRange:
         assert expected == computed, \
             f"Expected {expected}, computed {computed}"
 
+    def test_span(self, mass1, mass2):
+        expected = r'\qtyrange{1}{7}{\kilo\gram}'
+        computed = rf'{mass1 ^ mass2}'
+        assert expected == computed, \
+            f"Expected {expected}, computed {computed}"
+
+    def test_span_incommensurate(self, mass1, length1):
+        with pytest.raises(pint.errors.DimensionalityError):
+            _ = mass1 ^ length1
+
 
 class TestList:
     def test_masses(self, mass1, mass2, mass_mega):
@@ -61,3 +76,19 @@ class TestList:
         computed = rf'{QuantityList(mass1, mass2, mass_mega)}'
         assert expected == computed, \
             f"Expected {expected}, computed {computed}"
+
+    def test_masses_sun(self, mass1, mass2, mass_brutal):
+        expected = r'\qtylist[forbid-literal-units=false]{1;7;2e+30}{\kilo\gram}'
+        computed = rf'{QuantityList(mass1, mass2, mass_brutal)}'
+        assert expected == computed, \
+            f"Expected {expected}, computed {computed}"
+
+    def test_lengths(self, length1, length2):
+        expected = r'\qtylist{2;3.2}{\metre}'
+        computed = rf'{QuantityList(length1, length2)}'
+        assert expected == computed, \
+            f"Expected {expected}, computed {computed}"
+
+    def test_incommensurate(self, length1, mass2):
+        with pytest.raises(pint.errors.DimensionalityError):
+            _ = QuantityList(length1, mass2)
