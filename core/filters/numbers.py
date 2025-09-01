@@ -3,9 +3,8 @@ Filters for work with numbers. Feel free to extend.
 """
 import numbers
 
-from core.builder.context import PhysicsConstant
 from .hacks import cut_extra_one
-from ..builder.context.constant import PhysicsQuantity
+from core.builder.context.quantities import PhysicsQuantity
 
 
 def roman(number: int) -> str:

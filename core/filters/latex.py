@@ -3,7 +3,7 @@ from typing import Any, Union, Callable, Optional
 from enschema import Schema, Or
 
 from .numbers import _nth, format_float, format_general
-from ..builder.context.quantity import PhysicsQuantity
+from core.builder.context.quantities import PhysicsQuantity
 
 
 def isotex(date):

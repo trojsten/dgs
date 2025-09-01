@@ -20,7 +20,7 @@ from core.builder.context.context import Context
 from core.builder.context.file import FileContext
 from core.builder.jinja import MarkdownJinjaRenderer
 
-from core.builder.context.constant import PhysicsConstant
+from core.builder.context.quantities import PhysicsConstant
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')

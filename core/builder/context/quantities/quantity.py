@@ -19,11 +19,15 @@ class PhysicsQuantity:
                  quantity: u.Quantity,
                  *,
                  symbol: str = None,
-                 si_extra: str = None,
+                 si_extra: dict[str, str] = None,
                  force_f: bool = False):
         self._quantity = quantity
         self._symbol = symbol
-        self.si_extra = si_extra
+
+        self.si_extra = {} if si_extra is None else si_extra
+        assert isinstance(self.si_extra, dict), \
+            f"si_extra must be a dict[str, str], got {type(self.si_extra)} instead"
+
         self.force_f = force_f
 
     @staticmethod
@@ -79,6 +83,9 @@ class PhysicsQuantity:
 
     def __rtruediv__(self, other):
         return PhysicsQuantity(other / self._quantity)
+
+    def __xor__(self, other):
+        return QuantityRange(self._quantity, other._quantity)
 
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
@@ -155,29 +162,28 @@ class PhysicsQuantity:
         magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
-    def _format(self, fmt: str = None):
-        """Return a formatted string representation, by default a `g` one."""
-        # print(f"Formatting {self.quantity} with fmt = {fmt}")
-
-        if fmt is None:
-            fmt = 'g'
-
-        if self.si_extra is None:
-            si_extra = ''
-        else:
-            si_extra = f'[{self.si_extra}]'
-
+    def _struct_format(self, fmt: str = 'g'):
         pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
         unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
         unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
 
-        if unit == '':
-            result = rf'\num{si_extra}{{{magnitude}}}'
-        else:
-            result = rf'\qty{si_extra}{{{magnitude}}}{{{unit}}}'
-        return result
+        return {
+            'cmd': 'num' if unit == '' else 'qty',
+            'si_extra': self.si_extra,
+            'magnitude': magnitude,
+            'unit': unit,
+        }
+
+    def _format(self, fmt: str = 'g'):
+        """Return a formatted string representation, by default a `g` one."""
+        fragments = self._struct_format(fmt=fmt)
+        cmd = fragments['cmd']
+        si_extra = f'[{self.si_extra}]' if fragments['si_extra'] is not None else ''
+        magnitude = f'{{{fragments['magnitude']}}}'
+        unit = '' if fragments['unit'] is None else f'{{{fragments['unit']}}}'
+        return rf'\{cmd}{si_extra}{magnitude}{unit}'
 
     @property
     def full(self):

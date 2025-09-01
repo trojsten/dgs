@@ -1,6 +1,6 @@
 from pint import UnitRegistry as u
 
-from core.builder.context.quantity import PhysicsQuantity
+from core.builder.context.quantities.quantity import PhysicsQuantity
 
 
 class PhysicsConstant(PhysicsQuantity):
