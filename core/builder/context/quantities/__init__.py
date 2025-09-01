@@ -1,7 +1,5 @@
-from .quantity import PhysicsQuantity, construct_quantity
+from .quantity import PhysicsQuantity, QuantityRange, QuantityList, construct_quantity
 from .constant import PhysicsConstant
-from .range import QuantityRange
-from .list import QuantityList
 
 
 __all__ = [

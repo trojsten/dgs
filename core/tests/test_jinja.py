@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, SpooledTemporaryFile
 
 import pytest
 import regex as re
@@ -9,16 +9,6 @@ from core.builder.jinja import MarkdownJinjaRenderer
 from jinja import JinjaConvertor, CLIInterface
 
 from pint import UnitRegistry as u
-
-
-@pytest.fixture
-def temp_renderer():
-    return MarkdownJinjaRenderer(Path('/'))
-
-
-@pytest.fixture
-def renderer():
-    return MarkdownJinjaRenderer(Path('core/tests/snippets'))
 
 
 @pytest.fixture
@@ -52,22 +42,27 @@ def create_temporary_file(string):
     return ntf
 
 
-def render_to_temporary(file, renderer, context) -> list[str]:
-    output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
-    renderer.render(file.name, context, outfile=output)
+def render_string_to_temporary(string, context) -> list[str]:
+    renderer = MarkdownJinjaRenderer(template=string)
+    output = SpooledTemporaryFile(0, 'r+')
+    renderer.render(context, outfile=output)
     output.seek(0)
+
     return output.readlines()
 
 
-def render_string_to_temporary(string, renderer, context) -> list[str]:
-    output = NamedTemporaryFile('r+', delete=False, delete_on_close=False)
-    renderer.render(string, context, outfile=output)
-    output.seek(0)
+def render_file_to_temporary(source, context) -> list[str]:
+    with open(source, 'r' ) as file:
+        renderer = MarkdownJinjaRenderer(template=file.read())
+        output = SpooledTemporaryFile(0, 'r+')
+        renderer.render(context, outfile=output)
+        output.seek(0)
+
     return output.readlines()
 
 
 class TestConstant:
-    @pytest.mark.parametrize("source,result", [
+    @pytest.mark.parametrize("template,expected", [
         pytest.param('hello', 'hello', id='hello'),
         pytest.param(r'(§ large §) < (§ giga|g §)', r'123456789 < e\+?09\n', id='complex'),
         pytest.param('(§ your_mom|g5 §)', r'3.14e\+?15\n?', id='sci5'),
@@ -76,10 +71,9 @@ class TestConstant:
         pytest.param('(§ cos(1)|float(5) §)', r'0.54030\n?', id='cos(1)'),
         pytest.param('(§ cos(1)|nf5 §)', r'\\num{0.54030}\n?', id='cos(1) num'),
     ])
-    def test_render(self, source, result, temp_renderer, context_simple) -> None:
-        ntf = create_temporary_file(source)
-        rr = re.compile(result)
-        output = render_to_temporary(ntf, temp_renderer, context_simple)[0]
+    def test_render(self, template, expected, context_simple) -> None:
+        rr = re.compile(expected)
+        output = render_string_to_temporary(template, context_simple)[0]
         assert rr.match(output), output
 
     @pytest.mark.parametrize("source,expected", [
@@ -96,10 +90,9 @@ class TestConstant:
         pytest.param('big_one.txt', '1.23e+08'),
         pytest.param('big_one_num.txt', r'\num{1.23e+08}'),
         pytest.param('giga.txt', 'e+09'),
-
     ])
-    def test_does_it_render(self, source, expected, renderer, context_simple) -> None:
-        result = render_string_to_temporary(source, renderer, context_simple)
+    def test_does_it_render(self, source, expected, context_simple) -> None:
+        result = render_file_to_temporary(Path('core/tests') / 'snippets' / source, context_simple)
         assert result == [f"{expected}\n"], \
             f"Expected {expected}, got {result}"
 

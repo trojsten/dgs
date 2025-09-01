@@ -1,3 +1,5 @@
+import functools
+import operator
 import math
 import numbers
 import re
@@ -85,7 +87,7 @@ class PhysicsQuantity:
         return PhysicsQuantity(other / self._quantity)
 
     def __xor__(self, other):
-        return QuantityRange(self._quantity, other._quantity)
+        return QuantityRange(self.quantity, other.quantity)
 
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
@@ -98,6 +100,15 @@ class PhysicsQuantity:
 
     def __eq__(self, other):
         return self._quantity == other._quantity
+
+    @property
+    def quantity(self):
+        """ Access the internal attribute """
+        return self._quantity
+
+    @quantity.setter
+    def quantity(self, value):
+        raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
     @property
     def mag(self):
@@ -162,7 +173,10 @@ class PhysicsQuantity:
         magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
-    def _struct_format(self, fmt: str = 'g'):
+    def format_struct(self, fmt: str = 'g'):
+        """
+        Format the physical quantity to a dict for further processing.
+        """
         pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
@@ -176,11 +190,17 @@ class PhysicsQuantity:
             'unit': unit,
         }
 
+    @staticmethod
+    def format_si_extra(si_extra) -> str:
+        siextraf = ', '.join(f'{key}={value}' for key, value in si_extra)
+        siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
+        return siextraf
+
     def _format(self, fmt: str = 'g'):
         """Return a formatted string representation, by default a `g` one."""
-        fragments = self._struct_format(fmt=fmt)
+        fragments = self.format_struct(fmt=fmt)
         cmd = fragments['cmd']
-        si_extra = f'[{self.si_extra}]' if fragments['si_extra'] is not None else ''
+        si_extra = self.format_si_extra(self.si_extra)
         magnitude = f'{{{fragments['magnitude']}}}'
         unit = '' if fragments['unit'] is None else f'{{{fragments['unit']}}}'
         return rf'\{cmd}{si_extra}{magnitude}{unit}'
@@ -248,4 +268,63 @@ class PhysicsQuantity:
 
 def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
     return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
+
+
+class QuantityRange:
+    """
+    Represents a range of two magnitudes of commensurate quantities.
+    Primarily meant to be useful for result tolerances.
+    """
+
+    def __init__(self,
+                 minimum: PhysicsQuantity,
+                 maximum: PhysicsQuantity):
+        self.minimum = minimum
+        self.maximum = maximum
+        self.si_extra = self.minimum.si_extra | self.maximum.si_extra
+
+        assert self.minimum.unit == self.maximum.unit, \
+            (f"Ranges can only be constructed from quantities with commensurate units,"
+             f"but got {self.minimum.unit} and {self.maximum.unit}")
+        self.unit = self.minimum.unit
+
+
+    def __str__(self):
+        minr = self.minimum.format_struct()
+        maxr = self.maximum.format_struct()
+
+        si_extra = PhysicsQuantity.format_si_extra(self.si_extra)
+        minf = f'{{{minr['magnitude']}}}'
+        maxf = f'{{{maxr['magnitude']}}}'
+        unitf = f'{{{minr["unit"]}}}'
+
+        cmd = 'qtyrange'
+        return rf'\{cmd}{siextraf}{minf}{maxf}{unitf}'
+
+
+class QuantityList:
+    """
+    Represents a list of commensurate quantities.
+    """
+
+    def __init__(self,
+                 *qs: PhysicsQuantity):
+        self.qs = qs
+        self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
+
+        unique_units = set([q.unit for q in self.qs])
+        assert len(unique_units) == 1, \
+            f"Lists can only be constructed from a list of commensurate quantities, got {unique_units}"
+
+    def __str__(self):
+        cmd = 'qtylist'
+        fqs = [q.format_struct() for q in self.qs]
+        self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
+
+        unitf = f'{{{fqs[0]['unit']}}}'
+        siextraf = ', '.join(f'{key}={value}' for key, value in self.si_extra)
+        siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
+        magf = f'{{{self.magnitudes}}}'
+
+        return rf'\{cmd}{siextraf}{magf}{unitf}'
 
