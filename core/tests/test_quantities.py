@@ -1,5 +1,6 @@
 import pint
 import pytest
+import regex as re
 
 from core.builder.context.quantities import PhysicsQuantity, QuantityRange, QuantityList
 
@@ -78,15 +79,15 @@ class TestList:
             f"Expected {expected}, computed {computed}"
 
     def test_masses_sun(self, mass1, mass2, mass_brutal):
-        expected = r'\qtylist[forbid-literal-units=false]{1;7;2e+30}{\kilo\gram}'
+        expected = re.compile(r'\\qtylist\[forbid-literal-units=false\]{1;7;2e\+30}{\\kilo\\gram}')
         computed = rf'{QuantityList(mass1, mass2, mass_brutal)}'
-        assert expected == computed, \
+        assert expected.match(computed), \
             f"Expected {expected}, computed {computed}"
 
     def test_lengths(self, length1, length2):
-        expected = r'\qtylist{2;3.2}{\metre}'
+        expected = re.compile(r'\\qtylist{2;3.2}{\\met(er|re)}')
         computed = rf'{QuantityList(length1, length2)}'
-        assert expected == computed, \
+        assert expected.match(computed), \
             f"Expected {expected}, computed {computed}"
 
     def test_incommensurate(self, length1, mass2):

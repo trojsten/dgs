@@ -99,7 +99,7 @@ class PhysicsQuantity:
         return f"{self.__class__.__name__} ({self._quantity})"
 
     def __eq__(self, other):
-        return self._quantity == other._quantity
+        return self._quantity == other.quantity
 
     @property
     def quantity(self):
@@ -224,13 +224,6 @@ class PhysicsQuantity:
         """
         return self._format()
 
-    def fullf(self, precision: int = None) -> str:
-        """
-        Full, with f formatting
-        """
-        if precision is None:
-            precision = self.digits
-        return self._format(f'.{precision}f')
 
     def fullg(self, precision: int = None) -> str:
         """
@@ -271,6 +264,7 @@ class PhysicsQuantity:
 
 
 def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
+    """ Constructor-like function """
     return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
 
 
@@ -287,10 +281,10 @@ class QuantityRange:
         self.maximum = maximum
         self.si_extra = self.minimum.si_extra | self.maximum.si_extra
 
-        assert self.minimum.unit == self.maximum.unit, \
-            (f"Ranges can only be constructed from quantities with commensurate units,"
-             f"but got {self.minimum.unit} and {self.maximum.unit}")
+        # Try to coerce to the same unit (minimum takes precedence).
+        # If it works, fine, if not, let pint raise the appropriate exception.
         self.unit = self.minimum.unit
+        self.maximum = self.maximum.to(self.unit)
 
 
     def __str__(self):
@@ -313,12 +307,10 @@ class QuantityList:
 
     def __init__(self,
                  *qs: PhysicsQuantity):
-        self.qs = qs
-        self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
+        # First, try to force same units everywhere. If it works, good, if it does not, a pint error will be raised.
+        self.qs = [q.to(qs[0].unit) for q in qs]
 
-        unique_units = set([q.unit for q in self.qs])
-        assert len(unique_units) == 1, \
-            f"Lists can only be constructed from a list of commensurate quantities, got {unique_units}"
+        self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
 
     def __str__(self):
         cmd = 'qtylist'

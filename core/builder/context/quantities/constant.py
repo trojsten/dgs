@@ -39,36 +39,26 @@ class PhysicsConstant(PhysicsQuantity):
         """
         return self.approximate(self.digits)
 
-    def fullg(self, precision: int = None) -> str:
-        """
-        Full, with g formatting
-        """
+    def _full(self, kind: str, precision: int = None) -> str:
         if precision is None:
             precision = self.digits
-        return self.format(f'.{precision}g')
+        return self._format(f'.{precision}{kind}')
+
+    def fullf(self, precision: int = None) -> str:
+        """ Full, with f formatting """
+        return self._full('f', precision)
+
+    def fullg(self, precision: int = None) -> str:
+        """ Full, with g formatting """
+        return self._full('g', precision)
 
     @property
     def full_exact(self):
-        return self._format(self.value, '99g')
+        return self._format('99g')
 
     @property
     def full_approx(self):
-        return self._format(self.approximate())
-
-    @property
-    def full_value(self):
-        r"""
-        Property for full, exact values.
-        Use as (* const.name.full_value *). This will render
-        ```
-        title:
-            value: 1.2345e-6
-            unit: "\\kilo\\gram"
-            digits: 3
-        ```
-        as \qty{1.2345e-6}{\kilo\gram} regardless of `digits`.
-        """
-        return self._format(self._quantity.magnitude, '.15g')
+        return self._format(self.approximate(self.digits))
 
     def __str__(self):
         return self.full

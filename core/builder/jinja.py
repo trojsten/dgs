@@ -11,7 +11,7 @@ from typing import Any, Optional, TextIO
 
 from jinja2 import DictLoader
 
-from core.builder.context.quantities import construct_quantity
+from core.builder.context.quantities import construct_quantity, PhysicsQuantity
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
@@ -168,7 +168,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_functions(latex.equals_general, 'eg'))
 
         self.env.globals |= {
-            'Q': construct_quantity,
+            'Q': PhysicsQuantity.construct,
             'sin': np.sin,
             'cos': np.cos,
             'tan': np.tan,
