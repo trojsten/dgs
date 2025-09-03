@@ -106,9 +106,9 @@ class TestConstant:
         assert value._quantity == expected, f"Expected {expected}, got {value}"
 
     @pytest.mark.parametrize("name,expected", [
-        pytest.param('g', r'\\(SI|qty)(\[\])?{9.80665}{\\met(re|er)\\per\\second\\squared}', id='g'),
-        #pytest.param('c', r'\\(SI|qty){299792458}{\\metre\\per\\second}', id='c'),
-        pytest.param('G', r'\\(SI|qty)(\[\])?{6.6743e-11}{\\newton\\per\\kilo\\gram\\squared\\per\\met(re|er)\\squared}', id='G'),
+        pytest.param('g', r'\\(SI|qty)\{9.80665\}{\\met(re|er)\\per\\second\\squared}$', id='g'),
+        pytest.param('G', r'\\(SI|qty){6.6743e-11}{\\newton\\per\\kilo\\gram\\squared\\per\\met(re|er)\\squared}$', id='G'),
+        pytest.param('c', r'\\(SI|qty)\{299792458\}{\\met(re|er)\\per\\second}$', id='c'),
     ])
     def test_full_value(self, name, expected, context_constants):
         value = f"{context_constants[name]}"
@@ -119,13 +119,3 @@ class TestConstant:
 #        renderer.render('constant.txt', context_simple, outfile=output)
 #        output.seek(0)
 #        assert output.readlines() == [r'\qty{}{}']
-
-
-@pytest.fixture
-def cli():
-    return CLIInterface(locale='sk')
-
-
-class TestJinjaCLI:
-    def disable_test_constants(self, cli):
-        cli.run()

@@ -86,14 +86,17 @@ class PhysicsQuantity:
     def __rtruediv__(self, other):
         return PhysicsQuantity(other / self._quantity)
 
-    def __xor__(self, other):
+    def __mod__(self, other):
         return QuantityRange(self, other)
 
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
 
     def __str__(self):
-        return self._format()
+        return self._format('g')
+
+    def __format__(self, fmt):
+        return self._format(fmt)
 
     def __repr__(self):
         return f"{self.__class__.__name__} ({self._quantity})"
@@ -224,15 +227,6 @@ class PhysicsQuantity:
         """
         return self._format()
 
-
-    def fullg(self, precision: int = None) -> str:
-        """
-        Full, with f formatting
-        """
-        if precision is None:
-            precision = self.digits
-        return self._format(f'.{precision}g')
-
     @property
     def equals(self) -> str:
         """
@@ -286,10 +280,9 @@ class QuantityRange:
         self.unit = self.minimum.unit
         self.maximum = self.maximum.to(self.unit)
 
-
-    def __str__(self):
-        minr = self.minimum.format_struct()
-        maxr = self.maximum.format_struct()
+    def __format__(self, fmt: str):
+        minr = self.minimum.format_struct(fmt)
+        maxr = self.maximum.format_struct(fmt)
 
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         minf = f'{{{minr['magnitude']}}}'
@@ -298,6 +291,9 @@ class QuantityRange:
 
         cmd = 'qtyrange'
         return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
+
+    def __str__(self):
+        return self.__format__('g')
 
 
 class QuantityList:
@@ -312,9 +308,9 @@ class QuantityList:
 
         self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
 
-    def __str__(self):
+    def __format__(self, fmt: str):
         cmd = 'qtylist'
-        fqs = [q.format_struct() for q in self.qs]
+        fqs = [q.format_struct(fmt) for q in self.qs]
         self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
 
         unitf = f'{{{fqs[0]['unit']}}}'
@@ -323,3 +319,5 @@ class QuantityList:
 
         return rf'\{cmd}{si_extraf}{magf}{unitf}'
 
+    def __str__(self):
+        return self.__format__('g')

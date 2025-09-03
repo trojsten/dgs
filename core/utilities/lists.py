@@ -2,7 +2,8 @@ import itertools
 from typing import Iterable, Callable, List, Dict, Any
 
 
-def add_numbers(items: List[Any], numbers: Iterable = itertools.count()) -> List[Dict]:
+def add_numbers(items: List[Any],
+                numbers: Iterable = itertools.count()) -> List[Dict]:
     """
     Take a list `items` and return a list of dictionaries with number included.
 
@@ -29,14 +30,18 @@ def add_numbers(items: List[Any], numbers: Iterable = itertools.count()) -> List
     return result
 
 
-def numerate(items: dict, numbers: Iterable = itertools.count()) -> dict:
+def numerate(items: dict[Any, Any],
+             numbers: Iterable = itertools.count()) -> dict[Any, Any]:
     for item in items:
         assert isinstance(item, dict)
         item |= {'number': next(numbers)}
     return items
 
 
-def split_mod(what: Iterable, count: int, *, first: int=0) -> list:
+def split_mod(what: Iterable,
+              count: int,
+              *,
+              first: int=0) -> list:
     result = [[] for _ in range(0, count)]
     for i, item in enumerate(what):
         result[(i + first) % count].append(item)
@@ -47,8 +52,7 @@ def split_div(what: Iterable[Any], size: int) -> List[List[Any]]:
     """
     Split `what` into chunks of length `size`. Last chunk might not be full. """
     what = iter(what)
-    return list(itertools.takewhile(bool, (list(itertools.islice(what, size)) for _ in itertools.repeat(None))))
-#   return list(itertools.batched(what, size)    for Python >=3.12
+    return list(map(list, itertools.batched(what, size)))
 
 
 def split_callback(what: Iterable, callback: Callable, count: int) -> List[List]:

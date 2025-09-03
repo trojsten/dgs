@@ -62,13 +62,13 @@ class TestRange:
 
     def test_span(self, mass1, mass2):
         expected = r'\qtyrange{1}{7}{\kilo\gram}'
-        computed = rf'{mass1 ^ mass2}'
+        computed = rf'{mass1 % mass2}'
         assert expected == computed, \
             f"Expected {expected}, computed {computed}"
 
     def test_span_incommensurate(self, mass1, length1):
         with pytest.raises(pint.errors.DimensionalityError):
-            _ = mass1 ^ length1
+            _ = mass1 % length1
 
 
 class TestList:

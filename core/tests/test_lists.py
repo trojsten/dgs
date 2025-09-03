@@ -19,7 +19,7 @@ def shopping_list():
 @pytest.fixture
 def folk_heroes():
     return [
-        dict(language="sk", name="Jánošík"),
+        dict(language="sk", name="Juraj Jánošík"),
         dict(language="cs", name="Krakonoš"),
         dict(language="hu", name="Rózsa Sándor"),
     ]
@@ -104,21 +104,21 @@ class TestAdornments():
 
     def test_add_numbers_dictlist(self, folk_heroes):
         assert add_numbers(folk_heroes, itertools.count(4, 1)) == [
-            dict(number=4, id=dict(language="sk", name="Jánošík")),
+            dict(number=4, id=dict(language="sk", name="Juraj Jánošík")),
             dict(number=5, id=dict(language="cs", name="Krakonoš")),
             dict(number=6, id=dict(language="hu", name="Rózsa Sándor")),
         ]
 
     def test_numerate(self, folk_heroes):
         assert numerate(folk_heroes) == [
-            dict(number=0, language="sk", name="Jánošík"),
+            dict(number=0, language="sk", name="Juraj Jánošík"),
             dict(number=1, language="cs", name="Krakonoš"),
             dict(number=2, language="hu", name="Rózsa Sándor"),
         ]
 
     def test_numerate_primes(self, folk_heroes, fibonacci):
         assert numerate(folk_heroes, itertools.islice(fibonacci(), 5, None)) == [
-            dict(number=5, language="sk", name="Jánošík"),
+            dict(number=5, language="sk", name="Juraj Jánošík"),
             dict(number=8, language="cs", name="Krakonoš"),
             dict(number=13, language="hu", name="Rózsa Sándor"),
         ]

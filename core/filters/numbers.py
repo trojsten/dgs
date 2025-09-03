@@ -4,7 +4,7 @@ Filters for work with numbers. Feel free to extend.
 import numbers
 
 from .hacks import cut_extra_one
-from core.builder.context.quantities import PhysicsQuantity
+from core.builder.context.quantities import PhysicsQuantity, QuantityRange, QuantityList
 
 
 def roman(number: int) -> str:
@@ -58,29 +58,35 @@ def nth(x: int) -> str:
 
 
 def format_float(x: float, precision: int = None):
+    if precision is None:
+        fmt = 'f'
+    else:
+        fmt = rf'.{precision}f'
+
     if isinstance(x, numbers.Number):
-        if precision is None:
-            return rf"{x:f}"
-        else:
-            return rf"{x:.{precision}f}"
-    elif isinstance(x, PhysicsQuantity):
-        return x.fullf(precision)
+        printed = rf"{x:{fmt}}"
+    elif isinstance(x, PhysicsQuantity) or isinstance(x, QuantityRange) or isinstance(x, QuantityList):
+        printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")
 
+    return cut_extra_one(printed)
 
 def format_general(x: float, precision: int = None):
     """
     Format a float in the exponential form
     """
+    if precision is None:
+        fmt = rf'g'
+    else:
+        fmt = rf'.{precision}g'
+
     if isinstance(x, numbers.Number):
-        if precision is None:
-            printed = rf"{x:g}"
-        else:
-            printed = rf"{x:.{precision}g}"
-    elif isinstance(x, PhysicsQuantity):
-        printed = x.fullg(precision)
+        printed = rf"{x:{fmt}}"
+    elif isinstance(x, PhysicsQuantity) or isinstance(x, QuantityRange) or isinstance(x, QuantityList):
+        printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")
 
     return cut_extra_one(printed)
+
