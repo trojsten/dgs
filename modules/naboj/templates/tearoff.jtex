@@ -7,7 +7,7 @@
     \pdfpagewidth=210mm
     \pdfpageheight=(* 297 / competition.tearoff.per_page *)mm
     \newgeometry{
-        left        = 12mm,
+        left        = 5mm,
         right       = 5mm,
         bottom      = 3mm,
         top         = 0mm,
