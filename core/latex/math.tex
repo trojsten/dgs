@@ -252,6 +252,13 @@
 \NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
 \NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
 
+% Matrix command
+\NewDocumentCommand{\Mat}{m}{\boldsymbol{#1}}
+% Matrix inverse
+\NewDocumentCommand{\Inv}{m}{{#1}^{-1}}
+% Matrix transpose
+\NewDocumentCommand{\Transpose}{m}{{#1}^{\!\top}}
+
 \def\omicron{o}
 \DeclareMathOperator{\atantwo}{atan2}
 \DeclareMathOperator{\arccot}{arccot}
@@ -326,7 +333,7 @@
 % \Nuclide[235][92]{U} for uranium
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
-% Big aggregate functions, and parenthesizing versions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Big aggregate functions, and parenthesizing versions
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
 \NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
 
@@ -345,15 +352,18 @@
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
 \NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
 
-% logical union (big cup)
+% logical union (big cup) as aggregate
 % \Union[lower limit][upper limit]{element}
 \NewDocumentCommand{\Union}{O{} O{} m}{\Aggregate{\bigcup}[#1][#2]{#3}}
 \NewDocumentCommand{\UnionP}{O{} O{} m}{\AggregateP{\bigcup}[#1][#2]{#3}}
 
-% intersection (big cap)
+% intersection (big cap) as aggregate
 % \Intersection[lower limit][upper limit]{element}
 \NewDocumentCommand{\Intersection}{O{} O{} m}{\Aggregate{\bigcap}[#1][#2]{#3}}
 \NewDocumentCommand{\IntersectionP}{O{} O{} m}{\AggregateP{\bigcap}[#1][#2]{#3}}
+
+\DeclareMathOperator{\Uni}{\cup}
+\DeclareMathOperator{\Intersect}{\cap}
 
 \DeclarePairedDelimiter\abs@{\lvert}{\rvert}
 \NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
