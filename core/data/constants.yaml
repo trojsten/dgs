@@ -110,8 +110,8 @@ eccentricity_earth:
 
 obliquity_earth:
     symbol:     "\\epsilon_{\\Earth}"
-    magnitude:  0.40909263
-    unit:       "radian"
+    magnitude:  23.4392811
+    unit:       "degree"
     digits:     3
 
 radius_sun:
