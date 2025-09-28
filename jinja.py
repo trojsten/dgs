@@ -5,6 +5,7 @@ import numbers
 import pprint
 import shutil
 import logging
+import datetime
 
 from abc import ABC
 from io import TextIOWrapper, StringIO
@@ -99,11 +100,17 @@ class ConstantsContext(FileContext):
 
 class StandaloneContext(FileContext):
     _schema = Schema({
-        'authors': list[str],
-        'tags': list[And(str, valid_tag)],
         Opt('values'): dict[str, PhysicsConstant],
+        Opt('date'): datetime.date,
+        Opt('title'): str,
     })
 
+
+class NabojStandaloneContext(StandaloneContext):
+    _schema = Schema({
+        'authors': list[str],
+        'tags': list[And(str, valid_tag)],
+    })
 
 class CLIInterface(cli.CLIInterface, ABC):
     """
@@ -136,7 +143,7 @@ class CLIInterface(cli.CLIInterface, ABC):
         return ctx
 
     def build_convertor(self, args, **kwargs):
-        if Path(self.args.preamble).exists():
+        if self.args.preamble is not None and Path(self.args.preamble).exists():
             preamble = open(self.args.preamble, 'r')
         else:
             preamble = None

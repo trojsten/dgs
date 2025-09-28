@@ -5,8 +5,8 @@ from modules.scholar.builder.contexts import ContextHomework, HomeworkMixin
 class BuilderHomework(HomeworkMixin, BuilderScholar):
     _root_context_class = ContextHomework
     templates = [
-        'homework-students.jtt',
-        'homework-solutions.jtt',
+        'homework-students.jtex',
+        'homework-solutions.jtex',
     ]
 
 

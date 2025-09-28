@@ -5,9 +5,9 @@ from modules.scholar.builder.contexts import ContextHandout, HandoutMixin
 class BuilderHandout(HandoutMixin, BuilderScholar):
     _root_context_class = ContextHandout
     templates = [
-        'handout-students.jtt',
-        'handout-solutions.jtt',
-        'handout-solved.jtt',
+        'handout-students.jtex',
+        'handout-solutions.jtex',
+        'handout-solved.jtex',
     ]
 
 

@@ -52,12 +52,22 @@ endef
 
 # lang
 # meta file
+# preamble file
 define _jinja
 	@echo -e '$(c_action)[jinja] Rendering \
 		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
     python jinja.py $(1) $< $@ --context $(2) --preamble $(3) || exit 1;
+endef
+
+# lang
+define _jinja_no_preamble
+	@echo -e '$(c_action)[jinja] Rendering \
+		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
+		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
+	@mkdir -p $(dir $@)
+    python jinja.py $(1) $< $@ --context $(2) || exit 1;
 endef
 
 # pandoctex(language)

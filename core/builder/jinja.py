@@ -92,7 +92,7 @@ class StaticRenderer(JinjaRenderer):
     A Jinja2 renderer for pre-rendering static TeX content from the modules.
     Includes ad hoc utility functions.
     """
-    def __init__(self, template_root: os.PathLike, **kwargs):
+    def __init__(self, template_root: os.PathLike, **kwargs: object) -> None:
         super().__init__(loader=jinja2.FileSystemLoader(template_root), **kwargs)
         self.template_root = template_root
 

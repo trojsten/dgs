@@ -1,4 +1,4 @@
-(@ extends 'handout-students.jtt' @)
+(@ extends 'handout-students.jtex' @)
 
 (@ block solution @)
     \paragraph{(* i18n.captions.solution.singular|capitalize *)}

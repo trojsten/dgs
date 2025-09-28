@@ -1,4 +1,4 @@
-(@ extends 'homework-base.jtt' @)
+(@ extends 'homework-base.jtex' @)
 
 (@ block sections @)
     (@ for problem in issue.problems @)

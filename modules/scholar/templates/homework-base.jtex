@@ -1,4 +1,4 @@
-(@ extends 'base.jtt' @)
+(@ extends 'base.jtex' @)
 
 (@ block type @)homework(@ endblock @)
 (@ block typedir @)homework(@ endblock @)

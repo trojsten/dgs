@@ -2,11 +2,11 @@ import abc
 from pathlib import Path
 from typing import Optional
 
-from core.builder import builder
+from core.builder.builder import BaseBuilder
 from core.builder.jinja import StaticRenderer
 
 
-class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
+class BuilderNaboj(BaseBuilder, metaclass=abc.ABCMeta):
     """
     The Builder for the Náboj competitions.
     """
@@ -17,7 +17,7 @@ class BuilderNaboj(builder.BaseBuilder, metaclass=abc.ABCMeta):
 
     def __init__(self):
         super().__init__()
-        self.renderer = StaticRenderer(Path(self.template_root))
+        self.renderer = self._renderer_class(Path(self.template_root))
 
     def add_arguments(self):
         super().add_arguments()

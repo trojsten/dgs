@@ -1,4 +1,4 @@
-(@ extends 'handout-base.jtt' @)
+(@ extends 'handout-base.jtex' @)
 
 (@ block problems @)
     (@ if issue.problems @)

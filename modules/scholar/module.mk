@@ -1,8 +1,20 @@
 .SECONDEXPANSION:
 
+render/scholar/%/text.md: \
+	source/scholar/$$*/text.md
+	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+
+render/scholar/%/problem.md: \
+	source/scholar/$$*/problem.md
+	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+
+render/scholar/%/solution.md: \
+	source/scholar/$$*/solution.md
+	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+
 build/scholar/%/build-handout: \
-	modules/scholar/templates/base.jtt \
-	$$(wildcard modules/scholar/templates/handout-*.jtt) \
+	modules/scholar/templates/base.jtex \
+	$$(wildcard modules/scholar/templates/handout-*.jtex) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -10,8 +22,8 @@ build/scholar/%/build-handout: \
 	python -m modules.scholar.builder.handout 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-homework: \
-	modules/scholar/templates/base.jtt \
-	$$(wildcard modules/scholar/templates/homework-*.jtt) \
+	modules/scholar/templates/base.jtex \
+	$$(wildcard modules/scholar/templates/homework-*.jtex) \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
@@ -19,12 +31,24 @@ build/scholar/%/build-homework: \
 	python -m modules.scholar.builder.homework 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-lecture: \
-	modules/scholar/templates/lecture.jtt \
+	modules/scholar/templates/lecture.jtex \
 	source/scholar/$$*/meta.yaml
 	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
 	python -m modules.scholar.builder.lecture 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+
+build/scholar/%/problem.tex: \
+	render/scholar/$$*/problem.md
+	$(call pandoctex,$(lang))
+
+build/scholar/%/solution.tex: \
+	render/scholar/$$*/solution.md
+	$(call pandoctex,$(lang))
+
+build/scholar/%/text.tex: \
+	render/scholar/$$*/text.md
+	$(call pandoctex,$(lang))
 
 # <subject>/<year>/<target>/<issue>
 build/scholar/%/handout-students.tex: \

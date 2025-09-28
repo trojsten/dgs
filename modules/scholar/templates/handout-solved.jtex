@@ -1,4 +1,4 @@
-(@ extends 'handout-students.jtt' @)
+(@ extends 'handout-students.jtex' @)
 
 (@ block solutions @)
     \newpage
