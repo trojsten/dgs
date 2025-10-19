@@ -20,15 +20,15 @@
 \crefname{equation}{(* i18n.equation *)}{(* i18n.equations *)}
 \Crefname{equation}{(* i18n.equation|capitalize *)}{(* i18n.equations|capitalize *)}
 
-(@ for unit in i18n.siunitx.units @)
-    \DeclareSIUnit\(* unit.name *){}{\text{(* unit.symbol *)}}
+(@ for name, symbol in i18n.siunitx.units.items() @)
+    \DeclareSIUnit{\(* name *)}{\text{(* symbol *)}}
 (@ endfor @)
 
-(@ for prefix in i18n.siunitx.prefixes @)
-    \DeclareSIPrefix\(* prefix.name *){\text{(* prefix.symbol *)}}{(* prefix.order *)}
-(@ endfo @)
+(@ for order, prefix in i18n.siunitx.prefixes.items() @)
+    \DeclareSIPrefix{\(* prefix.name *)}{\text{(* prefix.symbol *)}}{(* order *)}
+(@ endfor @)
 
-(@ for prefix in i18n.siunitx.binary_prefixes @)
-    \DeclareSIPrefix\(* prefix.name *){\text{(* prefix.symbol *)}}{(* prefix.order *)}
-(@ endfo @)
+(@ for order, prefix in i18n.siunitx.binary_prefixes.items() @)
+    \DeclareBinaryPrefix{\(* prefix.name *)}{\text{(* prefix.symbol *)}}{(* order *)}
+(@ endfor @)
 
