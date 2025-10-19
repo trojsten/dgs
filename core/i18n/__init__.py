@@ -24,6 +24,8 @@ class Locale:
         self.output_decimal_marker = extras.get('output_decimal_marker', '.')
 
         self.quotes_extra = extras.get('quotes_extra', '')
+        self.si_units = extras.get('si_units', [])
+        self.si_prefixes = extras.get('si_prefixes', [])
 
     def as_dict(self):
         return {
@@ -52,6 +54,9 @@ class Locale:
                 'output_decimal_marker': self.output_decimal_marker,
                 'list_final_separator': self.andw,
                 'list_pair_separator': self.andw,
+                'units': self.si_units,
+                'prefixes': self.si_prefixes,
+                'binary_prefixes': self.si_binary_prefixes,
             }
         }
 
@@ -126,7 +131,11 @@ languages = [
            table="Table", tables="Tables",
            equation="Equation", equations="Equations",
            andw="і",
-           output_decimal_marker=','),
+           output_decimal_marker=',',
+           siunits={
+               'metre': 'M',
+               'meter':
+           },),
     Locale('pt', 'portuguese', 'pt-PT', 'português ', ('«', '»'),
            figure='figura', figures='figuras',
            table='tabla', tables='tables',
