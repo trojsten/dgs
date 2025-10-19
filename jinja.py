@@ -103,6 +103,8 @@ class StandaloneContext(FileContext):
         Opt('values'): dict[str, PhysicsConstant],
         Opt('date'): datetime.date,
         Opt('title'): str,
+        'authors': list[str],
+        'tags': list[And(str, valid_tag)],
     })
 
 

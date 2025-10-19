@@ -122,11 +122,16 @@ languages = [
            table='tabuľka', tables='tabuľky',
            equation='rovnica', equations='rovnice'),
     Locale('uk', 'ukrainian', 'uk-UK', 'українська', ('«', '»'),
-           figure="???", figures="???",
-           table="???", tables="???",
-           equation="???", equations="???",
+           figure="Figure", figures="Figures",
+           table="Table", tables="Tables",
+           equation="Equation", equations="Equations",
            andw="і",
            output_decimal_marker=','),
+    Locale('pt', 'portuguese', 'pt-PT', 'português ', ('«', '»'),
+           figure='figura', figures='figuras',
+           table='tabla', tables='tables',
+           equation='ecuación', equations='ecuacións',
+           andw='y'),
 ]
 
 
