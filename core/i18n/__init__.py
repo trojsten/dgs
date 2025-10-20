@@ -235,7 +235,7 @@ languages = [
                },
            )
         ),
-    Locale('pt', 'portuguese', 'pt-PT', 'português ', ('«', '»'),
+    Locale('pt', 'portuguese', 'pt-PT', 'português', ('«', '»'),
            figure='figura', figures='figuras',
            table='tabla', tables='tables',
            equation='ecuación', equations='ecuacións',
