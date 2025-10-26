@@ -1,0 +1,21 @@
+full: 'slovak'
+native: 'slovensky'
+locale: 'sk-SK'
+quotes:
+  open: '„'
+  close: '“'
+figure:
+  singular: 'obrázok'
+  plural: 'obrázky'
+table:
+  singular: 'tabuľka'
+  plural: 'tabuľky'
+equation:
+  singular: 'rovnica'
+  plural: 'rovnice'
+section:
+  singular: 'úloha'
+  plural: 'úlohy'
+siunitx:
+  andw: 'a'
+  output_decimal_marker: ','

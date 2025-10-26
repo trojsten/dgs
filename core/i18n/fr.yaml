@@ -1,0 +1,17 @@
+full: 'french'
+native: 'français'
+locale: 'fr-FR'
+quotes:
+  open: '« '
+  close: ' »'
+figure:
+  singular: 'figure'
+  plural: 'figures'
+table:
+  singular: 'tableau'
+  plural: 'tableaux'
+equation:
+  singular: 'équation'
+  plural: 'équations'
+siunitx:
+  andw: 'et'

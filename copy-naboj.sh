@@ -1,3 +1,7 @@
+# Copy Náboj files from one language to another (typically sk/en to <lang> before it is distributed to branches for translation)
+#
+# Usage ./copy-naboj.sh source/naboj/phys/28/problems/sk en
+
 orig=${2}
 lang=${3}
 

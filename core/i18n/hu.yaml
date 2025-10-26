@@ -1,0 +1,18 @@
+full: 'hungarian'
+native: 'magyar'
+locale: 'hu-HU'
+quotes:
+  open: '„'
+  close: '“'
+figure:
+  singular: 'ábra'
+  plural: 'ábrák'
+table:
+  singular: 'táblázat'
+  plural: 'táblázatok'
+equation:
+  singular: 'egyenlet'
+  plural: 'egyenletek'
+siunitx:
+  andw: 'és'
+  output_decimal_marker: ','

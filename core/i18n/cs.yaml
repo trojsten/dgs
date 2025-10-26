@@ -1,0 +1,21 @@
+full: 'czech'
+native: 'česky'
+locale: 'cs-CZ'
+quotes:
+  open: '„'
+  close: '“'
+figure:
+  singular: 'obrázek'
+  plural: 'obrázky'
+table:
+  singular: 'tabulka'
+  plural: 'tabulky'
+equation:
+  singular: 'rovnice'
+  plural: 'rovnice'
+section:
+  singular: 'problém'
+  plural: 'problémy'
+siunitx:
+  andw: 'a'
+  output_decimal_marker: ','

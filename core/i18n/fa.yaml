@@ -1,0 +1,18 @@
+full: 'farsi'
+native: 'farsi'
+locale: 'en-US'
+quotes:
+  open: '“'
+  close: '”'
+figure:
+  singular: 'figure'
+  plural: 'figures'
+table:
+  singular: 'table'
+  plural: 'tables'
+equation:
+  singular: 'equation'
+  plural: 'equations'
+section:
+  singular: 'section'
+  plural: 'sections'

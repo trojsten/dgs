@@ -1,0 +1,15 @@
+full: 'test'
+native: 'quot-test'
+locale: 'sk-SK'
+quotes:
+  open: '('
+  close: ')'
+figure:
+  singular: 'obrázok'
+  plural: 'obrázky'
+table:
+  singular: 'tabuľka'
+  plural: 'tabuľky'
+equation:
+  singular: 'rovnica'
+  plural: 'rovnice'

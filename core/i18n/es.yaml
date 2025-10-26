@@ -1,0 +1,17 @@
+full: 'spanish'
+native: 'español'
+locale: 'es-ES'
+quotes:
+  open: '«'
+  close: '»'
+figure:
+  singular: 'figura'
+  plural: 'figuras'
+table:
+  singular: 'tabla'
+  plural: 'tables'
+equation:
+  singular: 'ecuación'
+  plural: 'ecuacións'
+siunitx:
+  andw: 'y'

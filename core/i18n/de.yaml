@@ -1,0 +1,18 @@
+full: 'german'
+native: 'deutsch'
+locale: 'de-AT'
+quotes:
+  open: '„'
+  close: '“'
+figure:
+  singular: 'Abbildung'
+  plural: 'Abbildungen'
+table:
+  singular: 'Tabelle'
+  plural: 'Tabellen'
+equation:
+  singular: 'Gleichung'
+  plural: 'Gleichungen'
+siunitx:
+  andw: 'und'
+  output_decimal_marker: ','

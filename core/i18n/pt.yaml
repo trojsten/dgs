@@ -1,0 +1,17 @@
+full: 'portuguese'
+native: 'português'
+locale: 'pt-PT'
+quotes:
+  open: '«'
+  close: '»'
+figure:
+  singular: 'figura'
+  plural: 'figuras'
+table:
+  singular: 'tabla'
+  plural: 'tables'
+equation:
+  singular: 'ecuación'
+  plural: 'ecuacións'
+siunitx:
+  andw: 'y'
