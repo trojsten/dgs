@@ -1,0 +1,102 @@
+full: 'ukrainian'
+native: 'українська'
+locale: 'uk-UA'
+quotes:
+  open: '«'
+  close: '»'
+figure:
+  singular: 'Figure'
+  plural: 'Figures'
+table:
+  singular: 'Table'
+  plural: 'Tables'
+equation:
+  singular: 'Equation'
+  plural: 'Equations'
+section:
+  singular: 'Problem'
+  plural: 'Problems'
+siunitx:
+  output_decimal_marker: ','
+  list_pair_separator: '<and>'
+  list_final_separator: '<and>'
+  units:
+    metre: 'м'
+    meter: 'м'
+    second: 'с'
+    ampere: 'А'
+    kelvin: 'К'
+    mole: 'моль'
+    candela: 'кд'
+    becquerel: 'Бк'
+    coulomb: 'Кл'
+    farad: 'Ф'
+    gram: 'г'
+    gray: 'Гр'
+    hertz: 'Гц'
+    henry: 'Гн'
+    joule: 'Дж'
+    katal: 'кат'
+    lumen: 'лм'
+    lux: 'лк'
+    newton: 'Н'
+    ohm: 'Ом'
+    pascal: 'Па'
+    radian: 'рад'
+    siemens: 'См'
+    sievert: 'Зв'
+    steradian: 'ср'
+    tesla: 'Тл'
+    volt: 'В'
+    watt: 'Вт'
+    weber: 'Вб'
+    day: 'діб'
+    hectare: 'га'
+    hour: 'год'
+    litre: 'л'
+    liter: 'л'
+    minute: 'хв'
+    tonne: 'т'
+    astronomicalunit: 'а. о.'
+    atomicmassunit: 'а. о. м.'
+    dalton: 'а. о. м.'
+    electronvolt': 'еВ'
+    bar: 'бар'
+    barn: 'б'
+    bel: 'Б'
+    decibel: 'дБ'
+    knot: 'вуз'
+    mmHg: 'мм рт. ст.'
+    nauticalmile: 'миля'
+    neper: 'Нп'
+
+  prefixes:
+    -24: { name: 'yocto', symbol: 'й' }
+    -21: { name: 'zepto', symbol: 'з' }
+    -18: { name: 'atto', symbol: 'а' }
+    -15: { name: 'femto', symbol: 'ф' }
+    -12: { name: 'pico', symbol: 'п' }
+    -9: { name: 'nano', symbol: 'н' }
+    -6: { name: 'micro', symbol: 'мк' }
+    -3: { name: 'milli', symbol: 'м' }
+    -2: { name: 'centi', symbol: 'с' }
+    -1: { name: 'deci', symbol: 'д' }
+    1: { name: 'deca', symbol: 'да' }
+    2: { name: 'hecto', symbol: 'г' }
+    3: { name: 'kilo', symbol: 'к' }
+    6: { name: 'mega', symbol: 'М' }
+    9: { name: 'giga', symbol: 'Г' }
+    12: { name: 'tera', symbol: 'Т' }
+    15: { name: 'peta', symbol: 'П' }
+    18: { name: 'exa', symbol: 'Е' }
+    21: { name: 'zetta', symbol: 'З' }
+    24: { name: 'yotta', symbol: 'Й' }
+  binary_prefixes:
+    10: { name: 'kibi', symbol: 'Кі' }
+    20: { name: 'mebi', symbol: 'Мі' }
+    30: { name: 'gibi', symbol: 'Гі' }
+    40: { name: 'tebi', symbol: 'Ті' }
+    50: { name: 'pebi', symbol: 'Пі' }
+    60: { name: 'exbi', symbol: 'Eі' }
+    70: { name: 'zebi', symbol: 'Зі' }
+    80: { name: 'yobi', symbol: 'Йі' }

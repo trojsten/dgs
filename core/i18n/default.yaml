@@ -1,0 +1,102 @@
+full: 'default'
+native: 'default'
+locale: '__-__'
+quotes:
+  open: '"'
+  close: '"'
+figure:
+  singular: 'FIGURE'
+  plural: 'FIGURES'
+table:
+  singular: 'TABLE'
+  plural: 'TABLES'
+equation:
+  singular: 'EQUATION'
+  plural: 'EQUATIONS'
+section:
+  singular: 'PROBLEM'
+  plural: 'PROBLEMS'
+siunitx:
+  output_decimal_marker: '.'
+  list_pair_separator: 'AND'
+  list_final_separator: 'AND'
+  units:
+    metre: 'm'
+    meter: 'm'
+    second: 's'
+    ampere: 'A'
+    kelvin: 'K'
+    mole: 'mol'
+    candela: 'cd'
+    becquerel: 'Bq'
+    coulomb: 'C'
+    farad: 'F'
+    gram: 'g'
+    gray: 'Gy'
+    hertz: 'Hz'
+    henry: 'H'
+    joule: 'J'
+    katal: 'cat'
+    lumen: 'lm'
+    lux: 'lx'
+    newton: 'N'
+    ohm: '\Omega'
+    pascal: 'Pa'
+    radian: 'rad'
+    siemens: 'Si'
+    sievert: 'Sv'
+    steradian: 'sr'
+    tesla: 'T'
+    volt: 'V'
+    watt: 'W'
+    weber: 'Wb'
+    day: 'd'
+    hectare: 'ha'
+    hour: 'h'
+    litre: 'l'
+    liter: 'l'
+    minute: 'min'
+    tonne: 't'
+    astronomicalunit: 'au'
+    atomicmassunit: 'amu'
+    dalton: 'Da'
+    electronvolt: 'eV'
+    bar: 'bar'
+    barn: 'b'
+    bel: 'B'
+    decibel: 'dB'
+    knot: 'kt'
+    mmHg: 'mmHg'
+    nauticalmile: 'mi'
+    neper: 'Np'
+  prefixes:
+    -24: { name: 'yocto', symbol: 'y' }
+    -21: { name: 'zepto', symbol: 'z' }
+    -18: { name: 'atto', symbol: 'a' }
+    -15: { name: 'femto', symbol: 'f' }
+    -12: { name: 'pico', symbol: 'p' }
+    -9: { name: 'nano', symbol: 'n' }
+    -6: { name: 'micro', symbol: 'µ' }
+    -3: { name: 'milli', symbol: 'm' }
+    -2: { name: 'centi', symbol: 'c' }
+    -1: { name: 'deci', symbol: 'd' }
+    1: { name: 'deca', symbol: 'da' }
+    2: { name: 'hecto', symbol: 'h' }
+    3: { name: 'kilo', symbol: 'K' }
+    6: { name: 'mega', symbol: 'M' }
+    9: { name: 'giga', symbol: 'G' }
+    12: { name: 'tera', symbol: 'T' }
+    15: { name: 'peta', symbol: 'P' }
+    18: { name: 'exa', symbol: 'E' }
+    21: { name: 'zetta', symbol: 'Z' }
+    24: { name: 'yotta', symbol: 'Y' }
+  binary_prefixes:
+    10: { name: 'kibi', symbol: 'Ki' }
+    20: { name: 'mebi', symbol: 'Mi' }
+    30: { name: 'gibi', symbol: 'Gi' }
+    40: { name: 'tebi', symbol: 'Ti' }
+    50: { name: 'pebi', symbol: 'Pi' }
+    60: { name: 'exbi', symbol: 'Ei' }
+    70: { name: 'zebi', symbol: 'Zi' }
+    80: { name: 'yobi', symbol: 'Yi' }
+

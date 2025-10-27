@@ -13,5 +13,3 @@ table:
 equation:
   singular: 'ecuación'
   plural: 'ecuacións'
-siunitx:
-  andw: 'y'

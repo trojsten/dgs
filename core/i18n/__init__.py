@@ -1,10 +1,24 @@
 import yaml
 import dotmap
+import copy
 import regex as re
 
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, Optional as Opt, Any
 from enschema import Schema, Optional
+
+
+def merge(original, extras):
+    output = copy.deepcopy(original)
+
+    for key, value in extras.items():
+        if isinstance(value, dict):
+            node = output.setdefault(key, {})
+            output[key] = merge(original[key], value)
+        else:
+            output[key] = value
+
+    return output
 
 
 class Locale:
@@ -28,26 +42,30 @@ class Locale:
         self.section = extras.get('section', '<section>')
         self.sections = extras.get('sections', '<sections>')
 
-        if siunitx is None:
-            siunitx = {}
-        self.output_decimal_marker = siunitx.get('output_decimal_marker', '.')
-        self.andw = siunitx.get('andw', '<and>')
+        self.output_decimal_marker = siunitx['output_decimal_marker']
+        self.list_pair_separator = siunitx['list_pair_separator']
+        self.list_final_separator = siunitx['list_final_separator']
         self.si_units = siunitx.get('units', {})
         self.si_prefixes = siunitx.get('prefixes', {})
         self.si_binary_prefixes = siunitx.get('prefixes', {})
 
     @staticmethod
-    def load_yaml(file: TextIO):
-        data = dotmap.DotMap(yaml.safe_load(file))
+    def load_yaml(defaults: dict[str, Any], file: TextIO) -> Opt['Locale']:
+        lang = yaml.safe_load(file)
+        data = dotmap.DotMap(merge(defaults, lang))
         match = re.search(r'core/i18n/(?P<lang>[a-z]{2})\.yaml$', file.name)
 
-        return Locale(
-            match.group('lang'),
-            data.full,
-            data.native,
-            data.locale,
-            (data.quotes.open, data.quotes.close),
-        )
+        if match:
+            return Locale(
+                match.group('lang'),
+                data.full,
+                data.native,
+                data.locale,
+                (data.quotes.open, data.quotes.close),
+                siunitx=data.siunitx
+            )
+        else:
+            return None
 
     def as_dict(self):
         return {
@@ -72,10 +90,9 @@ class Locale:
             'section': self.section,
             'sections': self.sections,
             'siunitx': {
-                'andw': self.andw,
                 'output_decimal_marker': self.output_decimal_marker,
-                'list_final_separator': self.andw,
-                'list_pair_separator': self.andw,
+                'list_final_separator': self.list_final_separator,
+                'list_pair_separator': self.list_pair_separator,
                 'units': self.si_units,
                 'prefixes': self.si_prefixes,
                 'binary_prefixes': self.si_binary_prefixes,
@@ -85,7 +102,6 @@ class Locale:
 
 LanguageSchema = Schema({
     'language': {
-        'id': str,
         'name': str,
         'locale': str,
         'quotes': {
@@ -94,9 +110,14 @@ LanguageSchema = Schema({
             'babel_id': str,
             Optional('extra'): str,
         },
-        'figure': str,
-        'figures': str,
-        'table': str,
+        'figure': {
+            'singular': str,
+            'plural': str,
+        },
+        'table': {
+            'singular': str,
+            'plural': str,
+        },
         'tables': str,
         'equation': str,
         'equations': str,
@@ -119,9 +140,12 @@ LanguageSchema = Schema({
 
 languages = {}
 
+with open('core/i18n/default.yaml', 'r') as defaults_file:
+    defaults = yaml.safe_load(defaults_file)
+
 for filename in Path('core/i18n').glob('*.yaml'):
     with open(filename, 'r') as file:
-        locale = Locale.load_yaml(file)
-        languages[locale.id] = locale
+        if (locale := Locale.load_yaml(defaults, file)) is not None:
+            languages[locale.id] = locale
 
 
