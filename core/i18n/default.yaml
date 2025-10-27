@@ -86,7 +86,7 @@ siunitx:
     -1: { name: 'deci', symbol: 'd' }
     1: { name: 'deca', symbol: 'da' }
     2: { name: 'hecto', symbol: 'h' }
-    3: { name: 'kilo', symbol: 'K' }
+    3: { name: 'kilo', symbol: 'k' }
     6: { name: 'mega', symbol: 'M' }
     9: { name: 'giga', symbol: 'G' }
     12: { name: 'tera', symbol: 'T' }
