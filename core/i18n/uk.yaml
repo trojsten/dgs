@@ -4,18 +4,19 @@ locale: 'uk-UA'
 quotes:
   open: '«'
   close: '»'
-figure:
-  singular: 'Figure'
-  plural: 'Figures'
-table:
-  singular: 'Table'
-  plural: 'Tables'
-equation:
-  singular: 'Equation'
-  plural: 'Equations'
-section:
-  singular: 'Problem'
-  plural: 'Problems'
+cref:
+  figure:
+    singular: 'FIGURE'
+    plural: 'FIGURES'
+  table:
+    singular: 'TABLE'
+    plural: 'TABLES'
+  equation:
+    singular: 'EQUATION'
+    plural: 'EQUATIONS'
+  section:
+    singular: 'задача'
+    plural: 'задачі'
 siunitx:
   output_decimal_marker: ','
   list_pair_separator: '<and>'

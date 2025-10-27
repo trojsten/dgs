@@ -4,15 +4,20 @@ locale: 'de-AT'
 quotes:
   open: '„'
   close: '“'
-figure:
-  singular: 'Abbildung'
-  plural: 'Abbildungen'
-table:
-  singular: 'Tabelle'
-  plural: 'Tabellen'
-equation:
-  singular: 'Gleichung'
-  plural: 'Gleichungen'
+cref:
+  figure:
+    singular: 'Abbildung'
+    plural: 'Abbildungen'
+  table:
+    singular: 'Tabelle'
+    plural: 'Tabellen'
+  equation:
+    singular: 'Gleichung'
+    plural: 'Gleichungen'
+  section:
+    singular: 'Aufgabe'
+    plural: 'Aufgaben'
 siunitx:
-  andw: 'und'
   output_decimal_marker: ','
+  list_pair_separator: 'und'
+  list_final_separator: 'und'

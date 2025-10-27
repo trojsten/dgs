@@ -4,14 +4,17 @@ locale: 'pt-PT'
 quotes:
   open: '«'
   close: '»'
-figure:
-  singular: 'figura'
-  plural: 'figuras'
-table:
-  singular: 'tabla'
-  plural: 'tables'
-equation:
-  singular: 'ecuación'
-  plural: 'ecuacións'
+cref:
+  figure:
+    singular: 'figura'
+    plural: 'figuras'
+  table:
+    singular: 'tabla'
+    plural: 'tables'
+  equation:
+    singular: 'ecuación'
+    plural: 'ecuacións'
 siunitx:
-  andw: 'y'
+  output_decimal_marker: ','
+  list_pair_separator: 'y'
+  list_final_separator: 'y'

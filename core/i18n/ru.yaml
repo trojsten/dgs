@@ -4,12 +4,13 @@ locale: 'ru-RU'
 quotes:
   open: '«'
   close: '»'
-figure:
-  singular: 'фигура'
-  plural: 'фигуры'
-table:
-  singular: 'таблица'
-  plural: 'таблицы'
-equation:
-  singular: 'уравнение'
-  plural: 'уравнения'
+cref:
+  figure:
+    singular: 'фигура'
+    plural: 'фигуры'
+  table:
+    singular: 'таблица'
+    plural: 'таблицы'
+  equation:
+    singular: 'уравнение'
+    plural: 'уравнения'

@@ -4,15 +4,20 @@ locale: 'hu-HU'
 quotes:
   open: '„'
   close: '“'
-figure:
-  singular: 'ábra'
-  plural: 'ábrák'
-table:
-  singular: 'táblázat'
-  plural: 'táblázatok'
-equation:
-  singular: 'egyenlet'
-  plural: 'egyenletek'
+cref:
+  figure:
+    singular: 'ábra'
+    plural: 'ábrák'
+  table:
+    singular: 'táblázat'
+    plural: 'táblázatok'
+  equation:
+    singular: 'egyenlet'
+    plural: 'egyenletek'
+  section:
+    singular: 'probléma'
+    plural: 'problémák'
 siunitx:
-  andw: 'és'
   output_decimal_marker: ','
+  list_pair_separator: 'és'
+  list_final_separator: 'és'

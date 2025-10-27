@@ -4,17 +4,23 @@ locale: 'en-US'
 quotes:
   open: '“'
   close: '”'
-figure:
-  singular: 'figure'
-  plural: 'figures'
-table:
-  singular: 'table'
-  plural: 'tables'
-equation:
-  singular: 'equation'
-  plural: 'equations'
-section:
-  singular: 'problem'
-  plural: 'problems'
+cref:
+  figure:
+    singular: 'figure'
+    plural: 'figures'
+  table:
+    singular: 'table'
+    plural: 'tables'
+  equation:
+    singular: 'equation'
+    plural: 'equations'
+  section:
+    singular: 'problem'
+    plural: 'problems'
+  listing:
+    singular: 'listing'
+    plural: 'listings'
 siunitx:
-  andw: 'and'
+  output_decimal_marker: '.'
+  list_pair_separator: 'and'
+  list_final_separator: 'and'

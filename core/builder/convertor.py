@@ -119,7 +119,7 @@ class Convertor:
 
         # regexes = yaml.safe_load(open('core/builder/regexes.yaml', 'rb'))
 
-        (self.quote_open, self.quote_close) = self.locale.quotes
+        (self.quote_open, self.quote_close) = self.locale.data['quotes']['open'], self.locale.data['quotes']['close']
 
         self.quotes_regexes = [
             RegexReplacement(r'"(_)', self.quote_close + r'\g<1>'),

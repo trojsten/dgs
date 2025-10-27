@@ -3,7 +3,7 @@ from pathlib import Path
 from enschema import Schema, Optional
 
 from core.builder.context.tree import FileSystemTreeContext
-from core.i18n import languages
+from core.i18n import languages, Locale
 
 
 class ContextI18n(FileSystemTreeContext):
@@ -59,24 +59,7 @@ class ContextI18n(FileSystemTreeContext):
         'venues': {
             str: str,
         },
-        'globals': {
-            'rtl': bool,
-            'quotes': {
-                'open': str,
-                'close': str,
-                'babel_id': str,
-                Optional('extra'): str,
-            },
-            'siunitx': {
-                'output_decimal_marker': str,
-                'list_final_separator': str,
-                'list_pair_separator': str,
-                'units': dict,
-                'prefixes': dict,
-                'binary_prefixes': dict,
-            },
-            str: str,
-        },
+        'globals': Locale.schema,
     })
 
     def populate(self, competition, language):

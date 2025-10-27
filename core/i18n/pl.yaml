@@ -4,15 +4,20 @@ locale: 'pl-PL'
 quotes:
   open: '„'
   close: '“'
-figure:
-  singular: 'figura'
-  plural: 'figury'
-table:
-  singular: 'tabela'
-  plural: 'tabely'
-equation:
-  singular: 'równanie'
-  plural: 'równania'
+cref:
+  figure:
+    singular: 'figura'
+    plural: 'figury'
+  table:
+    singular: 'tabela'
+    plural: 'tabely'
+  equation:
+    singular: 'równanie'
+    plural: 'równania'
+  section:
+    singular: 'problem'
+    plural: 'problemy'
 siunitx:
-  andw: 'i'
   output_decimal_marker: ','
+  list_pair_separator: 'i'
+  list_final_separator: 'i'

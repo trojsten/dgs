@@ -16,16 +16,6 @@ endef
 
 # TODO: for some reason these two do not work if combined into one!
 
-render/naboj/%/answer.md: \
-	$$(call truepath,$$(abspath source/naboj/$$*/../$$(notdir $$@)))
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call _jinja,$(language),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
-
-build/naboj/%/answer.tex: \
-	render/naboj/$$*/answer.md
-	$(eval language := $(word 5,$(subst /, ,$*)))
-	$(call pandoctex,$(language))
-
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
 define TRANSLATABLE
@@ -33,7 +23,6 @@ render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	touch $$(abspath $$(dir $$<)/../preamble.md)
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml),$$(abspath $$(dir $$<)/../preamble.md))
 
 build/naboj/%/$(1).tex: \
@@ -46,9 +35,9 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRA
 define NONTRANSLATABLE_ANSWERS
 render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	touch $$(abspath $$(dir $$<)/preamble.md)
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
 
 build/naboj/%/$(1).tex: \

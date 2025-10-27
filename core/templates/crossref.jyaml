@@ -1,8 +1,8 @@
-figureTitle: "(* i18n.figure *)"
-tableTitle: "(* i18n.table *)"
-listingTitle: "(* i18n.listing *)"
-figPrefix: ["(* i18n.figure *)", "(* i18n.figures *)"]
-tblPrefix: ["(* i18n.table *)", "(* i18n.tables *)"]
-eqnPrefix: ["(* i18n.equation *)", "(* i18n.equations *)"]
-lstPrefix: ["(* i18n.listing *)", "(* i18n.listings *)"]
-secPrefix: ["(* i18n.section *)", "(* i18n.sections *)"]
+figureTitle: "(* i18n.cref.figure *)"
+tableTitle: "(* i18n.cref.table *)"
+listingTitle: "(* i18n.cref.listing *)"
+figPrefix: ["(* i18n.cref.figure.singular *)", "(* i18n.cref.figure.plural *)"]
+tblPrefix: ["(* i18n.cref.table.singular *)", "(* i18n.cref.table.plural *)"]
+eqnPrefix: ["(* i18n.cref.equation.singular *)", "(* i18n.cref.equation.plural *)"]
+lstPrefix: ["(* i18n.cref.listing.singular *)", "(* i18n.cref.listing.plural *)"]
+secPrefix: ["(* i18n.cref.section.singular *)", "(* i18n.cref.section.plural *)"]

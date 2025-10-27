@@ -57,7 +57,7 @@ class ContextLanguage(ContextNaboj):
         self.load_meta(competition, volume, language) \
             .add_id(language) \
             .add(
-                name=i18n.languages[language].name,
+                name=i18n.languages[language].full,
                 rtl=i18n.languages[language].rtl,
             )
 

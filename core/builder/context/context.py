@@ -81,7 +81,7 @@ class Context(abc.ABC):
                 log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)} "
                           f"{c.path(self.id)}")
                 pprint.pprint(self.data)
-                log.error("against")
+                log.error(f"against {self.__class__.__qualname__}")
                 pprint.pprint(self.schema.schema)
                 raise exc
 

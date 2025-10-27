@@ -1,6 +1,8 @@
 import abc
 from pathlib import Path
 
+from enschema import Schema
+
 from core import i18n
 from core.builder.context.buildable import BuildableFileSystemTreeContext
 from core.builder.context.module import ContextModule
@@ -27,7 +29,7 @@ class BuildableContextNaboj(BuildableFileSystemTreeContext, ContextNaboj, metacl
 class BuildableContextLanguage(BuildableContextNaboj):
     _target = 'language'
     _subdir = 'languages'
-    _schema = i18n.LanguageSchema
+    _schema = Schema({})
 
     def __init__(self, root, *args):
         self._schema = super()._schema | self._schema
@@ -45,7 +47,7 @@ class BuildableContextLanguage(BuildableContextNaboj):
 class BuildableContextVenue(BuildableContextNaboj):
     _target = 'venue'
     _subdir = 'venues'
-    _schema = i18n.LanguageSchema
+    _schema = Schema({})
 
     def __init__(self, root, *args):
         self._schema = super()._schema | self._schema
