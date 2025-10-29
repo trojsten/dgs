@@ -21,7 +21,8 @@ endef
 define TRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml),$$(abspath $$(dir $$<)/../preamble.md))
 
