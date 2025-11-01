@@ -159,6 +159,7 @@
     textfont                = it,
 }
 
+\emergencystretch 3em
 \renewcommand{\arraystretch}{1.0}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}

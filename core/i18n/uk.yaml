@@ -61,7 +61,7 @@ siunitx:
     astronomicalunit: 'а. о.'
     atomicmassunit: 'а. о. м.'
     dalton: 'а. о. м.'
-    electronvolt': 'еВ'
+    electronvolt: 'еВ'
     bar: 'бар'
     barn: 'б'
     bel: 'Б'
