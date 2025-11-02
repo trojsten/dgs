@@ -65,7 +65,7 @@ mile:
     digits:     2
 
 us_pint:
-    symbol:     "\\mathrm{p}"
+    symbol:     "\\mathrm{pt}"
     magnitude:  473.176473
     unit:       "millilitre"
     digits:     3

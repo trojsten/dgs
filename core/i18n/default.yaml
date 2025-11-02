@@ -73,6 +73,7 @@ siunitx:
     mmHg: 'mmHg'
     nauticalmile: 'mi'
     neper: 'Np'
+    horsepower: 'hp'
   prefixes:
     -24: { name: 'yocto', symbol: 'y' }
     -21: { name: 'zepto', symbol: 'z' }

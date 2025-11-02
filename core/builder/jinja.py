@@ -83,7 +83,7 @@ class JinjaRenderer:
                 file=outfile,
             )
         except jinja2.exceptions.UndefinedError as e:
-            log.critical(f"Missing required variable from context: {c.err(e)}")
+            log.critical(f"Missing required variable from context: {c.err(e)} in {c.path(outfile.name)}")
             raise e
         except jinja2.exceptions.TemplateSyntaxError as e:
             log.critical(f"Template syntax error in {c.path(outfile.name)}")

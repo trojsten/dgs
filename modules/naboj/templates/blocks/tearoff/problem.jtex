@@ -9,7 +9,7 @@
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 (@ endblock activate @)
 
-\begin{minipage}[t][(* competition.tearoff.height *)mm][t]{\textwidth}%
+\begin{minipage}[t][(* competition.tearoff.height *)mm][t]{187mm}%
     (@ block main @)
         \subsection{\texorpdfstring{(* problem.number *)}{(* language.id *): (* problem.number *). (* problem.id *)}}%
         \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.86\linewidth}%
