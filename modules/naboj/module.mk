@@ -236,7 +236,7 @@ output/naboj/%/booklet.pdf: \
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf ;
-	pdfbook2 --short-edge --paper a4paper --outer-margin=40 --inner-margin=40 --top-margin=30 --bottom-margin=30 $<
+	pdfbook2 --short-edge --paper a4paper --outer-margin=30 --inner-margin=50 --top-margin=30 --bottom-margin=30 $<
 	mv output/naboj/$*/booklet-book.pdf $@
 
 output/naboj/%/answers.pdf: \

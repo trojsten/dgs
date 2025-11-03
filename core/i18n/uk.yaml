@@ -6,21 +6,21 @@ quotes:
   close: '»'
 cref:
   figure:
-    singular: 'FIGURE'
-    plural: 'FIGURES'
+    singular: 'Рис.'
+    plural: 'Рис.'
   table:
-    singular: 'TABLE'
-    plural: 'TABLES'
+    singular: 'Табл.'
+    plural: 'Табл.'
   equation:
-    singular: 'EQUATION'
-    plural: 'EQUATIONS'
+    singular: 'Рівняння'
+    plural: 'Рівняння'
   section:
     singular: 'задача'
     plural: 'задачі'
 siunitx:
   output_decimal_marker: ','
-  list_pair_separator: '<and>'
-  list_final_separator: '<and>'
+  list_pair_separator: 'і'
+  list_final_separator: 'і'
   units:
     metre: 'м'
     meter: 'м'
