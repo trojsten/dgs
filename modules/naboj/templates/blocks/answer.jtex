@@ -13,12 +13,13 @@
 }%
 \label{sec:(* problem.id *):answer}%
 \protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
-(@ if path_exists("source/{}/{}/{}/problems/{}/{}/answer-extra.md".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
-\!\textit{, }\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
+(@ set prefix = "{}/{}/{}/problems/{}".format(module.id, competition.id, volume.id, problem.id) @)%
+(@ if path_exists("source/{}/{}/answer-extra.md".format(prefix, language.id)) -@)%
+(@ if file_size("source/{}/answer.md".format(prefix)) > 0 @)\!\textit{, }(@ endif @)\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
 (@- endif -@)%
-(@- if path_exists("source/{}/{}/{}/problems/{}/answer-interval.md".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+(@- if path_exists("source/{}/answer-interval.md".format(prefix)) -@)%
 \!\textit{, (* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
 (@- endif -@)%
-(@- if path_exists("source/{}/{}/{}/problems/{}/answer-also.md".format(module.id, competition.id, volume.id, problem.id, language.id)) -@)%
+(@- if path_exists("source/{}/answer-also.md".format(prefix)) -@)%
 \!\textit{, (* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
 (@- endif -@)

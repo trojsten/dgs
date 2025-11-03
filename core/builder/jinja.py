@@ -113,7 +113,8 @@ class StaticRenderer(JinjaRenderer):
         self.env.globals |= {
             'plural': numbers.plural,
             'textbf': latex.textbf,
-            'path_exists': lambda x: os.path.exists(x),
+            'path_exists': os.path.exists,
+            'file_size': os.path.getsize,
         }
 
     def render(self,
