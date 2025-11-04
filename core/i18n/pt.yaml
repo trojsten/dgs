@@ -18,8 +18,8 @@ cref:
     singular: 'problema'
     plural: 'problemas'
   listing:
-    singular: 'lista'
-    plural: 'listas'
+    singular: 'listagem'
+    plural: 'listagens'
 siunitx:
   output_decimal_marker: ','
   list_pair_separator: 'e'

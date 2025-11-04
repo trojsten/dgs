@@ -101,8 +101,8 @@ class ConstantsContext(FileContext):
 class StandaloneContext(FileContext):
     _schema = Schema({
         Opt('values'): dict[str, PhysicsConstant],
-        Opt('date'): datetime.date,
-        Opt('title'): str,
+        #Opt('date'): datetime.date,
+        #Opt('title'): str,
         'authors': list[str],
         'tags': list[And(str, valid_tag)],
     })
