@@ -2,19 +2,25 @@ full: 'portuguese'
 native: 'português'
 locale: 'pt-PT'
 quotes:
-  open: '«'
-  close: '»'
+  open: '“'
+  close: '”'
 cref:
   figure:
     singular: 'figura'
     plural: 'figuras'
   table:
-    singular: 'tabla'
-    plural: 'tables'
+    singular: 'tabela'
+    plural: 'tabelas'
   equation:
-    singular: 'ecuación'
-    plural: 'ecuacións'
+    singular: 'equação'
+    plural: 'equações'
+  section:
+    singular: 'problema'
+    plural: 'problemas'
+  listing:
+    singular: 'lista'
+    plural: 'listas'
 siunitx:
   output_decimal_marker: ','
-  list_pair_separator: 'y'
-  list_final_separator: 'y'
+  list_pair_separator: 'e'
+  list_final_separator: 'e'
