@@ -12,7 +12,6 @@ class BuilderNabojLanguage(BuilderNaboj):
         'answers.jtex',
         'constants.jtex',
         'cover.jtex',
-        'instructions-online.jtex',
         'online.jtex',
         'evaluation.jtex',
         'tearoff.jtex',

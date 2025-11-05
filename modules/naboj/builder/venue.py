@@ -14,7 +14,9 @@ class BuilderNabojVenue(BuilderNaboj):
         'instructions.jtex',
         'answers-modulo.jtex',
     ]
-    language_templates = []
+    language_templates = [
+        'instructions-inner.jtex'
+    ]
 
     def add_arguments(self):
         super().add_arguments()
@@ -26,14 +28,17 @@ class BuilderNabojVenue(BuilderNaboj):
     def path(self) -> tuple:
         return self.args.competition, f'{self.args.volume:02d}', self._subdir, self.args.venue
 
+    def language_path(self) -> tuple:
+        return self.args.competition, f'{self.args.volume:02d}', 'languages', self.context.data['language']['id']
+
     def build_templates(self):
         super().build_templates()
-        renderer = jinja.StaticRenderer(Path(self.launch_directory, *self.path()))
+        language_renderer = jinja.StaticRenderer(Path('/home/kvik/dgs/source/naboj') / Path(*self.language_path()))
 
         for template in self.language_templates:
-            path = self.path()
             outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')
-            renderer.render(template, self.context.data['venue']['language'], outfile=outfile)
+            infile = Path('source/naboj') / Path(*self.language_path()) / template
+            language_renderer.render(infile, self.context.data, outfile=outfile)
 
 
 BuilderNabojVenue().build_templates()
