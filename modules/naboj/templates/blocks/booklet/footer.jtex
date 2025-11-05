@@ -17,6 +17,9 @@
     (* list(i18n[language.id].people.authors, volume.authors.problems) *)
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
+    (@ if language.id != 'sk' and language.translators|length > 0 @)%
+    (* list(i18n[language.id].people.translators, language.translators) *)
+    (@ endif @)
 
     (@ with colocolor='lightgray' @)
         (@ include 'blocks/colophon.jtex' @)

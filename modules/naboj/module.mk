@@ -80,7 +80,6 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-	touch $@
 
 ### Input files ###################################################################################
 
@@ -224,9 +223,9 @@ build/naboj/%/answers: \
 output/naboj/%/booklet.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
-	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/problems/$$(word 4,$$(subst /, ,$$*)) \
-	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/solutions/$$(word 4,$$(subst /, ,$$*)) \
-	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/answers/$$(word 4,$$(subst /, ,$$*)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems/$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions/$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

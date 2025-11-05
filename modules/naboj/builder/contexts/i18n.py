@@ -41,6 +41,7 @@ class ContextI18n(FileSystemTreeContext):
             'authors': str,
             'pictures': str,
             'editors': str,
+            'translators': str,
         },
         'tearoff': {
             'team': str,

@@ -48,7 +48,7 @@ class ContextLanguage(ContextNaboj):
                 'answers': bool,
             },
         },
-        Optional('translators'): [str],
+        Optional('translators', default=[]): [str],
         'name': valid_language_name,
         'rtl': bool,
     })
