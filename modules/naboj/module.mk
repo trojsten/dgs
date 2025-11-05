@@ -80,6 +80,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	touch $@
 
 ### Input files ###################################################################################
 
@@ -187,7 +188,10 @@ build/naboj/%/solutions/$(1): \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
 
 build/naboj/%/answers/$(1): \
-	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) ;
+	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
+	$$$$(subst answer-also.md,$(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md))) \
+	$$$$(subst answer-interval.md,$(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md))) \
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) ;
 
 build/naboj/%/$(1): \
 	build/naboj/%/problems/$(1) \
@@ -196,25 +200,12 @@ build/naboj/%/$(1): \
 endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
-# % <competition>/<volume>
-build/naboj/%/problems: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem.md))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/problem-extra.md))) ;
-
-build/naboj/%/solutions: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/solution.md))) ;
-
-build/naboj/%/answers: \
-	$$(addsuffix answer.tex,$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/))) \
-	$$(addsuffix answer-also.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-also.md),$$(wildcard $$(dir $$(int))*/)))) \
-	$$(addsuffix answer-interval.tex,$$(subst source/,build/,$$(foreach int,$$(wildcard source/naboj/$$*/problems/*/answer-interval.md),$$(wildcard $$(dir $$(int))*/)))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/naboj/$$*/problems/*/*/answer-extra.md))) ;
-
 ### Venues ######################################
 
 # Answers-modulo
+# <competition>/<volume>/venues/<venue>
 build/naboj/%/answers-modulo.tex: \
-	modules/naboj/templates/answer.jtex \
+	modules/naboj/templates/blocks/answer.jtex \
 	modules/naboj/templates/answers-modulo.jtex \
 	build/naboj/$$*/build-venue ;
 
@@ -225,9 +216,9 @@ build/naboj/%/answers-modulo.tex: \
 output/naboj/%/booklet.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions)) \
-	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers)) \
+	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/problems/$$(word 4,$$(subst /, ,$$*)) \
+	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/solutions/$$(word 4,$$(subst /, ,$$*)) \
+	build/naboj/$$(word 1,$$(subst /, ,$$*))/$$(word 2,$$(subst /, ,$$*))/answers/$$(word 4,$$(subst /, ,$$*)) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
 	$(call double_xelatex,naboj)

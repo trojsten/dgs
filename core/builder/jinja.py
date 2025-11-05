@@ -125,16 +125,15 @@ class StaticRenderer(JinjaRenderer):
         """
         Render the template to outfile (or stdout if None)
         """
-        template_path = self.template_root / template
 
         try:
-            log.info(f"Rendering template {c.path(template_path)} to {c.path(outfile.name)}")
+            log.info(f"Rendering template {c.path(template)} to {c.path(outfile.name)}")
             print(
                 self.env.get_template(template.name).render(context),
                 file=outfile,
             )
         except jinja2.exceptions.TemplateNotFound as e:
-            log.critical(f"{c.err('Template not found')}: {c.path(template_path)}, {c.err('aborting')}")
+            log.critical(f"{c.err('Template not found')}: {c.path(template)}, {c.err('aborting')}")
             raise e
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")

@@ -114,6 +114,7 @@ render/%.md: \
 	source/%.md \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
 	$(call _jinja,xx,$(abspath $(dir $<)/meta.yaml))
+	echo '$(c_err)Incorrect fall-through rule called$(c_default)'
 
 # Pandoc: render Markdown to TeX. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided

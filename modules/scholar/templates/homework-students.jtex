@@ -5,9 +5,9 @@
         \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
         \subsection{%
             \texorpdfstring{%
-                (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
+                (* problem.title *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
             }{%
-                \thesubsection{} (* problem.name *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
+                \thesubsection{} (* problem.title *)(@ if 'bonus' in problem and problem.bonus @) (bonus)(@ endif @)%
             }
         }
         \label{sec:(* problem.id *)}
@@ -19,9 +19,9 @@
             (@ for subproblem in problem.subproblems @)
                 \subsubsection{%
                     \texorpdfstring{%
-                        (* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
+                        (* subproblem.title *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
                     }{%
-                        \alph{subsubsection}. (* subproblem.name *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
+                        \alph{subsubsection}. (* subproblem.title *)(@ if 'bonus' in subproblem and subproblem.bonus @) (bonus)(@ endif @)%
                     }%
                 }
                 \label{sec:(* problem.id *):(* subproblem.id *)}

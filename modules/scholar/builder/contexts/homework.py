@@ -13,8 +13,8 @@ class HomeworkMixin:
 
 class ContextHomeworkSubproblem(HomeworkMixin, ContextIssueSubSub):
     _schema = Schema({
-        'id': And(str, len),
-        'name': And(str, len),
+        Optional('id'): And(str, len),
+        Optional('title'): And(str, len),
         Optional('bonus'): bool,
     })
 
@@ -24,7 +24,7 @@ class ContextHomeworkProblem(HomeworkMixin, ContextIssueSub):
     _subcontext_class = ContextHomeworkSubproblem
     _schema = Schema({
         'id': And(str, len),
-        'name': And(str, len),
+        'title': And(str, len),
         Optional('bonus'): bool,
     })
 
