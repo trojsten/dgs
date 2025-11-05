@@ -16,7 +16,7 @@
         \newpage
         \section{(* i18n[language.id].section.modulo *) (* loop.index0 *)}
         (@ for problem in modulo @)
-            (@ include 'answer.jtex' @)
+            (@ include 'blocks/answer.jtex' @)
         (@ endfor @)
 
     (@ endfor @)

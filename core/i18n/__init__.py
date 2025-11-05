@@ -1,5 +1,4 @@
 import yaml
-import dotmap
 import copy
 import pprint
 import regex as re

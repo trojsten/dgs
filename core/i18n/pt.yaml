@@ -4,6 +4,7 @@ locale: 'pt-PT'
 quotes:
   open: '“'
   close: '”'
+  extra: 'portuguese'
 cref:
   figure:
     singular: 'figura'

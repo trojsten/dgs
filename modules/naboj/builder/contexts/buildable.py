@@ -6,11 +6,12 @@ from enschema import Schema
 from core import i18n
 from core.builder.context.buildable import BuildableFileSystemTreeContext
 from core.builder.context.module import ContextModule
+from core.i18n import Locale
 from jinja import ConstantsContext
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
-from .i18n import ContextI18nGlobal
+from .i18n import ContextI18nGlobal, ContextI18n
 
 
 class BuildableContextNaboj(BuildableFileSystemTreeContext, ContextNaboj, metaclass=abc.ABCMeta):
@@ -47,7 +48,9 @@ class BuildableContextLanguage(BuildableContextNaboj):
 class BuildableContextVenue(BuildableContextNaboj):
     _target = 'venue'
     _subdir = 'venues'
-    _schema = Schema({})
+    _schema = Schema({
+        'language': Locale.schema,
+    })
 
     def __init__(self, root, *args):
         self._schema = super()._schema | self._schema
