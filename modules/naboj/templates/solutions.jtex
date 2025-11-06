@@ -1,0 +1,19 @@
+(# One solution per page (if it fits), for quick reference for the chief physicist. #)
+
+(@ extends 'base-booklet.jtex' @)
+
+(@ set target = 'booklet' @)
+
+(@ block content @)
+    \setcounter{volume}{(* volume.number *)}%
+    \pagestyle{naboj}
+
+    (@ if language.booklet.contents.solutions @)
+        \section{(* i18n[language.id].section.solutions *)}
+        \pagestyle{solutions}
+        (@ for problem in volume.problems @)%
+            (@ include 'blocks/solution.jtex' @)%
+            \newpage
+        (@ endfor @)
+    (@ endif @)
+(@ endblock @)

@@ -103,7 +103,7 @@ build/naboj/%/tearoff.tex: \
 	build/naboj/$$*/build-language ;
 
 # % <competition>/<volume>/languages/<language>
-build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex: \
+build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex build/naboj/%/solutions.tex: \
 	modules/naboj/templates/base.jtex \
 	modules/naboj/templates/base-booklet.jtex \
 	modules/naboj/templates/blocks/answer.jtex \
@@ -228,6 +228,14 @@ output/naboj/%/booklet.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
 	build/naboj/%/intro.tex \
 	build/naboj/%/booklet.tex
+	$(call double_xelatex,naboj)
+
+# % <competition>/<volume>/languages/<language>
+output/naboj/%/solutions.pdf: \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
+	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions/$$(word 4,$$(subst /, ,$$*)))) \
+	build/naboj/%/solutions.tex
 	$(call double_xelatex,naboj)
 
 # Full booklet folded for printing

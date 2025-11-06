@@ -15,6 +15,7 @@ class BuilderNabojLanguage(BuilderNaboj):
         'online.jtex',
         'evaluation.jtex',
         'tearoff.jtex',
+        'solutions.jtex',
     ]
     i18n_templates = ['intro.jtex', 'evaluators.jtex']
 

@@ -7,7 +7,7 @@
                 \item (* person *)
             (@ endfor @)
             (@ if people|length % 3 == 1 @)\item(@ endif @)
-            (@ if people|length % 3 >= 1 @)\item(@ endif @)
+            (@ if people|length % 3 == 2 @)\item(@ endif @)
         \end{itemize}
     \end{multicols}
 (@ endmacro @)

@@ -1,3 +1,6 @@
+(# Printable tearoff, without barcodes, one problem statement per page #)
+(# Size is A4 portrait, but split into `per_page` equal segments vertically #)
+
 (@ extends 'base-tearoff.jtex' @)
 
 (@ set target = 'tearoff' @)
