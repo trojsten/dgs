@@ -3,7 +3,7 @@ import operator
 import math
 import numbers
 import re
-from typing import Optional
+from typing import Optional, Self
 
 import numpy as np
 import pint
@@ -291,6 +291,14 @@ class QuantityRange:
 
         cmd = 'qtyrange'
         return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
+
+    def widen(self, value: float) -> Self:
+        """
+        Widen the interval by value:
+        minimum := (1 - value) * minimum
+        maximum := (1 + value) * maximum
+        """
+        return QuantityRange(self.minimum * (1 - value), self.maximum * (1 + value))
 
     def __str__(self):
         return self.__format__('g')

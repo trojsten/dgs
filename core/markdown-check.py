@@ -83,7 +83,6 @@ class StyleEnforcer:
     def check_label(self, module, path, label):
         if module == 'naboj':
             volume_id, problem_id, language, filename = path.parts()[-4:-1]
-            print(volume_id, problem_id, language, filename)
             # if matched := re.match(fr'#(eq|fig|tbl):(?P<problem>[]):[\w]+', label):
         elif module == 'seminar':
             volume_id, semester_id, round_id, problem_id = path.split[2:5]
@@ -138,7 +137,7 @@ class StyleEnforcer:
 
                 if self.args.warnings:
                     ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn)
-                               for checker in self.line_warnings])
+                               for checker in self.line_warnings.values()])
 
             if self.args.verbose and ok:
                 print(f"File {c.path(file.name)} {c.ok('OK')}")

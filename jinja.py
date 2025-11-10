@@ -100,11 +100,13 @@ class ConstantsContext(FileContext):
 
 class StandaloneContext(FileContext):
     _schema = Schema({
+        'id': str,
         Opt('values'): dict[str, PhysicsConstant],
         #Opt('date'): datetime.date,
         #Opt('title'): str,
         'authors': list[str],
         'tags': list[And(str, valid_tag)],
+        Opt('eq'): dict[str, str],
     })
 
 
@@ -121,11 +123,13 @@ class CLIInterface(cli.CLIInterface, ABC):
     description = "DeGeŠ Jinja convertor"
 
     def build_context(self) -> Context:
-        context = StandaloneContext(self.args.context.name, Path(self.args.context.name))
+        context = StandaloneContext(self.args.context.name, Path(self.args.context.name)).add(id=Path(self.args.context.name).parent.name)
         constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
         constants.validate()
 
         ctx = Context('cont')
+
+        # Process values: if a PhysicsConstant can be constructed, do so
         if 'values' in context.data:
             values = context.data['values']
 
@@ -139,6 +143,12 @@ class CLIInterface(cli.CLIInterface, ABC):
                     raise TypeError(f"Unsupported type {type(params)} ({params})")
 
             ctx.add(**values)
+
+        if 'eq' in context.data:
+            for idx, equation in context.data['eq'].items():
+                context.data['eq'][idx] = f"$$\n{equation}$$ {{#eq:{context.data['id']}}}\n"
+            eq = context.data['eq']
+            ctx.add(eq=eq)
 
         ctx.adopt(const=constants)
         context.validate()

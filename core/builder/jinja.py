@@ -11,7 +11,7 @@ from typing import Any, Optional, TextIO
 
 from jinja2 import DictLoader
 
-from core.builder.context.quantities import construct_quantity, PhysicsQuantity
+from core.builder.context.quantities import construct_quantity, PhysicsQuantity, QuantityRange
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
@@ -162,6 +162,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
+            'w': QuantityRange.widen,
         } |
         self.__generate_functions(numbers.format_float, 'f') |
         self.__generate_functions(numbers.format_general, 'g') |
