@@ -36,7 +36,6 @@ class JinjaConvertor:
     """
     def __init__(self,
                  template_file: TextIOWrapper,
-                 outfile: Optional[TextIOWrapper] = sys.stdout,
                  *,
                  context: Context,
                  preamble: Optional[io.TextIOWrapper] = None,
@@ -47,8 +46,6 @@ class JinjaConvertor:
         ----------
         template_file:
             The Jinja template file to render.
-        outfile:
-            The output file to write the rendered template to. Defaults to stdout.
         context:
             The context to use for rendering the template.
         preamble:
@@ -58,14 +55,13 @@ class JinjaConvertor:
         debug:
             Activate debug mode.
         """
-        self.outfile: Optional[Path] = outfile
         self.context: Context = context
         self.preamble: Optional[str] = preamble.read() if preamble else None
-        self.template_file: TextIOWrapper = template_file
+        self.template: str = template_file.read()
 
         if debug:
             log.debug(f"{c.debug('Template to render into')}:")
-
+            print(self.template)
             log.debug(f"{c.debug('Context data')}:")
             pprint.pprint(context.data)
 
@@ -76,8 +72,8 @@ class JinjaConvertor:
         return (self.preamble or "") + template
 
 
-    def run(self, *, outfile: Optional[TextIOWrapper] = sys.stdout):
-        intermediate = self.renderer.render(self.prepare_template(self.template_file.read()), self.context.data)
+    def run(self):
+        intermediate = self.renderer.render(self.prepare_template(self.template), self.context.data)
         return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
@@ -103,7 +99,8 @@ class StandaloneContext(FileContext):
     })
 
 
-class ScholarStandaloneContext(StandaloneContext):
+# FixMe move to module builder
+class ScholarStandaloneContext(Context):
     _schema = Schema({
         'date': datetime.date,
         'title': str,
@@ -122,12 +119,13 @@ class CLIInterface(cli.CLIInterface, ABC):
             self.args.context.name,
             Path(self.args.context.name)
         ).add(id=Path(self.args.context.name).parent.name)      # Also add the problem id here
+        context.validate()
         constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
         constants.validate()
 
         ctx = Context('cont')
 
-        # Process values: if a PhysicsConstant can be constructed, do so
+        # Process values: if a PhysicsConstant can be constructed, do so, and add directly to the context
         if 'values' in context.data:
             values = context.data['values']
 
@@ -142,28 +140,24 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             ctx.add(**values)
 
-        # Process all equations: `eq` for block math, `math` for inline math, `align` for aligned equations
-
-        # Block math will be rendered as
-        # $$
-        #     math math math
-        # $$ {#eq:<problem id>:<equation id>}
+        # Process all equations: create MathObject and store under the `eq` key in the context
         if 'eq' in context.data:
             for idx, fragment in context.data['eq'].items():
                 context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment)
             ctx.add(eq=context.data['eq'])
 
         ctx.adopt(const=constants)
-        ctx.validate()
         return ctx
 
     def build_convertor(self, args, **kwargs):
-        if self.args.preamble is not None and Path(self.args.preamble).exists():
+        if self.args.preamble is not None:
+            if not Path(self.args.preamble).exists():
+                log.error(f"Preamble file {Path(self.args.preamble)} specified but not found")
             preamble = open(self.args.preamble, 'r')
         else:
             preamble = None
 
-        return JinjaConvertor(self.args.infile, self.args.outfile,
+        return JinjaConvertor(self.args.infile,
                               context=self.build_context(),
                               preamble=preamble,
                               debug=self.args.debug)

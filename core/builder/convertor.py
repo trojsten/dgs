@@ -1,7 +1,7 @@
 import subprocess
 import tempfile
 from tempfile import SpooledTemporaryFile
-from typing import Callable, TextIO
+from typing import Callable
 from pathlib import Path
 
 from core.utilities import colour as c
@@ -148,7 +148,7 @@ class Convertor:
             self.file = self.call_pandoc()
             self.file = self.file_operation(self.postprocess)(self.file)
             self.file = self.file_operation(self.post_check)(self.file)
-            self.write()
+            return self.file.read().rstrip('\n')
         except IOError as e:
             print(f"{c.path(__file__)}: Could not create a temporary file: {e}")
         except AssertionError as e:
@@ -156,8 +156,6 @@ class Convertor:
         except Exception as e:
             print("Unexpected exception occurred:")
             raise e
-        else:
-            return 0
 
     @staticmethod
     def file_operation(function: Callable) -> Callable:
@@ -170,11 +168,6 @@ class Convertor:
             return out
 
         return inner
-
-    def write(self):
-        for line in self.file:
-            self.outfile.write(line)
-        self.file.seek(0)
 
     @staticmethod
     def process_line(line: str, regexes) -> str:

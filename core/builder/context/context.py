@@ -74,10 +74,11 @@ class Context(abc.ABC):
         """
         if self._schema is None:
             log.warning(f"No validation schema defined for class "
-                        "{c.name(self.__class__.__name__)}, skipping validation")
+                        f"{c.name(self.__class__.__name__)}, skipping validation")
         else:
             try:
                 self._data = self._schema.validate(self.data)
+                log.debug(f"Context {c.name(self.__class__.__name__)} was {c.ok('validated')}")
             except SchemaError as exc:
                 log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)} "
                           f"{c.path(self.id)}")

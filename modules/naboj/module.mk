@@ -52,7 +52,13 @@ render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
+	$$(call jinja_with_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
+
+render/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call jinja_without_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md
@@ -200,7 +206,7 @@ build/naboj/%/solutions/$(1): \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
 
 build/naboj/%/answers/$(1): \
-	$$$$(addsuffix answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/))) \
+	$$$$(subst answer.md,$(1)/answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer.md))) \
 	$$$$(subst answer-also.md,$(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md))) \
 	$$$$(subst answer-interval.md,$(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md))) \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) ;

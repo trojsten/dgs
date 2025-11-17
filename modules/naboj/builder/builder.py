@@ -27,6 +27,7 @@ class BuilderNaboj(BaseBuilder, metaclass=abc.ABCMeta):
     def build_templates(self, *, new_name: Optional[str] = None) -> None:
         super().build_templates()
 
+        # Also build files that are defined for a translation
         renderer = StaticRenderer(Path(self.launch_directory, *self.path()))
 
         for template in self.i18n_templates:
