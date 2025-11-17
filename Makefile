@@ -50,25 +50,25 @@ define _pandoc
 	python pandoc.py --format $(2) $(1) $< $@ || exit 1;
 endef
 
-# lang
-# meta file
-# preamble file
-define _jinja
+# <builder> <lang> <meta file>
+define jinja_without_preamble
 	@echo -e '$(c_action)[jinja] Rendering \
 		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
-    python jinja.py $(1) $< $@ --context $(2) --preamble $(3) || exit 1;
+    python -m $(1) $(2) $< $@ --context $(3) || exit 1;
 endef
 
-# lang
-define _jinja_no_preamble
+# <builder> <lang> <meta file> <preamble file>
+define jinja_with_preamble
 	@echo -e '$(c_action)[jinja] Rendering \
 		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
-		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
+		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default) with preamble \
+		$(c_filename)$(4)$(c_default)'
 	@mkdir -p $(dir $@)
-    python jinja.py $(1) $< $@ --context $(2) || exit 1;
+    python -m $(1) $(2) $< $@ --context $(3) --preamble $(4) || exit 1;
 endef
+
 
 # pandoctex(language)
 # Converts a file from Markdown to LaTeX
@@ -113,7 +113,7 @@ build/core/i18n: \
 render/%.md: \
 	source/%.md \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call _jinja,xx,$(abspath $(dir $<)/meta.yaml))
+	$(call jinja_without_preamble,xx,$(abspath $(dir $<)/meta.yaml))
 	echo '$(c_err)Incorrect fall-through rule called$(c_default)'
 
 # Pandoc: render Markdown to TeX. XFAIL: this should never be called!
@@ -229,7 +229,7 @@ render/%.gp:\
 	source/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat)) \
 	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
+	$(call jinja_with_preamble,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
 
 build/%.gp:\
 	render/%.gp \

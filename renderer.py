@@ -3,12 +3,12 @@ import argparse
 import io
 import numbers
 import pprint
-import shutil
 import logging
 import datetime
+import sys
 
 from abc import ABC
-from io import TextIOWrapper, StringIO
+from io import TextIOWrapper
 
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
@@ -19,6 +19,7 @@ from enschema import Schema, Or, Optional as Opt, And
 from core import cli
 from core.builder.context.context import Context
 from core.builder.context.file import FileContext
+from core.builder.context.quantities.math import MathObject
 from core.builder.jinja import MarkdownJinjaRenderer
 
 from core.builder.context.quantities import PhysicsConstant
@@ -27,61 +28,57 @@ from core.utilities import colour as c
 log = logging.getLogger('dgs')
 
 
-VALID_TAGS: dict[str, str] = {
-    'kinematics': 'kinematics',
-    'statics': 'statics',
-    'electrostatics': 'electrostatics',
-    'nuclear': 'nuclear physics',
-    'relativity': 'special or general relativity',
-    'uam': 'uniformly accelerated motion',
-    'com': 'centre of mass',
-    'creative': 'a problem that requires out-of-the-box thinking',
-    'thermodynamics': 'thermodynamics',
-    'buoyancy': 'buoyancy',
-    'troll': 'a problem with a trivial solution',
-    'elegant': 'short but interesting problem',
-}
-
-
-def valid_tag(tag: str) -> bool:
-    return tag in VALID_TAGS
-
-
 class JinjaConvertor:
+    """
+    Jinja template convertor wrapper.
+
+    Renders a single template to a file, using a provided Context.
+    """
     def __init__(self,
-                 template: TextIOWrapper,
-                 outfile: Optional[TextIOWrapper],
+                 template_file: TextIOWrapper,
+                 outfile: Optional[TextIOWrapper] = sys.stdout,
                  *,
                  context: Context,
                  preamble: Optional[io.TextIOWrapper] = None,
                  preamble_prepend: Optional[str] = '',
                  debug: bool = False):
+        """
+        Parameters
+        ----------
+        template_file:
+            The Jinja template file to render.
+        outfile:
+            The output file to write the rendered template to. Defaults to stdout.
+        context:
+            The context to use for rendering the template.
+        preamble:
+            The Jinja preamble file to use (optional). May contain computations.
+        preamble_prepend:
+            Prepend the string to every preamble line (currently ignored).
+        debug:
+            Activate debug mode.
+        """
         self.outfile: Optional[Path] = outfile
         self.context: Context = context
+        self.preamble: Optional[str] = preamble.read() if preamble else None
+        self.template_file: TextIOWrapper = template_file
 
-        with SpooledTemporaryFile(mode="w+") as tmp:
-            # If there is a preamble, prepend it to the actual file
-            if preamble is not None:
-                # FixME prepend preamble_prepend to every line (default '@J set ')
-                shutil.copyfileobj(preamble, tmp)
+        if debug:
+            log.debug(f"{c.debug('Template to render into')}:")
 
-            # Always copy the actual template
-            shutil.copyfileobj(template, tmp)
-            tmp.seek(0)
+            log.debug(f"{c.debug('Context data')}:")
+            pprint.pprint(context.data)
 
-            if debug:
-                log.debug(f"{c.debug('Template to render into')}:")
-                print(tmp.read())
-                tmp.seek(0)
+        self.renderer = MarkdownJinjaRenderer()
 
-                log.debug(f"{c.debug('Context data')}:")
-                pprint.pprint(context.data)
+    def prepare_template(self,
+                         template: str) -> str:
+        return (self.preamble or "") + template
 
-            self.renderer = MarkdownJinjaRenderer(template=tmp.read())
 
-    def run(self):
-        self.renderer.render(self.context.data, outfile=self.outfile)
-        return 0
+    def run(self, *, outfile: Optional[TextIOWrapper] = sys.stdout):
+        intermediate = self.renderer.render(self.prepare_template(self.template_file.read()), self.context.data)
+        return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
 class ConstantsContext(FileContext):
@@ -93,37 +90,38 @@ class ConstantsContext(FileContext):
         super().__init__(new_id, path, **defaults)
         self.add(**{
             alias: PhysicsConstant.construct(name, **data)
-            for name, data in self.data.items()  # Create and add all defined constants
-            for alias in [name] + data.get('aliases', [])  # Also include all available aliases for them
+            for name, data in self.data.items()             # Create and add all defined constants
+            for alias in [name] + data.get('aliases', [])   # Also include under all available aliases for them
         })
 
 
 class StandaloneContext(FileContext):
     _schema = Schema({
         'id': str,
-        Opt('values'): dict[str, PhysicsConstant],
-        #Opt('date'): datetime.date,
-        #Opt('title'): str,
-        'authors': list[str],
-        'tags': list[And(str, valid_tag)],
-        Opt('eq'): dict[str, str],
+        Opt('values'): dict[str, PhysicsConstant],  # Values
+        Opt('eq'): dict[str, str],                  # Equations
     })
 
 
-class NabojStandaloneContext(StandaloneContext):
+class ScholarStandaloneContext(StandaloneContext):
     _schema = Schema({
-        'authors': list[str],
-        'tags': list[And(str, valid_tag)],
+        'date': datetime.date,
+        'title': str,
     })
+
 
 class CLIInterface(cli.CLIInterface, ABC):
     """
     Jinja CLI interface
     """
-    description = "DeGeŠ Jinja convertor"
+    description = "Jinja convertor"
+    context_cls = StandaloneContext
 
     def build_context(self) -> Context:
-        context = StandaloneContext(self.args.context.name, Path(self.args.context.name)).add(id=Path(self.args.context.name).parent.name)
+        context = self.context_cls(
+            self.args.context.name,
+            Path(self.args.context.name)
+        ).add(id=Path(self.args.context.name).parent.name)      # Also add the problem id here
         constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
         constants.validate()
 
@@ -144,14 +142,19 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             ctx.add(**values)
 
+        # Process all equations: `eq` for block math, `math` for inline math, `align` for aligned equations
+
+        # Block math will be rendered as
+        # $$
+        #     math math math
+        # $$ {#eq:<problem id>:<equation id>}
         if 'eq' in context.data:
-            for idx, equation in context.data['eq'].items():
-                context.data['eq'][idx] = f"$$\n{equation}$$ {{#eq:{context.data['id']}}}\n"
-            eq = context.data['eq']
-            ctx.add(eq=eq)
+            for idx, fragment in context.data['eq'].items():
+                context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment)
+            ctx.add(eq=context.data['eq'])
 
         ctx.adopt(const=constants)
-        context.validate()
+        ctx.validate()
         return ctx
 
     def build_convertor(self, args, **kwargs):

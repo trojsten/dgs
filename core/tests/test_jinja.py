@@ -6,7 +6,7 @@ import regex as re
 
 from core.builder.context import PhysicsConstant
 from core.builder.jinja import MarkdownJinjaRenderer
-from jinja import JinjaConvertor, CLIInterface
+from renderer import JinjaConvertor, CLIInterface
 
 from pint import UnitRegistry as u
 

@@ -43,14 +43,15 @@ class CLIInterface:
         pass
 
     def run(self) -> None:
-        if self.convertor.run() == 0:
-            self.success()
-        else:
+        try:
+            output = self.convertor.run()
+            print(output, file=self.args.outfile)
+            self.success
+        except Exception as e:
             self.fail()
 
     def fail(self):
         log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
-        sys.exit(-1)
 
     def success(self):
         if self.args.verbose:

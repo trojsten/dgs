@@ -24,7 +24,20 @@ render/naboj/%/$(1).md: \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
 	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call _jinja,$$(language),$$(abspath $$(dir $$<)/../meta.yaml),$$(abspath $$(dir $$<)/../preamble.md))
+	$$(call jinja_with_preamble,\
+		modules.naboj.builder.renderer,\
+		$$(language),\
+		$$(call truepath,$$(abspath $$(dir $$<)/../meta.yaml)),\
+		$$(call truepath,$$(abspath $$(dir $$<)/../preamble.md)))
+
+render/naboj/%/$(1).md: \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
+	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call jinja_without_preamble,\
+		modules.naboj.builder.renderer,\
+		$$(language),\
+		$$(abspath $$(dir $$<)/../meta.yaml))
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md

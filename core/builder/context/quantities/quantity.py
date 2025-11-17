@@ -297,6 +297,8 @@ class QuantityRange:
         Widen the interval by value:
         minimum := (1 - value) * minimum
         maximum := (1 + value) * maximum
+
+        This should be useful for specifying ranges of acceptable results in Náboj.
         """
         return QuantityRange(self.minimum * (1 - value), self.maximum * (1 + value))
 

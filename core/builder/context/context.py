@@ -73,7 +73,8 @@ class Context(abc.ABC):
         Validate the data against the schema, if provided
         """
         if self._schema is None:
-            log.warning(f"No validation schema defined for {self.__class__.__name__}, skipping validation")
+            log.warning(f"No validation schema defined for class "
+                        "{c.name(self.__class__.__name__)}, skipping validation")
         else:
             try:
                 self._data = self._schema.validate(self.data)

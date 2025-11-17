@@ -1,9 +1,12 @@
+import regex as re
+
 from typing import Any, Union, Callable, Optional
 
 from enschema import Schema, Or
 
 from .numbers import _nth, format_float, format_general
 from core.builder.context.quantities import PhysicsQuantity
+from ..builder.context.quantities.math import MathObject
 
 
 def isotex(date):
@@ -139,3 +142,24 @@ def equals_float(q: PhysicsQuantity, precision: Optional[int] = None):
 
 def equals_general(q: PhysicsQuantity, precision: Optional[int] = None):
     return q.equals_general(precision)
+
+
+def math_inline(math: MathObject):
+    """
+    Display as inline math with no frills.
+    """
+    return f"{math!s}"
+
+
+def math_display(math: MathObject):
+    """
+    Display as block math with a label.
+    """
+    return f"{math:disp}"
+
+
+def math_aligned(math: MathObject):
+    r"""
+    Display inside an \aligned{} environment with a label
+    """
+    return f"{math:align}"

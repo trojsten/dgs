@@ -1,5 +1,6 @@
 import functools
 import math
+from abc import abstractmethod
 from pathlib import Path
 
 import jinja2
@@ -51,7 +52,7 @@ class JinjaRenderer:
     """
     def __init__(self,
                  *,
-                 loader: jinja2.BaseLoader,
+                 loader: jinja2.BaseLoader = jinja2.BaseLoader(),
                  **kwargs):
         self.env = jinja2.Environment(
             block_start_string=kwargs.pop('block_start_string', '(@'),
@@ -70,24 +71,27 @@ class JinjaRenderer:
         )
 
     def render(self,
-               context: dict[str, Any],
-               *,
-               outfile: Optional[TextIO] = sys.stdout) -> None:
+               template: Any,
+               context: dict[str, Any]) -> str:
         """
         Render in memory
         """
         try:
-            log.info(f"Rendering a template to {c.path(outfile.name)}")
-            print(
-                self.env.get_template('template').render(**context),
-                file=outfile,
-            )
+            return self._render(template, context=context)
         except jinja2.exceptions.UndefinedError as e:
-            log.critical(f"Missing required variable from context: {c.err(e)} in {c.path(outfile.name)}")
+            log.critical(f"Missing required variable from context: {c.err(e)}")
             raise e
         except jinja2.exceptions.TemplateSyntaxError as e:
-            log.critical(f"Template syntax error in {c.path(outfile.name)}")
+            log.critical(f"Template syntax error")
             raise e
+
+    @abstractmethod
+    def _render(self,
+                template: Any,
+                context: dict[str, Any]) -> str:
+        """
+        Inner render method
+        """
 
 
 class StaticRenderer(JinjaRenderer):
@@ -117,41 +121,47 @@ class StaticRenderer(JinjaRenderer):
             'file_size': os.path.getsize,
         }
 
-    def render(self,
-               template: Path,
-               context: dict[str, Any],
-               *,
-               outfile: Optional[TextIO] = sys.stdout) -> None:
+    def _render(self,
+                template: Path,
+                context: dict[str, Any]) -> str:
         """
-        Render the template to outfile (or stdout if None)
+        Render the template to a string)
         """
+        log.debug(f"Rendering {template}")
 
         try:
-            log.info(f"Rendering template {c.path(template)} to {c.path(outfile.name)}")
-            print(
-                self.env.get_template(template.name).render(context),
-                file=outfile,
-            )
-        except jinja2.exceptions.TemplateNotFound as e:
-            log.critical(f"{c.err('Template not found')}: {c.path(template)}, {c.err('aborting')}")
-            raise e
+            return self.env.get_template(template.name).render(**context)
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
             raise e
+        except jinja2.exceptions.UndefinedError as e:
+            log.critical(f"Missing required variable from context: {c.err(e)} in {c.path(template.name)}")
+            raise e
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            log.critical(f"Template syntax error in {c.path(template.name)}")
+            raise e
+        # Other exceptions are deferred to the base class
 
 
 class MarkdownJinjaRenderer(JinjaRenderer):
     """
     A Jinja2 renderer for pre-rendering dynamically added Markdown files.
-    Includes mathematical functions, basic constants, and number formatting filters.
+
+    String-based, expects the whole template to be provided as a string.
+    Includes mathematical functions, basic constants, and numerous formatting filters.
     """
     @staticmethod
-    def __generate_functions(func, tag):
+    def __generate_format_functions(func, tag):
+        """
+        Generate formatting function shorthands for a particular format and all precisions between 0 and 9.
+        """
         return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(0, 10)}
 
-    def __init__(self, *, template, **kwargs):
-        super().__init__(loader=DictLoader({'template': template}),
-                         variable_start_string='(§',
+    def __init__(self, **kwargs):
+        """
+        Markdown renderer overrides variable tags to `(§ §)` so as not to clash with Markdown syntax.
+        """
+        super().__init__(variable_start_string='(§',
                          variable_end_string='§)',
                          **kwargs)
 
@@ -164,15 +174,20 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'eg': latex.equals_general,
             'w': QuantityRange.widen,
         } |
-        self.__generate_functions(numbers.format_float, 'f') |
-        self.__generate_functions(numbers.format_general, 'g') |
-        self.__generate_functions(latex.num_float, 'nf') |
-        self.__generate_functions(latex.num_general, 'ng') |
-        self.__generate_functions(latex.equals_float, 'ef') |
-        self.__generate_functions(latex.equals_general, 'eg'))
+        self.__generate_format_functions(numbers.format_float, 'f') |
+        self.__generate_format_functions(numbers.format_general, 'g') |
+        self.__generate_format_functions(latex.num_float, 'nf') |
+        self.__generate_format_functions(latex.num_general, 'ng') |
+        self.__generate_format_functions(latex.equals_float, 'ef') |
+        self.__generate_format_functions(latex.equals_general, 'eg')) | {
+            'inline': latex.math_inline,
+            'disp': latex.math_display,
+            'align': latex.math_aligned,
+        }
 
         self.env.globals |= {
             'Q': PhysicsQuantity.construct,
+        } | {
             'sin': np.sin,
             'cos': np.cos,
             'tan': np.tan,
@@ -195,6 +210,12 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'pi': np.pi,
             'tau': math.tau,
             'euler': math.e,
+        } | {
             'KtoC': lambda x: x - 273.15,
             'CtoK': lambda x: x + 273.15,
         }
+
+    def _render(self,
+                template: str,
+                context: dict[str, Any]):
+        return self.env.from_string(template).render(**context)
