@@ -5,12 +5,9 @@ from pathlib import Path
 
 import jinja2
 import os
-import sys
 import numpy as np
 
 from typing import Any, Optional, TextIO
-
-from jinja2 import DictLoader
 
 from core.builder.context.quantities import construct_quantity, PhysicsQuantity, QuantityRange
 from core.utilities import colour as c, logger
@@ -82,8 +79,7 @@ class JinjaRenderer:
             log.critical(f"Missing required variable from context: {c.err(e)}")
             raise e
         except jinja2.exceptions.TemplateSyntaxError as e:
-            log.critical(f"Template syntax error")
-            print(e)
+            log.critical(f"Template syntax error: {e}")
             raise e
 
     @abstractmethod
@@ -174,6 +170,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ef': latex.equals_float,
             'eg': latex.equals_general,
             'w': QuantityRange.widen,
+            'widen': QuantityRange.widen,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |
