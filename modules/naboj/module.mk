@@ -11,18 +11,16 @@ source/naboj/%/i18n: \
 # Overrides global convertor!
 
 define truepath
-	$(subst $(cdir),,$(1))
+	$(subst $(cdir),,$(abspath $(1)))
 endef
-
-# TODO: for some reason these two do not work if combined into one!
 
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
-define TRANSLATABLE
+define NABOJ_TRANSLATABLE
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
+	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(call truepath, source/naboj/$$$$*/../preamble.md)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja_with_preamble,\
 		modules.naboj.builder.renderer,\
@@ -31,8 +29,8 @@ render/naboj/%/$(1).md: \
 		$$(call truepath,$$(abspath $$(dir $$<)/../preamble.md)))
 
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja_without_preamble,\
 		modules.naboj.builder.renderer,\
@@ -44,19 +42,19 @@ build/naboj/%/$(1).tex: \
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
-$(foreach filename,problem solution problem-extra answer-extra,$(eval $(call TRANSLATABLE,$(filename))))
+$(foreach filename,problem solution problem-extra answer-extra,$(eval $(call NABOJ_TRANSLATABLE,$(filename))))
 
-define NONTRANSLATABLE_ANSWERS
+define NABOJ_NONTRANSLATABLE
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../preamble.md))
+	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(call truepath, source/naboj/$$$$*/../preamble.md)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja_with_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
 
 render/naboj/%/$(1).md: \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../$(1).md)) \
-	$$$$(call truepath,$$$$(abspath source/naboj/$$$$*/../meta.yaml))
+	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja_without_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
@@ -65,7 +63,7 @@ build/naboj/%/$(1).tex: \
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
-$(foreach filename,answer answer-also answer-interval,$(eval $(call NONTRANSLATABLE_ANSWERS,$(filename))))
+$(foreach filename,answer answer-also answer-interval,$(eval $(call NABOJ_NONTRANSLATABLE,$(filename))))
 
 # Copy Gnuplot file to build, along with all of its possible .dat prerequisites
 render/naboj/%.gp:\

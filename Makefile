@@ -111,16 +111,14 @@ build/core/i18n: \
 # Jinja template: render Markdown to Markdown. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided
 render/%.md: \
-	source/%.md \
-	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call jinja_without_preamble,xx,$(abspath $(dir $<)/meta.yaml))
-	echo '$(c_err)Incorrect fall-through rule called$(c_default)'
+	source/%.md
+	echo '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
 
 # Pandoc: render Markdown to TeX. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided
 build/%.tex: \
 	render/%.md
-	$(call pandoctex,xx)
+	echo '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
 
 # Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \

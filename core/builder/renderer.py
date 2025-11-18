@@ -92,6 +92,10 @@ class ConstantsContext(FileContext):
 
 
 class StandaloneContext(FileContext):
+    """
+    Base context for the standalone Markdown renderer
+    (in the "source (Markdown / Jinja) -> render (Markdown) -> build (TeX / HTML) -> output (TeX / HTML)" chain)
+    """
     _schema = Schema({
         'id': str,
         Opt('values'): dict[str, Or(str, float, int, PhysicsConstant)],  # Values

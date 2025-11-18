@@ -7,9 +7,9 @@ import jinja2
 import os
 import numpy as np
 
-from typing import Any, Optional, TextIO
+from typing import Any
 
-from core.builder.context.quantities import construct_quantity, PhysicsQuantity, QuantityRange
+from core.builder.context.quantities import PhysicsQuantity, QuantityRange
 from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
@@ -68,7 +68,7 @@ class JinjaRenderer:
         )
 
     def render(self,
-               template: Any,
+               template: str | Path,
                context: dict[str, Any]) -> str:
         """
         Render in memory
@@ -87,7 +87,7 @@ class JinjaRenderer:
                 template: Any,
                 context: dict[str, Any]) -> str:
         """
-        Inner render method
+        Inner render method, to be overridden by subclasses if necessary.
         """
 
 
@@ -122,20 +122,22 @@ class StaticRenderer(JinjaRenderer):
                 template: Path,
                 context: dict[str, Any]) -> str:
         """
-        Render the template to a string)
+        Render the template to a string, catching and logging most typical exceptions
+
+        # ToDo: find if there are more worth of any attention
         """
         log.debug(f"Rendering {template}")
 
         try:
             return self.env.get_template(template.name).render(**context)
         except jinja2.exceptions.UndefinedError as e:
-            log.critical(f"Missing required variable from context in {c.path(template)}: {c.err(e)}")
+            log.critical(f"Missing required variable from context in {c.path(template.name)}: {c.err(e)}")
             raise e
         except jinja2.exceptions.UndefinedError as e:
-            log.critical(f"Missing required variable from context: {c.err(e)} in {c.path(template.name)}")
+            log.critical(f"Missing required variable from context in {c.path(template.name)}: {c.err(e)}")
             raise e
         except jinja2.exceptions.TemplateSyntaxError as e:
-            log.critical(f"Template syntax error in {c.path(template.name)}")
+            log.critical(f"Template syntax error in {c.path(template.name)}: {c.err(e)}")
             raise e
         # Other exceptions are deferred to the base class
 

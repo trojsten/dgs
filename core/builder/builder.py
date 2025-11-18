@@ -58,7 +58,7 @@ class BaseBuilder(metaclass=ABCMeta):
     templates = []
     _target: str = None
     _root_context_class: ClassVar[type[Context]] = None
-    _renderer_class: ClassVar[type[JinjaRenderer]] = None
+    _renderer_class: ClassVar[type[JinjaRenderer]]
     default_suffix_map = {
         '.jtex': '.tex',
         '.jyaml': '.yaml',
@@ -82,6 +82,8 @@ class BaseBuilder(metaclass=ABCMeta):
         self.output_directory = Path(self.args.output) if self.args.output else None
         self.context = self._root_context_class(self.launch_directory, *self.ident())
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
+
+        self.renderer = self._renderer_class(Path(self.template_root))
 
     def add_core_arguments(self) -> None:
         """ Create the default ArgumentParser """

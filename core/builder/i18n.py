@@ -19,12 +19,10 @@ class BuilderI18n(BaseBuilder):
     module = 'core'
     _target = 'global i18n'
     _root_context_class = BuildableContextCoreI18n
+    _renderer_class = StaticRenderer
 
     templates = ['override.jtex', 'crossref.jyaml']
 
-    def __init__(self):
-        super().__init__()
-        self.renderer = StaticRenderer(self.template_root)
 
     def add_arguments(self):
         super().add_arguments()

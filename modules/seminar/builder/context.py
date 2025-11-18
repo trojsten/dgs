@@ -150,7 +150,6 @@ class ContextProblem(ContextSeminar):
             Optional('code'): And(int, lambda x: x >= 0),
             Optional('extra'): And(int, lambda x: x >= 0),
         },
-        Optional('values'): {str: Or(str, dict)},
     })
 
     def populate(self, competition, volume, semester, issue, problem):

@@ -1,5 +1,17 @@
 .SECONDEXPANSION:
 
+define RULE_TEMPLATE_SEMINAR
+render/seminar/%/$(1).md: \
+	source/seminar/$$$$*/$(1).md \
+	source/seminar/$$$$*/meta.yaml
+	$$(call jinja_without_preamble,modules.seminar.builder.renderer,$$(lang),source/seminar/$$*/meta.yaml)
+
+build/seminar/%/$(1).tex: \
+	render/seminar/$$*/$(1).md
+	$(call pandoctex,$(lang))
+endef
+$(foreach target,problem solution,$(eval $(call RULE_TEMPLATE_SEMINAR,$(target))))
+
 build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
 	cp -r source/seminar/$*/.static/ build/seminar/$*/

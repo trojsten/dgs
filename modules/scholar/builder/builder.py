@@ -16,7 +16,6 @@ class BuilderScholar(BuilderScholarBase):
 
     def __init__(self):
         super().__init__()
-        self.renderer = self._renderer_class(Path(self.template_root))
 
     def add_arguments(self):
         super().add_arguments()

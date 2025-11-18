@@ -9,7 +9,6 @@ render/scholar/%/$(1).md: \
 build/scholar/%/$(1).tex: \
 	render/scholar/$$*/$(1).md
 	$(call pandoctex,$(lang))
-
 endef
 $(foreach target,text problem solution,$(eval $(call RULE_TEMPLATE_SCHOLAR,$(target))))
 
