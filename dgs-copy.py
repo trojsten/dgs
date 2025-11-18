@@ -6,8 +6,8 @@ import argparse
 from typing import Tuple
 
 
-VERSION = "4.0"
-DATE = "2024-11-23"
+VERSION = "5.0"
+DATE = "2025-11-18"
 
 
 def fire(query):
