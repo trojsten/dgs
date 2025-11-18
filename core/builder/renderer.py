@@ -4,17 +4,14 @@ import io
 import numbers
 import pprint
 import logging
-import datetime
-import sys
 
 from abc import ABC
 from io import TextIOWrapper
 
 from pathlib import Path
-from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 from typing import Optional
 
-from enschema import Schema, Or, Optional as Opt, And
+from enschema import Schema, Optional as Opt, Or
 
 from core import cli
 from core.builder.context.context import Context
@@ -36,10 +33,9 @@ class JinjaConvertor:
     """
     def __init__(self,
                  template_file: TextIOWrapper,
-                 *,
                  context: Context,
+                 *,
                  preamble: Optional[io.TextIOWrapper] = None,
-                 preamble_prepend: Optional[str] = '',
                  debug: bool = False):
         """
         Parameters
@@ -50,8 +46,6 @@ class JinjaConvertor:
             The context to use for rendering the template.
         preamble:
             The Jinja preamble file to use (optional). May contain computations.
-        preamble_prepend:
-            Prepend the string to every preamble line (currently ignored).
         debug:
             Activate debug mode.
         """
@@ -69,11 +63,17 @@ class JinjaConvertor:
 
     def prepare_template(self,
                          template: str) -> str:
+        """
+        Prepare a template for rendering.
+
+        Currently just prepends the preamble, if available
+        """
         return (self.preamble or "") + template
 
-
     def run(self):
+        # First pass: expand all equations and values
         intermediate = self.renderer.render(self.prepare_template(self.template), self.context.data)
+        # Second pass: expand all tags within equations
         return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
@@ -94,22 +94,15 @@ class ConstantsContext(FileContext):
 class StandaloneContext(FileContext):
     _schema = Schema({
         'id': str,
-        Opt('values'): dict[str, PhysicsConstant],  # Values
+        Opt('values'): dict[str, Or(str, float, int, PhysicsConstant)],  # Values
         Opt('eq'): dict[str, str],                  # Equations
     })
 
 
-# FixMe move to module builder
-class ScholarStandaloneContext(Context):
-    _schema = Schema({
-        'date': datetime.date,
-        'title': str,
-    })
-
 
 class CLIInterface(cli.CLIInterface, ABC):
     """
-    Jinja CLI interface
+    Jinja standalone convertor CLI interface
     """
     description = "Jinja convertor"
     context_cls = StandaloneContext
@@ -158,14 +151,10 @@ class CLIInterface(cli.CLIInterface, ABC):
             preamble = None
 
         return JinjaConvertor(self.args.infile,
-                              context=self.build_context(),
+                              self.build_context(),
                               preamble=preamble,
                               debug=self.args.debug)
 
     def add_extra_arguments(self):
         self.parser.add_argument('-C', '--context', type=argparse.FileType('r'))
         self.parser.add_argument('-P', '--preamble', type=str)
-
-
-if __name__ == "__main__":
-    CLIInterface().run()

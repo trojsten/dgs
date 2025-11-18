@@ -46,7 +46,7 @@ class CLIInterface:
         try:
             output = self.convertor.run()
             print(output, file=self.args.outfile)
-            self.success
+            self.success()
         except Exception as e:
             self.fail()
 

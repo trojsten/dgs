@@ -67,6 +67,21 @@ build/naboj/%/$(1).tex: \
 endef
 $(foreach filename,answer answer-also answer-interval,$(eval $(call NONTRANSLATABLE_ANSWERS,$(filename))))
 
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/naboj/%.gp:\
+	source/naboj/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
+	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
+	$(call jinja_with_preamble,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
+
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/naboj/%.gp:\
+	source/naboj/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
+	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
+	$(call jinja_without_preamble,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+
+
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))

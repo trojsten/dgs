@@ -4,9 +4,9 @@ import logging
 from abc import ABC
 
 
-from enschema import Schema, Or, Optional as Opt, And
+from enschema import Schema, And
 
-import renderer
+from core.builder import renderer
 
 log = logging.getLogger('dgs')
 
@@ -27,7 +27,6 @@ VALID_TAGS: dict[str, str] = {
     'troll': 'a problem with a trivial solution',
     'elegant': 'short but interesting problem',
 }
-
 
 
 def valid_tag(tag: str) -> bool:

@@ -7,11 +7,11 @@ from core import i18n
 from core.builder.context.buildable import BuildableFileSystemTreeContext
 from core.builder.context.module import ContextModule
 from core.i18n import Locale
-from renderer import ConstantsContext
+from core.builder.renderer import ConstantsContext
 from .validators import NabojValidator
 from .base import ContextNaboj
 from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
-from .i18n import ContextI18nGlobal, ContextI18n
+from .i18n import ContextI18nGlobal
 
 
 class BuildableContextNaboj(BuildableFileSystemTreeContext, ContextNaboj, metaclass=abc.ABCMeta):

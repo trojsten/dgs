@@ -224,13 +224,6 @@ output/%.html: source/%.md
 
 .SECONDEXPANSION:
 
-# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
-render/%.gp:\
-	source/%.gp \
-	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat)) \
-	$$(abspath source/$$(dir $$*)/meta.yaml)
-	$(call jinja_with_preamble,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
-
 build/%.gp:\
 	render/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/%.gp)*.dat))

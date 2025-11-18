@@ -83,6 +83,7 @@ class JinjaRenderer:
             raise e
         except jinja2.exceptions.TemplateSyntaxError as e:
             log.critical(f"Template syntax error")
+            print(e)
             raise e
 
     @abstractmethod

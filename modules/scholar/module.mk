@@ -1,16 +1,24 @@
 .SECONDEXPANSION:
 
-render/scholar/%/text.md: \
-	source/scholar/$$*/text.md
-	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+define RULE_TEMPLATE_SCHOLAR
+render/scholar/%/$(1).md: \
+	source/scholar/$$$$*/$(1).md \
+	source/scholar/$$$$*/meta.yaml
+	$$(call jinja_without_preamble,modules.scholar.builder.renderer,$$(lang),source/scholar/$$*/meta.yaml)
 
-render/scholar/%/problem.md: \
-	source/scholar/$$*/problem.md
-	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+build/scholar/%/$(1).tex: \
+	render/scholar/$$*/$(1).md
+	$(call pandoctex,$(lang))
 
-render/scholar/%/solution.md: \
-	source/scholar/$$*/solution.md
-	$(call _jinja_no_preamble,$(lang),$(abspath $(dir $<)/meta.yaml))
+endef
+$(foreach target,text problem solution,$(eval $(call RULE_TEMPLATE_SCHOLAR,$(target))))
+
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/scholar/%.gp:\
+	source/scholar/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/scholar/%.gp)*.dat)) \
+	$$(abspath source/scholar/$$(dir $$*)/meta.yaml)
+	$(call jinja_without_preamble,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 build/scholar/%/build-handout: \
 	modules/scholar/templates/base.jtex \
