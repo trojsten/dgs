@@ -3,7 +3,6 @@ import logging
 
 from abc import ABC
 
-
 from enschema import Schema, And, Optional, Or
 from schema import Literal
 
