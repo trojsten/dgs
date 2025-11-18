@@ -102,6 +102,7 @@ build/naboj/%/build-language: \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml
 	$(call prepare_arguments,language)
 	python -m modules.naboj.builder.language 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	touch $@
 
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/build-venue: \
@@ -112,6 +113,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	touch $@
 
 ### Input files ###################################################################################
 
@@ -319,7 +321,7 @@ output/naboj/%/cover-print.pdf: \
 	pdfjam --quiet --nup "2x1" --landscape --outfile $@ $<
 
 # Tearoffs, three problems per page, aligned for cutting
-# <competition>/<volume>/<languages>/<language>
+# <competition>/<volume>/languages/<language>
 output/naboj/%/tearoff.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
@@ -338,7 +340,7 @@ output/naboj/%/html: \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
 
 # All targets for <language>
-# <competition>/<volume>/<language>
+# <competition>/<volume>/languages/<language>
 output/naboj/%: \
 	output/naboj/%/answers.pdf \
 	output/naboj/%/constants.pdf \

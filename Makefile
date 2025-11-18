@@ -232,6 +232,7 @@ build/%.gp:\
 	@echo -e '$(c_action)Copying static files for $(c_filename)$*$(c_action):$(c_default)'
 	@mkdir -p $(dir $@).static/
 	cp -r $(subst build/,source/,$*)/.static/ $*/
+	touch $@
 
 
 output/%/clean:
