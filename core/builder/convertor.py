@@ -115,7 +115,8 @@ class Convertor:
         self.math = options.get('math', 'mathjax')
         self.file = None
 
-        assert output_format in ['html', 'latex'], "Output format is neither 'html' nor 'latex'!"
+        assert output_format in ['html', 'latex'], \
+            "Output format is neither 'html' nor 'latex'!"
 
         # regexes = yaml.safe_load(open('core/builder/regexes.yaml', 'rb'))
 

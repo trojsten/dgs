@@ -41,29 +41,21 @@ def create_temporary_file(string):
     return ntf
 
 
-def render_string_to_temporary(string, context) -> list[str]:
-    renderer = MarkdownJinjaRenderer(template=string)
-    output = SpooledTemporaryFile(0, 'r+')
-    renderer.render(context, outfile=output)
-    output.seek(0)
-
-    return output.readlines()
+def render_string_to_temporary(string, context) -> str:
+    renderer = MarkdownJinjaRenderer()
+    return renderer.render(string, context)
 
 
-def render_file_to_temporary(source, context) -> list[str]:
+def render_file_to_temporary(source, context) -> str:
+    renderer = MarkdownJinjaRenderer()
     with open(source, 'r' ) as file:
-        renderer = MarkdownJinjaRenderer(template=file.read())
-        output = SpooledTemporaryFile(0, 'r+')
-        renderer.render(context, outfile=output)
-        output.seek(0)
-
-    return output.readlines()
+        return renderer.render(file.read(), context)
 
 
 class TestConstant:
     @pytest.mark.parametrize("template,expected", [
         pytest.param('hello', 'hello', id='hello'),
-        pytest.param(r'(§ large §) < (§ giga|g §)', r'123456789 < e\+?09\n', id='complex'),
+        pytest.param(r'(§ large §) < (§ giga|g §)', r'123456789 < e\+?09', id='complex'),
         pytest.param('(§ your_mom|g5 §)', r'3.14e\+?15\n?', id='sci5'),
         pytest.param('(§ small|g4 §)', r'2.443e-19\n?', id='sci-small'),
         pytest.param('(§ (small * your_mom * five**5)|g5 §)', r'2.3975\n?', id='complex-expression'),
@@ -72,7 +64,7 @@ class TestConstant:
     ])
     def test_render(self, template, expected, context_simple) -> None:
         rr = re.compile(expected)
-        output = render_string_to_temporary(template, context_simple)[0]
+        output = render_string_to_temporary(template, context_simple)
         assert rr.match(output), output
 
     @pytest.mark.parametrize("source,expected", [
@@ -92,7 +84,7 @@ class TestConstant:
     ])
     def test_does_it_render(self, source, expected, context_simple) -> None:
         result = render_file_to_temporary(Path('core/tests') / 'snippets' / source, context_simple)
-        assert result == [f"{expected}\n"], \
+        assert result == expected, \
             f"Expected {expected}, got {result}"
 
     @pytest.mark.parametrize("name,expected,digits", [

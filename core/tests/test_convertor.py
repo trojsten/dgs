@@ -62,7 +62,8 @@ class TestImages:
     def test_image_latex(self, convert):
         output = convert('latex', 'sk', '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}')
         output = output.replace('\n', ' ')
-        assert re.search(r'\\insertPicture\[width=\\textwidth,height=47mm]{.*}', output) is not None
+        assert re.search(r'\\insertPicture\[width=\\textwidth,height=47mm]{.*}', output) is not None, \
+            f"Got '{output}'"
         assert 'ryba.pdf' in output
 
     def test_image_latex_multiline(self, convert):
@@ -72,7 +73,8 @@ Veľmi masívne.
 Aj s newlinami.](file.png){#fig:long height=53mm}
 """)
         output = output.replace('\n', ' ')
-        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{.*}', output) is not None
+        assert re.search(r'\\insertPicture\[width=\\textwidth,height=53mm]{.*}', output) is not None, \
+            f"Got '{output}'"
         assert 'file.png' in output
 
     def test_image_html(self, convert):
@@ -97,23 +99,27 @@ Aj s newlinami.](file.png){#fig:long height=53mm}
 class TestTags:
     def test_h_latex(self, convert):
         output = convert('latex', 'en', '@H this should not be seen!')
-        assert output == '\n'
+        assert output == '', \
+            f"Got '{output}'"
 
     def test_h_html(self, convert):
         output = convert('html', 'en', '@H this should not be seen!')
-        assert output == '<p>this should not be seen!</p>\n'
+        assert output == '<p>this should not be seen!</p>', \
+            f"Got '{output}'"
 
     def test_l_latex(self, convert):
         output = convert('latex', 'en', '@L this should not be seen!')
-        assert output == 'this should not be seen!\n'
+        assert output == 'this should not be seen!', \
+            f"Got '{output}'"
 
     def test_l_html(self, convert):
         output = convert('html', 'en', '@L this should not be seen!')
-        assert output == '\n'
+        assert output == '', \
+            f"Got '{output}'"
 
     def test_e_latex(self, convert):
         output = convert('latex', 'sk', '@E error')
-        assert re.match(r'\\errorMessage\{error}\n', output) is not None
+        assert re.match(r'\\errorMessage\{error}', output) is not None
 
     def test_e_html(self, convert):
         output = convert('html', 'sk', '@E error')
