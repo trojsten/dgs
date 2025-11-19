@@ -6,6 +6,15 @@ from core.builder.context.quantities.quantity import PhysicsQuantity
 class PhysicsConstant(PhysicsQuantity):
     """
     Represents a stored physical constant for comfortable and reproducible use in texts.
+
+    A PhysicsConstant has
+    - name: a universal identifier
+    - quantity: an underlying PhysicsQuantity
+    - digits: preferred precision
+    - exact: a boolean flag that can be used to mark it as exact by definition
+        (as opposed to measured with uncertainty)
+    - aliases: a list of alternative identifiers or nicknames
+        (e.g. Newton's gravity constant is `gravity` but also `G`)
     """
     def __init__(self,
                  name: str,
@@ -13,8 +22,8 @@ class PhysicsConstant(PhysicsQuantity):
                  **kwargs):
         self.name = name
         self.digits = kwargs.pop('digits', 3)
-        self.aliases = kwargs.pop('aliases', [])
         self.exact = kwargs.pop('exact', False)
+        self.aliases = kwargs.pop('aliases', [])
         super().__init__(quantity, **kwargs)
 
     @staticmethod

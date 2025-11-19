@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import argparse
 import io
 import numbers
@@ -16,10 +15,10 @@ from enschema import Schema, Optional as Opt, Or
 from core import cli
 from core.builder.context.context import Context
 from core.builder.context.file import FileContext
+from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
 from core.builder.jinja import MarkdownJinjaRenderer
 
-from core.builder.context.quantities import PhysicsConstant
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
@@ -29,7 +28,8 @@ class JinjaConvertor:
     """
     Jinja template convertor wrapper.
 
-    Renders a single template to a file, using a provided Context.
+    Renders a single template file to a text file, using a provided Context.
+    Optionally prepends a preamble file (with things intended for reuse across the unit).
     """
     def __init__(self,
                  template_file: TextIOWrapper,
@@ -71,9 +71,9 @@ class JinjaConvertor:
         return (self.preamble or "") + template
 
     def run(self):
-        # First pass: expand all equations and values
+        # First pass: expand all equations, tags and variables in the text
         intermediate = self.renderer.render(self.prepare_template(self.template), self.context.data)
-        # Second pass: expand all tags within equations
+        # Second pass: expand all tags and variables within equations
         return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
@@ -137,7 +137,7 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             ctx.add(**values)
 
-        # Process all equations: create MathObject and store under the `eq` key in the context
+        # Process equations: create MathObject and store under the `eq` key in the context
         if 'eq' in context.data:
             for idx, fragment in context.data['eq'].items():
                 context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment)
