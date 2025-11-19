@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+import datetime
 import logging
 
-from enschema import Schema, And
+from enschema import Schema, And, Optional as Opt
 
 from core.builder import renderer
 
@@ -11,7 +12,8 @@ log = logging.getLogger('dgs')
 
 class ScholarStandaloneContext(renderer.StandaloneContext):
     _schema = renderer.StandaloneContext._schema | Schema({
-        'title': str,
+        Opt('title'): str,
+        Opt('date'): datetime.date,
     })
 
 
