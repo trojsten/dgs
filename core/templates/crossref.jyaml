@@ -1,6 +1,6 @@
-figureTitle: "(* i18n.cref.figure *)"
-tableTitle: "(* i18n.cref.table *)"
-listingTitle: "(* i18n.cref.listing *)"
+figureTitle: "(* i18n.cref.figure.singular|title *)"
+tableTitle: "(* i18n.cref.table.singular|title *)"
+listingTitle: "(* i18n.cref.listing.singular|title *)"
 figPrefix: ["(* i18n.cref.figure.singular *)", "(* i18n.cref.figure.plural *)"]
 tblPrefix: ["(* i18n.cref.table.singular *)", "(* i18n.cref.table.plural *)"]
 eqnPrefix: ["(* i18n.cref.equation.singular *)", "(* i18n.cref.equation.plural *)"]
