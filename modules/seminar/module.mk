@@ -16,6 +16,13 @@ build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
 	cp -r source/seminar/$*/.static/ build/seminar/$*/
 
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/seminar/%.gp:\
+	source/seminar/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/seminar/%.gp)*.dat)) \
+	$$(abspath source/seminar/$$(dir $$*)/meta.yaml)
+	$(call jinja_without_preamble,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+
 # Split the path to get the node names
 define _prepare_arguments
 	@mkdir -p $(dir $@)
