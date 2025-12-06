@@ -203,7 +203,7 @@ output/%.py: source/%.py
 output/%.png: build/%.gp
 	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal png font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal pngcairo size 800,600 font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
 	cp $(subst output/,build/,$@) $@
 
 # Copy JPG (for web)
