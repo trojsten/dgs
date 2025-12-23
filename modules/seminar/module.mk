@@ -12,6 +12,13 @@ build/seminar/%/$(1).tex: \
 endef
 $(foreach target,problem solution,$(eval $(call RULE_TEMPLATE_SEMINAR,$(target))))
 
+# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
+render/seminar/%.gp:\
+	source/seminar/%.gp \
+	$$(subst source/,build/,$$(wildcard $$(dir source/seminar/%.gp)*.dat)) \
+	$$(abspath source/seminar/$$(dir $$*)/meta.yaml)
+	$(call jinja_without_preamble,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+
 build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
 	cp -r source/seminar/$*/.static/ build/seminar/$*/

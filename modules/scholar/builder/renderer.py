@@ -8,7 +8,6 @@ from core.builder import renderer
 log = logging.getLogger('dgs')
 
 
-
 class ScholarStandaloneContext(renderer.StandaloneContext):
     _schema = renderer.StandaloneContext._schema | Schema({
         'title': str,

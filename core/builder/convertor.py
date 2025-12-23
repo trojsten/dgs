@@ -58,6 +58,14 @@ class Convertor:
                 r'(\\num|\\SI){([0-9])e',
                 r'\g<1>{\g<2>.e',
             ),
+            RegexReplacement(
+                r'\\qty',
+                r'\\SI',
+            ),
+            RegexReplacement(
+                r'\\unit',
+                r'\\si',
+            ),
         ],
     }
 
