@@ -202,6 +202,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'rad': np.radians,
             'deg': np.degrees,
             'gamma': math.gamma,
+            'beta': lambda x, y: math.gamma(x) * math.gamma(y) / math.gamma(x + y),
             'log': np.log,
             'log10': np.log10,
             'log2': np.log2,
