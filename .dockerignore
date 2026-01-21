@@ -1,0 +1,25 @@
+.git/
+.github/
+
+# .gitignore
+.convert-temp
+*~
+*.swp
+*.swo
+*.tps
+*.tcp
+*.log
+*.out
+*.aux
+*.synctex
+*.pyc
+*__pycache__*
+*.dblite
+.idea/
+build/
+render/
+output/
+source/
+_*/
+.idea/*
+svg-inkscape/
