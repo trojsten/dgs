@@ -112,13 +112,13 @@ build/core/i18n: \
 # This rule is here just for debugging -- should be used if no language is provided
 render/%.md: \
 	source/%.md
-	echo '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
+	@echo -e '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
 
 # Pandoc: render Markdown to TeX. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided
 build/%.tex: \
 	render/%.md
-	echo '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
+	@echo -e '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
 
 # Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
