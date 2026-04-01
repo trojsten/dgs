@@ -22,8 +22,8 @@ class Convertor:
                              r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
                              purpose=r"Change \includesvg to protected \insertPicture"),
             # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
-            RegexReplacement(r"\\includegraphics\[(?P<options>.*)\]{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
-                             r"\\insertPicture[\g<options>]{\g<stem>.\g<extension>}",
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
+                             r"\\insertPicture\g<options>{\g<stem>.\g<extension>}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Remove empty labels and captions
             RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
