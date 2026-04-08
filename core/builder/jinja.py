@@ -167,6 +167,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.env.filters |= ({
             'f': numbers.format_float,
             'g': numbers.format_general,
+            'n': latex.num,
             'nf': latex.num_float,
             'ng': latex.num_general,
             'ef': latex.equals_float,

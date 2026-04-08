@@ -187,6 +187,7 @@ avogadro:
     symbol:     "N_A"
     magnitude:  6.02214076e+23
     unit:       "1 / mole"
+    aliases:    ["N_A"]
     si_extra:
       per-mode: 'reciprocal'
     digits:     4
@@ -364,3 +365,24 @@ thermal_expansion_water:
     si_extra:
       per-mode: 'reciprocal'
     digits:     2
+
+molar_mass_oxygen:
+    symbol:     "M_{\\ce{O}}"
+    magnitude:  16
+    unit:       "gram / mole"
+    digits:     2
+    aliases:    ['M_O']
+
+molar_mass_sulphur:
+    symbol:     "M_{\\ce{S}}"
+    magnitude:  32.06
+    unit:       "gram / mole"
+    digits:     2
+    aliases:    ['M_S']
+
+molar_mass_zinc:
+    symbol:     "M_{\\ce{Zn}}"
+    magnitude:  65.38
+    unit:       "gram / mole"
+    digits:     2
+    aliases:    ['M_Zn']

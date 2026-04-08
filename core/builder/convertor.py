@@ -18,8 +18,8 @@ class Convertor:
                              r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
-            RegexReplacement(r"\\includesvg\[(?P<options>.*)\]{(?P<stem>.*)\.(svg|gp)}",
-                             r"\\begin{figure}\\centering\\insertPicture[\g<options>]{\g<stem>.pdf}\\end{figure}",
+            RegexReplacement(r"\\includesvg(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
+                             r"\\begin{figure}\\centering\\insertPicture\g<options>{\g<stem>.pdf}\\end{figure}",
                              purpose=r"Change \includesvg to protected \insertPicture"),
             # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
@@ -114,7 +114,12 @@ class Convertor:
         'html': [],
     }
 
-    def __init__(self, output_format: str, locale_code: str, infile, outfile, **options):
+    def __init__(self,
+                 output_format: str,
+                 locale_code: str,
+                 infile,
+                 outfile,
+                 **options):
         self.output_format: str = output_format
         self.locale_code: str = locale_code
         self.locale: i18n.Locale = i18n.languages[locale_code]

@@ -126,13 +126,18 @@ def format_people(people: Union[str, list, dict], *, func: Callable = identity, 
                        func=func, and_word=and_word)
 
 
+def num(x: float):
+    """ Format as a `siunitx` \num{} input (as is)"""
+    return rf'\num{{{x}}}'
+
+
 def num_float(x: float, precision: Optional[int] = None):
-    """ Format as a `siunitx` \num{} input"""
+    """ Format as a `siunitx` \num{} input (float)"""
     return rf'\num{{{format_float(x, precision)}}}'
 
 
 def num_general(x: float, precision: Optional[int] = None):
-    """ Format as a `siunitx` \num{} input"""
+    """ Format as a `siunitx` \num{} input (general)"""
     return rf'\num{{{format_general(x, precision)}}}'
 
 

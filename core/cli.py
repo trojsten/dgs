@@ -48,10 +48,10 @@ class CLIInterface:
             print(output, file=self.args.outfile)
             self.success()
         except Exception as e:
-            self.fail()
+            self.fail(e)
 
-    def fail(self):
-        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
+    def fail(self, e):
+        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}: {e}")
 
     def success(self):
         if self.args.verbose:
