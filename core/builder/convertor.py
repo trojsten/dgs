@@ -21,12 +21,20 @@ class Convertor:
             RegexReplacement(r"\\includesvg(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
                              r"\\begin{figure}\\centering\\insertPicture\g<options>{\g<stem>.pdf}\\end{figure}",
                              purpose=r"Change \includesvg to protected \insertPicture"),
-            # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed)
+            # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed through unchanged)
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
                              r"\\insertPicture\g<options>{\g<stem>.\g<extension>}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Remove empty labels and captions
             RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
+            # Claude's fix for missing bottom rules
+            RegexReplacement(r'\\bottomrule\\noalign\{}\n\\endlastfoot',
+                             r'\\endlastfoot',
+                             purpose="Remove bottom rule from endlastfoot (moved to end of table)"),
+            # Claude's fix for missing bottom rules
+            RegexReplacement(r'\\end{longtable}',
+                             r'\\bottomrule\n\\end{longtable}',
+                             purpose="Restore missing bottom rule"),
         ],
         'html': [
             # Prepend "obrazky/"
