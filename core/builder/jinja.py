@@ -16,30 +16,26 @@ from core.filters import latex, numbers
 log = logger.setupLog('dgs')
 
 
-
-class CollectUndefined(jinja2.StrictUndefined):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.missing = []
-
-    def __call__(self, *args, **kwargs):
-        undefined = self.undefined_cls(*args, **kwargs)
-        self.missing.append(undefined._undefined_name)
-        return undefined
-
-    def assert_no_missing(self):
-        if len(self.missing) > 0:
-            raise MissingVariablesError(self.missing)
-
-
 class MissingVariablesError(Exception):
-    """ Jinja error emitted when variables used in the template are missing from the context. """
-    def __init__(self, missing, *args):
-        super().__init__(*args)
+    def __init__(self, missing):
+        super().__init__(f"Missing variables: {missing}")
         self.missing = missing
 
-    def __str__(self):
-        return f"Missing variables: {self.missing}"
+
+def make_collect_undefined():
+    """Factory so each Environment gets its own fresh registry."""
+    collected = []
+
+    class CollectUndefined(jinja2.Undefined):
+        def __init__(self, hint=None, obj=jinja2.runtime.missing,
+                     name=None, exc=jinja2.exceptions.UndefinedError):
+            super().__init__(hint, obj, name, exc)
+            if name is not None:
+                collected.append(name)
+
+    CollectUndefined._collected = collected
+    return CollectUndefined
+
 
 
 class JinjaRenderer:
@@ -51,6 +47,7 @@ class JinjaRenderer:
                  *,
                  loader: jinja2.BaseLoader = jinja2.BaseLoader(),
                  **kwargs):
+        self._undefined_cls = make_collect_undefined()
         self.env = jinja2.Environment(
             block_start_string=kwargs.pop('block_start_string', '(@'),
             block_end_string=kwargs.pop('block_end_string', '@)'),
@@ -62,7 +59,7 @@ class JinjaRenderer:
             line_comment_prefix=kwargs.pop('line_comment_prefix', '%#'),
             trim_blocks=True,
             autoescape=False,
-            undefined=CollectUndefined,
+            undefined=self._undefined_cls,
             loader=loader,
             **kwargs,
         )
@@ -70,9 +67,7 @@ class JinjaRenderer:
     def render(self,
                template: str | Path,
                context: dict[str, Any]) -> str:
-        """
-        Render in memory
-        """
+        """ Render in memory """
         try:
             return self._render(template, context=context)
         except jinja2.exceptions.UndefinedError as e:
@@ -162,59 +157,60 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                          **kwargs)
 
         self.env.filters |= ({
-            'f': numbers.format_float,
-            'g': numbers.format_general,
-            'n': latex.num,
-            'nf': latex.num_float,
-            'ng': latex.num_general,
-            'ef': latex.equals_float,
-            'eg': latex.equals_general,
-            'w': QuantityRange.widen,
-            'widen': QuantityRange.widen,
-        } |
-        self.__generate_format_functions(numbers.format_float, 'f') |
-        self.__generate_format_functions(numbers.format_general, 'g') |
-        self.__generate_format_functions(latex.num_float, 'nf') |
-        self.__generate_format_functions(latex.num_general, 'ng') |
-        self.__generate_format_functions(latex.equals_float, 'ef') |
-        self.__generate_format_functions(latex.equals_general, 'eg')) | {
-            'inline': latex.math_inline,
-            'disp': latex.math_display,
-            'align': latex.math_aligned,
-        }
+                                 'f': numbers.format_float,
+                                 'g': numbers.format_general,
+                                 'n': latex.num,
+                                 'nf': latex.num_float,
+                                 'ng': latex.num_general,
+                                 'ef': latex.equals_float,
+                                 'eg': latex.equals_general,
+                                 'w': QuantityRange.widen,
+                                 'widen': QuantityRange.widen,
+                             } |
+                             self.__generate_format_functions(numbers.format_float, 'f') |
+                             self.__generate_format_functions(numbers.format_general, 'g') |
+                             self.__generate_format_functions(latex.num_float, 'nf') |
+                             self.__generate_format_functions(latex.num_general, 'ng') |
+                             self.__generate_format_functions(latex.equals_float, 'ef') |
+                             self.__generate_format_functions(latex.equals_general, 'eg')) | {
+                                'inline': latex.math_inline,
+                                'disp': latex.math_display,
+                                'align': latex.math_aligned,
+                            }
 
         self.env.globals |= {
-            'Q': PhysicsQuantity.construct,
-        } | {
-            'sin': np.sin,
-            'cos': np.cos,
-            'tan': np.tan,
-            'asin': np.asin,
-            'acos': np.acos,
-            'atan': np.atan,
-            'atan2': np.atan2,
-            'ceil': np.ceil,
-            'floor': np.floor,
-            'sqrt': lambda x: (x ** 0.5),
-            'cbrt': np.cbrt,
-            'rad': np.radians,
-            'deg': np.degrees,
-            'gamma': math.gamma,
-            'beta': lambda x, y: math.gamma(x) * math.gamma(y) / math.gamma(x + y),
-            'log': np.log,
-            'log10': np.log10,
-            'log2': np.log2,
-            'exp': np.exp,
-            'pow': np.power,
-            'pi': np.pi,
-            'tau': math.tau,
-            'euler': math.e,
-        } | {
-            'KtoC': lambda x: x - 273.15,
-            'CtoK': lambda x: x + 273.15,
-        }
+                                'Q': PhysicsQuantity.construct,
+                            } | {
+                                'sin': np.sin,
+                                'cos': np.cos,
+                                'tan': np.tan,
+                                'asin': np.asin,
+                                'acos': np.acos,
+                                'atan': np.atan,
+                                'atan2': np.atan2,
+                                'ceil': np.ceil,
+                                'floor': np.floor,
+                                'sqrt': lambda x: (x ** 0.5),
+                                'cbrt': np.cbrt,
+                                'rad': np.radians,
+                                'deg': np.degrees,
+                                'gamma': math.gamma,
+                                'beta': lambda x, y: math.gamma(x) * math.gamma(y) / math.gamma(x + y),
+                                'log': np.log,
+                                'log10': np.log10,
+                                'log2': np.log2,
+                                'exp': np.exp,
+                                'pow': np.power,
+                                'pi': np.pi,
+                                'tau': math.tau,
+                                'euler': math.e,
+                            } | {
+                                'KtoC': lambda x: x - 273.15,
+                                'CtoK': lambda x: x + 273.15,
+                            }
 
     def _render(self,
                 template: str,
                 context: dict[str, Any]):
         return self.env.from_string(template).render(**context)
+

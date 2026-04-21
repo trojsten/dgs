@@ -54,8 +54,9 @@ class Context(abc.ABC):
         """
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(path)}")
         try:
-            with yaml.load(open(path, 'r'), Loader=yaml.SafeLoader) as contents:
-                self._data = {} if contents is None else contents
+            with open(path, 'r') as f:
+                contents = yaml.load(f, Loader=yaml.SafeLoader)
+            self._data = {} if contents is None else contents
         except FileNotFoundError as e:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))
             raise e

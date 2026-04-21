@@ -1,3 +1,5 @@
+import math
+
 import pint
 import pytest
 import regex as re
@@ -49,8 +51,12 @@ class TestExpression:
 
 
 class TestAngles:
-    def test_angle(self, mass1, mass2):
-        expected = PhysicsQuantity.construct(1, 'rad', symbol=r'\omega')
+    def test_angle(self):
+        first = PhysicsQuantity.construct(math.pi / 2, 'rad', symbol=r'\omega')
+        second = PhysicsQuantity.construct(45, 'deg', symbol=r'\alpha')
+        computed = first + second
+        expected = PhysicsQuantity.construct(135, 'deg', symbol=r'\omega')
+        assert expected == computed
 
 
 class TestRange:

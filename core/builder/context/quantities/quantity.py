@@ -213,7 +213,7 @@ class PhysicsQuantity:
         cmd = fragments['cmd']
         si_extra = self.format_si_extra(self.si_extra)
         magnitude = f"{{{fragments['magnitude']}}}"
-        unit = '' if fragments['unit'] is None else f'{{{fragments['unit']}}}'
+        unit = '' if fragments['unit'] is None else f"{{{fragments['unit']}}}"
         return rf'\{cmd}{si_extra}{magnitude}{unit}'
 
     @property
@@ -289,9 +289,9 @@ class QuantityRange:
         maxr = self.maximum.format_struct(fmt)
 
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
-        minf = f'{{{minr['magnitude']}}}'
-        maxf = f'{{{maxr['magnitude']}}}'
-        unitf = f'{{{minr["unit"]}}}'
+        minf = f"{{{minr['magnitude']}}}"
+        maxf = f"{{{maxr['magnitude']}}}"
+        unitf = f"{{{minr['unit']}}}"
 
         cmd = 'qtyrange'
         return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
@@ -327,7 +327,7 @@ class QuantityList:
         fqs = [q.format_struct(fmt) for q in self.qs]
         self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
 
-        unitf = f'{{{fqs[0]['unit']}}}'
+        unitf = f"{{{fqs[0]['unit']}}}"
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         magf = f'{{{self.magnitudes}}}'
 
