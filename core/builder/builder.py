@@ -12,14 +12,13 @@ from typing import Any, ClassVar
 from core.builder.context import Context
 from core.builder.jinja import JinjaRenderer
 from core.utilities import colour as c, crawler
-from core.builder import jinja
 from core.builder.context.buildable import BuildableContext
 
 log = logging.getLogger('dgs')
 
 
-def empty_if_none(string):
-    return '' if string is None else string
+def empty_if_none(what) -> str:
+    return '' if what is None else what
 
 
 def check_output(command, *, cwd) -> str:

@@ -109,7 +109,7 @@ class ContextSemesterFull(ContextSemester, BuildableFileSystemTreeContext):
 
 
 class ContextRound(ContextSeminar):
-    defaults = {
+    _defaults = {
         'instagram': {
             'skin': 'orange',
             'text_colour': 'black',

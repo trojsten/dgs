@@ -89,6 +89,10 @@ class TestRoman:
 
     def test_too_big_fails(self):
         with pytest.raises(ValueError):
+            roman(4000)
+
+    def test_very_big_fails(self):
+        with pytest.raises(ValueError):
             roman(123456)
 
     @pytest.mark.parametrize("ara,rom", [

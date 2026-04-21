@@ -12,7 +12,7 @@ def roman(number: int) -> str:
     if not type(number) == int:
         raise TypeError("Only integers between 1 and 3999 can be formatted as Roman numerals")
 
-    if number <= 0 or number > 4000:
+    if number <= 0 or number >= 4000:
         raise ValueError(f"Argument must be between 1 and 3999, got {number}")
 
     ints = (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
@@ -28,29 +28,17 @@ def roman(number: int) -> str:
 def plural(how_many, one, two, many):
     if how_many == 1:
         return one
-    if 2 < how_many < 5:
+    if 2 <= how_many < 5:
         return two
     else:
         return many
 
 
 def _nth(x: int) -> str:
-    assert isinstance(x, int)
-    assert x >= 0
-    if x % 10 in [0, 4, 5, 6, 7, 8, 9]:
+    assert isinstance(x, int) and x >= 0
+    if 10 <= x % 100 <= 20:
         return "th"
-    else:
-        if (x % 100) // 10 == 1:
-            return "th"
-        else:
-            match x % 10:
-                case 1:
-                    return "st"
-                case 2:
-                    return "nd"
-                case 3:
-                    return "rd"
-            return "th"
+    return {1: "st", 2: "nd", 3: "rd"}.get(x % 10, "th")
 
 
 def nth(x: int) -> str:

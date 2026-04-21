@@ -65,4 +65,3 @@ class PhysicsConstant(PhysicsQuantity):
 
     def __repr__(self):
         return self.full
-

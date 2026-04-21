@@ -102,7 +102,10 @@ class PhysicsQuantity:
         return f"{self.__class__.__name__} ({self._quantity})"
 
     def __eq__(self, other):
-        return self._quantity == other.quantity
+        if isinstance(other, PhysicsQuantity):
+            return self._quantity == other.quantity
+        else:
+            return NotImplemented
 
     @property
     def quantity(self):
@@ -173,7 +176,8 @@ class PhysicsQuantity:
             logarithm = math.floor(math.log10(abs(self._quantity.magnitude)))
 
         precision = digits - logarithm - 1
-        magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
+        #magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
+        magnitude = round(self._quantity.magnitude, precision)
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
     def format_struct(self, fmt: str = 'g'):
@@ -208,7 +212,7 @@ class PhysicsQuantity:
         fragments = self.format_struct(fmt=fmt)
         cmd = fragments['cmd']
         si_extra = self.format_si_extra(self.si_extra)
-        magnitude = f'{{{fragments['magnitude']}}}'
+        magnitude = f"{{{fragments['magnitude']}}}"
         unit = '' if fragments['unit'] is None else f'{{{fragments['unit']}}}'
         return rf'\{cmd}{si_extra}{magnitude}{unit}'
 

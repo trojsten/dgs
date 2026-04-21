@@ -164,20 +164,12 @@ class Convertor:
         return regex_set['all'] + regex_set[self.output_format]
 
     def run(self):
-        try:
-            self.file = self.file_operation(self.pre_check)(self.infile)
-            self.file = self.file_operation(self.preprocess)(self.file)
-            self.file = self.call_pandoc()
-            self.file = self.file_operation(self.postprocess)(self.file)
-            self.file = self.file_operation(self.post_check)(self.file)
-            return self.file.read().rstrip('\n')
-        except IOError as e:
-            print(f"{c.path(__file__)}: Could not create a temporary file: {e}")
-        except AssertionError as e:
-            print(f"{c.path(__file__)}: Calling pandoc failed: {e}")
-        except Exception as e:
-            print("Unexpected exception occurred:")
-            raise e
+        self.file = self.file_operation(self.pre_check)(self.infile)
+        self.file = self.file_operation(self.preprocess)(self.file)
+        self.file = self.call_pandoc()
+        self.file = self.file_operation(self.postprocess)(self.file)
+        self.file = self.file_operation(self.post_check)(self.file)
+        return self.file.read().rstrip('\n')
 
     @staticmethod
     def file_operation(function: Callable) -> Callable:
@@ -247,7 +239,7 @@ class Convertor:
                 "--webtex='eqn://'" if self.math == 'webtex' else "--mathjax",
             ]
 
-        subprocess.run(args, stdin=self.file, stdout=out)
+        subprocess.run(args, stdin=self.file, stdout=out, check=True)
 
         out.seek(0)
         return out
