@@ -5,7 +5,7 @@ import pytest
 import regex as re
 
 from core.builder.context import PhysicsConstant
-from core.builder.jinja import MarkdownJinjaRenderer
+from core.builder.jinja import MarkdownJinjaRenderer, MissingVariablesError
 
 from pint import UnitRegistry as u
 
@@ -110,3 +110,67 @@ class TestConstant:
 #        renderer.render('constant.txt', context_simple, outfile=output)
 #        output.seek(0)
 #        assert output.readlines() == [r'\qty{}{}']
+
+
+class TestMissingVariables:
+    """
+    Option B: missing variables do not abort rendering; they are collected
+    across the whole pass and raised together at the end.
+    """
+
+    def test_single_missing_raises(self):
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            renderer.render('(§ name §)', {})
+        assert exc.value.missing == ['name']
+
+    def test_multiple_missing_collected(self):
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            renderer.render('(§ a §) and (§ b §) and (§ c §)', {})
+        assert exc.value.missing == ['a', 'b', 'c']
+
+    def test_duplicate_references_deduped(self):
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            renderer.render('(§ x §) (§ x §) (§ y §)', {})
+        assert exc.value.missing == ['x', 'y']
+
+    def test_all_present_succeeds(self):
+        renderer = MarkdownJinjaRenderer()
+        assert renderer.render('(§ x §)', {'x': 42}) == '42'
+
+    def test_registry_clears_between_renders(self):
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError):
+            renderer.render('(§ missing §)', {})
+        # Stale names must not leak into the next render.
+        assert renderer.render('(§ x §)', {'x': 1}) == '1'
+
+    def test_renderers_have_isolated_registries(self):
+        r1 = MarkdownJinjaRenderer()
+        r2 = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError):
+            r1.render('(§ a §)', {})
+        # r2's registry must not contain r1's misses.
+        with pytest.raises(MissingVariablesError) as exc:
+            r2.render('(§ b §)', {})
+        assert exc.value.missing == ['b']
+
+    def test_default_filter_suppresses_miss(self):
+        """
+        `x | default(value)` should treat x as optional: when x is missing,
+        the fallback is substituted and the name is NOT reported as a miss.
+        """
+        renderer = MarkdownJinjaRenderer()
+        assert renderer.render('(§ x|default("fallback") §)', {}) == 'fallback'
+
+    def test_default_filter_mixed_with_real_miss(self):
+        """
+        A template with both a defaulted-optional and a genuinely required
+        variable should raise only for the required one.
+        """
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            renderer.render('(§ a|default("") §) (§ b §)', {})
+        assert exc.value.missing == ['b']

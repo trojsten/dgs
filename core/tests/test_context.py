@@ -1,6 +1,7 @@
 import pytest
 
 from core.builder.context import Context
+from core.builder.jinja import MarkdownJinjaRenderer, MissingVariablesError
 
 
 @pytest.fixture
@@ -91,3 +92,30 @@ class TestContext:
     def test_or(self):
         """ Note that or'ed contexts retain the parent's name but override items with child's """
         assert Context('foo', bar='mitzvah') | Context('baz', bar='baron') == Context('foo', bar='baron')
+
+
+class TestMissingVariables:
+    def test_single_missing_raises(self):
+        r = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            r.render('(§ name §)', {})
+        assert exc.value.missing == ['name']
+
+    def test_multiple_missing_collected(self):
+        r = MarkdownJinjaRenderer()
+        with pytest.raises(MissingVariablesError) as exc:
+            r.render('(§ a §) and (§ b §) and (§ c §)', {})
+        assert exc.value.missing == ['a', 'b', 'c']
+
+    def test_all_present_succeeds(self):
+        r = MarkdownJinjaRenderer()
+        assert r.render('(§ x §)', {'x': 42}) == '42'
+
+    def test_registry_clears_between_renders(self):
+        r = MarkdownJinjaRenderer()
+        try:
+            r.render('(§ missing §)', {})
+        except MissingVariablesError:
+            pass
+        # Next render with all defined should succeed
+        assert r.render('(§ x §)', {'x': 1}) == '1'

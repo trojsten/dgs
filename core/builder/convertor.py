@@ -236,7 +236,7 @@ class Convertor:
         ]
         if self.output_format == 'html':
             args += [
-                "--webtex='eqn://'" if self.math == 'webtex' else "--mathjax",
+                "--webtex=eqn://" if self.math == 'webtex' else "--mathjax",
             ]
 
         subprocess.run(args, stdin=self.file, stdout=out, check=True)
