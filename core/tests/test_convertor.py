@@ -12,7 +12,7 @@ def convert():
         outfile = tempfile.NamedTemporaryFile(mode='w+')
         infile.write(string)
         infile.seek(0)
-        Convertor(fmt, language, infile, outfile).run()
+        outfile.write(Convertor(fmt, language, infile, outfile).run())
         outfile.seek(0)
         return outfile.read()
 
