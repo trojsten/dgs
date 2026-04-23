@@ -7,6 +7,15 @@
 \mathcode`\%="7025
 \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
 
+% Swap shitty font choices
+\let\tmp\phi
+\let\phi\varphi
+\let\varphi\tmp
+\let\tmp\epsilon
+\let\epsilon\varepsilon
+\let\varepsilon\tmp
+
+
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
 \makeatother
@@ -44,4 +53,5 @@
     \node [black] at (.5,.5) {\Centerstack{#6}};
 }
 
+% Make Markdown ~strikeout~ work
 \NewDocumentCommand{\st}{m}{\sout{#1}}

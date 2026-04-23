@@ -49,18 +49,26 @@
                 \vspace{4pt}
                 {\Large (* volume.number *). (* i18n[language.id].competition.name.nominative *)}\\[4pt]
                 {\large (* volume.date.strftime('%d. %m. %Y') *)}\\[8pt]
-                {\footnotesize (* competition.organisation.name *), (* competition.organisation.address *)}\\[2pt]
+                {\footnotesize (* competition.organisation.name *)}\\[2pt]
                 \vspace{6pt}
             \end{minipage}
         }
         \fancyhead[R]{
             \begin{minipage}{0.2\textwidth}
                 \flushright
-                \includegraphics[width=30mm, keepaspectratio=true]{build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}\\[0pt]
+                \includegraphics[width=30mm, keepaspectratio=true]{%
+                    build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf%
+                }\\[0pt]
                 \vspace{4pt}
             \end{minipage}
         }
-        \fancyfoot[LO,RE]{\href{mailto:(* i18n[language.id].competition.email *)}{\texttt{(* i18n[language.id].competition.email *)}}}
+        \fancyfoot[LO,RE]{%
+            \href{%
+                mailto:(* i18n[language.id].competition.email *)%
+            }{%
+                \texttt{(* i18n[language.id].competition.email *)}%
+            }%
+        }
         \fancyfoot[C]{\small \thepage}
         \fancyfoot[LE,RO]{\URL{(* i18n[language.id].competition.website *)}}
         \titleformat{\subsection}[hang]{\bfseries}{}{0pt}{}[]

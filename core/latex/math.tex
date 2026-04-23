@@ -3,6 +3,24 @@
 \ExplSyntaxOn
 \makeatletter
 
+% Patch \left and \right with package mleftright
+\let\left\mleft
+\let\right\mright
+
+% Internal parentheses
+\DeclarePairedDelimiter{\dgs_paren@}{(}{)}
+\DeclarePairedDelimiter{\dgs_abs@}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\dgs_floor@}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\dgs_ceil@}{\lceil}{\rceil}
+
+% Nice parentheses
+\NewDocumentCommand{\Paren}{m}{\dgs_paren@*{#1}}
+\NewDocumentCommand{\Abs}{m}{\dgs_abs@*{#1}}
+% Shorthands for floor and ceiling functions
+\NewDocumentCommand{\Floor}{m}{\dgs_floor@{#1}}
+\NewDocumentCommand{\Ceil}{m}{\dgs_ceil@{#1}}
+
+% List of differentials
 \NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}
 
 \cs_new_protected:Npn \dgs_split_diff:nnn #1 #2 #3 {
@@ -10,6 +28,7 @@
     \seq_map_inline:Nn \l_split_args_seq {#3 ##1}
 }
 
+% Tuple of values
 \NewDocumentCommand{\Tuple}{O{;} >{\SplitList{;}} m}{%
     \def\itemdelim@{\def\itemdelim@{#1}}%
     {%
@@ -17,6 +36,7 @@
     }%
 }
 
+% Square-bracket delimited coordinates
 \NewDocumentCommand{\Coord}{O{;} >{\SplitList{;}} m}{%
     \def\itemdelim@{\def\itemdelim@{#1}}%
     {%
@@ -69,6 +89,12 @@
 }
 \ExplSyntaxOff
 
+% Derivative df/dx
+% d<> fraction type (f for \frac, d for \dfrac, t for \tfrac, s for \sfrac, n for \nfrac}
+% o order of derivative (number)
+% D differential (default \diff for d)
+% m function
+% m variable
 \NewDocumentCommand{\Derivative@}{d<> o D<>{\diff} m m}{%
     \SetDerivativeFrac@{#1}
     \IfNoValueTF{#2}{%
@@ -78,6 +104,7 @@
     }%
 }
 
+% Derivative d/dx (what)
 \NewDocumentCommand{\DerivativeParentheses@}{d<> o D<>{\diff} m m}{%
     \SetDerivativeFrac@{#1}
     \IfNoValueTF{#2}{%
@@ -89,12 +116,7 @@
 
 \ExplSyntaxOn
 \NewDocumentCommand{\DerivativeEmpty@}{d<> o D<>{\diff@} m}{%
-    \renewcommand{\frac@}{\str_case:nnF{#1}{%
-            {d}{\dfrac}%
-            {t}{\tfrac}%
-            {s}{\sfrac}%
-            {n}{\nicefrac}%
-    }{\frac}}%
+    \SetDerivativeFrac@{#1}
     \IfNoValueTF{#2}{%
         \frac@{#3}{#3#4}%
     }{%
@@ -147,27 +169,28 @@
 }%
 
 
+\ExplSyntaxOn
 % Generic 1D integral
 % [lower limit]
 % [upper limit]
 % {integrand}
 % {differential}
 % [operation] between integrand and differential, such as \cdot or \times
-\NewDocumentCommand{\Int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff@#4}
+\NewDocumentCommand{\dgs_int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff@#4}
 
 % Basic integral from #1 to #2 of #3 with respect to #4
 % Usage \Int[0][1]{x^2}{x}
-\NewDocumentCommand{\Int}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[]}
-\NewDocumentCommand{\IntP}{O{} O{} m m}{\Int@[#1][#2][\left(#3\right)]{#4}[]}
+\NewDocumentCommand{\Int}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[]}
+\NewDocumentCommand{\IntP}{O{} O{} m m}{\dgs_int@[#1][#2][\left(#3\right)]{#4}[]}
 % Empty integral for operations on expressions
 \NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
-\NewDocumentCommand{\IntE}{O{} O{} m}{\Int@[#1][#2][]{#3}[]}
+\NewDocumentCommand{\IntE}{O{} O{} m}{\dgs_int@[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
-\NewDocumentCommand{\IntD}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\cdot]}
+\NewDocumentCommand{\IntD}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[\cdot]}
 % ...auto-vectorized version
 \NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4
-\NewDocumentCommand{\IntC}{O{} O{} m m}{\Int@[#1][#2][#3]{#4}[\times]}
+\NewDocumentCommand{\IntC}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[\times]}
 % ...auto-vectorized version
 \NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
@@ -223,7 +246,8 @@
 
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
 
-\NewDocumentCommand{\Laplacian}{}{\mathop{}\!\laplacian\!}
+\ExplSyntaxOff
+
 
 \DeclareMathOperator{\Grad}{\del\!}
 \DeclareMathOperator{\GradT}{grad}
@@ -245,6 +269,10 @@
 % Rotation (vectorize, text)
 \NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
 
+\DeclareMathOperator{\Laplacian}{\mathop{}\!\laplacian\!}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Vectors %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \NewDocumentCommand{\ArrowVector}{m}{\vv{#1}}
 \NewDocumentCommand{\LongVector}{m}{\overrightarrow{#1}}
 \NewDocumentCommand{\BoldVector}{m}{\boldsymbol{#1}}
@@ -259,7 +287,8 @@
 % Matrix transpose
 \NewDocumentCommand{\Transpose}{m}{{#1}^{\!\top}}
 
-\def\omicron{o}
+\DeclareMathSymbol{\omicron}{\mathalpha}{letters}{`o}
+
 \DeclareMathOperator{\atantwo}{atan2}
 \DeclareMathOperator{\arccot}{arccot}
 \DeclareMathOperator{\arccsc}{arccsc}
@@ -275,6 +304,7 @@
 
 \NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
 \NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
+\NewDocumentCommand{\ImpliedBy}{}{\quad\Leftarrow\quad}
 
 % Sinc
 \DeclareMathOperator{\sinc}{sinc}
@@ -294,7 +324,7 @@
 \NewDocumentCommand{\Distribution}{m o m}{#1\left(\IfNoValueTF{#2}{}{#2 \mid}#3\right)}
 
 % Statistics
-\NewDocumentCommand{\ExpectedChevrons}{m}{\left<#1\right>}
+\NewDocumentCommand{\ExpectedChevrons}{m}{\left\langle#1\right\rangle}
 \NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
 \NewDocumentCommand{\Var}{m}{\mathrm{Var}\left(#1\right)}
@@ -303,6 +333,7 @@
 \NewDocumentCommand{\Binomial}{m m}{\binom{#1}{#2}}
 \NewDocumentCommand{\Dimen}{m}{\left[#1\right]}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Text shorthands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Text with spaces on both sides
 \NewDocumentCommand{\Text}{m}{\ \text{#1}\ }
 % Text with quad spaces on both sides
@@ -310,9 +341,6 @@
 % Text with double quad spaces on both sides
 \NewDocumentCommand{\QQText}{m}{\qquad\text{#1}\qquad}
 
-% Shorthands for floor and ceiling functions
-\NewDocumentCommand{\Floor}{m}{\left\lfloor#1\right\rfloor}
-\NewDocumentCommand{\Ceil}{m}{\left\lceil#1\right\rceil}
 
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}} % Limits
 \NewDocumentCommand{\Exp}{m}{e^{#1}}                            % Nicer exponential
@@ -326,7 +354,7 @@
 \NewDocumentCommand{\MustGG}{}{\Must{\gg}}                      % Must be \gg
 \NewDocumentCommand{\MustLeq}{}{\Must{\leq}}                    % Must be <=
 \NewDocumentCommand{\MustGeq}{}{\Must{\geq}}                    % Must be >=
-\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}    % Definition
+\NewDocumentCommand{\DefEqual}{}{\stackrel{\mathrm{def}}{=}}    % Equal by definition
 \NewDocumentCommand{\Assign}{}{\coloneqq}                       % Assignment with :=
 
 % Nuclide[A][Z]{symbol}
@@ -365,9 +393,6 @@
 \DeclareMathOperator{\Uni}{\cup}
 \DeclareMathOperator{\Intersect}{\cap}
 
-\DeclarePairedDelimiter\abs@{\lvert}{\rvert}
-\NewDocumentCommand{\Abs}{m}{\abs@*{#1}}
-
 \DeclareMathOperator{\maxop}{max\ }
 \DeclareMathOperator{\minop}{min\ }
 \NewDocumentCommand{\Max}{O{} m}{\underset{#1}{\maxop}{#2}}
@@ -382,10 +407,13 @@
 
 % Number set
 \NewDocumentCommand{\Set}{m O{} O{}}{%
-    \left\{#1\right\}\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
+    \left\{#1\right\}%
+    \IfNoValueTF{#2}{}{_{#2}}%
+    \IfNoValueTF{#3}{}{^{#3}}%
 }
 
 \NewDocumentCommand{\Seq}{m O{} O{}}{%
+    % Probably should be the same as Set except parentheses symbol
     \left(#1\right)\ifblank{#2}{}{_{#2}}\ifblank{#3}{}{^{#3}}%
 }
 
@@ -420,18 +448,6 @@
 
 % Defaults for multi-notation
 \NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
-
-\let\tmp\phi
-\let\phi\varphi
-\let\varphi\tmp
-\let\tmp\epsilon
-\let\epsilon\varepsilon
-\let\varepsilon\tmp
-
-% Patch \left and \right with package mleftright
-\let\left\mleft
-\let\right\mright
-
 \NewDocumentCommand{\OneHalf}{}{\text{½}}
 
 \NewDocumentCommand{\OneThird}{}{\text{⅓}}

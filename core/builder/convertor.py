@@ -33,7 +33,7 @@ class Convertor:
                              purpose="Remove bottom rule from endlastfoot (moved to end of table)"),
             # Claude's fix for missing bottom rules
             RegexReplacement(r'\\end{longtable}',
-                             r'\\bottomrule\n\\end{longtable}',
+                             r'\\end{longtable}',
                              purpose="Restore missing bottom rule"),
         ],
         'html': [
