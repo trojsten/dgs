@@ -99,9 +99,9 @@ class StandaloneContext(FileContext):
     """
     _schema = Schema({
         'id': str,
-        Opt('values'): dict[str, Or(str, float, int, PhysicsConstant)],  # Values
+        Opt('values'): dict[ValidIdentifier, Or(str, float, int, PhysicsConstant)],  # Values
         # Equations have to be strings, 'eq' and 'const' are reserved
-        Opt('eq'): dict[And(str, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
+        Opt('eq'): dict[And(ValidIdentifier, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
     })
 
 

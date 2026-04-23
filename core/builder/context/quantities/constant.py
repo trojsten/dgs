@@ -58,7 +58,7 @@ class PhysicsConstant(PhysicsQuantity):
 
     @property
     def full_approx(self):
-        return self._format(self.approximate(self.digits))
+        return self.approximate(self.digits)._format(f'{self.digits}g')
 
     def __str__(self):
         return self.full

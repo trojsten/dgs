@@ -3,7 +3,7 @@ import operator
 import math
 import numbers
 import re
-from typing import Optional, Self
+from typing import Optional, Self, Callable, Union, Any
 
 import numpy as np
 import pint
@@ -39,35 +39,29 @@ class PhysicsQuantity:
         """
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
-    def __add__(self, other):
+    def _binop(self, other, op: Callable[[Self, Union[Self, numbers.Number, u.Quantity]], Any]) -> Self:
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity + other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity + other)
+            return PhysicsQuantity(op(self._quantity, other._quantity))
+        elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
+            return PhysicsQuantity(op(self._quantity, other))
         else:
-            raise TypeError(f"Cannot __add__ with {type(other)} ({other})")
+            raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
+
+
+    def __add__(self, other):
+        return self._binop(other, operator.add)
 
     def __radd__(self, other):
         return self + other
 
     def __sub__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity - other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity - other)
-        else:
-            raise TypeError(f"Cannot __sub__ with {type(other)} ({other})")
+        return self._binop(other, operator.sub)
 
     def __rsub__(self, other):
         return -(self - other)
 
     def __mul__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity * other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity * other)
-        else:
-            return NotImplemented
+        return self._binop(other, operator.mul)
 
     def __rmul__(self, other):
         return self * other
@@ -76,12 +70,7 @@ class PhysicsQuantity:
         return PhysicsQuantity(self._quantity ** exponent)
 
     def __truediv__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity / other._quantity)
-        elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
-            return PhysicsQuantity(self._quantity / other)
-        else:
-            raise TypeError(f"Cannot __truediv__ type {type(other)} ({other})")
+        return self._binop(other, operator.truediv)
 
     def __rtruediv__(self, other):
         return PhysicsQuantity(other / self._quantity)
@@ -140,7 +129,7 @@ class PhysicsQuantity:
         return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)
 
     def simplify(self):
-        return PhysicsQuantity(self._quantity.to_base_units())
+        return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
 
     def sin(self):
         return PhysicsQuantity(np.sin(self._quantity))
@@ -170,13 +159,14 @@ class PhysicsQuantity:
         Note that this representation might not be exact due to machine precision,
         and will have to be passed through `format` again to render correctly.
         """
+        assert digits > 0 and isinstance(digits, int), \
+            "Digits must be a positive integer"
         if self._quantity.magnitude == 0:
             logarithm = 1
         else:
             logarithm = math.floor(math.log10(abs(self._quantity.magnitude)))
 
         precision = digits - logarithm - 1
-        #magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
         magnitude = round(self._quantity.magnitude, precision)
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
@@ -318,6 +308,8 @@ class QuantityList:
     def __init__(self,
                  *qs: PhysicsQuantity):
         # First, try to force same units everywhere. If it works, good, if it does not, a pint error will be raised.
+        assert len(qs) > 0, \
+            f"{self.__class__.__name__} must have at least one quantity"
         self.qs = [q.to(qs[0].unit) for q in qs]
 
         self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])

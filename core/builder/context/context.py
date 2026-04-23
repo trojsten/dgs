@@ -4,13 +4,16 @@ import logging
 import pprint
 import yaml
 
-from typing import Any, Self, Optional
+from typing import Any, Self, Optional, TypeVar
 from pathlib import Path
-from enschema import Schema, SchemaError
+from enschema import Schema, SchemaError, Regex
 
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
+
+
+ValidIdentifier = Regex(r'[A-Za-z_][A-Za-z_0-9]*]')
 
 
 class Context(abc.ABC):
