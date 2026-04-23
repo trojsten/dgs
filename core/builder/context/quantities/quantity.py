@@ -118,7 +118,6 @@ class PhysicsQuantity:
     def quantity(self, value):
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
-    @property
     def mag(self):
         """ Return the internal magnitude. """
         return self._quantity.magnitude
