@@ -17,8 +17,8 @@
 \NewDocumentCommand{\Paren}{m}{\dgs_paren@*{#1}}
 \NewDocumentCommand{\Abs}{m}{\dgs_abs@*{#1}}
 % Shorthands for floor and ceiling functions
-\NewDocumentCommand{\Floor}{m}{\dgs_floor@{#1}}
-\NewDocumentCommand{\Ceil}{m}{\dgs_ceil@{#1}}
+\NewDocumentCommand{\Floor}{m}{\dgs_floor@*{#1}}
+\NewDocumentCommand{\Ceil}{m}{\dgs_ceil@*{#1}}
 
 % List of differentials
 \NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}

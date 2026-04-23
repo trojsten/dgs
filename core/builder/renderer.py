@@ -15,7 +15,7 @@ from typing import Optional
 from enschema import Schema, Optional as Opt, Or, And, Regex
 
 from core import cli
-from core.builder.context.context import Context
+from core.builder.context.context import Context, ValidIdentifier
 from core.builder.context.file import FileContext
 from core.builder.context.quantities.math import MathObject
 from core.builder.jinja import MarkdownJinjaRenderer

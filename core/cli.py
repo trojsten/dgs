@@ -52,7 +52,7 @@ class CLIInterface:
 
     def fail(self, e):
         log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}: {e}")
-        sys.exit(1)
+        raise e
 
     def success(self):
         if self.args.verbose:

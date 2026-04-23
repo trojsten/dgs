@@ -185,6 +185,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'eg': latex.equals_general,
             'w': QuantityRange.widen,
             'widen': QuantityRange.widen,
+            'mag': PhysicsQuantity.mag,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |
@@ -207,8 +208,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'acos': np.acos,
             'atan': np.atan,
             'atan2': np.atan2,
-            'ceil': np.ceil,
-            'floor': np.floor,
+            'ceil': PhysicsQuantity.ceil,
+            'floor': PhysicsQuantity.floor,
             'sqrt': lambda x: (x ** 0.5),
             'cbrt': np.cbrt,
             'rad': np.radians,

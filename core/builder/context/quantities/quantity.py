@@ -82,10 +82,23 @@ class PhysicsQuantity:
         return PhysicsQuantity(-self._quantity)
 
     def __str__(self):
-        return self._format('g')
+        return format(self, 'g')
 
     def __format__(self, fmt):
-        return self._format(fmt)
+        """
+        Format the quantity as a siunitx command (\\num or \\qty).
+        The format spec is forwarded to the underlying magnitude formatting:
+        empty spec prints the magnitude with Python's default for its type
+        (plain decimal for ints, repr-like for floats), which is usually
+        what callers want for verbatim output. Pass 'g', '.3f' etc. for
+        specific formatting.
+        """
+        fragments = self.format_struct(fmt=fmt)
+        cmd = fragments['cmd']
+        si_extra = self.format_si_extra(self.si_extra)
+        magnitude = f"{{{fragments['magnitude']}}}"
+        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else ''
+        return rf'\{cmd}{si_extra}{magnitude}{unit}'
 
     def __repr__(self):
         return f"{self.__class__.__name__} ({self._quantity})"
@@ -152,6 +165,12 @@ class PhysicsQuantity:
     def degrees(self):
         return PhysicsQuantity(np.degrees(self._quantity))
 
+    def ceil(self):
+        return PhysicsQuantity(np.ceil(self._quantity))
+
+    def floor(self):
+        return PhysicsQuantity(np.floor(self._quantity))
+
     def approximate(self, digits: int):
         """
         Return an approximate value of the constant (not just formatted output, but truly rounded).
@@ -197,15 +216,6 @@ class PhysicsQuantity:
         siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
         return siextraf
 
-    def _format(self, fmt: str = 'g'):
-        """Return a formatted string representation, by default a `g` one."""
-        fragments = self.format_struct(fmt=fmt)
-        cmd = fragments['cmd']
-        si_extra = self.format_si_extra(self.si_extra)
-        magnitude = f"{{{fragments['magnitude']}}}"
-        unit = '' if fragments['unit'] is None else f"{{{fragments['unit']}}}"
-        return rf'\{cmd}{si_extra}{magnitude}{unit}'
-
     @property
     def full(self):
         r"""
@@ -219,7 +229,7 @@ class PhysicsQuantity:
         ```
         as \qty{1.23e-6}{\kilo\gram}.
         """
-        return self._format()
+        return f'{self:g}'
 
     @property
     def equals(self) -> str:
@@ -241,14 +251,14 @@ class PhysicsQuantity:
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self._format(f'.{precision}f')}"
+        return rf"{self._symbol} = {self:.{precision}f}"
 
     def equals_general(self, precision: Optional[int]) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self._format(f'.{precision}g')}"
+        return rf"{self._symbol} = {self:.{precision}g}"
 
 
 def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
@@ -281,9 +291,14 @@ class QuantityRange:
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         minf = f"{{{minr['magnitude']}}}"
         maxf = f"{{{maxr['magnitude']}}}"
-        unitf = f"{{{minr['unit']}}}"
 
-        cmd = 'qtyrange'
+        # Use \numrange for dimensionless quantities, \qtyrange otherwise.
+        if minr['unit']:
+            cmd = 'qtyrange'
+            unitf = f"{{{minr['unit']}}}"
+        else:
+            cmd = 'numrange'
+            unitf = ''
         return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
 
     def widen(self, value: float) -> Self:
@@ -297,7 +312,7 @@ class QuantityRange:
         return QuantityRange(self.minimum * (1 - value), self.maximum * (1 + value))
 
     def __str__(self):
-        return self.__format__('g')
+        return format(self, 'g')
 
 
 class QuantityList:
@@ -310,20 +325,25 @@ class QuantityList:
         # First, try to force same units everywhere. If it works, good, if it does not, a pint error will be raised.
         assert len(qs) > 0, \
             f"{self.__class__.__name__} must have at least one quantity"
-
         self.qs = [q.to(qs[0].unit) for q in qs]
+
         self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
 
     def __format__(self, fmt: str):
-        cmd = 'qtylist'
         fqs = [q.format_struct(fmt) for q in self.qs]
         self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
 
-        unitf = f"{{{fqs[0]['unit']}}}"
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         magf = f'{{{self.magnitudes}}}'
 
+        # Use \numlist for dimensionless quantities, \qtylist otherwise.
+        if fqs[0]['unit']:
+            cmd = 'qtylist'
+            unitf = f"{{{fqs[0]['unit']}}}"
+        else:
+            cmd = 'numlist'
+            unitf = ''
         return rf'\{cmd}{si_extraf}{magf}{unitf}'
 
     def __str__(self):
-        return self.__format__('g')
+        return format(self, 'g')

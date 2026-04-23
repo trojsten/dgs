@@ -29,7 +29,7 @@ class PhysicsConstant(PhysicsQuantity):
         elif fmt is None:
             fmt = f'.{self.digits}g'
 
-        return self._format(fmt)
+        return format(self, fmt)
 
     @property
     def approx(self):
@@ -42,7 +42,7 @@ class PhysicsConstant(PhysicsQuantity):
     def _full(self, kind: str, precision: int = None) -> str:
         if precision is None:
             precision = self.digits
-        return self._format(f'.{precision}{kind}')
+        return f'{self:.{precision}{kind}}'
 
     def fullf(self, precision: int = None) -> str:
         """ Full, with f formatting """
@@ -54,11 +54,11 @@ class PhysicsConstant(PhysicsQuantity):
 
     @property
     def full_exact(self):
-        return self._format('99g')
+        return f'{self:99g}'
 
     @property
     def full_approx(self):
-        return self.approximate(self.digits)._format(f'{self.digits}g')
+        return f'{self.approximate(self.digits):{self.digits}g}'
 
     def __str__(self):
         return self.full

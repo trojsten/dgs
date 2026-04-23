@@ -99,3 +99,389 @@ class TestList:
     def test_incommensurate(self, length1, mass2):
         with pytest.raises(pint.errors.DimensionalityError):
             _ = QuantityList(length1, mass2)
+
+
+# --- Metadata propagation ------------------------------------------------
+#
+# Physical reasoning: a "symbol" names a specific quantity and does not
+# compose under arithmetic (c - 1000 km/s is not c). Same for si_extra:
+# formatting directives attached to one quantity should not silently propagate
+# to a derived one. Operations that yield the *same* quantity in a different
+# form (unit conversion, simplification, rounding) do preserve metadata.
+
+
+class TestMetadataPreserved:
+    """Operations that yield the same quantity must keep symbol and si_extra."""
+
+    @pytest.fixture
+    def labelled(self):
+        return PhysicsQuantity.construct(
+            5000, 'gram', symbol='m', si_extra={'round-mode': 'figures'},
+        )
+
+    def test_to_preserves(self, labelled):
+        converted = labelled.to('kg')
+        assert converted.symbol == 'm'
+        assert converted.si_extra == {'round-mode': 'figures'}
+
+    def test_simplify_preserves(self, labelled):
+        simplified = labelled.simplify()
+        assert simplified.symbol == 'm'
+        assert simplified.si_extra == {'round-mode': 'figures'}
+
+    def test_approximate_preserves(self, labelled):
+        approx = labelled.approximate(2)
+        assert approx.symbol == 'm'
+        assert approx.si_extra == {'round-mode': 'figures'}
+
+
+class TestMetadataDropped:
+    """Operations that yield a *new* quantity must drop symbol and si_extra."""
+
+    @pytest.fixture
+    def labelled(self):
+        return PhysicsQuantity.construct(
+            5, 'kg', symbol='m', si_extra={'round-mode': 'figures'},
+        )
+
+    @pytest.fixture
+    def other(self):
+        return PhysicsQuantity.construct(3, 'kg', symbol='n')
+
+    def test_add_drops(self, labelled, other):
+        result = labelled + other
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_sub_drops(self, labelled, other):
+        result = labelled - other
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_mul_drops(self, labelled, other):
+        result = labelled * other
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_truediv_drops(self, labelled, other):
+        result = labelled / other
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_neg_drops(self, labelled):
+        result = -labelled
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_pow_drops(self, labelled):
+        result = labelled ** 2
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_scalar_mul_drops(self, labelled):
+        """Multiplying by a plain number is still a new quantity."""
+        result = labelled * 2
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_sin_drops(self):
+        import numpy as np
+        angle = PhysicsQuantity.construct(
+            np.pi / 2, 'radian', symbol=r'\theta',
+            si_extra={'round-mode': 'figures'},
+            )
+        result = angle.sin()
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_log_drops(self):
+        q = PhysicsQuantity.construct(
+            2.718, '', symbol='x', si_extra={'round-mode': 'figures'},
+        )
+        result = q.log()
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+    def test_degrees_drops(self):
+        import numpy as np
+        angle = PhysicsQuantity.construct(
+            np.pi, 'radian', symbol='a', si_extra={'round-mode': 'figures'},
+        )
+        result = angle.degrees()
+        assert result.symbol is None
+        assert result.si_extra == {}
+
+
+# --- Pint interop --------------------------------------------------------
+
+
+class TestPintInterop:
+    """Binary ops with bare pint.Quantity operands must stay in the PhysicsQuantity world."""
+
+    def test_mul_with_pint_quantity(self):
+        from pint import UnitRegistry as u
+        m = PhysicsQuantity.construct(5, 'kg')
+        v = u.Quantity(2, 'meter / second')
+        result = m * v
+        assert isinstance(result, PhysicsQuantity), (
+            f"expected PhysicsQuantity, got {type(result).__name__}"
+        )
+
+    def test_truediv_with_pint_quantity(self):
+        from pint import UnitRegistry as u
+        m = PhysicsQuantity.construct(5, 'kg')
+        v = u.Quantity(2, 'meter / second')
+        result = m / v
+        assert isinstance(result, PhysicsQuantity)
+
+    def test_add_with_plain_number_errors(self):
+        """5 kg + 3 is a dimensionality error, not a silent pass-through."""
+        m = PhysicsQuantity.construct(5, 'kg')
+        with pytest.raises(pint.errors.DimensionalityError):
+            _ = m + 3
+
+
+# --- Approximate rounding ------------------------------------------------
+
+
+class TestApproximate:
+    """Sanity checks on `approximate()` rounding."""
+
+    def test_positive_digits_required(self):
+        m = PhysicsQuantity.construct(123.456, 'kg')
+        with pytest.raises(AssertionError):
+            m.approximate(0)
+
+    def test_negative_digits_rejected(self):
+        m = PhysicsQuantity.construct(123.456, 'kg')
+        with pytest.raises(AssertionError):
+            m.approximate(-1)
+
+    def test_non_integer_digits_rejected(self):
+        m = PhysicsQuantity.construct(123.456, 'kg')
+        with pytest.raises(AssertionError):
+            m.approximate(2.5)
+
+    def test_symmetric_around_zero(self):
+        """Positive and negative magnitudes must round symmetrically."""
+        pos = PhysicsQuantity.construct(1.55, 'kg').approximate(2).mag
+        neg = PhysicsQuantity.construct(-1.55, 'kg').approximate(2).mag
+        assert pos == -neg, f"asymmetric rounding: {pos} vs {neg}"
+
+    def test_zero_magnitude(self):
+        m = PhysicsQuantity.construct(0.0, 'kg')
+        assert m.approximate(3).mag == 0.0
+
+    def test_significant_figures_one(self):
+        m = PhysicsQuantity.construct(123.456, 'kg')
+        assert m.approximate(1).mag == 100.0
+
+    def test_significant_figures_three(self):
+        m = PhysicsQuantity.construct(123.456, 'kg')
+        assert m.approximate(3).mag == 123.0
+
+
+# --- Range guardrails ----------------------------------------------------
+
+
+class TestRangeGuardrails:
+    """Ranges with invalid bounds should be rejected at construction."""
+
+    @pytest.fixture
+    def m1(self):
+        return PhysicsQuantity.construct(1, 'kg')
+
+    @pytest.fixture
+    def m3(self):
+        return PhysicsQuantity.construct(3, 'kg')
+
+    @pytest.mark.xfail(reason="swapped endpoints currently accepted silently")
+    def test_swapped_endpoints_rejected(self, m1, m3):
+        with pytest.raises(ValueError):
+            QuantityRange(m3, m1)
+
+    def test_widen_sane(self, m1, m3):
+        r = QuantityRange(m1, m3).widen(0.1)
+        assert r.minimum.mag == pytest.approx(0.9)
+        assert r.maximum.mag == pytest.approx(3.3)
+
+    @pytest.mark.xfail(reason="widen(value>=1) produces negative minimum")
+    def test_widen_out_of_range_rejected(self, m1, m3):
+        with pytest.raises((ValueError, AssertionError)):
+            QuantityRange(m1, m3).widen(1.5)
+
+    def test_widen_identity(self, m1, m3):
+        """widen(0) returns an equivalent range."""
+        r = QuantityRange(m1, m3).widen(0)
+        assert r.minimum.mag == 1
+        assert r.maximum.mag == 3
+
+
+# --- si_extra clash detection --------------------------------------------
+
+
+class TestSiExtraClash:
+    """
+    When two quantities with conflicting si_extra keys are combined into a
+    QuantityRange or QuantityList, the conflict should be surfaced rather
+    than silently resolved.
+    """
+
+    @pytest.fixture
+    def m_figures(self):
+        return PhysicsQuantity.construct(1, 'kg', si_extra={'round-mode': 'figures'})
+
+    @pytest.fixture
+    def m_places(self):
+        return PhysicsQuantity.construct(2, 'kg', si_extra={'round-mode': 'places'})
+
+    @pytest.fixture
+    def m_plain(self):
+        return PhysicsQuantity.construct(3, 'kg')
+
+    def test_range_compatible_keys_merge(self, m_figures, m_plain):
+        """Non-conflicting si_extra should merge cleanly."""
+        r = QuantityRange(m_figures, m_plain)
+        assert r.si_extra == {'round-mode': 'figures'}
+
+    def test_list_compatible_keys_merge(self, m_figures, m_plain):
+        ql = QuantityList(m_figures, m_plain)
+        assert ql.si_extra == {'round-mode': 'figures'}
+
+    @pytest.mark.xfail(reason="si_extra conflicts in QuantityRange are currently silent (last-wins)")
+    def test_range_conflicting_keys_raises(self, m_figures, m_places):
+        with pytest.raises(ValueError, match="round-mode"):
+            QuantityRange(m_figures, m_places)
+
+    @pytest.mark.xfail(reason="si_extra conflicts in QuantityList are currently silent (last-wins)")
+    def test_list_conflicting_keys_raises(self, m_figures, m_places):
+        with pytest.raises(ValueError, match="round-mode"):
+            QuantityList(m_figures, m_places)
+
+
+# --- QuantityList edge cases ---------------------------------------------
+
+
+class TestQuantityListEdgeCases:
+    def test_empty_rejected(self):
+        with pytest.raises(AssertionError):
+            QuantityList()
+
+    def test_single_element(self):
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert rf'{QuantityList(m)}' == r'\qtylist{5}{\kilo\gram}'
+
+    def test_unit_of_first_wins(self):
+        """
+        QuantityList coerces all elements to the first element's unit.
+        Note: pint's conversion may change int→float, so '1' becomes '1.0'
+        when it is the result of a conversion rather than a literal.
+        """
+        g = PhysicsQuantity.construct(1000, 'gram')
+        kg = PhysicsQuantity.construct(1, 'kilogram')
+        assert rf'{QuantityList(g, kg)}' == r'\qtylist{1000;1000.0}{\gram}'
+        assert rf'{QuantityList(kg, g)}' == r'\qtylist{1;1.0}{\kilo\gram}'
+
+
+# --- Formatting ----------------------------------------------------------
+
+
+class TestFormatting:
+    def test_dimensionless_uses_num(self):
+        d = PhysicsQuantity.construct(3.14, '')
+        assert str(d).startswith(r'\num{')
+
+    def test_dimensionless_has_no_trailing_braces(self):
+        """\num{3.14} is the correct form; \num{3.14}{} has a stray empty group."""
+        d = PhysicsQuantity.construct(3.14, '')
+        assert str(d) == r'\num{3.14}'
+
+    def test_dimensionless_range_uses_numrange(self):
+        a = PhysicsQuantity.construct(0.1, '')
+        b = PhysicsQuantity.construct(0.5, '')
+        assert rf'{QuantityRange(a, b)}' == r'\numrange{0.1}{0.5}'
+
+    def test_dimensionless_list_uses_numlist(self):
+        a = PhysicsQuantity.construct(0.1, '')
+        b = PhysicsQuantity.construct(0.5, '')
+        assert rf'{QuantityList(a, b)}' == r'\numlist{0.1;0.5}'
+
+    def test_with_unit_uses_qty(self):
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert str(m).startswith(r'\qty{')
+
+    def test_si_extra_appears_in_output(self):
+        m = PhysicsQuantity.construct(
+            5, 'kg', si_extra={'round-mode': 'figures'},
+        )
+        assert 'round-mode=figures' in str(m)
+
+
+# --- Equality semantics --------------------------------------------------
+
+
+class TestEquality:
+    """Equality compares physical values only; metadata is ignored by design."""
+
+    def test_same_value_different_symbol(self):
+        a = PhysicsQuantity.construct(5, 'kg', symbol='X')
+        b = PhysicsQuantity.construct(5, 'kg', symbol='Y')
+        assert a == b
+
+    def test_same_value_different_si_extra(self):
+        a = PhysicsQuantity.construct(5, 'kg', si_extra={'round-mode': 'figures'})
+        b = PhysicsQuantity.construct(5, 'kg')
+        assert a == b
+
+    def test_same_value_different_units(self):
+        """pint's equality handles unit conversion under the hood."""
+        a = PhysicsQuantity.construct(1, 'kilogram')
+        b = PhysicsQuantity.construct(1000, 'gram')
+        assert a == b
+
+    def test_different_values_not_equal(self):
+        a = PhysicsQuantity.construct(5, 'kg')
+        b = PhysicsQuantity.construct(7, 'kg')
+        assert a != b
+
+    def test_not_equal_to_non_quantity(self):
+        """Comparison with non-PhysicsQuantity returns False, does not crash."""
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert (m == 5) is False
+        assert (m == "5 kg") is False
+        assert (m == None) is False
+
+    def test_unhashable(self):
+        """Defining __eq__ without __hash__ makes instances unhashable."""
+        m = PhysicsQuantity.construct(5, 'kg')
+        with pytest.raises(TypeError):
+            hash(m)
+
+
+# --- PhysicsConstant -----------------------------------------------------
+
+
+class TestPhysicsConstant:
+    """Smoke tests for the PhysicsConstant subclass."""
+
+    @pytest.fixture
+    def g(self):
+        from core.builder.context.quantities.constant import PhysicsConstant
+        from pint import UnitRegistry as u
+        return PhysicsConstant(
+            'gforce', u.Quantity(9.80665, 'meter / second^2'), digits=2,
+        )
+
+    def test_full(self, g):
+        assert r'\qty{' in g.full
+        assert r'\meter' in g.full
+
+    def test_approx(self, g):
+        """g with 2 digits rounds to 9.8 m/s^2."""
+        assert g.approx.mag == pytest.approx(9.8)
+
+    def test_full_approx(self, g):
+        """Previously crashed with `ValueError: Invalid format specifier`."""
+        rendered = g.full_approx
+        assert r'\qty{' in rendered
+        assert '9.8' in rendered

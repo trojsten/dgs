@@ -229,7 +229,7 @@ class Convertor:
             "--to", self.output_format,
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
-            "--filter", "pandoc-include",
+            #"--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
             "-M", f"rewrite-path=false",
             "--filter", "pandoc-minted",
