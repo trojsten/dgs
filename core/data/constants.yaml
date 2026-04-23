@@ -386,3 +386,16 @@ molar_mass_zinc:
     unit:       "gram / mole"
     digits:     2
     aliases:    ['M_Zn']
+
+molar_mass_carbon:
+    symbol:     "M_{\\ce{C}}"
+    magnitude:  12.01
+    unit:       "gram / mole"
+    digits:     2
+    aliases:    ['M_C']
+
+relative_mass_carbon:
+    symbol:     "A_r(\\ce{C})"
+    magnitude:  12.01
+    digits:     2
+    aliases:    ['ArC']
