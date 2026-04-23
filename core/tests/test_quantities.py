@@ -264,21 +264,21 @@ class TestApproximate:
 
     def test_symmetric_around_zero(self):
         """Positive and negative magnitudes must round symmetrically."""
-        pos = PhysicsQuantity.construct(1.55, 'kg').approximate(2).mag
-        neg = PhysicsQuantity.construct(-1.55, 'kg').approximate(2).mag
+        pos = PhysicsQuantity.construct(1.55, 'kg').approximate(2).mag()
+        neg = PhysicsQuantity.construct(-1.55, 'kg').approximate(2).mag()
         assert pos == -neg, f"asymmetric rounding: {pos} vs {neg}"
 
     def test_zero_magnitude(self):
         m = PhysicsQuantity.construct(0.0, 'kg')
-        assert m.approximate(3).mag == 0.0
+        assert m.approximate(3).mag()== 0.0
 
     def test_significant_figures_one(self):
         m = PhysicsQuantity.construct(123.456, 'kg')
-        assert m.approximate(1).mag == 100.0
+        assert m.approximate(1).mag()== 100.0
 
     def test_significant_figures_three(self):
         m = PhysicsQuantity.construct(123.456, 'kg')
-        assert m.approximate(3).mag == 123.0
+        assert m.approximate(3).mag()== 123.0
 
 
 # --- Range guardrails ----------------------------------------------------
@@ -302,8 +302,8 @@ class TestRangeGuardrails:
 
     def test_widen_sane(self, m1, m3):
         r = QuantityRange(m1, m3).widen(0.1)
-        assert r.minimum.mag == pytest.approx(0.9)
-        assert r.maximum.mag == pytest.approx(3.3)
+        assert r.minimum.mag()== pytest.approx(0.9)
+        assert r.maximum.mag()== pytest.approx(3.3)
 
     @pytest.mark.xfail(reason="widen(value>=1) produces negative minimum")
     def test_widen_out_of_range_rejected(self, m1, m3):
@@ -313,8 +313,8 @@ class TestRangeGuardrails:
     def test_widen_identity(self, m1, m3):
         """widen(0) returns an equivalent range."""
         r = QuantityRange(m1, m3).widen(0)
-        assert r.minimum.mag == 1
-        assert r.maximum.mag == 3
+        assert r.minimum.mag()== 1
+        assert r.maximum.mag()== 3
 
 
 # --- si_extra clash detection --------------------------------------------
@@ -478,7 +478,7 @@ class TestPhysicsConstant:
 
     def test_approx(self, g):
         """g with 2 digits rounds to 9.8 m/s^2."""
-        assert g.approx.mag == pytest.approx(9.8)
+        assert g.approx.mag()== pytest.approx(9.8)
 
     def test_full_approx(self, g):
         """Previously crashed with `ValueError: Invalid format specifier`."""
