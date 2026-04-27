@@ -281,6 +281,127 @@ class TestApproximate:
         assert m.approximate(3).mag == 123.0
 
 
+# --- PhysicsQuantity.mag -------------------------------------------------
+
+
+class TestMag:
+    """
+    `mag` is a thin accessor for the underlying pint magnitude. It returns
+    whatever numeric type pint stores (int, float, or numpy scalar after
+    operations like np.floor/np.ceil).
+    """
+
+    def test_int_construction(self):
+        assert PhysicsQuantity.construct(7, 'kg').mag == 7
+
+    def test_float_construction(self):
+        assert PhysicsQuantity.construct(5.5, 'kg').mag == pytest.approx(5.5)
+
+    def test_negative(self):
+        assert PhysicsQuantity.construct(-3.7, 'kg').mag == pytest.approx(-3.7)
+
+    def test_dimensionless(self):
+        assert PhysicsQuantity.construct(2.5, '').mag == pytest.approx(2.5)
+
+    def test_after_unit_conversion(self):
+        """`to()` may change int -> float as a side effect of conversion."""
+        kg = PhysicsQuantity.construct(1, 'kilogram')
+        assert kg.to('gram').mag == pytest.approx(1000)
+
+    def test_mag_does_not_carry_units(self):
+        """The bare magnitude is a number, not a pint Quantity."""
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert not hasattr(m.mag, 'units')
+
+
+# --- PhysicsQuantity.floor / .ceil --------------------------------------
+
+
+class TestFloorCeil:
+    """
+    `floor` and `ceil` round the magnitude toward -inf and +inf respectively,
+    keeping the unit. They return a new PhysicsQuantity; metadata is dropped
+    because the result is a different quantity from the input.
+    """
+
+    def test_floor_positive(self):
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert m.floor().mag == pytest.approx(5)
+
+    def test_ceil_positive(self):
+        m = PhysicsQuantity.construct(5.3, 'kg')
+        assert m.ceil().mag == pytest.approx(6)
+
+    def test_floor_negative_rounds_toward_neg_inf(self):
+        """floor(-2.3) is -3, not -2 (toward -inf, not toward zero)."""
+        m = PhysicsQuantity.construct(-2.3, 'meter')
+        assert m.floor().mag == pytest.approx(-3)
+
+    def test_ceil_negative_rounds_toward_pos_inf(self):
+        """ceil(-2.3) is -2, not -3 (toward +inf, not toward zero)."""
+        m = PhysicsQuantity.construct(-2.3, 'meter')
+        assert m.ceil().mag == pytest.approx(-2)
+
+    def test_floor_of_integer(self):
+        m = PhysicsQuantity.construct(5.0, 'kg')
+        assert m.floor().mag == pytest.approx(5)
+
+    def test_ceil_of_integer(self):
+        m = PhysicsQuantity.construct(5.0, 'kg')
+        assert m.ceil().mag == pytest.approx(5)
+
+    def test_floor_of_zero(self):
+        m = PhysicsQuantity.construct(0, 'kg')
+        assert m.floor().mag == pytest.approx(0)
+
+    def test_ceil_of_zero(self):
+        m = PhysicsQuantity.construct(0, 'kg')
+        assert m.ceil().mag == pytest.approx(0)
+
+    def test_floor_preserves_unit(self):
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert m.floor().unit == m.unit
+
+    def test_ceil_preserves_unit(self):
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert m.ceil().unit == m.unit
+
+    def test_floor_returns_physics_quantity(self):
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert isinstance(m.floor(), PhysicsQuantity)
+
+    def test_ceil_returns_physics_quantity(self):
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert isinstance(m.ceil(), PhysicsQuantity)
+
+    def test_floor_drops_symbol(self):
+        """floor produces a new quantity, so the original symbol does not carry over."""
+        m = PhysicsQuantity.construct(5.7, 'kg', symbol='m')
+        assert m.floor().symbol is None
+
+    def test_floor_drops_si_extra(self):
+        m = PhysicsQuantity.construct(5.7, 'kg', si_extra={'round-mode': 'figures'})
+        assert m.floor().si_extra == {}
+
+    def test_ceil_drops_symbol(self):
+        m = PhysicsQuantity.construct(5.7, 'kg', symbol='m')
+        assert m.ceil().symbol is None
+
+    def test_ceil_drops_si_extra(self):
+        m = PhysicsQuantity.construct(5.7, 'kg', si_extra={'round-mode': 'figures'})
+        assert m.ceil().si_extra == {}
+
+    def test_floor_dimensionless_renders_with_num(self):
+        """Dimensionless results should still use \\num, not \\qty."""
+        d = PhysicsQuantity.construct(2.7, '')
+        assert str(d.floor()).startswith(r'\num{')
+
+    def test_floor_then_ceil_idempotent_on_floored_value(self):
+        """ceil of a floored integer is the same value."""
+        m = PhysicsQuantity.construct(5.7, 'kg')
+        assert m.floor().ceil().mag == pytest.approx(5)
+
+
 # --- PhysicsQuantity.widen -----------------------------------------------
 
 
