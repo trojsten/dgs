@@ -281,6 +281,66 @@ class TestApproximate:
         assert m.approximate(3).mag == 123.0
 
 
+# --- PhysicsQuantity.widen -----------------------------------------------
+
+
+class TestQuantityWiden:
+    """
+    PhysicsQuantity.widen(v) constructs an asymmetric tolerance range
+    [(1-v)*x, (1+v)*x] from a single value, with min/max ordered correctly
+    regardless of sign.
+    """
+
+    def test_positive_value(self):
+        m = PhysicsQuantity.construct(100, 'meter')
+        r = m.widen(0.05)
+        assert r.minimum.mag == pytest.approx(95)
+        assert r.maximum.mag == pytest.approx(105)
+
+    def test_negative_value(self):
+        """For x < 0, the result is still ordered (min < max)."""
+        m = PhysicsQuantity.construct(-100, 'meter')
+        r = m.widen(0.05)
+        assert r.minimum.mag == pytest.approx(-105)
+        assert r.maximum.mag == pytest.approx(-95)
+
+    def test_large_factor_crosses_zero(self):
+        """value >= 1 produces a range crossing zero."""
+        m = PhysicsQuantity.construct(100, 'meter')
+        r = m.widen(1.5)
+        assert r.minimum.mag == pytest.approx(-50)
+        assert r.maximum.mag == pytest.approx(250)
+
+    def test_zero_value(self):
+        """widen on x == 0 gives a degenerate range at zero."""
+        m = PhysicsQuantity.construct(0, 'meter')
+        r = m.widen(0.1)
+        assert r.minimum.mag == 0
+        assert r.maximum.mag == 0
+
+    def test_zero_factor(self):
+        """widen(0) gives a degenerate range at the original value."""
+        m = PhysicsQuantity.construct(42, 'meter')
+        r = m.widen(0)
+        assert r.minimum.mag == pytest.approx(42)
+        assert r.maximum.mag == pytest.approx(42)
+
+    def test_negative_factor_rejected(self):
+        m = PhysicsQuantity.construct(100, 'meter')
+        with pytest.raises(AssertionError, match="non-negative"):
+            m.widen(-0.05)
+
+    def test_unit_preserved(self):
+        m = PhysicsQuantity.construct(100, 'meter')
+        r = m.widen(0.1)
+        assert r.minimum.unit == r.maximum.unit
+        assert str(r.minimum.unit) == 'meter'
+
+    def test_returns_quantity_range(self):
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert isinstance(m.widen(0.1), QuantityRange)
+
+
 # --- Range guardrails ----------------------------------------------------
 
 
@@ -300,21 +360,52 @@ class TestRangeGuardrails:
         with pytest.raises(ValueError):
             QuantityRange(m3, m1)
 
-    def test_widen_sane(self, m1, m3):
+    def test_widen_positive_range(self, m1, m3):
+        """[1, 3] widened by 0.1: width grows from 2 to 2.2, symmetric around centre 2."""
         r = QuantityRange(m1, m3).widen(0.1)
         assert r.minimum.mag == pytest.approx(0.9)
-        assert r.maximum.mag == pytest.approx(3.3)
+        assert r.maximum.mag == pytest.approx(3.1)
 
-    @pytest.mark.xfail(reason="widen(value>=1) produces negative minimum")
-    def test_widen_out_of_range_rejected(self, m1, m3):
-        with pytest.raises((ValueError, AssertionError)):
-            QuantityRange(m1, m3).widen(1.5)
+    def test_widen_negative_range(self):
+        """A negative-valued range must widen, not narrow."""
+        a = PhysicsQuantity.construct(-3, 'kg')
+        b = PhysicsQuantity.construct(-1, 'kg')
+        r = QuantityRange(a, b).widen(0.1)
+        assert r.minimum.mag == pytest.approx(-3.1)
+        assert r.maximum.mag == pytest.approx(-0.9)
+
+    def test_widen_zero_centred_range(self):
+        """Range straddling zero widens symmetrically."""
+        a = PhysicsQuantity.construct(-1, 'kg')
+        b = PhysicsQuantity.construct(1, 'kg')
+        r = QuantityRange(a, b).widen(0.5)
+        assert r.minimum.mag == pytest.approx(-1.5)
+        assert r.maximum.mag == pytest.approx(1.5)
+
+    def test_widen_large_factor_allowed(self, m1, m3):
+        """value >= 1 is now permitted; the range simply grows substantially."""
+        r = QuantityRange(m1, m3).widen(1.5)
+        # Centre 2, half-width 1, scaled by 2.5 -> half-width 2.5
+        assert r.minimum.mag == pytest.approx(-0.5)
+        assert r.maximum.mag == pytest.approx(4.5)
+
+    def test_widen_negative_value_rejected(self, m1, m3):
+        """widen(-0.1) would contract; reject so 'widen' stays honest about its name."""
+        with pytest.raises(AssertionError, match="non-negative"):
+            QuantityRange(m1, m3).widen(-0.1)
 
     def test_widen_identity(self, m1, m3):
         """widen(0) returns an equivalent range."""
         r = QuantityRange(m1, m3).widen(0)
-        assert r.minimum.mag == 1
-        assert r.maximum.mag == 3
+        assert r.minimum.mag == pytest.approx(1)
+        assert r.maximum.mag == pytest.approx(3)
+
+    def test_widen_degenerate_range(self):
+        """A range with min==max stays degenerate; half-width is zero."""
+        a = PhysicsQuantity.construct(5, 'kg')
+        r = QuantityRange(a, a).widen(0.1)
+        assert r.minimum.mag == pytest.approx(5)
+        assert r.maximum.mag == pytest.approx(5)
 
 
 # --- si_extra clash detection --------------------------------------------

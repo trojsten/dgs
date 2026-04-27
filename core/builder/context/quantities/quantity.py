@@ -144,6 +144,27 @@ class PhysicsQuantity:
     def simplify(self):
         return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
 
+    def widen(self, value: float) -> "QuantityRange":
+        """
+        Construct a tolerance range from this quantity:
+        ``[(1 - v) * x, (1 + v) * x]``.
+
+        For positive ``x`` the smaller endpoint is ``(1 - v) * x`` and the
+        larger is ``(1 + v) * x``. For negative ``x`` the order flips so the
+        returned range still has minimum <= maximum.
+
+        ``value`` must be non-negative; pass ``0`` for a degenerate range.
+        Values >= 1 are allowed and produce a range that crosses zero
+        (e.g. ``100.widen(1.5) -> [-50, 250]``).
+        """
+        assert value >= 0, f"widen factor must be non-negative, got {value}"
+        low = self * (1 - value)
+        high = self * (1 + value)
+        if self._quantity.magnitude >= 0:
+            return QuantityRange(low, high)
+        else:
+            return QuantityRange(high, low)
+
     def sin(self):
         return PhysicsQuantity(np.sin(self._quantity))
 
@@ -303,13 +324,28 @@ class QuantityRange:
 
     def widen(self, value: float) -> Self:
         """
-        Widen the interval by value:
-        minimum := (1 - value) * minimum
-        maximum := (1 + value) * maximum
+        Return a new range whose width is multiplied by ``(1 + value)``,
+        expanded symmetrically around the centre.
 
-        This should be useful for specifying ranges of acceptable results in Náboj.
+        For a range ``[a, b]`` with centre ``c = (a + b) / 2`` and half-width
+        ``h = (b - a) / 2``, the result is ``[c - h*(1+v), c + h*(1+v)]``.
+
+        This always widens (never narrows) regardless of sign:
+            [1, 3]   widen(0.1) -> [0.9, 3.1]
+            [-3, -1] widen(0.1) -> [-3.1, -0.9]
+            [-1, 1]  widen(0.5) -> [-1.5, 1.5]
+
+        A degenerate range (a == b) stays degenerate, since its half-width
+        is zero. Construct an explicit non-degenerate range first if you
+        want a tolerance band around a single value.
+
+        This should be useful for specifying ranges of acceptable results
+        in Náboj.
         """
-        return QuantityRange(self.minimum * (1 - value), self.maximum * (1 + value))
+        assert value >= 0, f"widen factor must be non-negative, got {value}"
+        centre = (self.minimum + self.maximum) * 0.5
+        half_width = (self.maximum - self.minimum) * 0.5 * (1 + value)
+        return QuantityRange(centre - half_width, centre + half_width)
 
     def __str__(self):
         return format(self, 'g')

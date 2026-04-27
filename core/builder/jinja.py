@@ -183,8 +183,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
-            'w': QuantityRange.widen,
-            'widen': QuantityRange.widen,
+            'w': lambda obj, value: obj.widen(value),
+            'widen': lambda obj, value: obj.widen(value),
             'mag': PhysicsQuantity.mag,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
