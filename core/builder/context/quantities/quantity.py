@@ -1,7 +1,6 @@
-import functools
-import operator
 import math
 import numbers
+import operator
 import re
 from typing import Optional, Self, Callable, Union, Any
 
@@ -10,6 +9,7 @@ import pint
 from pint import UnitRegistry as u
 
 from core.filters.hacks import cut_extra_one
+from core.utilities.dicts import strict_merge
 
 
 class PhysicsQuantity:
@@ -118,6 +118,7 @@ class PhysicsQuantity:
     def quantity(self, value):
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
+    @property
     def mag(self):
         """ Return the internal magnitude. """
         return self._quantity.magnitude
@@ -276,7 +277,7 @@ class QuantityRange:
                  maximum: PhysicsQuantity):
         self.minimum = minimum
         self.maximum = maximum
-        self.si_extra = self.minimum.si_extra | self.maximum.si_extra
+        self.si_extra = strict_merge(self.minimum.si_extra, self.maximum.si_extra)
 
         # Try to coerce to the same unit (minimum takes precedence).
         # If it works, fine, if not, let pint raise the appropriate exception.
@@ -326,7 +327,7 @@ class QuantityList:
             f"{self.__class__.__name__} must have at least one quantity"
         self.qs = [q.to(qs[0].unit) for q in qs]
 
-        self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
+        self.si_extra = strict_merge(*(q.si_extra for q in self.qs))
 
     def __format__(self, fmt: str):
         fqs = [q.format_struct(fmt) for q in self.qs]
