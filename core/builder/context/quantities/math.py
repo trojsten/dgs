@@ -1,5 +1,3 @@
-from typing import Optional
-
 import regex as re
 
 
@@ -19,13 +17,22 @@ class MathObject:
     def __repr__(self):
         return repr(self.__str__())
 
-    def __format__(self, spec: Optional[str] = None):
+    _INTERPUNCTION = '.,;?!'
+
+    def __format__(self, spec: str = ''):
+        interpunction = ''
+        if len(spec) > 0 and spec[-1] in self._INTERPUNCTION:
+            interpunction = spec[-1]
+            spec = spec[:-1]
+
         match spec:
-            case None:
-                return self.__str__()
+            case '':
+                return f"${self.content}{interpunction}$"
             case 'disp':
                 content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
-                return f"""$$\n{content}\n$$ {{#eq:{self.id}}}"""
+                return f"$$\n{content}{interpunction}\n$$ {{#eq:{self.id}}}"
             case 'align':
                 content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
-                return f"""$${{\n{content}\n}}$$ {{#eq:{self.id}}}"""
+                return f"$${{\n{content}{interpunction}\n}}$$ {{#eq:{self.id}}}"
+            case _:
+                raise NotImplementedError(f"Unknown format spec {spec!r} for MathObject")

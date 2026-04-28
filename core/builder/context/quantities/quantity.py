@@ -47,7 +47,6 @@ class PhysicsQuantity:
         else:
             raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
 
-
     def __add__(self, other):
         return self._binop(other, operator.add)
 
