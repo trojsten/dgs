@@ -18,12 +18,18 @@ class PhysicsQuantity:
     """
 
     def __init__(self,
-                 quantity: u.Quantity,
+                 quantity: pint.Quantity | int | float,
                  *,
                  symbol: str = None,
                  si_extra: dict[str, str] = None,
                  force_f: bool = False):
-        self._quantity = quantity
+        if isinstance(quantity, pint.Quantity):
+            self._quantity = quantity
+        elif isinstance(quantity, numbers.Number):
+            self._quantity = u.Quantity(quantity, '1')
+        else:
+            raise TypeError(f"Cannot construct a {self.__class__.__qualname__} object from {quantity}")
+
         self._symbol = symbol
 
         self.si_extra = {} if si_extra is None else si_extra
@@ -117,7 +123,6 @@ class PhysicsQuantity:
     def quantity(self, value):
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
-    @property
     def mag(self):
         """ Return the internal magnitude. """
         return self._quantity.magnitude
@@ -302,7 +307,7 @@ class QuantityRange:
         self.unit = minimum.unit
         self.maximum = maximum.to(self.unit)
 
-        if self.minimum.mag > self.maximum.mag:
+        if self.minimum.mag() > self.maximum.mag():
             raise ValueError(
                 f"QuantityRange minimum ({minimum}) "
                 f"must not exceed maximum ({maximum})"

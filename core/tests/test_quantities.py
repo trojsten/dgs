@@ -264,24 +264,24 @@ class TestApproximate:
 
     def test_symmetric_around_zero(self):
         """Positive and negative magnitudes must round symmetrically."""
-        pos = PhysicsQuantity.construct(1.55, 'kg').approximate(2).mag
-        neg = PhysicsQuantity.construct(-1.55, 'kg').approximate(2).mag
+        pos = PhysicsQuantity.construct(1.55, 'kg').approximate(2).mag()
+        neg = PhysicsQuantity.construct(-1.55, 'kg').approximate(2).mag()
         assert pos == -neg, f"asymmetric rounding: {pos} vs {neg}"
 
     def test_zero_magnitude(self):
         m = PhysicsQuantity.construct(0.0, 'kg')
-        assert m.approximate(3).mag == 0.0
+        assert m.approximate(3).mag() == 0.0
 
     def test_significant_figures_one(self):
         m = PhysicsQuantity.construct(123.456, 'kg')
-        assert m.approximate(1).mag == 100.0
+        assert m.approximate(1).mag() == 100.0
 
     def test_significant_figures_three(self):
         m = PhysicsQuantity.construct(123.456, 'kg')
-        assert m.approximate(3).mag == 123.0
+        assert m.approximate(3).mag() == 123.0
 
 
-# --- PhysicsQuantity.mag -------------------------------------------------
+# --- PhysicsQuantity.mag() -------------------------------------------------
 
 
 class TestMag:
@@ -292,26 +292,26 @@ class TestMag:
     """
 
     def test_int_construction(self):
-        assert PhysicsQuantity.construct(7, 'kg').mag == 7
+        assert PhysicsQuantity.construct(7, 'kg').mag() == 7
 
     def test_float_construction(self):
-        assert PhysicsQuantity.construct(5.5, 'kg').mag == pytest.approx(5.5)
+        assert PhysicsQuantity.construct(5.5, 'kg').mag() == pytest.approx(5.5)
 
     def test_negative(self):
-        assert PhysicsQuantity.construct(-3.7, 'kg').mag == pytest.approx(-3.7)
+        assert PhysicsQuantity.construct(-3.7, 'kg').mag() == pytest.approx(-3.7)
 
     def test_dimensionless(self):
-        assert PhysicsQuantity.construct(2.5, '').mag == pytest.approx(2.5)
+        assert PhysicsQuantity.construct(2.5, '').mag() == pytest.approx(2.5)
 
     def test_after_unit_conversion(self):
         """`to()` may change int -> float as a side effect of conversion."""
         kg = PhysicsQuantity.construct(1, 'kilogram')
-        assert kg.to('gram').mag == pytest.approx(1000)
+        assert kg.to('gram').mag() == pytest.approx(1000)
 
     def test_mag_does_not_carry_units(self):
         """The bare magnitude is a number, not a pint Quantity."""
         m = PhysicsQuantity.construct(5, 'kg')
-        assert not hasattr(m.mag, 'units')
+        assert not hasattr(m.mag(), 'units')
 
 
 # --- PhysicsQuantity.floor / .ceil --------------------------------------
@@ -326,37 +326,37 @@ class TestFloorCeil:
 
     def test_floor_positive(self):
         m = PhysicsQuantity.construct(5.7, 'kg')
-        assert m.floor().mag == pytest.approx(5)
+        assert m.floor().mag() == pytest.approx(5)
 
     def test_ceil_positive(self):
         m = PhysicsQuantity.construct(5.3, 'kg')
-        assert m.ceil().mag == pytest.approx(6)
+        assert m.ceil().mag() == pytest.approx(6)
 
     def test_floor_negative_rounds_toward_neg_inf(self):
         """floor(-2.3) is -3, not -2 (toward -inf, not toward zero)."""
         m = PhysicsQuantity.construct(-2.3, 'meter')
-        assert m.floor().mag == pytest.approx(-3)
+        assert m.floor().mag() == pytest.approx(-3)
 
     def test_ceil_negative_rounds_toward_pos_inf(self):
         """ceil(-2.3) is -2, not -3 (toward +inf, not toward zero)."""
         m = PhysicsQuantity.construct(-2.3, 'meter')
-        assert m.ceil().mag == pytest.approx(-2)
+        assert m.ceil().mag() == pytest.approx(-2)
 
     def test_floor_of_integer(self):
         m = PhysicsQuantity.construct(5.0, 'kg')
-        assert m.floor().mag == pytest.approx(5)
+        assert m.floor().mag() == pytest.approx(5)
 
     def test_ceil_of_integer(self):
         m = PhysicsQuantity.construct(5.0, 'kg')
-        assert m.ceil().mag == pytest.approx(5)
+        assert m.ceil().mag() == pytest.approx(5)
 
     def test_floor_of_zero(self):
         m = PhysicsQuantity.construct(0, 'kg')
-        assert m.floor().mag == pytest.approx(0)
+        assert m.floor().mag() == pytest.approx(0)
 
     def test_ceil_of_zero(self):
         m = PhysicsQuantity.construct(0, 'kg')
-        assert m.ceil().mag == pytest.approx(0)
+        assert m.ceil().mag() == pytest.approx(0)
 
     def test_floor_preserves_unit(self):
         m = PhysicsQuantity.construct(5.7, 'kg')
@@ -399,7 +399,7 @@ class TestFloorCeil:
     def test_floor_then_ceil_idempotent_on_floored_value(self):
         """ceil of a floored integer is the same value."""
         m = PhysicsQuantity.construct(5.7, 'kg')
-        assert m.floor().ceil().mag == pytest.approx(5)
+        assert m.floor().ceil().mag() == pytest.approx(5)
 
 
 # --- PhysicsQuantity.widen -----------------------------------------------
@@ -415,36 +415,36 @@ class TestQuantityWiden:
     def test_positive_value(self):
         m = PhysicsQuantity.construct(100, 'meter')
         r = m.widen(0.05)
-        assert r.minimum.mag == pytest.approx(95)
-        assert r.maximum.mag == pytest.approx(105)
+        assert r.minimum.mag() == pytest.approx(95)
+        assert r.maximum.mag() == pytest.approx(105)
 
     def test_negative_value(self):
         """For x < 0, the result is still ordered (min < max)."""
         m = PhysicsQuantity.construct(-100, 'meter')
         r = m.widen(0.05)
-        assert r.minimum.mag == pytest.approx(-105)
-        assert r.maximum.mag == pytest.approx(-95)
+        assert r.minimum.mag() == pytest.approx(-105)
+        assert r.maximum.mag() == pytest.approx(-95)
 
     def test_large_factor_crosses_zero(self):
         """value >= 1 produces a range crossing zero."""
         m = PhysicsQuantity.construct(100, 'meter')
         r = m.widen(1.5)
-        assert r.minimum.mag == pytest.approx(-50)
-        assert r.maximum.mag == pytest.approx(250)
+        assert r.minimum.mag() == pytest.approx(-50)
+        assert r.maximum.mag() == pytest.approx(250)
 
     def test_zero_value(self):
         """widen on x == 0 gives a degenerate range at zero."""
         m = PhysicsQuantity.construct(0, 'meter')
         r = m.widen(0.1)
-        assert r.minimum.mag == 0
-        assert r.maximum.mag == 0
+        assert r.minimum.mag() == 0
+        assert r.maximum.mag() == 0
 
     def test_zero_factor(self):
         """widen(0) gives a degenerate range at the original value."""
         m = PhysicsQuantity.construct(42, 'meter')
         r = m.widen(0)
-        assert r.minimum.mag == pytest.approx(42)
-        assert r.maximum.mag == pytest.approx(42)
+        assert r.minimum.mag() == pytest.approx(42)
+        assert r.maximum.mag() == pytest.approx(42)
 
     def test_negative_factor_rejected(self):
         m = PhysicsQuantity.construct(100, 'meter')
@@ -483,31 +483,31 @@ class TestRangeGuardrails:
     def test_widen_positive_range(self, m1, m3):
         """[1, 3] widened by 0.1: width grows from 2 to 2.2, symmetric around centre 2."""
         r = QuantityRange(m1, m3).widen(0.1)
-        assert r.minimum.mag == pytest.approx(0.9)
-        assert r.maximum.mag == pytest.approx(3.1)
+        assert r.minimum.mag() == pytest.approx(0.9)
+        assert r.maximum.mag() == pytest.approx(3.1)
 
     def test_widen_negative_range(self):
         """A negative-valued range must widen, not narrow."""
         a = PhysicsQuantity.construct(-3, 'kg')
         b = PhysicsQuantity.construct(-1, 'kg')
         r = QuantityRange(a, b).widen(0.1)
-        assert r.minimum.mag == pytest.approx(-3.1)
-        assert r.maximum.mag == pytest.approx(-0.9)
+        assert r.minimum.mag() == pytest.approx(-3.1)
+        assert r.maximum.mag() == pytest.approx(-0.9)
 
     def test_widen_zero_centred_range(self):
         """Range straddling zero widens symmetrically."""
         a = PhysicsQuantity.construct(-1, 'kg')
         b = PhysicsQuantity.construct(1, 'kg')
         r = QuantityRange(a, b).widen(0.5)
-        assert r.minimum.mag == pytest.approx(-1.5)
-        assert r.maximum.mag == pytest.approx(1.5)
+        assert r.minimum.mag() == pytest.approx(-1.5)
+        assert r.maximum.mag() == pytest.approx(1.5)
 
     def test_widen_large_factor_allowed(self, m1, m3):
         """value >= 1 is now permitted; the range simply grows substantially."""
         r = QuantityRange(m1, m3).widen(1.5)
         # Centre 2, half-width 1, scaled by 2.5 -> half-width 2.5
-        assert r.minimum.mag == pytest.approx(-0.5)
-        assert r.maximum.mag == pytest.approx(4.5)
+        assert r.minimum.mag() == pytest.approx(-0.5)
+        assert r.maximum.mag() == pytest.approx(4.5)
 
     def test_widen_negative_value_rejected(self, m1, m3):
         """widen(-0.1) would contract; reject so 'widen' stays honest about its name."""
@@ -517,15 +517,15 @@ class TestRangeGuardrails:
     def test_widen_identity(self, m1, m3):
         """widen(0) returns an equivalent range."""
         r = QuantityRange(m1, m3).widen(0)
-        assert r.minimum.mag == pytest.approx(1)
-        assert r.maximum.mag == pytest.approx(3)
+        assert r.minimum.mag() == pytest.approx(1)
+        assert r.maximum.mag() == pytest.approx(3)
 
     def test_widen_degenerate_range(self):
         """A range with min==max stays degenerate; half-width is zero."""
         a = PhysicsQuantity.construct(5, 'kg')
         r = QuantityRange(a, a).widen(0.1)
-        assert r.minimum.mag == pytest.approx(5)
-        assert r.maximum.mag == pytest.approx(5)
+        assert r.minimum.mag() == pytest.approx(5)
+        assert r.maximum.mag() == pytest.approx(5)
 
 
 # --- si_extra clash detection --------------------------------------------
@@ -687,7 +687,7 @@ class TestPhysicsConstant:
 
     def test_approx(self, g):
         """g with 2 digits rounds to 9.8 m/s^2."""
-        assert g.approx.mag == pytest.approx(9.8)
+        assert g.approx.mag() == pytest.approx(9.8)
 
     def test_full_approx(self, g):
         """Previously crashed with `ValueError: Invalid format specifier`."""
