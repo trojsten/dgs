@@ -69,7 +69,10 @@ class JinjaConvertor:
 
         Currently just prepends the preamble, if available
         """
-        return (self.preamble or "") + template
+        if self.preamble is not None:
+            return self.preamble + "\n" + template
+        else:
+            return template
 
     def run(self):
         # First pass: expand all equations and values
