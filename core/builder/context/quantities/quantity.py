@@ -289,20 +289,26 @@ def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
 class QuantityRange:
     """
     Represents a range of two magnitudes of commensurate quantities.
-    Primarily meant to be useful for result tolerances.
+    Also meant to be useful for result tolerances.
     """
 
     def __init__(self,
                  minimum: PhysicsQuantity,
                  maximum: PhysicsQuantity):
+        # Coerce to a common unit before comparing magnitudes, so ranges like
+        # QuantityRange(1 kg, 500 g) work correctly. Incompatible units raise
+        # the underlying pint DimensionalityError.
         self.minimum = minimum
-        self.maximum = maximum
-        self.si_extra = strict_merge(self.minimum.si_extra, self.maximum.si_extra)
+        self.unit = minimum.unit
+        self.maximum = maximum.to(self.unit)
 
-        # Try to coerce to the same unit (minimum takes precedence).
-        # If it works, fine, if not, let pint raise the appropriate exception.
-        self.unit = self.minimum.unit
-        self.maximum = self.maximum.to(self.unit)
+        if self.minimum.mag > self.maximum.mag:
+            raise ValueError(
+                f"QuantityRange minimum ({minimum}) "
+                f"must not exceed maximum ({maximum})"
+            )
+
+        self.si_extra = strict_merge(self.minimum.si_extra, self.maximum.si_extra)
 
     def __format__(self, fmt: str):
         minr = self.minimum.format_struct(fmt)

@@ -476,9 +476,8 @@ class TestRangeGuardrails:
     def m3(self):
         return PhysicsQuantity.construct(3, 'kg')
 
-    @pytest.mark.xfail(reason="swapped endpoints currently accepted silently")
     def test_swapped_endpoints_rejected(self, m1, m3):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must not exceed"):
             QuantityRange(m3, m1)
 
     def test_widen_positive_range(self, m1, m3):

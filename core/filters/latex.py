@@ -30,7 +30,6 @@ def identity(x: Any) -> Any:
     return x
 
 
-
 def upnth(x: int) -> str:
     """
     Superscripted nth for LaTeX
@@ -89,8 +88,8 @@ def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[
 def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = identity) -> str:
     """
     Format people metadata:
-        -   if it is a dict, it should have name and gender, display that
-        -   if it is a list of dicts, use plural and display a list of names
+        - if it is a dict, it should have name and gender, display that
+        - if it is a list of dicts, use plural and display a list of names
 
     Returns
     -------
@@ -149,22 +148,32 @@ def equals_general(q: PhysicsQuantity, precision: Optional[int] = None):
     return q.equals_general(precision)
 
 
-def math_inline(math: MathObject):
+def math_inline(math: MathObject) -> str:
     """
-    Display as inline math with no frills.
+    Display as inline math. No punctuation argument: write any sentence
+    punctuation outside the math, e.g. `(* eq | inline *).`
     """
-    return f"{math!s}"
+    return f"{math}"
 
 
-def math_display(math: MathObject):
+def math_display(math: MathObject, punct: str = '') -> str:
     """
-    Display as block math with a label.
+    Display as block math with a label, optionally with trailing punctuation.
+
+    Usage in templates:
+        (* eq | disp *)          →  $$\\n    a + b\\n$$ {#eq:id}
+        (* eq | disp(',') *)     →  $$\\n    a + b,\\n$$ {#eq:id}
     """
-    return f"{math:disp}"
+    return f"{math:disp{punct}}"
 
 
-def math_aligned(math: MathObject):
+def math_aligned(math: MathObject, punct: str = '') -> str:
     r"""
-    Display inside an \aligned{} environment with a label
+    Display inside an \aligned{} environment with a label, optionally with
+    trailing punctuation.
+
+    Usage in templates:
+        (* eq | align *)         →  $${\n    a &= b\n}$$ {#eq:id}
+        (* eq | align('.') *)    →  $${\n    a &= b.\n}$$ {#eq:id}
     """
-    return f"{math:align}"
+    return f"{math:align{punct}}"

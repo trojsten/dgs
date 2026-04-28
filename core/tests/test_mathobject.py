@@ -62,13 +62,17 @@ class TestMathObjectAlign:
 
 class TestMathObjectInterpunction:
     """
-    A trailing punctuation character in the spec is appended to the math
-    content, so the equation can end a sentence cleanly.
+    For block specs (disp, align), a trailing punctuation character in the
+    spec is appended to the math content, so the equation can end a sentence
+    cleanly. Inline math doesn't accept punctuation — authors should write
+    it outside the closing `$`.
     """
 
     @pytest.mark.parametrize("punct", list('.,;?!'))
-    def test_inline_with_punctuation(self, inline, punct):
-        assert f'{inline:{punct}}' == f'$a + b = c{punct}$'
+    def test_inline_punctuation_rejected(self, inline, punct):
+        """Inline math should not accept in-math punctuation."""
+        with pytest.raises(ValueError, match="Inline math does not accept"):
+            f'{inline:{punct}}'
 
     @pytest.mark.parametrize("punct", list('.,;?!'))
     def test_disp_with_punctuation(self, inline, punct):
@@ -82,14 +86,17 @@ class TestMathObjectInterpunction:
         # Punctuation lands after the last content line, before `\n}$$`.
         assert f'b &= 2c{punct}\n}}$$' in result
 
-    def test_punctuation_only_spec_treated_as_inline(self, inline):
-        """`:.` strips the period and falls through to the empty-spec branch."""
-        assert f'{inline:.}' == '$a + b = c.$'
-
-    def test_non_punctuation_char_not_stripped(self, inline):
-        """A trailing letter is not interpunction; the spec is rejected."""
-        with pytest.raises(NotImplementedError):
+    def test_invalid_punctuation_after_valid_base(self, inline):
+        """
+        A non-punctuation char following a recognised base spec is reported
+        specifically as bad punctuation, not as an unknown spec.
+        """
+        with pytest.raises(ValueError, match="Invalid trailing character 'x'"):
             f'{inline:dispx}'
+
+    def test_invalid_punctuation_after_align(self, inline):
+        with pytest.raises(ValueError, match="Invalid trailing character 'q'"):
+            f'{inline:alignq}'
 
 
 class TestMathObjectErrors:

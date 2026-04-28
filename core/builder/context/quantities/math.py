@@ -18,6 +18,8 @@ class MathObject:
         return repr(self.__str__())
 
     _INTERPUNCTION = '.,;?!'
+    _BASE_SPECS = {'', 'disp', 'align'}
+    _SPECS_ACCEPTING_PUNCTUATION = {'disp', 'align'}
 
     def __format__(self, spec: str = ''):
         interpunction = ''
@@ -25,9 +27,33 @@ class MathObject:
             interpunction = spec[-1]
             spec = spec[:-1]
 
+        # Distinguish "unknown base spec" from "valid base spec with invalid
+        # trailing character," because the latter is the much more common
+        # author mistake.
+        if spec not in self._BASE_SPECS:
+            if len(spec) > 1 and spec[:-1] in self._BASE_SPECS:
+                raise ValueError(
+                    f"Invalid trailing character {spec[-1]!r} in MathObject "
+                    f"format spec; expected one of {''.join(self._INTERPUNCTION)} "
+                    f"or no trailing character"
+                )
+            raise NotImplementedError(
+                f"Unknown format spec {spec!r} for MathObject; "
+                f"expected one of {sorted(self._BASE_SPECS - {''})} or empty"
+            )
+
+        # Inline math doesn't need in-math punctuation — authors can simply
+        # type the punctuation outside, after the closing $.
+        if interpunction and spec not in self._SPECS_ACCEPTING_PUNCTUATION:
+            raise ValueError(
+                f"Inline math does not accept trailing punctuation; "
+                f"write the punctuation outside the math instead: "
+                f"`(* eq | inline *){interpunction}`"
+            )
+
         match spec:
             case '':
-                return f"${self.content}{interpunction}$"
+                return f"${self.content}$"
             case 'disp':
                 content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
                 return f"$$\n{content}{interpunction}\n$$ {{#eq:{self.id}}}"

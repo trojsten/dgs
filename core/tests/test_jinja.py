@@ -174,3 +174,52 @@ class TestMissingVariables:
         with pytest.raises(MissingVariablesError) as exc:
             renderer.render('(§ a|default("") §) (§ b §)', {})
         assert exc.value.missing == ['b']
+
+
+class TestMathFilters:
+    """
+    The inline/disp/align filters delegate to MathObject.__format__.
+    disp and align accept an optional punctuation argument; inline does not.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @pytest.fixture
+    def context(self):
+        from core.builder.context.quantities.math import MathObject
+        return {
+            'eq': MathObject('e1', 'a + b = c'),
+            'multi': MathObject('e2', 'a &= b + c \\\\\nb &= 2c'),
+        }
+
+    def test_inline_no_arg(self, renderer, context):
+        assert renderer.render('(§ eq | inline §)', context) == '$a + b = c$'
+
+    def test_inline_does_not_accept_punctuation(self, renderer, context):
+        """The inline filter takes no arguments; punctuation goes outside."""
+        with pytest.raises(TypeError):
+            renderer.render('(§ eq | inline(".") §)', context)
+
+    def test_disp_no_arg(self, renderer, context):
+        result = renderer.render('(§ eq | disp §)', context)
+        assert '    a + b = c\n$$' in result
+        assert '{#eq:e1}' in result
+
+    def test_disp_with_comma(self, renderer, context):
+        result = renderer.render('(§ eq | disp(",") §)', context)
+        assert '    a + b = c,\n$$' in result
+
+    def test_align_no_arg(self, renderer, context):
+        result = renderer.render('(§ multi | align §)', context)
+        assert '    b &= 2c\n}$$' in result
+
+    def test_align_with_period(self, renderer, context):
+        result = renderer.render('(§ multi | align(".") §)', context)
+        assert '    b &= 2c.\n}$$' in result
+
+    def test_invalid_punctuation_rejected(self, renderer, context):
+        """An unsupported punctuation char is reported with a friendly message."""
+        with pytest.raises(ValueError, match="Invalid trailing character 'x'"):
+            renderer.render('(§ eq | disp("x") §)', context)
