@@ -7,7 +7,7 @@ import jinja2
 import os
 import numpy as np
 
-from typing import Any
+from typing import Any, Callable
 
 from core.builder.context.quantities import PhysicsQuantity, QuantityRange
 from core.utilities import colour as c, logger
@@ -160,7 +160,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
     Includes mathematical functions, basic constants, and numerous formatting filters.
     """
     @staticmethod
-    def __generate_format_functions(func, tag):
+    def __generate_format_functions(func: Callable[[Any], Callable], tag: str):
         """
         Generate formatting function shorthands for a particular format and all precisions between 0 and 9.
         """
@@ -182,7 +182,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
-            'w': lambda obj, value: obj.widen(value),
+            'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': PhysicsQuantity.mag,
         } |
@@ -223,9 +223,6 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'pi': np.pi,
             'tau': math.tau,
             'euler': math.e,
-        } | {
-            'KtoC': lambda x: x - 273.15,
-            'CtoK': lambda x: x + 273.15,
         }
 
     def _render(self,
