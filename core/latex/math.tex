@@ -1,6 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Operators %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\ExplSyntaxOn
 \makeatletter
 
 % Patch \left and \right with package mleftright
@@ -8,19 +7,26 @@
 \let\right\mright
 
 % Internal parentheses
-\DeclarePairedDelimiter{\dgs_paren@}{(}{)}
-\DeclarePairedDelimiter{\dgs_abs@}{\lvert}{\rvert}
-\DeclarePairedDelimiter{\dgs_floor@}{\lfloor}{\rfloor}
-\DeclarePairedDelimiter{\dgs_ceil@}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\dgsparen@}{(}{)}
+\DeclarePairedDelimiter{\dgsbracket@}{[}{]}
+\DeclarePairedDelimiter{\dgsabs@}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\dgsfloor@}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\dgsceil@}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\dgschevrons@}{\langle}{\rangle}
 
 % Nice parentheses
-\NewDocumentCommand{\Paren}{m}{\dgs_paren@*{#1}}
-\NewDocumentCommand{\Abs}{m}{\dgs_abs@*{#1}}
+\NewDocumentCommand{\Paren}{m}{\dgsparen@*{#1}}
+\NewDocumentCommand{\Abs}{m}{\dgsabs@*{#1}}
 % Shorthands for floor and ceiling functions
-\NewDocumentCommand{\Floor}{m}{\dgs_floor@*{#1}}
-\NewDocumentCommand{\Ceil}{m}{\dgs_ceil@*{#1}}
+\NewDocumentCommand{\Floor}{m}{\dgsfloor@*{#1}}
+\NewDocumentCommand{\Ceil}{m}{\dgsceil@*{#1}}
+
+\NewDocumentCommand{\ExpectedChevrons}{m o}{\dgschevrons@*{#1}\IfNoValueTF{#2}{}{_#2}}
+\NewDocumentCommand{\ExpectedE}{m o}{\mathrm{E}\dgsbrackets@*{#1}\IfNoValueTF{#2}{}{_#2}}
+\NewDocumentCommand{\Expected}{m o}{\ExpectedE{#1}[#2]}
 
 % List of differentials
+\ExplSyntaxOn
 \NewDocumentCommand{\cdiff}{O{,} m m}{\dgs_split_diff:nnn {#1} {#2} {#3}}
 
 \cs_new_protected:Npn \dgs_split_diff:nnn #1 #2 #3 {
@@ -169,28 +175,27 @@
 }%
 
 
-\ExplSyntaxOn
 % Generic 1D integral
 % [lower limit]
 % [upper limit]
 % {integrand}
 % {differential}
 % [operation] between integrand and differential, such as \cdot or \times
-\NewDocumentCommand{\dgs_int@}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff@#4}
+\NewDocumentCommand{\dgsint}{O{} O{} O{} m O{}}{\int\limits_{#1}^{#2} #3#5\diff@#4}
 
 % Basic integral from #1 to #2 of #3 with respect to #4
 % Usage \Int[0][1]{x^2}{x}
-\NewDocumentCommand{\Int}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[]}
-\NewDocumentCommand{\IntP}{O{} O{} m m}{\dgs_int@[#1][#2][\left(#3\right)]{#4}[]}
+\NewDocumentCommand{\Int}{O{} O{} m m}{\dgsint[#1][#2][#3]{#4}[]}
+\NewDocumentCommand{\IntP}{O{} O{} m m}{\dgsint[#1][#2][\left(#3\right)]{#4}[]}
 % Empty integral for operations on expressions
 \NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
-\NewDocumentCommand{\IntE}{O{} O{} m}{\dgs_int@[#1][#2][]{#3}[]}
+\NewDocumentCommand{\IntE}{O{} O{} m}{\dgsint[#1][#2][]{#3}[]}
 % Integral from #1 to #2 of dot product of #3 and d#4
-\NewDocumentCommand{\IntD}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[\cdot]}
+\NewDocumentCommand{\IntD}{O{} O{} m m}{\dgsint[#1][#2][#3]{#4}[\cdot]}
 % ...auto-vectorized version
 \NewDocumentCommand{\IntDV}{O{} O{} m m}{\IntD[#1][#2]{\vec{#3}}{\vec{#4}}}
 % Integral from #1 to #2 of cross product of #3 and d#4
-\NewDocumentCommand{\IntC}{O{} O{} m m}{\dgs_int@[#1][#2][#3]{#4}[\times]}
+\NewDocumentCommand{\IntC}{O{} O{} m m}{\dgsint[#1][#2][#3]{#4}[\times]}
 % ...auto-vectorized version
 \NewDocumentCommand{\IntCV}{O{} O{} m m}{\IntC[#1][#2]{\vec{#3}}{\vec{#4}}}
 
@@ -245,9 +250,6 @@
 \NewDocumentCommand{\IIIntPV}{O{} O{} m m}{\IIIntI@[#1][#2]{\left(#3\right)}[3]{#4}[]}
 
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
-
-\ExplSyntaxOff
-
 
 \DeclareMathOperator{\Grad}{\del\!}
 \DeclareMathOperator{\GradT}{grad}
@@ -324,8 +326,6 @@
 \NewDocumentCommand{\Distribution}{m o m}{#1\left(\IfNoValueTF{#2}{}{#2 \mid}#3\right)}
 
 % Statistics
-\NewDocumentCommand{\ExpectedChevrons}{m}{\left\langle#1\right\rangle}
-\NewDocumentCommand{\ExpectedE}{m}{\mathrm{E}\left[#1\right]}
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
 \NewDocumentCommand{\Var}{m}{\mathrm{Var}\left(#1\right)}
 \NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\left({#1}\right)}
@@ -447,7 +447,6 @@
 \NewDocumentCommand{\kth}{m}{\ensuremath{#1^{\text{th}}}}
 
 % Defaults for multi-notation
-\NewDocumentCommand{\Expected}{m}{\ExpectedE{#1}}
 \NewDocumentCommand{\OneHalf}{}{\text{½}}
 
 \NewDocumentCommand{\OneThird}{}{\text{⅓}}
@@ -456,3 +455,4 @@
 \NewDocumentCommand{\OneQuarter}{}{\text{¼}}
 \NewDocumentCommand{\ThreeQuarters}{}{\text{¾}}
 % (and maybe more but later)
+\makeatother

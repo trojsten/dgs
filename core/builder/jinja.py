@@ -56,7 +56,6 @@ def make_collect_undefined():
     return CollectUndefined
 
 
-
 class JinjaRenderer:
     """
     A wrapper class for rendering Jinja2 templates.
@@ -208,8 +207,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'acos': np.acos,
             'atan': np.atan,
             'atan2': np.atan2,
-            'ceil': np.ceil,
-            'floor': np.floor,
+            'ceil': lambda x: PhysicsQuantity.ceil if isinstance(x, PhysicsQuantity) else np.ceil(x),
+            'floor': lambda x: PhysicsQuantity.floor if isinstance(x, PhysicsQuantity) else np.floor(x),
             'sqrt': lambda x: (x ** 0.5),
             'cbrt': np.cbrt,
             'rad': np.radians,
