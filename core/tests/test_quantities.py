@@ -284,6 +284,76 @@ class TestApproximate:
 # --- PhysicsQuantity.mag() -------------------------------------------------
 
 
+class TestOnlyUnit:
+    """
+    `only_unit()` returns the unit of a quantity formatted as a siunitx
+    `\\unit{...}` command, without the magnitude.  The output can be used
+    in templates where you want to print the unit separately from the value.
+    """
+
+    def test_kilogram(self):
+        assert PhysicsQuantity.construct(5, 'kg').only_unit() == r'\unit{\kilo\gram}'
+
+    def test_meter_per_second_squared(self):
+        assert PhysicsQuantity.construct(9.8, 'meter/second^2').only_unit() == \
+               r'\unit{\meter\per\second\squared}'
+
+    def test_meter_per_second(self):
+        assert PhysicsQuantity.construct(10, 'meter/second').only_unit() == \
+               r'\unit{\meter\per\second}'
+
+    def test_celsius(self):
+        """Degree-Celsius is converted to siunitx \\celsius."""
+        from pint import UnitRegistry as u
+        T = PhysicsQuantity(u.Quantity(25, 'degree_Celsius'))
+        assert T.only_unit() == r'\unit{\celsius}'
+
+    def test_joule(self):
+        assert PhysicsQuantity.construct(1.5, 'joule').only_unit() == r'\unit{\joule}'
+
+    def test_pascal(self):
+        assert PhysicsQuantity.construct(101325, 'Pa').only_unit() == r'\unit{\pascal}'
+
+    def test_dimensionless_gives_unit_one(self):
+        """A dimensionless quantity produces \\unit{1}."""
+        d = PhysicsQuantity.construct(3.14, '')
+        assert d.only_unit() == r'\unit{1}'
+
+    def test_si_extra_included(self):
+        """si_extra options appear between \\unit and the braces."""
+        m = PhysicsQuantity.construct(5, 'kg', si_extra={'round-mode': 'figures'})
+        assert m.only_unit() == r'\unit[round-mode=figures]{\kilo\gram}'
+
+    def test_symbol_ignored(self):
+        """The symbol is a display label for the quantity, not part of its unit."""
+        m = PhysicsQuantity.construct(5, 'meter', symbol='d')
+        assert m.only_unit() == r'\unit{\meter}'
+
+    def test_after_unit_conversion(self):
+        """Unit reflects the converted unit, not the original."""
+        g = PhysicsQuantity.construct(1000, 'gram').to('kilogram')
+        assert g.only_unit() == r'\unit{\kilo\gram}'
+
+    def test_magnitude_does_not_appear(self):
+        """Sanity check: the output contains no numeric characters."""
+        m = PhysicsQuantity.construct(12345.678, 'kg')
+        result = m.only_unit()
+        assert not any(c.isdigit() for c in result), \
+            f"Magnitude appeared in unit output: {result!r}"
+
+    def test_starts_with_unit_command(self):
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert m.only_unit().startswith(r'\unit')
+
+    def test_jinja_filter(self):
+        """The `| unit` Jinja filter wires correctly to only_unit()."""
+        from core.builder.jinja import MarkdownJinjaRenderer
+        renderer = MarkdownJinjaRenderer()
+        ctx = {'q': PhysicsQuantity.construct(9.8, 'meter/second^2')}
+        result = renderer.render('(§ q | unit §)', ctx)
+        assert result == r'\unit{\meter\per\second\squared}'
+
+
 class TestMag:
     """
     `mag` is a thin accessor for the underlying pint magnitude. It returns

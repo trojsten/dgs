@@ -149,11 +149,10 @@ class PhysicsQuantity:
         return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
 
     def only_unit(self):
-        """ Return a nicely formatted unit (\unit{...} in siunitx format)
-        """
-        fragments = self.format_struct(fmt='f')
+        r""" Return a nicely formatted unit (\unit{...} in siunitx format) """
+        fragments = self.format_struct(fmt='g')
         si_extra = self.format_si_extra(self.si_extra)
-        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '1'
+        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '{1}'
         return rf'\unit{si_extra}{unit}'
 
     def widen(self, value: float) -> "QuantityRange":
