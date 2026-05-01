@@ -38,7 +38,7 @@ gravity:
     symbol:     "G"
     aliases:    ['G']
     magnitude:  6.67430e-11
-    unit:       "newton metre squared / kilogram squared"
+    unit:       "kg^(-1) m^3 s^(-2)"
     digits:     3
 
 ### Imperial
@@ -202,6 +202,7 @@ boltzmann:
     symbol:     "k_B"
     magnitude:  1.380649e-23
     unit:       "joule / kelvin"
+    aliases:    ['k_B']
     digits:     3
 
 stefan_boltzmann:

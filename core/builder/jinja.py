@@ -185,6 +185,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': PhysicsQuantity.mag,
+            'unit': PhysicsQuantity.only_unit,
+            'sim': PhysicsQuantity.simplify,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |

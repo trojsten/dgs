@@ -360,11 +360,11 @@ class TestFloorCeil:
 
     def test_floor_preserves_unit(self):
         m = PhysicsQuantity.construct(5.7, 'kg')
-        assert m.floor().unit == m.unit
+        assert m.floor().unit() == m.unit()
 
     def test_ceil_preserves_unit(self):
         m = PhysicsQuantity.construct(5.7, 'kg')
-        assert m.ceil().unit == m.unit
+        assert m.ceil().unit() == m.unit()
 
     def test_floor_returns_physics_quantity(self):
         m = PhysicsQuantity.construct(5.7, 'kg')
@@ -454,8 +454,8 @@ class TestQuantityWiden:
     def test_unit_preserved(self):
         m = PhysicsQuantity.construct(100, 'meter')
         r = m.widen(0.1)
-        assert r.minimum.unit == r.maximum.unit
-        assert str(r.minimum.unit) == 'meter'
+        assert r.minimum.unit() == r.maximum.unit()
+        assert str(r.minimum.unit()) == 'meter'
 
     def test_returns_quantity_range(self):
         m = PhysicsQuantity.construct(5, 'kg')
