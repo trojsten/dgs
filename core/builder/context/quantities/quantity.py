@@ -121,6 +121,7 @@ class PhysicsQuantity:
 
     @quantity.setter
     def quantity(self, value):
+        """ No setter: PhysicsQuantity is immutable. """
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
     def mag(self):
@@ -148,6 +149,8 @@ class PhysicsQuantity:
         return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
 
     def only_unit(self):
+        """ Return a nicely formatted unit (\unit{...} in siunitx format)
+        """
         fragments = self.format_struct(fmt='f')
         si_extra = self.format_si_extra(self.si_extra)
         unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '1'
