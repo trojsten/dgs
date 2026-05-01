@@ -124,10 +124,12 @@ class PhysicsQuantity:
         """ No setter: PhysicsQuantity is immutable. """
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
+    @property
     def mag(self):
         """ Return the internal magnitude. """
         return self._quantity.magnitude
 
+    @property
     def unit(self):
         """ Return the internal unit. """
         return self._quantity.units
@@ -311,10 +313,10 @@ class QuantityRange:
         # QuantityRange(1 kg, 500 g) work correctly. Incompatible units raise
         # the underlying pint DimensionalityError.
         self.minimum = minimum
-        self.unit = minimum.unit()
+        self.unit = minimum.unit
         self.maximum = maximum.to(self.unit)
 
-        if self.minimum.mag() > self.maximum.mag():
+        if self.minimum.mag > self.maximum.mag:
             raise ValueError(
                 f"QuantityRange minimum ({minimum}) "
                 f"must not exceed maximum ({maximum})"
@@ -378,7 +380,7 @@ class QuantityList:
         # First, try to force same units everywhere. If it works, good, if it does not, a pint error will be raised.
         assert len(qs) > 0, \
             f"{self.__class__.__name__} must have at least one quantity"
-        self.qs = [q.to(qs[0].unit()) for q in qs]
+        self.qs = [q.to(qs[0].unit) for q in qs]
 
         self.si_extra = strict_merge(*(q.si_extra for q in self.qs))
 

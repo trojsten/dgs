@@ -174,7 +174,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                          variable_end_string='§)',
                          **kwargs)
 
-        self.env.filters |= ({
+        self.env.filters |= (
+        {
             'f': numbers.format_float,
             'g': numbers.format_general,
             'n': latex.num,
@@ -184,7 +185,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'eg': latex.equals_general,
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
-            'mag': PhysicsQuantity.mag,
+            'mag': lambda q: q.mag,
             'unit': PhysicsQuantity.only_unit,
             'sim': PhysicsQuantity.simplify,
         } |
@@ -231,4 +232,3 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                 template: str,
                 context: dict[str, Any]):
         return self.env.from_string(template).render(**context)
-
