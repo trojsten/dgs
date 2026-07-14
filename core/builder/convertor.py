@@ -221,13 +221,13 @@ class Convertor:
 
         self.file.seek(0)
         args = [
-            "pandoc",
+            "./external/pandoc",
             "--metadata", f"lang={self.locale.id}",
             "-V", "csquotes=true",
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
-            "--filter", "pandoc-crossref",
+            "--filter", "./external/pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             #"--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
