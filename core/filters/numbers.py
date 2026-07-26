@@ -3,8 +3,9 @@ Filters for work with numbers. Feel free to extend.
 """
 import numbers
 
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityRange
+
 from .hacks import cut_extra_one
-from core.builder.context.quantities import PhysicsQuantity, QuantityRange, QuantityList
 
 
 def roman(number: int) -> str:
@@ -65,7 +66,7 @@ def format_general(x: float, precision: int = None):
     Format a float in the exponential form
     """
     if precision is None:
-        fmt = rf'g'
+        fmt = r'g'
     else:
         fmt = rf'.{precision}g'
 

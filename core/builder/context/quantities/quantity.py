@@ -2,7 +2,8 @@ import math
 import numbers
 import operator
 import re
-from typing import Optional, Self, Callable, Union, Any
+from collections.abc import Callable
+from typing import Any, Self
 
 import numpy as np
 import pint
@@ -18,7 +19,7 @@ class PhysicsQuantity:
     """
 
     def __init__(self,
-                 quantity: pint.Quantity | int | float,
+                 quantity: pint.Quantity | float,
                  *,
                  symbol: str = None,
                  si_extra: dict[str, str] = None,
@@ -45,7 +46,7 @@ class PhysicsQuantity:
         """
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
-    def _binop(self, other, op: Callable[[Self, Union[Self, numbers.Number, u.Quantity]], Any]) -> Self:
+    def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
         if isinstance(other, PhysicsQuantity):
             return PhysicsQuantity(op(self._quantity, other._quantity))
         elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
@@ -280,14 +281,14 @@ class PhysicsQuantity:
         """
         return self.equals
 
-    def equals_float(self, precision: Optional[int]) -> str:
+    def equals_float(self, precision: int | None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
         return rf"{self._symbol} = {self:.{precision}f}"
 
-    def equals_general(self, precision: Optional[int]) -> str:
+    def equals_general(self, precision: int | None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
@@ -295,7 +296,7 @@ class PhysicsQuantity:
         return rf"{self._symbol} = {self:.{precision}g}"
 
 
-def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
+def construct_quantity(magnitude, unit, *, symbol: str | None = None):
     """ Constructor-like function """
     return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
 

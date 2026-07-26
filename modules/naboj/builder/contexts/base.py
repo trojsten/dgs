@@ -1,12 +1,13 @@
-import os
 import datetime
+import os
 from pathlib import Path
-from enschema import Schema, And, Or, Regex, Optional
 
+from enschema import And, Optional, Or, Regex, Schema
+
+from core.builder.builder import get_branch, get_last_commit_hash
 from core.builder.context.tree import FileSystemTreeContext
-from core.builder.builder import get_last_commit_hash, get_branch
+from core.builder.validator import CommitHash
 from core.utilities.schema import valid_language
-from core.builder.validator import CommitHash, String
 
 
 def valid_tag(tag: str):
@@ -83,7 +84,7 @@ class ContextNaboj(FileSystemTreeContext):
                     'hash': get_last_commit_hash(self.node_path(repo_root)),
                     'branch': get_branch(self.node_path(repo_root)),
                 },
-                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'timestamp': datetime.datetime.now(datetime.UTC),
             },
         )
 

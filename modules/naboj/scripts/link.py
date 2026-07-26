@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-import argparsedirs
-import subprocess
-import os
 import glob
-
+import os
+import subprocess
 from pathlib import Path
+
+import argparsedirs
 
 from core import i18n
 
@@ -57,7 +57,6 @@ class Linker:
                 subprocess.run(["ln", "-s", relative_target, file], cwd=cwd, check=True)
             except subprocess.CalledProcessError:
                 print(f"Failed to create {relative_target} in {cwd}")
-                pass
 
 
 os.chdir('.')

@@ -1,12 +1,13 @@
-import regex as re
 
-from typing import Any, Union, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
-from enschema import Schema, Or
+from enschema import Or, Schema
 
-from .numbers import _nth, format_float, format_general
 from core.builder.context.quantities import PhysicsQuantity
+
 from ..builder.context.quantities.math import MathObject
+from .numbers import _nth, format_float, format_general
 
 
 def isotex(date):
@@ -37,7 +38,7 @@ def upnth(x: int) -> str:
     return rf"${x}^{{\mathrm{{{_nth(x)}}}}}$"
 
 
-def render_list(items: Union[list, Any],
+def render_list(items: list | Any,
                 *,
                 func: Callable = identity,
                 and_word: str = 'a',
@@ -67,7 +68,7 @@ def render_list(items: Union[list, Any],
     return ' '.join(items)
 
 
-def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[dict[str, str]]:
+def process_people(people: list[dict[str, str]] | dict[str, str]) -> list[dict[str, str]]:
     """
     Pre-process people metadata:
         - if a dict, wrap it in a list
@@ -113,7 +114,7 @@ def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = 
                              f"Define 'gender' key in meta.yaml")
 
 
-def format_people(people: Union[str, list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
+def format_people(people: str | list | dict, *, func: Callable = identity, and_word: str = 'a') -> str:
     """
     Fully format a list of people
     Parameters
@@ -130,21 +131,21 @@ def num(x: float):
     return rf'\num{{{x}}}'
 
 
-def num_float(x: float, precision: Optional[int] = None):
+def num_float(x: float, precision: int | None = None):
     """ Format as a `siunitx` \num{} input (float)"""
     return rf'\num{{{format_float(x, precision)}}}'
 
 
-def num_general(x: float, precision: Optional[int] = None):
+def num_general(x: float, precision: int | None = None):
     """ Format as a `siunitx` \num{} input (general)"""
     return rf'\num{{{format_general(x, precision)}}}'
 
 
-def equals_float(q: PhysicsQuantity, precision: Optional[int] = None):
+def equals_float(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_float(precision)
 
 
-def equals_general(q: PhysicsQuantity, precision: Optional[int] = None):
+def equals_general(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_general(precision)
 
 

@@ -1,26 +1,22 @@
 #!/usr/bin/env python
 import argparse
 import io
+import logging
 import numbers
 import pprint
-import logging
-import regex as re
-
 from abc import ABC
 from io import TextIOWrapper
-
 from pathlib import Path
-from typing import Optional
 
-from enschema import Schema, Optional as Opt, Or, And, Regex
+from enschema import And, Or, Regex, Schema
+from enschema import Optional as Opt
 
 from core import cli
 from core.builder.context.context import Context, ValidIdentifier
 from core.builder.context.file import FileContext
+from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
 from core.builder.jinja import MarkdownJinjaRenderer
-
-from core.builder.context.quantities import PhysicsConstant
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
@@ -36,7 +32,7 @@ class JinjaConvertor:
                  template_file: TextIOWrapper,
                  context: Context,
                  *,
-                 preamble: Optional[io.TextIOWrapper] = None,
+                 preamble: io.TextIOWrapper | None = None,
                  debug: bool = False):
         """
         Parameters
@@ -51,7 +47,7 @@ class JinjaConvertor:
             Activate debug mode.
         """
         self.context: Context = context
-        self.preamble: Optional[str] = preamble.read() if preamble else None
+        self.preamble: str | None = preamble.read() if preamble else None
         self.template: str = template_file.read()
 
         if debug:

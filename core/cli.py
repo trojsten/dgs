@@ -3,7 +3,6 @@
 import argparse
 import logging
 import sys
-
 from abc import abstractmethod
 
 from core import i18n

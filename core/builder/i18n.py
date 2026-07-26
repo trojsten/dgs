@@ -1,7 +1,6 @@
+from core import i18n
 from core.builder.builder import BaseBuilder
 from core.builder.context.buildable import BuildableContext
-
-from core import i18n
 from core.builder.jinja import StaticRenderer
 
 

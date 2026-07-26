@@ -1,11 +1,12 @@
-import yaml
 import copy
 import pprint
-import regex as re
-
 from pathlib import Path
-from typing import TextIO, Optional as Opt, Any
-from enschema import Schema, Optional, SchemaMissingKeyError
+from typing import Any, TextIO
+from typing import Optional as Opt
+
+import regex as re
+import yaml
+from enschema import Optional, Schema, SchemaMissingKeyError
 
 
 def merge(original, extras):

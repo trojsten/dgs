@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
 from .context import Context
 from .tree import FileSystemTreeContext
@@ -18,7 +18,6 @@ class BuildableContext(Context):
         """
         Populate the buildable context with data. No default behaviour; must be implemented in the derived class.
         """
-        pass
 
 
 class BuildableFileSystemTreeContext(FileSystemTreeContext, BuildableContext, ABC):

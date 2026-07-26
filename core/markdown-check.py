@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-import sys
-import regex as re
 import copy
 import subprocess
-
+import sys
 from pathlib import Path
 
+import regex as re
 from mdcheck import check, exceptions
 from utilities import colour as c
 

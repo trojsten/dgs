@@ -1,6 +1,5 @@
 import regex as re
 
-
 NumberWithExtraOne = re.compile(r'1\.?e[+-]?[0-9]+')
 
 

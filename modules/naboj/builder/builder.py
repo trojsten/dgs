@@ -1,6 +1,5 @@
 import abc
 from pathlib import Path
-from typing import Optional
 
 from core.builder.builder import BaseBuilder
 from core.builder.jinja import StaticRenderer
@@ -24,7 +23,7 @@ class BuilderNaboj(BaseBuilder, metaclass=abc.ABCMeta):
         self.parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
         self.parser.add_argument('volume', type=int)
 
-    def build_templates(self, *, new_name: Optional[str] = None) -> None:
+    def build_templates(self, *, new_name: str | None = None) -> None:
         super().build_templates()
 
         # Also build files that are defined for a translation

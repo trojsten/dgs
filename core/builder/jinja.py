@@ -1,18 +1,19 @@
 import functools
 import math
+import os
 from abc import abstractmethod
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import jinja2
-import pint
-import os
 import numpy as np
+import pint
 
-from typing import Any, Callable
-
-from core.builder.context.quantities import PhysicsQuantity, QuantityRange
-from core.utilities import colour as c, logger
+from core.builder.context.quantities import PhysicsQuantity
 from core.filters import latex, numbers
+from core.utilities import colour as c
+from core.utilities import logger
 
 log = logger.setupLog('dgs')
 
@@ -169,7 +170,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         """
         Generate formatting function shorthands for a particular format and all precisions between 0 and 9.
         """
-        return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(0, 10)}
+        return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(10)}
 
     def __init__(self, **kwargs):
         """

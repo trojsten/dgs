@@ -1,10 +1,11 @@
 import logging
-
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
+
 from enschema import SchemaError, SchemaMissingKeyError
 
-from core.utilities import colour as c, crawler
+from core.utilities import colour as c
+from core.utilities import crawler
 
 from .context import Context
 

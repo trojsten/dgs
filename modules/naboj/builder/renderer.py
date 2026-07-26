@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import logging
-
 from abc import ABC
 
-
-from enschema import Schema, And, Or
+from enschema import And, Or, Schema
 
 from core.builder import renderer
 

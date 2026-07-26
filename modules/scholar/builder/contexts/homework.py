@@ -1,8 +1,9 @@
 import datetime
-from enschema import Schema, And, Optional
 
-from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
+from enschema import And, Optional, Schema
+
 from .buildable import ContextIssueBase
+from .hierarchy import ContextIssue, ContextIssueSub, ContextIssueSubSub
 from .validators import HomeworkValidator
 
 

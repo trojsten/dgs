@@ -1,12 +1,12 @@
 import subprocess
 import tempfile
-from tempfile import SpooledTemporaryFile
-from typing import Callable
+from collections.abc import Callable
 from pathlib import Path
+from tempfile import SpooledTemporaryFile
 
-from core.utilities import colour as c
-from .classes import RegexFailure, RegexReplacement
 from core import i18n
+
+from .classes import RegexFailure, RegexReplacement
 
 
 class Convertor:
@@ -231,7 +231,7 @@ class Convertor:
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             #"--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
-            "-M", f"rewrite-path=false",
+            "-M", "rewrite-path=false",
             "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]

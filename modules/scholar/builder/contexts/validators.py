@@ -1,7 +1,6 @@
-from enschema import Schema, Optional, Regex
+from enschema import Optional, Regex, Schema
 
-from core.builder.validator import FileSystemValidator, File, FileOrLink
-
+from core.builder.validator import File, FileOrLink, FileSystemValidator
 
 data = Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|tsv)')
 

@@ -1,6 +1,7 @@
 from abc import ABCMeta
 
-from core.builder.context import ContextModule, BuildableFileSystemTreeContext
+from core.builder.context import BuildableFileSystemTreeContext, ContextModule
+
 from .base import ContextScholar
 from .hierarchy import ContextCourse, ContextYear
 from .i18n import ContextI18n

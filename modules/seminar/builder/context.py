@@ -1,14 +1,16 @@
 import datetime
-
-from pathlib import Path
 from abc import ABCMeta
-from typing import Any
+from pathlib import Path
 
+from enschema import And, Optional, Or, Schema, Use
 from schema import Literal
-from enschema import Schema, Optional, Use, And, Or
 
+from core.builder.context import (
+    BuildableFileSystemTreeContext,
+    ContextModule,
+    FileSystemTreeContext,
+)
 from core.utilities.schema import valid_language
-from core.builder.context import FileSystemTreeContext, BuildableFileSystemTreeContext, ContextModule
 from modules.seminar.builder.validators import SeminarRoundValidator
 
 

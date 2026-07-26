@@ -1,10 +1,9 @@
-from abc import ABCMeta, abstractmethod
-import regex as re
-import logging
 import codecs
+import logging
+from abc import ABCMeta, abstractmethod
 
+import regex as re
 from mdcheck import exceptions
-
 
 log = logging.getLogger('root')
 log.setLevel(logging.WARNING)
@@ -76,7 +75,7 @@ class EqualsSpaces(LineChecker):
             raise exceptions.SingleLineError(f'Spaces missing around "{match.group(0)}"', line, match.end() - 1)
 
 
-class CdotSpaces():
+class CdotSpaces:
     re_cdot = re.compile(r'[^ ]\\cdot[^$]')
 
     def check(self, module, path, line):
@@ -84,7 +83,7 @@ class CdotSpaces():
             raise exceptions.SingleLineError("Spaces missing around \\cdot", line, search.start() + 1)
 
 
-class PlusSpaces():
+class PlusSpaces:
     re_plus_in_quotes = re.compile(r'"\+"')
     re_plus_in_curly = re.compile(r'{\+}')
     re_plus_unary = re.compile(r'[(\[]\+[^ ]')
@@ -97,7 +96,7 @@ class PlusSpaces():
             raise exceptions.SingleLineError('Spaces missing around "+"', line, search.end() - 2)
 
 
-class DoubleDollars():
+class DoubleDollars:
     re_dollars = re.compile(r'\$\$')
     re_dollars_curly_open = re.compile(r'\$\${')
     re_dollars_curly_close = re.compile(r'}\$\$')
@@ -127,7 +126,7 @@ class DoubleDollars():
             raise exceptions.SingleLineError('Double dollars within text', line, search.start())
 
 
-class ParenthesesSpace():
+class ParenthesesSpace:
     re_right_space = re.compile(r'[^ ] +(\\right)?\)')
     re_left_space = re.compile(r'(\\left)?\( ')
 
@@ -139,7 +138,7 @@ class ParenthesesSpace():
             raise exceptions.SingleLineError("Space before right parenthesis", line, match.start() + 1)
 
 
-class Parentheses():
+class Parentheses:
     re_image = re.compile(r'^!\[.*\](.*){.*}$')
     re_left = re.compile(r'(?<!left)\(')
     re_right = re.compile(r'(?<!right)\)')
@@ -155,7 +154,7 @@ class Parentheses():
             raise exceptions.SingleLineError("Consider using \\right)", line, search.start())
 
 
-class SIExponents():
+class SIExponents:
     re_fail = re.compile(r'(?P<command>\\ang|\\SI|\\SIlist|\\SIrange){[^}]*(\\cdot|\\times|\^)[^}]*}')
 
     def check(self, module, path, line):
@@ -163,15 +162,15 @@ class SIExponents():
             raise exceptions.SingleLineError(f"Use e notation instead of TeX inside {search.group('command')}",
                 line, search.start() + len(search.group('command')) + 1)
 
-class ConflictMarkers():
+class ConflictMarkers:
     re_fail = re.compile(r'(<<<<<<<|=======|>>>>>>>)')
 
     def check(self, module, path, line):
         if search := self.re_fail.search(line):
-            raise exceptions.SingleLineError(f"Git conflict markers found!", line, search.start())
+            raise exceptions.SingleLineError("Git conflict markers found!", line, search.start())
 
 
-class DoubleSpace():
+class DoubleSpace:
     re_double_space = re.compile(r'.*\w  +\w')
 
     def check(self, module, path, line):

@@ -1,11 +1,19 @@
 import datetime
+
 import pytest
 
-from core.filters.latex import render_list, textbf, textit, isotex, format_gender_suffix, format_people
-from core.filters.numbers import nth, roman, plural
+from core.filters.latex import (
+    format_gender_suffix,
+    format_people,
+    isotex,
+    render_list,
+    textbf,
+    textit,
+)
+from core.filters.numbers import nth, plural, roman
 
 
-class TestRender():
+class TestRender:
     def test_render_list_nolist(self):
         assert render_list('string') == "string"
 
@@ -35,7 +43,7 @@ class TestRender():
                 r"f(x), f(y), und f(z)")
 
 
-class TestIsotex():
+class TestIsotex:
     def test_one(self):
         assert isotex(datetime.date(2021, 9, 23)) == '2021--09--23'
 

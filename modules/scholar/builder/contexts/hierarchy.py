@@ -1,10 +1,10 @@
 from abc import ABCMeta
-from enschema import And
+
+from enschema import And, Schema
+
+from core.utilities.schema import valid_language
 
 from .base import ContextScholar
-
-from enschema import Schema
-from core.utilities.schema import valid_language
 
 
 class ContextCourse(ContextScholar):

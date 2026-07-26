@@ -1,12 +1,12 @@
 import itertools
 
-from enschema import Schema, Regex, Optional
+from enschema import Optional, Regex, Schema
 from schema import Forbidden
 
-from core import i18n
-from core.builder.validator import FileSystemValidator, File, Link, FileOrLink
-from core.utilities.schema import valid_language
 import core.utilities.colour as c
+from core import i18n
+from core.builder.validator import File, FileOrLink, FileSystemValidator, Link
+from core.utilities.schema import valid_language
 
 
 class NabojValidator(FileSystemValidator):

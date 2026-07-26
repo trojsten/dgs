@@ -2,11 +2,11 @@ import abc
 import copy
 import logging
 import pprint
-import yaml
-
-from typing import Any, Self, Optional
 from pathlib import Path
-from enschema import Schema, SchemaError, Regex
+from typing import Any, Self
+
+import yaml
+from enschema import Regex, Schema, SchemaError
 
 from core.utilities import colour as c
 
@@ -18,7 +18,7 @@ ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
 
 class Context(abc.ABC):
     _defaults: dict[str, Any] = {}      # Defaults for every instance
-    _schema: Optional[Schema] = None       # Validation schema for the context, or None if it is not to be validated
+    _schema: Schema | None = None       # Validation schema for the context, or None if it is not to be validated
     _id: str = None
     _data: dict[str, Any] = None
 

@@ -4,7 +4,7 @@ import pint
 import pytest
 import regex as re
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityRange, QuantityList
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityRange
 
 
 @pytest.fixture
@@ -745,8 +745,9 @@ class TestPhysicsConstant:
 
     @pytest.fixture
     def g(self):
-        from core.builder.context.quantities.constant import PhysicsConstant
         from pint import UnitRegistry as u
+
+        from core.builder.context.quantities.constant import PhysicsConstant
         return PhysicsConstant(
             'gforce', u.Quantity(9.80665, 'meter / second^2'), digits=2,
         )

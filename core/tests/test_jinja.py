@@ -1,13 +1,12 @@
 from pathlib import Path
-from tempfile import NamedTemporaryFile, SpooledTemporaryFile
+from tempfile import NamedTemporaryFile
 
 import pytest
 import regex as re
+from pint import UnitRegistry as u
 
 from core.builder.context import PhysicsConstant
 from core.builder.jinja import MarkdownJinjaRenderer, MissingVariablesError
-
-from pint import UnitRegistry as u
 
 
 @pytest.fixture

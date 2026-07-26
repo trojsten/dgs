@@ -1,7 +1,10 @@
-from .quantity import PhysicsQuantity, QuantityRange, QuantityList, construct_quantity
 from .constant import PhysicsConstant
-
+from .quantity import PhysicsQuantity, QuantityList, QuantityRange, construct_quantity
 
 __all__ = [
-    'PhysicsQuantity', 'PhysicsConstant', 'QuantityRange', 'QuantityList', 'construct_quantity',
+    'PhysicsConstant',
+    'PhysicsQuantity',
+    'QuantityList',
+    'QuantityRange',
+    'construct_quantity',
 ]

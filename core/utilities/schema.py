@@ -1,4 +1,3 @@
-from enschema import And, Or, Regex
 
 from core import i18n
 
