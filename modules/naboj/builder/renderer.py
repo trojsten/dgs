@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 
 
-from enschema import Schema, And
+from enschema import Schema, And, Or
 
 from core.builder import renderer
 
@@ -35,8 +35,8 @@ def valid_tag(tag: str) -> bool:
 
 class NabojStandaloneContext(renderer.StandaloneContext):
     _schema = renderer.StandaloneContext._schema | Schema({
-        'authors': list[str],                       # List of authors
-        'tags': list[And(str, valid_tag)],          # Tags
+        'authors': Or(list[str], []),             # List of authors
+        'tags': Or(list[And(str, valid_tag)], []),          # Tags
     })
 
 

@@ -46,8 +46,8 @@ class ContextNaboj(FileSystemTreeContext):
     })
     problem = Schema({
         'id': Regex(r'[a-z0-9-]+'),
-        Optional('tags'): [str],
-        Optional('author'): [valid_tag],
+        Optional('tags'): [valid_tag],
+        Optional('author'): Or([str], []),
         'number': int,
     })
     _schema = Schema({
