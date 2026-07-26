@@ -4,6 +4,7 @@ from abc import abstractmethod
 from pathlib import Path
 
 import jinja2
+import pint
 import os
 import numpy as np
 
@@ -14,6 +15,10 @@ from core.utilities import colour as c, logger
 from core.filters import latex, numbers
 
 log = logger.setupLog('dgs')
+
+ureg = pint.UnitRegistry(preprocessors=[lambda s: s.replace("€", "EUR")])
+ureg.define("eur = [currency] = € = EUR")
+pint.set_application_registry(ureg)
 
 
 class MissingVariablesError(Exception):
