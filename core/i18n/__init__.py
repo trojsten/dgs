@@ -73,7 +73,7 @@ class Locale:
         except SchemaMissingKeyError as exc:
             pprint.pprint(self.data)
             print(exc)
-            raise exc
+            raise
 
     @staticmethod
     def load_yaml(defaults: dict[str, Any], file: TextIO) -> Opt['Locale']:

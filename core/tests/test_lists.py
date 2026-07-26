@@ -26,9 +26,9 @@ def shopping_list():
 @pytest.fixture
 def folk_heroes():
     return [
-        dict(language="sk", name="Juraj Jánošík"),
-        dict(language="cs", name="Krakonoš"),
-        dict(language="hu", name="Rózsa Sándor"),
+        {"language": "sk", "name": "Juraj Jánošík"},
+        {"language": "cs", "name": "Krakonoš"},
+        {"language": "hu", "name": "Rózsa Sándor"},
     ]
 
 @pytest.fixture
@@ -90,44 +90,44 @@ class TestSplits:
 class TestAdornments:
     def test_add_numbers(self, shopping_list):
         assert add_numbers(shopping_list) == [
-            dict(number=0, id="Javelin"),
-            dict(number=1, id="HIMARS"),
-            dict(number=2, id="ATACMS"),
+            {"number": 0, "id": "Javelin"},
+            {"number": 1, "id": "HIMARS"},
+            {"number": 2, "id": "ATACMS"},
         ]
 
     def test_add_numbers_start(self, shopping_list):
         assert add_numbers(shopping_list, itertools.count(4, 1)) == [
-            dict(number=4, id="Javelin"),
-            dict(number=5, id="HIMARS"),
-            dict(number=6, id="ATACMS"),
+            {"number": 4, "id": "Javelin"},
+            {"number": 5, "id": "HIMARS"},
+            {"number": 6, "id": "ATACMS"},
         ]
 
     def test_add_primes(self, shopping_list, primes):
         assert add_numbers(shopping_list, primes()) == [
-            dict(number=2, id="Javelin"),
-            dict(number=3, id="HIMARS"),
-            dict(number=5, id="ATACMS"),
+            {"number": 2, "id": "Javelin"},
+            {"number": 3, "id": "HIMARS"},
+            {"number": 5, "id": "ATACMS"},
         ]
 
     def test_add_numbers_dictlist(self, folk_heroes):
         assert add_numbers(folk_heroes, itertools.count(4, 1)) == [
-            dict(number=4, id=dict(language="sk", name="Juraj Jánošík")),
-            dict(number=5, id=dict(language="cs", name="Krakonoš")),
-            dict(number=6, id=dict(language="hu", name="Rózsa Sándor")),
+            {"number": 4, "id": {"language": "sk", "name": "Juraj Jánošík"}},
+            {"number": 5, "id": {"language": "cs", "name": "Krakonoš"}},
+            {"number": 6, "id": {"language": "hu", "name": "Rózsa Sándor"}},
         ]
 
     def test_numerate(self, folk_heroes):
         assert numerate(folk_heroes) == [
-            dict(number=0, language="sk", name="Juraj Jánošík"),
-            dict(number=1, language="cs", name="Krakonoš"),
-            dict(number=2, language="hu", name="Rózsa Sándor"),
+            {"number": 0, "language": "sk", "name": "Juraj Jánošík"},
+            {"number": 1, "language": "cs", "name": "Krakonoš"},
+            {"number": 2, "language": "hu", "name": "Rózsa Sándor"},
         ]
 
     def test_numerate_primes(self, folk_heroes, fibonacci):
         assert numerate(folk_heroes, itertools.islice(fibonacci(), 5, None)) == [
-            dict(number=5, language="sk", name="Juraj Jánošík"),
-            dict(number=8, language="cs", name="Krakonoš"),
-            dict(number=13, language="hu", name="Rózsa Sándor"),
+            {"number": 5, "language": "sk", "name": "Juraj Jánošík"},
+            {"number": 8, "language": "cs", "name": "Krakonoš"},
+            {"number": 13, "language": "hu", "name": "Rózsa Sándor"},
         ]
 
     def test_numerate_error(self, shopping_list):

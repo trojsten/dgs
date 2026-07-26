@@ -33,7 +33,7 @@ class BuilderI18n(BaseBuilder):
     def path(self) -> tuple:
         return self.ident()
 
-    def build_templates(self, *, new_name: str = None):
+    def build_templates(self, *, new_name: str | None = None):
         super().build_templates(new_name=self.args.language)
 
 

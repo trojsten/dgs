@@ -46,7 +46,7 @@ def nth(x: int) -> str:
     return f"{x}{_nth(x)}"
 
 
-def format_float(x: float, precision: int = None):
+def format_float(x: float, precision: int | None = None):
     if precision is None:
         fmt = 'f'
     else:
@@ -54,14 +54,14 @@ def format_float(x: float, precision: int = None):
 
     if isinstance(x, numbers.Number):
         printed = rf"{x:{fmt}}"
-    elif isinstance(x, PhysicsQuantity) or isinstance(x, QuantityRange) or isinstance(x, QuantityList):
+    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList)):
         printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")
 
     return cut_extra_one(printed)
 
-def format_general(x: float, precision: int = None):
+def format_general(x: float, precision: int | None = None):
     """
     Format a float in the exponential form
     """
@@ -72,7 +72,7 @@ def format_general(x: float, precision: int = None):
 
     if isinstance(x, numbers.Number):
         printed = rf"{x:{fmt}}"
-    elif isinstance(x, PhysicsQuantity) or isinstance(x, QuantityRange) or isinstance(x, QuantityList):
+    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList)):
         printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")

@@ -130,19 +130,19 @@ class TestGenderSuffix:
     def test_invalid_gender(self):
         """ This fails: unknown gender """
         with pytest.raises(ValueError):
-            format_gender_suffix(dict(name='Melody', gender='x'))
+            format_gender_suffix({'name': 'Melody', 'gender': 'x'})
 
     def test_single_dict_m(self):
-        assert format_gender_suffix(dict(name="Adam", gender='m')) == ''
+        assert format_gender_suffix({'name': "Adam", 'gender': 'm'}) == ''
 
     def test_single_dict_n(self):
-        assert format_gender_suffix(dict(name="Kaj", gender='n')) == 'o'
+        assert format_gender_suffix({'name': "Kaj", 'gender': 'n'}) == 'o'
 
     def test_single_dict_f(self):
-        assert format_gender_suffix(dict(name="Viki", gender='f')) == 'a'
+        assert format_gender_suffix({'name': "Viki", 'gender': 'f'}) == 'a'
 
     def test_multi_dict(self):
-        assert format_gender_suffix([dict(name="Majo", gender='m'), dict(name="Nina", gender="f")]) == 'i'
+        assert format_gender_suffix([{'name': "Majo", 'gender': 'm'}, {'name': "Nina", 'gender': "f"}]) == 'i'
 
     def test_multi_dict_str(self):
         assert format_gender_suffix(["Krto", "Zahradník", "Marcel"]) == 'i'
@@ -159,7 +159,7 @@ class TestPeople:
         assert format_people(['Mözög', 'pipka', 'pipka', 'pipka']) == 'Mözög, pipka, pipka a pipka'
 
     def test_single_dict(self):
-        assert format_people(dict(name='Adam', gender='m')) == 'Adam'
+        assert format_people({'name': 'Adam', 'gender': 'm'}) == 'Adam'
 
     def test_single_dict_list(self):
         assert format_people([{'name': 'Jaro', 'gender': 'm'}]) == 'Jaro'

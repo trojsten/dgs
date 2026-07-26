@@ -80,7 +80,7 @@ class ContextVenue(ContextNaboj):
 
     def populate(self, competition, volume, venue):
         super().populate(competition)
-        comp = ContextCompetition(self.root, competition)
+        ContextCompetition(self.root, competition)
         vol = ContextVolume(self.root, competition, volume)
         self.load_meta(competition, volume, venue) \
             .add_id(venue)

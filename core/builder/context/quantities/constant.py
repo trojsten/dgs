@@ -23,7 +23,7 @@ class PhysicsConstant(PhysicsQuantity):
         unit = kwargs.pop('unit', '1')
         return PhysicsConstant(name, u.Quantity(magnitude, unit), **kwargs)
 
-    def format(self, fmt: str = None):
+    def format(self, fmt: str | None = None):
         if self.force_f:
             fmt = f'.{self.digits}f'
         elif fmt is None:
@@ -39,16 +39,16 @@ class PhysicsConstant(PhysicsQuantity):
         """
         return self.approximate(self.digits)
 
-    def _full(self, kind: str, precision: int = None) -> str:
+    def _full(self, kind: str, precision: int | None = None) -> str:
         if precision is None:
             precision = self.digits
         return f'{self:.{precision}{kind}}'
 
-    def fullf(self, precision: int = None) -> str:
+    def fullf(self, precision: int | None = None) -> str:
         """ Full, with f formatting """
         return self._full('f', precision)
 
-    def fullg(self, precision: int = None) -> str:
+    def fullg(self, precision: int | None = None) -> str:
         """ Full, with g formatting """
         return self._full('g', precision)
 

@@ -21,8 +21,8 @@ class PhysicsQuantity:
     def __init__(self,
                  quantity: pint.Quantity | float,
                  *,
-                 symbol: str = None,
-                 si_extra: dict[str, str] = None,
+                 symbol: str | None = None,
+                 si_extra: dict[str, str] | None = None,
                  force_f: bool = False):
         if isinstance(quantity, pint.Quantity):
             self._quantity = quantity
@@ -49,7 +49,7 @@ class PhysicsQuantity:
     def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
         if isinstance(other, PhysicsQuantity):
             return PhysicsQuantity(op(self._quantity, other._quantity))
-        elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
+        elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
             return PhysicsQuantity(op(self._quantity, other))
         else:
             raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
@@ -140,10 +140,21 @@ class PhysicsQuantity:
         """ Return the internal symbol. """
         return self._symbol
 
+    @symbol.setter
+    def symbol(self, value: str | None):
+        self._symbol = value
+
     @property
     def sym(self):
         """ Return the internal symbol (shorthand). """
         return self._symbol
+
+    @sym.setter
+    def sym(self, value: str | None):
+        self._symbol = value
+
+    def alias(self, symbol: str | None) -> "PhysicsQuantity":
+        return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra, force_f=self.force_f)
 
     def to(self, what):
         return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)

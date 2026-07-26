@@ -43,7 +43,7 @@ class Reference(LineChecker):
         # Only process lines that can be identified as references"
         if match := self.re_reference.search(line):
             log.debug(f"Found reference label {line}")
-            kind = match.group('kind')
+            match.group('kind')
             sub = match.group('sub')
             match module:
                 case 'seminar':

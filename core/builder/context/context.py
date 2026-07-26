@@ -60,9 +60,9 @@ class Context(abc.ABC):
             with open(path, 'r') as f:
                 contents = yaml.load(f, Loader=yaml.SafeLoader)
             self._data = {} if contents is None else contents
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))
-            raise e
+            raise
 
         return self
 
@@ -83,13 +83,13 @@ class Context(abc.ABC):
             try:
                 self._data = self._schema.validate(self.data)
                 log.debug(f"Context {c.name(self.__class__.__name__)} was {c.ok('validated')}")
-            except SchemaError as exc:
+            except SchemaError:
                 log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)} "
                           f"{c.path(self.id)}")
                 pprint.pprint(self.data)
                 log.error(f"against {self.__class__.__qualname__}")
                 pprint.pprint(self.schema.schema)
-                raise exc
+                raise
 
     def add(self, **kwargs):
         """

@@ -151,10 +151,10 @@ class StaticRenderer(JinjaRenderer):
             return self.env.get_template(template.name).render(**context)
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template.name)}: {c.err(e)}")
-            raise e
+            raise
         except jinja2.exceptions.TemplateSyntaxError as e:
             log.critical(f"Template syntax error in {c.path(template.name)}: {c.err(e)}")
-            raise e
+            raise
         # Other exceptions are deferred to the base class
 
 

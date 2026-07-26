@@ -52,11 +52,11 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         try:
             self.schema.validate(self.tree)
             self.perform_extra_checks()
-        except SchemaError as e:
+        except SchemaError:
             log.error("Could not validate file system tree")
             pprint.pprint(self.tree)
             log.error(f"against schema\n{self.schema}")
-            raise e
+            raise
 
     def perform_extra_checks(self) -> None:
         """

@@ -88,7 +88,7 @@ class ContextNaboj(FileSystemTreeContext):
             },
         )
 
-    def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
+    def as_tuple(self, competition: str | None = None, volume: int | None = None, sub: str | None = None, issue: str | None = None):
         assert competition in ContextNaboj.competitions
 
         result = []

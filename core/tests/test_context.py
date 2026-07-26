@@ -62,7 +62,7 @@ class TestContext:
         assert context_override.data['fks']['nothing'] == 'Nina'
 
     def test_adopt_full(self, context_override):
-        assert context_override.data == dict(fks=dict(boss='Marcel', pictures='KatkaN', htr='Kvík', nothing='Nina'))
+        assert context_override.data == {'fks': {'boss': 'Marcel', 'pictures': 'KatkaN', 'htr': 'Kvík', 'nothing': 'Nina'}}
 
     def test_add_id(self, context_defaults):
         context_defaults.add_id(4)
@@ -82,7 +82,7 @@ class TestContext:
 
     def test_add(self, context_defaults, context_two):
         context_defaults |= context_two
-        assert context_defaults.data == dict(foo='hotel', baz=5, qux=7)
+        assert context_defaults.data == {'foo': 'hotel', 'baz': 5, 'qux': 7}
 
     def test_ior(self):
         first = Context('fks', boss='Matúš', coffee='Nina')

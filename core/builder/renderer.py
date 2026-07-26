@@ -131,7 +131,7 @@ class CLIInterface(cli.CLIInterface, ABC):
                 if isinstance(params, dict):
                     symbol = params.pop('symbol', key)
                     values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
-                elif isinstance(params, str) or isinstance(params, numbers.Number):
+                elif isinstance(params, (str, numbers.Number)):
                     values[key] = params
                 else:
                     raise TypeError(f"Unsupported type {type(params)} ({params})")

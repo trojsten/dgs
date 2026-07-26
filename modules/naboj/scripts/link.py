@@ -34,7 +34,7 @@ class Linker:
         files = glob.glob(f"**/{self.args.from_lang}/problem.md", root_dir=self.path, recursive=True)
 
         for f in files:
-            problem_id, _, filename = tuple(f.split('/'))
+            problem_id, _, _filename = tuple(f.split('/'))
 
             if self.args.problems:
                 self.call_ln(problem_id, 'problem.md')

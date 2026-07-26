@@ -66,7 +66,7 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def __init__(self,
                  *,
-                 suffix_map: dict[str, str] = None):
+                 suffix_map: dict[str, str] | None = None):
         """
         suffix_map: translates template suffixes to rendered template suffixes
                     and also provides defaults for dgs
@@ -148,7 +148,7 @@ class BaseBuilder(metaclass=ABCMeta):
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
-    def build_templates(self, *, new_name: str = None) -> None:
+    def build_templates(self, *, new_name: str | None = None) -> None:
         """
         Build all templates for this builder.
         """

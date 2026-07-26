@@ -74,17 +74,17 @@ class NabojValidator(FileSystemValidator):
     def _check_same_translations(self) -> None:
         if self.tree['problems']:
             for (pid1, problem1), (pid2, problem2) in itertools.pairwise(self.tree['problems'].items()):
-                translations1 = [x for x in problem1.keys() if x in i18n.languages.keys()]
-                translations2 = [x for x in problem2.keys() if x in i18n.languages.keys()]
+                translations1 = [x for x in problem1 if x in i18n.languages]
+                translations2 = [x for x in problem2 if x in i18n.languages]
                 if translations1 != translations2:
                     print(f"Warning: problem {pid1} has translations {translations1} "
                           f"and {pid2} has translations {translations2}")
 
     def _check_presence(self, filename, *, optional: bool = False):
         for problem_id, problem in sorted(self.tree['problems'].items()):
-            translations = [x for x in problem.keys() if x in i18n.languages.keys()]
+            translations = [x for x in problem if x in i18n.languages]
             is_present = {
-                trans: problem[trans][filename] if filename in problem[trans] else None for trans in translations
+                trans: problem[trans].get(filename, None) for trans in translations
             }
 
             lp = len([x for x, y in is_present.items() if y])

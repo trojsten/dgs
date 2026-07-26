@@ -77,11 +77,11 @@ def process_people(people: list[dict[str, str]] | dict[str, str]) -> list[dict[s
     """
     Schema(Or([Or(str, {'name': str, 'gender': str})], Or(str, {'name': str, 'gender': str}), str)).validate(people)
     if isinstance(people, str):
-        return [dict(name=people, gender='?')]
+        return [{'name': people, 'gender': '?'}]
     if isinstance(people, dict):
         return [people]
     elif isinstance(people, list):
-        return [dict(name=person, gender='?') if isinstance(person, str) else person for person in people]
+        return [{'name': person, 'gender': '?'} if isinstance(person, str) else person for person in people]
     else:
         raise TypeError(f"Invalid people type: {type(people)}")
 
