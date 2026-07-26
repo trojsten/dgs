@@ -23,7 +23,7 @@ jobs:
       with:
           xelatex: true
     - name: Set up uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v9
       with:
         python-version: "3.14"
     - name: Install dependencies
@@ -68,10 +68,8 @@ jobs:
         uv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         uv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-<<<<<<< HEAD
-        uv run ruff
-=======
->>>>>>> 81ed38c (Claude converted the workflow file)
+    - name: Lint with ruff
+      run: uv run ruff check .
     - name: Test with pytest
       run: |
         uv run python -m pytest -s -v
