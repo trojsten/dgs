@@ -70,6 +70,18 @@ us_pint:
     unit:       "millilitre"
     digits:     3
 
+ounce:
+    symbol:     "oz"
+    magnitude:  28.349523125
+    unit:       "gram"
+    digits:     4
+
+troy_ounce:
+    symbol:     "oz t"
+    magnitude:  31.1034768
+    unit:       "gram"
+    digits:     3
+
 pound:
     symbol:     "\\mathrm{lb}"
     aliases:    ['lb']
@@ -346,18 +358,21 @@ heat_vaporization_water:
     magnitude:  2260
     unit:       "kilojoule / kilogram"
     digits:     2
+    aliases:    ['hvw']
 
 heat_capacity_ice:
     symbol:     "c_\\text{\\Snow}"
     magnitude:  2093
     unit:       "joule / kilogram / kelvin"
     digits:     4
+    aliases:    ['hci']
 
 heat_melting_ice:
     symbol:     "l_\\text{\\Snow}"
     magnitude:  334000
     unit:       "J / kg"
     digits:     3
+    aliases:    ['hmi']
 
 thermal_expansion_water:
     symbol:     "\\beta_{\\ce{H2O}}"
@@ -366,6 +381,7 @@ thermal_expansion_water:
     si_extra:
       per-mode: 'reciprocal'
     digits:     2
+    aliases:    ['tew']  
 
 molar_mass_oxygen:
     symbol:     "M_{\\ce{O}}"
