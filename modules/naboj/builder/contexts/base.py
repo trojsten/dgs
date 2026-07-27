@@ -12,11 +12,25 @@ from core.utilities.schema import valid_language
 
 def valid_tag(tag: str):
     return tag in [
-        'elegant', 'troll', 'trick', 'silly', 'unreal', 'creative',
-        'circuit', 'resistance', 'rlc', 'elmag',
-        'kinematics', 'uam',
-        'paaa', 'cog',
-        'calorimetry', 'thermo-process', 'optics', 'blackbody', 'nuclear'
+        'elegant',        # short but interesting problem
+        'troll',          # a problem with a trivial solution
+        'trick',          # has a trick or twist in the intended solution
+        'silly',          # a silly or joke problem
+        'unreal',         # a physically unrealistic setup played for humor
+        'creative',       # requires out-of-the-box thinking
+        'circuit',        # resistor network / circuit analysis
+        'resistance',     # problems focused on electrical resistance
+        'rlc',            # resonant RLC circuit
+        'elmag',          # general electromagnetism (induction, EM fields)
+        'kinematics',     # kinematics
+        'uam',            # uniformly accelerated motion
+        'paaa',           # projectile at an angle (inferred from usage; not documented at origin)
+        'cog',            # centre of gravity
+        'calorimetry',    # calorimetry / heat exchange
+        'thermo-process', # a specific thermodynamic process or cycle
+        'optics',         # optics
+        'blackbody',      # blackbody radiation
+        'nuclear',        # nuclear physics
     ]
 
 

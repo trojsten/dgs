@@ -4,7 +4,7 @@ import pint
 import pytest
 import regex as re
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityRange
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
 
 
 @pytest.fixture
@@ -99,6 +99,30 @@ class TestList:
     def test_incommensurate(self, length1, mass2):
         with pytest.raises(pint.errors.DimensionalityError):
             _ = QuantityList(length1, mass2)
+
+
+class TestProduct:
+    def test_masses(self, mass1, mass2, mass_mega):
+        expected = r'\qtyproduct{1 x 7 x 96.7}{\kilo\gram}'
+        computed = rf'{QuantityProduct(mass1, mass2, mass_mega)}'
+        assert expected == computed, \
+            f"Expected {expected}, computed {computed}"
+
+    def test_masses_sun(self, mass1, mass2, mass_brutal):
+        expected = re.compile(r'\\qtyproduct\[forbid-literal-units=false\]{1 x 7 x 2e\+30}{\\kilo\\gram}')
+        computed = rf'{QuantityProduct(mass1, mass2, mass_brutal)}'
+        assert expected.match(computed), \
+            f"Expected {expected}, computed {computed}"
+
+    def test_lengths(self, length1, length2):
+        expected = re.compile(r'\\qtyproduct{2 x 3.2}{\\met(er|re)}')
+        computed = rf'{QuantityProduct(length1, length2)}'
+        assert expected.match(computed), \
+            f"Expected {expected}, computed {computed}"
+
+    def test_incommensurate(self, length1, mass2):
+        with pytest.raises(pint.errors.DimensionalityError):
+            _ = QuantityProduct(length1, mass2)
 
 
 # --- Metadata propagation ------------------------------------------------
@@ -637,6 +661,14 @@ class TestSiExtraClash:
         with pytest.raises(ValueError, match="round-mode"):
             QuantityList(m_figures, m_places)
 
+    def test_product_compatible_keys_merge(self, m_figures, m_plain):
+        qp = QuantityProduct(m_figures, m_plain)
+        assert qp.si_extra == {'round-mode': 'figures'}
+
+    def test_product_conflicting_keys_raises(self, m_figures, m_places):
+        with pytest.raises(ValueError, match="round-mode"):
+            QuantityProduct(m_figures, m_places)
+
 
 # --- QuantityList edge cases ---------------------------------------------
 
@@ -662,6 +694,105 @@ class TestQuantityListEdgeCases:
         assert rf'{QuantityList(kg, g)}' == r'\qtylist{1;1.0}{\kilo\gram}'
 
 
+class TestQuantityProductEdgeCases:
+    def test_empty_rejected(self):
+        with pytest.raises(AssertionError):
+            QuantityProduct()
+
+    def test_single_element(self):
+        m = PhysicsQuantity.construct(5, 'kg')
+        assert rf'{QuantityProduct(m)}' == r'\qtyproduct{5}{\kilo\gram}'
+
+    def test_unit_of_first_wins(self):
+        """
+        QuantityProduct coerces all elements to the first element's unit.
+        Note: pint's conversion may change int→float, so '1' becomes '1.0'
+        when it is the result of a conversion rather than a literal.
+        """
+        g = PhysicsQuantity.construct(1000, 'gram')
+        kg = PhysicsQuantity.construct(1, 'kilogram')
+        assert rf'{QuantityProduct(g, kg)}' == r'\qtyproduct{1000 x 1000.0}{\gram}'
+        assert rf'{QuantityProduct(kg, g)}' == r'\qtyproduct{1 x 1.0}{\kilo\gram}'
+
+
+class TestQuantityListCollectionParity:
+    """
+    QuantityList should behave like a first-class sequence of its
+    (unit-coerced) elements, matching len()/iteration/indexing users would
+    expect from any collection type.
+    """
+
+    def test_len(self, mass1, mass2, mass_mega):
+        assert len(QuantityList(mass1, mass2, mass_mega)) == 3
+
+    def test_iter(self, mass1, mass2):
+        ql = QuantityList(mass1, mass2)
+        assert list(ql) == [mass1, mass2]
+
+    def test_getitem(self, mass1, mass2, mass_mega):
+        ql = QuantityList(mass1, mass2, mass_mega)
+        assert ql[0] == mass1
+        assert ql[-1] == mass_mega
+
+    def test_repr(self, mass1, mass2):
+        assert repr(QuantityList(mass1, mass2)) == f"QuantityList ({[mass1, mass2]})"
+
+    def test_eq(self, mass1, mass2):
+        assert QuantityList(mass1, mass2) == QuantityList(mass1, mass2)
+
+    def test_eq_different_elements(self, mass1, mass2, mass_mega):
+        assert QuantityList(mass1, mass2) != QuantityList(mass1, mass_mega)
+
+    def test_eq_unit_coercion(self):
+        """Equality compares coerced elements, so equivalent quantities in
+        different literal units still compare equal."""
+        g = PhysicsQuantity.construct(1000, 'gram')
+        kg = PhysicsQuantity.construct(1, 'kilogram')
+        assert QuantityList(kg, g) == QuantityList(kg, g)
+
+    def test_eq_not_implemented_for_other_types(self, mass1, mass2):
+        assert QuantityList(mass1, mass2).__eq__(mass1) is NotImplemented
+
+
+class TestQuantityProductCollectionParity:
+    """
+    QuantityProduct should behave like a first-class sequence of its
+    (unit-coerced) elements, matching len()/iteration/indexing users would
+    expect from any collection type.
+    """
+
+    def test_len(self, mass1, mass2, mass_mega):
+        assert len(QuantityProduct(mass1, mass2, mass_mega)) == 3
+
+    def test_iter(self, mass1, mass2):
+        qp = QuantityProduct(mass1, mass2)
+        assert list(qp) == [mass1, mass2]
+
+    def test_getitem(self, mass1, mass2, mass_mega):
+        qp = QuantityProduct(mass1, mass2, mass_mega)
+        assert qp[0] == mass1
+        assert qp[-1] == mass_mega
+
+    def test_repr(self, mass1, mass2):
+        assert repr(QuantityProduct(mass1, mass2)) == f"QuantityProduct ({[mass1, mass2]})"
+
+    def test_eq(self, mass1, mass2):
+        assert QuantityProduct(mass1, mass2) == QuantityProduct(mass1, mass2)
+
+    def test_eq_different_elements(self, mass1, mass2, mass_mega):
+        assert QuantityProduct(mass1, mass2) != QuantityProduct(mass1, mass_mega)
+
+    def test_eq_unit_coercion(self):
+        """Equality compares coerced elements, so equivalent quantities in
+        different literal units still compare equal."""
+        g = PhysicsQuantity.construct(1000, 'gram')
+        kg = PhysicsQuantity.construct(1, 'kilogram')
+        assert QuantityProduct(kg, g) == QuantityProduct(kg, g)
+
+    def test_eq_not_implemented_for_other_types(self, mass1, mass2):
+        assert QuantityProduct(mass1, mass2).__eq__(mass1) is NotImplemented
+
+
 # --- Formatting ----------------------------------------------------------
 
 
@@ -684,6 +815,11 @@ class TestFormatting:
         a = PhysicsQuantity.construct(0.1, '')
         b = PhysicsQuantity.construct(0.5, '')
         assert rf'{QuantityList(a, b)}' == r'\numlist{0.1;0.5}'
+
+    def test_dimensionless_product_uses_numproduct(self):
+        a = PhysicsQuantity.construct(0.1, '')
+        b = PhysicsQuantity.construct(0.5, '')
+        assert rf'{QuantityProduct(a, b)}' == r'\numproduct{0.1 x 0.5}'
 
     def test_with_unit_uses_qty(self):
         m = PhysicsQuantity.construct(5, 'kg')

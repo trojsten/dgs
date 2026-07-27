@@ -72,8 +72,8 @@ Provided by `core/builder/renderer.py::CLIInterface.build_context`:
 ## Filters (registered in `core/builder/jinja.py::MarkdownJinjaRenderer`)
 
 Number formatting — precision-parameterised versions are pre-generated for 0–9
-digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`, or a raw
-number:
+digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`,
+`QuantityProduct`, or a raw number:
 
 | Filter               | What it does                                              |
 | -------------------- | --------------------------------------------------------- |
@@ -114,11 +114,18 @@ pi   tau  euler                # constants
 
 These accept both raw numbers and `PhysicsQuantity` values (pint routes through).
 
-Constructor:
+Constructors (short aliases in parentheses):
 
 ```
 Q(magnitude, unit)             # ad-hoc PhysicsQuantity, e.g. Q(100, '%')
+QuantityList(q1, q2, q3)       # (QL) combine several commensurate quantities into a list
+QuantityProduct(q1, q2, q3)    # (QP) combine several commensurate quantities into a product (e.g. box dimensions)
+QuantityRange(lo, hi)          # (QR) build a range directly; equivalent to `lo % hi`
 ```
+
+`q1 % q2` and `q.widen(v)` remain the idiomatic ways to build a `QuantityRange` (see
+quantities-and-constants.md); `QR(lo, hi)` is there for when the operands aren't
+bare variables and `%` would need extra parens anyway.
 
 ## `@J set` — the everyday case
 

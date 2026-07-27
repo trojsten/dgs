@@ -155,11 +155,13 @@ filters apply — `PhysicsQuantity` handles the routing.
 
 ## Ranges (`QuantityRange`)
 
-Two constructors:
+Three constructors:
 
 - `q1 % q2` where `q1 <= q2` (units must be commensurate; second is converted to
   first's unit).
 - `q.widen(v)` — returns a symmetric ±v range around `q`.
+- `QuantityRange(lo, hi)` (short alias `QR`) — same as `lo % hi`, spelled out;
+  handy when `lo`/`hi` are compound expressions where `%` would need parens.
 - Given a range `r`, `r.widen(v)` **widens** the range by factor `(1+v)`
   around its centre. It never narrows; degenerate ranges (min == max) stay
   degenerate.
@@ -182,9 +184,27 @@ This says: take the range with endpoints `result` and `result_exact`, widen by
 
 If you have several commensurate values to typeset as a list:
 
+- Construct with the `QuantityList` global (short alias `QL`): `QuantityList(q1, q2, q3)` or `QL(q1, q2, q3)`.
 - Format: `\qtylist{v1;v2;v3}{unit}` (or `\numlist` for dimensionless).
 - All values are coerced to the first's unit; `pint` raises on incompatible units.
+- Behaves like a sequence of its (coerced) elements: `len(ql)`, `for q in ql`,
+  `ql[0]`.
 - Not commonly used in Náboj; more common in scholar / seminar modules.
+- No `.widen()` — unlike a single value or a range, "widening" a list of
+  arbitrary points has no single natural meaning, so it's intentionally
+  unsupported. Widen each element individually before listing if needed.
+
+## Products (`QuantityProduct`)
+
+For dimensions of an object (e.g. the length x width x height of a box), all
+sharing one unit:
+
+- Construct with the `QuantityProduct` global (short alias `QP`): `QuantityProduct(q1, q2, q3)` or `QP(q1, q2, q3)`.
+- Format: `\qtyproduct{v1 x v2 x v3}{unit}` (or `\numproduct` for dimensionless).
+- Same unit-coercion, `si_extra`-merge, and sequence behavior (`len()`,
+  iteration, indexing) as `QuantityList` — the only difference is the `x`
+  separator and command name.
+- No `.widen()`, for the same reason `QuantityList` has none.
 
 ## Common pitfalls
 

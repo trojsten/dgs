@@ -10,7 +10,7 @@ import jinja2
 import numpy as np
 import pint
 
-from core.builder.context.quantities import PhysicsQuantity
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
 from core.filters import latex, numbers
 from core.utilities import colour as c
 from core.utilities import logger
@@ -208,6 +208,11 @@ class MarkdownJinjaRenderer(JinjaRenderer):
 
         self.env.globals |= {
             'Q': PhysicsQuantity.construct,
+            'QuantityList': QuantityList,
+            'QL': QuantityList,
+            'QuantityProduct': QuantityProduct,
+            'QP': QuantityProduct,
+            'QR': QuantityRange,
         } | {
             'sin': np.sin,
             'cos': np.cos,

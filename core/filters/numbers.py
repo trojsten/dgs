@@ -3,7 +3,7 @@ Filters for work with numbers. Feel free to extend.
 """
 import numbers
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityRange
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
 
 from .hacks import cut_extra_one
 
@@ -54,7 +54,7 @@ def format_float(x: float, precision: int | None = None):
 
     if isinstance(x, numbers.Number):
         printed = rf"{x:{fmt}}"
-    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList)):
+    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)):
         printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")
@@ -72,7 +72,7 @@ def format_general(x: float, precision: int | None = None):
 
     if isinstance(x, numbers.Number):
         printed = rf"{x:{fmt}}"
-    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList)):
+    elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)):
         printed = x.__format__(fmt)
     else:
         raise TypeError(f"Cannot handle type {type(x)} ({x})")
