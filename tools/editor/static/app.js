@@ -1,5 +1,8 @@
 const state = {
   problems: [],
+  problemIndex: {},   // comp -> vol -> [{pid, key, langs, optional_targets}]
+  comp: null,
+  vol: null,
   key: null,
   lang: null,
   activeTarget: "problem",
@@ -97,26 +100,95 @@ function switchTarget(target) {
   renderSourceTabs();
 }
 
-async function loadProblems() {
-  state.problems = await fetchJSON("/api/problems");
-  const sel = el("problem-select");
-  sel.innerHTML = "";
-  for (const p of state.problems) {
+function fillSelect(selectEl, values, labelFn) {
+  selectEl.innerHTML = "";
+  for (const v of values) {
     const opt = document.createElement("option");
-    opt.value = p.key;
-    opt.textContent = p.key;
-    sel.appendChild(opt);
-  }
-  if (state.problems.length) {
-    await loadProblem(state.problems[0].key);
+    opt.value = v;
+    opt.textContent = labelFn ? labelFn(v) : v;
+    selectEl.appendChild(opt);
   }
 }
 
-async function loadProblem(key, lang) {
-  if (anyDirty() && !confirm("Discard unsaved changes?")) {
-    el("problem-select").value = state.key;
-    return;
+function pidsFor(comp, vol) {
+  return (state.problemIndex[comp]?.[vol]) ?? [];
+}
+
+function populateVolumes(comp, preferredVol) {
+  const vols = Object.keys(state.problemIndex[comp] ?? {}).sort();
+  fillSelect(el("vol-select"), vols);
+  state.vol = vols.includes(preferredVol) ? preferredVol : vols[0];
+  el("vol-select").value = state.vol;
+}
+
+function populateProblems(comp, vol, preferredPid) {
+  const problems = pidsFor(comp, vol);
+  fillSelect(el("pid-select"), problems.map((p) => p.pid), (pid) => pid);
+  const match = problems.find((p) => p.pid === preferredPid) ?? problems[0];
+  el("pid-select").value = match ? match.pid : "";
+  return match ? match.key : null;
+}
+
+async function loadProblems() {
+  state.problems = await fetchJSON("/api/problems");
+  state.problemIndex = {};
+  for (const p of state.problems) {
+    const [comp, vol, , pid] = p.key.split("/");
+    (state.problemIndex[comp] ??= {})[vol] ??= [];
+    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs, optional_targets: p.optional_targets });
   }
+  for (const comp in state.problemIndex) {
+    for (const vol in state.problemIndex[comp]) {
+      state.problemIndex[comp][vol].sort((a, b) => a.pid.localeCompare(b.pid));
+    }
+  }
+
+  const comps = Object.keys(state.problemIndex).sort();
+  fillSelect(el("comp-select"), comps);
+  if (!comps.length) return;
+
+  state.comp = comps[0];
+  populateVolumes(state.comp);
+  const key = populateProblems(state.comp, state.vol);
+  if (key) await loadProblem(key);
+}
+
+function confirmDiscard(revertEl, revertValue) {
+  if (anyDirty() && !confirm("Discard unsaved changes?")) {
+    revertEl.value = revertValue;
+    return false;
+  }
+  return true;
+}
+
+async function onCompChange(comp) {
+  if (!confirmDiscard(el("comp-select"), state.comp)) return;
+  state.comp = comp;
+  populateVolumes(comp);
+  const key = populateProblems(comp, state.vol);
+  if (key) await loadProblem(key);
+}
+
+async function onVolChange(vol) {
+  if (!confirmDiscard(el("vol-select"), state.vol)) return;
+  state.vol = vol;
+  const key = populateProblems(state.comp, vol);
+  if (key) await loadProblem(key);
+}
+
+async function onPidChange(pid) {
+  const current = pidsFor(state.comp, state.vol).find((p) => p.key === state.key);
+  if (!confirmDiscard(el("pid-select"), current ? current.pid : pid)) return;
+  const match = pidsFor(state.comp, state.vol).find((p) => p.pid === pid);
+  if (match) await loadProblem(match.key);
+}
+
+async function onLangChange(lang) {
+  if (!confirmDiscard(el("lang-select"), state.lang)) return;
+  await loadProblem(state.key, lang);
+}
+
+async function loadProblem(key, lang) {
   const url = lang ? `/api/problem/${key}?lang=${lang}` : `/api/problem/${key}`;
   const data = await fetchJSON(url);
   const meta = state.problems.find((p) => p.key === key);
@@ -140,7 +212,11 @@ async function loadProblem(key, lang) {
   };
   state.baseline = { ...state.buffers };
 
-  el("problem-select").value = key;
+  const [comp, vol, , pid] = key.split("/");
+  el("comp-select").value = comp;
+  el("vol-select").value = vol;
+  el("pid-select").value = pid;
+
   const langSel = el("lang-select");
   langSel.innerHTML = "";
   for (const l of data.langs) {
@@ -160,11 +236,50 @@ async function loadProblem(key, lang) {
   el("output-rendered").classList.remove("error");
 }
 
-async function doRender() {
-  if (!state.key || !state.lang) return;
+function captureEditors() {
   state.buffers[state.activeTarget] = el("source-editor").value;
   state.meta = el("meta-editor").value;
   state.preamble = el("preamble-editor").value;
+}
+
+function markSaved() {
+  state.baseline[state.activeTarget] = state.buffers[state.activeTarget];
+  state.metaBaseline = state.meta;
+  state.preambleBaseline = state.preamble;
+  renderSourceTabs();
+}
+
+async function doSave() {
+  if (!state.key || !state.lang) return;
+  captureEditors();
+  setStatus("Saving…", "dirty");
+  try {
+    const body = await fetchJSON("/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: state.key,
+        lang: state.lang,
+        target: state.activeTarget,
+        files: {
+          meta_yaml: state.meta,
+          preamble_md: state.preamble,
+          content: state.buffers[state.activeTarget],
+        },
+      }),
+    });
+    if (body.ok) {
+      markSaved();
+      setStatus("Saved", "ok");
+    }
+  } catch (e) {
+    setStatus(e.message, "error");
+  }
+}
+
+async function doRender() {
+  if (!state.key || !state.lang) return;
+  captureEditors();
 
   setStatus("Rendering…", "dirty");
   try {
@@ -189,10 +304,7 @@ async function doRender() {
       code.innerHTML = highlight(body.rendered_md ?? "", "dgs-md");
       out.classList.remove("error");
       setStatus("Rendered OK", "ok");
-      state.baseline[state.activeTarget] = state.buffers[state.activeTarget];
-      state.metaBaseline = state.meta;
-      state.preambleBaseline = state.preamble;
-      renderSourceTabs();
+      markSaved();
     } else {
       const dump = `$ make render/naboj/${state.key}/${state.lang}/${state.activeTarget}.md\n\n${body.stdout}\n${body.stderr}`;
       code.innerHTML = escapeHtml(dump);
@@ -245,8 +357,11 @@ function switchOutputTab(name) {
 }
 
 function init() {
-  el("problem-select").addEventListener("change", (e) => loadProblem(e.target.value));
-  el("lang-select").addEventListener("change", (e) => loadProblem(state.key, e.target.value));
+  el("comp-select").addEventListener("change", (e) => onCompChange(e.target.value));
+  el("vol-select").addEventListener("change", (e) => onVolChange(e.target.value));
+  el("pid-select").addEventListener("change", (e) => onPidChange(e.target.value));
+  el("lang-select").addEventListener("change", (e) => onLangChange(e.target.value));
+  el("save-btn").addEventListener("click", doSave);
   el("render-btn").addEventListener("click", doRender);
 
   wireCodeEditor("source-editor", "source-highlight", "dgs-md", () => {
@@ -267,6 +382,9 @@ function init() {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       doRender();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      doSave();
     }
   });
   loadProblems();

@@ -26,6 +26,14 @@ html, body {
   border-radius: 4px;
 }
 
+#save-btn {
+  cursor: pointer;
+  background: #2f5c7a;
+  border-color: #3a7098;
+}
+
+#save-btn:hover { background: #386f92; }
+
 #render-btn {
   cursor: pointer;
   background: #2f6f4f;
@@ -128,6 +136,14 @@ html, body {
   z-index: 1;
 }
 
+/* <code>'s user-agent stylesheet sets its own font-family, which otherwise
+   wins over the inherited one from .code-highlight and desyncs character
+   widths from the textarea sitting on top of it. */
+.code-highlight code {
+  font: inherit;
+  white-space: inherit;
+}
+
 .code-input {
   z-index: 2;
   width: 100%;
@@ -153,6 +169,11 @@ html, body {
   font-size: 0.85rem;
   line-height: 1.4;
   color: #ddd;
+}
+
+.output code {
+  font: inherit;
+  white-space: inherit;
 }
 
 .tok-jinja { color: #e0c34a; background: rgba(224, 195, 74, 0.12); border-radius: 2px; }

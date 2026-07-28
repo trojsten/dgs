@@ -63,10 +63,12 @@ class JinjaConvertor:
         """
         Prepare a template for rendering.
 
-        Currently just prepends the preamble, if available
+        Currently just prepends the preamble, if available, separated from
+        the template by exactly one newline. An empty (or whitespace-only)
+        preamble is treated as absent, so no leading blank line is added.
         """
-        if self.preamble is not None:
-            return self.preamble + "\n" + template
+        if self.preamble and self.preamble.strip():
+            return self.preamble.rstrip("\n") + "\n" + template
         else:
             return template
 

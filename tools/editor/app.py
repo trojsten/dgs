@@ -19,6 +19,7 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][A-Za-z0-9]")
 BUILD_LOCK = threading.Lock()
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 class BadRequest(Exception):
@@ -140,6 +141,33 @@ def run_make(target):
     )
 
 
+def write_files(problem_dir, lang, target, files):
+    if "meta_yaml" in files:
+        (problem_dir / "meta.yaml").write_text(files["meta_yaml"])
+    if "preamble_md" in files:
+        (problem_dir / "preamble.md").write_text(files["preamble_md"])
+    if "content" in files:
+        source_path_for_target(problem_dir, lang, target).write_text(files["content"])
+
+
+@app.post("/api/save")
+def api_save():
+    body = request.get_json(force=True)
+    key = body.get("key")
+    lang = body.get("lang")
+    target = body.get("target")
+    files = body.get("files") or {}
+
+    problem_dir = resolve_problem_dir(key)
+    validate_lang(problem_dir, lang)
+    validate_target(target)
+
+    with BUILD_LOCK:
+        write_files(problem_dir, lang, target, files)
+
+    return jsonify({"ok": True})
+
+
 @app.post("/api/render")
 def api_render():
     body = request.get_json(force=True)
@@ -153,12 +181,7 @@ def api_render():
     validate_target(target)
 
     with BUILD_LOCK:
-        if "meta_yaml" in files:
-            (problem_dir / "meta.yaml").write_text(files["meta_yaml"])
-        if "preamble_md" in files:
-            (problem_dir / "preamble.md").write_text(files["preamble_md"])
-        if "content" in files:
-            source_path_for_target(problem_dir, lang, target).write_text(files["content"])
+        write_files(problem_dir, lang, target, files)
 
         make_target = f"render/naboj/{key}/{lang}/{target}.md"
         result = run_make(make_target)
