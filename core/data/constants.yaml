@@ -305,6 +305,12 @@ refraction_water:
     unit:       ~
     digits:     4
 
+refraction_air:
+    symbol:     'n_a'
+    magnitude:  1.00028652
+    unit:       ~
+    digits:     3
+
 ### Material
 density_air:
     symbol:     '\rho_a'
