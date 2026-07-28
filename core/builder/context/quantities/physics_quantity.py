@@ -153,10 +153,21 @@ class PhysicsQuantity:
     def sym(self, value: str | None):
         self._symbol = value
 
+    @property
+    def s(self):
+        """ Return the internal symbol (shorthand). """
+        return self._symbol
+
+    @s.setter
+    def s(self, value: str | None):
+        self._symbol = value
+
     def alias(self, symbol: str | None) -> "PhysicsQuantity":
+        """ Return an aliased quantity with a symbol """
         return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra, force_f=self.force_f)
 
     def to(self, what):
+        """ Convert a physics quantity unit to another compatible unit. """
         return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)
 
     def simplify(self):
@@ -196,6 +207,9 @@ class PhysicsQuantity:
 
     def cos(self):
         return PhysicsQuantity(np.cos(self._quantity))
+
+    def tan(self):
+        return PhysicsQuantity(np.tan(self._quantity))
 
     def arcsin(self):
         return PhysicsQuantity(np.arcsin(self._quantity))
