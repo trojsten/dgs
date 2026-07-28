@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Náboj problem editor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header id="topbar">
+    <select id="problem-select"></select>
+    <select id="lang-select"></select>
+    <button id="render-btn">Render (Ctrl/Cmd+Enter)</button>
+    <span id="status"></span>
+  </header>
+
+  <main id="grid">
+    <section id="pane-source" class="pane">
+      <div class="tabbar" id="source-tabs"></div>
+      <textarea id="source-editor" class="editor" spellcheck="false"></textarea>
+    </section>
+
+    <section id="pane-context" class="pane">
+      <div class="pane-label">meta.yaml</div>
+      <textarea id="meta-editor" class="editor" spellcheck="false"></textarea>
+      <div class="pane-label">preamble.md</div>
+      <textarea id="preamble-editor" class="editor" spellcheck="false"></textarea>
+    </section>
+
+    <section id="pane-output" class="pane">
+      <div class="tabbar">
+        <button class="tab active" data-output="rendered">Rendered Markdown</button>
+        <button class="tab" data-output="lint">Lint (advisory)</button>
+      </div>
+      <pre id="output-rendered" class="output"></pre>
+      <div id="output-lint" class="output" hidden></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

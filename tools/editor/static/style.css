@@ -1,0 +1,140 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  background: #1e1e1e;
+  color: #ddd;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #252526;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+#topbar select, #topbar button {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  background: #333;
+  color: #ddd;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+#render-btn {
+  cursor: pointer;
+  background: #2f6f4f;
+  border-color: #3a8a63;
+}
+
+#render-btn:hover { background: #38875e; }
+
+#status {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+#status.error { color: #ff6b6b; }
+#status.dirty { color: #e0c34a; }
+#status.ok { color: #6bcf7f; }
+
+#grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: #3a3a3a;
+  height: calc(100vh - 48px);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+
+.pane-label {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+  background: #252526;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.tabbar {
+  display: flex;
+  background: #252526;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.tab {
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  color: #ddd;
+  border-bottom-color: #2f6f4f;
+}
+
+.tab.dirty::after {
+  content: " \25cf";
+  color: #e0c34a;
+}
+
+.editor {
+  flex: 1;
+  width: 100%;
+  border: none;
+  resize: none;
+  background: #1e1e1e;
+  color: #ddd;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 0.6rem;
+  outline: none;
+}
+
+#pane-context .editor {
+  flex: 1 1 40%;
+}
+
+.output {
+  flex: 1;
+  margin: 0;
+  padding: 0.6rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.output.error {
+  color: #ff8f8f;
+  background: #2a1414;
+}
+
+.lint-violation {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #333;
+}
+
+.lint-violation .loc {
+  color: #999;
+  margin-right: 0.5rem;
+}
