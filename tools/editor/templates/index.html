@@ -25,19 +25,6 @@
       </div>
     </section>
 
-    <section id="pane-context" class="pane">
-      <div class="pane-label">meta.yaml</div>
-      <div class="code-editor">
-        <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
-        <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
-      </div>
-      <div class="pane-label">preamble.md</div>
-      <div class="code-editor">
-        <pre class="code-highlight" aria-hidden="true"><code id="preamble-highlight"></code></pre>
-        <textarea id="preamble-editor" class="code-input" spellcheck="false"></textarea>
-      </div>
-    </section>
-
     <section id="pane-output" class="pane">
       <div class="tabbar">
         <button class="tab active" data-output="rendered">Rendered Markdown</button>
@@ -45,6 +32,23 @@
       </div>
       <pre id="output-rendered" class="output"><code id="output-rendered-code"></code></pre>
       <div id="output-lint" class="output" hidden></div>
+    </section>
+
+    <section id="pane-context" class="pane">
+      <div class="context-col">
+        <div class="pane-label">meta.yaml</div>
+        <div class="code-editor">
+          <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
+          <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="context-col">
+        <div class="pane-label">preamble.md</div>
+        <div class="code-editor">
+          <pre class="code-highlight" aria-hidden="true"><code id="preamble-highlight"></code></pre>
+          <textarea id="preamble-editor" class="code-input" spellcheck="false"></textarea>
+        </div>
+      </div>
     </section>
   </main>
 

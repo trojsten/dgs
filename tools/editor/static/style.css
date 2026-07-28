@@ -54,17 +54,40 @@ html, body {
 
 #grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 240px;
+  grid-template-areas:
+    "source output"
+    "context context";
   gap: 1px;
   background: #3a3a3a;
   height: calc(100vh - 48px);
 }
+
+#pane-source { grid-area: source; }
+#pane-output { grid-area: output; }
+#pane-context { grid-area: context; }
 
 .pane {
   display: flex;
   flex-direction: column;
   background: #1e1e1e;
   overflow: hidden;
+}
+
+#pane-context {
+  flex-direction: row;
+}
+
+.context-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.context-col + .context-col {
+  border-left: 1px solid #3a3a3a;
 }
 
 .pane-label {
@@ -110,10 +133,6 @@ html, body {
   overflow: hidden;
 }
 
-#pane-context .code-editor {
-  flex: 1 1 40%;
-}
-
 .code-highlight,
 .code-input {
   position: absolute;
@@ -134,6 +153,22 @@ html, body {
   color: #ddd;
   pointer-events: none;
   z-index: 1;
+}
+
+/* 120-column ruler. background-attachment:local ties the gradient to the
+   element's scrollable content (not just its viewport), so the line still
+   lines up with column 120 after scrolling down a long file. */
+.code-highlight,
+.output {
+  background-image: linear-gradient(
+    to right,
+    transparent calc(0.6rem + 120ch),
+    rgba(255, 255, 255, 0.15) calc(0.6rem + 120ch),
+    rgba(255, 255, 255, 0.15) calc(0.6rem + 120ch + 1px),
+    transparent calc(0.6rem + 120ch + 1px)
+  );
+  background-attachment: local;
+  background-repeat: no-repeat;
 }
 
 /* <code>'s user-agent stylesheet sets its own font-family, which otherwise
@@ -192,7 +227,7 @@ html, body {
 
 .output.error {
   color: #ff8f8f;
-  background: #2a1414;
+  background-color: #2a1414;
 }
 
 .lint-violation {
