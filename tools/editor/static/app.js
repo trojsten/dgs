@@ -346,6 +346,40 @@ async function doLint() {
   }
 }
 
+const CONTEXT_HEIGHT_KEY = "dgs-editor-context-height";
+
+function wireRowResizer() {
+  const resizer = el("row-resizer");
+  const grid = el("grid");
+  let dragging = false;
+
+  const saved = localStorage.getItem(CONTEXT_HEIGHT_KEY);
+  if (saved) grid.style.setProperty("--context-height", saved);
+
+  resizer.addEventListener("mousedown", (e) => {
+    dragging = true;
+    resizer.classList.add("dragging");
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const gridRect = grid.getBoundingClientRect();
+    const height = Math.min(
+      Math.max(gridRect.bottom - e.clientY, 80),
+      gridRect.height - 120
+    );
+    grid.style.setProperty("--context-height", `${height}px`);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove("dragging");
+    localStorage.setItem(CONTEXT_HEIGHT_KEY, grid.style.getPropertyValue("--context-height"));
+  });
+}
+
 function switchOutputTab(name) {
   state.activeOutput = name;
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
@@ -363,6 +397,7 @@ function init() {
   el("lang-select").addEventListener("change", (e) => onLangChange(e.target.value));
   el("save-btn").addEventListener("click", doSave);
   el("render-btn").addEventListener("click", doRender);
+  wireRowResizer();
 
   wireCodeEditor("source-editor", "source-highlight", "dgs-md", () => {
     state.buffers[state.activeTarget] = el("source-editor").value;

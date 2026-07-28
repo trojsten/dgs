@@ -53,11 +53,13 @@ html, body {
 #status.ok { color: #6bcf7f; }
 
 #grid {
+  --context-height: 240px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 240px;
+  grid-template-rows: 1fr 8px var(--context-height);
   grid-template-areas:
     "source output"
+    "resizer resizer"
     "context context";
   gap: 1px;
   background: #3a3a3a;
@@ -67,6 +69,31 @@ html, body {
 #pane-source { grid-area: source; }
 #pane-output { grid-area: output; }
 #pane-context { grid-area: context; }
+
+#row-resizer {
+  grid-area: resizer;
+  position: relative;
+  background: #252526;
+  cursor: row-resize;
+  user-select: none;
+}
+
+#row-resizer:hover,
+#row-resizer.dragging {
+  background: #2f6f4f;
+}
+
+#row-resizer::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 32px;
+  height: 2px;
+  background: #666;
+  transform: translate(-50%, -50%);
+  border-radius: 1px;
+}
 
 .pane {
   display: flex;
