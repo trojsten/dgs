@@ -230,6 +230,12 @@ stefan_boltzmann:
     unit:       'watt / metre squared / kelvin^4'
     digits:     3
 
+valovcan:
+    symbol:     'C_V'
+    magnitude:  40
+    unit:       ~
+    exact:      true
+
 pressure_standard:
     symbol:     'p_0'
     magnitude:  101325
