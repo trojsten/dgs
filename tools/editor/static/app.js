@@ -42,6 +42,31 @@ function anyDirty() {
   return sourceTargets().some(isDirty);
 }
 
+// --- syntax highlighting overlay -------------------------------------------
+
+function refreshHighlight(textareaId, highlightId, lang) {
+  const text = el(textareaId).value;
+  el(highlightId).innerHTML = highlight(text + "\n", lang);
+}
+
+function wireCodeEditor(textareaId, highlightId, lang, onInput) {
+  const textarea = el(textareaId);
+  const pre = el(highlightId).parentElement;
+  textarea.addEventListener("input", () => {
+    refreshHighlight(textareaId, highlightId, lang);
+    if (onInput) onInput();
+  });
+  textarea.addEventListener("scroll", () => {
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+  });
+}
+
+function setEditorValue(textareaId, highlightId, lang, value) {
+  el(textareaId).value = value;
+  refreshHighlight(textareaId, highlightId, lang);
+}
+
 function renderSourceTabs() {
   const bar = el("source-tabs");
   bar.innerHTML = "";
@@ -68,7 +93,7 @@ function labelFor(target) {
 
 function switchTarget(target) {
   state.activeTarget = target;
-  el("source-editor").value = state.buffers[target] ?? "";
+  setEditorValue("source-editor", "source-highlight", "dgs-md", state.buffers[target] ?? "");
   renderSourceTabs();
 }
 
@@ -126,12 +151,12 @@ async function loadProblem(key, lang) {
   }
   langSel.value = data.lang;
 
-  el("meta-editor").value = state.meta;
-  el("preamble-editor").value = state.preamble;
+  setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
+  setEditorValue("preamble-editor", "preamble-highlight", "dgs-preamble", state.preamble);
   renderSourceTabs();
   switchTarget("problem");
   setStatus("Loaded", "ok");
-  el("output-rendered").textContent = "";
+  el("output-rendered-code").innerHTML = "";
   el("output-rendered").classList.remove("error");
 }
 
@@ -159,8 +184,9 @@ async function doRender() {
     });
 
     const out = el("output-rendered");
+    const code = el("output-rendered-code");
     if (body.ok) {
-      out.textContent = body.rendered_md ?? "";
+      code.innerHTML = highlight(body.rendered_md ?? "", "dgs-md");
       out.classList.remove("error");
       setStatus("Rendered OK", "ok");
       state.baseline[state.activeTarget] = state.buffers[state.activeTarget];
@@ -168,7 +194,8 @@ async function doRender() {
       state.preambleBaseline = state.preamble;
       renderSourceTabs();
     } else {
-      out.textContent = `$ make render/naboj/${state.key}/${state.lang}/${state.activeTarget}.md\n\n${body.stdout}\n${body.stderr}`;
+      const dump = `$ make render/naboj/${state.key}/${state.lang}/${state.activeTarget}.md\n\n${body.stdout}\n${body.stderr}`;
+      code.innerHTML = escapeHtml(dump);
       out.classList.add("error");
       setStatus(`Render failed (exit ${body.returncode})`, "error");
     }
@@ -221,16 +248,18 @@ function init() {
   el("problem-select").addEventListener("change", (e) => loadProblem(e.target.value));
   el("lang-select").addEventListener("change", (e) => loadProblem(state.key, e.target.value));
   el("render-btn").addEventListener("click", doRender);
-  el("source-editor").addEventListener("input", () => {
+
+  wireCodeEditor("source-editor", "source-highlight", "dgs-md", () => {
     state.buffers[state.activeTarget] = el("source-editor").value;
     renderSourceTabs();
   });
-  el("meta-editor").addEventListener("input", () => {
+  wireCodeEditor("meta-editor", "meta-highlight", "dgs-yaml", () => {
     state.meta = el("meta-editor").value;
   });
-  el("preamble-editor").addEventListener("input", () => {
+  wireCodeEditor("preamble-editor", "preamble-highlight", "dgs-preamble", () => {
     state.preamble = el("preamble-editor").value;
   });
+
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
     t.addEventListener("click", () => switchOutputTab(t.dataset.output));
   });

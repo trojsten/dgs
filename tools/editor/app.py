@@ -38,7 +38,7 @@ def resolve_problem_dir(key):
     problem_dir = (SOURCE_ROOT / key).resolve()
     if not problem_dir.is_relative_to(SOURCE_ROOT.resolve()):
         raise BadRequest(f"Invalid problem key: {key!r}")
-    if not (problem_dir / "meta.yaml").is_file():
+    if not (problem_dir / "meta.yaml").is_file() or problem_dir.parent.name != "problems":
         raise BadRequest(f"No such problem: {key!r}")
     return problem_dir
 
@@ -78,6 +78,8 @@ def list_problems():
     problems = []
     for meta_path in sorted(SOURCE_ROOT.rglob("meta.yaml")):
         problem_dir = meta_path.parent
+        if problem_dir.parent.name != "problems":
+            continue  # venue/constants/language config, not an actual problem
         key = problem_dir.relative_to(SOURCE_ROOT).as_posix()
         langs = available_langs(problem_dir)
         optional = [
