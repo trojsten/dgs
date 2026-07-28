@@ -77,10 +77,11 @@ ounce:
     digits:     4
 
 troy_ounce:
-    symbol:     'oz t'
+    symbol:     '\mathrm{oz t}'
     magnitude:  31.1034768
     unit:       'gram'
     digits:     3
+    exact:      true
 
 pound:
     symbol:     '\mathrm{lb}'
