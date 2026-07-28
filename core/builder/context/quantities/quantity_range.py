@@ -71,5 +71,9 @@ class QuantityRange:
         half_width = (self.maximum - self.minimum) * 0.5 * (1 + value)
         return QuantityRange(centre - half_width, centre + half_width)
 
+    def to(self, unit) -> Self:
+        """ Convert both endpoints to another commensurate unit. """
+        return QuantityRange(self.minimum.to(unit), self.maximum.to(unit))
+
     def __str__(self):
         return format(self, 'g')
