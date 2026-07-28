@@ -301,7 +301,7 @@ amu:
 
 refraction_water:
     symbol:     'n_{\ce{H2O}}'
-    magnitude:  1.333
+    magnitude:  1.3330
     unit:       ~
     digits:     4
 
@@ -314,15 +314,15 @@ refraction_air:
 ### Material
 density_air:
     symbol:     '\rho_a'
-    magnitude:  1.28
+    magnitude:  1.293
     unit:       'kilogram / metre cubed'
     digits:     2
 
 density_water:
     symbol:     '\rho_{\ce{H2O}}'
-    magnitude:  998
+    magnitude:  999.972
     unit:       'kilogram / metre cubed'
-    digits:     2
+    digits:     3
 
 density_ice:
     symbol:     '\rho_{\ce{H2O}}'

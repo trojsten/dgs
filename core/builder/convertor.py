@@ -228,6 +228,7 @@ class Convertor:
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
             "--columns=200",
+            "--wrap=preserve",
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             #"--filter", "pandoc-include",
