@@ -149,6 +149,14 @@ def equals_general(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_general(precision)
 
 
+def approx_float(q: PhysicsQuantity, precision: int | None = None):
+    return q.approx_float(precision)
+
+
+def approx_general(q: PhysicsQuantity, precision: int | None = None):
+    return q.approx_general(precision)
+
+
 def math_inline(math: MathObject) -> str:
     """
     Display as inline math. No punctuation argument: write any sentence

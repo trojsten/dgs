@@ -180,8 +180,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                          variable_end_string='§)',
                          **kwargs)
 
-        self.env.filters |= (
-        {
+        self.env.filters |= ({
             'f': numbers.format_float,
             'g': numbers.format_general,
             'n': latex.num,
@@ -200,11 +199,13 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_format_functions(latex.num_float, 'nf') |
         self.__generate_format_functions(latex.num_general, 'ng') |
         self.__generate_format_functions(latex.equals_float, 'ef') |
-        self.__generate_format_functions(latex.equals_general, 'eg')) | {
+        self.__generate_format_functions(latex.equals_general, 'eg') |
+        self.__generate_format_functions(latex.approx_float, 'af') |
+        self.__generate_format_functions(latex.approx_general, 'ag') | {
            'inline': latex.math_inline,
            'disp': latex.math_display,
            'align': latex.math_aligned,
-        }
+        })
 
         self.env.globals |= {
             'Q': PhysicsQuantity.construct,

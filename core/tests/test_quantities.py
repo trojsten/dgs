@@ -832,6 +832,38 @@ class TestFormatting:
         assert 'round-mode=figures' in str(m)
 
 
+# --- equals_*/approx_* string formatting ---------------------------------
+
+
+class TestEqualsApprox:
+    """`equals_*` use ` = `; `approx_*` use `\\approx` and otherwise format identically."""
+
+    def test_equals_float(self, mass_mega):
+        assert mass_mega.equals_float(2) == r'm_D = \qty{96.70}{\kilo\gram}'
+
+    def test_equals_general(self, mass_mega):
+        assert mass_mega.equals_general(2) == r'm_D = \qty{97}{\kilo\gram}'
+
+    def test_approx_float(self, mass_mega):
+        assert mass_mega.approx_float(2) == r'm_D \approx \qty{96.70}{\kilo\gram}'
+
+    def test_approx_general(self, mass_mega):
+        assert mass_mega.approx_general(2) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_approx_float_precision_zero(self, mass_mega):
+        assert mass_mega.approx_float(0) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_approx_matches_equals_except_operator(self, mass_mega):
+        """`approx_*` should format identically to `equals_*` other than `=` vs `\\approx`."""
+        assert mass_mega.approx_float(3).replace(r'\approx', '=') == mass_mega.equals_float(3)
+        assert mass_mega.approx_general(3).replace(r'\approx', '=') == mass_mega.equals_general(3)
+
+    def test_precision_is_required(self, mass_mega):
+        """Precision has no default; there is no bare/default form."""
+        with pytest.raises(TypeError):
+            mass_mega.approx_float()
+
+
 # --- Equality semantics --------------------------------------------------
 
 

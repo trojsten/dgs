@@ -222,3 +222,31 @@ class TestMathFilters:
         """An unsupported punctuation char is reported with a friendly message."""
         with pytest.raises(ValueError, match="Invalid trailing character 'x'"):
             renderer.render('(§ eq | disp("x") §)', context)
+
+
+class TestApproxEqualsFilters:
+    """`ef`/`eg` render `symbol = value`; `af`/`ag` render `symbol \\approx value`, suffixed 0-9 for precision."""
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @pytest.fixture
+    def context(self):
+        from core.builder.context.quantities import PhysicsQuantity
+        return {'m': PhysicsQuantity.construct(96.7, 'kg', symbol='m_D')}
+
+    def test_ef0(self, renderer, context):
+        assert renderer.render('(§ m | ef0 §)', context) == r'm_D = \qty{97}{\kilo\gram}'
+
+    def test_eg2(self, renderer, context):
+        assert renderer.render('(§ m | eg2 §)', context) == r'm_D = \qty{97}{\kilo\gram}'
+
+    def test_af0(self, renderer, context):
+        assert renderer.render('(§ m | af0 §)', context) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_ag2(self, renderer, context):
+        assert renderer.render('(§ m | ag2 §)', context) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_af2(self, renderer, context):
+        assert renderer.render('(§ m | af2 §)', context) == r'm_D \approx \qty{96.70}{\kilo\gram}'

@@ -2,7 +2,12 @@ import datetime
 
 import pytest
 
+from core.builder.context.quantities import PhysicsQuantity
 from core.filters.latex import (
+    approx_float,
+    approx_general,
+    equals_float,
+    equals_general,
     format_gender_suffix,
     format_people,
     isotex,
@@ -186,6 +191,30 @@ class TestPeople:
                 {'name': 'Emmika', 'gender': 'f'},
             ], func=textit, and_word='et'
         ) == r'\textit{Kika} et \textit{Emmika}'
+
+
+class TestApproxEqualsFilters:
+    """The `latex.approx_*`/`equals_*` filters just delegate to the PhysicsQuantity methods."""
+
+    @pytest.fixture
+    def q(self):
+        return PhysicsQuantity.construct(96.7, 'kg', symbol='m_D')
+
+    def test_equals_float(self, q):
+        assert equals_float(q, 2) == q.equals_float(2)
+
+    def test_equals_general(self, q):
+        assert equals_general(q, 2) == q.equals_general(2)
+
+    def test_approx_float(self, q):
+        assert approx_float(q, 2) == q.approx_float(2)
+
+    def test_approx_general(self, q):
+        assert approx_general(q, 2) == q.approx_general(2)
+
+    def test_approx_float_uses_approx_sign(self, q):
+        assert r'\approx' in approx_float(q, 2)
+        assert '=' not in approx_float(q, 2)
 
 
 class TestNth:

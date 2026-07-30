@@ -322,6 +322,21 @@ class PhysicsQuantity:
         return rf"{self._symbol} = {self:.{precision}g}"
 
 
+    def approx_float(self, precision: int | None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self._symbol} \approx {self:.{precision}f}"
+
+    def approx_general(self, precision: int | None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self._symbol} \approx {self:.{precision}g}"
+
+
 def construct_quantity(magnitude, unit, *, symbol: str | None = None):
     """ Constructor-like function """
     return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
