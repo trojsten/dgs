@@ -326,7 +326,7 @@ density_water:
 
 density_ice:
     symbol:     '\rho_{\ce{H2O}}'
-    magnitude:  916
+    magnitude:  917
     unit:       'kilogram / metre cubed'
     digits:     3
 
