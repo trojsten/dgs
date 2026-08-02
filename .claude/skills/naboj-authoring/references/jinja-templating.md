@@ -84,10 +84,23 @@ digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`,
 | `|ng`, `|ng0..9`     | `\num{…}` with general precision.                         |
 | `|ef`, `|ef0..9`     | `symbol = \qty{…}` fixed. Uses `PhysicsQuantity.symbol`.  |
 | `|eg`, `|eg0..9`     | Same, general precision.                                  |
+| `|af`, `|af0..9`     | `symbol \approx \qty{…}` fixed — like `|ef` but `\approx`. |
+| `|ag`, `|ag0..9`     | Same, general precision.                                  |
 | `|mag`               | Extract raw magnitude (pint magnitude, not a string).     |
 | `|unit`              | Just the unit, formatted as `\unit{…}`.                   |
 | `|sim`               | `.simplify()` — convert to base SI units.                 |
 | `|w(value)`, `|widen(value)` | Construct a tolerance range: `x|w(0.05)` → ±5%.   |
+
+Every family exists both bare and suffixed `0`–`9`. Bare means "no precision in
+the format spec", i.e. Python's default for that kind: `f` gives six decimals
+(`\qty{96.700000}{…}`), `g` gives six significant digits with trailing zeros
+dropped (`\qty{96.7}{…}`). In practice the bare `f` forms are rarely what you
+want — reach for `|g`, `|eg`, `|ag` or an explicit precision.
+
+`|ef*` vs `|af*` is purely the relation symbol (`=` vs `\approx`); use `|af*`
+for rounded numeric results. Both read `q.symbol`, so a quantity without a
+symbol renders the literal `None` — set `symbol:` in `values:` or use
+`.alias('x')`.
 
 For a `MathObject`:
 
@@ -98,6 +111,27 @@ For a `MathObject`:
 | `|disp('.')`  | Same with trailing punctuation inside the math.                  |
 | `|align`      | `$${\n    …\n}$$ {#eq:<id>}` (aligned environment).              |
 | `|align(',')` | Same with punctuation.                                           |
+| `|dispd`, `|dispc`, `|disps`, `|dispq`, `|dispe` | Shorthands for `|disp` with `.` `,` `;` `?` `!`. |
+| `|alignd`, `|alignc`, `|aligns`, `|alignq`, `|aligne` | Ditto for `|align`.     |
+
+Mnemonic: **d**ot, **c**omma, **s**emicolon, **q**uestion mark, **e**xclamation
+mark — one suffix per member of `MathObject._INTERPUNCTION`, so the shorthands
+cover every punctuation mark the formatter accepts.
+
+The suffixed forms are `functools.partial`s with the punctuation already bound,
+so they take **no** argument: `(§ eq|dispd('.') §)` raises `TypeError`.
+They exist because `|dispc` reads better than `|disp(',')` in the middle of a
+derivation, where nearly every equation ends in a comma or a full stop.
+
+Punctuation rules, enforced in `MathObject.__format__`:
+
+- Accepted trailing punctuation is exactly `. , ; ? !`.
+- A bad trailing character after a valid base spec raises `ValueError` naming
+  the character; an unknown base spec raises `NotImplementedError`. The two are
+  deliberately distinct — the first is the common author typo.
+- `|inline` accepts no punctuation; write it after the closing `$`.
+- `disp` and `align` indent each content line by four spaces and append
+  `{#eq:<MathObject.id>}` — this is why `eq:` keys double as label names.
 
 ## Globals
 
@@ -112,7 +146,24 @@ gamma beta                     # Γ and B(x,y) = Γ(x)Γ(y)/Γ(x+y)
 pi   tau  euler                # constants
 ```
 
-These accept both raw numbers and `PhysicsQuantity` values (pint routes through).
+All of them work on raw numbers. On a `PhysicsQuantity` most are numpy ufuncs,
+which dispatch to a same-named method on the object — so **only the subset that
+`PhysicsQuantity` implements works**. Verified behaviour:
+
+| Works on a `PhysicsQuantity`                     | Raises `TypeError` / `AttributeError` |
+| ------------------------------------------------ | ------------------------------------- |
+| `sin cos tan asin acos atan log deg ceil floor`  | `cbrt log10 log2 exp rad atan2`       |
+| `sqrt` (implemented as `x ** 0.5`), `pow`        |                                       |
+
+The failure message is opaque (`loop of ufunc does not support argument 0 of
+type PhysicsQuantity which has no callable log10 method`). Fix by taking the
+magnitude first: `log10(x|mag)` / `log10(x.mag)`, or add the missing method to
+`core/builder/context/quantities/physics_quantity.py`. Note `deg(x)` works but
+`rad(x)` does not — asymmetric because only `.degrees()` is implemented.
+
+`sqrt` on a quantity whose unit is not a perfect square yields a fractional
+exponent: `sqrt(Q(4, 'metre'))` → `\qty{2}{\meter\tothe{0.500}}`. That is almost
+always an authoring bug; take `.mag` or fix the expression's dimensions.
 
 Constructors (short aliases in parentheses):
 
@@ -123,9 +174,30 @@ QuantityProduct(q1, q2, q3)    # (QP) combine several commensurate quantities in
 QuantityRange(lo, hi)          # (QR) build a range directly; equivalent to `lo % hi`
 ```
 
+Both the long names and the short aliases are registered, so `QR(a, b)` and
+`QuantityRange(a, b)` are the same global.
+
 `q1 % q2` and `q.widen(v)` remain the idiomatic ways to build a `QuantityRange` (see
 quantities-and-constants.md); `QR(lo, hi)` is there for when the operands aren't
 bare variables and `%` would need extra parens anyway.
+
+## Units beyond SI
+
+The pint registry lives in `core/builder/jinja.py` and is installed as pint's
+*application* registry, so every module shares it. Two local extensions:
+
+- **Currency.** `eur` is defined as its own dimension `[currency]`, with `€` and
+  `EUR` as symbols; a preprocessor rewrites a literal `€` in unit strings to
+  `EUR`. So `Q(3, 'eur')|f2` → `\qty{3.00}{\eur}` (`\eur` is declared in
+  `core/latex/siunitx.tex`). Currency is not commensurate with anything else, as
+  intended.
+- **Temperature.** `PhysicsQuantity.format_struct` rewrites pint's
+  `\degree_Celsius` → `\celsius` and `\delta_degree_Celsius` → `\dcelsius`
+  (both declared in `siunitx.tex`). Use `'degC'` for absolute temperatures and
+  `'delta_degC'` for differences. `absolute + delta` is fine
+  (`20 °C + 5 Δ°C = 25 °C`), but multiplying or dividing an absolute Celsius
+  value raises pint's `OffsetUnitCalculusError` — convert with `.to('kelvin')`
+  before doing arithmetic that scales it.
 
 ## `@J set` — the everyday case
 
