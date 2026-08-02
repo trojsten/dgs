@@ -224,8 +224,98 @@ class TestMathFilters:
             renderer.render('(§ eq | disp("x") §)', context)
 
 
+DISP_SHORTHANDS = [
+    pytest.param('dispd', '.', id='dispd'),
+    pytest.param('dispc', ',', id='dispc'),
+    pytest.param('disps', ';', id='disps'),
+    pytest.param('dispq', '?', id='dispq'),
+    pytest.param('dispe', '!', id='dispe'),
+]
+
+ALIGN_SHORTHANDS = [
+    pytest.param('alignd', '.', id='alignd'),
+    pytest.param('alignc', ',', id='alignc'),
+    pytest.param('aligns', ';', id='aligns'),
+    pytest.param('alignq', '?', id='alignq'),
+    pytest.param('aligne', '!', id='aligne'),
+]
+
+
+class TestMathPunctuationShorthands:
+    """
+    `dispd`/`dispc`/`disps`/`dispq`/`dispe` and the matching `align*` filters are
+    functools.partial shorthands binding the trailing punctuation (dot / comma /
+    semicolon / question mark / exclamation mark), so that `| dispd` means exactly
+    `| disp('.')`. Together they cover all of `MathObject._INTERPUNCTION`.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @pytest.fixture
+    def context(self):
+        from core.builder.context.quantities.math import MathObject
+        return {
+            'eq': MathObject('e1', 'a + b = c'),
+            'multi': MathObject('e2', 'a &= b + c \\\\\nb &= 2c'),
+        }
+
+    @pytest.mark.parametrize("shorthand,punct", DISP_SHORTHANDS)
+    def test_disp_shorthand(self, renderer, context, shorthand, punct):
+        assert renderer.render(f'(§ eq | {shorthand} §)', context) == \
+               f'$$\n    a + b = c{punct}\n$$ {{#eq:e1}}'
+
+    @pytest.mark.parametrize("shorthand,punct", ALIGN_SHORTHANDS)
+    def test_align_shorthand(self, renderer, context, shorthand, punct):
+        assert renderer.render(f'(§ multi | {shorthand} §)', context) == \
+               f'$${{\n    a &= b + c \\\\\n    b &= 2c{punct}\n}}$$ {{#eq:e2}}'
+
+    @pytest.mark.parametrize("shorthand,punct", DISP_SHORTHANDS)
+    def test_disp_shorthand_matches_explicit(self, renderer, context, shorthand, punct):
+        """The whole point of the shorthand: identical output to the explicit call."""
+        assert renderer.render(f'(§ eq | {shorthand} §)', context) == \
+               renderer.render(f'(§ eq | disp("{punct}") §)', context)
+
+    @pytest.mark.parametrize("shorthand,punct", ALIGN_SHORTHANDS)
+    def test_align_shorthand_matches_explicit(self, renderer, context, shorthand, punct):
+        assert renderer.render(f'(§ multi | {shorthand} §)', context) == \
+               renderer.render(f'(§ multi | align("{punct}") §)', context)
+
+    def test_shorthands_are_distinct(self, renderer, context):
+        """Guards against copy-paste: each shorthand must bind its own punctuation."""
+        disp_names = [p.values[0] for p in DISP_SHORTHANDS]
+        align_names = [p.values[0] for p in ALIGN_SHORTHANDS]
+        disp = {s: renderer.render(f'(§ eq | {s} §)', context) for s in disp_names}
+        align = {s: renderer.render(f'(§ multi | {s} §)', context) for s in align_names}
+        assert len(set(disp.values())) == len(disp_names), disp
+        assert len(set(align.values())) == len(align_names), align
+
+    def test_shorthands_cover_all_interpunction(self):
+        """Every punctuation mark `MathObject` accepts must have a shorthand."""
+        from core.builder.context.quantities.math import MathObject
+        for names, params in (('disp', DISP_SHORTHANDS), ('align', ALIGN_SHORTHANDS)):
+            bound = {p.values[1] for p in params}
+            assert bound == set(MathObject._INTERPUNCTION), (names, bound)
+
+    def test_disp_shorthand_is_not_align(self, renderer, context):
+        """`disp*` must not be wired to math_aligned (or vice versa)."""
+        assert renderer.render('(§ eq | dispd §)', context).startswith('$$\n')
+        assert renderer.render('(§ multi | alignd §)', context).startswith('$${\n')
+
+    @pytest.mark.parametrize("shorthand", [p.values[0] for p in DISP_SHORTHANDS + ALIGN_SHORTHANDS])
+    def test_shorthand_takes_no_argument(self, renderer, context, shorthand):
+        """Punctuation is already bound, so passing another one is a conflict."""
+        with pytest.raises(TypeError):
+            renderer.render(f'(§ eq | {shorthand}(".") §)', context)
+
+
 class TestApproxEqualsFilters:
-    """`ef`/`eg` render `symbol = value`; `af`/`ag` render `symbol \\approx value`, suffixed 0-9 for precision."""
+    """
+    `ef`/`eg` render `symbol = value`; `af`/`ag` render `symbol \\approx value`.
+    All four exist bare (Python's default formatting for the kind) and suffixed 0-9
+    for an explicit precision.
+    """
 
     @pytest.fixture
     def renderer(self):
@@ -250,3 +340,34 @@ class TestApproxEqualsFilters:
 
     def test_af2(self, renderer, context):
         assert renderer.render('(§ m | af2 §)', context) == r'm_D \approx \qty{96.70}{\kilo\gram}'
+
+    def test_ef_bare(self, renderer, context):
+        """No precision means Python's default 'f', i.e. six decimals — same as `| f`."""
+        assert renderer.render('(§ m | ef §)', context) == r'm_D = \qty{96.700000}{\kilo\gram}'
+
+    def test_eg_bare(self, renderer, context):
+        assert renderer.render('(§ m | eg §)', context) == r'm_D = \qty{96.7}{\kilo\gram}'
+
+    def test_af_bare(self, renderer, context):
+        assert renderer.render('(§ m | af §)', context) == r'm_D \approx \qty{96.700000}{\kilo\gram}'
+
+    def test_ag_bare(self, renderer, context):
+        assert renderer.render('(§ m | ag §)', context) == r'm_D \approx \qty{96.7}{\kilo\gram}'
+
+    @pytest.mark.parametrize("equals,approx", [
+        pytest.param('ef', 'af', id='float'),
+        pytest.param('eg', 'ag', id='general'),
+    ])
+    def test_bare_approx_matches_bare_equals(self, renderer, context, equals, approx):
+        """The bare forms may only differ in the relation symbol."""
+        assert renderer.render(f'(§ m | {approx} §)', context).replace(r'\approx', '=') == \
+               renderer.render(f'(§ m | {equals} §)', context)
+
+    @pytest.mark.parametrize("bare,suffixed", [
+        pytest.param('ag', 'ag6', id='eg'),
+        pytest.param('af', 'af6', id='ef'),
+    ])
+    def test_bare_matches_default_precision(self, renderer, context, bare, suffixed):
+        """Python's default for both 'f' and 'g' is six digits, so these coincide here."""
+        assert renderer.render(f'(§ m | {bare} §)', context) == \
+               renderer.render(f'(§ m | {suffixed} §)', context)

@@ -188,6 +188,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
+            'af': latex.approx_float,
+            'ag': latex.approx_general,
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': lambda q: q.mag,
@@ -203,8 +205,18 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_format_functions(latex.approx_float, 'af') |
         self.__generate_format_functions(latex.approx_general, 'ag') | {
            'inline': latex.math_inline,
-           'disp': latex.math_display,
-           'align': latex.math_aligned,
+           'disp': latex.math_display,                                  # full function
+           'dispd': functools.partial(latex.math_display, punct='.'),   # shorthand with dot
+           'dispc': functools.partial(latex.math_display, punct=','),   # shorthand with comma
+           'disps': functools.partial(latex.math_display, punct=';'),   # shorthand with semicolon
+           'dispq': functools.partial(latex.math_display, punct='?'),   # shorthand with question mark
+           'dispe': functools.partial(latex.math_display, punct='!'),   # shorthand with exclamation mark
+           'align': latex.math_aligned,                                 # full function
+           'alignd': functools.partial(latex.math_aligned, punct='.'),  # shorthand with dot
+           'alignc': functools.partial(latex.math_aligned, punct=','),  # shorthand with comma
+           'aligns': functools.partial(latex.math_aligned, punct=';'),  # shorthand with semicolon
+           'alignq': functools.partial(latex.math_aligned, punct='?'),  # shorthand with question mark
+           'aligne': functools.partial(latex.math_aligned, punct='!'),  # shorthand with exclamation mark
         })
 
         self.env.globals |= {
@@ -213,6 +225,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'QL': QuantityList,
             'QuantityProduct': QuantityProduct,
             'QP': QuantityProduct,
+            'QuantityRange': QuantityRange,
             'QR': QuantityRange,
         } | {
             'sin': np.sin,

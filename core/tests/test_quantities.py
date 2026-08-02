@@ -858,10 +858,17 @@ class TestEqualsApprox:
         assert mass_mega.approx_float(3).replace(r'\approx', '=') == mass_mega.equals_float(3)
         assert mass_mega.approx_general(3).replace(r'\approx', '=') == mass_mega.equals_general(3)
 
-    def test_precision_is_required(self, mass_mega):
-        """Precision has no default; there is no bare/default form."""
-        with pytest.raises(TypeError):
-            mass_mega.approx_float()
+    def test_precision_is_optional(self, mass_mega):
+        """Omitting precision falls back to the bare 'f'/'g' spec, as in `format_float`."""
+        assert mass_mega.approx_float() == r'm_D \approx \qty{96.700000}{\kilo\gram}'
+        assert mass_mega.approx_general() == r'm_D \approx \qty{96.7}{\kilo\gram}'
+        assert mass_mega.equals_float() == r'm_D = \qty{96.700000}{\kilo\gram}'
+        assert mass_mega.equals_general() == r'm_D = \qty{96.7}{\kilo\gram}'
+
+    def test_explicit_none_precision_matches_omitted(self, mass_mega):
+        """`None` is the documented way to say "no precision", not an error."""
+        assert mass_mega.approx_float(None) == mass_mega.approx_float()
+        assert mass_mega.equals_general(None) == mass_mega.equals_general()
 
 
 # --- Equality semantics --------------------------------------------------

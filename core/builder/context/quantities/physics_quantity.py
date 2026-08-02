@@ -307,34 +307,42 @@ class PhysicsQuantity:
         """
         return self.equals
 
-    def equals_float(self, precision: int | None) -> str:
+    @staticmethod
+    def _format_spec(kind: str, precision: int | None) -> str:
+        """
+        Build a format spec of the requested kind ('f' or 'g'). `None` precision
+        means the bare spec, i.e. Python's default for that kind -- the same
+        convention as `core.filters.numbers.format_float` / `format_general`.
+        """
+        return kind if precision is None else f'.{precision}{kind}'
+
+    def equals_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self:.{precision}f}"
+        return rf"{self._symbol} = {self:{self._format_spec('f', precision)}}"
 
-    def equals_general(self, precision: int | None) -> str:
+    def equals_general(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self:.{precision}g}"
+        return rf"{self._symbol} = {self:{self._format_spec('g', precision)}}"
 
-
-    def approx_float(self, precision: int | None) -> str:
+    def approx_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and approx sign,
-        `<symbol> = <full>`
+        `<symbol> \\approx <full>`
         """
-        return rf"{self._symbol} \approx {self:.{precision}f}"
+        return rf"{self._symbol} \approx {self:{self._format_spec('f', precision)}}"
 
-    def approx_general(self, precision: int | None) -> str:
+    def approx_general(self, precision: int | None = None) -> str:
         """
         Full form with symbol and approx sign,
-        `<symbol> = <full>`
+        `<symbol> \\approx <full>`
         """
-        return rf"{self._symbol} \approx {self:.{precision}g}"
+        return rf"{self._symbol} \approx {self:{self._format_spec('g', precision)}}"
 
 
 def construct_quantity(magnitude, unit, *, symbol: str | None = None):
