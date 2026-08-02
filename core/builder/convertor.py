@@ -231,10 +231,8 @@ class Convertor:
             "--wrap=preserve",
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
-            #"--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
             "-M", "rewrite-path=false",
-            "--filter", "pandoc-minted",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
         if self.output_format == 'html':
