@@ -162,13 +162,13 @@ magnitude first: `log10(x|mag)` / `log10(x.mag)`, or add the missing method to
 `rad(x)` does not — asymmetric because only `.degrees()` is implemented.
 
 `sqrt` on a quantity whose unit is not a perfect square yields a fractional
-exponent: `sqrt(Q(4, 'metre'))` → `\qty{2}{\meter\tothe{0.500}}`. That is almost
+exponent: `sqrt(PQ(4, 'metre'))` → `\qty{2}{\meter\tothe{0.500}}`. That is almost
 always an authoring bug; take `.mag` or fix the expression's dimensions.
 
 Constructors (short aliases in parentheses):
 
 ```
-Q(magnitude, unit)             # ad-hoc PhysicsQuantity, e.g. Q(100, '%')
+PQ(magnitude, unit)            # ad-hoc PhysicsQuantity, e.g. PQ(100, '%')
 QuantityList(q1, q2, q3)       # (QL) combine several commensurate quantities into a list
 QuantityProduct(q1, q2, q3)    # (QP) combine several commensurate quantities into a product (e.g. box dimensions)
 QuantityRange(lo, hi)          # (QR) build a range directly; equivalent to `lo % hi`
@@ -188,7 +188,7 @@ The pint registry lives in `core/builder/jinja.py` and is installed as pint's
 
 - **Currency.** `eur` is defined as its own dimension `[currency]`, with `€` and
   `EUR` as symbols; a preprocessor rewrites a literal `€` in unit strings to
-  `EUR`. So `Q(3, 'eur')|f2` → `\qty{3.00}{\eur}` (`\eur` is declared in
+  `EUR`. So `PQ(3, 'eur')|f2` → `\qty{3.00}{\eur}` (`\eur` is declared in
   `core/latex/siunitx.tex`). Currency is not commensurate with anything else, as
   intended.
 - **Temperature.** `PhysicsQuantity.format_struct` rewrites pint's

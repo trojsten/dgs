@@ -1,6 +1,7 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+import jinja2
 import pytest
 import regex as re
 from pint import UnitRegistry as u
@@ -371,3 +372,61 @@ class TestApproxEqualsFilters:
         """Python's default for both 'f' and 'g' is six digits, so these coincide here."""
         assert renderer.render(f'(§ m | {bare} §)', context) == \
                renderer.render(f'(§ m | {suffixed} §)', context)
+
+
+class TestQuantityConstructorGlobals:
+    """
+    The ad-hoc constructor is `PQ`, not `Q`: `Q` is heat/charge in half the
+    problems, so a `@J set Q = ...` shadowing the constructor was too easy.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    def test_pq_constructs_a_quantity(self, renderer):
+        assert renderer.render("(§ PQ(96.7, 'kg') | f2 §)", {}) == r'\qty{96.70}{\kilo\gram}'
+
+    def test_pq_is_usable_in_arithmetic(self, renderer):
+        assert renderer.render("(§ (PQ(2, 'm') * PQ(3, 'm')) | f0 §)", {}) == r'\qty{6}{\meter\squared}'
+
+    def test_bare_q_is_not_a_global(self, renderer):
+        """
+        The old name must be gone, not silently aliased. Calling an undefined
+        raises `UndefinedError` straight away (jinja2 binds `Undefined.__call__`
+        before `CollectUndefined` can intercept it), so this never reaches the
+        collected-variables check.
+        """
+        with pytest.raises((jinja2.UndefinedError, MissingVariablesError)):
+            renderer.render("(§ Q(96.7, 'kg') | f2 §)", {})
+
+    def test_q_is_free_for_authors(self, renderer):
+        """A context variable named `Q` (heat, charge) no longer collides."""
+        from core.builder.context.quantities import PhysicsQuantity
+        heat = PhysicsQuantity.construct(2.2e6, 'J', symbol='Q')
+        assert renderer.render('(§ Q | eg2 §)', {'Q': heat}) == r'Q = \qty{2.2e+06}{\joule}'
+
+    @pytest.mark.parametrize("alias,long", [
+        pytest.param('QL', 'QuantityList', id='list'),
+        pytest.param('QP', 'QuantityProduct', id='product'),
+        pytest.param('QR', 'QuantityRange', id='range'),
+    ])
+    def test_other_constructors_keep_both_names(self, renderer, alias, long):
+        """Only `Q` was renamed; the QL/QP/QR pairs are untouched."""
+        args = "PQ(1, 'm'), PQ(2, 'm')"
+        assert renderer.render(f'(§ {alias}({args}) | f0 §)', {}) == \
+               renderer.render(f'(§ {long}({args}) | f0 §)', {})
+
+
+class TestEqualsFiltersWithoutSymbol:
+    """A symbol-less quantity must crash the render, not emit `None = ...`."""
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @pytest.mark.parametrize("filt", ['ef', 'ef2', 'eg', 'eg2', 'af', 'af2', 'ag', 'ag2'])
+    def test_symbol_less_render_raises(self, renderer, filt):
+        from core.builder.context.quantities import MissingSymbolError
+        with pytest.raises(MissingSymbolError):
+            renderer.render(f"(§ PQ(11.345, 'm/s^2') | {filt} §)", {})

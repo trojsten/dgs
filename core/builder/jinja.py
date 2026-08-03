@@ -220,7 +220,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         })
 
         self.env.globals |= {
-            'Q': PhysicsQuantity.construct,
+            'PQ': PhysicsQuantity.construct,
             'QuantityList': QuantityList,
             'QL': QuantityList,
             'QuantityProduct': QuantityProduct,

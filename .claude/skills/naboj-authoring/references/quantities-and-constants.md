@@ -208,8 +208,8 @@ Format:
 - Precision inherited from format spec: `|f2`, `|g3`, ...
 - `r.to('cm')` converts both endpoints (`QuantityList.to` and
   `QuantityProduct.to` do the same for every element).
-- The constructor coerces `maximum` into `minimum`'s unit, so `QR(Q(1,'kg'),
-  Q(500,'g'))` is fine, but `minimum > maximum` after coercion raises
+- The constructor coerces `maximum` into `minimum`'s unit, so `QR(PQ(1,'kg'),
+  PQ(500,'g'))` is fine, but `minimum > maximum` after coercion raises
   `ValueError` and incompatible units raise pint's `DimensionalityError`.
 - `si_extra` of both endpoints is `strict_merge`d (`core/utilities/dicts.py`):
   identical assignments coalesce, conflicting ones raise `ValueError` instead of
@@ -253,7 +253,7 @@ sharing one unit:
 
 ## Common pitfalls
 
-- **Percentages.** `unit: '%'` gives you a `pint` percent. `Q(100, '%')` is
+- **Percentages.** `unit: '%'` gives you a `pint` percent. `PQ(100, '%')` is
   the ad-hoc form. Convert with `.to('1')` when you need a dimensionless ratio.
 - **Angles.** `unit: 'degree'` for degrees; use `.to('radian')` or `rad(x)` in
   Jinja math expressions.
