@@ -1,7 +1,6 @@
+from core import i18n
 from core.builder.builder import BaseBuilder
 from core.builder.context.buildable import BuildableContext
-
-from core import i18n
 from core.builder.jinja import StaticRenderer
 
 
@@ -34,7 +33,7 @@ class BuilderI18n(BaseBuilder):
     def path(self) -> tuple:
         return self.ident()
 
-    def build_templates(self, *, new_name: str = None):
+    def build_templates(self, *, new_name: str | None = None):
         super().build_templates(new_name=self.args.language)
 
 

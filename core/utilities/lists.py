@@ -1,9 +1,10 @@
 import itertools
-from typing import Iterable, Callable, List, Dict, Any
+from collections.abc import Callable, Iterable
+from typing import Any
 
 
-def add_numbers(items: List[Any],
-                numbers: Iterable = itertools.count()) -> List[Dict]:
+def add_numbers(items: list[Any],
+                numbers: Iterable = itertools.count()) -> list[dict]:
     """
     Take a list `items` and return a list of dictionaries with number included.
 
@@ -42,26 +43,26 @@ def split_mod(what: Iterable,
               count: int,
               *,
               first: int=0) -> list:
-    result = [[] for _ in range(0, count)]
+    result = [[] for _ in range(count)]
     for i, item in enumerate(what):
         result[(i + first) % count].append(item)
     return result
 
 
-def split_div(what: Iterable[Any], size: int) -> List[List[Any]]:
+def split_div(what: Iterable[Any], size: int) -> list[list[Any]]:
     """
     Split `what` into chunks of length `size`. Last chunk might not be full. """
     what = iter(what)
     return list(map(list, itertools.batched(what, size)))
 
 
-def split_callback(what: Iterable, callback: Callable, count: int) -> List[List]:
+def split_callback(what: Iterable, callback: Callable, count: int) -> list[list]:
     """
     Split `what` by `callback` function, using `count` bins
         what: [Any]
         callback: Any -> int, result must be 0 <= result < count
     """
-    result = [[] for _ in range(0, count)]
+    result = [[] for _ in range(count)]
     for i, item in enumerate(what):
         result[callback(i)].append(item)
 

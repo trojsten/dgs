@@ -1,12 +1,13 @@
-import regex as re
 
-from typing import Any, Union, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
-from enschema import Schema, Or
+from enschema import Or, Schema
 
-from .numbers import _nth, format_float, format_general
 from core.builder.context.quantities import PhysicsQuantity
+
 from ..builder.context.quantities.math import MathObject
+from .numbers import _nth, format_float, format_general
 
 
 def isotex(date):
@@ -30,7 +31,6 @@ def identity(x: Any) -> Any:
     return x
 
 
-
 def upnth(x: int) -> str:
     """
     Superscripted nth for LaTeX
@@ -38,7 +38,7 @@ def upnth(x: int) -> str:
     return rf"${x}^{{\mathrm{{{_nth(x)}}}}}$"
 
 
-def render_list(items: Union[list, Any],
+def render_list(items: list | Any,
                 *,
                 func: Callable = identity,
                 and_word: str = 'a',
@@ -68,7 +68,7 @@ def render_list(items: Union[list, Any],
     return ' '.join(items)
 
 
-def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[dict[str, str]]:
+def process_people(people: list[dict[str, str]] | dict[str, str]) -> list[dict[str, str]]:
     """
     Pre-process people metadata:
         - if a dict, wrap it in a list
@@ -77,11 +77,11 @@ def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[
     """
     Schema(Or([Or(str, {'name': str, 'gender': str})], Or(str, {'name': str, 'gender': str}), str)).validate(people)
     if isinstance(people, str):
-        return [dict(name=people, gender='?')]
+        return [{'name': people, 'gender': '?'}]
     if isinstance(people, dict):
         return [people]
     elif isinstance(people, list):
-        return [dict(name=person, gender='?') if isinstance(person, str) else person for person in people]
+        return [{'name': person, 'gender': '?'} if isinstance(person, str) else person for person in people]
     else:
         raise TypeError(f"Invalid people type: {type(people)}")
 
@@ -89,8 +89,8 @@ def process_people(people: Union[list[dict[str, str]], dict[str, str]]) -> list[
 def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = identity) -> str:
     """
     Format people metadata:
-        -   if it is a dict, it should have name and gender, display that
-        -   if it is a list of dicts, use plural and display a list of names
+        - if it is a dict, it should have name and gender, display that
+        - if it is a list of dicts, use plural and display a list of names
 
     Returns
     -------
@@ -114,7 +114,7 @@ def format_gender_suffix(people: dict[str, dict[str, str]], *, func: Callable = 
                              f"Define 'gender' key in meta.yaml")
 
 
-def format_people(people: Union[str, list, dict], *, func: Callable = identity, and_word: str = 'a') -> str:
+def format_people(people: str | list | dict, *, func: Callable = identity, and_word: str = 'a') -> str:
     """
     Fully format a list of people
     Parameters
@@ -131,40 +131,58 @@ def num(x: float):
     return rf'\num{{{x}}}'
 
 
-def num_float(x: float, precision: Optional[int] = None):
+def num_float(x: float, precision: int | None = None):
     """ Format as a `siunitx` \num{} input (float)"""
     return rf'\num{{{format_float(x, precision)}}}'
 
 
-def num_general(x: float, precision: Optional[int] = None):
+def num_general(x: float, precision: int | None = None):
     """ Format as a `siunitx` \num{} input (general)"""
     return rf'\num{{{format_general(x, precision)}}}'
 
 
-def equals_float(q: PhysicsQuantity, precision: Optional[int] = None):
+def equals_float(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_float(precision)
 
 
-def equals_general(q: PhysicsQuantity, precision: Optional[int] = None):
+def equals_general(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_general(precision)
 
 
-def math_inline(math: MathObject):
-    """
-    Display as inline math with no frills.
-    """
-    return f"{math!s}"
+def approx_float(q: PhysicsQuantity, precision: int | None = None):
+    return q.approx_float(precision)
 
 
-def math_display(math: MathObject):
-    """
-    Display as block math with a label.
-    """
-    return f"{math:disp}"
+def approx_general(q: PhysicsQuantity, precision: int | None = None):
+    return q.approx_general(precision)
 
 
-def math_aligned(math: MathObject):
+def math_inline(math: MathObject) -> str:
+    """
+    Display as inline math. No punctuation argument: write any sentence
+    punctuation outside the math, e.g. `(* eq | inline *).`
+    """
+    return f"{math}"
+
+
+def math_display(math: MathObject, punct: str = '') -> str:
+    """
+    Display as block math with a label, optionally with trailing punctuation.
+
+    Usage in templates:
+        (* eq | disp *)          →  $$\\n    a + b\\n$$ {#eq:id}
+        (* eq | disp(',') *)     →  $$\\n    a + b,\\n$$ {#eq:id}
+    """
+    return f"{math:disp{punct}}"
+
+
+def math_aligned(math: MathObject, punct: str = '') -> str:
     r"""
-    Display inside an \aligned{} environment with a label
+    Display inside an \aligned{} environment with a label, optionally with
+    trailing punctuation.
+
+    Usage in templates:
+        (* eq | align *)         →  $${\n    a &= b\n}$$ {#eq:id}
+        (* eq | align('.') *)    →  $${\n    a &= b.\n}$$ {#eq:id}
     """
-    return f"{math:align}"
+    return f"{math:align{punct}}"

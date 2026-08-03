@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-import sys
-import regex as re
 import copy
 import subprocess
-
+import sys
 from pathlib import Path
 
+import regex as re
 from mdcheck import check, exceptions
 from utilities import colour as c
 
@@ -82,7 +81,7 @@ class StyleEnforcer:
 
     def check_label(self, module, path, label):
         if module == 'naboj':
-            volume_id, problem_id, language, filename = path.parts()[-4:-1]
+            volume_id, problem_id, _language, _filename = path.parts()[-4:-1]
             # if matched := re.match(fr'#(eq|fig|tbl):(?P<problem>[]):[\w]+', label):
         elif module == 'seminar':
             volume_id, semester_id, round_id, problem_id = path.split[2:5]
@@ -133,11 +132,11 @@ class StyleEnforcer:
         with open(path, 'r') as file:
             ok = None
             for number, line in enumerate(file):
-                ok = all([self.check_line(checker, module, path, number, line) for checker in line_errors.values()])
+                ok = all(self.check_line(checker, module, path, number, line) for checker in line_errors.values())
 
                 if self.args.warnings:
-                    ok &= all([self.check_line(checker, module, path, number, line, cfunc=c.warn)
-                               for checker in self.line_warnings.values()])
+                    ok &= all(self.check_line(checker, module, path, number, line, cfunc=c.warn)
+                               for checker in self.line_warnings.values())
 
             if self.args.verbose and ok:
                 print(f"File {c.path(file.name)} {c.ok('OK')}")

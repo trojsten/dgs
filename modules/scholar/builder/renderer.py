@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import logging
 
-from enschema import Schema, And
+from enschema import Schema
 
 from core.builder import renderer
 

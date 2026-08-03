@@ -44,7 +44,7 @@ siunitx:
     lumen: 'lm'
     lux: 'lx'
     newton: 'N'
-    ohm: '\Omega'
+    ohm: 'Ω'
     pascal: 'Pa'
     radian: 'rad'
     siemens: 'Si'

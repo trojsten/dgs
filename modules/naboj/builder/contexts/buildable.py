@@ -6,12 +6,13 @@ from enschema import Schema
 from core import i18n
 from core.builder.context.buildable import BuildableFileSystemTreeContext
 from core.builder.context.module import ContextModule
-from core.i18n import Locale
 from core.builder.renderer import ConstantsContext
-from .validators import NabojValidator
+from core.i18n import Locale
+
 from .base import ContextNaboj
-from .hierarchy import ContextCompetition, ContextVolume, ContextLanguage, ContextVenue
+from .hierarchy import ContextCompetition, ContextLanguage, ContextVenue, ContextVolume
 from .i18n import ContextI18nGlobal
+from .validators import NabojValidator
 
 
 class BuildableContextNaboj(BuildableFileSystemTreeContext, ContextNaboj, metaclass=abc.ABCMeta):

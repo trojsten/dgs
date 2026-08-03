@@ -1,12 +1,12 @@
 import subprocess
 import tempfile
-from tempfile import SpooledTemporaryFile
-from typing import Callable
+from collections.abc import Callable
 from pathlib import Path
+from tempfile import SpooledTemporaryFile
 
-from core.utilities import colour as c
-from .classes import RegexFailure, RegexReplacement
 from core import i18n
+
+from .classes import RegexFailure, RegexReplacement
 
 
 class Convertor:
@@ -31,7 +31,7 @@ class Convertor:
             RegexReplacement(r'\\bottomrule\\noalign\{}\n\\endlastfoot',
                              r'\\endlastfoot',
                              purpose="Remove bottom rule from endlastfoot (moved to end of table)"),
-            # Claude's fix for missing bottom rules
+            # Claude's fix for missing bottom rules (currently does not do anything)
             RegexReplacement(r'\\end{longtable}',
                              r'\\end{longtable}',
                              purpose="Restore missing bottom rule"),
@@ -108,6 +108,7 @@ class Convertor:
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Keep HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
+            # FixMe: These two are harmful workarounds of downstream problems
             RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to old siunitx syntax for old failing web"),
             RegexReplacement(r"\\unit", r"\\si", purpose="Revert to old siunitx syntax for old failing web"),
         ],
@@ -226,12 +227,12 @@ class Convertor:
             "--from", "markdown+smart",
             "--pdf-engine", "xelatex",
             "--to", self.output_format,
+            "--columns=200",
+            "--wrap=preserve",
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
-            "--filter", "pandoc-include",
             "-M", f"include-entry={Path(self.infile.name).parent}/",
-            "-M", f"rewrite-path=false",
-            "--filter", "pandoc-minted",
+            "-M", "rewrite-path=false",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
         if self.output_format == 'html':

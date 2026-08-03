@@ -1,19 +1,25 @@
 import functools
 import math
-from abc import abstractmethod
-from pathlib import Path
-
-import jinja2
 import os
-import numpy as np
-
+from abc import abstractmethod
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityRange
-from core.utilities import colour as c, logger
+import jinja2
+import numpy as np
+import pint
+
+from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
 from core.filters import latex, numbers
+from core.utilities import colour as c
+from core.utilities import logger
 
 log = logger.setupLog('dgs')
+
+ureg = pint.UnitRegistry(preprocessors=[lambda s: s.replace("€", "EUR")])
+ureg.define("eur = [currency] = € = EUR")
+pint.set_application_registry(ureg)
 
 
 class MissingVariablesError(Exception):
@@ -54,7 +60,6 @@ def make_collect_undefined():
 
     CollectUndefined._collected = collected
     return CollectUndefined
-
 
 
 class JinjaRenderer:
@@ -146,10 +151,10 @@ class StaticRenderer(JinjaRenderer):
             return self.env.get_template(template.name).render(**context)
         except jinja2.exceptions.UndefinedError as e:
             log.critical(f"Missing required variable from context in {c.path(template.name)}: {c.err(e)}")
-            raise e
+            raise
         except jinja2.exceptions.TemplateSyntaxError as e:
             log.critical(f"Template syntax error in {c.path(template.name)}: {c.err(e)}")
-            raise e
+            raise
         # Other exceptions are deferred to the base class
 
 
@@ -161,11 +166,11 @@ class MarkdownJinjaRenderer(JinjaRenderer):
     Includes mathematical functions, basic constants, and numerous formatting filters.
     """
     @staticmethod
-    def __generate_format_functions(func, tag):
+    def __generate_format_functions(func: Callable[[Any], Callable], tag: str):
         """
         Generate formatting function shorthands for a particular format and all precisions between 0 and 9.
         """
-        return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(0, 10)}
+        return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(10)}
 
     def __init__(self, **kwargs):
         """
@@ -183,22 +188,45 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
-            'w': QuantityRange.widen,
-            'widen': QuantityRange.widen,
+            'af': latex.approx_float,
+            'ag': latex.approx_general,
+            'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
+            'widen': lambda obj, value: obj.widen(value),
+            'mag': lambda q: q.mag,
+            'unit': PhysicsQuantity.only_unit,
+            'sim': PhysicsQuantity.simplify,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |
         self.__generate_format_functions(latex.num_float, 'nf') |
         self.__generate_format_functions(latex.num_general, 'ng') |
         self.__generate_format_functions(latex.equals_float, 'ef') |
-        self.__generate_format_functions(latex.equals_general, 'eg')) | {
+        self.__generate_format_functions(latex.equals_general, 'eg') |
+        self.__generate_format_functions(latex.approx_float, 'af') |
+        self.__generate_format_functions(latex.approx_general, 'ag') | {
            'inline': latex.math_inline,
-           'disp': latex.math_display,
-           'align': latex.math_aligned,
-        }
+           'disp': latex.math_display,                                  # full function
+           'dispd': functools.partial(latex.math_display, punct='.'),   # shorthand with dot
+           'dispc': functools.partial(latex.math_display, punct=','),   # shorthand with comma
+           'disps': functools.partial(latex.math_display, punct=';'),   # shorthand with semicolon
+           'dispq': functools.partial(latex.math_display, punct='?'),   # shorthand with question mark
+           'dispe': functools.partial(latex.math_display, punct='!'),   # shorthand with exclamation mark
+           'align': latex.math_aligned,                                 # full function
+           'alignd': functools.partial(latex.math_aligned, punct='.'),  # shorthand with dot
+           'alignc': functools.partial(latex.math_aligned, punct=','),  # shorthand with comma
+           'aligns': functools.partial(latex.math_aligned, punct=';'),  # shorthand with semicolon
+           'alignq': functools.partial(latex.math_aligned, punct='?'),  # shorthand with question mark
+           'aligne': functools.partial(latex.math_aligned, punct='!'),  # shorthand with exclamation mark
+        })
 
         self.env.globals |= {
             'Q': PhysicsQuantity.construct,
+            'QuantityList': QuantityList,
+            'QL': QuantityList,
+            'QuantityProduct': QuantityProduct,
+            'QP': QuantityProduct,
+            'QuantityRange': QuantityRange,
+            'QR': QuantityRange,
         } | {
             'sin': np.sin,
             'cos': np.cos,
@@ -207,8 +235,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'acos': np.acos,
             'atan': np.atan,
             'atan2': np.atan2,
-            'ceil': np.ceil,
-            'floor': np.floor,
+            'ceil': lambda x: PhysicsQuantity.ceil(x) if isinstance(x, PhysicsQuantity) else np.ceil(x),
+            'floor': lambda x: PhysicsQuantity.floor(x) if isinstance(x, PhysicsQuantity) else np.floor(x),
             'sqrt': lambda x: (x ** 0.5),
             'cbrt': np.cbrt,
             'rad': np.radians,
@@ -223,13 +251,9 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'pi': np.pi,
             'tau': math.tau,
             'euler': math.e,
-        } | {
-            'KtoC': lambda x: x - 273.15,
-            'CtoK': lambda x: x + 273.15,
         }
 
     def _render(self,
                 template: str,
                 context: dict[str, Any]):
         return self.env.from_string(template).render(**context)
-

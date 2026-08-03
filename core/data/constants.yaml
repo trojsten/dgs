@@ -11,391 +11,427 @@
 
 ### Fundamental
 planck:
-    symbol:     "h"
+    symbol:     'h'
     aliases:    ['h']
     magnitude:  6.62607015e-34
     exact:      true
-    unit:       "joule second"
+    unit:       'joule second'
     digits:     4
 
 planck_bar:
-    symbol:     "\\hbar"
+    symbol:     '\hbar'
     aliases:    ['hbar']
     magnitude:  1.054571817e-34
     exact:      true
-    unit:       "joule second"
+    unit:       'joule second'
     digits:     4
 
 speed_light:
-    symbol:     "c"
+    symbol:     'c'
     aliases:    ['c']
     magnitude:  299792458
     exact:      true
-    unit:       "metre / second"
+    unit:       'metre / second'
     digits:     1
 
 gravity:
-    symbol:     "G"
+    symbol:     'G'
     aliases:    ['G']
     magnitude:  6.67430e-11
-    unit:       "newton metre squared / kilogram squared"
+    unit:       'kg^(-1) m^3 s^(-2)'
     digits:     3
 
 ### Imperial
 inch:
-    symbol:     "\\mathrm{in}"
+    symbol:     '\mathrm{in}'
     magnitude:  0.0254
     exact:      true
-    unit:       "metre"
+    unit:       'metre'
     digits:     3
 
 foot:
-    symbol:     "\\mathrm{ft}"
+    symbol:     '\mathrm{ft}'
     aliases:    ['ft']
     magnitude:  0.3048
     exact:      true
-    unit:       "metre"
+    unit:       'metre'
     digits:     4
 
 mile:
-    symbol:     "\\mathrm{mi}"
+    symbol:     '\mathrm{mi}'
     magnitude:  1609.344
-    unit:       "metre"
+    unit:       'metre'
     exact:      true
     digits:     2
 
 us_pint:
-    symbol:     "\\mathrm{pt}"
+    symbol:     '\mathrm{pt}'
     magnitude:  473.176473
-    unit:       "millilitre"
+    unit:       'millilitre'
     digits:     3
 
+ounce:
+    symbol:     'oz'
+    magnitude:  28.349523125
+    unit:       'gram'
+    digits:     4
+
+troy_ounce:
+    symbol:     '\mathrm{oz t}'
+    magnitude:  31.1034768
+    unit:       'gram'
+    digits:     3
+    exact:      true
+
 pound:
-    symbol:     "\\mathrm{lb}"
+    symbol:     '\mathrm{lb}'
     aliases:    ['lb']
     magnitude:  0.45359237
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     4
 
 
 ################## Astronomy
 gforce:
-    symbol:     "g"
+    symbol:     'g'
     aliases:    ['g']
     magnitude:  9.80665
-    unit:       "metre / s^2"
+    unit:       'metre / s^2'
     digits:     1
     force_f:    true
 
 radius_earth:
-    symbol:     "R_{\\oplus}"
+    symbol:     'R_{\oplus}'
     aliases:    ['r_E']
     magnitude:  6378000
-    unit:       "metre"
+    unit:       'metre'
     digits:     4
 
 mass_earth:
-    symbol:     "M_{\\oplus}"
+    symbol:     'M_{\oplus}'
     aliases:    ['m_E']
     magnitude:  5.972168e+24
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     2
 
 eccentricity_earth:
-    symbol:     "e_{\\Earth}"
+    symbol:     'e_{\Earth}'
     aliases:    ['e_E']
     magnitude:  0.0167086
     unit:       ~
     digits:     2
 
 obliquity_earth:
-    symbol:     "\\epsilon_{\\Earth}"
+    symbol:     '\epsilon_{\Earth}'
     magnitude:  23.4392811
-    unit:       "degree"
+    unit:       'degree'
     digits:     3
 
 radius_sun:
-    symbol:     "R_{\\odot}"
+    symbol:     'R_{\odot}'
     magnitude:  6.957e+8
-    unit:       "metre"
+    unit:       'metre'
     digits:     2
 
 mass_sun:
-    symbol:     "M_{\\odot}"
+    symbol:     'M_{\odot}'
     magnitude:  1.988475e+30
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     2
 
 temperature_sun:
-    symbol:     "T_{\\odot}"
+    symbol:     'T_{\odot}'
     magnitude:  5777
-    unit:       "kelvin"
+    unit:       'kelvin'
+    digits:     4
+
+radius_moon:
+    symbol:     'R_{\Moon}'
+    magnitude:  1737000
+    unit:       'metre'
     digits:     4
 
 radius_mars:
-    symbol:     "R_\\Mars"
+    symbol:     'R_\Mars'
     magnitude:  3390000
-    unit:       "metre"
+    unit:       'metre'
     digits:     4
 
 tropical_year:
-    symbol:     "y"
+    symbol:     'y'
     magnitude:  31556926
-    unit:       "second"
+    unit:       'second'
     digits:     5
 
 day:
-    symbol:     "d"
+    symbol:     'd'
     magnitude:  86400
     exact:      true
-    unit:       "second"
+    unit:       'second'
     digits:     5
 
 day_sidereal:
-    symbol:     "d"
+    symbol:     'd'
     magnitude:  86164.0905
-    unit:       "second"
+    unit:       'second'
     digits:     5
 
 mass_mars:
-    symbol:     "M_\\Mars"
+    symbol:     'M_\Mars'
     magnitude:  6.417e+23
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     2
 
 au:
-    symbol:     "\\mathrm{au}"
+    symbol:     '\mathrm{au}'
     magnitude:  1.49597870700e+11
-    unit:       "metre"
+    unit:       'metre'
     digits:     2
 
 parsec:
-    symbol:     "\\mathrm{pc}"
+    symbol:     '\mathrm{pc}'
     aliases:    ['pc']
     magnitude:  30856775814913673
-    unit:       "metre"
+    unit:       'metre'
     digits:     4
 
 solar_flux:
-    symbol:     "F_{\\odot}"
+    symbol:     'F_{\odot}'
     magnitude:  1366
-    unit:       "watt per metre squared"
+    unit:       'watt per metre squared'
     digits:     4
 
 ##################### Gas
 avogadro:
-    symbol:     "N_A"
+    symbol:     'N_A'
     magnitude:  6.02214076e+23
-    unit:       "1 / mole"
-    aliases:    ["N_A"]
+    unit:       '1 / mole'
+    aliases:    ['N_A']
     si_extra:
       per-mode: 'reciprocal'
     digits:     4
 
 universal_gas:
-    symbol:     "R"
+    symbol:     'R'
     magnitude:  8.31446261815324
-    unit:       "joule / kelvin / mole"
+    unit:       'joule / kelvin / mole'
     digits:     3
 
 boltzmann:
-    symbol:     "k_B"
+    symbol:     'k_B'
     magnitude:  1.380649e-23
-    unit:       "joule / kelvin"
+    unit:       'joule / kelvin'
+    aliases:    ['k_B']
     digits:     3
 
 stefan_boltzmann:
-    symbol:     "\\sigma"
+    symbol:     '\sigma'
     magnitude:  5.670374419e-8
-    unit:       "watt / metre squared / kelvin^4"
+    unit:       'watt / metre squared / kelvin^4'
     digits:     3
 
+valovcan:
+    symbol:     'C_V'
+    magnitude:  40
+    unit:       ~
+    exact:      true
+
 pressure_standard:
-    symbol:     "p_0"
+    symbol:     'p_0'
     magnitude:  101325
-    unit:       "pascal"
+    unit:       'pascal'
     digits:     2
 
 temperature_standard:
-    symbol:     "T_0"
+    symbol:     'T_0'
     magnitude:  0
-    unit:       "celsius"
+    unit:       'celsius'
     digits:     1
 
 speed_sound:
-    symbol:     "c_s"
+    symbol:     'c_s'
     magnitude:  343
-    unit:       "metre / second"
+    unit:       'metre / second'
     digits:     3
 
 ###################### Electromagnetic
 
 permittivity:
-    symbol:     "\\epsilon_0"
+    symbol:     '\epsilon_0'
     aliases:    ['eps0']
     magnitude:  8.8541878188e-12
-    unit:       "farad / metre"
+    unit:       'farad / metre'
     digits:     4
 
 permeability:
-    symbol:     "\\mu_0"
+    symbol:     '\mu_0'
     aliases:    ['mu0']
     magnitude:  1.25663706127e-6
-    unit:       "henry / metre"
+    unit:       'henry / metre'
     digits:     3
 
 elementary_charge:
-    symbol:     "e"
+    symbol:     'e'
     aliases:    ['e']
     magnitude:  1.602176634e-19
-    unit:       "coulomb"
+    unit:       'coulomb'
     digits:     2
 
 mass_electron:
-    symbol:     "m_e"
+    symbol:     'm_e'
     aliases:    ['m_e']
     magnitude:  9.1093837139e-31
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     3
 
 mass_proton:
-    symbol:     "m_p"
+    symbol:     'm_p'
     aliases:    ['m_p']
     magnitude:  1.67262192595e-27
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     3
 
 amu:
-    symbol:     "u"
+    symbol:     'u'
     magnitude:  1.6605390689e-27
-    unit:       "kilogram"
+    unit:       'kilogram'
     digits:     3
 
 ####################### Other
 
 refraction_water:
-    symbol:     "n_{\\ce{H2O}}"
-    magnitude:  1.333
+    symbol:     'n_{\ce{H2O}}'
+    magnitude:  1.3330
     unit:       ~
     digits:     4
 
+refraction_air:
+    symbol:     'n_a'
+    magnitude:  1.00028652
+    unit:       ~
+    digits:     3
+
 ### Material
 density_air:
-    symbol:     "\\rho_a"
-    magnitude:  1.28
-    unit:       "kilogram / metre cubed"
+    symbol:     '\rho_a'
+    magnitude:  1.293
+    unit:       'kilogram / metre cubed'
     digits:     2
 
 density_water:
-    symbol:     "\\rho_{\\ce{H2O}}"
-    magnitude:  998
-    unit:       "kilogram / metre cubed"
-    digits:     2
+    symbol:     '\rho_{\ce{H2O}}'
+    magnitude:  999.972
+    unit:       'kilogram / metre cubed'
+    digits:     3
 
 density_ice:
-    symbol:     "\\rho_{\\ce{H2O}}"
-    magnitude:  916
-    unit:       "kilogram / metre cubed"
+    symbol:     '\rho_{\ce{H2O}}'
+    magnitude:  917
+    unit:       'kilogram / metre cubed'
     digits:     3
 
 density_helium:
-    symbol:     "\\rho_{\\ce{He}}"
+    symbol:     '\rho_{\ce{He}}'
     magnitude:  0.18
-    unit:       "kilogram / metre cubed"
+    unit:       'kilogram / metre cubed'
     digits:     3
 
 density_mercury:
-    symbol:     "\\rho_{\\ce{Hg}}"
+    symbol:     '\rho_{\ce{Hg}}'
     magnitude:  13546
-    unit:       "kilogram / metre cubed"
+    unit:       'kilogram / metre cubed'
     digits:     3
 
 density_gold:
-    symbol:     "\\rho_{\\ce{Au}}"
+    symbol:     '\rho_{\ce{Au}}'
     magnitude:  19283
-    unit:       "kilogram / metre cubed"
+    unit:       'kilogram / metre cubed'
     digits:     3
 
 molar_mass_gold:
-    symbol:     "M_{\\ce{Au}}"
+    symbol:     'M_{\ce{Au}}'
     magnitude:  196.966570
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     3
 
 molar_mass_air:
-    symbol:     "M_{\\mathrm{a}}"
+    symbol:     'M_{\mathrm{a}}'
     magnitude:  28.9647
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     2
 
 surface_tension_water:
-    symbol:     "\\sigma"
+    symbol:     '\sigma'
     magnitude:  0.072
-    unit:       "newton / metre"
+    unit:       'newton / metre'
     digits:     2
 
 heat_capacity_water:
-    symbol:     "c_{\\ce{H2O}}"
+    symbol:     'c_{\ce{H2O}}'
     magnitude:  4180
-    unit:       "joule / kilogram / kelvin"
+    unit:       'joule / kilogram / kelvin'
     digits:     3
 
 heat_vaporization_water:
-    symbol:     "l_{\\ce{H2O}}"
+    symbol:     'l_{\ce{H2O}}'
     magnitude:  2260
-    unit:       "kilojoule / kilogram"
+    unit:       'kilojoule / kilogram'
     digits:     2
+    aliases:    ['hvw']
 
 heat_capacity_ice:
-    symbol:     "c_\\text{\\Snow}"
+    symbol:     'c_\text{\Snow}'
     magnitude:  2093
-    unit:       "joule / kilogram / kelvin"
+    unit:       'joule / kilogram / kelvin'
     digits:     4
+    aliases:    ['hci']
 
 heat_melting_ice:
-    symbol:     "l_\\text{\\Snow}"
+    symbol:     'l_\text{\Snow}'
     magnitude:  334000
-    unit:       "J / kg"
+    unit:       'J / kg'
     digits:     3
+    aliases:    ['hmi']
 
 thermal_expansion_water:
-    symbol:     "\\beta_{\\ce{H2O}}"
+    symbol:     '\beta_{\ce{H2O}}'
     magnitude:  1.8e-4
-    unit:       "1 / kelvin"
+    unit:       '1 / kelvin'
     si_extra:
       per-mode: 'reciprocal'
     digits:     2
+    aliases:    ['tew']  
 
 molar_mass_oxygen:
-    symbol:     "M_{\\ce{O}}"
+    symbol:     'M_{\ce{O}}'
     magnitude:  16
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     2
     aliases:    ['M_O']
 
 molar_mass_sulphur:
-    symbol:     "M_{\\ce{S}}"
+    symbol:     'M_{\ce{S}}'
     magnitude:  32.06
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     2
     aliases:    ['M_S']
 
 molar_mass_zinc:
-    symbol:     "M_{\\ce{Zn}}"
+    symbol:     'M_{\ce{Zn}}'
     magnitude:  65.38
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     2
     aliases:    ['M_Zn']
 
 molar_mass_carbon:
-    symbol:     "M_{\\ce{C}}"
+    symbol:     'M_{\ce{C}}'
     magnitude:  12.01
-    unit:       "gram / mole"
+    unit:       'gram / mole'
     digits:     2
     aliases:    ['M_C']
 
 relative_mass_carbon:
-    symbol:     "A_r(\\ce{C})"
+    symbol:     'A_r(\ce{C})'
     magnitude:  12.01
     digits:     2
     aliases:    ['ArC']

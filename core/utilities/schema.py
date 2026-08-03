@@ -1,10 +1,9 @@
-from enschema import And, Or, Regex
 
 from core import i18n
 
 
 def valid_language(code: str) -> bool:
-    return code in i18n.languages.keys()
+    return code in i18n.languages
 
 
 def valid_language_name(name: str) -> bool:

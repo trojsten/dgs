@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-import argparsedirs
-import subprocess
-import os
 import glob
-
+import os
+import subprocess
 from pathlib import Path
+
+import argparsedirs
 
 from core import i18n
 
@@ -34,7 +34,7 @@ class Linker:
         files = glob.glob(f"**/{self.args.from_lang}/problem.md", root_dir=self.path, recursive=True)
 
         for f in files:
-            problem_id, _, filename = tuple(f.split('/'))
+            problem_id, _, _filename = tuple(f.split('/'))
 
             if self.args.problems:
                 self.call_ln(problem_id, 'problem.md')
@@ -57,7 +57,6 @@ class Linker:
                 subprocess.run(["ln", "-s", relative_target, file], cwd=cwd, check=True)
             except subprocess.CalledProcessError:
                 print(f"Failed to create {relative_target} in {cwd}")
-                pass
 
 
 os.chdir('.')

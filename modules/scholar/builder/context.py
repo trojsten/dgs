@@ -1,5 +1,4 @@
 import abc
-
 from pathlib import Path
 
 from core.builder.context import BuildableFileSystemTreeContext

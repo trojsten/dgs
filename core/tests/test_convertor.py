@@ -1,6 +1,7 @@
-import pytest
 import re
 import tempfile
+
+import pytest
 
 from core.builder.convertor import Convertor
 

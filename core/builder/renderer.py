@@ -1,26 +1,22 @@
 #!/usr/bin/env python
 import argparse
 import io
+import logging
 import numbers
 import pprint
-import logging
-import regex as re
-
 from abc import ABC
 from io import TextIOWrapper
-
 from pathlib import Path
-from typing import Optional
 
-from enschema import Schema, Optional as Opt, Or, And, Regex
+from enschema import And, Or, Regex, Schema
+from enschema import Optional as Opt
 
 from core import cli
-from core.builder.context.context import Context
+from core.builder.context.context import Context, ValidIdentifier
 from core.builder.context.file import FileContext
+from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
 from core.builder.jinja import MarkdownJinjaRenderer
-
-from core.builder.context.quantities import PhysicsConstant
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
@@ -36,7 +32,7 @@ class JinjaConvertor:
                  template_file: TextIOWrapper,
                  context: Context,
                  *,
-                 preamble: Optional[io.TextIOWrapper] = None,
+                 preamble: io.TextIOWrapper | None = None,
                  debug: bool = False):
         """
         Parameters
@@ -51,7 +47,7 @@ class JinjaConvertor:
             Activate debug mode.
         """
         self.context: Context = context
-        self.preamble: Optional[str] = preamble.read() if preamble else None
+        self.preamble: str | None = preamble.read() if preamble else None
         self.template: str = template_file.read()
 
         if debug:
@@ -69,7 +65,10 @@ class JinjaConvertor:
 
         Currently just prepends the preamble, if available
         """
-        return (self.preamble or "") + template
+        if self.preamble is not None:
+            return self.preamble + "\n" + template
+        else:
+            return template
 
     def run(self):
         # First pass: expand all equations and values
@@ -99,9 +98,9 @@ class StandaloneContext(FileContext):
     """
     _schema = Schema({
         'id': str,
-        Opt('values'): dict[str, Or(str, float, int, PhysicsConstant)],  # Values
+        Opt('values'): dict[ValidIdentifier, Or(str, float, int, PhysicsConstant)],  # Values
         # Equations have to be strings, 'eq' and 'const' are reserved
-        Opt('eq'): dict[And(str, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
+        Opt('eq'): dict[And(ValidIdentifier, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
     })
 
 
@@ -132,7 +131,7 @@ class CLIInterface(cli.CLIInterface, ABC):
                 if isinstance(params, dict):
                     symbol = params.pop('symbol', key)
                     values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
-                elif isinstance(params, str) or isinstance(params, numbers.Number):
+                elif isinstance(params, (str, numbers.Number)):
                     values[key] = params
                 else:
                     raise TypeError(f"Unsupported type {type(params)} ({params})")

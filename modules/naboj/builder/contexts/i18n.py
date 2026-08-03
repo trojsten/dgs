@@ -1,9 +1,9 @@
-import yaml
 from pathlib import Path
-from enschema import Schema, Optional
+
+from enschema import Schema
 
 from core.builder.context.tree import FileSystemTreeContext
-from core.i18n import languages, Locale
+from core.i18n import Locale, languages
 
 
 class ContextI18n(FileSystemTreeContext):

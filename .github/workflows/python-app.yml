@@ -22,15 +22,12 @@ jobs:
     - uses: siacodelabs/setup-pandoc@v1
       with:
           xelatex: true
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v3
+    - name: astral-sh/setup-uv
+      uses: astral-sh/setup-uv@v9.0.0
       with:
-        python-version: "3.13"
+        python-version: "3.14"
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pipenv
-        pipenv install --dev
+      run: uv sync --dev
     - name: "Install utilities"
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
@@ -65,15 +62,9 @@ jobs:
         TEXHOME=`kpsewhich -var-value=TEXMFHOME`
         mkdir -p $TEXHOME/tex/latex/
         ln -s $PWD/core/latex/dgs.cls $TEXHOME/tex/latex/dgs.cls
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        pipenv run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pipenv run python -m pytest -s -v
+        uv run python -m pytest -s -v
     - name: "Clone testing repository"
       uses: actions/checkout@master
       with:

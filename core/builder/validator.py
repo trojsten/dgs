@@ -1,10 +1,10 @@
 import abc
 import logging
 import pprint
-import regex as re
-
-from enschema import Schema, SchemaError, And, Or, Regex
 from pathlib import Path
+
+import regex as re
+from enschema import And, Or, Regex, Schema, SchemaError
 
 log = logging.getLogger('dgs')
 
@@ -52,15 +52,14 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         try:
             self.schema.validate(self.tree)
             self.perform_extra_checks()
-        except SchemaError as e:
-            log.error(f"Could not validate file system tree")
+        except SchemaError:
+            log.error("Could not validate file system tree")
             pprint.pprint(self.tree)
             log.error(f"against schema\n{self.schema}")
-            raise e
+            raise
 
     def perform_extra_checks(self) -> None:
         """
         Extra checks that are impossible or cumbersome to implement with schema.
         Runs *after* schema validation. By default, this is a no-op.
         """
-        pass

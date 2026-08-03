@@ -1,4 +1,4 @@
-from enschema import Schema, And
+from enschema import And, Schema
 
 from .context import Context
 

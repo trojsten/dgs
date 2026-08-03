@@ -6,7 +6,7 @@ from core.utilities import colour as c
 log = logging.getLogger('dgs')
 
 
-class Crawler():
+class Crawler:
     def __init__(self, root):
         self.step = 4
         self.root = root

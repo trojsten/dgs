@@ -1,9 +1,9 @@
-import functools
-import operator
 import math
 import numbers
+import operator
 import re
-from typing import Optional, Self
+from collections.abc import Callable
+from typing import Any, Self
 
 import numpy as np
 import pint
@@ -18,12 +18,18 @@ class PhysicsQuantity:
     """
 
     def __init__(self,
-                 quantity: u.Quantity,
+                 quantity: pint.Quantity | float,
                  *,
-                 symbol: str = None,
-                 si_extra: dict[str, str] = None,
+                 symbol: str | None = None,
+                 si_extra: dict[str, str] | None = None,
                  force_f: bool = False):
-        self._quantity = quantity
+        if isinstance(quantity, pint.Quantity):
+            self._quantity = quantity
+        elif isinstance(quantity, numbers.Number):
+            self._quantity = u.Quantity(quantity, '1')
+        else:
+            raise TypeError(f"Cannot construct a {self.__class__.__qualname__} object from {quantity}")
+
         self._symbol = symbol
 
         self.si_extra = {} if si_extra is None else si_extra
@@ -39,35 +45,28 @@ class PhysicsQuantity:
         """
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
-    def __add__(self, other):
+    def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity + other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity + other)
+            return PhysicsQuantity(op(self._quantity, other._quantity))
+        elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
+            return PhysicsQuantity(op(self._quantity, other))
         else:
-            raise TypeError(f"Cannot __add__ with {type(other)} ({other})")
+            raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
+
+    def __add__(self, other):
+        return self._binop(other, operator.add)
 
     def __radd__(self, other):
         return self + other
 
     def __sub__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity - other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity - other)
-        else:
-            raise TypeError(f"Cannot __sub__ with {type(other)} ({other})")
+        return self._binop(other, operator.sub)
 
     def __rsub__(self, other):
         return -(self - other)
 
     def __mul__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity * other._quantity)
-        elif isinstance(other, numbers.Number):
-            return PhysicsQuantity(self._quantity * other)
-        else:
-            return NotImplemented
+        return self._binop(other, operator.mul)
 
     def __rmul__(self, other):
         return self * other
@@ -76,27 +75,36 @@ class PhysicsQuantity:
         return PhysicsQuantity(self._quantity ** exponent)
 
     def __truediv__(self, other):
-        if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(self._quantity / other._quantity)
-        elif isinstance(other, numbers.Number) or isinstance(other, pint.registry.Quantity):
-            return PhysicsQuantity(self._quantity / other)
-        else:
-            raise TypeError(f"Cannot __truediv__ type {type(other)} ({other})")
+        return self._binop(other, operator.truediv)
 
     def __rtruediv__(self, other):
         return PhysicsQuantity(other / self._quantity)
 
     def __mod__(self, other):
+        from .quantity_range import QuantityRange
         return QuantityRange(self, other)
 
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
 
     def __str__(self):
-        return self._format('g')
+        return format(self, 'g')
 
     def __format__(self, fmt):
-        return self._format(fmt)
+        """
+        Format the quantity as a siunitx command (\\num or \\qty).
+        The format spec is forwarded to the underlying magnitude formatting:
+        empty spec prints the magnitude with Python's default for its type
+        (plain decimal for ints, repr-like for floats), which is usually
+        what callers want for verbatim output. Pass 'g', '.3f' etc. for
+        specific formatting.
+        """
+        fragments = self.format_struct(fmt=fmt)
+        cmd = fragments['cmd']
+        si_extra = self.format_si_extra(self.si_extra)
+        magnitude = f"{{{fragments['magnitude']}}}"
+        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else ''
+        return rf'\{cmd}{si_extra}{magnitude}{unit}'
 
     def __repr__(self):
         return f"{self.__class__.__name__} ({self._quantity})"
@@ -114,6 +122,7 @@ class PhysicsQuantity:
 
     @quantity.setter
     def quantity(self, value):
+        """ No setter: PhysicsQuantity is immutable. """
         raise TypeError(f"{self.__class__.__name__} ({value}) is immutable")
 
     @property
@@ -131,22 +140,76 @@ class PhysicsQuantity:
         """ Return the internal symbol. """
         return self._symbol
 
+    @symbol.setter
+    def symbol(self, value: str | None):
+        self._symbol = value
+
     @property
     def sym(self):
         """ Return the internal symbol (shorthand). """
         return self._symbol
 
+    @sym.setter
+    def sym(self, value: str | None):
+        self._symbol = value
+
+    @property
+    def s(self):
+        """ Return the internal symbol (shorthand). """
+        return self._symbol
+
+    @s.setter
+    def s(self, value: str | None):
+        self._symbol = value
+
+    def alias(self, symbol: str | None) -> "PhysicsQuantity":
+        """ Return an aliased quantity with a symbol """
+        return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra, force_f=self.force_f)
+
     def to(self, what):
+        """ Convert a physics quantity unit to another compatible unit. """
         return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)
 
     def simplify(self):
-        return PhysicsQuantity(self._quantity.to_base_units())
+        return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
+
+    def only_unit(self):
+        r""" Return a nicely formatted unit (\unit{...} in siunitx format) """
+        fragments = self.format_struct(fmt='g')
+        si_extra = self.format_si_extra(self.si_extra)
+        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '{1}'
+        return rf'\unit{si_extra}{unit}'
+
+    def widen(self, value: float) -> "QuantityRange":
+        """
+        Construct a tolerance range from this quantity:
+        ``[(1 - v) * x, (1 + v) * x]``.
+
+        For positive ``x`` the smaller endpoint is ``(1 - v) * x`` and the
+        larger is ``(1 + v) * x``. For negative ``x`` the order flips so the
+        returned range still has minimum <= maximum.
+
+        ``value`` must be non-negative; pass ``0`` for a degenerate range.
+        Values >= 1 are allowed and produce a range that crosses zero
+        (e.g. ``100.widen(1.5) -> [-50, 250]``).
+        """
+        from .quantity_range import QuantityRange
+        assert value >= 0, f"widen factor must be non-negative, got {value}"
+        low = self * (1 - value)
+        high = self * (1 + value)
+        if self._quantity.magnitude >= 0:
+            return QuantityRange(low, high)
+        else:
+            return QuantityRange(high, low)
 
     def sin(self):
         return PhysicsQuantity(np.sin(self._quantity))
 
     def cos(self):
         return PhysicsQuantity(np.cos(self._quantity))
+
+    def tan(self):
+        return PhysicsQuantity(np.tan(self._quantity))
 
     def arcsin(self):
         return PhysicsQuantity(np.arcsin(self._quantity))
@@ -163,6 +226,12 @@ class PhysicsQuantity:
     def degrees(self):
         return PhysicsQuantity(np.degrees(self._quantity))
 
+    def ceil(self):
+        return PhysicsQuantity(np.ceil(self._quantity))
+
+    def floor(self):
+        return PhysicsQuantity(np.floor(self._quantity))
+
     def approximate(self, digits: int):
         """
         Return an approximate value of the constant (not just formatted output, but truly rounded).
@@ -170,13 +239,14 @@ class PhysicsQuantity:
         Note that this representation might not be exact due to machine precision,
         and will have to be passed through `format` again to render correctly.
         """
+        assert digits > 0 and isinstance(digits, int), \
+            "Digits must be a positive integer"
         if self._quantity.magnitude == 0:
             logarithm = 1
         else:
             logarithm = math.floor(math.log10(abs(self._quantity.magnitude)))
 
         precision = digits - logarithm - 1
-        #magnitude = math.trunc(self._quantity.magnitude * (10 ** precision) + 0.5) / (10 ** precision)
         magnitude = round(self._quantity.magnitude, precision)
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
 
@@ -207,15 +277,6 @@ class PhysicsQuantity:
         siextraf = f'[{siextraf}]' if len(siextraf) >= 1 else siextraf
         return siextraf
 
-    def _format(self, fmt: str = 'g'):
-        """Return a formatted string representation, by default a `g` one."""
-        fragments = self.format_struct(fmt=fmt)
-        cmd = fragments['cmd']
-        si_extra = self.format_si_extra(self.si_extra)
-        magnitude = f"{{{fragments['magnitude']}}}"
-        unit = '' if fragments['unit'] is None else f"{{{fragments['unit']}}}"
-        return rf'\{cmd}{si_extra}{magnitude}{unit}'
-
     @property
     def full(self):
         r"""
@@ -229,7 +290,7 @@ class PhysicsQuantity:
         ```
         as \qty{1.23e-6}{\kilo\gram}.
         """
-        return self._format()
+        return f'{self:g}'
 
     @property
     def equals(self) -> str:
@@ -246,92 +307,44 @@ class PhysicsQuantity:
         """
         return self.equals
 
-    def equals_float(self, precision: Optional[int]) -> str:
+    @staticmethod
+    def _format_spec(kind: str, precision: int | None) -> str:
+        """
+        Build a format spec of the requested kind ('f' or 'g'). `None` precision
+        means the bare spec, i.e. Python's default for that kind -- the same
+        convention as `core.filters.numbers.format_float` / `format_general`.
+        """
+        return kind if precision is None else f'.{precision}{kind}'
+
+    def equals_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self._format(f'.{precision}f')}"
+        return rf"{self._symbol} = {self:{self._format_spec('f', precision)}}"
 
-    def equals_general(self, precision: Optional[int]) -> str:
+    def equals_general(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self._format(f'.{precision}g')}"
+        return rf"{self._symbol} = {self:{self._format_spec('g', precision)}}"
+
+    def approx_float(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> \\approx <full>`
+        """
+        return rf"{self._symbol} \approx {self:{self._format_spec('f', precision)}}"
+
+    def approx_general(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> \\approx <full>`
+        """
+        return rf"{self._symbol} \approx {self:{self._format_spec('g', precision)}}"
 
 
-def construct_quantity(magnitude, unit, *, symbol: Optional[str] = None):
+def construct_quantity(magnitude, unit, *, symbol: str | None = None):
     """ Constructor-like function """
     return PhysicsQuantity.construct(magnitude, unit, symbol=symbol)
-
-
-class QuantityRange:
-    """
-    Represents a range of two magnitudes of commensurate quantities.
-    Primarily meant to be useful for result tolerances.
-    """
-
-    def __init__(self,
-                 minimum: PhysicsQuantity,
-                 maximum: PhysicsQuantity):
-        self.minimum = minimum
-        self.maximum = maximum
-        self.si_extra = self.minimum.si_extra | self.maximum.si_extra
-
-        # Try to coerce to the same unit (minimum takes precedence).
-        # If it works, fine, if not, let pint raise the appropriate exception.
-        self.unit = self.minimum.unit
-        self.maximum = self.maximum.to(self.unit)
-
-    def __format__(self, fmt: str):
-        minr = self.minimum.format_struct(fmt)
-        maxr = self.maximum.format_struct(fmt)
-
-        si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
-        minf = f"{{{minr['magnitude']}}}"
-        maxf = f"{{{maxr['magnitude']}}}"
-        unitf = f"{{{minr['unit']}}}"
-
-        cmd = 'qtyrange'
-        return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
-
-    def widen(self, value: float) -> Self:
-        """
-        Widen the interval by value:
-        minimum := (1 - value) * minimum
-        maximum := (1 + value) * maximum
-
-        This should be useful for specifying ranges of acceptable results in Náboj.
-        """
-        return QuantityRange(self.minimum * (1 - value), self.maximum * (1 + value))
-
-    def __str__(self):
-        return self.__format__('g')
-
-
-class QuantityList:
-    """
-    Represents a list of commensurate quantities.
-    """
-
-    def __init__(self,
-                 *qs: PhysicsQuantity):
-        # First, try to force same units everywhere. If it works, good, if it does not, a pint error will be raised.
-        self.qs = [q.to(qs[0].unit) for q in qs]
-
-        self.si_extra = functools.reduce(operator.or_, [q.si_extra for q in self.qs])
-
-    def __format__(self, fmt: str):
-        cmd = 'qtylist'
-        fqs = [q.format_struct(fmt) for q in self.qs]
-        self.magnitudes = ';'.join([fq['magnitude'] for fq in fqs])
-
-        unitf = f"{{{fqs[0]['unit']}}}"
-        si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
-        magf = f'{{{self.magnitudes}}}'
-
-        return rf'\{cmd}{si_extraf}{magf}{unitf}'
-
-    def __str__(self):
-        return self.__format__('g')

@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import TextIO, Optional
+from typing import TextIO
 
 from core import i18n
-from core.builder.jinja import StaticRenderer, JinjaRenderer
 from core.builder.context import Context
+from core.builder.jinja import StaticRenderer
 
 
 class BuilderStandalone:
@@ -12,7 +12,7 @@ class BuilderStandalone:
     def __init__(self,
                  locale_code: str,
                  infile: TextIO,
-                 outfile: Optional[TextIO] = None,
+                 outfile: TextIO | None = None,
                  **options):
         self.locale_code: str = locale_code
         self.locale: i18n.Locale = i18n.languages[locale_code]

@@ -1,21 +1,36 @@
-import os
 import datetime
+import os
 from pathlib import Path
-from enschema import Schema, And, Or, Regex, Optional
 
+from enschema import And, Optional, Or, Regex, Schema
+
+from core.builder.builder import get_branch, get_last_commit_hash
 from core.builder.context.tree import FileSystemTreeContext
-from core.builder.builder import get_last_commit_hash, get_branch
+from core.builder.validator import CommitHash
 from core.utilities.schema import valid_language
-from core.builder.validator import CommitHash, String
 
 
 def valid_tag(tag: str):
     return tag in [
-        'elegant', 'troll', 'trick', 'silly', 'unreal', 'creative',
-        'circuit', 'resistance', 'rlc', 'elmag',
-        'kinematics', 'uam',
-        'paaa', 'cog',
-        'calorimetry', 'thermo-process', 'optics', 'blackbody', 'nuclear'
+        'elegant',        # short but interesting problem
+        'troll',          # a problem with a trivial solution
+        'trick',          # has a trick or twist in the intended solution
+        'silly',          # a silly or joke problem
+        'unreal',         # a physically unrealistic setup played for humor
+        'creative',       # requires out-of-the-box thinking
+        'circuit',        # resistor network / circuit analysis
+        'resistance',     # problems focused on electrical resistance
+        'rlc',            # resonant RLC circuit
+        'elmag',          # general electromagnetism (induction, EM fields)
+        'kinematics',     # kinematics
+        'uam',            # uniformly accelerated motion
+        'paaa',           # projectile at an angle (inferred from usage; not documented at origin)
+        'cog',            # centre of gravity
+        'calorimetry',    # calorimetry / heat exchange
+        'thermo-process', # a specific thermodynamic process or cycle
+        'optics',         # optics
+        'blackbody',      # blackbody radiation
+        'nuclear',        # nuclear physics
     ]
 
 
@@ -46,8 +61,8 @@ class ContextNaboj(FileSystemTreeContext):
     })
     problem = Schema({
         'id': Regex(r'[a-z0-9-]+'),
-        Optional('tags'): [str],
-        Optional('author'): [valid_tag],
+        Optional('tags'): [valid_tag],
+        Optional('author'): Or([str], []),
         'number': int,
     })
     _schema = Schema({
@@ -83,11 +98,11 @@ class ContextNaboj(FileSystemTreeContext):
                     'hash': get_last_commit_hash(self.node_path(repo_root)),
                     'branch': get_branch(self.node_path(repo_root)),
                 },
-                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'timestamp': datetime.datetime.now(datetime.UTC),
             },
         )
 
-    def as_tuple(self, competition: str = None, volume: int = None, sub: str = None, issue: str = None):
+    def as_tuple(self, competition: str | None = None, volume: int | None = None, sub: str | None = None, issue: str | None = None):
         assert competition in ContextNaboj.competitions
 
         result = []

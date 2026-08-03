@@ -1,7 +1,7 @@
-from enschema import Schema, Optional, Regex
+from enschema import Optional, Regex, Schema
 from schema import Forbidden
 
-from core.builder.validator import FileSystemValidator, File
+from core.builder.validator import File, FileSystemValidator
 
 
 class SeminarRoundValidator(FileSystemValidator):

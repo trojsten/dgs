@@ -31,7 +31,6 @@
 \RequirePackage{siunitx}                                    % SI units
 \RequirePackage{xparse}
 \RequirePackage{enumitem}                                   % sets properties for itemize, enumerate, description...
-\RequirePackage{minted}                                     % nice rendering of included code
 \RequirePackage{lastpage}
 \RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
 \RequirePackage{pdftexcmds}
@@ -90,8 +89,6 @@
 
 \AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
 %\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
-
-\setminted{fontsize=\footnotesize}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}

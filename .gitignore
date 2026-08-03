@@ -19,3 +19,4 @@ source/
 _*/
 .idea/*
 svg-inkscape/
+*.minted

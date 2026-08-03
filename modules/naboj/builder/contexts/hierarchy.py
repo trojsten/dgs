@@ -1,12 +1,13 @@
 import datetime
 import itertools
 
-from enschema import Schema, And, Optional, Regex
+from enschema import And, Optional, Regex, Schema
 
 from core import i18n
+from core.builder.validator import String
 from core.utilities import lists
 from core.utilities.schema import valid_language, valid_language_name
-from core.builder.validator import String
+
 from .base import ContextNaboj
 
 
@@ -79,7 +80,7 @@ class ContextVenue(ContextNaboj):
 
     def populate(self, competition, volume, venue):
         super().populate(competition)
-        comp = ContextCompetition(self.root, competition)
+        ContextCompetition(self.root, competition)
         vol = ContextVolume(self.root, competition, volume)
         self.load_meta(competition, volume, venue) \
             .add_id(venue)

@@ -2,20 +2,23 @@ import abc
 import copy
 import logging
 import pprint
-import yaml
-
-from typing import Any, Self, Optional
 from pathlib import Path
-from enschema import Schema, SchemaError
+from typing import Any, Self
+
+import yaml
+from enschema import Regex, Schema, SchemaError
 
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
 
 
+ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
+
+
 class Context(abc.ABC):
     _defaults: dict[str, Any] = {}      # Defaults for every instance
-    _schema: Optional[Schema] = None       # Validation schema for the context, or None if it is not to be validated
+    _schema: Schema | None = None       # Validation schema for the context, or None if it is not to be validated
     _id: str = None
     _data: dict[str, Any] = None
 
@@ -57,9 +60,9 @@ class Context(abc.ABC):
             with open(path, 'r') as f:
                 contents = yaml.load(f, Loader=yaml.SafeLoader)
             self._data = {} if contents is None else contents
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))
-            raise e
+            raise
 
         return self
 
@@ -80,13 +83,13 @@ class Context(abc.ABC):
             try:
                 self._data = self._schema.validate(self.data)
                 log.debug(f"Context {c.name(self.__class__.__name__)} was {c.ok('validated')}")
-            except SchemaError as exc:
+            except SchemaError:
                 log.error(f"{c.err('[FATAL] Failed to validate')} {c.name(self.__class__.__name__)} "
                           f"{c.path(self.id)}")
                 pprint.pprint(self.data)
                 log.error(f"against {self.__class__.__qualname__}")
                 pprint.pprint(self.schema.schema)
-                raise exc
+                raise
 
     def add(self, **kwargs):
         """

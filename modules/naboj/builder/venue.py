@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import core.builder.jinja as jinja
+from core.builder import jinja
 from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextVenue
 
@@ -31,8 +31,8 @@ class BuilderNabojVenue(BuilderNaboj):
     def language_path(self) -> tuple:
         return self.args.competition, f'{self.args.volume:02d}', 'languages', self.context.data['language']['id']
 
-    def build_templates(self):
-        super().build_templates()
+    def build_templates(self, *, new_name: str | None = None) -> None:
+        super().build_templates(new_name=new_name)
         language_renderer = jinja.StaticRenderer(Path('/home/kvik/dgs/source/naboj') / Path(*self.language_path()))
 
         for template in self.language_templates:

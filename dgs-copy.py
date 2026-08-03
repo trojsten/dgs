@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import argparse
-
-from typing import Tuple
-
+import os
 
 VERSION = "5.0"
 DATE = "2025-11-18"
@@ -15,7 +12,7 @@ def fire(query):
     return os.system(query)
 
 
-def problem_count(seminar: str, volume: int) -> Tuple[str, int]:
+def problem_count(seminar: str, volume: int) -> tuple[str, int]:
     sr = seminar
     if seminar == 'FKS':
         if volume < 38:
@@ -79,8 +76,8 @@ def main():
 
     # rsync everything to server
     if not args.dry_run:
-        fire(f"rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 "
-             f"tasks trojstenweb@ksp:/var/www/trojstenweb/")
+        fire("rsync --recursive --compress --verbose --partial --progress --copy-links --chmod=775 "
+             "tasks trojstenweb@ksp:/var/www/trojstenweb/")
 
     # delete the temporary structure
     fire("rm -rf tasks")

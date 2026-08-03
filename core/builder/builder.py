@@ -1,18 +1,19 @@
-import pprint
 import argparse
-import argparsedirs
 import logging
 import os
+import pprint
 import subprocess
-
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
+
+import argparsedirs
 
 from core.builder.context import Context
-from core.builder.jinja import JinjaRenderer
-from core.utilities import colour as c, crawler
 from core.builder.context.buildable import BuildableContext
+from core.builder.jinja import JinjaRenderer
+from core.utilities import colour as c
+from core.utilities import crawler
 
 log = logging.getLogger('dgs')
 
@@ -65,7 +66,7 @@ class BaseBuilder(metaclass=ABCMeta):
 
     def __init__(self,
                  *,
-                 suffix_map: dict[str, str] = None):
+                 suffix_map: dict[str, str] | None = None):
         """
         suffix_map: translates template suffixes to rendered template suffixes
                     and also provides defaults for dgs
@@ -147,7 +148,7 @@ class BaseBuilder(metaclass=ABCMeta):
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
-    def build_templates(self, *, new_name: str = None) -> None:
+    def build_templates(self, *, new_name: str | None = None) -> None:
         """
         Build all templates for this builder.
         """

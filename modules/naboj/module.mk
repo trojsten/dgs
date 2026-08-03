@@ -79,7 +79,6 @@ render/naboj/%.gp:\
 	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
 	$(call jinja_without_preamble,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
-
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
 	$(eval language := $(word 5,$(subst /, ,$*)))

@@ -3,7 +3,6 @@
 import argparse
 import logging
 import sys
-
 from abc import abstractmethod
 
 from core import i18n
@@ -51,8 +50,8 @@ class CLIInterface:
             self.fail(e)
 
     def fail(self, e):
-        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}: {e}")
-        sys.exit(1)
+        log.error(f"{c.err('convert: failure on ')}{c.path(self.args.infile.name)}")
+        raise e
 
     def success(self):
         if self.args.verbose:
