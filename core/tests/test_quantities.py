@@ -4,7 +4,13 @@ import pint
 import pytest
 import regex as re
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
+from core.builder.context.quantities import (
+    MissingSymbolError,
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+)
 
 
 @pytest.fixture
@@ -869,6 +875,50 @@ class TestEqualsApprox:
         """`None` is the documented way to say "no precision", not an error."""
         assert mass_mega.approx_float(None) == mass_mega.approx_float()
         assert mass_mega.equals_general(None) == mass_mega.equals_general()
+
+
+class TestEqualsApproxWithoutSymbol:
+    """
+    Rendering a symbol-less quantity with a symbol form must crash, not silently
+    print `None = \\qty{...}` into the text.
+    """
+
+    @pytest.fixture
+    def anonymous(self):
+        return PhysicsQuantity.construct(11.345, 'm/s^2')
+
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    def test_raises_without_symbol(self, anonymous, method):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, method)(2)
+
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    def test_raises_without_symbol_no_precision(self, anonymous, method):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, method)()
+
+    @pytest.mark.parametrize('prop', ['equals', 'eq'])
+    def test_equals_property_raises_without_symbol(self, anonymous, prop):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, prop)
+
+    def test_error_names_the_method(self, anonymous):
+        with pytest.raises(MissingSymbolError, match='equals_float'):
+            anonymous.equals_float(2)
+
+    def test_symbol_less_formatting_still_works(self, anonymous):
+        """Only the symbol forms are affected; plain formatting is untouched."""
+        assert anonymous.full == r'\qty{11.345}{\meter\per\second\squared}'
+        assert f'{anonymous:.1f}' == r'\qty{11.3}{\meter\per\second\squared}'
+
+    def test_aliasing_fixes_it(self, anonymous):
+        assert anonymous.alias('a').equals_float(2) == r'a = \qty{11.35}{\meter\per\second\squared}'
+
+    def test_symbol_set_to_none_again_raises(self, mass_mega):
+        """The symbol is the one mutable field -- clearing it must re-arm the check."""
+        mass_mega.symbol = None
+        with pytest.raises(MissingSymbolError):
+            mass_mega.equals_float(2)
 
 
 # --- Equality semantics --------------------------------------------------

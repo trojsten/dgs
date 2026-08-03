@@ -12,6 +12,22 @@ from pint import UnitRegistry as u
 from core.filters.hacks import cut_extra_one
 
 
+class MissingSymbolError(Exception):
+    """
+    Raised when a quantity is rendered in a form that includes its symbol
+    (`equals`, `|ef`, `|eg`, `|af`, `|ag`, ...) but no symbol was ever set.
+    Silently printing `None = ...` into a solution is much worse than crashing.
+    """
+    def __init__(self, quantity, method: str):
+        super().__init__(
+            f"Cannot render {quantity!r} as `{method}`: no symbol is defined. "
+            f"Set one with `alias('x')`, `symbol=` at construction, or use a "
+            f"symbol-less filter such as `|nf` / `|ng`."
+        )
+        self.quantity = quantity
+        self.method = method
+
+
 class PhysicsQuantity:
     """
     Represents a physics quantity for comfortable and reproducible use in calculations and texts.
@@ -292,13 +308,22 @@ class PhysicsQuantity:
         """
         return f'{self:g}'
 
+    def _require_symbol(self, method: str) -> str:
+        """
+        Return the symbol, or raise if there is none. Every rendering that
+        prints the symbol must go through this.
+        """
+        if self._symbol is None:
+            raise MissingSymbolError(self, method)
+        return self._symbol
+
     @property
     def equals(self) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self.full}"
+        return rf"{self._require_symbol('equals')} = {self.full}"
 
     @property
     def eq(self) -> str:
@@ -321,28 +346,28 @@ class PhysicsQuantity:
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self:{self._format_spec('f', precision)}}"
+        return rf"{self._require_symbol('equals_float')} = {self:{self._format_spec('f', precision)}}"
 
     def equals_general(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self:{self._format_spec('g', precision)}}"
+        return rf"{self._require_symbol('equals_general')} = {self:{self._format_spec('g', precision)}}"
 
     def approx_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and approx sign,
         `<symbol> \\approx <full>`
         """
-        return rf"{self._symbol} \approx {self:{self._format_spec('f', precision)}}"
+        return rf"{self._require_symbol('approx_float')} \approx {self:{self._format_spec('f', precision)}}"
 
     def approx_general(self, precision: int | None = None) -> str:
         """
         Full form with symbol and approx sign,
         `<symbol> \\approx <full>`
         """
-        return rf"{self._symbol} \approx {self:{self._format_spec('g', precision)}}"
+        return rf"{self._require_symbol('approx_general')} \approx {self:{self._format_spec('g', precision)}}"
 
 
 def construct_quantity(magnitude, unit, *, symbol: str | None = None):

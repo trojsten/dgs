@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from core.builder.context.quantities import PhysicsQuantity
+from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.latex import (
     approx_float,
     approx_general,
@@ -215,6 +215,13 @@ class TestApproxEqualsFilters:
     def test_approx_float_uses_approx_sign(self, q):
         assert r'\approx' in approx_float(q, 2)
         assert '=' not in approx_float(q, 2)
+
+    @pytest.mark.parametrize('filt', [equals_float, equals_general, approx_float, approx_general])
+    def test_symbol_less_quantity_raises(self, filt):
+        """`(§ x|ef2 §)` on a symbol-less quantity must crash, not render `None = ...`."""
+        anonymous = PhysicsQuantity.construct(96.7, 'kg')
+        with pytest.raises(MissingSymbolError):
+            filt(anonymous, 2)
 
 
 class TestNth:
