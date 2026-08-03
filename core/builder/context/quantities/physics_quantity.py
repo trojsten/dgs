@@ -28,10 +28,52 @@ class MissingSymbolError(Exception):
         self.method = method
 
 
+class UnknownUnitMacroError(Exception):
+    r"""
+    Raised when pint's LaTeX output contains a unit macro that DGS cannot render.
+    `pint`'s `Lx` format builds the macro from the unit's *full name*, so every
+    multi-word unit arrives as an invalid TeX command (`\astronomical_unit`,
+    `\nautical_mile`, ...). Emitting one would only fail much later, buried in a
+    XeLaTeX log, so we refuse here instead.
+    """
+    def __init__(self, name: str, unit: str):
+        super().__init__(
+            f"pint rendered the unit `{name}` as `\\{name}`, which is not valid TeX "
+            f"(full unit: `{unit}`). Either express the quantity in units DGS knows "
+            f"(e.g. 'm/s' rather than 'mps'), or declare a macro in "
+            f"`core/latex/siunitx.tex` and map it in `PhysicsQuantity.PINT_TO_SIUNITX`."
+        )
+        self.name = name
+        self.unit = unit
+
+
 class PhysicsQuantity:
     """
     Represents a physics quantity for comfortable and reproducible use in calculations and texts.
     """
+
+    #: `pint` unit names whose `Lx` macro is invalid TeX, mapped onto the siunitx
+    #: macros DGS declares (`core/latex/siunitx.tex`) or that siunitx ships itself.
+    #: Anything not listed raises `UnknownUnitMacroError` -- see `_latex_unit`.
+    PINT_TO_SIUNITX = {
+        'degree_Celsius': r'\celsius',
+        'delta_degree_Celsius': r'\dcelsius',
+        'degree_Fahrenheit': r'\fahrenheit',
+        'astronomical_unit': r'\au',
+        'light_year': r'\lightyear',
+        'watt_hour': r'\watthour',
+        'revolutions_per_minute': r'\rpm',
+        'standard_atmosphere': r'\atmosphere',
+        'standard_gravity': r'\gforce',
+        'unified_atomic_mass_unit': r'\atomicmass',
+        'css_pixel': r'\pixel',
+        'metric_ton': r'\tonne',           # siunitx built-in
+        'electron_volt': r'\electronvolt',  # siunitx built-in
+    }
+
+    #: A `\macro` whose name contains an underscore, i.e. one pint built from a
+    #: multi-word unit name. `\kilo\meter_per_hour` matches only the second part.
+    _UNDERSCORE_MACRO = re.compile(r'\\([A-Za-z]+(?:_[A-Za-z0-9]+)+)')
 
     def __init__(self,
                  quantity: pint.Quantity | float,
@@ -273,8 +315,7 @@ class PhysicsQuantity:
         pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
-        unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
-        unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
+        unit = self._latex_unit(si_fragment.group('unit'))
 
         return {
             'cmd': 'num' if unit == '' else 'qty',
@@ -282,6 +323,21 @@ class PhysicsQuantity:
             'magnitude': magnitude,
             'unit': unit,
         }
+
+    @classmethod
+    def _latex_unit(cls, unit: str) -> str:
+        r"""
+        Rewrite pint's multi-word unit macros into the siunitx macros DGS declares.
+        Raises `UnknownUnitMacroError` for anything unmapped rather than emitting
+        an invalid `\foo_bar`.
+        """
+        def substitute(match: re.Match) -> str:
+            name = match.group(1)
+            if name not in cls.PINT_TO_SIUNITX:
+                raise UnknownUnitMacroError(name, unit)
+            return cls.PINT_TO_SIUNITX[name]
+
+        return cls._UNDERSCORE_MACRO.sub(substitute, unit)
 
     @staticmethod
     def format_si_extra(si_extra) -> str:

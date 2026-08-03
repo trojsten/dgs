@@ -10,6 +10,7 @@ from core.builder.context.quantities import (
     QuantityList,
     QuantityProduct,
     QuantityRange,
+    UnknownUnitMacroError,
 )
 
 
@@ -990,3 +991,69 @@ class TestPhysicsConstant:
         rendered = g.full_approx
         assert r'\qty{' in rendered
         assert '9.8' in rendered
+
+
+# --- pint -> siunitx unit macros -----------------------------------------
+
+
+class TestUnitMacros:
+    r"""
+    `pint`'s `Lx` format builds a macro from the unit's *full name*, so every
+    multi-word unit arrives as invalid TeX (`\astronomical_unit`). Known ones are
+    mapped onto the macros declared in `core/latex/siunitx.tex`; the rest must
+    raise rather than reach XeLaTeX.
+    """
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('au', r'\au', id='astronomical_unit'),
+        pytest.param('ly', r'\lightyear', id='light_year'),
+        pytest.param('t', r'\tonne', id='metric_ton'),
+        pytest.param('eV', r'\electronvolt', id='electron_volt'),
+        pytest.param('degC', r'\celsius', id='degree_Celsius'),
+        pytest.param('delta_degC', r'\dcelsius', id='delta_degree_Celsius'),
+        pytest.param('degF', r'\fahrenheit', id='degree_Fahrenheit'),
+        pytest.param('rpm', r'\rpm', id='revolutions_per_minute'),
+        pytest.param('atm', r'\atmosphere', id='standard_atmosphere'),
+        pytest.param('u', r'\atomicmass', id='unified_atomic_mass_unit'),
+        pytest.param('px', r'\pixel', id='css_pixel'),
+        pytest.param('g_0', r'\gforce', id='standard_gravity'),
+        pytest.param('Wh', r'\watthour', id='watt_hour'),
+    ])
+    def test_mapped_units(self, unit, macro):
+        q = PhysicsQuantity.construct(1.5, unit)
+        assert f'{q:g}' == rf'\qty{{1.5}}{{{macro}}}'
+        assert q.only_unit() == rf'\unit{{{macro}}}'
+
+    def test_mapped_unit_inside_compound(self):
+        """A mapped macro must survive being combined with prefixes and `\\per`."""
+        assert PhysicsQuantity.construct(1, 'au/year').only_unit() == r'\unit{\au\per\year}'
+
+    @pytest.mark.parametrize("unit", ['nautical_mile', 'psi', 'tropical_year', 'ft_lb', 'sidereal_day'])
+    def test_unmapped_unit_raises(self, unit):
+        with pytest.raises(UnknownUnitMacroError):
+            f"{PhysicsQuantity.construct(1, unit):g}"
+
+    def test_unmapped_unit_raises_from_only_unit_too(self):
+        with pytest.raises(UnknownUnitMacroError):
+            PhysicsQuantity.construct(1, 'nautical_mile').only_unit()
+
+    def test_error_names_the_offending_unit(self):
+        with pytest.raises(UnknownUnitMacroError, match='nautical_mile') as excinfo:
+            f"{PhysicsQuantity.construct(1, 'nautical_mile'):g}"
+        assert excinfo.value.name == 'nautical_mile'
+
+    def test_compound_pint_alias_raises(self):
+        """`mps` is one pint unit named `meter_per_second`, not `m/s` -- so it must raise."""
+        with pytest.raises(UnknownUnitMacroError):
+            f"{PhysicsQuantity.construct(1, 'mps'):g}"
+        # ... while the same physical unit spelled out is fine
+        assert PhysicsQuantity.construct(1, 'm/s').only_unit() == r'\unit{\meter\per\second}'
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('kg', r'\kilo\gram', id='prefixed'),
+        pytest.param('km/h', r'\kilo\meter\per\hour', id='per'),
+        pytest.param('kg/m^3', r'\kilo\gram\per\meter\cubed', id='power'),
+        pytest.param('J', r'\joule', id='named'),
+    ])
+    def test_ordinary_units_untouched(self, unit, macro):
+        assert PhysicsQuantity.construct(1, unit).only_unit() == rf'\unit{{{macro}}}'

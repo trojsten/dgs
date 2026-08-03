@@ -191,13 +191,32 @@ The pint registry lives in `core/builder/jinja.py` and is installed as pint's
   `EUR`. So `PQ(3, 'eur')|f2` → `\qty{3.00}{\eur}` (`\eur` is declared in
   `core/latex/siunitx.tex`). Currency is not commensurate with anything else, as
   intended.
-- **Temperature.** `PhysicsQuantity.format_struct` rewrites pint's
-  `\degree_Celsius` → `\celsius` and `\delta_degree_Celsius` → `\dcelsius`
-  (both declared in `siunitx.tex`). Use `'degC'` for absolute temperatures and
-  `'delta_degC'` for differences. `absolute + delta` is fine
-  (`20 °C + 5 Δ°C = 25 °C`), but multiplying or dividing an absolute Celsius
-  value raises pint's `OffsetUnitCalculusError` — convert with `.to('kelvin')`
-  before doing arithmetic that scales it.
+- **Temperature.** Use `'degC'` for absolute temperatures and `'delta_degC'` for
+  differences. `absolute + delta` is fine (`20 °C + 5 Δ°C = 25 °C`), but
+  multiplying or dividing an absolute Celsius value raises pint's
+  `OffsetUnitCalculusError` — convert with `.to('kelvin')` before doing
+  arithmetic that scales it.
+
+### Multi-word units
+
+pint's `Lx` format builds the siunitx macro from the unit's *full name*, so any
+multi-word unit comes out as invalid TeX: `au` → `\astronomical_unit`,
+`ly` → `\light_year`, `degC` → `\degree_Celsius`. `PhysicsQuantity._latex_unit`
+rewrites the ones DGS can render via the `PINT_TO_SIUNITX` table
+(`physics_quantity.py`) — currently au, light year, tonne, electronvolt, Celsius
+and ΔCelsius, Fahrenheit, rpm, atmosphere, atomic mass unit, pixel, `\gforce`,
+watt-hour — and raises `UnknownUnitMacroError` for everything else, rather than
+emitting a `\foo_bar` that only blows up later in the XeLaTeX log.
+
+So `PQ(1, 'au')|f2` → `\qty{1.00}{\au}`, and it composes:
+`.to('au/year')` → `\unit{\au\per\year}`. But `'nautical_mile'`, `'psi'`,
+`'tropical_year'`, `'ft_lb'`, … raise. Two ways out:
+
+- Spell the unit out instead of using pint's compound alias — `'m/s'` renders
+  fine, while `'mps'` (one pint unit called `meter_per_second`) raises. Likewise
+  `'km/h'` not `'kph'`.
+- If the unit genuinely belongs in a problem, `\DeclareSIUnit` it in
+  `core/latex/siunitx.tex` and add the pint name to `PINT_TO_SIUNITX`.
 
 ## `@J set` — the everyday case
 
