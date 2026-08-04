@@ -4,7 +4,7 @@ define RULE_TEMPLATE_SCHOLAR
 render/scholar/%/$(1).md: \
 	source/scholar/$$$$*/$(1).md \
 	source/scholar/$$$$*/meta.yaml
-	$$(call jinja_without_preamble,modules.scholar.builder.renderer,$$(lang),source/scholar/$$*/meta.yaml)
+	$$(call jinja,modules.scholar.builder.renderer,$$(lang),source/scholar/$$*/meta.yaml)
 
 build/scholar/%/$(1).tex: \
 	render/scholar/$$*/$(1).md
@@ -17,7 +17,7 @@ render/scholar/%.gp:\
 	source/scholar/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/scholar/%.gp)*.dat)) \
 	$$(abspath source/scholar/$$(dir $$*)/meta.yaml)
-	$(call jinja_without_preamble,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call jinja,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 build/scholar/%/build-handout: \
 	modules/scholar/templates/base.jtex \

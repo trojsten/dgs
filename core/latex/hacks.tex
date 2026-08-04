@@ -3,6 +3,9 @@
 % fix bug in pandoc where lists are not rendered
 \providecommand{\tightlist}{}
 
+% sink counter: pandoc wraps caption-less longtables in \def\LTcaptype{none} so they do not consume a table number
+\newcounter{none}
+
 % force rendering the percent sign with nice font, not ugly Computer modern
 \mathcode`\%="7025
 \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}

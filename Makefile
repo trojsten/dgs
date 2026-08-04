@@ -51,22 +51,12 @@ define _pandoc
 endef
 
 # <builder> <lang> <meta file>
-define jinja_without_preamble
+define jinja
 	@echo -e '$(c_action)[jinja] Rendering \
 		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
 		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default)'
 	@mkdir -p $(dir $@)
     python -m $(1) $(2) $< $@ --context $(3) || exit 1;
-endef
-
-# <builder> <lang> <meta file> <preamble file>
-define jinja_with_preamble
-	@echo -e '$(c_action)[jinja] Rendering \
-		$(c_extension)Markdown template$(c_action) $(c_filename)$<$(c_action) to \
-		$(c_extension)Markdown$(c_action) file $(c_filename)$@$(c_action)$(c_default) with preamble \
-		$(c_filename)$(4)$(c_default)'
-	@mkdir -p $(dir $@)
-    python -m $(1) $(2) $< $@ --context $(3) --preamble $(4) || exit 1;
 endef
 
 

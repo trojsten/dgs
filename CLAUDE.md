@@ -17,7 +17,10 @@ uv run python -m modules.naboj.builder.renderer sk \
     source/naboj/phys/29/problems/<pid>/sk/solution.md /tmp/out.md
 ```
 
-Pass `-P` only when `preamble.md` exists — the renderer errors out if it is missing.
+Pass `-P` only when `preamble.md` exists — the renderer errors out if it is missing. Most
+problems no longer have one: computed quantities belong in the `derived:` mapping in
+`meta.yaml` (name → Jinja expression, evaluated in document order). `preamble.md` remains
+only for computations needing real control flow.
 
 ## Code layout
 

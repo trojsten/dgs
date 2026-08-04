@@ -100,6 +100,29 @@ class JinjaRenderer:
 
         return output
 
+    def evaluate(self,
+                 expression: str,
+                 context: dict[str, Any]) -> Any:
+        """
+        Evaluate a single Jinja *expression* and return the resulting object, not its string
+        rendering. This is what `derived:` entries in a problem's metadata are built from, so
+        filters, globals and the pint registry all work exactly as they do in a template.
+        """
+        self._undefined_cls._collected.clear()
+        try:
+            value = self.env.compile_expression(expression, undefined_to_none=False)(**context)
+        except jinja2.UndefinedError as e:
+            # Using an undefined in arithmetic raises straight away; report it the same way as a
+            # name that merely got rendered, so callers see one error type for one kind of mistake.
+            raise MissingVariablesError([str(e)], template=expression) from e
+
+        if missing := list(dict.fromkeys(self._undefined_cls._collected)):
+            raise MissingVariablesError(missing, template=expression)
+        if isinstance(value, jinja2.Undefined):
+            raise MissingVariablesError([expression], template=expression)
+
+        return value
+
 
     @abstractmethod
     def _render(self,

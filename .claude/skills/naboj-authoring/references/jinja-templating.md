@@ -44,8 +44,9 @@ Everything else about the environments is identical.
 3. Second render pass: re-renders the intermediate so that any Jinja tags that
    appear **inside expanded content** (e.g. inside a MathObject) get expanded too.
 
-This is why you can write things like `(§ result|f0 §)` in `answer.md` and have
-`result` come from `preamble.md` — the preamble is prepended before the first pass.
+This is why you can write things like `(§ result|f0 §)` in `answer.md` and have `result`
+come from the problem's `derived:` mapping — every derived quantity is evaluated while the
+context is built, before either pass runs.
 
 The second pass matters most for `eq:` fragments: `(§ eq.foo|disp §)` expands
 on pass 1 to a display equation whose body still contains raw `(§ … §)` tags
@@ -98,9 +99,9 @@ dropped (`\qty{96.7}{…}`). In practice the bare `f` forms are rarely what you
 want — reach for `|g`, `|eg`, `|ag` or an explicit precision.
 
 `|ef*` vs `|af*` is purely the relation symbol (`=` vs `\approx`); use `|af*`
-for rounded numeric results. Both read `q.symbol`, so a quantity without a
-symbol renders the literal `None` — set `symbol:` in `values:` or use
-`.alias('x')`.
+for rounded numeric results. Both read `q.symbol`, so a quantity without a symbol
+raises `MissingSymbolError` rather than printing `None` — set `symbol:` in `values:`
+or use `.alias('x')`.
 
 For a `MathObject`:
 
@@ -218,18 +219,24 @@ So `PQ(1, 'au')|f2` → `\qty{1.00}{\au}`, and it composes:
 - If the unit genuinely belongs in a problem, `\DeclareSIUnit` it in
   `core/latex/siunitx.tex` and add the pint name to `PINT_TO_SIUNITX`.
 
-## `@J set` — the everyday case
+## Computing values — `derived:`, not `@J set`
 
-Used almost exclusively inside `preamble.md`:
+Computed quantities live in the `derived:` mapping in `meta.yaml`, evaluated in document
+order before anything is rendered:
 
+```yaml
+derived:
+  result:       'v0**2 / const.g.approx - sqrt((v0**4 / const.g.approx**2) - D**2)'
+  result_exact: 'v0**2 / const.g - sqrt((v0**4 / const.g**2) - D**2)'
 ```
-@J set result       = v0**2 / const.g.approx - sqrt((v0**4 / const.g.approx**2) - D**2)
-@J set result_exact = v0**2 / const.g       - sqrt((v0**4 / const.g**2)       - D**2)
-```
 
-The `@J` (line-statement prefix) form is preferred over `(@ set … @)` for
-readability. Idiomatic pattern: compute a rounded-constant version for `answer.md`
-and an exact-constant version for `solution.md`.
+See `layout.md` for the details (ordering, quoting, error reporting). Idiomatic pattern:
+compute a rounded-constant version for `answer.md` and an exact-constant version for
+`solution.md`.
+
+`@J set` in a `preamble.md` still works and is the escape hatch for the rare computation
+that needs real control flow, but it is no longer the everyday tool: a loop can nearly
+always be unrolled into a few named `derived:` steps.
 
 ## Control flow (`.jtex` templates)
 
@@ -256,9 +263,9 @@ them and raises `MissingVariablesError`. The message lists every missing name in
 insertion order. Typical causes:
 
 - Typo in `(§ v_0 §)` when the value is defined as `v0`.
-- Value defined in preamble but preamble file not prepended (check that
-  `preamble.md` exists at the problem level — the Makefile falls back to a
-  no-preamble rule if it's missing).
+- Value defined in `derived:` but misspelled at the use site (or vice versa).
+- Value defined in a `preamble.md` that was not prepended — the Makefile falls back to a
+  no-preamble rule when the file is absent, so a typo'd filename fails this way.
 - Cross-problem reference. Values are scoped to a single problem.
 
 ## Common pitfalls

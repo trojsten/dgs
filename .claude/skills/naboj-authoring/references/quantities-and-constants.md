@@ -111,11 +111,12 @@ Constants (`const.g`, `const.G`, ...) add:
 | `const.g.fullg(p)`        | General-precision printable.                            |
 | `const.g.exact`           | `True` if the value is defined as exact.                |
 
-The idiomatic pattern (see `preamble.md` in `archery`, `ice-ice-baby`, etc.):
+The idiomatic pattern, in `meta.yaml`:
 
-```
-@J set result       = expr(v0, D, const.g.approx)      # for answer.md
-@J set result_exact = expr(v0, D, const.g)             # for solution.md
+```yaml
+derived:
+  result:       'expr(v0, D, const.g.approx)'      # for answer.md
+  result_exact: 'expr(v0, D, const.g)'             # for solution.md
 ```
 
 Constants come from `core/data/constants.yaml`. Each entry:

@@ -1,3 +1,4 @@
+import re
 import subprocess
 import tempfile
 from collections.abc import Callable
@@ -17,9 +18,13 @@ class Convertor:
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp|tikz)}",
                              r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
-            # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF)
+            # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF).
+            # No \begin{figure} wrapper here: pandoc already emits one around captioned images, so
+            # adding another produced a float nested inside a float. \insertPicture centres on its
+            # own, so uncaptioned pictures need no wrapper either -- this is exactly how the
+            # \includegraphics rules above and below behave.
             RegexReplacement(r"\\includesvg(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp)}",
-                             r"\\begin{figure}\\centering\\insertPicture\g<options>{\g<stem>.pdf}\\end{figure}",
+                             r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includesvg to protected \insertPicture"),
             # Change \includegraphics to protected \insertPicture (PNG, JPG and PDF are passed through unchanged)
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
@@ -27,14 +32,6 @@ class Convertor:
                              purpose=r"Change \includegraphics to protected \insertPicture"),
             # Remove empty labels and captions
             RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
-            # Claude's fix for missing bottom rules
-            RegexReplacement(r'\\bottomrule\\noalign\{}\n\\endlastfoot',
-                             r'\\endlastfoot',
-                             purpose="Remove bottom rule from endlastfoot (moved to end of table)"),
-            # Claude's fix for missing bottom rules (currently does not do anything)
-            RegexReplacement(r'\\end{longtable}',
-                             r'\\end{longtable}',
-                             purpose="Restore missing bottom rule"),
         ],
         'html': [
             # Prepend "obrazky/"
@@ -88,6 +85,13 @@ class Convertor:
         ],
         'latex': [
             RegexFailure(r'@H', error="HTML-only tag in LaTeX"),
+            # Pandoc >= 3.2 wraps an image carrying no attributes in \pandocbounded, a macro that
+            # only exists in pandoc's own LaTeX template -- we emit fragments, so it would be
+            # undefined at compile time. The cause is always an image without an attribute block,
+            # so refuse here rather than defining the macro and rendering an unsized picture.
+            RegexFailure(r'\\pandocbounded',
+                         error=r"Caught a \pandocbounded: an image has no attributes. "
+                               r"Give it a size, e.g. ![caption](picture.svg){height=40mm}"),
         ],
     }
 
@@ -169,8 +173,49 @@ class Convertor:
         self.file = self.file_operation(self.preprocess)(self.file)
         self.file = self.call_pandoc()
         self.file = self.file_operation(self.postprocess)(self.file)
+        if self.output_format == 'latex':
+            self.file = self.move_bottom_rules(self.file)
         self.file = self.file_operation(self.post_check)(self.file)
         return self.file.read().rstrip('\n')
+
+    #: A `\bottomrule` on a line of its own, as pandoc emits it inside `\endlastfoot`
+    BOTTOMRULE = re.compile(r'^\\bottomrule(\\noalign\{})?\s*$')
+
+    @classmethod
+    def move_bottom_rules(cls, f: SpooledTemporaryFile[str]) -> SpooledTemporaryFile[str]:
+        r"""
+        Move a table's `\bottomrule` out of `\endlastfoot` and into the table body.
+
+        Pandoc puts it in `\endlastfoot`, which longtable's *output routine* inserts when it
+        recognises the table's last page. Inside a box -- the tearoff wraps every problem in
+        fixed-height minipages -- there is no page breaking and no output routine, so the foot
+        is never consulted and the rule silently disappears. Emitting no-ops after the table
+        does not help: nothing is queued, the foot is simply unused. As the last row of the
+        body the rule is an ordinary `\noalign` between rows and always prints.
+
+        Needs one line of lookahead, hence a buffered pass rather than a `post_regexes` entry.
+        """
+        out = SpooledTemporaryFile(mode='w+')
+        held: str | None = None         # a \bottomrule whose fate depends on the next line
+        deferred = False                # this table's rule has to be re-emitted before its end
+        for line in f:
+            if held is not None:
+                if line.startswith(r'\endlastfoot'):
+                    deferred = True     # drop the held rule, it belongs to the unused foot
+                else:
+                    out.write(held)     # a rule anywhere else stays exactly where it was
+                held = None
+            if cls.BOTTOMRULE.match(line):
+                held = line
+                continue
+            if line.startswith(r'\end{longtable}') and deferred:
+                out.write('\\bottomrule\\noalign{}\n')
+                deferred = False
+            out.write(line)
+        if held is not None:
+            out.write(held)
+        out.seek(0)
+        return out
 
     @staticmethod
     def file_operation(function: Callable) -> Callable:

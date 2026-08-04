@@ -19,20 +19,9 @@ endef
 define NABOJ_TRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
-	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
-	$$$$(call truepath, source/naboj/$$$$*/../preamble.md)
-	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call jinja_with_preamble,\
-		modules.naboj.builder.renderer,\
-		$$(language),\
-		$$(call truepath,$$(abspath $$(dir $$<)/../meta.yaml)),\
-		$$(call truepath,$$(abspath $$(dir $$<)/../preamble.md)))
-
-render/naboj/%/$(1).md: \
-	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call jinja_without_preamble,\
+	$$(call jinja,\
 		modules.naboj.builder.renderer,\
 		$$(language),\
 		$$(abspath $$(dir $$<)/../meta.yaml))
@@ -47,16 +36,9 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call NAB
 define NABOJ_NONTRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
-	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
-	$$$$(call truepath, source/naboj/$$$$*/../preamble.md)
-	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call jinja_with_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml),$$(abspath $$(dir $$<)/preamble.md))
-
-render/naboj/%/$(1).md: \
-	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
-	$$(call jinja_without_preamble,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
+	$$(call jinja,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md
@@ -70,14 +52,7 @@ render/naboj/%.gp:\
 	source/naboj/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
 	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
-	$(call jinja_with_preamble,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml),$(abspath $(dir $<)/preamble.md))
-
-# Copy Gnuplot file to build, along with all of its possible .dat prerequisites
-render/naboj/%.gp:\
-	source/naboj/%.gp \
-	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
-	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
-	$(call jinja_without_preamble,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call jinja,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))

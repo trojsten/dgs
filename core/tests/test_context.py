@@ -119,3 +119,46 @@ class TestMissingVariables:
             pass
         # Next render with all defined should succeed
         assert r.render('(§ x §)', {'x': 1}) == '1'
+
+class TestEvaluate:
+    """
+    `MarkdownJinjaRenderer.evaluate` returns the *object* a Jinja expression produces, not its
+    rendering. This is what `derived:` entries in a problem's metadata are built on.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    def test_returns_an_object_not_a_string(self, renderer):
+        from core.builder.context.quantities import PhysicsQuantity
+        value = renderer.evaluate("PQ(3, 'metre')", {})
+        assert isinstance(value, PhysicsQuantity)
+        assert value.mag == 3
+
+    def test_globals_and_filters_are_available(self, renderer):
+        assert renderer.evaluate("sqrt(PQ(4, 'm^2'))", {}).mag == 2
+        assert renderer.evaluate("pi", {}) == pytest.approx(3.14159, abs=1e-4)
+
+    def test_context_names_are_visible(self, renderer):
+        assert renderer.evaluate("a + b", {'a': 2, 'b': 5}) == 7
+
+    def test_quantities_compose(self, renderer):
+        """The point of `derived:`: later entries build on earlier ones."""
+        from core.builder.context.quantities import PhysicsQuantity
+        v = renderer.evaluate("s / t", {'s': PhysicsQuantity.construct(100, 'm'),
+                                        't': PhysicsQuantity.construct(4, 's')})
+        assert f'{v:g}' == r'\qty{25}{\meter\per\second}'
+
+    def test_unknown_name_raises(self, renderer):
+        """A typo must not silently evaluate to an empty string, as bare rendering would."""
+        with pytest.raises(MissingVariablesError):
+            renderer.evaluate("nonexistent_variable", {})
+
+    def test_unknown_name_in_arithmetic_raises(self, renderer):
+        with pytest.raises(MissingVariablesError):
+            renderer.evaluate("2 * nonexistent_variable", {'a': 1})
+
+    def test_missing_name_is_reported(self, renderer):
+        with pytest.raises(MissingVariablesError, match='nonexistent_variable'):
+            renderer.evaluate("nonexistent_variable", {})

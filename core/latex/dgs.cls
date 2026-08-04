@@ -43,6 +43,8 @@
 \RequirePackage{leftidx}                                    % left subscript and superscript
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
+\RequirePackage{calc}                                       % \real{}, used by pandoc in the column
+                                                            % specifications of tables with widths
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
 \RequirePackage{cancel}                                     % cancellation of terms in mathematical expressions

@@ -77,6 +77,19 @@ class JinjaConvertor:
         return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
+class DerivedQuantityError(Exception):
+    """
+    Raised when a `derived:` expression cannot be evaluated. Names it, so the author does not have to
+    guess which of a dozen expressions is broken -- the underlying error alone rarely says.
+    """
+    def __init__(self, key: str, expression: str, cause: Exception):
+        super().__init__(f"Could not evaluate derived quantity `{key}`: {expression!r}\n"
+                         f"    {cause.__class__.__name__}: {cause}")
+        self.key = key
+        self.expression = expression
+        self.cause = cause
+
+
 class ConstantsContext(FileContext):
     _schema = Schema({
         str: PhysicsConstant,
@@ -99,6 +112,9 @@ class StandaloneContext(FileContext):
     _schema = Schema({
         'id': str,
         Opt('values'): dict[ValidIdentifier, Or(str, float, int, PhysicsConstant)],  # Values
+        # Quantities computed from `values` and `const`: name -> Jinja expression.
+        # Evaluated in document order, so an entry may use anything defined above it.
+        Opt('derived'): dict[ValidIdentifier, str],
         # Equations have to be strings, 'eq' and 'const' are reserved
         Opt('eq'): dict[And(ValidIdentifier, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
     })
@@ -138,13 +154,26 @@ class CLIInterface(cli.CLIInterface, ABC):
 
             ctx.add(**values)
 
+        # Constants must be present before `derived` expressions are evaluated, as they use `const.x`
+        ctx.adopt(const=constants)
+
+        # Process derived quantities: evaluate the expressions in document order, adding each result
+        # to the context, so that a later expression may build on an earlier one. This replaces the
+        # old `preamble.md` full of `@J set` lines for everything but genuine control flow.
+        if 'derived' in context.data:
+            renderer = MarkdownJinjaRenderer()
+            for key, expression in context.data['derived'].items():
+                try:
+                    ctx.add(**{key: renderer.evaluate(expression, ctx.data)})
+                except Exception as e:
+                    raise DerivedQuantityError(key, expression, e) from e
+
         # Process all equations: create MathObject and store under the `eq` key in the context
         if 'eq' in context.data:
             for idx, fragment in context.data['eq'].items():
                 context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment)
             ctx.add(eq=context.data['eq'])
 
-        ctx.adopt(const=constants)
         return ctx
 
     def build_convertor(self, args, **kwargs):
