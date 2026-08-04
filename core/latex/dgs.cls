@@ -72,6 +72,11 @@
     russian,
     english,
 ]{babel}
+% Must precede chemmacros, which pulls in `bm`. When `bm` loads it copies the *current* math
+% fonts into its bold alphabets, so with the default (Computer Modern) still in place every
+% \boldsymbol -- FKS writes all vectors that way -- came out in CM instead of Minion.
+\RequirePackage[minionint, mathlf]{MinionPro}
+
 \RequirePackage{chemmacros}
 \RequirePackage[version=4]{mhchem}
 \chemsetup{formula=mhchem}                                  % avoid a conflict with Russian babel
@@ -79,8 +84,9 @@
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
-\RequirePackage[minionint, mathlf]{MinionPro}
-\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec; must stay after
+                                                            % chemmacros, as it makes any later
+                                                            % \RequirePackage{amsmath} an error
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
 
