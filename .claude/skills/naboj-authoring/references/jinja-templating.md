@@ -57,7 +57,9 @@ Without the second pass, `eq:` would be useless.
 
 Provided by `core/builder/renderer.py::CLIInterface.build_context`:
 
-- `id` — the problem id (from directory name).
+- **Not** `id`. The problem id is read from the directory name into the *metadata* context, where
+  it becomes the `eq:` label prefix (`{#eq:<pid>:<key>}`), but it is never added to the render
+  context — `(§ id §)` raises `MissingVariablesError`.
 - **Every key under `values:` in `meta.yaml`** becomes a variable in the local
   scope. If the value is a dict with `magnitude:` and `unit:`, it becomes a
   `PhysicsQuantity`; if a bare string/number, it's used as-is.

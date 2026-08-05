@@ -15,6 +15,40 @@ log = logging.getLogger('dgs')
 
 ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
 
+#: The only names the rendering context holds itself, and therefore the only ones a `values:` or
+#: `derived:` entry must not claim: `values` and `derived` are spread into the context, so whoever
+#: is added last would win. `const` is *adopted* as a child context rather than spread, so only the
+#: bare name is taken -- its subkeys are untouched, and a value named `g` coexists with `const.g`.
+#: Note `values` and `derived` themselves are section names in the file, never context names, and
+#: `id` lives only in the metadata context, so none of those three are reserved.
+RESERVED_NAMES = frozenset({'const', 'eq'})
+
+
+class DuplicateKeyError(Exception):
+    """
+    Raised when a YAML mapping defines the same key twice. PyYAML keeps the last value at the
+    first key's position, which is invisible in a diff and changes evaluation order for anything
+    ordered -- `derived:` in particular.
+    """
+    def __init__(self, path: Path, keys: list[str]):
+        super().__init__(f"Duplicate keys in {path}: {', '.join(map(str, keys))}")
+        self.path = path
+        self.keys = keys
+
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """A SafeLoader that refuses duplicate keys instead of silently keeping the last one."""
+    def construct_mapping(self, node, deep=False):
+        seen, duplicates = set(), []
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in seen:
+                duplicates.append(key)
+            seen.add(key)
+        if duplicates:
+            raise DuplicateKeyError(Path(getattr(node.start_mark, 'name', '<yaml>')), duplicates)
+        return super().construct_mapping(node, deep)
+
 
 class Context(abc.ABC):
     _defaults: dict[str, Any] = {}      # Defaults for every instance
@@ -58,7 +92,7 @@ class Context(abc.ABC):
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(path)}")
         try:
             with open(path, 'r') as f:
-                contents = yaml.load(f, Loader=yaml.SafeLoader)
+                contents = yaml.load(f, Loader=UniqueKeyLoader)
             self._data = {} if contents is None else contents
         except FileNotFoundError:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))

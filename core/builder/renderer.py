@@ -8,11 +8,11 @@ from abc import ABC
 from io import TextIOWrapper
 from pathlib import Path
 
-from enschema import And, Or, Regex, Schema
+from enschema import Or, Schema
 from enschema import Optional as Opt
 
 from core import cli
-from core.builder.context.context import Context, ValidIdentifier
+from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifier
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
@@ -77,6 +77,18 @@ class JinjaConvertor:
         return self.renderer.render(self.prepare_template(intermediate), self.context.data)
 
 
+class NameCollisionError(Exception):
+    """
+    Raised when a `values:` or `derived:` key collides with another name in the same namespace:
+    either one of the two the render context holds itself (`const`, `eq`), or a `values` entry that
+    a `derived` entry would overwrite. Both are silent otherwise -- whoever is added last wins.
+    """
+    def __init__(self, key: str, block: str, reason: str):
+        super().__init__(f"`{block}` may not define `{key}`: {reason}. Rename it.")
+        self.key = key
+        self.block = block
+
+
 class DerivedQuantityError(Exception):
     """
     Raised when a `derived:` expression cannot be evaluated. Names it, so the author does not have to
@@ -109,16 +121,17 @@ class StandaloneContext(FileContext):
     Base context for the standalone Markdown renderer
     (in the "source (Markdown / Jinja) -> render (Markdown) -> build (TeX / HTML) -> output (TeX / HTML)" chain)
     """
+    # All three blocks name things, so they share one identifier rule (`ValidIdentifier`).
+    # `eq` used to demand `^[a-z][a-zA-Z0-9_]+$`, which uniquely rejected capitals and
+    # single-character names -- `eq: {v: ...}` was invalid while `derived: {v: ...}` was fine.
     _schema = Schema({
         'id': str,
         Opt('values'): dict[ValidIdentifier, Or(str, float, int, PhysicsConstant)],  # Values
         # Quantities computed from `values` and `const`: name -> Jinja expression.
         # Evaluated in document order, so an entry may use anything defined above it.
         Opt('derived'): dict[ValidIdentifier, str],
-        # Equations have to be strings, 'eq' and 'const' are reserved
-        Opt('eq'): dict[And(ValidIdentifier, lambda x: x != 'eq' and x != 'const', Regex(r'^[a-z][a-zA-Z0-9_]+$')), str],
+        Opt('eq'): dict[ValidIdentifier, str],
     })
-
 
 
 class CLIInterface(cli.CLIInterface, ABC):
@@ -127,6 +140,19 @@ class CLIInterface(cli.CLIInterface, ABC):
     """
     description = "Jinja convertor"
     context_cls = StandaloneContext
+
+    @staticmethod
+    def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = frozenset()) -> None:
+        """
+        Refuse names that would silently replace something already in the context. `values` and
+        `derived` are spread into one namespace shared with `const` and `eq`, and whoever is added
+        last wins, so a clash is invisible until a formula quietly uses the wrong thing.
+        """
+        for key in block:
+            if key in RESERVED_NAMES:
+                raise NameCollisionError(key, block_name, "it is used by the rendering context")
+            if key in taken:
+                raise NameCollisionError(key, block_name, "it is already defined under `values`")
 
     def build_context(self) -> Context:
         context = self.context_cls(
@@ -142,6 +168,7 @@ class CLIInterface(cli.CLIInterface, ABC):
         # Process values: if a PhysicsConstant can be constructed, do so, and add directly to the context
         if 'values' in context.data:
             values = context.data['values']
+            self._reject_name_collisions(values, 'values')
 
             for key, params in values.items():
                 if isinstance(params, dict):
@@ -161,6 +188,8 @@ class CLIInterface(cli.CLIInterface, ABC):
         # to the context, so that a later expression may build on an earlier one. This replaces the
         # old `preamble.md` full of `@J set` lines for everything but genuine control flow.
         if 'derived' in context.data:
+            self._reject_name_collisions(context.data['derived'], 'derived',
+                                         taken=set(context.data.get('values') or {}))
             renderer = MarkdownJinjaRenderer()
             for key, expression in context.data['derived'].items():
                 try:
