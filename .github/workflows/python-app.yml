@@ -29,7 +29,7 @@ jobs:
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
         packages: librsvg2-bin lcdf-typetools
-        version: 1.0
+        version: 1.1
     # pandoc and pandoc-crossref have to match: the filter is compiled against one pandoc and
     # warns that anything else "is not supported, strange things may (and likely will) happen
     # silently". So pin only the filter, ask the binary which pandoc it was built with, install
@@ -56,7 +56,21 @@ jobs:
       uses: awalsh128/cache-apt-pkgs-action@latest
       with:
         packages: texlive-full texlive-fonts-extra texlive-science
-        version: 1.0
+        version: 1.1
+    # FontPro fails deep inside a TeX run when a tool is absent, and the apt steps above report
+    # success even when a stale cache restored nothing. Fail here instead, where the step name
+    # alone says what happened.
+    - name: "Verify FontPro prerequisites"
+      run: |
+        missing=""
+        for tool in tex fontinst vptovf pltotf otfinfo otftotfm cfftot1 kpsewhich mktexlsr updmap-sys perl; do
+          command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+        done
+        if [ -n "$missing" ]; then
+          echo "::error::missing tools:$missing"
+          exit 1
+        fi
+        kpsewhich -var-value=TEXMFLOCAL
     - name: "Clone FontPro"
       uses: actions/checkout@master
       with:
