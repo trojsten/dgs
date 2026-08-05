@@ -49,6 +49,14 @@ jobs:
         pandoc --filter pandoc-crossref --to latex /tmp/crossref-check.md 2>&1 | tee /tmp/crossref-check.out
         ! grep -q 'WARNING' /tmp/crossref-check.out
         grep -q 'ref{eq:d}' /tmp/crossref-check.out
+    # Must precede FontPro: its scripts run tex, fontinst, vptovf, pltotf, mktexlsr and
+    # updmap-sys, and it installs into TEXMFLOCAL. This used to work by accident, because the
+    # pandoc action we no longer use dragged in a TeX distribution of its own.
+    - name: "Install XeLaTeX"
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: texlive-full texlive-fonts-extra texlive-science
+        version: 1.0
     - name: "Clone FontPro"
       uses: actions/checkout@master
       with:
@@ -62,11 +70,6 @@ jobs:
         ./scripts/makeall MinionPro
         yes | sudo ./scripts/install
         yes | sudo updmap-sys --enable Map=MinionPro.map
-    - name: "Install XeLaTeX"
-      uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: texlive-full texlive-fonts-extra texlive-science
-        version: 1.0
     - name: "Set up XeLaTeX"
       run: |
         DIR=$(dirname $0)
