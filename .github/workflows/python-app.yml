@@ -19,9 +19,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
-    - uses: siacodelabs/setup-pandoc@v1
-      with:
-          xelatex: true
     - name: astral-sh/setup-uv
       uses: astral-sh/setup-uv@v9.0.0
       with:
@@ -33,11 +30,25 @@ jobs:
       with:
         packages: librsvg2-bin lcdf-typetools
         version: 1.0
-    - name: "Set up pandoc-crossref"
+    # pandoc and pandoc-crossref have to match: the filter is compiled against one pandoc and
+    # warns that anything else "is not supported, strange things may (and likely will) happen
+    # silently". So pin only the filter, ask the binary which pandoc it was built with, install
+    # exactly that one, and fail the job if the pair still disagrees. Bumping = one version here.
+    - name: "Set up pandoc and pandoc-crossref"
+      env:
+        PANDOC_CROSSREF_VERSION: v0.3.25
       run: |
-        wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.16.0a/pandoc-crossref-Linux.tar.xz
-        tar -xf pandoc-crossref-Linux.tar.xz
-        mv ./pandoc-crossref "/usr/local/bin/pandoc-crossref"
+        set -euo pipefail
+        curl -fsSL "https://github.com/lierdakil/pandoc-crossref/releases/download/${PANDOC_CROSSREF_VERSION}/pandoc-crossref-Linux-X64.tar.xz" | tar -xJ
+        install -m755 pandoc-crossref /usr/local/bin/pandoc-crossref
+        PANDOC_VERSION="$(pandoc-crossref --version | sed -n 's/.*built with Pandoc v\([0-9][0-9.]*\).*/\1/p')"
+        echo "pandoc-crossref ${PANDOC_CROSSREF_VERSION} was built with pandoc ${PANDOC_VERSION}"
+        curl -fsSLO "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+        sudo dpkg -i "pandoc-${PANDOC_VERSION}-1-amd64.deb"
+        printf 'x [-@eq:d]\n\n$$E=mc^2$$ {#eq:d}\n' > /tmp/crossref-check.md
+        pandoc --filter pandoc-crossref --to latex /tmp/crossref-check.md 2>&1 | tee /tmp/crossref-check.out
+        ! grep -q 'WARNING' /tmp/crossref-check.out
+        grep -q 'ref{eq:d}' /tmp/crossref-check.out
     - name: "Clone FontPro"
       uses: actions/checkout@master
       with:
