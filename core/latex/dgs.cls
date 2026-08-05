@@ -75,7 +75,12 @@
 % Must precede chemmacros, which pulls in `bm`. When `bm` loads it copies the *current* math
 % fonts into its bold alphabets, so with the default (Computer Modern) still in place every
 % \boldsymbol -- FKS writes all vectors that way -- came out in CM instead of Minion.
-\RequirePackage[minionint, mathlf]{MinionPro}
+% `onlymath`: we want this package for the math families (MnSymbol, and the bold alphabets `bm`
+% copies below), never for text -- fonts.tex sets the text fonts from assets/fonts/ by path. Its
+% text half would set \rmdefault to MinionPro-OsF, a T1-only family, and mathspec then asks for it
+% under fontspec's TU encoding, which does not exist: "Font shape `TU/MinionPro-OsF/m/n' undefined,
+% using `TU/lmr/m/n' instead".
+\RequirePackage[minionint, mathlf, onlymath]{MinionPro}
 
 \RequirePackage{chemmacros}
 \RequirePackage[version=4]{mhchem}
