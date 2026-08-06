@@ -22,12 +22,10 @@ SHEET_SCHEMAS = {
     }),
 }
 
-#: A problem carries at most a heading and a flag. `title` and `name` both appear -- 25 and 26
-#: times across the tree -- and neither is going away without a pass over the sources, so both
-#: are accepted here rather than one being declared wrong by fiat.
+#: A problem carries at most a heading and a flag. Half the tree used to say `name` instead of
+#: `title`; the sources were renamed rather than the schema widened to accept both.
 PROBLEM_SCHEMA = Schema({
     Optional('title'): str,
-    Optional('name'): str,
     Optional('bonus'): bool,
 })
 
