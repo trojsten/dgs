@@ -4,7 +4,7 @@ define RULE_TEMPLATE_SEMINAR
 render/seminar/%/$(1).md: \
 	source/seminar/$$$$*/$(1).md \
 	source/seminar/$$$$*/meta.yaml
-	$$(call jinja_without_preamble,modules.seminar.builder.renderer,$$(lang),source/seminar/$$*/meta.yaml)
+	$$(call jinja,modules.seminar.builder.renderer,$$(lang),source/seminar/$$*/meta.yaml)
 
 build/seminar/%/$(1).tex: \
 	render/seminar/$$*/$(1).md
@@ -17,7 +17,7 @@ render/seminar/%.gp:\
 	source/seminar/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/seminar/%.gp)*.dat)) \
 	$$(abspath source/seminar/$$(dir $$*)/meta.yaml)
-	$(call jinja_without_preamble,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call jinja,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/

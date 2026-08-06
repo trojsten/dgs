@@ -79,10 +79,21 @@ Access via dotted attribute (inside `(§ … §)`):
 | `q.simplify()`  | Convert to base SI units.                                   |
 | `q.only_unit()` | Just the unit as `\unit{…}` (siunitx).                      |
 | `q.widen(v)`    | Return a `QuantityRange` of `[(1−v)q, (1+v)q]`.             |
+| `q.alias('x')`  | Copy of the quantity with a different symbol (keeps unit, `si_extra`, `force_f`). |
+| `q.approximate(n)` | Truly round the magnitude to `n` significant digits. Available on any quantity, not just constants — `const.g.approx` is just `approximate(digits)`. |
 
 Arithmetic operators all work: `+ - * / ** neg`. Mixed with raw numbers you get
 the expected pint behaviour. `q1 % q2` is overloaded: it constructs a
 `QuantityRange(q1, q2)` — do **not** expect Python modulo.
+
+`q.to(...)` takes a unit — a string (`q.to('cm')`), a pint unit object
+(`q.to(other.unit)`), or a pint `Quantity`. Passing a **`PhysicsQuantity`**
+(`q.to(other)`) fails with an unhelpful `AttributeError: 'NoneType' object has
+no attribute 'items'`; write `q.to(other.unit)` instead.
+
+The symbol is the one mutable part: `q.symbol = 'x'` (also `q.sym`, `q.s`)
+works, everything else is immutable. Prefer `.alias('x')` in templates, since it
+returns a value instead of a statement.
 
 ## Extra properties on `PhysicsConstant`
 
@@ -100,11 +111,12 @@ Constants (`const.g`, `const.G`, ...) add:
 | `const.g.fullg(p)`        | General-precision printable.                            |
 | `const.g.exact`           | `True` if the value is defined as exact.                |
 
-The idiomatic pattern (see `preamble.md` in `archery`, `ice-ice-baby`, etc.):
+The idiomatic pattern, in `meta.yaml`:
 
-```
-@J set result       = expr(v0, D, const.g.approx)      # for answer.md
-@J set result_exact = expr(v0, D, const.g)             # for solution.md
+```yaml
+derived:
+  result:       'expr(v0, D, const.g.approx)'      # for answer.md
+  result_exact: 'expr(v0, D, const.g)'             # for solution.md
 ```
 
 Constants come from `core/data/constants.yaml`. Each entry:
@@ -133,9 +145,30 @@ aliases in constants.yaml:
 - `const.e`  → `elementary_charge`
 - `const.m_E`, `const.M_Sun`, etc.
 
-Adding a new constant: edit `core/data/constants.yaml`, keep alphabetical grouping,
-provide `symbol`, `magnitude`, `unit`, `digits`, and any `aliases`. Set `exact: true`
-if the SI defines the value exactly (planck, c, elementary charge, ...).
+Adding a new constant: edit `core/data/constants.yaml`, keep the thematic grouping
+(`### Fundamental`, `### Material`, ...), provide `symbol`, `magnitude`, `unit`,
+`digits`, and any `aliases`. Set `exact: true` if the SI defines the value exactly
+(planck, c, elementary charge, ...).
+
+Details that are easy to get wrong:
+
+- **`magnitude` should carry full known precision; `digits` is only the default
+  print precision.** Rounding belongs in `digits` / `.approx`, never in the
+  stored magnitude — that is why commits keep raising precision in place
+  (`density_water: 998 → 999.972` with `digits: 3`).
+- **Trailing zeros in the magnitude are meaningful to authors, not to Python.**
+  `1.3330` and `1.333` parse identically; the zero documents the intended
+  precision alongside `digits: 4`.
+- **`digits` defaults to 3** when omitted (`PhysicsConstant.__init__`).
+- **`unit: ~` means dimensionless** and formats via `\num{…}` instead of `\qty`.
+  Refractive indices and dimensionless coefficients use this.
+- **`exact: true` is currently metadata only.** It is stored on the constant and
+  readable as `const.x.exact`, but no formatter consumes it — don't expect it to
+  change output.
+- **`force_f: true`** makes `PhysicsConstant.format()` use `.{digits}f` instead
+  of `.{digits}g`, so the value never goes scientific. Used for `gforce`.
+- Units are pint expressions here too, and the mixed styles in the file
+  (`'metre / s^2'`, `'watt / metre squared / kelvin^4'`) all work.
 
 ## Formatting filters (summary; full list in jinja-templating.md)
 
@@ -145,6 +178,10 @@ if the SI defines the value exactly (planck, c, elementary charge, ...).
 - `|nf2`, `|ng3` — `\num{}` with precision.
 - `|ef2` — `v_0 = \qty{50.00}{...}` (uses `.symbol`).
 - `|eg3` — general precision variant.
+- `|af2`, `|ag3` — same, but with `\approx` instead of `=`.
+- All four (`|ef |eg |af |ag`) also exist bare, meaning Python's default for the
+  kind: `f` → six decimals, `g` → six significant digits. Prefer an explicit
+  precision or the `g` forms.
 - `|mag` — raw magnitude only (for further arithmetic).
 - `|unit` — just `\unit{...}`.
 - `|sim` — simplify to base units.
@@ -170,6 +207,14 @@ Format:
 
 - Formatted as `\qtyrange{lo}{hi}{unit}` (or `\numrange{}` for dimensionless).
 - Precision inherited from format spec: `|f2`, `|g3`, ...
+- `r.to('cm')` converts both endpoints (`QuantityList.to` and
+  `QuantityProduct.to` do the same for every element).
+- The constructor coerces `maximum` into `minimum`'s unit, so `QR(PQ(1,'kg'),
+  PQ(500,'g'))` is fine, but `minimum > maximum` after coercion raises
+  `ValueError` and incompatible units raise pint's `DimensionalityError`.
+- `si_extra` of both endpoints is `strict_merge`d (`core/utilities/dicts.py`):
+  identical assignments coalesce, conflicting ones raise `ValueError` instead of
+  silently picking one.
 
 Typical use in `answer-interval.md`:
 
@@ -189,6 +234,7 @@ If you have several commensurate values to typeset as a list:
 - All values are coerced to the first's unit; `pint` raises on incompatible units.
 - Behaves like a sequence of its (coerced) elements: `len(ql)`, `for q in ql`,
   `ql[0]`.
+- `ql.to('cm')` returns a new list with every element converted.
 - Not commonly used in Náboj; more common in scholar / seminar modules.
 - No `.widen()` — unlike a single value or a range, "widening" a list of
   arbitrary points has no single natural meaning, so it's intentionally
@@ -208,7 +254,7 @@ sharing one unit:
 
 ## Common pitfalls
 
-- **Percentages.** `unit: '%'` gives you a `pint` percent. `Q(100, '%')` is
+- **Percentages.** `unit: '%'` gives you a `pint` percent. `PQ(100, '%')` is
   the ad-hoc form. Convert with `.to('1')` when you need a dimensionless ratio.
 - **Angles.** `unit: 'degree'` for degrees; use `.to('radian')` or `rad(x)` in
   Jinja math expressions.

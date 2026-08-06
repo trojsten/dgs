@@ -4,7 +4,14 @@ import pint
 import pytest
 import regex as re
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
+from core.builder.context.quantities import (
+    MissingSymbolError,
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+    UnknownUnitMacroError,
+)
 
 
 @pytest.fixture
@@ -832,6 +839,89 @@ class TestFormatting:
         assert 'round-mode=figures' in str(m)
 
 
+# --- equals_*/approx_* string formatting ---------------------------------
+
+
+class TestEqualsApprox:
+    """`equals_*` use ` = `; `approx_*` use `\\approx` and otherwise format identically."""
+
+    def test_equals_float(self, mass_mega):
+        assert mass_mega.equals_float(2) == r'm_D = \qty{96.70}{\kilo\gram}'
+
+    def test_equals_general(self, mass_mega):
+        assert mass_mega.equals_general(2) == r'm_D = \qty{97}{\kilo\gram}'
+
+    def test_approx_float(self, mass_mega):
+        assert mass_mega.approx_float(2) == r'm_D \approx \qty{96.70}{\kilo\gram}'
+
+    def test_approx_general(self, mass_mega):
+        assert mass_mega.approx_general(2) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_approx_float_precision_zero(self, mass_mega):
+        assert mass_mega.approx_float(0) == r'm_D \approx \qty{97}{\kilo\gram}'
+
+    def test_approx_matches_equals_except_operator(self, mass_mega):
+        """`approx_*` should format identically to `equals_*` other than `=` vs `\\approx`."""
+        assert mass_mega.approx_float(3).replace(r'\approx', '=') == mass_mega.equals_float(3)
+        assert mass_mega.approx_general(3).replace(r'\approx', '=') == mass_mega.equals_general(3)
+
+    def test_precision_is_optional(self, mass_mega):
+        """Omitting precision falls back to the bare 'f'/'g' spec, as in `format_float`."""
+        assert mass_mega.approx_float() == r'm_D \approx \qty{96.700000}{\kilo\gram}'
+        assert mass_mega.approx_general() == r'm_D \approx \qty{96.7}{\kilo\gram}'
+        assert mass_mega.equals_float() == r'm_D = \qty{96.700000}{\kilo\gram}'
+        assert mass_mega.equals_general() == r'm_D = \qty{96.7}{\kilo\gram}'
+
+    def test_explicit_none_precision_matches_omitted(self, mass_mega):
+        """`None` is the documented way to say "no precision", not an error."""
+        assert mass_mega.approx_float(None) == mass_mega.approx_float()
+        assert mass_mega.equals_general(None) == mass_mega.equals_general()
+
+
+class TestEqualsApproxWithoutSymbol:
+    """
+    Rendering a symbol-less quantity with a symbol form must crash, not silently
+    print `None = \\qty{...}` into the text.
+    """
+
+    @pytest.fixture
+    def anonymous(self):
+        return PhysicsQuantity.construct(11.345, 'm/s^2')
+
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    def test_raises_without_symbol(self, anonymous, method):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, method)(2)
+
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    def test_raises_without_symbol_no_precision(self, anonymous, method):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, method)()
+
+    @pytest.mark.parametrize('prop', ['equals', 'eq'])
+    def test_equals_property_raises_without_symbol(self, anonymous, prop):
+        with pytest.raises(MissingSymbolError):
+            getattr(anonymous, prop)
+
+    def test_error_names_the_method(self, anonymous):
+        with pytest.raises(MissingSymbolError, match='equals_float'):
+            anonymous.equals_float(2)
+
+    def test_symbol_less_formatting_still_works(self, anonymous):
+        """Only the symbol forms are affected; plain formatting is untouched."""
+        assert anonymous.full == r'\qty{11.345}{\meter\per\second\squared}'
+        assert f'{anonymous:.1f}' == r'\qty{11.3}{\meter\per\second\squared}'
+
+    def test_aliasing_fixes_it(self, anonymous):
+        assert anonymous.alias('a').equals_float(2) == r'a = \qty{11.35}{\meter\per\second\squared}'
+
+    def test_symbol_set_to_none_again_raises(self, mass_mega):
+        """The symbol is the one mutable field -- clearing it must re-arm the check."""
+        mass_mega.symbol = None
+        with pytest.raises(MissingSymbolError):
+            mass_mega.equals_float(2)
+
+
 # --- Equality semantics --------------------------------------------------
 
 
@@ -901,3 +991,69 @@ class TestPhysicsConstant:
         rendered = g.full_approx
         assert r'\qty{' in rendered
         assert '9.8' in rendered
+
+
+# --- pint -> siunitx unit macros -----------------------------------------
+
+
+class TestUnitMacros:
+    r"""
+    `pint`'s `Lx` format builds a macro from the unit's *full name*, so every
+    multi-word unit arrives as invalid TeX (`\astronomical_unit`). Known ones are
+    mapped onto the macros declared in `core/latex/siunitx.tex`; the rest must
+    raise rather than reach XeLaTeX.
+    """
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('au', r'\au', id='astronomical_unit'),
+        pytest.param('ly', r'\lightyear', id='light_year'),
+        pytest.param('t', r'\tonne', id='metric_ton'),
+        pytest.param('eV', r'\electronvolt', id='electron_volt'),
+        pytest.param('degC', r'\celsius', id='degree_Celsius'),
+        pytest.param('delta_degC', r'\dcelsius', id='delta_degree_Celsius'),
+        pytest.param('degF', r'\fahrenheit', id='degree_Fahrenheit'),
+        pytest.param('rpm', r'\rpm', id='revolutions_per_minute'),
+        pytest.param('atm', r'\atmosphere', id='standard_atmosphere'),
+        pytest.param('u', r'\atomicmass', id='unified_atomic_mass_unit'),
+        pytest.param('px', r'\pixel', id='css_pixel'),
+        pytest.param('g_0', r'\gforce', id='standard_gravity'),
+        pytest.param('Wh', r'\watthour', id='watt_hour'),
+    ])
+    def test_mapped_units(self, unit, macro):
+        q = PhysicsQuantity.construct(1.5, unit)
+        assert f'{q:g}' == rf'\qty{{1.5}}{{{macro}}}'
+        assert q.only_unit() == rf'\unit{{{macro}}}'
+
+    def test_mapped_unit_inside_compound(self):
+        """A mapped macro must survive being combined with prefixes and `\\per`."""
+        assert PhysicsQuantity.construct(1, 'au/year').only_unit() == r'\unit{\au\per\year}'
+
+    @pytest.mark.parametrize("unit", ['nautical_mile', 'psi', 'tropical_year', 'ft_lb', 'sidereal_day'])
+    def test_unmapped_unit_raises(self, unit):
+        with pytest.raises(UnknownUnitMacroError):
+            f"{PhysicsQuantity.construct(1, unit):g}"
+
+    def test_unmapped_unit_raises_from_only_unit_too(self):
+        with pytest.raises(UnknownUnitMacroError):
+            PhysicsQuantity.construct(1, 'nautical_mile').only_unit()
+
+    def test_error_names_the_offending_unit(self):
+        with pytest.raises(UnknownUnitMacroError, match='nautical_mile') as excinfo:
+            f"{PhysicsQuantity.construct(1, 'nautical_mile'):g}"
+        assert excinfo.value.name == 'nautical_mile'
+
+    def test_compound_pint_alias_raises(self):
+        """`mps` is one pint unit named `meter_per_second`, not `m/s` -- so it must raise."""
+        with pytest.raises(UnknownUnitMacroError):
+            f"{PhysicsQuantity.construct(1, 'mps'):g}"
+        # ... while the same physical unit spelled out is fine
+        assert PhysicsQuantity.construct(1, 'm/s').only_unit() == r'\unit{\meter\per\second}'
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('kg', r'\kilo\gram', id='prefixed'),
+        pytest.param('km/h', r'\kilo\meter\per\hour', id='per'),
+        pytest.param('kg/m^3', r'\kilo\gram\per\meter\cubed', id='power'),
+        pytest.param('J', r'\joule', id='named'),
+    ])
+    def test_ordinary_units_untouched(self, unit, macro):
+        assert PhysicsQuantity.construct(1, unit).only_unit() == rf'\unit{{{macro}}}'

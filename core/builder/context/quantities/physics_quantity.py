@@ -12,10 +12,68 @@ from pint import UnitRegistry as u
 from core.filters.hacks import cut_extra_one
 
 
+class MissingSymbolError(Exception):
+    """
+    Raised when a quantity is rendered in a form that includes its symbol
+    (`equals`, `|ef`, `|eg`, `|af`, `|ag`, ...) but no symbol was ever set.
+    Silently printing `None = ...` into a solution is much worse than crashing.
+    """
+    def __init__(self, quantity, method: str):
+        super().__init__(
+            f"Cannot render {quantity!r} as `{method}`: no symbol is defined. "
+            f"Set one with `alias('x')`, `symbol=` at construction, or use a "
+            f"symbol-less filter such as `|nf` / `|ng`."
+        )
+        self.quantity = quantity
+        self.method = method
+
+
+class UnknownUnitMacroError(Exception):
+    r"""
+    Raised when pint's LaTeX output contains a unit macro that DGS cannot render.
+    `pint`'s `Lx` format builds the macro from the unit's *full name*, so every
+    multi-word unit arrives as an invalid TeX command (`\astronomical_unit`,
+    `\nautical_mile`, ...). Emitting one would only fail much later, buried in a
+    XeLaTeX log, so we refuse here instead.
+    """
+    def __init__(self, name: str, unit: str):
+        super().__init__(
+            f"pint rendered the unit `{name}` as `\\{name}`, which is not valid TeX "
+            f"(full unit: `{unit}`). Either express the quantity in units DGS knows "
+            f"(e.g. 'm/s' rather than 'mps'), or declare a macro in "
+            f"`core/latex/siunitx.tex` and map it in `PhysicsQuantity.PINT_TO_SIUNITX`."
+        )
+        self.name = name
+        self.unit = unit
+
+
 class PhysicsQuantity:
     """
     Represents a physics quantity for comfortable and reproducible use in calculations and texts.
     """
+
+    #: `pint` unit names whose `Lx` macro is invalid TeX, mapped onto the siunitx
+    #: macros DGS declares (`core/latex/siunitx.tex`) or that siunitx ships itself.
+    #: Anything not listed raises `UnknownUnitMacroError` -- see `_latex_unit`.
+    PINT_TO_SIUNITX = {
+        'degree_Celsius': r'\celsius',
+        'delta_degree_Celsius': r'\dcelsius',
+        'degree_Fahrenheit': r'\fahrenheit',
+        'astronomical_unit': r'\au',
+        'light_year': r'\lightyear',
+        'watt_hour': r'\watthour',
+        'revolutions_per_minute': r'\rpm',
+        'standard_atmosphere': r'\atmosphere',
+        'standard_gravity': r'\gforce',
+        'unified_atomic_mass_unit': r'\atomicmass',
+        'css_pixel': r'\pixel',
+        'metric_ton': r'\tonne',           # siunitx built-in
+        'electron_volt': r'\electronvolt',  # siunitx built-in
+    }
+
+    #: A `\macro` whose name contains an underscore, i.e. one pint built from a
+    #: multi-word unit name. `\kilo\meter_per_hour` matches only the second part.
+    _UNDERSCORE_MACRO = re.compile(r'\\([A-Za-z]+(?:_[A-Za-z0-9]+)+)')
 
     def __init__(self,
                  quantity: pint.Quantity | float,
@@ -257,8 +315,7 @@ class PhysicsQuantity:
         pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
-        unit = re.sub(r'\\degree_Celsius', r'\\celsius', si_fragment.group('unit'))
-        unit = re.sub(r'\\delta_degree_Celsius', r'\\dcelsius', unit)
+        unit = self._latex_unit(si_fragment.group('unit'))
 
         return {
             'cmd': 'num' if unit == '' else 'qty',
@@ -266,6 +323,21 @@ class PhysicsQuantity:
             'magnitude': magnitude,
             'unit': unit,
         }
+
+    @classmethod
+    def _latex_unit(cls, unit: str) -> str:
+        r"""
+        Rewrite pint's multi-word unit macros into the siunitx macros DGS declares.
+        Raises `UnknownUnitMacroError` for anything unmapped rather than emitting
+        an invalid `\foo_bar`.
+        """
+        def substitute(match: re.Match) -> str:
+            name = match.group(1)
+            if name not in cls.PINT_TO_SIUNITX:
+                raise UnknownUnitMacroError(name, unit)
+            return cls.PINT_TO_SIUNITX[name]
+
+        return cls._UNDERSCORE_MACRO.sub(substitute, unit)
 
     @staticmethod
     def format_si_extra(si_extra) -> str:
@@ -292,13 +364,22 @@ class PhysicsQuantity:
         """
         return f'{self:g}'
 
+    def _require_symbol(self, method: str) -> str:
+        """
+        Return the symbol, or raise if there is none. Every rendering that
+        prints the symbol must go through this.
+        """
+        if self._symbol is None:
+            raise MissingSymbolError(self, method)
+        return self._symbol
+
     @property
     def equals(self) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self.full}"
+        return rf"{self._require_symbol('equals')} = {self.full}"
 
     @property
     def eq(self) -> str:
@@ -307,19 +388,42 @@ class PhysicsQuantity:
         """
         return self.equals
 
-    def equals_float(self, precision: int | None) -> str:
+    @staticmethod
+    def _format_spec(kind: str, precision: int | None) -> str:
         """
-        Full form with symbol and equal sign,
-        `<symbol> = <full>`
+        Build a format spec of the requested kind ('f' or 'g'). `None` precision
+        means the bare spec, i.e. Python's default for that kind -- the same
+        convention as `core.filters.numbers.format_float` / `format_general`.
         """
-        return rf"{self._symbol} = {self:.{precision}f}"
+        return kind if precision is None else f'.{precision}{kind}'
 
-    def equals_general(self, precision: int | None) -> str:
+    def equals_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and equal sign,
         `<symbol> = <full>`
         """
-        return rf"{self._symbol} = {self:.{precision}g}"
+        return rf"{self._require_symbol('equals_float')} = {self:{self._format_spec('f', precision)}}"
+
+    def equals_general(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self._require_symbol('equals_general')} = {self:{self._format_spec('g', precision)}}"
+
+    def approx_float(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> \\approx <full>`
+        """
+        return rf"{self._require_symbol('approx_float')} \approx {self:{self._format_spec('f', precision)}}"
+
+    def approx_general(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> \\approx <full>`
+        """
+        return rf"{self._require_symbol('approx_general')} \approx {self:{self._format_spec('g', precision)}}"
 
 
 def construct_quantity(magnitude, unit, *, symbol: str | None = None):

@@ -100,6 +100,29 @@ class JinjaRenderer:
 
         return output
 
+    def evaluate(self,
+                 expression: str,
+                 context: dict[str, Any]) -> Any:
+        """
+        Evaluate a single Jinja *expression* and return the resulting object, not its string
+        rendering. This is what `derived:` entries in a problem's metadata are built from, so
+        filters, globals and the pint registry all work exactly as they do in a template.
+        """
+        self._undefined_cls._collected.clear()
+        try:
+            value = self.env.compile_expression(expression, undefined_to_none=False)(**context)
+        except jinja2.UndefinedError as e:
+            # Using an undefined in arithmetic raises straight away; report it the same way as a
+            # name that merely got rendered, so callers see one error type for one kind of mistake.
+            raise MissingVariablesError([str(e)], template=expression) from e
+
+        if missing := list(dict.fromkeys(self._undefined_cls._collected)):
+            raise MissingVariablesError(missing, template=expression)
+        if isinstance(value, jinja2.Undefined):
+            raise MissingVariablesError([expression], template=expression)
+
+        return value
+
 
     @abstractmethod
     def _render(self,
@@ -180,8 +203,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                          variable_end_string='§)',
                          **kwargs)
 
-        self.env.filters |= (
-        {
+        self.env.filters |= ({
             'f': numbers.format_float,
             'g': numbers.format_general,
             'n': latex.num,
@@ -189,6 +211,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'ng': latex.num_general,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
+            'af': latex.approx_float,
+            'ag': latex.approx_general,
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': lambda q: q.mag,
@@ -200,18 +224,31 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_format_functions(latex.num_float, 'nf') |
         self.__generate_format_functions(latex.num_general, 'ng') |
         self.__generate_format_functions(latex.equals_float, 'ef') |
-        self.__generate_format_functions(latex.equals_general, 'eg')) | {
+        self.__generate_format_functions(latex.equals_general, 'eg') |
+        self.__generate_format_functions(latex.approx_float, 'af') |
+        self.__generate_format_functions(latex.approx_general, 'ag') | {
            'inline': latex.math_inline,
-           'disp': latex.math_display,
-           'align': latex.math_aligned,
-        }
+           'disp': latex.math_display,                                  # full function
+           'dispd': functools.partial(latex.math_display, punct='.'),   # shorthand with dot
+           'dispc': functools.partial(latex.math_display, punct=','),   # shorthand with comma
+           'disps': functools.partial(latex.math_display, punct=';'),   # shorthand with semicolon
+           'dispq': functools.partial(latex.math_display, punct='?'),   # shorthand with question mark
+           'dispe': functools.partial(latex.math_display, punct='!'),   # shorthand with exclamation mark
+           'align': latex.math_aligned,                                 # full function
+           'alignd': functools.partial(latex.math_aligned, punct='.'),  # shorthand with dot
+           'alignc': functools.partial(latex.math_aligned, punct=','),  # shorthand with comma
+           'aligns': functools.partial(latex.math_aligned, punct=';'),  # shorthand with semicolon
+           'alignq': functools.partial(latex.math_aligned, punct='?'),  # shorthand with question mark
+           'aligne': functools.partial(latex.math_aligned, punct='!'),  # shorthand with exclamation mark
+        })
 
         self.env.globals |= {
-            'Q': PhysicsQuantity.construct,
+            'PQ': PhysicsQuantity.construct,
             'QuantityList': QuantityList,
             'QL': QuantityList,
             'QuantityProduct': QuantityProduct,
             'QP': QuantityProduct,
+            'QuantityRange': QuantityRange,
             'QR': QuantityRange,
         } | {
             'sin': np.sin,

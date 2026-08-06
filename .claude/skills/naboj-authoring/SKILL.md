@@ -27,10 +27,11 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
 
 - Authoring / editing a problem (`problem.md`, `solution.md`, `meta.yaml`, `preamble.md`,
   `answer*.md`) → read `references/layout.md`, then `references/markdown-extensions.md`.
-- Using `(§ … §)` templating, `@J set …`, math filters, `Q(…)`, `const.g`, etc. →
+- Using `(§ … §)` templating, `@J set …`, math filters, `PQ(…)`, `const.g`, etc. →
   `references/jinja-templating.md`.
 - Defining `values:` in meta.yaml, using `PhysicsQuantity`, `.eq`, `.approx`, `.widen`, ranges,
-  formatting filters (`|f2`, `|g3`, `|w(0.05)`) → `references/quantities-and-constants.md`.
+  formatting filters (`|f2`, `|g3`, `|ef2`, `|af2`, `|w(0.05)`) →
+  `references/quantities-and-constants.md`.
 - Using / adding custom LaTeX macros (`\Int`, `\Sum`, `\Ceil`, `\Nuclide`, `\Implies`, …) →
   `references/latex-macros.md`.
 - Style linter failures (missing spaces around `=`, `\SI` vs `\qty`, label conventions,

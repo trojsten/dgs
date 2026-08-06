@@ -19,9 +19,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
-    - uses: siacodelabs/setup-pandoc@v1
-      with:
-          xelatex: true
     - name: astral-sh/setup-uv
       uses: astral-sh/setup-uv@v9.0.0
       with:
@@ -29,33 +26,78 @@ jobs:
     - name: Install dependencies
       run: uv sync --dev
     - name: "Install utilities"
-      uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: librsvg2-bin lcdf-typetools
-        version: 1.0
-    - name: "Set up pandoc-crossref"
       run: |
-        wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.16.0a/pandoc-crossref-Linux.tar.xz
-        tar -xf pandoc-crossref-Linux.tar.xz
-        mv ./pandoc-crossref "/usr/local/bin/pandoc-crossref"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends librsvg2-bin lcdf-typetools
+    # pandoc and pandoc-crossref have to match: the filter is compiled against one pandoc and
+    # warns that anything else "is not supported, strange things may (and likely will) happen
+    # silently". So pin only the filter, ask the binary which pandoc it was built with, install
+    # exactly that one, and fail the job if the pair still disagrees. Bumping = one version here.
+    - name: "Set up pandoc and pandoc-crossref"
+      env:
+        PANDOC_CROSSREF_VERSION: v0.3.25
+      run: |
+        set -euo pipefail
+        curl -fsSL "https://github.com/lierdakil/pandoc-crossref/releases/download/${PANDOC_CROSSREF_VERSION}/pandoc-crossref-Linux-X64.tar.xz" | tar -xJ
+        install -m755 pandoc-crossref /usr/local/bin/pandoc-crossref
+        PANDOC_VERSION="$(pandoc-crossref --version | sed -n 's/.*built with Pandoc v\([0-9][0-9.]*\).*/\1/p')"
+        echo "pandoc-crossref ${PANDOC_CROSSREF_VERSION} was built with pandoc ${PANDOC_VERSION}"
+        curl -fsSLO "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
+        sudo dpkg -i "pandoc-${PANDOC_VERSION}-1-amd64.deb"
+        printf 'x [-@eq:d]\n\n$$E=mc^2$$ {#eq:d}\n' > /tmp/crossref-check.md
+        pandoc --filter pandoc-crossref --to latex /tmp/crossref-check.md 2>&1 | tee /tmp/crossref-check.out
+        ! grep -q 'WARNING' /tmp/crossref-check.out
+        grep -q 'ref{eq:d}' /tmp/crossref-check.out
+    # Must precede FontPro: its scripts run tex, fontinst, vptovf, pltotf, mktexlsr and
+    # updmap-sys, and it installs into TEXMFLOCAL. This used to work by accident, because the
+    # pandoc action we no longer use dragged in a TeX distribution of its own.
+    #
+    # Installed with apt directly rather than through cache-apt-pkgs-action: that action restores
+    # files but never runs the packages' postinst, so a restored TeX has binaries yet no
+    # configuration -- no updmap.cfg under /var/lib/texmf, no ls-R -- and FontPro dies in
+    # `updmap-sys` after minutes of work. The one CI run that ever got past FontPro was the one
+    # that populated the cache, i.e. actually installed.
+    - name: "Install XeLaTeX"
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends texlive-full texlive-fonts-extra texlive-science
+        updmap-sys --version | head -1
+        kpsewhich -var-value=TEXMFLOCAL
+    # FontPro fails deep inside a TeX run when a tool is absent, and the apt steps above report
+    # success even when a stale cache restored nothing. Fail here instead, where the step name
+    # alone says what happened.
+    - name: "Verify FontPro prerequisites"
+      run: |
+        missing=""
+        for tool in tex fontinst vptovf pltotf otfinfo otftotfm cfftot1 kpsewhich mktexlsr updmap-sys perl; do
+          command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+        done
+        if [ -n "$missing" ]; then
+          echo "::error::missing tools:$missing"
+          exit 1
+        fi
+        kpsewhich -var-value=TEXMFLOCAL
     - name: "Clone FontPro"
       uses: actions/checkout@master
       with:
         repository: sebschub/FontPro
         path: assets/fonts/FontPro
-    - name: "Set up FontPro"
+    # Split into three, so a failure is identified by the step name -- the log is not readable
+    # without a token, and this one takes minutes before it dies.
+    - name: "FontPro: build MinionPro"
       run: |
         cd assets/fonts/FontPro
-        mkdir otf
+        mkdir -p otf
         cp ../../fonts/MinionPro/*.otf otf/
         ./scripts/makeall MinionPro
+    - name: "FontPro: install into TEXMFLOCAL"
+      run: |
+        cd assets/fonts/FontPro
         yes | sudo ./scripts/install
+    - name: "FontPro: enable the map file"
+      run: |
         yes | sudo updmap-sys --enable Map=MinionPro.map
-    - name: "Install XeLaTeX"
-      uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: texlive-full texlive-fonts-extra texlive-science
-        version: 1.0
+        kpsewhich MinionPro.map
     - name: "Set up XeLaTeX"
       run: |
         DIR=$(dirname $0)

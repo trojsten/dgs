@@ -151,19 +151,40 @@ Constraints:
 - More common in `chem` than `phys`; useful when the same computation is
   displayed *and* re-used later as a labelled equation.
 
-## `preamble.md`
+## `derived:` — computed quantities
 
-Optional. Executes Jinja before problem/solution rendering; **prepended** to the file being
-rendered. Almost always contains `@J set` lines:
+Everything a problem computes from its `values:` and `const` belongs in the `derived:`
+mapping in `meta.yaml`, as *name: expression*:
 
+```yaml
+derived:
+  result:       'v0**2 / const.g.approx - sqrt((v0**4 / const.g.approx**2) - D**2)'
+  result_exact: 'v0**2 / const.g - sqrt((v0**4 / const.g**2) - D**2)'
 ```
-@J set result = v0**2 / const.g.approx - sqrt((v0**4 / const.g.approx**2) - D**2)
-@J set result_exact = v0**2 / const.g - sqrt((v0**4 / const.g**2) - D**2)
-```
+
+- Evaluated in document order, so an entry may use anything defined above it, plus every
+  `value:`, `const.x`, and all the usual globals (`sqrt`, `pi`, `PQ`, …) and methods
+  (`.to()`, `.alias()`, `.approx`).
+- The results are ordinary context variables: `(§ result|f2 §)` in any of the problem's
+  files, including inside `eq:` entries.
+- Quote expressions with **double quotes outside, single quotes inside**, so nested Jinja
+  strings read naturally: `"(x).to('km/h')"`, `"y.alias('a')"`.
+- A backslash inside a double-quoted scalar must be escaped — write
+  `"z.alias('f_{\\mathrm{max}}')"`. A single `\` is an unknown YAML escape and fails to
+  parse, which is at least loud.
+- A failing expression raises `DerivedQuantityError` naming the key, and an unknown name
+  raises `MissingVariablesError` — neither silently yields an empty value.
 
 Convention: compute a rounded-`const.g` variant (`.approx`) alongside an exact-`const.g`
 variant so both `answer.md` (rounded target for competitors) and `solution.md` (exact
 expression) get sensible values.
+
+## `preamble.md`
+
+Optional, and only for computations `derived:` cannot express — i.e. genuine control flow.
+It is Jinja **prepended** to the file being rendered, and it must be passed explicitly with
+`-P`. Prefer `derived:`: a loop can nearly always be unrolled into a few named steps, which
+is both clearer and checkable.
 
 ## `answer.md` / `answer-also.md` / `answer-interval.md`
 

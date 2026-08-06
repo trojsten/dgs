@@ -31,7 +31,6 @@
 \RequirePackage{siunitx}                                    % SI units
 \RequirePackage{xparse}
 \RequirePackage{enumitem}                                   % sets properties for itemize, enumerate, description...
-\RequirePackage{minted}                                     % nice rendering of included code
 \RequirePackage{lastpage}
 \RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
 \RequirePackage{pdftexcmds}
@@ -44,6 +43,8 @@
 \RequirePackage{leftidx}                                    % left subscript and superscript
 \RequirePackage{afterpage}
 \RequirePackage{longtable}
+\RequirePackage{calc}                                       % \real{}, used by pandoc in the column
+                                                            % specifications of tables with widths
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
 \RequirePackage{cancel}                                     % cancellation of terms in mathematical expressions
@@ -71,6 +72,16 @@
     russian,
     english,
 ]{babel}
+% Must precede chemmacros, which pulls in `bm`. When `bm` loads it copies the *current* math
+% fonts into its bold alphabets, so with the default (Computer Modern) still in place every
+% \boldsymbol -- FKS writes all vectors that way -- came out in CM instead of Minion.
+% `onlymath`: we want this package for the math families (MnSymbol, and the bold alphabets `bm`
+% copies below), never for text -- fonts.tex sets the text fonts from assets/fonts/ by path. Its
+% text half would set \rmdefault to MinionPro-OsF, a T1-only family, and mathspec then asks for it
+% under fontspec's TU encoding, which does not exist: "Font shape `TU/MinionPro-OsF/m/n' undefined,
+% using `TU/lmr/m/n' instead".
+\RequirePackage[minionint, mathlf, onlymath]{MinionPro}
+
 \RequirePackage{chemmacros}
 \RequirePackage[version=4]{mhchem}
 \chemsetup{formula=mhchem}                                  % avoid a conflict with Russian babel
@@ -78,8 +89,9 @@
 
 \RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
 %\RequirePackage{boolexpr}                                  % boolean expressions, switch
-\RequirePackage[minionint, mathlf]{MinionPro}
-\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec; must stay after
+                                                            % chemmacros, as it makes any later
+                                                            % \RequirePackage{amsmath} an error
 \RequirePackage[f]{esvect}
 \RequirePackage{accents}
 
@@ -90,8 +102,6 @@
 
 \AtBeginEnvironment{verbatim}{\setlist[trivlist]{nolistsep}}
 %\newfontfamily\arabicfont[Script=Arabic]{Scheherazade}
-
-\setminted{fontsize=\footnotesize}
 
 \definecolor{colour-url}{RGB}{0, 137, 162}
 \definecolor{colour-link}{RGB}{0, 137, 162}
