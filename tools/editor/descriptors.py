@@ -22,10 +22,21 @@ RENDERABLE_AUX_EXTENSIONS = (".gp",)
 class UnitKind:
     """One `units:` entry: a shape of directory, and what to do with it."""
     glob: str
+    levels: tuple = ()           # what each path segment is: competition, volume, problem, ...
     targets: tuple = ()          # every file the unit may hold, in the order the tabs appear
     translated: tuple = ()       # the subset living inside <language>/ rather than beside it
     render: str = ""
     preview: str = ""
+
+    @property
+    def fixed_levels(self):
+        """
+        Depths the glob pins to a literal, like Náboj's `problems/`. Those are not a choice and
+        the picker leaves them out -- unlike a level that merely has one value at the moment,
+        which is what a seminar competition looks like when only FKS is checked out.
+        """
+        return tuple(i for i, segment in enumerate(self.glob.split("/"))
+                     if not any(c in segment for c in "*?["))
 
     @property
     def all_targets(self):
@@ -64,6 +75,7 @@ def load_modules(repo_root: Path):
             kinds=tuple(
                 UnitKind(
                     glob=entry["glob"],
+                    levels=tuple(entry.get("levels") or ()),
                     targets=tuple(entry.get("targets") or ()),
                     translated=tuple(entry.get("translated") or ()),
                     render=entry.get("render", ""),

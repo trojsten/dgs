@@ -182,6 +182,26 @@ def index():
     return render_template("index.html")
 
 
+def hidden_levels(module):
+    """
+    Path levels the picker should not offer, because the descriptor leaves no choice there.
+
+    A level qualifies only if every unit kind pins it to a literal *and* they all pin it to the
+    same one -- Náboj's `problems/`. Scholar also pins its third level, but to `handouts` in one
+    kind and `homework` in another, so that one is a choice and stays. Neither is the same thing
+    as a level that merely has one value today: seminar has repositories besides FKS, and hiding
+    the competition because only FKS is checked out would give no hint that the others exist.
+    """
+    depths = {}
+    for kind in module.kinds:
+        segments = kind.glob.split("/")
+        for depth, segment in enumerate(segments):
+            literal = segment if depth in kind.fixed_levels else None
+            depths.setdefault(depth, set()).add(literal)
+    return sorted(depth for depth, values in depths.items()
+                  if len(values) == 1 and None not in values)
+
+
 @app.get("/api/modules")
 def api_modules():
     """
@@ -195,6 +215,11 @@ def api_modules():
             "label": module.label,
             "languages": module.languages,
             "units": sorted(discover_units(module)),
+            # What each path level is, and which of them are not a choice at all.
+            "levels": sorted({(i, name)
+                              for kind in module.kinds
+                              for i, name in enumerate(kind.levels)}),
+            "hidden_levels": hidden_levels(module),
         }
         for module in sorted(MODULES.values(), key=lambda m: m.label)
     ])

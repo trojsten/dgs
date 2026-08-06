@@ -5,6 +5,7 @@ label: Seminar
 units:
   # <competition>/<volume>/<semester>/<round>/<problem>, e.g. FKS/41/1/3/07
   - glob: '*/*/*/*/*'
+    levels: [competition, volume, semester, round, problem]
     targets: [problem, solution]
     render: 'render/seminar/{unit}/{target}.md'
     preview: 'output/seminar/{unit}/standalone.pdf'

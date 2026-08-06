@@ -238,9 +238,10 @@ const SELF = "\u00b7";   // the option standing for "this node itself", where it
  * Rebuild the cascade of selects for `unit`, one per level, and return nothing: the selects
  * drive everything through their change handlers.
  *
- * Levels with a single choice are skipped rather than rendered as a dropdown of one -- Naboj's
- * literal `problems/` segment is one of these, so its picker still reads competition, volume,
- * problem exactly as before.
+ * Every level gets a select except those the server reports as no choice at all, which is a
+ * property of the descriptor rather than of what is checked out: seminar has repositories
+ * besides FKS, and hiding the competition because only FKS is cloned would give no hint that
+ * the others exist.
  */
 function renderCascade(unit) {
   const container = el("unit-cascade");
@@ -248,6 +249,8 @@ function renderCascade(unit) {
   if (!state.module) return;
 
   const segments = unit ? unit.split("/") : [];
+  const hidden = new Set(state.module.hidden_levels ?? []);
+  const names = Object.fromEntries(state.module.levels ?? []);
   let node = unitTree(state.module.units);
   const prefix = [];
 
@@ -258,10 +261,11 @@ function renderCascade(unit) {
     const chosen = options.includes(segments[depth]) ? segments[depth]
                  : (node.isUnit && depth === segments.length ? SELF : options[0]);
 
-    if (options.length > 1) {
+    if (!hidden.has(depth)) {
       const select = document.createElement("select");
       fillSelect(select, options);
       select.value = chosen;
+      if (names[depth]) select.title = names[depth];
       const at = [...prefix];
       select.addEventListener("change", (e) => onCascadeChange(at, e.target.value));
       container.appendChild(select);

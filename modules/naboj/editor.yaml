@@ -16,6 +16,10 @@ units:
   - glob: '*/*/problems/*'
     # `targets` is the full set, in the order the tabs appear; `translated` marks the subset that
     # lives inside `<language>/` rather than beside it.
+    # Names for the path levels, one per segment of the glob. A level fixed by the glob -- the
+    # literal `problems/` here -- is not offered as a choice; every other one always is, even
+    # when only one of its values happens to be checked out.
+    levels: [competition, volume, kind, problem]
     targets: [problem, problem-extra, solution, answer, answer-extra, answer-also, answer-interval]
     translated: [problem, problem-extra, solution, answer-extra]
     render: 'render/naboj/{unit}/{language}/{target}.md'

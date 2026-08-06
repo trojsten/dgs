@@ -7,21 +7,25 @@ label: Scholar
 # `modules/scholar/builder/standalone.py` picks the parts from the depth of the path.
 units:
   - glob: '*/*/handouts/*'
+    levels: [course, year, kind, issue]
     targets: [text]
     render: 'render/scholar/{unit}/{target}.md'
     preview: 'output/scholar/{unit}/standalone.pdf'
 
   - glob: '*/*/handouts/*/*'
+    levels: [course, year, kind, issue, problem]
     targets: [problem, solution]
     render: 'render/scholar/{unit}/{target}.md'
     preview: 'output/scholar/{unit}/standalone.pdf'
 
   - glob: '*/*/homework/*'
+    levels: [course, year, kind, issue]
     targets: [text]
     render: 'render/scholar/{unit}/{target}.md'
     preview: 'output/scholar/{unit}/standalone.pdf'
 
   - glob: '*/*/homework/*/*'
+    levels: [course, year, kind, issue, problem]
     targets: [problem, solution]
     render: 'render/scholar/{unit}/{target}.md'
     preview: 'output/scholar/{unit}/standalone.pdf'
