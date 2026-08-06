@@ -61,9 +61,13 @@ TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
 
 # xelatex(module, run, texfot_args)
 # Compiles a selected target
+# TeX wraps its log at 79 columns, which chops error messages mid-word -- "File ended while sc /
+# anning use of \frac". Widening the line keeps each error readable, and quotable, in one piece.
+# Affects only what is printed, never what is typeset.
 define xelatex
 	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
-	@texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) \
+	@max_print_line=1000 error_line=254 half_error_line=238 \
+		texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) \
 		-halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
 endef
 
@@ -126,15 +130,20 @@ build/core/i18n: \
 
 # Jinja template: render Markdown to Markdown. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided
+# It exits nonzero: the recipe does not produce $@, so reporting success only moves the failure
+# to whatever needed the file, which then blames a rule that is not the one at fault. The colour
+# was `$(c_err)`, which is not a variable this makefile defines, so the warning came out unpainted.
 render/%.md: \
 	source/%.md
-	@echo -e '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
+	@echo -e '$(c_error)Incorrect fall-through rule called on $@!$(c_default)'
+	@exit 1
 
 # Pandoc: render Markdown to TeX. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided
 build/%.tex: \
 	render/%.md
-	@echo -e '$(c_err)Incorrect fall-through rule called on $@!$(c_default)'
+	@echo -e '$(c_error)Incorrect fall-through rule called on $@!$(c_default)'
+	@exit 1
 
 # Standalone TeX file from .tikz.tex
 build/%.tikz.tex: \
@@ -160,14 +169,14 @@ build/%.xdv: build/%.tikz.tex
 	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to ' \
 			 '$(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
+	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
 
 build/%.pdf: build/%.tikz.tex
 	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to' \
 			 '$(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
-	texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
 build/%.svg: build/%.xdv
 	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'

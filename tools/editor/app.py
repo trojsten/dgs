@@ -1,5 +1,4 @@
 import argparse
-import os
 import re
 import shutil
 import subprocess
@@ -217,12 +216,6 @@ def api_problem(key):
     })
 
 
-# TeX wraps its log at 79 columns by default, which chops error messages mid-word ("File ended
-# while sc / anning use of \\frac"). Widening the line keeps each error on one line so it can be
-# read, and quoted, whole. Scoped to the editor -- it changes no build output, only the log.
-MAKE_ENV = os.environ | {"max_print_line": "1000", "error_line": "254", "half_error_line": "238"}
-
-
 def run_make(target, *, timeout=60):
     return subprocess.run(
         ["uv", "run", "make", target],
@@ -230,7 +223,6 @@ def run_make(target, *, timeout=60):
         capture_output=True,
         text=True,
         timeout=timeout,
-        env=MAKE_ENV,
     )
 
 
