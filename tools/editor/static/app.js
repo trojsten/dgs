@@ -294,7 +294,15 @@ function setLog(text) {
 }
 
 function logOf(body) {
-  return `$ ${body.command}\n\n${body.stdout}${body.stderr}`;
+  // The summary goes on top: the line that says what is wrong is otherwise the second-to-last
+  // of a few hundred, under a pretty-printed schema or a TeX package banner.
+  const head = body.summary ? `${body.summary}\n\n` : "";
+  return `${head}$ ${body.command}\n\n${body.stdout}${body.stderr}`;
+}
+
+function failureStatus(body, verb) {
+  if (body.summary) return body.summary;
+  return body.returncode === null ? `Cannot ${verb}` : `${verb} failed (exit ${body.returncode})`;
 }
 
 /**
@@ -382,8 +390,7 @@ async function doCompile() {
       // Keep the last good render on screen, badged as out of date, and show why.
       if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(state.key, state.lang), { stale: true });
       switchOutputTab("log");
-      // No exit code when the failure is ours rather than make's (a missing meta.yaml).
-      setStatus(body.returncode === null ? "Cannot compile" : `Compile failed (exit ${body.returncode})`, "error");
+      setStatus(failureStatus(body, "compile"), "error");
     }
   } catch (e) {
     setStatus(e.message, "error");
@@ -408,7 +415,7 @@ async function doRender() {
     } else {
       code.textContent = logOf(body);
       out.classList.add("error");
-      setStatus(body.returncode === null ? "Cannot render" : `Render failed (exit ${body.returncode})`, "error");
+      setStatus(failureStatus(body, "render"), "error");
     }
   } catch (e) {
     setStatus(e.message, "error");

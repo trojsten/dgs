@@ -40,6 +40,14 @@ c_default   := $(shell tput sgr0; tput setaf 7)
 
 .SECONDARY:
 
+# Delete a target whose recipe failed. `argparse.FileType('w')` opens the output file when the
+# arguments are parsed, so the renderer and the convertor both truncate their target before doing
+# any work -- a meta.yaml that fails validation leaves a 0-byte `render/.../solution.md` behind.
+# Make then sees a target newer than its prerequisites and skips it, and the *next* build succeeds
+# with an empty document: three headings and no text, no error anywhere. A silent empty success is
+# far worse than a loud failure, and this is the one-line cure.
+.DELETE_ON_ERROR:
+
 # No interactive mode with texfot
 # and ignore underfull warnings
 TEXFOT_ARGS=--no-interactive \

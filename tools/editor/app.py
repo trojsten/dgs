@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -158,6 +159,12 @@ def api_problem(key):
     })
 
 
+# TeX wraps its log at 79 columns by default, which chops error messages mid-word ("File ended
+# while sc / anning use of \\frac"). Widening the line keeps each error on one line so it can be
+# read, and quoted, whole. Scoped to the editor -- it changes no build output, only the log.
+MAKE_ENV = os.environ | {"max_print_line": "1000", "error_line": "254", "half_error_line": "238"}
+
+
 def run_make(target, *, timeout=60):
     return subprocess.run(
         ["uv", "run", "make", target],
@@ -165,14 +172,58 @@ def run_make(target, *, timeout=60):
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=MAKE_ENV,
     )
 
 
+# XeLaTeX runs with `-file-line-error`, so its errors arrive as `file.tex:12: message`.
+LATEX_ERROR_RE = re.compile(r"^\.?/?\S+\.tex:(\d+):\s*(.+)$", re.MULTILINE)
+# The renderer raises through to the top level, so an authoring mistake in meta.yaml or in a
+# `(§ … §)` tag reaches us as the last line of a Python traceback.
+PYTHON_ERROR_RE = re.compile(r"^(?:[\w.]+\.)?(\w*(?:Error|Exception)):\s*(.+)$", re.MULTILINE)
+
+
+def elide(summary, limit=160):
+    """
+    Keep the summary to one readable line. `MissingVariablesError` in particular interpolates the
+    whole template into its message when rendering from a string rather than a file, so without
+    this the "one line worth reading" is the entire problem statement.
+    """
+    summary = " ".join(summary.split())
+    return summary if len(summary) <= limit else summary[:limit - 1].rstrip() + "\u2026"
+
+
+# `MissingVariablesError` interpolates the whole template into its message before naming the
+# variables, so the part worth reading is the list at the very end, several lines down. Greedy
+# `.*` skips the template to the last `: [...]`.
+MISSING_VARS_RE = re.compile(r"MissingVariablesError: Missing variables in .*: (\[[^\[\]]*\])", re.DOTALL)
+
+
+def summarise_failure(text):
+    """
+    The one line worth reading, pulled out of a few hundred that are not.
+
+    A bad meta.yaml buries `Missing keys: 'authors', 'tags'` under a pretty-printed schema and a
+    twenty-frame traceback; a bad equation buries the TeX error under the package banner. Both
+    stay in the log, but neither should have to be hunted for.
+    """
+    if missing := MISSING_VARS_RE.search(text):
+        return elide(f"Missing variables: {missing.group(1)}")
+    if latex := LATEX_ERROR_RE.search(text):
+        return elide(f"line {latex.group(1)}: {latex.group(2)}")
+    if python := list(PYTHON_ERROR_RE.finditer(text)):
+        name, message = python[-1].groups()
+        return elide(f"{name}: {message}")
+    return None
+
+
 def make_result(target, result):
+    combined = ANSI_RE.sub("", result.stdout + result.stderr)
     return {
         "ok": result.returncode == 0,
         "returncode": result.returncode,
         "command": f"make {target}",
+        "summary": None if result.returncode == 0 else summarise_failure(combined),
         "stdout": ANSI_RE.sub("", result.stdout),
         "stderr": ANSI_RE.sub("", result.stderr),
     }
@@ -189,6 +240,7 @@ def missing_meta_result(target, problem_dir):
         "ok": False,
         "returncode": None,
         "command": f"make {target}",
+        "summary": "meta.yaml does not exist",
         "stdout": f"{problem_dir.relative_to(REPO_ROOT)}/meta.yaml does not exist.\n\n"
                   f"Every render rule needs it, so nothing can be built until it is written. "
                   f"Fill in the meta.yaml pane -- `authors:` and `tags:` at minimum -- and save.\n",
