@@ -52,7 +52,7 @@ render/naboj/%.gp:\
 	source/naboj/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
 	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
-	$(call jinja,modules.naboj.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
+	$(call jinja,modules.naboj.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
 
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))

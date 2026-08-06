@@ -3,12 +3,23 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa uk pt
 
-# Language used to render pictures (`.tikz`, `.gp`). Unlike problem text, a picture lives at the
-# problem level and is shared by every translation, so it can only ever be rendered in one language;
-# the language merely selects number formatting inside the Jinja tags. Both rules already referenced
-# `$(lang)` but nothing ever set it, so they passed an empty argument and died on `invalid choice`
-# -- picture builds only appeared to work while a stale intermediate was still sitting in `build/`.
+# Language a picture (`.tikz`, `.gp`) is rendered in. It is not cosmetic: it selects the locale
+# the Jinja tags format numbers with, so getting it wrong writes a decimal point where the Slovak
+# figure wants a comma.
+#
+# Resolved per picture, most specific first:
+#   1. an explicit `make lang=en ...`, which always wins;
+#   2. the language directory the picture sits in, for a picture that belongs to one translation
+#      (`problems/johan-august/sk/puzzle.tikz`);
+#   3. `$(lang)` below, for the usual case of a picture at the problem level, shared by every
+#      translation and with nothing in its path to infer from.
+#
+# Both rules already referenced `$(lang)`, but nothing ever set it, so they passed an empty
+# argument and died on `invalid choice`. That stayed hidden because a stale intermediate in
+# `build/` lets make skip the rule -- `make -B` on any `.tikz.tex` shows it.
 lang ?= sk
+inferred_lang = $(lastword $(filter $(SUPPORTED_LANGUAGES),$(subst /, ,$(dir $(1)))))
+pathlang = $(if $(findstring command,$(origin lang)),$(lang),$(or $(call inferred_lang,$(1)),$(lang)))
 
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
@@ -122,7 +133,7 @@ build/%.tikz.tex: \
 	source/%.tikz \
 	core/templates/standalone.jtex
 	@mkdir -p $(dir $@)
-	./standalone.py $(lang) $< $@
+	./standalone.py $(call pathlang,$*) $< $@
 
 # Copy py files from source to build
 # These most probably should not be rendered by Jinja (ToDo verify)
