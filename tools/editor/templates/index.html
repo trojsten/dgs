@@ -12,7 +12,11 @@
     <select id="pid-select"></select>
     <select id="lang-select"></select>
     <button id="save-btn">Save (Ctrl/Cmd+S)</button>
-    <button id="render-btn">Render (Ctrl/Cmd+Enter)</button>
+    <button id="compile-btn">Compile (Ctrl/Cmd+Enter)</button>
+    <button id="render-btn">Render</button>
+    <label id="autocompile-label" title="Recompile a short while after you stop typing">
+      <input type="checkbox" id="autocompile"> auto
+    </label>
     <span id="status"></span>
   </header>
 
@@ -25,31 +29,32 @@
       </div>
     </section>
 
+    <div id="col-resizer" role="separator" aria-orientation="vertical" aria-label="Resize source/output columns"></div>
+
     <section id="pane-output" class="pane">
       <div class="tabbar">
-        <button class="tab active" data-output="rendered">Rendered Markdown</button>
+        <button class="tab active" data-output="pdf">PDF</button>
+        <button class="tab" data-output="rendered">Rendered Markdown</button>
         <button class="tab" data-output="lint">Lint (advisory)</button>
+        <button class="tab" data-output="log">Log</button>
+        <a id="pdf-newtab" class="tab-link" href="#" target="_blank" rel="noopener">open in tab &#8599;</a>
       </div>
-      <pre id="output-rendered" class="output"><code id="output-rendered-code"></code></pre>
+      <div id="output-pdf" class="output-frame">
+        <iframe id="pdf-frame" title="Compiled problem"></iframe>
+        <div id="pdf-placeholder" class="placeholder">Nothing compiled yet &mdash; press Ctrl/Cmd+Enter.</div>
+      </div>
+      <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
       <div id="output-lint" class="output" hidden></div>
+      <pre id="output-log" class="output" hidden><code id="output-log-code"></code></pre>
     </section>
 
-    <div id="row-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize meta/preamble panel"></div>
+    <div id="row-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize meta.yaml panel"></div>
 
     <section id="pane-context" class="pane">
-      <div class="context-col">
-        <div class="pane-label">meta.yaml</div>
-        <div class="code-editor">
-          <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
-          <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
-        </div>
-      </div>
-      <div class="context-col">
-        <div class="pane-label">preamble.md</div>
-        <div class="code-editor">
-          <pre class="code-highlight" aria-hidden="true"><code id="preamble-highlight"></code></pre>
-          <textarea id="preamble-editor" class="code-input" spellcheck="false"></textarea>
-        </div>
+      <div class="pane-label">meta.yaml</div>
+      <div class="code-editor">
+        <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
+        <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
       </div>
     </section>
   </main>

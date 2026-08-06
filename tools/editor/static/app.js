@@ -1,19 +1,19 @@
 const state = {
   problems: [],
-  problemIndex: {},   // comp -> vol -> [{pid, key, langs, optional_targets}]
+  problemIndex: {},   // comp -> vol -> [{pid, key, langs}]
   comp: null,
   vol: null,
   key: null,
   lang: null,
-  activeTarget: "problem",
+  targets: [],        // every file this problem/language actually has, in document order
+  activeTarget: null,
   buffers: {},        // target -> current text
-  baseline: {},        // target -> last-saved text (for dirty tracking)
+  baseline: {},       // target -> last-written text (for dirty tracking)
   meta: "",
   metaBaseline: "",
-  preamble: "",
-  preambleBaseline: "",
-  optionalTargets: [],
-  activeOutput: "rendered",
+  activeOutput: "pdf",
+  pdfUrl: null,       // currently displayed PDF, or null when nothing is compiled
+  log: "",
 };
 
 const el = (id) => document.getElementById(id);
@@ -31,18 +31,16 @@ function setStatus(text, cls) {
   s.className = cls || "";
 }
 
-function sourceTargets() {
-  return ["problem", "solution", ...state.optionalTargets];
-}
-
 function isDirty(target) {
   return (state.buffers[target] ?? "") !== (state.baseline[target] ?? "");
 }
 
+function metaDirty() {
+  return state.meta !== state.metaBaseline;
+}
+
 function anyDirty() {
-  if (state.meta !== state.metaBaseline) return true;
-  if (state.preamble !== state.preambleBaseline) return true;
-  return sourceTargets().some(isDirty);
+  return metaDirty() || state.targets.some(isDirty);
 }
 
 // --- syntax highlighting overlay -------------------------------------------
@@ -70,10 +68,26 @@ function setEditorValue(textareaId, highlightId, lang, value) {
   refreshHighlight(textareaId, highlightId, lang);
 }
 
+// --- source tabs -----------------------------------------------------------
+
+const TARGET_LABELS = {
+  "problem": "Problem",
+  "problem-extra": "Problem extra",
+  "solution": "Solution",
+  "answer": "Answer",
+  "answer-extra": "Answer extra",
+  "answer-also": "Answer also",
+  "answer-interval": "Answer interval",
+};
+
+function labelFor(target) {
+  return TARGET_LABELS[target] || target;
+}
+
 function renderSourceTabs() {
   const bar = el("source-tabs");
   bar.innerHTML = "";
-  for (const target of sourceTargets()) {
+  for (const target of state.targets) {
     const btn = document.createElement("button");
     btn.className = "tab" + (target === state.activeTarget ? " active" : "");
     if (isDirty(target)) btn.classList.add("dirty");
@@ -84,21 +98,16 @@ function renderSourceTabs() {
   }
 }
 
-function labelFor(target) {
-  return {
-    "problem": "Problem",
-    "solution": "Solution",
-    "answer": "Answer",
-    "answer-also": "Answer also",
-    "answer-interval": "Answer interval",
-  }[target] || target;
-}
-
 function switchTarget(target) {
+  // Keep whatever is in the textarea before swapping it out, or edits to the tab being
+  // left behind would be lost.
+  if (state.activeTarget) state.buffers[state.activeTarget] = el("source-editor").value;
   state.activeTarget = target;
   setEditorValue("source-editor", "source-highlight", "dgs-md", state.buffers[target] ?? "");
   renderSourceTabs();
 }
+
+// --- problem picker --------------------------------------------------------
 
 function fillSelect(selectEl, values, labelFn) {
   selectEl.innerHTML = "";
@@ -135,7 +144,7 @@ async function loadProblems() {
   for (const p of state.problems) {
     const [comp, vol, , pid] = p.key.split("/");
     (state.problemIndex[comp] ??= {})[vol] ??= [];
-    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs, optional_targets: p.optional_targets });
+    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs });
   }
   for (const comp in state.problemIndex) {
     for (const vol in state.problemIndex[comp]) {
@@ -191,83 +200,79 @@ async function onLangChange(lang) {
 async function loadProblem(key, lang) {
   const url = lang ? `/api/problem/${key}?lang=${lang}` : `/api/problem/${key}`;
   const data = await fetchJSON(url);
-  const meta = state.problems.find((p) => p.key === key);
 
   state.key = key;
   state.lang = data.lang;
-  state.optionalTargets = meta ? meta.optional_targets : [];
-  state.activeTarget = "problem";
+  state.targets = data.targets;
+  state.activeTarget = null;
 
   state.meta = data.meta_yaml ?? "";
   state.metaBaseline = state.meta;
-  state.preamble = data.preamble_md ?? "";
-  state.preambleBaseline = state.preamble;
 
-  state.buffers = {
-    problem: data.problem_md ?? "",
-    solution: data.solution_md ?? "",
-    answer: data.answer_md ?? "",
-    "answer-also": data.answer_also_md ?? "",
-    "answer-interval": data.answer_interval_md ?? "",
-  };
+  state.buffers = {};
+  for (const target of state.targets) state.buffers[target] = data.files[target] ?? "";
   state.baseline = { ...state.buffers };
 
   const [comp, vol, , pid] = key.split("/");
   el("comp-select").value = comp;
   el("vol-select").value = vol;
   el("pid-select").value = pid;
-
-  const langSel = el("lang-select");
-  langSel.innerHTML = "";
-  for (const l of data.langs) {
-    const opt = document.createElement("option");
-    opt.value = l;
-    opt.textContent = l;
-    langSel.appendChild(opt);
-  }
-  langSel.value = data.lang;
+  fillSelect(el("lang-select"), data.langs);
+  el("lang-select").value = data.lang;
 
   setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
-  setEditorValue("preamble-editor", "preamble-highlight", "dgs-preamble", state.preamble);
-  renderSourceTabs();
-  switchTarget("problem");
+  switchTarget(state.targets[0] ?? null);
   setStatus("Loaded", "ok");
+
   el("output-rendered-code").innerHTML = "";
   el("output-rendered").classList.remove("error");
+  setLog("");
+  showPdf(null);
 }
 
+// --- writing back ----------------------------------------------------------
+
 function captureEditors() {
-  state.buffers[state.activeTarget] = el("source-editor").value;
+  if (state.activeTarget) state.buffers[state.activeTarget] = el("source-editor").value;
   state.meta = el("meta-editor").value;
-  state.preamble = el("preamble-editor").value;
+}
+
+/**
+ * Only dirty buffers go over the wire. Writing every file on every compile would bump
+ * their mtimes and make `make` redo the whole problem each time instead of just the part
+ * that changed.
+ */
+function dirtyFiles() {
+  const files = {};
+  if (metaDirty()) files.meta_yaml = state.meta;
+  const targets = {};
+  for (const target of state.targets) {
+    if (isDirty(target)) targets[target] = state.buffers[target];
+  }
+  if (Object.keys(targets).length) files.targets = targets;
+  return files;
 }
 
 function markSaved() {
-  state.baseline[state.activeTarget] = state.buffers[state.activeTarget];
+  state.baseline = { ...state.buffers };
   state.metaBaseline = state.meta;
-  state.preambleBaseline = state.preamble;
   renderSourceTabs();
+}
+
+async function post(url, extra) {
+  captureEditors();
+  return fetchJSON(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: state.key, lang: state.lang, files: dirtyFiles(), ...extra }),
+  });
 }
 
 async function doSave() {
   if (!state.key || !state.lang) return;
-  captureEditors();
   setStatus("Saving…", "dirty");
   try {
-    const body = await fetchJSON("/api/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: state.key,
-        lang: state.lang,
-        target: state.activeTarget,
-        files: {
-          meta_yaml: state.meta,
-          preamble_md: state.preamble,
-          content: state.buffers[state.activeTarget],
-        },
-      }),
-    });
+    const body = await post("/api/save");
     if (body.ok) {
       markSaved();
       setStatus("Saved", "ok");
@@ -277,37 +282,126 @@ async function doSave() {
   }
 }
 
-async function doRender() {
-  if (!state.key || !state.lang) return;
-  captureEditors();
+// --- output pane -----------------------------------------------------------
 
+function setLog(text) {
+  state.log = text;
+  el("output-log-code").textContent = text;
+}
+
+function logOf(body) {
+  return `$ ${body.command}\n\n${body.stdout}${body.stderr}`;
+}
+
+/**
+ * Point the preview at `url`, or clear it when `url` is null.
+ *
+ * When only the content changed, reload in place rather than reassigning `src`: the
+ * browser's PDF viewer keeps its scroll position across a reload but always jumps back to
+ * page one when the src changes. It can throw if the viewer refuses to expose its window,
+ * so fall back to the src swap.
+ */
+function showPdf(url, { stale = false } = {}) {
+  const frame = el("pdf-frame");
+  const placeholder = el("pdf-placeholder");
+  const wrapper = el("output-pdf");
+  const link = el("pdf-newtab");
+
+  wrapper.classList.toggle("stale", stale);
+
+  if (!url) {
+    state.pdfUrl = null;
+    frame.classList.remove("loaded");
+    frame.removeAttribute("src");
+    placeholder.hidden = false;
+    placeholder.textContent = "Nothing compiled yet — press Ctrl/Cmd+Enter.";
+    link.removeAttribute("href");
+    return;
+  }
+
+  const sameDocument = state.pdfUrl === url;
+  state.pdfUrl = url;
+  link.href = url;
+  placeholder.hidden = true;
+  frame.classList.add("loaded");
+
+  // A failed compile did not rewrite the cached file, so there is nothing to refetch --
+  // reloading would only throw away the reader's scroll position for no reason.
+  if (stale && sameDocument) return;
+
+  if (sameDocument) {
+    try {
+      frame.contentWindow.location.reload();
+      return;
+    } catch {
+      // fall through to the src swap
+    }
+  }
+  frame.src = url;
+}
+
+function switchOutputTab(name) {
+  state.activeOutput = name;
+  document.querySelectorAll("#pane-output .tab").forEach((t) => {
+    t.classList.toggle("active", t.dataset.output === name);
+  });
+  el("output-pdf").hidden = name !== "pdf";
+  el("output-rendered").hidden = name !== "rendered";
+  el("output-lint").hidden = name !== "lint";
+  el("output-log").hidden = name !== "log";
+  if (name === "lint") doLint();
+}
+
+// --- actions ---------------------------------------------------------------
+
+/**
+ * `#pagemode=none` keeps the viewer's outline sidebar shut. hyperref marks the document
+ * `/UseOutlines`, so without it PDF.js opens the sidebar over the first page every time.
+ */
+function pdfUrlFor(key, lang) {
+  return `/api/pdf/${key}/${lang}#pagemode=none`;
+}
+
+async function doCompile() {
+  if (!state.key || !state.lang) return;
+  setStatus("Compiling…", "dirty");
+  try {
+    const body = await post("/api/compile");
+    setLog(logOf(body));
+    markSaved();
+
+    if (body.ok) {
+      showPdf(pdfUrlFor(state.key, state.lang));
+      switchOutputTab("pdf");
+      setStatus("Compiled", "ok");
+    } else {
+      // Keep the last good render on screen, badged as out of date, and show why.
+      if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(state.key, state.lang), { stale: true });
+      switchOutputTab("log");
+      setStatus(`Compile failed (exit ${body.returncode})`, "error");
+    }
+  } catch (e) {
+    setStatus(e.message, "error");
+  }
+}
+
+async function doRender() {
+  if (!state.key || !state.lang || !state.activeTarget) return;
   setStatus("Rendering…", "dirty");
   try {
-    const body = await fetchJSON("/api/render", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: state.key,
-        lang: state.lang,
-        target: state.activeTarget,
-        files: {
-          meta_yaml: state.meta,
-          preamble_md: state.preamble,
-          content: state.buffers[state.activeTarget],
-        },
-      }),
-    });
+    const body = await post("/api/render", { target: state.activeTarget });
+    setLog(logOf(body));
+    markSaved();
 
     const out = el("output-rendered");
     const code = el("output-rendered-code");
+    switchOutputTab("rendered");
     if (body.ok) {
       code.innerHTML = highlight(body.rendered_md ?? "", "dgs-md");
       out.classList.remove("error");
       setStatus("Rendered OK", "ok");
-      markSaved();
     } else {
-      const dump = `$ make render/naboj/${state.key}/${state.lang}/${state.activeTarget}.md\n\n${body.stdout}\n${body.stderr}`;
-      code.innerHTML = escapeHtml(dump);
+      code.textContent = logOf(body);
       out.classList.add("error");
       setStatus(`Render failed (exit ${body.returncode})`, "error");
     }
@@ -317,7 +411,7 @@ async function doRender() {
 }
 
 async function doLint() {
-  if (!state.key || !state.lang) return;
+  if (!state.key || !state.lang || !state.activeTarget) return;
   const box = el("output-lint");
   box.textContent = "Linting…";
   try {
@@ -346,15 +440,36 @@ async function doLint() {
   }
 }
 
-const CONTEXT_HEIGHT_KEY = "dgs-editor-context-height";
+// --- auto-compile ----------------------------------------------------------
 
-function wireRowResizer() {
-  const resizer = el("row-resizer");
+const AUTOCOMPILE_KEY = "dgs-editor-autocompile";
+const AUTOCOMPILE_IDLE_MS = 2000;
+let autocompileTimer = null;
+
+function scheduleAutocompile() {
+  if (!el("autocompile").checked) return;
+  clearTimeout(autocompileTimer);
+  autocompileTimer = setTimeout(() => {
+    if (anyDirty()) doCompile();
+  }, AUTOCOMPILE_IDLE_MS);
+}
+
+// --- resizers --------------------------------------------------------------
+
+const CONTEXT_HEIGHT_KEY = "dgs-editor-context-height";
+const SOURCE_WIDTH_KEY = "dgs-editor-source-width";
+
+/**
+ * Wire one draggable gutter. `measure` turns a pointer position into the new CSS value;
+ * the property is the single source of truth shared by the grid template and the drag.
+ */
+function wireResizer(resizerId, property, storageKey, measure) {
+  const resizer = el(resizerId);
   const grid = el("grid");
   let dragging = false;
 
-  const saved = localStorage.getItem(CONTEXT_HEIGHT_KEY);
-  if (saved) grid.style.setProperty("--context-height", saved);
+  const saved = localStorage.getItem(storageKey);
+  if (saved) grid.style.setProperty(property, saved);
 
   resizer.addEventListener("mousedown", (e) => {
     dragging = true;
@@ -364,31 +479,22 @@ function wireRowResizer() {
 
   document.addEventListener("mousemove", (e) => {
     if (!dragging) return;
-    const gridRect = grid.getBoundingClientRect();
-    const height = Math.min(
-      Math.max(gridRect.bottom - e.clientY, 80),
-      gridRect.height - 120
-    );
-    grid.style.setProperty("--context-height", `${height}px`);
+    grid.style.setProperty(property, measure(e, grid.getBoundingClientRect()));
   });
 
   document.addEventListener("mouseup", () => {
     if (!dragging) return;
     dragging = false;
     resizer.classList.remove("dragging");
-    localStorage.setItem(CONTEXT_HEIGHT_KEY, grid.style.getPropertyValue("--context-height"));
+    localStorage.setItem(storageKey, grid.style.getPropertyValue(property));
   });
 }
 
-function switchOutputTab(name) {
-  state.activeOutput = name;
-  document.querySelectorAll("#pane-output .tab").forEach((t) => {
-    t.classList.toggle("active", t.dataset.output === name);
-  });
-  el("output-rendered").hidden = name !== "rendered";
-  el("output-lint").hidden = name !== "lint";
-  if (name === "lint") doLint();
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
+
+// --- init ------------------------------------------------------------------
 
 function init() {
   el("comp-select").addEventListener("change", (e) => onCompChange(e.target.value));
@@ -396,18 +502,30 @@ function init() {
   el("pid-select").addEventListener("change", (e) => onPidChange(e.target.value));
   el("lang-select").addEventListener("change", (e) => onLangChange(e.target.value));
   el("save-btn").addEventListener("click", doSave);
+  el("compile-btn").addEventListener("click", doCompile);
   el("render-btn").addEventListener("click", doRender);
-  wireRowResizer();
+
+  const autocompile = el("autocompile");
+  autocompile.checked = localStorage.getItem(AUTOCOMPILE_KEY) === "1";
+  autocompile.addEventListener("change", () => {
+    localStorage.setItem(AUTOCOMPILE_KEY, autocompile.checked ? "1" : "0");
+    scheduleAutocompile();
+  });
+
+  wireResizer("row-resizer", "--context-height", CONTEXT_HEIGHT_KEY,
+    (e, rect) => `${clamp(rect.bottom - e.clientY, 80, rect.height - 120)}px`);
+  wireResizer("col-resizer", "--source-width", SOURCE_WIDTH_KEY,
+    (e, rect) => `${clamp(e.clientX - rect.left, 200, rect.width - 200)}px`);
 
   wireCodeEditor("source-editor", "source-highlight", "dgs-md", () => {
+    if (!state.activeTarget) return;
     state.buffers[state.activeTarget] = el("source-editor").value;
     renderSourceTabs();
+    scheduleAutocompile();
   });
   wireCodeEditor("meta-editor", "meta-highlight", "dgs-yaml", () => {
     state.meta = el("meta-editor").value;
-  });
-  wireCodeEditor("preamble-editor", "preamble-highlight", "dgs-preamble", () => {
-    state.preamble = el("preamble-editor").value;
+    scheduleAutocompile();
   });
 
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
@@ -416,7 +534,7 @@ function init() {
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
-      doRender();
+      doCompile();
     } else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
       doSave();

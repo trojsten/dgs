@@ -19,11 +19,6 @@ const RULES = {
     { re: /^\s*[\w-]+(?=:)/gm, cls: "tok-key" },
     { re: /(?<![\w.])-?\d+(\.\d+)?\b/g, cls: "tok-number" },
   ],
-  "dgs-preamble": [
-    { re: /^@J\b/gm, cls: "tok-keyword" },
-    { re: /\bset\b/g, cls: "tok-keyword2" },
-    { re: /\bconst\.[\w.]+/g, cls: "tok-const" },
-  ],
 };
 
 function escapeHtml(s) {

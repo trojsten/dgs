@@ -1,17 +1,33 @@
 import argparse
 import re
+import shutil
 import subprocess
 import threading
 from pathlib import Path
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_file
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPO_ROOT / "source" / "naboj"
 
-TRANSLATABLE_TARGETS = {"problem", "solution", "problem-extra"}
-NONTRANSLATABLE_TARGETS = {"answer", "answer-also", "answer-interval", "answer-extra"}
-ALL_TARGETS = TRANSLATABLE_TARGETS | NONTRANSLATABLE_TARGETS
+# Which directory a target's source lives in, mirroring the two rule families in
+# `modules/naboj/module.mk`: translatable files sit in `<problem>/<language>/`, the rest
+# directly in `<problem>/`. `answer-extra` is translated -- it is covered by the
+# NABOJ_TRANSLATABLE loop and its file lives under the language directory.
+TRANSLATABLE_TARGETS = ("problem", "problem-extra", "solution", "answer-extra")
+NONTRANSLATABLE_TARGETS = ("answer", "answer-also", "answer-interval")
+
+# Display order: the order the standalone document prints them in.
+ORDERED_TARGETS = (
+    "problem", "problem-extra", "solution",
+    "answer", "answer-extra", "answer-also", "answer-interval",
+)
+ALL_TARGETS = frozenset(TRANSLATABLE_TARGETS) | frozenset(NONTRANSLATABLE_TARGETS)
+
+# Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed
+# compile can leave a truncated file in `output/`; serving a copy means a broken edit keeps
+# showing the previous render beside the error log instead of a blank pane.
+PDF_CACHE = REPO_ROOT / "build" / ".editor-preview"
 
 LANG_RE = re.compile(r"^[a-z]{2,3}$")
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][A-Za-z0-9]")
@@ -82,13 +98,19 @@ def list_problems():
         if problem_dir.parent.name != "problems":
             continue  # venue/constants/language config, not an actual problem
         key = problem_dir.relative_to(SOURCE_ROOT).as_posix()
-        langs = available_langs(problem_dir)
-        optional = [
-            t for t in ("answer", "answer-also", "answer-interval")
-            if (problem_dir / f"{t}.md").is_file()
-        ]
-        problems.append({"key": key, "langs": langs, "optional_targets": optional})
+        problems.append({"key": key, "langs": available_langs(problem_dir)})
     return problems
+
+
+def existing_targets(problem_dir, lang):
+    """
+    Every target this problem actually has a file for, in document order. The editor opens
+    all of them at once, so it needs the list rather than a fixed pair plus extras.
+    """
+    return [
+        target for target in ORDERED_TARGETS
+        if lang and source_path_for_target(problem_dir, lang, target).is_file()
+    ]
 
 
 @app.get("/")
@@ -107,63 +129,76 @@ def api_problem(key):
     langs = available_langs(problem_dir)
     lang = request.args.get("lang") or (langs[0] if langs else None)
 
-    data = {
+    if lang:
+        validate_lang(problem_dir, lang)
+
+    targets = existing_targets(problem_dir, lang)
+    return jsonify({
         "key": key,
         "langs": langs,
         "lang": lang,
+        "targets": targets,
         "meta_yaml": read_if_exists(problem_dir / "meta.yaml"),
-        "preamble_md": read_if_exists(problem_dir / "preamble.md"),
-        "answer_md": read_if_exists(problem_dir / "answer.md"),
-        "answer_also_md": read_if_exists(problem_dir / "answer-also.md"),
-        "answer_interval_md": read_if_exists(problem_dir / "answer-interval.md"),
-        "problem_md": None,
-        "solution_md": None,
-        "problem_extra_md": None,
-    }
-
-    if lang:
-        validate_lang(problem_dir, lang)
-        lang_dir = problem_dir / lang
-        data["problem_md"] = read_if_exists(lang_dir / "problem.md")
-        data["solution_md"] = read_if_exists(lang_dir / "solution.md")
-        data["problem_extra_md"] = read_if_exists(lang_dir / "problem-extra.md")
-
-    return jsonify(data)
+        "files": {
+            target: read_if_exists(source_path_for_target(problem_dir, lang, target))
+            for target in targets
+        },
+    })
 
 
-def run_make(target):
+def run_make(target, *, timeout=60):
     return subprocess.run(
         ["uv", "run", "make", target],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=timeout,
     )
 
 
-def write_files(problem_dir, lang, target, files):
-    if "meta_yaml" in files:
+def make_result(target, result):
+    return {
+        "ok": result.returncode == 0,
+        "returncode": result.returncode,
+        "command": f"make {target}",
+        "stdout": ANSI_RE.sub("", result.stdout),
+        "stderr": ANSI_RE.sub("", result.stderr),
+    }
+
+
+def write_files(problem_dir, lang, files):
+    """
+    Write back every buffer the editor sent. All of a problem's files are open at once, so a
+    save or a compile has to flush all the dirty ones -- compiling only the active tab would
+    silently preview a mixture of edited and stale text.
+    """
+    if files.get("meta_yaml") is not None:
         (problem_dir / "meta.yaml").write_text(files["meta_yaml"])
-    if "preamble_md" in files:
-        (problem_dir / "preamble.md").write_text(files["preamble_md"])
-    if "content" in files:
-        source_path_for_target(problem_dir, lang, target).write_text(files["content"])
+
+    for target, content in (files.get("targets") or {}).items():
+        validate_target(target)
+        source_path = source_path_for_target(problem_dir, lang, target)
+        if not source_path.is_file():
+            raise BadRequest(f"Refusing to create a new file: {target}.md does not exist")
+        source_path.write_text(content)
+
+
+def request_problem(body):
+    """Resolve and validate the `key`/`lang` every endpoint below starts with."""
+    key = body.get("key")
+    lang = body.get("lang")
+    problem_dir = resolve_problem_dir(key)
+    validate_lang(problem_dir, lang)
+    return key, lang, problem_dir
 
 
 @app.post("/api/save")
 def api_save():
     body = request.get_json(force=True)
-    key = body.get("key")
-    lang = body.get("lang")
-    target = body.get("target")
-    files = body.get("files") or {}
-
-    problem_dir = resolve_problem_dir(key)
-    validate_lang(problem_dir, lang)
-    validate_target(target)
+    key, lang, problem_dir = request_problem(body)
 
     with BUILD_LOCK:
-        write_files(problem_dir, lang, target, files)
+        write_files(problem_dir, lang, body.get("files") or {})
 
     return jsonify({"ok": True})
 
@@ -171,33 +206,61 @@ def api_save():
 @app.post("/api/render")
 def api_render():
     body = request.get_json(force=True)
-    key = body.get("key")
-    lang = body.get("lang")
+    key, lang, problem_dir = request_problem(body)
     target = body.get("target")
-    files = body.get("files") or {}
-
-    problem_dir = resolve_problem_dir(key)
-    validate_lang(problem_dir, lang)
     validate_target(target)
 
     with BUILD_LOCK:
-        write_files(problem_dir, lang, target, files)
+        write_files(problem_dir, lang, body.get("files") or {})
 
         make_target = f"render/naboj/{key}/{lang}/{target}.md"
-        result = run_make(make_target)
-
-        response = {
-            "ok": result.returncode == 0,
-            "stdout": ANSI_RE.sub("", result.stdout),
-            "stderr": ANSI_RE.sub("", result.stderr),
-            "returncode": result.returncode,
-            "rendered_md": None,
-        }
-        if response["ok"]:
-            render_path = render_path_for_target(key, lang, target)
-            response["rendered_md"] = read_if_exists(render_path)
+        response = make_result(make_target, run_make(make_target))
+        response["rendered_md"] = (
+            read_if_exists(render_path_for_target(key, lang, target)) if response["ok"] else None
+        )
 
     return jsonify(response)
+
+
+def cached_pdf_path(key, lang):
+    return PDF_CACHE / key / lang / "standalone.pdf"
+
+
+@app.post("/api/compile")
+def api_compile():
+    """Write every buffer, then build the standalone one-problem PDF for the preview pane."""
+    body = request.get_json(force=True)
+    key, lang, problem_dir = request_problem(body)
+
+    with BUILD_LOCK:
+        write_files(problem_dir, lang, body.get("files") or {})
+
+        make_target = f"output/naboj/{key}/{lang}/standalone.pdf"
+        response = make_result(make_target, run_make(make_target, timeout=300))
+
+        built = REPO_ROOT / make_target
+        if response["ok"] and built.is_file():
+            cached = cached_pdf_path(key, lang)
+            cached.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(built, cached)
+
+        response["has_pdf"] = cached_pdf_path(key, lang).is_file()
+
+    return jsonify(response)
+
+
+@app.get("/api/pdf/<path:key>/<lang>")
+def api_pdf(key, lang):
+    problem_dir = resolve_problem_dir(key)
+    validate_lang(problem_dir, lang)
+
+    cached = cached_pdf_path(key, lang)
+    if not cached.is_file():
+        raise BadRequest("Nothing compiled yet for this problem and language.")
+
+    response = send_file(cached, mimetype="application/pdf")
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 VIOLATION_RE = re.compile(r"^File (?P<file>.+) line (?P<line>\d+): (?P<message>.+)$")
@@ -227,12 +290,8 @@ def parse_mdcheck_output(stdout):
 @app.post("/api/lint")
 def api_lint():
     body = request.get_json(force=True)
-    key = body.get("key")
-    lang = body.get("lang")
+    key, lang, _ = request_problem(body)
     target = body.get("target")
-
-    problem_dir = resolve_problem_dir(key)
-    validate_lang(problem_dir, lang)
     validate_target(target)
 
     render_path = render_path_for_target(key, lang, target)

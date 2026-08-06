@@ -34,13 +34,25 @@ html, body {
 
 #save-btn:hover { background: #386f92; }
 
-#render-btn {
+#compile-btn {
   cursor: pointer;
   background: #2f6f4f;
   border-color: #3a8a63;
 }
 
-#render-btn:hover { background: #38875e; }
+#compile-btn:hover { background: #38875e; }
+
+#render-btn { cursor: pointer; }
+#render-btn:hover { background: #3d3d3d; }
+
+#autocompile-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #999;
+  cursor: pointer;
+}
 
 #status {
   margin-left: auto;
@@ -54,13 +66,14 @@ html, body {
 
 #grid {
   --context-height: 240px;
+  --source-width: 1fr;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: var(--source-width) 8px 1fr;
   grid-template-rows: 1fr 8px var(--context-height);
   grid-template-areas:
-    "source output"
-    "resizer resizer"
-    "context context";
+    "source colresizer output"
+    "rowresizer rowresizer rowresizer"
+    "context context context";
   gap: 1px;
   background: #3a3a3a;
   height: calc(100vh - 48px);
@@ -70,51 +83,38 @@ html, body {
 #pane-output { grid-area: output; }
 #pane-context { grid-area: context; }
 
-#row-resizer {
-  grid-area: resizer;
+#row-resizer, #col-resizer {
   position: relative;
   background: #252526;
-  cursor: row-resize;
   user-select: none;
 }
 
-#row-resizer:hover,
-#row-resizer.dragging {
+#row-resizer { grid-area: rowresizer; cursor: row-resize; }
+#col-resizer { grid-area: colresizer; cursor: col-resize; }
+
+#row-resizer:hover, #row-resizer.dragging,
+#col-resizer:hover, #col-resizer.dragging {
   background: #2f6f4f;
 }
 
-#row-resizer::after {
+#row-resizer::after, #col-resizer::after {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 32px;
-  height: 2px;
   background: #666;
   transform: translate(-50%, -50%);
   border-radius: 1px;
 }
+
+#row-resizer::after { width: 32px; height: 2px; }
+#col-resizer::after { width: 2px; height: 32px; }
 
 .pane {
   display: flex;
   flex-direction: column;
   background: #1e1e1e;
   overflow: hidden;
-}
-
-#pane-context {
-  flex-direction: row;
-}
-
-.context-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.context-col + .context-col {
-  border-left: 1px solid #3a3a3a;
 }
 
 .pane-label {
@@ -151,6 +151,65 @@ html, body {
 .tab.dirty::after {
   content: " \25cf";
   color: #e0c34a;
+}
+
+.tab-link {
+  margin-left: auto;
+  align-self: center;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  color: #777;
+  text-decoration: none;
+}
+
+.tab-link:hover { color: #ddd; }
+
+/* The PDF pane. The browser's built-in viewer does the rendering, so there is nothing to
+   vendor -- but it resets to page 1 on every reload, hence the page bookkeeping in app.js. */
+.output-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #2a2a2a;
+}
+
+#pdf-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: none;
+}
+
+#pdf-frame.loaded { display: block; }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.placeholder.stale { color: #e0c34a; }
+.placeholder[hidden] { display: none; }
+
+/* A compile failure leaves the previous PDF on screen; this marks it as out of date so the
+   pane is never quietly lying about what the source currently says. */
+.output-frame.stale::after {
+  content: "compile failed \2014 showing last good render";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.3rem 0.6rem;
+  background: #7a2f2f;
+  color: #fff;
+  font-size: 0.8rem;
+  text-align: center;
 }
 
 .code-editor {
