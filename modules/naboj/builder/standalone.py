@@ -18,9 +18,31 @@ from pathlib import Path
 
 import argparsedirs
 
+import yaml
+
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
 from modules.naboj.builder.contexts import ContextI18nGlobal
+
+#: Shown in the framed box when the problem's position cannot be established.
+UNNUMBERED = '?'
+
+
+def problem_number(launch_directory: Path, competition: str, volume: int, problem: str) -> str:
+    """
+    The problem's position in the volume, which is what the booklet prints in its box.
+
+    Read straight from the volume's `problems:` list rather than through `ContextVolume`, which
+    validates the whole volume meta and would refuse a volume that is merely incomplete -- 18 has
+    no `problems:` list at all. Any failure falls back to `?`: an unnumbered preview is worth far
+    more than no preview.
+    """
+    meta = Path(launch_directory) / competition / f'{volume:02d}' / 'meta.yaml'
+    try:
+        problems = (yaml.safe_load(meta.read_text()) or {}).get('problems') or []
+        return str(problems.index(problem) + 1)
+    except (OSError, ValueError, AttributeError, yaml.YAMLError):
+        return UNNUMBERED
 
 
 class BuilderNabojStandalone:
@@ -40,7 +62,10 @@ class BuilderNabojStandalone:
             module={'id': 'naboj'},
             competition={'id': competition},
             volume={'id': f'{volume:02d}'},
-            problem={'id': problem},
+            problem={
+                'id': problem,
+                'number': problem_number(launch_directory, competition, volume, problem),
+            },
             language={'id': language},
         # `blocks/answer-body.jtex` leads the interval and "also accept" answers in with a
         # localised phrase, so the preview needs the competition's i18n after all. It is only

@@ -32,13 +32,17 @@
         \fancyfoot[C]{\small \thepage}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0pt}
-        \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+        (# Copied from `base-booklet.jtex`: a part is headed by its problem number in a 7mm
+           framed box, run in with the text that follows. The preview is for judging how a
+           problem will look in print, so its headings have to be the printed ones. #)
+        \titleformat{\subsection}[runin]{\bfseries}{}{0pt}{\setlength{\fboxsep}{3pt}\framebox[7mm]}[\setlength{\fboxsep}{0pt}]
         \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
         \titleformat{\paragraph}[hang]{\bfseries\itshape}{}{0pt}{}[]
-        \titlespacing*{\subsection}{0pt}{12pt}{8pt}
+        \titlespacing*{\subsection}{0pt}{8pt}{8pt}
         \titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
         \titlespacing*{\paragraph}{0pt}{8pt}{-1em}
     }
+    \setcounter{secnumdepth}{3}
 
     (# Carries `\selectlanguage`, the localised decimal separator for siunitx,
        and the `\crefname`s that pandoc-crossref references resolve against. #)
@@ -59,14 +63,15 @@
        Get this path wrong and every figure silently degrades to `example-image`. #)
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 
-    (# Headed with the booklet's own section names, so the preview reads in the language it is
-       written in.
+    (# Each part is headed exactly as the booklet heads it: the problem's number in a framed box,
+       run in with the text. The booklet tells problem from solution from answer by which of its
+       three sections you are in; here they simply follow one another, in that order.
 
        Guarded with `\IfFileExists` rather than in Jinja: the document is rendered once and then
        compiled against whatever the Makefile actually built, and an optional part may appear or
        vanish without the context ever changing. #)
     \IfFileExists{\activeDirectory/(* language.id *)/problem.tex}{%
-        \subsection*{(* i18n[language.id].section.problems *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *) -- problem}}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
@@ -79,21 +84,21 @@
        own page here too, and the tearoff's `*` marker. #)
     \IfFileExists{\activeDirectory/(* language.id *)/problem-extra.tex}{%
         \newpage%
-        \subsection*{(* i18n[language.id].section.problems *)*}%
+        \subsection{\texorpdfstring{(* problem.number *)*}{(* problem.number *)*. (* problem.id *) -- problem extra}}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
         \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
     }{}%
     \IfFileExists{\activeDirectory/(* language.id *)/solution.tex}{%
-        \subsection*{(* i18n[language.id].section.solutions *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *) -- solution}}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
         \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
     }{}%
     \IfFileExists{\activeDirectory/(* language.id *)/answer.tex}{%
-        \subsection*{(* i18n[language.id].section.answers *)}%
+        \subsection{\texorpdfstring{(* problem.number *)}{(* problem.number *). (* problem.id *) -- answer}}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
