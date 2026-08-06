@@ -59,28 +59,30 @@
        Get this path wrong and every figure silently degrades to `example-image`. #)
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 
-    (# The parts are `\IfFileExists`-guarded rather than checked in Jinja: this document is
-       rendered once and then compiled against whatever the Makefile actually built, and an
-       optional part may appear or vanish without the context ever changing. #)
-    (@ for part, title in [
-        ('problem', 'Problem'),
-        ('problem-extra', 'Problem (extra)'),
-        ('solution', 'Solution'),
-    ] @)
-    \IfFileExists{\activeDirectory/(* language.id *)/(* part *).tex}{%
-        \subsection*{(* title *)}%
+    (# Three sections, headed with the booklet's own section names so the preview reads in the
+       language it is written in. There is no i18n name for `problem-extra` or for the answer
+       extras, and neither wants one: each is a continuation of the part above it, which is why
+       `blocks/problem-body.jtex` and `blocks/answer-body.jtex` fold them in.
+
+       Guarded with `\IfFileExists` rather than in Jinja: the document is rendered once and then
+       compiled against whatever the Makefile actually built, and an optional part may appear or
+       vanish without the context ever changing. #)
+    \IfFileExists{\activeDirectory/(* language.id *)/problem.tex}{%
+        \subsection*{(* i18n[language.id].section.problems *)}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
-        \protectedInput{\activeDirectory/(* language.id *)/(* part *).tex}%
+        (@ include 'blocks/problem-body.jtex' @)%
     }{}%
-    (@ endfor @)
-
-    (# The answer is not four more sections. `answer`, `answer-extra`, `answer-interval` and
-       `answer-also` are assembled into a single run-on line -- see `blocks/answer-body.jtex`,
-       which the booklet uses too, so what is previewed here is what gets printed. #)
+    \IfFileExists{\activeDirectory/(* language.id *)/solution.tex}{%
+        \subsection*{(* i18n[language.id].section.solutions *)}%
+        \setcounter{equation}{0}%
+        \setcounter{table}{0}%
+        \setcounter{figure}{0}%
+        \protectedInput{\activeDirectory/(* language.id *)/solution.tex}%
+    }{}%
     \IfFileExists{\activeDirectory/(* language.id *)/answer.tex}{%
-        \subsection*{Answer}%
+        \subsection*{(* i18n[language.id].section.answers *)}%
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
