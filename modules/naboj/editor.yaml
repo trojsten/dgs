@@ -1,0 +1,22 @@
+# What `tools/editor` needs to know about this module: where the editable units live, which
+# files each one holds, and which document to compile to preview one. Everything else about the
+# editor is module-agnostic, so a fourth module needs a file like this and nothing else.
+#
+# `glob` is relative to `source/<module>/`. Paths matched by it are "units" -- a problem, a
+# handout, whatever the module's editable thing is. `{unit}` and `{parent}` interpolate into the
+# make targets; `{language}` and `{target}` too, where they apply.
+
+label: Náboj
+
+# The only module whose text is translated: a unit holds a directory per language, and the two
+# rule families in module.mk put `translated` files inside it and `shared` files beside it.
+languages: true
+
+units:
+  - glob: '*/*/problems/*'
+    # `targets` is the full set, in the order the tabs appear; `translated` marks the subset that
+    # lives inside `<language>/` rather than beside it.
+    targets: [problem, problem-extra, solution, answer, answer-extra, answer-also, answer-interval]
+    translated: [problem, problem-extra, solution, answer-extra]
+    render: 'render/naboj/{unit}/{language}/{target}.md'
+    preview: 'output/naboj/{unit}/{language}/standalone.pdf'

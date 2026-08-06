@@ -1,0 +1,27 @@
+# See modules/naboj/editor.yaml for what this file is.
+
+label: Scholar
+
+# Two levels are editable here, and they are different things: a handout or homework sheet has
+# its own `text.md`, and holds a directory per problem. Both preview as the whole sheet, because
+# that is the only document scholar builds.
+units:
+  - glob: '*/*/handouts/*'
+    targets: [text]
+    render: 'render/scholar/{unit}/{target}.md'
+    preview: 'output/scholar/{unit}/handout-solved.pdf'
+
+  - glob: '*/*/handouts/*/*'
+    targets: [problem, solution]
+    render: 'render/scholar/{unit}/{target}.md'
+    preview: 'output/scholar/{parent}/handout-solved.pdf'
+
+  - glob: '*/*/homework/*'
+    targets: [text]
+    render: 'render/scholar/{unit}/{target}.md'
+    preview: 'output/scholar/{unit}/homework-solutions.pdf'
+
+  - glob: '*/*/homework/*/*'
+    targets: [problem, solution]
+    render: 'render/scholar/{unit}/{target}.md'
+    preview: 'output/scholar/{parent}/homework-solutions.pdf'

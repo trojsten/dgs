@@ -17,6 +17,8 @@ html, body {
   border-bottom: 1px solid #3a3a3a;
 }
 
+#unit-cascade { display: contents; }
+
 #topbar select, #topbar button {
   font-size: 0.9rem;
   padding: 0.3rem 0.5rem;
@@ -335,3 +337,5 @@ html, body {
   opacity: 0.4;
   cursor: default;
 }
+
+#topbar select[hidden] { display: none; }

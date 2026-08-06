@@ -7,40 +7,27 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, render_template, send_file
 
+# `descriptors`, not `modules`: the repo root holds a `modules/` namespace package, and whichever
+# came first on sys.path would win.
+from descriptors import (AUX_EXTENSIONS, RENDERABLE_AUX_EXTENSIONS,
+                         discover_units, load_modules)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SOURCE_ROOT = REPO_ROOT / "source" / "naboj"
 
-# Which directory a target's source lives in, mirroring the two rule families in
-# `modules/naboj/module.mk`: translatable files sit in `<problem>/<language>/`, the rest
-# directly in `<problem>/`. `answer-extra` is translated -- it is covered by the
-# NABOJ_TRANSLATABLE loop and its file lives under the language directory.
-TRANSLATABLE_TARGETS = ("problem", "problem-extra", "solution", "answer-extra")
-NONTRANSLATABLE_TARGETS = ("answer", "answer-also", "answer-interval")
-
-# Display order: the order the standalone document prints them in.
-ORDERED_TARGETS = (
-    "problem", "problem-extra", "solution",
-    "answer", "answer-extra", "answer-also", "answer-interval",
-)
-ALL_TARGETS = frozenset(TRANSLATABLE_TARGETS) | frozenset(NONTRANSLATABLE_TARGETS)
-
-# Files that are not prose but still feed the document, and so are still worth editing beside it:
-# a gnuplot script is Jinja-rendered like everything else (`render/naboj/%.gp`) and becomes a
-# figure, and the .dat tables it reads are its prerequisites. Named by their path relative to the
-# problem rather than by a fixed target name, since there can be any number of them.
-AUX_EXTENSIONS = (".gp", ".dat")
-# Only the gnuplot script goes through Jinja; a .dat is copied verbatim.
-RENDERABLE_AUX_EXTENSIONS = (".gp",)
-
-# Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed
-# compile can leave a truncated file in `output/`; serving a copy means a broken edit keeps
-# showing the previous render beside the error log instead of a blank pane.
+# Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed compile
+# can leave a truncated file in `output/`; serving a copy means a broken edit keeps showing the
+# previous render beside the error log instead of a blank pane.
 PDF_CACHE = REPO_ROOT / "build" / ".editor-preview"
+
+# Stands in for the language in cache paths for modules that do not have one.
+NO_LANGUAGE = "_"
 
 LANG_RE = re.compile(r"^[a-z]{2,3}$")
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][A-Za-z0-9]")
 
 BUILD_LOCK = threading.Lock()
+
+MODULES = load_modules(REPO_ROOT)
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -57,164 +44,183 @@ def handle_bad_request(e):
     return jsonify({"error": e.message}), 400
 
 
-def resolve_problem_dir(key):
-    if not key or ".." in key.split("/"):
-        raise BadRequest(f"Invalid problem key: {key!r}")
-    problem_dir = (SOURCE_ROOT / key).resolve()
-    if not problem_dir.is_relative_to(SOURCE_ROOT.resolve()):
-        raise BadRequest(f"Invalid problem key: {key!r}")
-    # A problem is a directory under `problems/`. Deliberately not "a directory with a
-    # meta.yaml": a problem that has not been converted yet has none, and those are precisely
-    # the ones somebody needs to open in order to write one.
-    if not problem_dir.is_dir() or problem_dir.parent.name != "problems":
-        raise BadRequest(f"No such problem: {key!r}")
-    return problem_dir
+# --- resolving what the request is talking about ----------------------------
 
-
-def available_langs(problem_dir):
-    return sorted(
-        d.name for d in problem_dir.iterdir()
-        if d.is_dir() and (d / "problem.md").is_file()
-    )
-
-
-def validate_lang(problem_dir, lang):
-    if not lang or not LANG_RE.match(lang) or lang not in available_langs(problem_dir):
-        raise BadRequest(f"Invalid or unavailable language: {lang!r}")
-
-
-def is_aux(target):
-    """An auxiliary file is named by path and extension; the prose targets are bare names."""
-    return target not in ALL_TARGETS
-
-
-def aux_path(problem_dir, target):
+class Unit:
     """
-    Resolve an auxiliary target, which is attacker-supplied text rather than one of seven known
-    names, so it is checked rather than trusted: inside the problem, and of an editable kind.
+    One editable thing, resolved and validated: which module, which directory, what it may hold.
+
+    The unit path is checked by *membership* in the module's discovered set rather than by
+    inspecting the string, which settles path traversal at the same time -- no glob ever yields
+    a path outside the module's source root.
     """
-    if not target or target.startswith("/") or ".." in target.split("/"):
-        raise BadRequest(f"Invalid file: {target!r}")
-    path = (problem_dir / target).resolve()
-    if not path.is_relative_to(problem_dir.resolve()) or path.suffix not in AUX_EXTENSIONS:
-        raise BadRequest(f"Not an editable auxiliary file: {target!r}")
-    return path
+    def __init__(self, module_name, unit, lang=None):
+        self.module = MODULES.get(module_name)
+        if self.module is None:
+            raise BadRequest(f"Unknown module: {module_name!r}")
+
+        self.kind = discover_units(self.module).get(unit)
+        if self.kind is None:
+            raise BadRequest(f"No such {self.module.label} unit: {unit!r}")
+
+        self.name = unit
+        self.path = self.module.root / unit
+        self.languages = self.available_languages()
+        self.lang = self.resolve_language(lang)
+
+    def available_languages(self):
+        if not self.module.languages:
+            return []
+        return sorted(
+            child.name for child in self.path.iterdir()
+            if child.is_dir() and any((child / f"{t}.md").is_file() for t in self.kind.translated)
+        )
+
+    def resolve_language(self, lang):
+        if not self.module.languages:
+            return None
+        if lang is None:
+            return self.languages[0] if self.languages else None
+        if not LANG_RE.match(lang) or lang not in self.languages:
+            raise BadRequest(f"Invalid or unavailable language: {lang!r}")
+        return lang
+
+    # -- files ---------------------------------------------------------------
+
+    def is_aux(self, target):
+        """An auxiliary file is named by path and extension; declared targets are bare names."""
+        return target not in self.kind.targets
+
+    def aux_path(self, target):
+        """
+        Resolve an auxiliary target. Unlike a declared target this is arbitrary text, so it is
+        checked rather than trusted: inside the unit, and of an editable kind.
+        """
+        if not target or target.startswith("/") or ".." in target.split("/"):
+            raise BadRequest(f"Invalid file: {target!r}")
+        path = (self.path / target).resolve()
+        if not path.is_relative_to(self.path.resolve()) or path.suffix not in AUX_EXTENSIONS:
+            raise BadRequest(f"Not an editable auxiliary file: {target!r}")
+        return path
+
+    def source_path(self, target):
+        if self.is_aux(target):
+            return self.aux_path(target)
+        if self.kind.is_translated(target):
+            if not self.lang:
+                raise BadRequest(f"{target} is translated, but no language is selected.")
+            return self.path / self.lang / f"{target}.md"
+        return self.path / f"{target}.md"
+
+    def aux_files(self):
+        """
+        Every `.gp` and `.dat` the unit holds, at its own level and inside the language directory,
+        named relative to the unit so `sk/data.dat` stays distinct from `data.dat`.
+        """
+        found = []
+        directories = [self.path] + ([self.path / self.lang] if self.lang else [])
+        for directory in directories:
+            if directory.is_dir():
+                found += sorted(
+                    path.relative_to(self.path).as_posix()
+                    for path in directory.iterdir()
+                    if path.is_file() and path.suffix in AUX_EXTENSIONS
+                )
+        return found
+
+    def existing_targets(self):
+        """Every file the unit actually has, declared ones in the order the descriptor lists."""
+        declared = [t for t in self.kind.targets
+                    if (self.lang or not self.kind.is_translated(t))
+                    and self.source_path(t).is_file()]
+        return declared + self.aux_files()
+
+    @property
+    def meta_path(self):
+        return self.path / "meta.yaml"
+
+    # -- make targets --------------------------------------------------------
+
+    def _format(self, template):
+        parent = self.name.rsplit("/", 1)[0] if "/" in self.name else ""
+        return template.format(unit=self.name, parent=parent,
+                               language=self.lang or "", target="{target}")
+
+    def render_target(self, target):
+        """
+        The make target that renders this file. A gnuplot script keeps its own name and extension
+        (`render/<module>/%.gp`); a declared target is always `.md`.
+        """
+        if self.is_aux(target):
+            return f"render/{self.module.name}/{self.name}/{target}"
+        return self._format(self.kind.render).format(target=target)
+
+    def render_path(self, target):
+        return REPO_ROOT / self.render_target(target)
+
+    def preview_target(self):
+        if not self.kind.preview:
+            return None
+        return self._format(self.kind.preview)
+
+    def cached_pdf(self):
+        return PDF_CACHE / self.module.name / self.name / (self.lang or NO_LANGUAGE) / "preview.pdf"
 
 
-def validate_target(problem_dir, target):
-    if is_aux(target):
-        aux_path(problem_dir, target)
-
-
-def source_path_for_target(problem_dir, lang, target):
-    if is_aux(target):
-        return aux_path(problem_dir, target)
-    if target in TRANSLATABLE_TARGETS:
-        return problem_dir / lang / f"{target}.md"
-    return problem_dir / f"{target}.md"
-
-
-def aux_files(problem_dir, lang):
-    """
-    Every `.gp` and `.dat` belonging to this problem, at the problem level and inside the language
-    directory, named relative to the problem so `sk/data.dat` stays distinct from `data.dat`.
-    """
-    found = []
-    for directory in [problem_dir] + ([problem_dir / lang] if lang else []):
-        if directory.is_dir():
-            found += sorted(
-                path.relative_to(problem_dir).as_posix()
-                for path in directory.iterdir()
-                if path.is_file() and path.suffix in AUX_EXTENSIONS
-            )
-    return found
-
-
-def render_target_for(key, lang, target):
-    """
-    The make target that renders this file. A gnuplot script lives at the problem level and keeps
-    its own name and extension (`render/naboj/%.gp`); prose is per language and always `.md`.
-    """
-    if is_aux(target):
-        return f"render/naboj/{key}/{target}"
-    return f"render/naboj/{key}/{lang}/{target}.md"
-
-
-def render_path_for_target(key, lang, target):
-    return REPO_ROOT / render_target_for(key, lang, target)
+def unit_from_body(body):
+    return Unit(body.get("module"), body.get("unit"), body.get("lang"))
 
 
 def read_if_exists(path):
     return path.read_text() if path.is_file() else None
 
 
-def list_problems():
-    """
-    Every problem directory under a `<competition>/<volume>/problems/`.
-
-    Walking the directories rather than hunting for `meta.yaml` matters: 69 of the 144 chem
-    problems have no meta.yaml at all and 37 more have an empty one, so keying the picker off
-    that file hid nearly half of chem -- the unconverted half, which is the half that needs
-    opening. `has_meta` lets the picker say so instead of pretending they do not exist.
-    """
-    problems = []
-    for problems_dir in sorted(SOURCE_ROOT.glob("*/*/problems")):
-        for problem_dir in sorted(p for p in problems_dir.iterdir() if p.is_dir()):
-            problems.append({
-                "key": problem_dir.relative_to(SOURCE_ROOT).as_posix(),
-                "langs": available_langs(problem_dir),
-                "has_meta": (problem_dir / "meta.yaml").is_file(),
-            })
-    return problems
-
-
-def existing_targets(problem_dir, lang):
-    """
-    Every target this problem actually has a file for, in document order. The editor opens
-    all of them at once, so it needs the list rather than a fixed pair plus extras.
-    """
-    prose = [
-        target for target in ORDERED_TARGETS
-        if lang and source_path_for_target(problem_dir, lang, target).is_file()
-    ]
-    return prose + aux_files(problem_dir, lang)
-
+# --- reading ----------------------------------------------------------------
 
 @app.get("/")
 def index():
     return render_template("index.html")
 
 
-@app.get("/api/problems")
-def api_problems():
-    return jsonify(list_problems())
+@app.get("/api/modules")
+def api_modules():
+    """
+    Everything the front end needs to build its picker and to read a URL: the modules that exist
+    and every unit in each. Sent whole because the client resolves a hash by finding the longest
+    unit path that prefixes it, units being of different depths in different modules.
+    """
+    return jsonify([
+        {
+            "name": module.name,
+            "label": module.label,
+            "languages": module.languages,
+            "units": sorted(discover_units(module)),
+        }
+        for module in sorted(MODULES.values(), key=lambda m: m.label)
+    ])
 
 
-@app.get("/api/problem/<path:key>")
-def api_problem(key):
-    problem_dir = resolve_problem_dir(key)
-    langs = available_langs(problem_dir)
-    lang = request.args.get("lang") or (langs[0] if langs else None)
-
-    if lang:
-        validate_lang(problem_dir, lang)
-
-    targets = existing_targets(problem_dir, lang)
+@app.get("/api/unit/<module>/<path:unit>")
+def api_unit(module, unit):
+    resolved = Unit(module, unit, request.args.get("lang"))
+    targets = resolved.existing_targets()
     return jsonify({
-        "key": key,
-        "langs": langs,
-        "lang": lang,
+        "module": module,
+        "unit": unit,
+        "langs": resolved.languages,
+        "lang": resolved.lang,
         "targets": targets,
+        "has_meta": resolved.meta_path.is_file(),
         # So a reload can put the last compiled page straight back in the pane instead of an
-        # empty placeholder: the PDF outlives the browser session, it is sitting in the cache.
-        "has_pdf": bool(lang) and cached_pdf_path(key, lang).is_file(),
-        "meta_yaml": read_if_exists(problem_dir / "meta.yaml"),
-        "files": {
-            target: read_if_exists(source_path_for_target(problem_dir, lang, target))
-            for target in targets
-        },
+        # empty placeholder: the PDF outlives the browser session, it is in the cache.
+        "has_pdf": resolved.cached_pdf().is_file(),
+        "has_preview": resolved.preview_target() is not None,
+        "meta_yaml": read_if_exists(resolved.meta_path),
+        "files": {t: read_if_exists(resolved.source_path(t)) for t in targets},
     })
 
+
+# --- running make -----------------------------------------------------------
 
 def run_make(target, *, timeout=60):
     return subprocess.run(
@@ -231,22 +237,15 @@ LATEX_ERROR_RE = re.compile(r"^\.?/?\S+\.tex:(\d+):\s*(.+)$", re.MULTILINE)
 # The renderer raises through to the top level, so an authoring mistake in meta.yaml or in a
 # `(§ … §)` tag reaches us as the last line of a Python traceback.
 PYTHON_ERROR_RE = re.compile(r"^(?:[\w.]+\.)?(\w*(?:Error|Exception)):\s*(.+)$", re.MULTILINE)
-
-
-def elide(summary, limit=160):
-    """
-    Keep the summary to one readable line. `MissingVariablesError` in particular interpolates the
-    whole template into its message when rendering from a string rather than a file, so without
-    this the "one line worth reading" is the entire problem statement.
-    """
-    summary = " ".join(summary.split())
-    return summary if len(summary) <= limit else summary[:limit - 1].rstrip() + "\u2026"
-
-
 # `MissingVariablesError` interpolates the whole template into its message before naming the
 # variables, so the part worth reading is the list at the very end, several lines down. Greedy
 # `.*` skips the template to the last `: [...]`.
 MISSING_VARS_RE = re.compile(r"MissingVariablesError: Missing variables in .*: (\[[^\[\]]*\])", re.DOTALL)
+
+
+def elide(summary, limit=160):
+    summary = " ".join(summary.split())
+    return summary if len(summary) <= limit else summary[:limit - 1].rstrip() + "…"
 
 
 def summarise_failure(text):
@@ -279,129 +278,120 @@ def make_result(target, result):
     }
 
 
-def missing_meta_result(target, problem_dir):
-    """
-    Every render rule takes the problem's `meta.yaml` as a prerequisite, so without one make
-    cannot build the chain at all and reports `No rule to make target`, naming the PDF rather
-    than the file that is actually missing. Say what is wrong instead -- an unconverted problem
-    opens in the editor precisely so that a meta.yaml can be written for it.
-    """
-    return {
-        "ok": False,
-        "returncode": None,
-        "command": f"make {target}",
-        "summary": "meta.yaml does not exist",
-        "stdout": f"{problem_dir.relative_to(REPO_ROOT)}/meta.yaml does not exist.\n\n"
-                  f"Every render rule needs it, so nothing can be built until it is written. "
-                  f"Fill in the meta.yaml pane -- `authors:` and `tags:` at minimum -- and save.\n",
-        "stderr": "",
-    }
+def refusal(target, summary, explanation):
+    """A failure of ours rather than make's: no exit code, and a reason worth reading."""
+    return {"ok": False, "returncode": None, "command": f"make {target}",
+            "summary": summary, "stdout": explanation, "stderr": ""}
 
 
-def write_files(problem_dir, lang, files):
+def missing_meta_result(target, unit):
     """
-    Write back every buffer the editor sent. All of a problem's files are open at once, so a
-    save or a compile has to flush all the dirty ones -- compiling only the active tab would
-    silently preview a mixture of edited and stale text.
+    Every render rule takes the unit's `meta.yaml` as a prerequisite, so without one make cannot
+    build the chain at all and reports `No rule to make target`, naming the PDF rather than the
+    file that is actually missing. Say what is wrong instead -- an unconverted unit opens in the
+    editor precisely so that a meta.yaml can be written for it.
+    """
+    return refusal(
+        target, "meta.yaml does not exist",
+        f"{unit.meta_path.relative_to(REPO_ROOT)} does not exist.\n\n"
+        f"Every render rule needs it, so nothing can be built until it is written. "
+        f"Fill in the meta.yaml pane and save.\n",
+    )
+
+
+def build(unit, make_target, *, timeout=60):
+    if not unit.meta_path.is_file():
+        return missing_meta_result(make_target, unit)
+    return make_result(make_target, run_make(make_target, timeout=timeout))
+
+
+# --- writing ----------------------------------------------------------------
+
+def write_files(unit, files):
+    """
+    Write back every buffer the editor sent. All of a unit's files are open at once, so a save or
+    a compile has to flush all the dirty ones -- compiling only the active tab would silently
+    preview a mixture of edited and stale text.
     """
     if files.get("meta_yaml") is not None:
-        (problem_dir / "meta.yaml").write_text(files["meta_yaml"])
+        unit.meta_path.write_text(files["meta_yaml"])
 
     for target, content in (files.get("targets") or {}).items():
-        validate_target(problem_dir, target)
-        source_path = source_path_for_target(problem_dir, lang, target)
+        source_path = unit.source_path(target)
         if not source_path.is_file():
-            raise BadRequest(f"Refusing to create a new file: {target}.md does not exist")
+            raise BadRequest(f"Refusing to create a new file: {target} does not exist")
         source_path.write_text(content)
-
-
-def request_problem(body):
-    """Resolve and validate the `key`/`lang` every endpoint below starts with."""
-    key = body.get("key")
-    lang = body.get("lang")
-    problem_dir = resolve_problem_dir(key)
-    validate_lang(problem_dir, lang)
-    return key, lang, problem_dir
 
 
 @app.post("/api/save")
 def api_save():
     body = request.get_json(force=True)
-    key, lang, problem_dir = request_problem(body)
-
+    unit = unit_from_body(body)
     with BUILD_LOCK:
-        write_files(problem_dir, lang, body.get("files") or {})
-
+        write_files(unit, body.get("files") or {})
     return jsonify({"ok": True})
 
 
 @app.post("/api/render")
 def api_render():
     body = request.get_json(force=True)
-    key, lang, problem_dir = request_problem(body)
+    unit = unit_from_body(body)
     target = body.get("target")
-    validate_target(problem_dir, target)
-    if is_aux(target) and Path(target).suffix not in RENDERABLE_AUX_EXTENSIONS:
+    unit.source_path(target)        # validates
+    if unit.is_aux(target) and Path(target).suffix not in RENDERABLE_AUX_EXTENSIONS:
         raise BadRequest(f"{target} is copied verbatim, not rendered -- nothing to preview.")
 
     with BUILD_LOCK:
-        write_files(problem_dir, lang, body.get("files") or {})
-
-        make_target = render_target_for(key, lang, target)
-        if not (problem_dir / "meta.yaml").is_file():
-            response = missing_meta_result(make_target, problem_dir)
-        else:
-            response = make_result(make_target, run_make(make_target))
+        write_files(unit, body.get("files") or {})
+        make_target = unit.render_target(target)
+        response = build(unit, make_target)
         response["rendered_md"] = (
-            read_if_exists(render_path_for_target(key, lang, target)) if response["ok"] else None
+            read_if_exists(unit.render_path(target)) if response["ok"] else None
         )
-
     return jsonify(response)
-
-
-def cached_pdf_path(key, lang):
-    return PDF_CACHE / key / lang / "standalone.pdf"
 
 
 @app.post("/api/compile")
 def api_compile():
-    """Write every buffer, then build the standalone one-problem PDF for the preview pane."""
+    """Write every buffer, then build whichever document previews this unit."""
     body = request.get_json(force=True)
-    key, lang, problem_dir = request_problem(body)
+    unit = unit_from_body(body)
+    make_target = unit.preview_target()
 
     with BUILD_LOCK:
-        write_files(problem_dir, lang, body.get("files") or {})
+        write_files(unit, body.get("files") or {})
 
-        make_target = f"output/naboj/{key}/{lang}/standalone.pdf"
-        if not (problem_dir / "meta.yaml").is_file():
-            response = missing_meta_result(make_target, problem_dir)
+        if make_target is None:
+            response = refusal(
+                "(none)", "no preview for this module",
+                f"{unit.module.label} declares no preview document in "
+                f"modules/{unit.module.name}/editor.yaml, so there is nothing to compile.\n",
+            )
         else:
-            response = make_result(make_target, run_make(make_target, timeout=300))
+            # A whole handout or round takes longer than a single problem.
+            response = build(unit, make_target, timeout=600)
+            built = REPO_ROOT / make_target
+            if response["ok"] and built.is_file():
+                cached = unit.cached_pdf()
+                cached.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(built, cached)
 
-        built = REPO_ROOT / make_target
-        if response["ok"] and built.is_file():
-            cached = cached_pdf_path(key, lang)
-            cached.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(built, cached)
-
-        response["has_pdf"] = cached_pdf_path(key, lang).is_file()
-
+        response["has_pdf"] = unit.cached_pdf().is_file()
     return jsonify(response)
 
 
-@app.get("/api/pdf/<path:key>/<lang>")
-def api_pdf(key, lang):
-    problem_dir = resolve_problem_dir(key)
-    validate_lang(problem_dir, lang)
-
-    cached = cached_pdf_path(key, lang)
+@app.get("/api/pdf/<module>/<path:unit>")
+def api_pdf(module, unit):
+    resolved = Unit(module, unit, request.args.get("lang"))
+    cached = resolved.cached_pdf()
     if not cached.is_file():
-        raise BadRequest("Nothing compiled yet for this problem and language.")
-
+        raise BadRequest("Nothing compiled yet for this unit.")
     response = send_file(cached, mimetype="application/pdf")
     response.headers["Cache-Control"] = "no-store"
     return response
 
+
+# --- style checker ----------------------------------------------------------
 
 VIOLATION_RE = re.compile(r"^File (?P<file>.+) line (?P<line>\d+): (?P<message>.+)$")
 
@@ -430,40 +420,35 @@ def parse_mdcheck_output(stdout):
 @app.post("/api/lint")
 def api_lint():
     body = request.get_json(force=True)
-    key, lang, problem_dir = request_problem(body)
+    unit = unit_from_body(body)
     target = body.get("target")
-    validate_target(problem_dir, target)
-    if is_aux(target):
+    unit.source_path(target)        # validates
+    if unit.is_aux(target):
         raise BadRequest("The style checker only reads Markdown.")
 
-    render_path = render_path_for_target(key, lang, target)
+    render_path = unit.render_path(target)
     if not render_path.is_file():
         raise BadRequest("Render the file before linting it.")
 
-    rel_path = render_path.relative_to(REPO_ROOT).as_posix()
-
     with BUILD_LOCK:
         result = subprocess.run(
-            ["uv", "run", "python", "core/markdown-check.py", rel_path, "-v"],
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            timeout=60,
+            ["uv", "run", "python", "core/markdown-check.py",
+             render_path.relative_to(REPO_ROOT).as_posix(), "-v"],
+            cwd=REPO_ROOT, capture_output=True, text=True, timeout=60,
         )
 
     stdout = ANSI_RE.sub("", result.stdout)
-    stderr = ANSI_RE.sub("", result.stderr)
     return jsonify({
         "ok": result.returncode == 0,
         "violations": parse_mdcheck_output(stdout),
         "stdout": stdout,
-        "stderr": stderr,
+        "stderr": ANSI_RE.sub("", result.stderr),
         "returncode": result.returncode,
     })
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local Náboj problem source/render editor")
+    parser = argparse.ArgumentParser(description="Local DGS problem source/render editor")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--debug", action="store_true")

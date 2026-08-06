@@ -7,10 +7,11 @@
 </head>
 <body>
   <header id="topbar">
-    <select id="comp-select"></select>
-    <select id="vol-select"></select>
-    <select id="pid-select"></select>
-    <select id="lang-select"></select>
+    <select id="module-select"></select>
+    <!-- One select per path level, generated from the module's unit list: units are four
+         segments deep in Naboj, five in seminar, and both in scholar. -->
+    <span id="unit-cascade"></span>
+    <select id="lang-select" hidden></select>
     <button id="save-btn">Save (Ctrl/Cmd+S)</button>
     <button id="compile-btn">Compile (Ctrl/Cmd+Enter)</button>
     <button id="render-btn">Render</button>

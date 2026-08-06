@@ -1,9 +1,7 @@
 const state = {
-  problems: [],
-  problemIndex: {},   // comp -> vol -> [{pid, key, langs}]
-  comp: null,
-  vol: null,
-  key: null,
+  modules: [],        // [{name, label, languages, units: [...]}]
+  module: null,       // the selected module's descriptor
+  unit: null,         // path of the open unit, relative to source/<module>
   lang: null,
   targets: [],        // every file this problem/language actually has, in document order
   activeTarget: null,
@@ -96,6 +94,7 @@ function sourceMode() {
 }
 
 function syncActionsForTarget() {
+  el("compile-btn").disabled = !state.hasPreview;
   const aux = isAux(state.activeTarget);
   el("render-btn").disabled = aux && !state.activeTarget.endsWith(".gp");
   document.querySelector('[data-output="lint"]').disabled = aux;
@@ -143,20 +142,35 @@ function switchTarget(target) {
 function readLocation() {
   const raw = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
   if (!raw) return {};
-  const parts = raw.split("/");
-  if (parts.length < 4) return {};
+  const slash = raw.indexOf("/");
+  if (slash < 0) return {};
+  const moduleName = raw.slice(0, slash);
+  const module = state.modules.find((m) => m.name === moduleName);
+  if (!module) return {};
+
+  // Units are four segments deep in one module and five in another, and scholar has both, so
+  // there is no fixed offset to slice at. Take the longest unit that prefixes the rest.
+  const tail = raw.slice(slash + 1);
+  const unit = module.units
+    .filter((u) => tail === u || tail.startsWith(u + "/"))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!unit) return { module: moduleName };
+
+  const rest = tail.slice(unit.length).replace(/^\//, "").split("/").filter(Boolean);
   return {
-    key: parts.slice(0, 4).join("/"),
-    lang: parts[4] || null,
-    target: parts.slice(5).join("/") || null,
+    module: moduleName,
+    unit,
+    lang: module.languages ? (rest.shift() ?? null) : null,
+    target: rest.join("/") || null,
   };
 }
 
 // `replaceState`, not `pushState`: switching tabs should not fill the history with entries that
 // send you back to a different file when you meant to leave the page.
 function writeLocation() {
-  if (!state.key) return;
-  const path = [state.key, state.lang, state.activeTarget].filter(Boolean).join("/");
+  if (!state.module || !state.unit) return;
+  const path = [state.module.name, state.unit, state.lang, state.activeTarget]
+    .filter(Boolean).join("/");
   history.replaceState(null, "", `#${path}`);
 }
 
@@ -171,11 +185,11 @@ function scrollStore() {
 }
 
 function scrollId(target) {
-  return `${state.key}/${state.lang}/${target}`;
+  return `${state.module?.name}/${state.unit}/${state.lang}/${target}`;
 }
 
 function rememberScroll() {
-  if (!state.key || !state.activeTarget) return;
+  if (!state.unit || !state.activeTarget) return;
   const store = scrollStore();
   store[scrollId(state.activeTarget)] = el("source-editor").scrollTop;
   localStorage.setItem(SCROLL_KEY, JSON.stringify(store));
@@ -188,7 +202,7 @@ function restoreScroll(target) {
   el("source-highlight").parentElement.scrollTop = top;
 }
 
-// --- problem picker --------------------------------------------------------
+// --- picker -----------------------------------------------------------------
 
 function fillSelect(selectEl, values, labelFn) {
   selectEl.innerHTML = "";
@@ -200,124 +214,143 @@ function fillSelect(selectEl, values, labelFn) {
   }
 }
 
-function pidsFor(comp, vol) {
-  return (state.problemIndex[comp]?.[vol]) ?? [];
-}
-
-function populateVolumes(comp, preferredVol) {
-  const vols = Object.keys(state.problemIndex[comp] ?? {}).sort();
-  fillSelect(el("vol-select"), vols);
-  state.vol = vols.includes(preferredVol) ? preferredVol : vols[0];
-  el("vol-select").value = state.vol;
-}
-
-function populateProblems(comp, vol, preferredPid) {
-  const problems = pidsFor(comp, vol);
-  // Mark the problems that have no meta.yaml yet, rather than leaving you to work out why
-  // a compile fails: nearly half of chem is still unconverted.
-  const marks = Object.fromEntries(problems.map((p) => [p.pid, p.hasMeta ? "" : " \u26a0"]));
-  fillSelect(el("pid-select"), problems.map((p) => p.pid), (pid) => pid + (marks[pid] ?? ""));
-  const match = problems.find((p) => p.pid === preferredPid) ?? problems[0];
-  el("pid-select").value = match ? match.pid : "";
-  return match ? match.key : null;
-}
-
-async function loadProblems() {
-  state.problems = await fetchJSON("/api/problems");
-  state.problemIndex = {};
-  for (const p of state.problems) {
-    const [comp, vol, , pid] = p.key.split("/");
-    (state.problemIndex[comp] ??= {})[vol] ??= [];
-    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs, hasMeta: p.has_meta });
-  }
-  for (const comp in state.problemIndex) {
-    for (const vol in state.problemIndex[comp]) {
-      state.problemIndex[comp][vol].sort((a, b) => a.pid.localeCompare(b.pid));
+/**
+ * The module's units as a tree, so the picker can offer one select per path level.
+ *
+ * A node may be both a unit and a parent of units -- a scholar handout has its own `text.md` and
+ * a directory per problem -- so `isUnit` is a flag on the node rather than a property of leaves.
+ */
+function unitTree(units) {
+  const root = { children: {}, isUnit: false };
+  for (const unit of units) {
+    let node = root;
+    for (const segment of unit.split("/")) {
+      node = (node.children[segment] ??= { children: {}, isUnit: false });
     }
+    node.isUnit = true;
   }
-
-  const comps = Object.keys(state.problemIndex).sort();
-  fillSelect(el("comp-select"), comps);
-  if (!comps.length) return;
-
-  // Reopen whatever the address bar names, falling back to the first problem if the URL is
-  // empty or points at something that has since been renamed or removed.
-  const wanted = readLocation();
-  const known = wanted.key && state.problems.some((p) => p.key === wanted.key);
-  const [comp, vol, , pid] = known ? wanted.key.split("/") : [comps[0]];
-
-  state.comp = comps.includes(comp) ? comp : comps[0];
-  populateVolumes(state.comp, vol);
-  const key = populateProblems(state.comp, state.vol, pid);
-  if (key) await loadProblem(key, known ? wanted.lang : null, known ? wanted.target : null);
+  return root;
 }
 
-function confirmDiscard(revertEl, revertValue) {
-  if (anyDirty() && !confirm("Discard unsaved changes?")) {
-    revertEl.value = revertValue;
-    return false;
+const SELF = "\u00b7";   // the option standing for "this node itself", where it is also a unit
+
+/**
+ * Rebuild the cascade of selects for `unit`, one per level, and return nothing: the selects
+ * drive everything through their change handlers.
+ *
+ * Levels with a single choice are skipped rather than rendered as a dropdown of one -- Naboj's
+ * literal `problems/` segment is one of these, so its picker still reads competition, volume,
+ * problem exactly as before.
+ */
+function renderCascade(unit) {
+  const container = el("unit-cascade");
+  container.innerHTML = "";
+  if (!state.module) return;
+
+  const segments = unit ? unit.split("/") : [];
+  let node = unitTree(state.module.units);
+  const prefix = [];
+
+  for (let depth = 0; node && Object.keys(node.children).length; depth++) {
+    const options = Object.keys(node.children).sort();
+    if (node.isUnit) options.unshift(SELF);
+
+    const chosen = options.includes(segments[depth]) ? segments[depth]
+                 : (node.isUnit && depth === segments.length ? SELF : options[0]);
+
+    if (options.length > 1) {
+      const select = document.createElement("select");
+      fillSelect(select, options);
+      select.value = chosen;
+      const at = [...prefix];
+      select.addEventListener("change", (e) => onCascadeChange(at, e.target.value));
+      container.appendChild(select);
+    }
+
+    if (chosen === SELF) break;
+    prefix.push(chosen);
+    node = node.children[chosen];
   }
-  return true;
 }
 
-async function onCompChange(comp) {
-  if (!confirmDiscard(el("comp-select"), state.comp)) return;
-  state.comp = comp;
-  populateVolumes(comp);
-  const key = populateProblems(comp, state.vol);
-  if (key) await loadProblem(key);
+/** Descend from `prefix`/`choice`, taking the first option at every level below it. */
+function firstUnitUnder(prefix, choice) {
+  if (choice === SELF) return prefix.join("/");
+  const path = [...prefix, choice];
+  let node = unitTree(state.module.units);
+  for (const segment of path) node = node.children[segment];
+  while (node && !node.isUnit && Object.keys(node.children).length) {
+    const next = Object.keys(node.children).sort()[0];
+    path.push(next);
+    node = node.children[next];
+  }
+  return path.join("/");
 }
 
-async function onVolChange(vol) {
-  if (!confirmDiscard(el("vol-select"), state.vol)) return;
-  state.vol = vol;
-  const key = populateProblems(state.comp, vol);
-  if (key) await loadProblem(key);
+async function onCascadeChange(prefix, choice) {
+  if (!confirmDiscard()) { renderCascade(state.unit); return; }
+  await openUnit(state.module.name, firstUnitUnder(prefix, choice));
 }
 
-async function onPidChange(pid) {
-  const current = pidsFor(state.comp, state.vol).find((p) => p.key === state.key);
-  if (!confirmDiscard(el("pid-select"), current ? current.pid : pid)) return;
-  const match = pidsFor(state.comp, state.vol).find((p) => p.pid === pid);
-  if (match) await loadProblem(match.key);
+async function onModuleChange(name) {
+  if (!confirmDiscard()) { el("module-select").value = state.module.name; return; }
+  const module = state.modules.find((m) => m.name === name);
+  if (!module || !module.units.length) return;
+  state.module = module;
+  await openUnit(name, module.units[0]);
 }
 
 async function onLangChange(lang) {
-  if (!confirmDiscard(el("lang-select"), state.lang)) return;
-  await loadProblem(state.key, lang);
+  if (!confirmDiscard()) { el("lang-select").value = state.lang; return; }
+  await openUnit(state.module.name, state.unit, lang);
 }
 
-async function loadProblem(key, lang, target) {
-  rememberScroll();   // still pointing at the outgoing file
-  const url = lang ? `/api/problem/${key}?lang=${lang}` : `/api/problem/${key}`;
-  const data = await fetchJSON(url);
+async function loadModules() {
+  state.modules = await fetchJSON("/api/modules");
+  if (!state.modules.length) return;
+  fillSelect(el("module-select"), state.modules.map((m) => m.name),
+             (n) => state.modules.find((m) => m.name === n).label);
 
-  state.key = key;
+  // Reopen whatever the address bar names, falling back to the first unit of the first module.
+  const wanted = readLocation();
+  const module = state.modules.find((m) => m.name === wanted.module) ?? state.modules[0];
+  const unit = module.units.includes(wanted.unit) ? wanted.unit : module.units[0];
+  state.module = module;
+  if (unit) await openUnit(module.name, unit, wanted.lang, wanted.target);
+}
+
+function confirmDiscard() {
+  return !anyDirty() || confirm("Discard unsaved changes?");
+}
+
+async function openUnit(moduleName, unit, lang, target) {
+  rememberScroll();   // still pointing at the outgoing file
+  const query = lang ? `?lang=${encodeURIComponent(lang)}` : "";
+  const data = await fetchJSON(`/api/unit/${moduleName}/${unit}${query}`);
+
+  state.module = state.modules.find((m) => m.name === moduleName);
+  state.unit = unit;
   state.lang = data.lang;
   state.targets = data.targets;
+  state.hasPreview = data.has_preview;
   state.activeTarget = null;
 
   state.meta = data.meta_yaml ?? "";
   state.metaBaseline = state.meta;
-
   state.buffers = {};
-  for (const target of state.targets) state.buffers[target] = data.files[target] ?? "";
+  for (const t of state.targets) state.buffers[t] = data.files[t] ?? "";
   state.baseline = { ...state.buffers };
 
-  // Repopulate rather than just assign: a jump straight to another competition or volume -- from
-  // a bookmark, or by editing the address bar -- arrives with the volume and problem lists still
-  // holding the previous one's options, and assigning a value no option has silently selects
-  // nothing.
-  const [comp, vol, , pid] = key.split("/");
-  state.comp = comp;
-  el("comp-select").value = comp;
-  populateVolumes(comp, vol);
-  populateProblems(comp, state.vol, pid);
-  fillSelect(el("lang-select"), data.langs);
-  el("lang-select").value = data.lang;
+  el("module-select").value = moduleName;
+  renderCascade(unit);
+  const langSelect = el("lang-select");
+  langSelect.hidden = !data.langs.length;
+  fillSelect(langSelect, data.langs);
+  if (data.lang) langSelect.value = data.lang;
 
   setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
-  el("meta-label").textContent = data.meta_yaml === null ? "meta.yaml (does not exist yet)" : "meta.yaml";
+  el("meta-label").textContent =
+    data.meta_yaml === null ? "meta.yaml (does not exist yet)" : "meta.yaml";
   switchTarget(state.targets.includes(target) ? target : (state.targets[0] ?? null));
   setStatus("Loaded", "ok");
 
@@ -326,7 +359,7 @@ async function loadProblem(key, lang, target) {
   setLog("");
   // The compiled page outlives the browser session, so a reload gets it straight back rather
   // than an empty pane and a pointless recompile.
-  showPdf(data.has_pdf ? pdfUrlFor(state.key, state.lang) : null);
+  showPdf(data.has_pdf ? pdfUrlFor() : null);
   writeLocation();
 }
 
@@ -364,12 +397,13 @@ async function post(url, extra) {
   return fetchJSON(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key: state.key, lang: state.lang, files: dirtyFiles(), ...extra }),
+    body: JSON.stringify({ module: state.module.name, unit: state.unit, lang: state.lang,
+                           files: dirtyFiles(), ...extra }),
   });
 }
 
 async function doSave() {
-  if (!state.key || !state.lang) return;
+  if (!state.unit) return;
   setStatus("Saving…", "dirty");
   try {
     const body = await post("/api/save");
@@ -466,12 +500,13 @@ function switchOutputTab(name) {
  * `#pagemode=none` keeps the viewer's outline sidebar shut. hyperref marks the document
  * `/UseOutlines`, so without it PDF.js opens the sidebar over the first page every time.
  */
-function pdfUrlFor(key, lang) {
-  return `/api/pdf/${key}/${lang}#pagemode=none`;
+function pdfUrlFor() {
+  const query = state.lang ? `?lang=${encodeURIComponent(state.lang)}` : "";
+  return `/api/pdf/${state.module.name}/${state.unit}${query}#pagemode=none`;
 }
 
 async function doCompile() {
-  if (!state.key || !state.lang) return;
+  if (!state.unit) return;
   setStatus("Compiling…", "dirty");
   try {
     const body = await post("/api/compile");
@@ -479,12 +514,12 @@ async function doCompile() {
     markSaved();
 
     if (body.ok) {
-      showPdf(pdfUrlFor(state.key, state.lang));
+      showPdf(pdfUrlFor());
       switchOutputTab("pdf");
       setStatus("Compiled", "ok");
     } else {
       // Keep the last good render on screen, badged as out of date, and show why.
-      if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(state.key, state.lang), { stale: true });
+      if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(), { stale: true });
       switchOutputTab("log");
       setStatus(failureStatus(body, "compile"), "error");
     }
@@ -494,7 +529,7 @@ async function doCompile() {
 }
 
 async function doRender() {
-  if (!state.key || !state.lang || !state.activeTarget) return;
+  if (!state.unit || !state.activeTarget) return;
   setStatus("Rendering…", "dirty");
   try {
     const body = await post("/api/render", { target: state.activeTarget });
@@ -519,14 +554,15 @@ async function doRender() {
 }
 
 async function doLint() {
-  if (!state.key || !state.lang || !state.activeTarget) return;
+  if (!state.unit || !state.activeTarget) return;
   const box = el("output-lint");
   box.textContent = "Linting…";
   try {
     const body = await fetchJSON("/api/lint", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: state.key, lang: state.lang, target: state.activeTarget }),
+      body: JSON.stringify({ module: state.module.name, unit: state.unit,
+                             lang: state.lang, target: state.activeTarget }),
     });
     box.innerHTML = "";
     if (!body.violations.length) {
@@ -605,9 +641,7 @@ function clamp(value, min, max) {
 // --- init ------------------------------------------------------------------
 
 function init() {
-  el("comp-select").addEventListener("change", (e) => onCompChange(e.target.value));
-  el("vol-select").addEventListener("change", (e) => onVolChange(e.target.value));
-  el("pid-select").addEventListener("change", (e) => onPidChange(e.target.value));
+  el("module-select").addEventListener("change", (e) => onModuleChange(e.target.value));
   el("lang-select").addEventListener("change", (e) => onLangChange(e.target.value));
   el("save-btn").addEventListener("click", doSave);
   el("compile-btn").addEventListener("click", doCompile);
@@ -657,15 +691,16 @@ function init() {
   // taken there. Ignore the hash we just wrote ourselves.
   window.addEventListener("hashchange", async () => {
     const wanted = readLocation();
-    if (!wanted.key) return;
-    if (wanted.key === state.key && wanted.lang === state.lang) {
+    if (!wanted.unit) return;
+    if (wanted.module === state.module?.name && wanted.unit === state.unit
+        && wanted.lang === state.lang) {
       if (wanted.target && wanted.target !== state.activeTarget
           && state.targets.includes(wanted.target)) switchTarget(wanted.target);
       return;
     }
-    if (!confirmDiscard({ value: null }, null)) return;
+    if (!confirmDiscard()) return;
     try {
-      await loadProblem(wanted.key, wanted.lang, wanted.target);
+      await openUnit(wanted.module, wanted.unit, wanted.lang, wanted.target);
     } catch (e) {
       // A hand-edited or stale URL should say so, not fail silently in the console.
       setStatus(e.message, "error");
@@ -680,7 +715,7 @@ function init() {
       doSave();
     }
   });
-  loadProblems();
+  loadModules();
 }
 
 init();

@@ -1,0 +1,12 @@
+# See modules/naboj/editor.yaml for what this file is.
+
+label: Seminar
+
+units:
+  # <competition>/<volume>/<semester>/<round>/<problem>, e.g. FKS/41/1/3/07
+  - glob: '*/*/*/*/*'
+    targets: [problem, solution]
+    render: 'render/seminar/{unit}/{target}.md'
+    # There is no one-problem document here, so the preview is the document the problem is
+    # actually printed in: the round's full solutions, built from `{parent}`.
+    preview: 'output/seminar/{parent}/solutions-full.pdf'
