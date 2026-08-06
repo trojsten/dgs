@@ -59,10 +59,8 @@
        Get this path wrong and every figure silently degrades to `example-image`. #)
     \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
 
-    (# Three sections, headed with the booklet's own section names so the preview reads in the
-       language it is written in. There is no i18n name for `problem-extra` or for the answer
-       extras, and neither wants one: each is a continuation of the part above it, which is why
-       `blocks/problem-body.jtex` and `blocks/answer-body.jtex` fold them in.
+    (# Headed with the booklet's own section names, so the preview reads in the language it is
+       written in.
 
        Guarded with `\IfFileExists` rather than in Jinja: the document is rendered once and then
        compiled against whatever the Makefile actually built, and an optional part may appear or
@@ -72,7 +70,20 @@
         \setcounter{equation}{0}%
         \setcounter{table}{0}%
         \setcounter{figure}{0}%
-        (@ include 'blocks/problem-body.jtex' @)%
+        \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
+    }{}%
+    (# `problem-extra` exists to be torn off separately: `tearoff.jtex` runs a second pass over
+       every problem after the closing page and gives each extra its own sheet, numbered `N*`.
+       The booklet has no pages to hand out and simply appends it to the statement, but the
+       preview must not -- being a separate sheet is the whole point of the file, so it gets its
+       own page here too, and the tearoff's `*` marker. #)
+    \IfFileExists{\activeDirectory/(* language.id *)/problem-extra.tex}{%
+        \newpage%
+        \subsection*{(* i18n[language.id].section.problems *)*}%
+        \setcounter{equation}{0}%
+        \setcounter{table}{0}%
+        \setcounter{figure}{0}%
+        \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
     }{}%
     \IfFileExists{\activeDirectory/(* language.id *)/solution.tex}{%
         \subsection*{(* i18n[language.id].section.solutions *)}%

@@ -221,7 +221,6 @@ $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language
 build/naboj/%/build-standalone: \
 	modules/naboj/templates/base.jtex \
 	modules/naboj/templates/standalone.jtex \
-	modules/naboj/templates/blocks/problem-body.jtex \
 	modules/naboj/templates/blocks/answer-body.jtex
 	$(call prepare_arguments,standalone)
 	python -m modules.naboj.builder.standalone \
