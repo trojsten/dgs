@@ -7,6 +7,4 @@ units:
   - glob: '*/*/*/*/*'
     targets: [problem, solution]
     render: 'render/seminar/{unit}/{target}.md'
-    # There is no one-problem document here, so the preview is the document the problem is
-    # actually printed in: the round's full solutions, built from `{parent}`.
-    preview: 'output/seminar/{parent}/solutions-full.pdf'
+    preview: 'output/seminar/{unit}/standalone.pdf'

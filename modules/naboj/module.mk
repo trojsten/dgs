@@ -10,10 +10,6 @@ source/naboj/%/i18n: \
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
 
-define truepath
-	$(subst $(cdir),,$(abspath $(1)))
-endef
-
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
 define NABOJ_TRANSLATABLE

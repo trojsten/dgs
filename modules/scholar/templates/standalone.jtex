@@ -1,0 +1,48 @@
+(# One unit -- a handout's text, or a single problem with its solution -- as its own document,
+   for previewing while authoring.
+
+   Deliberately not built on `base.jtex`: that file sets `\setActive` from a handout's context and
+   defines the sheet's page furniture, so extending it would demand an issue and a course to
+   render what this document never uses. The class, the headings and the i18n input are what
+   matter, and those are copied from it verbatim so the preview matches the printed sheet. #)
+
+\documentclass[12pt, oneside]{dgs}
+
+\input{build/scholar/(* course *)/.static/format-override.tex}
+\input{build/core/i18n/(* language *).tex}
+
+\setcounter{secnumdepth}{3}
+
+\fancypagestyle{standalone}{%
+    \fancyhf{}
+    \fancyhead[L]{\small\texttt{(* unit *)}}
+    \fancyfoot[C]{\small \thepage}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0pt}
+    \titleformat{\subsection}[hang]{\LARGE\bfseries\vspace{4mm}\vspace*{-4mm}}{}{0pt}{}
+    \titleformat{\subsubsection}[hang]{\large\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titleformat{\subparagraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titlespacing{\subsection}{0pt}{6mm}{4mm}
+    \titlespacing{\subsubsection}{0pt}{2mm}{0pt}
+    \titlespacing{\paragraph}{0pt}{2mm}{0pt}
+    \titlespacing{\subparagraph}{0pt}{2mm}{0pt}
+}
+
+\numberwithin{equation}{subsection}
+\numberwithin{figure}{subsection}
+
+\begin{document}
+    \pagestyle{standalone}
+    \setActive{\rootDirectory/(* module *)/(* unit *)}%
+
+    (@ for part in parts @)
+    \IfFileExists{\activeDirectory/(* part *).tex}{%
+        \subsection*{(* title *)}%
+        \setcounter{equation}{0}%
+        \setcounter{figure}{0}%
+        \setcounter{table}{0}%
+        \protectedInput{\activeDirectory/(* part *).tex}%
+    }{}%
+    (@ endfor @)
+\end{document}

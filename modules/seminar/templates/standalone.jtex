@@ -1,0 +1,71 @@
+(# One problem -- statement and solution -- as its own document, for previewing while authoring.
+
+   Deliberately not built on `base.jtex`: that file defines the booklet's page furniture inline,
+   so extending it would demand the whole competition context (logos, founding year, addresses)
+   to render pagestyles this document never uses. What is left is the class, the geometry and the
+   headings, and a context of four strings taken from the path.
+
+   The geometry and the `seminar` titleformats are copied from `base.jtex` verbatim: a preview is
+   for judging how a problem will look in print, so line breaking and headings have to match. #)
+
+\documentclass[12pt, oneside]{dgs}
+
+\newgeometry{
+    left                    = 15mm,
+    right                   = 15mm,
+    top                     = 15mm,
+    bottom                  = 15mm,
+    headheight              = 20pt,
+    headsep                 = 16pt,
+    footskip                = 32pt,
+    includeheadfoot,
+}
+
+\input{build/seminar/(* competition.id *)/.static/format-override.tex}
+\input{build/core/i18n/(* language *).tex}
+
+\newcounter{volume}
+\newcounter{semester}
+\newcounter{round}
+\newcounter{problem}
+
+\fancypagestyle{standalone}{%
+    \fancyhf{}
+    \fancyhead[L]{\small\texttt{(* unit *)}}
+    \fancyfoot[C]{\small \thepage}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0pt}
+    \titleformat{\subsection}[hang]{\large}{\bfseries\arabic{round}.\arabic{problem}}{6pt}{}[]
+    \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+    \titleformat{\paragraph}[hang]{\it\bfseries}{}{0pt}{}[]
+    \titleformat{\subparagraph}[hang]{\it}{}{0pt}{}[]
+    \titlespacing{\subsection}{0pt}{8pt}{0pt}
+    \titlespacing{\subsubsection}{0pt}{8pt}{0pt}
+    \titlespacing{\paragraph}{0pt}{8pt}{0pt}
+    \titlespacing{\subparagraph}{0pt}{6pt}{0pt}
+}
+
+\numberwithin{equation}{subsection}
+\numberwithin{figure}{subsection}
+
+\begin{document}
+    \pagestyle{standalone}
+
+    (# The booklet numbers a problem `<round>.<problem>`, and both are segments of its path,
+       so the preview can print the number it will really carry. #)
+    \setcounter{volume}{(* volume *)}%
+    \setcounter{semester}{(* semester *)}%
+    \setcounter{round}{(* round *)}%
+    \setcounter{problem}{(* number *)}%
+    \setActive{\rootDirectory/(* module *)/(* unit *)}%
+
+    (@ for part in ['problem', 'solution'] @)
+    \IfFileExists{\activeDirectory/(* part *).tex}{%
+        \subsection{\large \textbf{(* title *)}}%
+        \setcounter{equation}{0}%
+        \setcounter{figure}{0}%
+        \setcounter{table}{0}%
+        \protectedInput{\activeDirectory/(* part *).tex}%
+    }{}%
+    (@ endfor @)
+\end{document}

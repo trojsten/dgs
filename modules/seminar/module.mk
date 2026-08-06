@@ -19,6 +19,42 @@ render/seminar/%.gp:\
 	$$(abspath source/seminar/$$(dir $$*)/meta.yaml)
 	$(call jinja,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
+### Standalone problems #########################
+# One problem, statement and solution, as its own PDF. Everything else here builds at least a
+# whole round, which is no use while authoring: it fails for reasons that have nothing to do with
+# the problem in front of you.
+
+# % <competition>/<volume>/<semester>/<round>/<problem>
+build/seminar/%/build-standalone: \
+	modules/seminar/templates/standalone.jtex
+	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)Building standalone for $(c_filename)$*$(c_action):$(c_default)'
+	python -m modules.seminar.builder.standalone $* -o '$(dir $@)'
+	touch $@
+
+build/seminar/%/standalone.tex: \
+	build/seminar/$$*/build-standalone ;
+
+# Pictures and class files for a single problem.
+build/seminar/%/standalone-prerequisites: \
+	core/latex/dgs.cls \
+	$$(wildcard core/latex/*.tex) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.pdf)) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/seminar/$$*/*.tikz))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*.gp))) \
+	$$(call truepath, build/seminar/$$*/../../../../copy-static) \
+	build/core/i18n ;
+
+output/seminar/%/standalone.pdf: \
+	build/seminar/%/standalone-prerequisites \
+	$$(if $$(wildcard source/seminar/$$*/problem.md),build/seminar/$$*/problem.tex) \
+	$$(if $$(wildcard source/seminar/$$*/solution.md),build/seminar/$$*/solution.tex) \
+	build/seminar/%/standalone.tex
+	$(call double_xelatex,seminar)
+
 build/seminar/%/copy-static:
 	@mkdir -p $(dir $@).static/
 	cp -r source/seminar/$*/.static/ build/seminar/$*/

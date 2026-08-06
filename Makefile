@@ -59,6 +59,12 @@ TEXFOT_ARGS_FIRST=${TEXFOT_ARGS} \
 	--ignore 'LaTeX Warning: Reference.*' \
 	--ignore 'LaTeX Warning: Citation.*'
 
+# Normalise a path containing `..` to one relative to the repository root. Shared: it started in
+# modules/naboj/module.mk, but seminar and scholar reach for it too.
+define truepath
+	$(subst $(cdir),,$(abspath $(1)))
+endef
+
 # xelatex(module, run, texfot_args)
 # Compiles a selected target
 # TeX wraps its log at 79 columns, which chops error messages mid-word -- "File ended while sc /

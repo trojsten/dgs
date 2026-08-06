@@ -19,6 +19,43 @@ render/scholar/%.gp:\
 	$$(abspath source/scholar/$$(dir $$*)/meta.yaml)
 	$(call jinja,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
+### Standalone units ############################
+# One unit -- a sheet's text, or one problem with its solution -- as its own PDF. Everything else
+# here builds a whole handout, which is no use while authoring.
+
+# % <course>/<year>/<kind>/<issue>[/<problem>]
+build/scholar/%/build-standalone: \
+	modules/scholar/templates/standalone.jtex
+	@mkdir -p $(dir $@)
+	@echo -e '$(c_action)Building standalone for $(c_filename)$*$(c_action):$(c_default)'
+	python -m modules.scholar.builder.standalone $* -o '$(dir $@)'
+	touch $@
+
+build/scholar/%/standalone.tex: \
+	build/scholar/$$*/build-standalone ;
+
+build/scholar/%/standalone-prerequisites: \
+	core/latex/dgs.cls \
+	$$(wildcard core/latex/*.tex) \
+	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*.pdf)) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/scholar/$$*/*.tikz))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
+	build/core/i18n ;
+
+# `text` belongs to a sheet and `problem`/`solution` to a problem inside one; the wildcards pick
+# whichever of the three actually exist, so one rule serves both depths.
+output/scholar/%/standalone.pdf: \
+	build/scholar/%/standalone-prerequisites \
+	$$(subst $$(cdir),,$$(abspath build/scholar/$$(word 1,$$(subst /, ,$$*))/copy-static)) \
+	$$(if $$(wildcard source/scholar/$$*/text.md),build/scholar/$$*/text.tex) \
+	$$(if $$(wildcard source/scholar/$$*/problem.md),build/scholar/$$*/problem.tex) \
+	$$(if $$(wildcard source/scholar/$$*/solution.md),build/scholar/$$*/solution.tex) \
+	build/scholar/%/standalone.tex
+	$(call double_xelatex,scholar)
+
 build/scholar/%/build-handout: \
 	modules/scholar/templates/base.jtex \
 	$$(wildcard modules/scholar/templates/handout-*.jtex) \
