@@ -64,6 +64,10 @@ html, body {
 #status.dirty { color: #e0c34a; }
 #status.ok { color: #6bcf7f; }
 
+/* Two columns: everything you edit on the left, the compiled page on the right. The
+   right-hand column spans all three rows so the PDF gets the full window height; source and
+   meta.yaml stack inside the left one, because `values:`/`derived:` are what the source's
+   `(§ … §)` references resolve against and you want both in view at once. */
 #grid {
   --context-height: 240px;
   --source-width: 1fr;
@@ -71,9 +75,9 @@ html, body {
   grid-template-columns: var(--source-width) 8px 1fr;
   grid-template-rows: 1fr 8px var(--context-height);
   grid-template-areas:
-    "source colresizer output"
-    "rowresizer rowresizer rowresizer"
-    "context context context";
+    "source     colresizer output"
+    "rowresizer colresizer output"
+    "context    colresizer output";
   gap: 1px;
   background: #3a3a3a;
   height: calc(100vh - 48px);

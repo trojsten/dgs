@@ -29,6 +29,16 @@
       </div>
     </section>
 
+    <div id="row-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize meta.yaml panel"></div>
+
+    <section id="pane-context" class="pane">
+      <div class="pane-label">meta.yaml</div>
+      <div class="code-editor">
+        <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
+        <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
+      </div>
+    </section>
+
     <div id="col-resizer" role="separator" aria-orientation="vertical" aria-label="Resize source/output columns"></div>
 
     <section id="pane-output" class="pane">
@@ -46,16 +56,6 @@
       <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
       <div id="output-lint" class="output" hidden></div>
       <pre id="output-log" class="output" hidden><code id="output-log-code"></code></pre>
-    </section>
-
-    <div id="row-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize meta.yaml panel"></div>
-
-    <section id="pane-context" class="pane">
-      <div class="pane-label">meta.yaml</div>
-      <div class="code-editor">
-        <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
-        <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
-      </div>
     </section>
   </main>
 
