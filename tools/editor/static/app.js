@@ -118,11 +118,74 @@ function renderSourceTabs() {
 function switchTarget(target) {
   // Keep whatever is in the textarea before swapping it out, or edits to the tab being
   // left behind would be lost.
-  if (state.activeTarget) state.buffers[state.activeTarget] = el("source-editor").value;
+  if (state.activeTarget) {
+    state.buffers[state.activeTarget] = el("source-editor").value;
+    rememberScroll();
+  }
   state.activeTarget = target;
   setEditorValue("source-editor", "source-highlight", sourceMode, state.buffers[target] ?? "");
   renderSourceTabs();
   syncActionsForTarget();
+  if (target) restoreScroll(target);
+  writeLocation();
+}
+
+// --- where you were ---------------------------------------------------------
+
+/**
+ * The address bar is the workspace. `#phys/28/problems/leaky-graph/sk/time.gp` names exactly one
+ * open file, so a reload comes back to it, and the URL can be bookmarked or pasted to a colleague.
+ *
+ * A problem key is always four segments (`<competition>/<volume>/problems/<id>`) and a language
+ * never contains a slash, so the rest is the file -- which lets an auxiliary target keep its own
+ * `sk/data.dat` shape without any escaping.
+ */
+function readLocation() {
+  const raw = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+  if (!raw) return {};
+  const parts = raw.split("/");
+  if (parts.length < 4) return {};
+  return {
+    key: parts.slice(0, 4).join("/"),
+    lang: parts[4] || null,
+    target: parts.slice(5).join("/") || null,
+  };
+}
+
+// `replaceState`, not `pushState`: switching tabs should not fill the history with entries that
+// send you back to a different file when you meant to leave the page.
+function writeLocation() {
+  if (!state.key) return;
+  const path = [state.key, state.lang, state.activeTarget].filter(Boolean).join("/");
+  history.replaceState(null, "", `#${path}`);
+}
+
+const SCROLL_KEY = "dgs-editor-scroll";
+
+function scrollStore() {
+  try {
+    return JSON.parse(localStorage.getItem(SCROLL_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function scrollId(target) {
+  return `${state.key}/${state.lang}/${target}`;
+}
+
+function rememberScroll() {
+  if (!state.key || !state.activeTarget) return;
+  const store = scrollStore();
+  store[scrollId(state.activeTarget)] = el("source-editor").scrollTop;
+  localStorage.setItem(SCROLL_KEY, JSON.stringify(store));
+}
+
+function restoreScroll(target) {
+  const top = scrollStore()[scrollId(target)] ?? 0;
+  const textarea = el("source-editor");
+  textarea.scrollTop = top;
+  el("source-highlight").parentElement.scrollTop = top;
 }
 
 // --- problem picker --------------------------------------------------------
@@ -177,10 +240,16 @@ async function loadProblems() {
   fillSelect(el("comp-select"), comps);
   if (!comps.length) return;
 
-  state.comp = comps[0];
-  populateVolumes(state.comp);
-  const key = populateProblems(state.comp, state.vol);
-  if (key) await loadProblem(key);
+  // Reopen whatever the address bar names, falling back to the first problem if the URL is
+  // empty or points at something that has since been renamed or removed.
+  const wanted = readLocation();
+  const known = wanted.key && state.problems.some((p) => p.key === wanted.key);
+  const [comp, vol, , pid] = known ? wanted.key.split("/") : [comps[0]];
+
+  state.comp = comps.includes(comp) ? comp : comps[0];
+  populateVolumes(state.comp, vol);
+  const key = populateProblems(state.comp, state.vol, pid);
+  if (key) await loadProblem(key, known ? wanted.lang : null, known ? wanted.target : null);
 }
 
 function confirmDiscard(revertEl, revertValue) {
@@ -218,7 +287,8 @@ async function onLangChange(lang) {
   await loadProblem(state.key, lang);
 }
 
-async function loadProblem(key, lang) {
+async function loadProblem(key, lang, target) {
+  rememberScroll();   // still pointing at the outgoing file
   const url = lang ? `/api/problem/${key}?lang=${lang}` : `/api/problem/${key}`;
   const data = await fetchJSON(url);
 
@@ -234,22 +304,30 @@ async function loadProblem(key, lang) {
   for (const target of state.targets) state.buffers[target] = data.files[target] ?? "";
   state.baseline = { ...state.buffers };
 
+  // Repopulate rather than just assign: a jump straight to another competition or volume -- from
+  // a bookmark, or by editing the address bar -- arrives with the volume and problem lists still
+  // holding the previous one's options, and assigning a value no option has silently selects
+  // nothing.
   const [comp, vol, , pid] = key.split("/");
+  state.comp = comp;
   el("comp-select").value = comp;
-  el("vol-select").value = vol;
-  el("pid-select").value = pid;
+  populateVolumes(comp, vol);
+  populateProblems(comp, state.vol, pid);
   fillSelect(el("lang-select"), data.langs);
   el("lang-select").value = data.lang;
 
   setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
   el("meta-label").textContent = data.meta_yaml === null ? "meta.yaml (does not exist yet)" : "meta.yaml";
-  switchTarget(state.targets[0] ?? null);
+  switchTarget(state.targets.includes(target) ? target : (state.targets[0] ?? null));
   setStatus("Loaded", "ok");
 
   el("output-rendered-code").innerHTML = "";
   el("output-rendered").classList.remove("error");
   setLog("");
-  showPdf(null);
+  // The compiled page outlives the browser session, so a reload gets it straight back rather
+  // than an empty pane and a pointless recompile.
+  showPdf(data.has_pdf ? pdfUrlFor(state.key, state.lang) : null);
+  writeLocation();
 }
 
 // --- writing back ----------------------------------------------------------
@@ -560,6 +638,38 @@ function init() {
 
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
     t.addEventListener("click", () => switchOutputTab(t.dataset.output));
+  });
+
+  // Keep the scroll offset current so a reload lands where you were reading, not at the top.
+  let scrollTimer = null;
+  el("source-editor").addEventListener("scroll", () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(rememberScroll, 200);
+  });
+
+  // Nothing here auto-saves, so leaving with edits in the buffers would drop them silently.
+  window.addEventListener("beforeunload", (e) => {
+    rememberScroll();
+    if (anyDirty()) e.preventDefault();
+  });
+
+  // Someone editing the address bar, or arriving from a bookmark in an open tab, should be
+  // taken there. Ignore the hash we just wrote ourselves.
+  window.addEventListener("hashchange", async () => {
+    const wanted = readLocation();
+    if (!wanted.key) return;
+    if (wanted.key === state.key && wanted.lang === state.lang) {
+      if (wanted.target && wanted.target !== state.activeTarget
+          && state.targets.includes(wanted.target)) switchTarget(wanted.target);
+      return;
+    }
+    if (!confirmDiscard({ value: null }, null)) return;
+    try {
+      await loadProblem(wanted.key, wanted.lang, wanted.target);
+    } catch (e) {
+      // A hand-edited or stale URL should say so, not fail silently in the console.
+      setStatus(e.message, "error");
+    }
   });
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {

@@ -206,6 +206,9 @@ def api_problem(key):
         "langs": langs,
         "lang": lang,
         "targets": targets,
+        # So a reload can put the last compiled page straight back in the pane instead of an
+        # empty placeholder: the PDF outlives the browser session, it is sitting in the cache.
+        "has_pdf": bool(lang) and cached_pdf_path(key, lang).is_file(),
         "meta_yaml": read_if_exists(problem_dir / "meta.yaml"),
         "files": {
             target: read_if_exists(source_path_for_target(problem_dir, lang, target))
