@@ -55,7 +55,10 @@ def resolve_problem_dir(key):
     problem_dir = (SOURCE_ROOT / key).resolve()
     if not problem_dir.is_relative_to(SOURCE_ROOT.resolve()):
         raise BadRequest(f"Invalid problem key: {key!r}")
-    if not (problem_dir / "meta.yaml").is_file() or problem_dir.parent.name != "problems":
+    # A problem is a directory under `problems/`. Deliberately not "a directory with a
+    # meta.yaml": a problem that has not been converted yet has none, and those are precisely
+    # the ones somebody needs to open in order to write one.
+    if not problem_dir.is_dir() or problem_dir.parent.name != "problems":
         raise BadRequest(f"No such problem: {key!r}")
     return problem_dir
 
@@ -92,13 +95,22 @@ def read_if_exists(path):
 
 
 def list_problems():
+    """
+    Every problem directory under a `<competition>/<volume>/problems/`.
+
+    Walking the directories rather than hunting for `meta.yaml` matters: 69 of the 144 chem
+    problems have no meta.yaml at all and 37 more have an empty one, so keying the picker off
+    that file hid nearly half of chem -- the unconverted half, which is the half that needs
+    opening. `has_meta` lets the picker say so instead of pretending they do not exist.
+    """
     problems = []
-    for meta_path in sorted(SOURCE_ROOT.rglob("meta.yaml")):
-        problem_dir = meta_path.parent
-        if problem_dir.parent.name != "problems":
-            continue  # venue/constants/language config, not an actual problem
-        key = problem_dir.relative_to(SOURCE_ROOT).as_posix()
-        problems.append({"key": key, "langs": available_langs(problem_dir)})
+    for problems_dir in sorted(SOURCE_ROOT.glob("*/*/problems")):
+        for problem_dir in sorted(p for p in problems_dir.iterdir() if p.is_dir()):
+            problems.append({
+                "key": problem_dir.relative_to(SOURCE_ROOT).as_posix(),
+                "langs": available_langs(problem_dir),
+                "has_meta": (problem_dir / "meta.yaml").is_file(),
+            })
     return problems
 
 
@@ -166,6 +178,24 @@ def make_result(target, result):
     }
 
 
+def missing_meta_result(target, problem_dir):
+    """
+    Every render rule takes the problem's `meta.yaml` as a prerequisite, so without one make
+    cannot build the chain at all and reports `No rule to make target`, naming the PDF rather
+    than the file that is actually missing. Say what is wrong instead -- an unconverted problem
+    opens in the editor precisely so that a meta.yaml can be written for it.
+    """
+    return {
+        "ok": False,
+        "returncode": None,
+        "command": f"make {target}",
+        "stdout": f"{problem_dir.relative_to(REPO_ROOT)}/meta.yaml does not exist.\n\n"
+                  f"Every render rule needs it, so nothing can be built until it is written. "
+                  f"Fill in the meta.yaml pane -- `authors:` and `tags:` at minimum -- and save.\n",
+        "stderr": "",
+    }
+
+
 def write_files(problem_dir, lang, files):
     """
     Write back every buffer the editor sent. All of a problem's files are open at once, so a
@@ -214,7 +244,10 @@ def api_render():
         write_files(problem_dir, lang, body.get("files") or {})
 
         make_target = f"render/naboj/{key}/{lang}/{target}.md"
-        response = make_result(make_target, run_make(make_target))
+        if not (problem_dir / "meta.yaml").is_file():
+            response = missing_meta_result(make_target, problem_dir)
+        else:
+            response = make_result(make_target, run_make(make_target))
         response["rendered_md"] = (
             read_if_exists(render_path_for_target(key, lang, target)) if response["ok"] else None
         )
@@ -236,7 +269,10 @@ def api_compile():
         write_files(problem_dir, lang, body.get("files") or {})
 
         make_target = f"output/naboj/{key}/{lang}/standalone.pdf"
-        response = make_result(make_target, run_make(make_target, timeout=300))
+        if not (problem_dir / "meta.yaml").is_file():
+            response = missing_meta_result(make_target, problem_dir)
+        else:
+            response = make_result(make_target, run_make(make_target, timeout=300))
 
         built = REPO_ROOT / make_target
         if response["ok"] and built.is_file():

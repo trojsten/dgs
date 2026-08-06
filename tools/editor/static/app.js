@@ -132,7 +132,10 @@ function populateVolumes(comp, preferredVol) {
 
 function populateProblems(comp, vol, preferredPid) {
   const problems = pidsFor(comp, vol);
-  fillSelect(el("pid-select"), problems.map((p) => p.pid), (pid) => pid);
+  // Mark the problems that have no meta.yaml yet, rather than leaving you to work out why
+  // a compile fails: nearly half of chem is still unconverted.
+  const marks = Object.fromEntries(problems.map((p) => [p.pid, p.hasMeta ? "" : " \u26a0"]));
+  fillSelect(el("pid-select"), problems.map((p) => p.pid), (pid) => pid + (marks[pid] ?? ""));
   const match = problems.find((p) => p.pid === preferredPid) ?? problems[0];
   el("pid-select").value = match ? match.pid : "";
   return match ? match.key : null;
@@ -144,7 +147,7 @@ async function loadProblems() {
   for (const p of state.problems) {
     const [comp, vol, , pid] = p.key.split("/");
     (state.problemIndex[comp] ??= {})[vol] ??= [];
-    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs });
+    state.problemIndex[comp][vol].push({ pid, key: p.key, langs: p.langs, hasMeta: p.has_meta });
   }
   for (const comp in state.problemIndex) {
     for (const vol in state.problemIndex[comp]) {
@@ -221,6 +224,7 @@ async function loadProblem(key, lang) {
   el("lang-select").value = data.lang;
 
   setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
+  el("meta-label").textContent = data.meta_yaml === null ? "meta.yaml (does not exist yet)" : "meta.yaml";
   switchTarget(state.targets[0] ?? null);
   setStatus("Loaded", "ok");
 
@@ -378,7 +382,8 @@ async function doCompile() {
       // Keep the last good render on screen, badged as out of date, and show why.
       if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(state.key, state.lang), { stale: true });
       switchOutputTab("log");
-      setStatus(`Compile failed (exit ${body.returncode})`, "error");
+      // No exit code when the failure is ours rather than make's (a missing meta.yaml).
+      setStatus(body.returncode === null ? "Cannot compile" : `Compile failed (exit ${body.returncode})`, "error");
     }
   } catch (e) {
     setStatus(e.message, "error");
@@ -403,7 +408,7 @@ async function doRender() {
     } else {
       code.textContent = logOf(body);
       out.classList.add("error");
-      setStatus(`Render failed (exit ${body.returncode})`, "error");
+      setStatus(body.returncode === null ? "Cannot render" : `Render failed (exit ${body.returncode})`, "error");
     }
   } catch (e) {
     setStatus(e.message, "error");
