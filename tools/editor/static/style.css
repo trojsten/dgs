@@ -329,3 +329,9 @@ html, body {
   color: #999;
   margin-right: 0.5rem;
 }
+
+#topbar button:disabled,
+.tab:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -25,6 +25,14 @@ ORDERED_TARGETS = (
 )
 ALL_TARGETS = frozenset(TRANSLATABLE_TARGETS) | frozenset(NONTRANSLATABLE_TARGETS)
 
+# Files that are not prose but still feed the document, and so are still worth editing beside it:
+# a gnuplot script is Jinja-rendered like everything else (`render/naboj/%.gp`) and becomes a
+# figure, and the .dat tables it reads are its prerequisites. Named by their path relative to the
+# problem rather than by a fixed target name, since there can be any number of them.
+AUX_EXTENSIONS = (".gp", ".dat")
+# Only the gnuplot script goes through Jinja; a .dat is copied verbatim.
+RENDERABLE_AUX_EXTENSIONS = (".gp",)
+
 # Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed
 # compile can leave a truncated file in `output/`; serving a copy means a broken edit keeps
 # showing the previous render beside the error log instead of a blank pane.
@@ -76,19 +84,65 @@ def validate_lang(problem_dir, lang):
         raise BadRequest(f"Invalid or unavailable language: {lang!r}")
 
 
-def validate_target(target):
-    if target not in ALL_TARGETS:
-        raise BadRequest(f"Invalid target: {target!r}")
+def is_aux(target):
+    """An auxiliary file is named by path and extension; the prose targets are bare names."""
+    return target not in ALL_TARGETS
+
+
+def aux_path(problem_dir, target):
+    """
+    Resolve an auxiliary target, which is attacker-supplied text rather than one of seven known
+    names, so it is checked rather than trusted: inside the problem, and of an editable kind.
+    """
+    if not target or target.startswith("/") or ".." in target.split("/"):
+        raise BadRequest(f"Invalid file: {target!r}")
+    path = (problem_dir / target).resolve()
+    if not path.is_relative_to(problem_dir.resolve()) or path.suffix not in AUX_EXTENSIONS:
+        raise BadRequest(f"Not an editable auxiliary file: {target!r}")
+    return path
+
+
+def validate_target(problem_dir, target):
+    if is_aux(target):
+        aux_path(problem_dir, target)
 
 
 def source_path_for_target(problem_dir, lang, target):
+    if is_aux(target):
+        return aux_path(problem_dir, target)
     if target in TRANSLATABLE_TARGETS:
         return problem_dir / lang / f"{target}.md"
     return problem_dir / f"{target}.md"
 
 
+def aux_files(problem_dir, lang):
+    """
+    Every `.gp` and `.dat` belonging to this problem, at the problem level and inside the language
+    directory, named relative to the problem so `sk/data.dat` stays distinct from `data.dat`.
+    """
+    found = []
+    for directory in [problem_dir] + ([problem_dir / lang] if lang else []):
+        if directory.is_dir():
+            found += sorted(
+                path.relative_to(problem_dir).as_posix()
+                for path in directory.iterdir()
+                if path.is_file() and path.suffix in AUX_EXTENSIONS
+            )
+    return found
+
+
+def render_target_for(key, lang, target):
+    """
+    The make target that renders this file. A gnuplot script lives at the problem level and keeps
+    its own name and extension (`render/naboj/%.gp`); prose is per language and always `.md`.
+    """
+    if is_aux(target):
+        return f"render/naboj/{key}/{target}"
+    return f"render/naboj/{key}/{lang}/{target}.md"
+
+
 def render_path_for_target(key, lang, target):
-    return REPO_ROOT / "render" / "naboj" / key / lang / f"{target}.md"
+    return REPO_ROOT / render_target_for(key, lang, target)
 
 
 def read_if_exists(path):
@@ -120,10 +174,11 @@ def existing_targets(problem_dir, lang):
     Every target this problem actually has a file for, in document order. The editor opens
     all of them at once, so it needs the list rather than a fixed pair plus extras.
     """
-    return [
+    prose = [
         target for target in ORDERED_TARGETS
         if lang and source_path_for_target(problem_dir, lang, target).is_file()
     ]
+    return prose + aux_files(problem_dir, lang)
 
 
 @app.get("/")
@@ -258,7 +313,7 @@ def write_files(problem_dir, lang, files):
         (problem_dir / "meta.yaml").write_text(files["meta_yaml"])
 
     for target, content in (files.get("targets") or {}).items():
-        validate_target(target)
+        validate_target(problem_dir, target)
         source_path = source_path_for_target(problem_dir, lang, target)
         if not source_path.is_file():
             raise BadRequest(f"Refusing to create a new file: {target}.md does not exist")
@@ -290,12 +345,14 @@ def api_render():
     body = request.get_json(force=True)
     key, lang, problem_dir = request_problem(body)
     target = body.get("target")
-    validate_target(target)
+    validate_target(problem_dir, target)
+    if is_aux(target) and Path(target).suffix not in RENDERABLE_AUX_EXTENSIONS:
+        raise BadRequest(f"{target} is copied verbatim, not rendered -- nothing to preview.")
 
     with BUILD_LOCK:
         write_files(problem_dir, lang, body.get("files") or {})
 
-        make_target = f"render/naboj/{key}/{lang}/{target}.md"
+        make_target = render_target_for(key, lang, target)
         if not (problem_dir / "meta.yaml").is_file():
             response = missing_meta_result(make_target, problem_dir)
         else:
@@ -378,9 +435,11 @@ def parse_mdcheck_output(stdout):
 @app.post("/api/lint")
 def api_lint():
     body = request.get_json(force=True)
-    key, lang, _ = request_problem(body)
+    key, lang, problem_dir = request_problem(body)
     target = body.get("target")
-    validate_target(target)
+    validate_target(problem_dir, target)
+    if is_aux(target):
+        raise BadRequest("The style checker only reads Markdown.")
 
     render_path = render_path_for_target(key, lang, target)
     if not render_path.is_file():

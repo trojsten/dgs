@@ -47,7 +47,7 @@ function anyDirty() {
 
 function refreshHighlight(textareaId, highlightId, lang) {
   const text = el(textareaId).value;
-  el(highlightId).innerHTML = highlight(text + "\n", lang);
+  el(highlightId).innerHTML = highlight(text + "\n", typeof lang === "function" ? lang() : lang);
 }
 
 function wireCodeEditor(textareaId, highlightId, lang, onInput) {
@@ -84,6 +84,23 @@ function labelFor(target) {
   return TARGET_LABELS[target] || target;
 }
 
+// A gnuplot script or its data table, carried as a path rather than one of the seven prose names.
+function isAux(target) {
+  return target != null && !(target in TARGET_LABELS);
+}
+
+// The .md grammar would read a gnuplot script's `#` comments as headings and its `$1` columns
+// as maths, so aux files get their own mode -- one that still lights up the `(§ … §)` tags.
+function sourceMode() {
+  return isAux(state.activeTarget) ? "dgs-gnuplot" : "dgs-md";
+}
+
+function syncActionsForTarget() {
+  const aux = isAux(state.activeTarget);
+  el("render-btn").disabled = aux && !state.activeTarget.endsWith(".gp");
+  document.querySelector('[data-output="lint"]').disabled = aux;
+}
+
 function renderSourceTabs() {
   const bar = el("source-tabs");
   bar.innerHTML = "";
@@ -103,8 +120,9 @@ function switchTarget(target) {
   // left behind would be lost.
   if (state.activeTarget) state.buffers[state.activeTarget] = el("source-editor").value;
   state.activeTarget = target;
-  setEditorValue("source-editor", "source-highlight", "dgs-md", state.buffers[target] ?? "");
+  setEditorValue("source-editor", "source-highlight", sourceMode, state.buffers[target] ?? "");
   renderSourceTabs();
+  syncActionsForTarget();
 }
 
 // --- problem picker --------------------------------------------------------
@@ -529,7 +547,7 @@ function init() {
   wireResizer("col-resizer", "--source-width", SOURCE_WIDTH_KEY,
     (e, rect) => `${clamp(e.clientX - rect.left, 200, rect.width - 200)}px`);
 
-  wireCodeEditor("source-editor", "source-highlight", "dgs-md", () => {
+  wireCodeEditor("source-editor", "source-highlight", sourceMode, () => {
     if (!state.activeTarget) return;
     state.buffers[state.activeTarget] = el("source-editor").value;
     renderSourceTabs();

@@ -12,6 +12,15 @@ const RULES = {
     { re: /\\[A-Za-z]+/g, cls: "tok-cmd" },
     { re: /\*\*[^*\n]+?\*\*/g, cls: "tok-em" },
   ],
+  // Gnuplot scripts and their data tables. The `(§ … §)` tags are the whole reason a .gp is
+  // edited here rather than in an editor that knows gnuplot: they are what ties the graph to
+  // meta.yaml. Comments and strings are along for the ride; the rest is left alone.
+  "dgs-gnuplot": [
+    { re: /\(§[\s\S]*?§\)/g, cls: "tok-jinja" },
+    { re: /#.*/g, cls: "tok-comment" },
+    { re: /'[^'\n]*'|"[^"\n]*"/g, cls: "tok-string" },
+    { re: /(?<![\w.])-?\d+(\.\d+)?\b/g, cls: "tok-number" },
+  ],
   "dgs-yaml": [
     { re: /#.*/g, cls: "tok-comment" },
     { re: /'[^'\n]*'|"[^"\n]*"/g, cls: "tok-string" },
