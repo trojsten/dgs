@@ -3,6 +3,13 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa uk pt
 
+# Language used to render pictures (`.tikz`, `.gp`). Unlike problem text, a picture lives at the
+# problem level and is shared by every translation, so it can only ever be rendered in one language;
+# the language merely selects number formatting inside the Jinja tags. Both rules already referenced
+# `$(lang)` but nothing ever set it, so they passed an empty argument and died on `invalid choice`
+# -- picture builds only appeared to work while a stale intermediate was still sitting in `build/`.
+lang ?= sk
+
 path := $(abspath $(lastword $(MAKEFILE_LIST)))
 cdir := $(dir $(path))
 

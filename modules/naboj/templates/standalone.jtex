@@ -1,0 +1,82 @@
+(@ extends 'base.jtex' @)
+
+(# Every part of a single problem in one document, for previewing while authoring.
+
+   Deliberately *not* built on `base-booklet.jtex`: everything volume-shaped lives there
+   (logo header, competition name, volume date, `i18n[...]`), and none of it says anything
+   about the problem itself. Keeping this document to `base.jtex` means the whole context
+   is five strings taken from the path, so a preview still builds for a volume whose
+   `meta.yaml` or `languages/` tree does not.
+
+   Geometry does match the booklet, though -- line breaking and overfull boxes are exactly
+   what an author is checking for, and those depend on the text width.
+ #)
+
+(@ block documentclass @)oneside(@ endblock @)
+
+(@ block specific @)
+    \newgeometry{
+        left                    = 15mm,
+        right                   = 15mm,
+        top                     = 15mm,
+        bottom                  = 15mm,
+        headheight              = 20pt,
+        headsep                 = 16pt,
+        footskip                = 32pt,
+        includeheadfoot,
+    }
+
+    \fancypagestyle{standalone}{%
+        \fancyhf{}
+        \fancyhead[L]{\small\texttt{(* competition.id *)/(* volume.id *)/(* problem.id *)/(* language.id *)}}
+        \fancyfoot[C]{\small \thepage}
+        \renewcommand{\headrulewidth}{0.4pt}
+        \renewcommand{\footrulewidth}{0pt}
+        \titleformat{\subsection}[hang]{\bfseries\large}{}{0pt}{}[]
+        \titleformat{\subsubsection}[hang]{\bfseries}{}{0pt}{}[]
+        \titleformat{\paragraph}[hang]{\bfseries\itshape}{}{0pt}{}[]
+        \titlespacing*{\subsection}{0pt}{12pt}{8pt}
+        \titlespacing*{\subsubsection}{0pt}{8pt}{0pt}
+        \titlespacing*{\paragraph}{0pt}{8pt}{-1em}
+    }
+
+    (# Carries `\selectlanguage`, the localised decimal separator for siunitx,
+       and the `\crefname`s that pandoc-crossref references resolve against. #)
+    \input{build/core/i18n/(* language.id *).tex}
+
+    \pagestyle{standalone}
+(@ endblock @)
+
+(@ block content @)
+    (# There is no volume here, so `base.jtex`'s `\arabic{problem}.\arabic{equation}` would
+       number every equation `0.1`, `0.2`, ... Drop the problem prefix. This has to happen in
+       `content`, not `specific`: `base.jtex` emits its own `\renewcommand`s in between. #)
+    \renewcommand{\theequation}{\arabic{equation}}%
+    \renewcommand{\thefigure}{\arabic{figure}}%
+    \renewcommand{\thetable}{\arabic{table}}%
+
+    (# Pictures are `\insertPicture{<name>}`, resolved against `\activeDirectory`.
+       Get this path wrong and every figure silently degrades to `example-image`. #)
+    \setActive{\rootDirectory/(* module.id *)/(* competition.id *)/(* volume.id *)/problems/(* problem.id *)}%
+
+    (# The parts are `\IfFileExists`-guarded rather than checked in Jinja: this document is
+       rendered once and then compiled against whatever the Makefile actually built, and an
+       optional part may appear or vanish without the context ever changing. #)
+    (@ for part, title in [
+        ('problem', 'Problem'),
+        ('problem-extra', 'Problem (extra)'),
+        ('solution', 'Solution'),
+        ('answer', 'Answer'),
+        ('answer-extra', 'Answer (extra)'),
+        ('answer-also', 'Answer (also)'),
+        ('answer-interval', 'Answer (interval)'),
+    ] @)
+    \IfFileExists{\activeDirectory/(* language.id *)/(* part *).tex}{%
+        \subsection*{(* title *)}%
+        \setcounter{equation}{0}%
+        \setcounter{table}{0}%
+        \setcounter{figure}{0}%
+        \protectedInput{\activeDirectory/(* language.id *)/(* part *).tex}%
+    }{}%
+    (@ endfor @)
+(@ endblock @)

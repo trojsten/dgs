@@ -207,6 +207,65 @@ build/naboj/%/$(1): \
 endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
+### Standalone problems #########################
+# One problem, one language, one PDF. Everything else in this file builds at least a whole
+# volume, which is no use while authoring: it fails for reasons that have nothing to do with
+# the problem in front of you. The standalone document deliberately depends on nothing but
+# the problem itself, so it still builds when the volume does not.
+
+# % <competition>/<volume>/problems/<problem>/<language>
+# The templates are prerequisites of the stamp rather than of `standalone.tex`, because
+# `standalone.tex` has an empty recipe -- listing them there would mark it out of date
+# without ever regenerating it.
+build/naboj/%/build-standalone: \
+	modules/naboj/templates/base.jtex \
+	modules/naboj/templates/standalone.jtex
+	$(call prepare_arguments,standalone)
+	python -m modules.naboj.builder.standalone \
+		$(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) $(word 5,$(words)) -o '$(dir $@)'
+	touch $@
+
+# % <competition>/<volume>/problems/<problem>/<language>
+build/naboj/%/standalone.tex: \
+	build/naboj/$$*/build-standalone ;
+
+# Pictures, graphs and class files for a single problem: `pdf-prerequisites` narrowed from
+# the whole volume down to one problem directory (and its per-language subdirectories).
+# % <competition>/<volume>/problems/<problem>
+build/naboj/%/standalone-prerequisites: \
+	core/latex/dgs.cls \
+	$$(wildcard core/latex/*.tex) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*.pdf)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/*/*.pdf)) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/naboj/$$*/*.tikz))) \
+	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/naboj/$$*/*/*.tikz))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*.svg))) \
+	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/naboj/$$*/*/*.svg))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*.gp))) \
+	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
+	$$(call truepath, build/naboj/$$*/../../../copy-static) \
+	build/core/i18n ;
+
+# % <competition>/<volume>/problems/<problem>/<language>
+# Every part is optional -- `$(if $(wildcard ...))` asks the source tree what exists, and the
+# document itself guards each `\protectedInput` with `\IfFileExists`, so the two agree.
+# Note the `answer*.md` sources live one level up, at the problem, but build into <language>/.
+output/naboj/%/standalone.pdf: \
+	$$(call truepath, build/naboj/$$*/../standalone-prerequisites) \
+	$$(if $$(wildcard source/naboj/$$*/problem.md),build/naboj/$$*/problem.tex) \
+	$$(if $$(wildcard source/naboj/$$*/problem-extra.md),build/naboj/$$*/problem-extra.tex) \
+	$$(if $$(wildcard source/naboj/$$*/solution.md),build/naboj/$$*/solution.tex) \
+	$$(if $$(wildcard source/naboj/$$*/answer-extra.md),build/naboj/$$*/answer-extra.tex) \
+	$$(if $$(wildcard source/naboj/$$*/../answer.md),build/naboj/$$*/answer.tex) \
+	$$(if $$(wildcard source/naboj/$$*/../answer-also.md),build/naboj/$$*/answer-also.tex) \
+	$$(if $$(wildcard source/naboj/$$*/../answer-interval.md),build/naboj/$$*/answer-interval.tex) \
+	build/naboj/%/standalone.tex
+	$(call double_xelatex,naboj)
+
 ### Venues ######################################
 
 # Answers-modulo
