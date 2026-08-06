@@ -66,10 +66,6 @@
         ('problem', 'Problem'),
         ('problem-extra', 'Problem (extra)'),
         ('solution', 'Solution'),
-        ('answer', 'Answer'),
-        ('answer-extra', 'Answer (extra)'),
-        ('answer-also', 'Answer (also)'),
-        ('answer-interval', 'Answer (interval)'),
     ] @)
     \IfFileExists{\activeDirectory/(* language.id *)/(* part *).tex}{%
         \subsection*{(* title *)}%
@@ -79,4 +75,15 @@
         \protectedInput{\activeDirectory/(* language.id *)/(* part *).tex}%
     }{}%
     (@ endfor @)
+
+    (# The answer is not four more sections. `answer`, `answer-extra`, `answer-interval` and
+       `answer-also` are assembled into a single run-on line -- see `blocks/answer-body.jtex`,
+       which the booklet uses too, so what is previewed here is what gets printed. #)
+    \IfFileExists{\activeDirectory/(* language.id *)/answer.tex}{%
+        \subsection*{Answer}%
+        \setcounter{equation}{0}%
+        \setcounter{table}{0}%
+        \setcounter{figure}{0}%
+        (@ include 'blocks/answer-body.jtex' @)%
+    }{}%
 (@ endblock @)

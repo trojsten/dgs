@@ -1,0 +1,27 @@
+(# The answer as it actually reads: one run-on line, never a list.
+
+   `answer.tex` comes first, then whichever extras exist, each glued on with `\!` before its
+   comma. Every part is a separate pandoc file and so ends in a newline, which TeX turns into
+   a space -- the negative thin space pulls that back so the comma sits tight against the
+   fragment before it. `answer-interval` and `answer-also` additionally carry an i18n lead-in
+   ("uznajte výsledky v intervale", "also accept", ...) and are closed with a full stop.
+
+   `answer-extra` gets no lead-in, only the comma, and even that is suppressed when
+   `answer.md` is empty -- a problem whose whole answer lives in the extra must not open with
+   a stray comma.
+
+   Shared by `blocks/answer.jtex` (booklet, answer sheets, modulo sheets) and by
+   `standalone.jtex` (the one-problem preview), so the preview cannot drift from the real
+   thing. Needs `path_exists` / `file_size`, which decide against the *source* tree: the
+   built `.tex` for a part that does not exist is simply never produced. #)
+\protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
+(@ set prefix = "{}/{}/{}/problems/{}".format(module.id, competition.id, volume.id, problem.id) @)%
+(@ if path_exists("source/{}/{}/answer-extra.md".format(prefix, language.id)) -@)%
+(@ if path_exists("source/{}/answer.md".format(prefix)) and file_size("source/{}/answer.md".format(prefix)) > 0 @)\!\textit{, }(@ endif @)\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
+(@- endif -@)%
+(@- if path_exists("source/{}/answer-interval.md".format(prefix)) -@)%
+\!\textit{, (* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
+(@- endif -@)%
+(@- if path_exists("source/{}/answer-also.md".format(prefix)) -@)%
+\!\textit{, (* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
+(@- endif -@)

@@ -115,6 +115,7 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex buil
 	modules/naboj/templates/base.jtex \
 	modules/naboj/templates/base-booklet.jtex \
 	modules/naboj/templates/blocks/answer.jtex \
+	modules/naboj/templates/blocks/answer-body.jtex \
 	modules/naboj/templates/blocks/booklet/footer.jtex \
 	modules/naboj/templates/blocks/colophon.jtex \
 	build/naboj/$$*/build-language \
@@ -219,7 +220,8 @@ $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language
 # without ever regenerating it.
 build/naboj/%/build-standalone: \
 	modules/naboj/templates/base.jtex \
-	modules/naboj/templates/standalone.jtex
+	modules/naboj/templates/standalone.jtex \
+	modules/naboj/templates/blocks/answer-body.jtex
 	$(call prepare_arguments,standalone)
 	python -m modules.naboj.builder.standalone \
 		$(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) $(word 5,$(words)) -o '$(dir $@)'
@@ -272,6 +274,7 @@ output/naboj/%/standalone.pdf: \
 # <competition>/<volume>/venues/<venue>
 build/naboj/%/answers-modulo.tex: \
 	modules/naboj/templates/blocks/answer.jtex \
+	modules/naboj/templates/blocks/answer-body.jtex \
 	modules/naboj/templates/answers-modulo.jtex \
 	build/naboj/$$*/build-venue ;
 

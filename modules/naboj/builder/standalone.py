@@ -20,6 +20,7 @@ import argparsedirs
 
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
+from modules.naboj.builder.contexts import ContextI18nGlobal
 
 
 class BuilderNabojStandalone:
@@ -31,7 +32,8 @@ class BuilderNabojStandalone:
                  problem: str,
                  language: str,
                  output_directory: Path,
-                 template_root: Path):
+                 template_root: Path,
+                 launch_directory: Path):
         self.output_directory = Path(output_directory)
         self.context = Context(
             f'{competition}/{volume:02d}/{problem}/{language}',
@@ -40,7 +42,10 @@ class BuilderNabojStandalone:
             volume={'id': f'{volume:02d}'},
             problem={'id': problem},
             language={'id': language},
-        )
+        # `blocks/answer-body.jtex` leads the interval and "also accept" answers in with a
+        # localised phrase, so the preview needs the competition's i18n after all. It is only
+        # a read of `.static/i18n/*.yaml` -- no volume, no problem tree, nothing to validate.
+        ).adopt(i18n=ContextI18nGlobal(Path(launch_directory), competition))
         self.renderer = StaticRenderer(Path(template_root))
 
     def run(self) -> None:
@@ -58,10 +63,11 @@ def main():
     parser.add_argument('-o', '--output', action=argparsedirs.WriteableDir, required=True)
     parser.add_argument('-t', '--template-root', action=argparsedirs.ReadableDir,
                         default='modules/naboj/templates/')
+    parser.add_argument('-l', '--launch', action=argparsedirs.ReadableDir, default='source/naboj/')
     args = parser.parse_args()
 
     BuilderNabojStandalone(args.competition, args.volume, args.problem, args.language,
-                           args.output, args.template_root).run()
+                           args.output, args.template_root, args.launch).run()
 
 
 if __name__ == '__main__':
