@@ -227,7 +227,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_format_functions(latex.equals_general, 'eg') |
         self.__generate_format_functions(latex.approx_float, 'af') |
         self.__generate_format_functions(latex.approx_general, 'ag') | {
-           'inline': latex.math_inline,
+           'raw': latex.math_raw,                                       # no delimiters -- the default
+           'inl': latex.math_inline,                                    # $…$
            'disp': latex.math_display,                                  # full function
            'dispd': functools.partial(latex.math_display, punct='.'),   # shorthand with dot
            'dispc': functools.partial(latex.math_display, punct=','),   # shorthand with comma

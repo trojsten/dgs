@@ -109,7 +109,9 @@ For a `MathObject`:
 
 | Filter        | What it does                                                     |
 | ------------- | ---------------------------------------------------------------- |
-| `|inline`     | Renders `$…$`. Write sentence punctuation **outside** the tag.  |
+| *(none)*      | Raw include: the fragment, no delimiters. Splice a named piece into a larger expression. |
+| `|raw`        | The same, said explicitly.                                       |
+| `|inl`        | Renders `$…$`. Write sentence punctuation **outside** the tag.  |
 | `|disp`       | Renders `$$\n    …\n$$ {#eq:<id>}`.                              |
 | `|disp('.')`  | Same with trailing punctuation inside the math.                  |
 | `|align`      | `$${\n    …\n}$$ {#eq:<id>}` (aligned environment).              |
@@ -126,13 +128,19 @@ so they take **no** argument: `(§ eq|dispd('.') §)` raises `TypeError`.
 They exist because `|dispc` reads better than `|disp(',')` in the middle of a
 derivation, where nearly every equation ends in a comma or a full stop.
 
+How an equation is delimited is the filter's business, not the fragment's: a bare
+`(§ eq.foo §)` yields the LaTeX as written, so it can be dropped inside another equation
+(`x = (§ eq.res §)` within an `|align` block), while `|inl` and `|disp` wrap it for use on
+its own. Writing `$(§ eq.foo §)$` by hand is therefore no longer needed, and inside display
+math it was never valid.
+
 Punctuation rules, enforced in `MathObject.__format__`:
 
 - Accepted trailing punctuation is exactly `. , ; ? !`.
 - A bad trailing character after a valid base spec raises `ValueError` naming
   the character; an unknown base spec raises `NotImplementedError`. The two are
   deliberately distinct — the first is the common author typo.
-- `|inline` accepts no punctuation; write it after the closing `$`.
+- A bare reference and `|inl` accept no punctuation; write it after the closing `$`.
 - `disp` and `align` indent each content line by four spaces and append
   `{#eq:<MathObject.id>}` — this is why `eq:` keys double as label names.
 

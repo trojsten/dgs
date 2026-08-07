@@ -157,12 +157,21 @@ def approx_general(q: PhysicsQuantity, precision: int | None = None):
     return q.approx_general(precision)
 
 
-def math_inline(math: MathObject) -> str:
+def math_raw(math: MathObject) -> str:
     """
-    Display as inline math. No punctuation argument: write any sentence
-    punctuation outside the math, e.g. `(* eq | inline *).`
+    The fragment with no delimiters at all, for building a larger expression from a named piece.
+
+    This is what a bare `(§ eq.foo §)` does, so the filter exists mainly to be explicit.
     """
     return f"{math}"
+
+
+def math_inline(math: MathObject) -> str:
+    """
+    Render as inline math. No punctuation argument: write any sentence
+    punctuation outside the math, e.g. `(§ eq.foo|inl §).`
+    """
+    return f"{math:inl}"
 
 
 def math_display(math: MathObject, punct: str = '') -> str:

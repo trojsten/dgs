@@ -4,8 +4,14 @@ from core.builder.context.quantities.math import MathObject
 
 
 @pytest.fixture
-def inline():
+def equation():
     return MathObject('e1', 'a + b = c')
+
+
+@pytest.fixture
+def inline(equation):
+    """Kept under the old name so the display and punctuation suites read unchanged."""
+    return equation
 
 
 @pytest.fixture
@@ -13,17 +19,27 @@ def multiline():
     return MathObject('e2', 'a &= b + c \\\\\nb &= 2c')
 
 
+class TestMathObjectRaw:
+    """No spec means a raw include: the fragment, with no delimiters added."""
+
+    def test_str(self, equation):
+        assert str(equation) == 'a + b = c'
+
+    def test_format_no_spec(self, equation):
+        assert f'{equation}' == 'a + b = c'
+
+    def test_format_explicit_empty_spec(self, equation):
+        assert format(equation, '') == 'a + b = c'
+
+
 class TestMathObjectInline:
-    """Default formatting wraps content in $...$."""
+    """`:inl` is the one that wraps content in $...$."""
 
-    def test_str(self, inline):
-        assert str(inline) == '$a + b = c$'
+    def test_inl(self, equation):
+        assert format(equation, 'inl') == '$a + b = c$'
 
-    def test_format_no_spec(self, inline):
-        assert f'{inline}' == '$a + b = c$'
-
-    def test_format_explicit_empty_spec(self, inline):
-        assert format(inline, '') == '$a + b = c$'
+    def test_inl_is_not_the_default(self, equation):
+        assert format(equation, 'inl') != format(equation, '')
 
 
 class TestMathObjectDisplay:
@@ -69,10 +85,16 @@ class TestMathObjectInterpunction:
     """
 
     @pytest.mark.parametrize("punct", list('.,;?!'))
-    def test_inline_punctuation_rejected(self, inline, punct):
-        """Inline math should not accept in-math punctuation."""
-        with pytest.raises(ValueError, match="Inline math does not accept"):
-            f'{inline:{punct}}'
+    def test_raw_punctuation_rejected(self, equation, punct):
+        """A raw include has no math to put punctuation inside of."""
+        with pytest.raises(ValueError, match="does not accept trailing punctuation"):
+            f'{equation:{punct}}'
+
+    @pytest.mark.parametrize("punct", list('.,;?!'))
+    def test_inline_punctuation_rejected(self, equation, punct):
+        """Inline math should not accept in-math punctuation either."""
+        with pytest.raises(ValueError, match="does not accept trailing punctuation"):
+            f'{equation:inl{punct}}'
 
     @pytest.mark.parametrize("punct", list('.,;?!'))
     def test_disp_with_punctuation(self, inline, punct):
@@ -120,5 +142,5 @@ class TestMathObjectConstruction:
         m = MathObject('e', 'a\nb\nc')
         assert m.content == 'a\nb\nc'
 
-    def test_repr(self, inline):
-        assert repr(inline) == "'$a + b = c$'"
+    def test_repr(self, equation):
+        assert repr(equation) == "'a + b = c'"

@@ -194,13 +194,20 @@ class TestMathFilters:
             'multi': MathObject('e2', 'a &= b + c \\\\\nb &= 2c'),
         }
 
-    def test_inline_no_arg(self, renderer, context):
-        assert renderer.render('(§ eq | inline §)', context) == '$a + b = c$'
+    def test_bare_reference_is_raw(self, renderer, context):
+        """No filter means no delimiters: the fragment, for building a larger expression."""
+        assert renderer.render('(§ eq §)', context) == 'a + b = c'
 
-    def test_inline_does_not_accept_punctuation(self, renderer, context):
+    def test_raw_filter_matches_bare(self, renderer, context):
+        assert renderer.render('(§ eq | raw §)', context) == 'a + b = c'
+
+    def test_inl(self, renderer, context):
+        assert renderer.render('(§ eq | inl §)', context) == '$a + b = c$'
+
+    def test_inl_does_not_accept_punctuation(self, renderer, context):
         """The inline filter takes no arguments; punctuation goes outside."""
         with pytest.raises(TypeError):
-            renderer.render('(§ eq | inline(".") §)', context)
+            renderer.render('(§ eq | inl(".") §)', context)
 
     def test_disp_no_arg(self, renderer, context):
         result = renderer.render('(§ eq | disp §)', context)
