@@ -30,9 +30,24 @@ class FailIfFound(LineChecker):
 
 class LineLength(LineChecker):
     """ Fails if line length is more than 120 characters """
+    LIMIT = 120
+    # A pipe-table row has to be one line -- there is no continuation syntax to wrap it onto --
+    # so the limit is unsatisfiable there without rewording the cell. Volume 28's
+    # `truth-or-dare-celestial` tables are 28 such rows, and trimming every scrap of alignment
+    # padding would still leave 12 of them over. Exempt the row rather than train authors to
+    # ignore the checker.
+    re_table_row = re.compile(r'^\s*\|.*\|\s*$')
+
     def check(self, module, path, line):
-        if len(line) > 120:
-            raise exceptions.SingleLineError("Line too long", line, 119)
+        if self.re_table_row.match(line):
+            return
+
+        # Lines arrive straight from file iteration, so all but the last still carry their
+        # newline. Counting it made the effective limit 119 and flagged every line of exactly
+        # 120 characters -- and inconsistently, since a final line without a newline got the
+        # full 120.
+        if len(line.rstrip('\r\n')) > self.LIMIT:
+            raise exceptions.SingleLineError("Line too long", line, self.LIMIT - 1)
 
 
 class Reference(LineChecker):
@@ -105,6 +120,10 @@ class DoubleDollars:
     re_dollars_ref = re.compile(r'^ *\$\$ {#eq:[\w:-]+}$')
     re_aligned_begin = re.compile(r'^\$\$ ?\\begin\{aligned\}')
     re_aligned_end = re.compile(r'^\\end\{aligned\} ?\$\$')
+    # A display equation inside a footnote closes as `$$]`, and the sentence the footnote
+    # interrupts carries on after it: `$$] teda`. Valid pandoc, so it cannot be "$$ within text".
+    # The footnote bracket takes the label's place, so no `{#eq:...}` is possible here.
+    re_dollars_footnote = re.compile(r'^ *\$\$\](\s|$)')
 
     def check(self, module, path, line):
         if search := self.re_dollars_ref_missing_space.search(line):
@@ -112,6 +131,7 @@ class DoubleDollars:
 
         if self.re_only_dollars.match(line) \
             or self.re_dollars_ref.match(line) \
+            or self.re_dollars_footnote.match(line) \
             or self.re_dollars_curly_open.match(line) \
             or self.re_dollars_curly_close.match(line):
             return
@@ -195,10 +215,23 @@ def too_long(line):
 """
 
 def encoding(filename):
+    """
+    File-level checks: the whole file must be UTF-8 and must use Unix line endings.
+
+    CRLF is reported here rather than per line because a file that has it usually has it
+    everywhere -- 40 of volume 28's translations were wholly CRLF -- and one message per file
+    is more use than one per line. It is not cosmetic either: the stray carriage return counts
+    towards the line length, so every line in such a file measures one character too long.
+    """
     try:
-        f = codecs.open(filename, encoding='utf-8', errors='strict')
-        for line in f:
-            pass
-        return True
+        with codecs.open(filename, encoding='utf-8', errors='strict') as f:
+            for line in f:
+                pass
     except UnicodeDecodeError:
         raise exceptions.EncodingError(f'{filename} is not a UTF-8 file')
+
+    with open(filename, 'rb') as f:
+        if b'\r' in f.read():
+            raise exceptions.EncodingError(f'{filename} uses Windows (CRLF) line endings')
+
+    return True

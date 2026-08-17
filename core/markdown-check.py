@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import regex as re
+import i18n
 from mdcheck import check, exceptions
 from utilities import colour as c
 
@@ -29,9 +30,20 @@ class StyleEnforcer:
         self.line_errors = {
             'tab': check.FailIfFound(r'\t', "Tab instead of spaces"),
             'cws': check.FailIfFound(r',[^\s^]', "Comma not followed by whitespace"),
-            'sws': check.FailIfFound(r'(?<!\\ang{;?|\\qtylist{[0-9.e;]+|\\Coord{[0-9.e;]+);[^\s]', "Semicolon not followed by whitespace"),
+            # siunitx separates list arguments with `;`, so a semicolon inside `\Coord{...}`,
+            # `\qtylist{...}` or `\ang{...}` is the syntax, not a punctuation slip. The exemptions
+            # used to demand a numeric argument (`[0-9.e;]+`) and no option group, which flagged
+            # both `\Coord{R;H}` and `\qtylist[list-units=single]{4;2;...}` -- symbolic coordinates
+            # and any listed unit option. Match the whole argument up to the semicolon instead.
+            # `[^}]*` rather than `[^};]*`: a list has a semicolon between every pair of items, and
+            # the exemption has to reach back past the earlier ones to the opening brace.
+            'sws': check.FailIfFound(r'(?<!\\(?:ang|qtylist|Coord)(?:\[[^\]]*\])?{[^}]*);[^\s]',
+                                     "Semicolon not followed by whitespace"),
             'pas': check.ParenthesesSpace(),
-            'tws': check.FailIfFound(r'(?! )[ \t]$', "Trailing whitespace"),
+            # `(?! )[ \t]$` could never fire on a trailing space: the lookahead is evaluated at
+            # the very position `[ \t]` then consumes, so a space failed its own guard and only a
+            # tab was ever reported. 14 of volume 28's files had trailing spaces and passed.
+            'tws': check.FailIfFound(r'[ \t]+$', "Trailing whitespace"),
             'spb': check.FailIfFound(r'[^ ]\\\\$', "No space before ending \\\\", offset=1),
             'frb': check.FailIfFound(r'\\frac[^{]', "\\frac not followed by a brace", offset=5),
             'csi': check.FailIfFound(r'(?:qty\{[^},]*),', "Comma in \\qty expression", offset=0),
@@ -41,8 +53,6 @@ class StyleEnforcer:
             'crc': check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
             'lbw': check.FailIfFound(r'(?<!\\text){\s+[^\s]', "Left brace { followed by whitespace"),
             'rbw': check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
-            'mzm': check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
-            'tht': check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
             'tgc': check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
             'thc': check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
             'tjs': check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
@@ -55,7 +65,12 @@ class StyleEnforcer:
             'txs': check.FailIfFound(r'\\(sub)?section', "Do not use TeX headings"),
             'txf': check.FailIfFound(r'\\footnote', "Do not use TeX footnotes"),
             'lip': check.FailIfFound(r'\\insertPicture', "Do not use legacy custom figure commands"),
-            'uni': check.FailIfFound(r'[“”’–—~]', "Do not use fancy Unicode dashes or quotation marks in the source"),
+            # `~` used to be in this class, which made every `~~strikethrough~~` a "fancy Unicode
+            # dash" -- three false positives in `28/circle-squared` alone. It is not a dash or a
+            # quote and does not belong here. It was not moved to a rule of its own either: the
+            # only lone `~` anywhere in `source/` sits in `~user` URL paths, so such a rule would
+            # report nothing but false positives.
+            'uni': check.FailIfFound(r'[“”’–—]', "Do not use fancy Unicode dashes or quotation marks in the source"),
             'opa': check.FailIfFound(r'\\((arc)?(cos|sin|tan|cot|log|ln))\{\((\\)?.+\)\}',
                               "Omit parentheses in simple functions"),
             'cmk': check.ConflictMarkers(),
@@ -68,10 +83,34 @@ class StyleEnforcer:
             'rfc': check.Reference(),
         }
 
+        # Spelling rules for one language only. They used to sit in `line_errors` and so ran on
+        # every translation: `tohoto` is a misspelling of Slovak `tohto` but the correct Czech word,
+        # so every Czech file that used it was reported. Keyed by the language directory the file
+        # sits in, and skipped entirely for a path with no language in it.
+        self.language_errors = {
+            'sk': {
+                'mzm': check.FailIfFound(r'[Mm]ôžme', "It's spelled \"môžeme\"...", offset=2),
+                'tht': check.FailIfFound(r'[Tt]ohoto', "It's spelled \"tohto\"...", offset=3),
+            },
+        }
+
         self.line_warnings = {
             'tak': check.FailIfFound(r'\btak\b(?!,)', "Do you really need this \"tak\" here?", offset=1),
             # check.Parentheses(),
         }
+
+    def language_of(self, path: Path) -> str | None:
+        """
+        The language a source file is written in, or None if the path does not say.
+
+        Every module puts the language in a directory name, but at a different depth
+        (`.../problems/<problem>/<language>/solution.md` in `naboj`), so match on the
+        set of known languages rather than on a fixed index.
+        """
+        for part in reversed(path.parts):
+            if part in i18n.languages:
+                return part
+        return None
 
     def check(self):
         for path in self.args.infiles:
@@ -113,6 +152,8 @@ class StyleEnforcer:
             return False
 
         line_errors = copy.copy(self.line_errors)
+        line_errors |= self.language_errors.get(self.language_of(path), {})
+
         if path.name == 'problem.md':
             line_errors |= self.problem_errors
 
