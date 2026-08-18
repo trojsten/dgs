@@ -171,7 +171,7 @@
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
 % \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
 \NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
-    \EvalAt{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
+    \Eval{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
 }%
 
 
