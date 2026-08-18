@@ -1,8 +1,12 @@
 import abc
+import logging
 from pathlib import Path
 
+import core.utilities.colour as c
 from core.builder.builder import BaseBuilder
 from core.builder.jinja import StaticRenderer
+
+log = logging.getLogger('dgs')
 
 
 class BuilderNaboj(BaseBuilder, metaclass=abc.ABCMeta):
@@ -27,11 +31,24 @@ class BuilderNaboj(BaseBuilder, metaclass=abc.ABCMeta):
         super().build_templates()
 
         # Also build files that are defined for a translation
-        renderer = StaticRenderer(Path(self.launch_directory, *self.path()))
+        source_root = Path(self.launch_directory, *self.path())
+        renderer = StaticRenderer(source_root)
 
         for template in self.i18n_templates:
-            outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')
-            print(
-                renderer.render(Path(template), self.context.data),
-                file=outfile,
-            )
+            # `NabojValidator` marks `evaluators.jtex` optional and `module.mk` reaches for it
+            # through `$(wildcard ...)`, but this loop used to render it unconditionally, so a
+            # language without one died on `TemplateNotFound` and could not build at all -- not
+            # even its tearoffs. Volume 26's `cs`, `es`, `hu` and `pl` are exactly that case.
+            # Only `evaluation.pdf` and the venue `answers-modulo` read the result, so skipping
+            # it costs nothing else.
+            if not (source_root / template).exists():
+                log.warning(f"No {c.path(template)} for {c.name('/'.join(str(p) for p in self.path()))}, "
+                            f"skipping it")
+                continue
+
+            # Render before opening the target: `open(..., 'w')` truncates immediately, so a
+            # template that raises used to leave a 0-byte `.tex` behind, which make then treats
+            # as up to date and never rebuilds.
+            rendered = renderer.render(Path(template), self.context.data)
+            with open(self.output_directory / Path(template).with_suffix('.tex'), 'w') as outfile:
+                print(rendered, file=outfile)
