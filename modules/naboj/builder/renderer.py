@@ -32,6 +32,7 @@ VALID_TAGS: dict[str, str] = {
     'statics': 'bodies in equilibrium',
     'dynamics': 'forces and the motion they cause',
     'energy': 'conservation of energy, work',
+    'momentum': 'conservation of momentum, collisions, recoil',
     'com': 'centre of mass',
     'springs': 'springs and elasticity',
     'friction': 'friction between surfaces',
