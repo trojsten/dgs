@@ -111,7 +111,16 @@ def valid_tag(tag: str) -> bool:
 
 class NabojStandaloneContext(renderer.StandaloneContext):
     _schema = renderer.StandaloneContext._schema | Schema({
-        'authors': Or(list[str], []),             # List of authors
+        # Who did what, by role: `idea` is whoever thought of the problem, `problem`
+        # whoever wrote the statement, `solution` whoever wrote up the solution. All three
+        # are optional, so a problem records only what is known -- absent and empty both
+        # mean unrecorded. Note the volume-level `authors` in `contexts/hierarchy.py` is a
+        # different thing, listing people across the whole volume.
+        'authors': {
+            Opt('idea'): Or(list[str], []),
+            Opt('problem'): Or(list[str], []),
+            Opt('solution'): Or(list[str], []),
+        },
         'tags': Or(list[And(str, valid_tag)], []),          # Tags
         # Editorial metadata a handful of problems carry. Nothing reads these yet, but the schema
         # admits no unknown key, so without them three problems fail to render at all rather than
