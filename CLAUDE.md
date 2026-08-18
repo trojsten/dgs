@@ -85,9 +85,9 @@ invisible in a diff, and Python's `str.isspace()` is true for it, so a whitespac
 pass will flatten it to a plain space and quietly widen the gap. That happened
 once already.
 
-Nine Slovak chemistry problems use U+202F for something else: keeping a
-one-letter preposition off the end of a line (`v<U+202F>istej`). The idiom for
-that everywhere else in the corpus is `v\ istej`.
+Do not use U+202F for a preposition either. That is `\ `, a normal non-breaking
+space -- `v\ istej`, not a thin one. Nine chemistry problems had 57 of these from
+a word processor; they are gone.
 
 ## Symlinks — check before any bulk edit
 
