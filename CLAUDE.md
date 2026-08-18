@@ -64,6 +64,38 @@ and most other rules are still meaningful on source.
 Known checker gap: `format_general` emits Python's `e+NN`, and the "spaces around
 `+`" rule flags it (`\qty{1.737e+06}{...}`). Not an authoring error — ignore.
 
+## Symlinks — check before any bulk edit
+
+**84 files under `source/` are symlinks, and `Path.write_text` follows them.**
+A script that rewrites files per language will hit the same real file once per
+link, and a second edit applied at offsets computed from the original text
+shreds it.
+
+    source/naboj/phys/27   78   cs/solution.md -> ../sk/solution.md, es -> ../en
+    source/naboj/phys/26    4   truth-or-dare-elmag, four languages
+    source/naboj/phys/00    2
+    source/scholar          3   a shared picture
+
+They are deliberate: a translation nobody has written yet mirrors its master
+rather than keeping a stale copy, which is how `28/turntable` came to hold
+physics that `sk` had already corrected. `NabojValidator` agrees, typing these
+entries `FileOrLink`.
+
+So in any script that edits sources:
+
+- resolve first and write each real file once — keep a `set` of
+  `path.resolve()` and skip a path already written;
+- never assume "one file per language": 41 Czech and 43 Spanish solutions are
+  not files;
+- do not "fix" a mirrored translation by editing it, or the edit lands on `sk`
+  or `en`.
+
+This has bitten once and nearly twice. Hoisting equations in volume 27 corrupted
+88 files exactly this way; volume 26 escaped only because its four links sit in
+`truth-or-dare-elmag`, which has no equations to hoist. The renderer was
+perfectly happy both times — it was caught by diffing pandoc's output before
+and after. Reading through a symlink is safe; writing is not.
+
 ## Editing problem text
 
 - Problem and solution prose is authored deliberately. Fix mechanical/style
