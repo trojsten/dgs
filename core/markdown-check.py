@@ -53,8 +53,12 @@ class StyleEnforcer:
             'crc': check.FailIfFound(r'\^\{?\\circ\}?', "\\circ is not allowed, use \\ang{...} instead", offset=2),
             'lbw': check.FailIfFound(r'(?<!\\text){\s+[^\s]', "Left brace { followed by whitespace"),
             'rbw': check.FailIfFound(r'[^\s]\s+}', "Right brace } preceded by whitespace", offset=2),
-            'tgc': check.FailIfFound(r'\\[,;.]', "You should not use typographic corrections"),
-            'thc': check.FailIfFound(r'\\thinspace', "You should not use typographic corrections"),
+            # `\,` cannot be written in Markdown: a backslash before punctuation is an escape,
+            # so `d.\,h.` reaches the TeX as `d.,h.` -- a literal comma in the middle of a word.
+            # The rule stays, then, but now says what to write instead. `\;` and `\.` are the
+            # same trap.
+            'tgc': check.FailIfFound(r'\\[,;.]', "Escapes to a literal character in Markdown; "
+                                              "use \\thinspace for a thin space"),
             'tjs': check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             'pun': check.FailIfFound(r'\\text(rm)?\{[.,; ]+\}', "No need to enclose punctuation in \\text"),
             'sum': check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),

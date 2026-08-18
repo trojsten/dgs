@@ -64,6 +64,31 @@ and most other rules are still meaningful on source.
 Known checker gap: `format_general` emits Python's `e+NN`, and the "spaces around
 `+`" rule flags it (`\qty{1.737e+06}{...}`). Not an authoring error — ignore.
 
+## Thin spaces, and why `\,` is banned
+
+German abbreviations take a thin, non-breaking space between their parts -- `d. h.`
+for *das heißt*, likewise `z. B.` and `u. a.` A full word space is too wide and a
+line break between the halves is wrong. Write it as **`\thinspace`**:
+
+    d.\thinspace h. um $\ang{45}$ gegenüber ...
+
+`\,` looks like the obvious spelling and **does not work**. A backslash before
+punctuation is a Markdown escape, so `d.\,h.` reaches the TeX as `d.,h.` -- a
+literal comma inside the word, silently. The `tgc` rule flags `\,`, `\;` and `\.`
+for exactly this reason and says what to use instead. `\thinspace` survives pandoc
+verbatim because it is a control word, and LaTeX defines it as `\,` outright
+(`latex.ltx`: `\let\thinspace\,`), so the typeset result is identical.
+
+U+202F NARROW NO-BREAK SPACE also works -- pandoc turns it into `\,` -- and two
+German solutions used it before `\thinspace` was allowed. Avoid it: it is
+invisible in a diff, and Python's `str.isspace()` is true for it, so a whitespace
+pass will flatten it to a plain space and quietly widen the gap. That happened
+once already.
+
+Nine Slovak chemistry problems use U+202F for something else: keeping a
+one-letter preposition off the end of a line (`v<U+202F>istej`). The idiom for
+that everywhere else in the corpus is `v\ istej`.
+
 ## Symlinks — check before any bulk edit
 
 **84 files under `source/` are symlinks, and `Path.write_text` follows them.**
