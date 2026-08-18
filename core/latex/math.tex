@@ -22,7 +22,7 @@
 \NewDocumentCommand{\Ceil}{m}{\dgsceil@*{#1}}
 
 \NewDocumentCommand{\ExpectedChevrons}{m o}{\dgschevrons@*{#1}\IfNoValueTF{#2}{}{_#2}}
-\NewDocumentCommand{\ExpectedE}{m o}{\mathrm{E}\dgsbrackets@*{#1}\IfNoValueTF{#2}{}{_#2}}
+\NewDocumentCommand{\ExpectedE}{m o}{\mathrm{E}\dgsbracket@*{#1}\IfNoValueTF{#2}{}{_#2}}
 \NewDocumentCommand{\Expected}{m o}{\ExpectedE{#1}[#2]}
 
 % List of differentials
