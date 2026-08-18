@@ -26,6 +26,7 @@ VALID_TAGS: dict[str, str] = {
     'uam': 'uniformly accelerated motion',
     'oblique-throw': 'a body thrown at an angle in a homogeneous gravitational field',
     'free-fall': 'released from rest and falling',
+    'jerk': 'jerk, the time derivative of acceleration',
 
     # -- mechanics -------------------------------------------------------------------------------
     'statics': 'bodies in equilibrium',
@@ -54,6 +55,7 @@ VALID_TAGS: dict[str, str] = {
     'gases': 'the ideal gas and its state equation',
     'thermo-process': 'a named process: isothermal, adiabatic and the rest',
     'mixing': 'mixing substances at different temperatures or concentrations',
+    'blackbody': 'thermal radiation, the Stefan-Boltzmann law',
 
     # -- electromagnetism ------------------------------------------------------------------------
     # `electricity` is the umbrella -- electrostatics, electrodynamics, all of it -- and `circuit`
@@ -67,7 +69,8 @@ VALID_TAGS: dict[str, str] = {
     # -- optics and waves ------------------------------------------------------------------------
     'optics': 'light, mirrors, lenses',
     'refraction': 'refraction at an interface',
-    'spectrum': 'spectra and dispersion',
+    # Dispersion only. It used to carry thermal radiation too, which is now `blackbody`.
+    'spectrum': 'dispersion, light split into its components',
     'acoustics': 'sound',
 
     # -- gravity and astronomy -------------------------------------------------------------------
