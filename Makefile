@@ -127,6 +127,7 @@ endef
 include modules/*/module.mk
 
 build/core/i18n/%.tex: \
+	core/i18n/%.yaml \
 	core/templates/override.jtex
 	@mkdir -p $(dir $@)
 	python -m core.builder.i18n 'core/i18n/' 'core/templates/' $* -o $(dir $@)

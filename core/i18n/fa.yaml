@@ -4,6 +4,8 @@ locale: 'en-US'
 quotes:
   open: '“'
   close: '”'
+  # csquotes defines no `farsi` style; these are the English marks.
+  babel_id: 'english'
 cref:
   figure:
     singular: 'figure'

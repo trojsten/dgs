@@ -63,7 +63,9 @@ class Locale:
         self.id = code
         self.data = data
         self.full = self.data['full']
-        self.data['quotes']['babel_id'] = self.full
+        # csquotes has no style for every language we publish in, so a language may name
+        # one; `fa` borrows English, whose marks are the ones it declares anyway.
+        self.data['quotes'].setdefault('babel_id', self.full)
         self.locale = self.data['locale']
         self.name = self.data['full']
         self.rtl = self.data.get('rtl', False)
