@@ -738,6 +738,37 @@ def encoding(sources):
                               unit.path, unit.label(lang, name))
 
 
+# --- subscripts --------------------------------------------------------------
+
+#: A braced subscript of two or more lowercase letters, not already wrapped. `E_{kin}` sets `kin` as
+#: k times i times n, in italics, with the spacing of a product; it has to be `E_{\\text{kin}}`.
+#: Lowercase only: capitals are labels, not words -- `T_{KJ}` is the time from K to J and `c_{Kx}` a
+#: component of K, and wrapping either would be wrong.
+RE_WORD_SUBSCRIPT = re.compile(r'_\{([a-z\u00e0-\u024f]{2,})\}')
+
+#: A template tag holds Python identifiers, so `(§ t_up - t_down §)` is not a subscript at all.
+RE_TEMPLATE_TAG = re.compile(r'\(§.*?§\)', re.S)
+
+
+@check('subscript-unwrapped', 'warning', 'A word subscript that is not upright')
+def subscript_unwrapped(sources):
+    """
+    Kvík's rule: a subscript that is a word is always `\\text{}` (`\\mathrm{}` would do, `\\text{}` is
+    preferred). Left bare it is a product of italic variables, which is what it looks like.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)
+            if (place, name) in seen:
+                continue
+            seen.add((place, name))
+            for m in RE_WORD_SUBSCRIPT.finditer(RE_TEMPLATE_TAG.sub(' ', text)):
+                yield Finding('subscript-unwrapped', 'warning',
+                              f"`_{{{m.group(1)}}}` is a word; write `_{{\\text{{{m.group(1)}}}}}`",
+                              unit.path, place, line_of(text, m.start()))
+
+
 # --- labelling ---------------------------------------------------------------
 
 #: The file a solution lives in. Náboj's labelling rule is asymmetric, so the checks below have to

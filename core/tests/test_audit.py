@@ -896,3 +896,29 @@ class TestInlineLength:
         block = '$$\n    ' + 'a + ' * 40 + 'b\n$$ {#eq:widget:long}\n'
         assert 'inline-long' not in ids(run(tmp_path, files={
             'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block}}))
+
+
+class TestWordSubscripts:
+    """A word subscript is upright; a label is not a word."""
+
+    def test_a_bare_word_subscript_fires(self, tmp_path):
+        assert 'subscript-unwrapped' in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'the energy $E_{kin}$ is'}}))
+
+    def test_a_wrapped_one_is_quiet(self, tmp_path):
+        assert 'subscript-unwrapped' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'the energy $E_{\\text{kin}}$ is'}}))
+
+    def test_capitals_are_labels_not_words(self, tmp_path):
+        """`T_{KJ}` is the time from K to J; upright roman would be wrong."""
+        assert 'subscript-unwrapped' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'the time $T_{KJ}$ and $c_{Kx}$'}}))
+
+    def test_a_single_letter_is_a_symbol(self, tmp_path):
+        assert 'subscript-unwrapped' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'the speed $v_0$ and $v_x$'}}))
+
+    def test_an_identifier_in_a_template_tag_is_not_a_subscript(self, tmp_path):
+        """`(§ t_up - t_down §)` names two `values:` entries. 220 of these were false positives."""
+        assert 'subscript-unwrapped' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'lasts $(§ t_{up} - t_{down} §)$ seconds'}}))
