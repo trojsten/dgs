@@ -27,7 +27,8 @@ from core.audit import audit as run_audit                                      #
 from core.audit import build as audit_build                                    # noqa: E402
 from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
 from core.audit.status import (STATES, TRANSLATED,                              # noqa: E402
-                               TRANSLATION_STATES)                              # noqa: E402
+                               TRANSLATION_STATES,                              # noqa: E402
+                               shared_file_states)                              # noqa: E402
 from core.i18n import languages as LOCALES                                     # noqa: E402
 
 
@@ -501,6 +502,28 @@ def api_lint():
 
 # --- audit ------------------------------------------------------------------
 
+def module_files(module):
+    """
+    What a unit of this module may hold, split the way its build rules split it: translated files
+    live inside `<language>/`, shared ones beside the unit. The descriptor mirrors module.mk's two
+    rule families, and `core/tests/test_audit.py` fails if the mirror stops matching.
+    """
+    translated, shared = [], []
+    for kind in module.kinds:
+        for name in kind.targets:
+            bucket = translated if name in kind.translated else shared
+            if f'{name}.md' not in bucket:
+                bucket.append(f'{name}.md')
+    return translated, shared
+
+
+def run_scope_audit(module, scope, units):
+    """`run_audit` with the module's own file families, which is how every route should call it."""
+    translated, shared = module_files(module)
+    return run_audit(module.root, module.name, scope, units,
+                     translated_files=translated, shared_files=shared)
+
+
 def scope_units(module_name, scope):
     """The units in a scope, or a 400 if there is no such scope or it is not audited."""
     module = MODULES.get(module_name)
@@ -565,7 +588,7 @@ def api_audit_overview():
     rows = []
     for module in audited_modules(MODULES):
         for scope, units in sorted(discover_scopes(module).items()):
-            report = run_audit(module.root, module.name, scope, units)
+            report = run_scope_audit(module, scope, units)
             rows.append({
                 "module": module.name,
                 "module_label": module.label,
@@ -588,7 +611,7 @@ def api_audit_overview():
 @app.get("/api/audit/scope/<module>/<path:scope>")
 def api_audit_scope(module, scope):
     resolved, units = scope_units(module, scope)
-    report = run_audit(resolved.root, resolved.name, scope, units)
+    report = run_scope_audit(resolved, scope, units)
     return jsonify({
         "module": module,
         "module_label": resolved.label,
@@ -610,6 +633,8 @@ def api_audit_scope(module, scope):
                                for block in ("values", "derived", "eq")},
                 "files": {lang: sorted(files) for lang, files in unit.translated.items()},
                 "shared": sorted(unit.shared),
+                # per shared file, what state it is in -- these have no verdict, see status.py
+                "shared_state": shared_file_states(unit, report.sources.shared_files),
                 # "how far along is this", one verdict per kind -- see `core/audit/status.py`
                 "status": {kind: {"state": s.state, "summary": s.summary, "detail": s.detail}
                            for kind, s in report.statuses.get(unit.path, {}).items()},
@@ -618,9 +643,11 @@ def api_audit_scope(module, scope):
         ],
         "status_summary": report.status_summary(),
         "states": list(STATES),
-        # the files a translation consists of, in the order the columns should read them; from
-        # `core/audit/status.py` so the table cannot disagree with the verdict it is showing
-        "translated_files": list(TRANSLATED),
+        # what a unit may hold, from the module's build rules by way of its descriptor, narrowed to
+        # what this volume actually has -- a column per file, per language for the translated ones
+        "translated_files": list(report.sources.present_translated()),
+        "shared_files": list(report.sources.present_shared()),
+        "required_files": list(TRANSLATED),
         "translation_states": list(TRANSLATION_STATES),
         "findings": [finding_json(f) for f in report.findings],
         "stats": stats_json(report.stats),
@@ -636,7 +663,7 @@ def read_build_cache(module, scope):
     resolved = MODULES.get(module)
     if resolved is not None:
         units = discover_scopes(resolved).get(scope) or []
-        current = run_audit(resolved.root, module, scope, units).sources.fingerprint()
+        current = run_scope_audit(resolved, scope, units).sources.fingerprint()
         payload["stale"] = current != payload.get("fingerprint")
     return payload
 
@@ -657,7 +684,7 @@ def api_audit_build(module, scope):
     so the page asks for this explicitly and the answer is cached.
     """
     resolved, units = scope_units(module, scope)
-    sources = run_audit(resolved.root, module, scope, units).sources
+    sources = run_scope_audit(resolved, scope, units).sources
 
     def run(make_target, timeout):
         with BUILD_LOCK:

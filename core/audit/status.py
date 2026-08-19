@@ -25,8 +25,11 @@ from core.audit.sources import link_language
 #: Worst first. A scope's column is as bad as its worst problem, so the order is the ranking.
 STATES = ('broken', 'missing', 'partial', 'ok', 'none')
 
-#: The file a statement lives in, and the one a solution lives in. `answer.md` sits beside the unit
-#: rather than in a language directory, so it is not part of the translation status.
+#: The two files whose absence means "not translated". The other translatable files that
+#: `module.mk` defines -- `problem-extra.md`, `answer-extra.md` -- are extra content only some
+#: problems carry, so a language lacking one is a gap to show, not a translation that is missing.
+#: Which files exist at all is `module.mk`'s business, carried on `Sources`; which of them a
+#: translation is judged on is this decision.
 TRANSLATED = ('problem.md', 'solution.md')
 
 #: What one translated file can be. Not `STATES`: those rank a whole problem, these say what
@@ -55,20 +58,21 @@ def worst(states):
 
 # --- translations -----------------------------------------------------------
 
-def translation_status(unit, expected_languages):
+def translation_status(unit, expected_languages, translated_files=TRANSLATED):
     """
     Per language, whether each translated file is written, absent, empty, or still a mirror.
 
     `expected_languages` comes from the volume rather than the problem: a language the rest of the
     volume has and this problem does not is the interesting case, and the problem alone cannot know.
     """
-    # Every file any language of this problem has. `problem.md` and `solution.md` are required and
-    # come first; anything else -- `answer-extra.md`, `problem-extra.md` -- is optional content that
-    # only some problems carry, but once one language has it the others not having it is a gap, so
-    # it is reported per language rather than silently left out.
+    # The files the module's build rules define, in their order, plus anything on disk that they do
+    # not -- an unexpected file is exactly the thing a table should not hide. `problem.md` and
+    # `solution.md` decide the verdict; the rest is extra content only some problems carry, and a
+    # language lacking one is a gap to show rather than a translation that is missing.
     found = {name for files in unit.translated.values() for name in files}
     found |= {n.split('/', 1)[1] for n in unit.links if '/' in n}
-    order = list(TRANSLATED) + sorted(found - set(TRANSLATED))
+    order = [n for n in translated_files if n in found or n in TRANSLATED]
+    order += sorted(found - set(order))
 
     per_language = {}
     for lang in sorted(set(expected_languages) | set(unit.translated)):
@@ -110,6 +114,29 @@ def translation_status(unit, expected_languages):
         parts.insert(0, f"{counts['ok']} complete")
     return Status('translations', 'missing' if counts['missing'] else 'partial',
                   ', '.join(parts), {'languages': per_language, 'order': order})
+
+
+def shared_file_states(unit, shared_files):
+    """
+    The files that sit beside the unit rather than in a language directory -- `answer.md` and the
+    rest of `module.mk`'s `NABOJ_NONTRANSLATABLE` family. One per problem, not one per language, so
+    there is no verdict here: most problems carry `answer.md` and nothing else, and an absent
+    `answer-interval.md` is the normal case rather than a gap.
+    """
+    order = [n for n in shared_files if n in unit.shared or n in unit.links]
+    order += sorted({n for n in unit.shared if n not in order and n not in shared_files})
+    out = {}
+    for name in order:
+        link = unit.links.get(name)
+        if link is not None:
+            out[name] = {'state': 'symlink', 'note': f'mirrors {link}'}
+        elif name not in unit.shared:
+            out[name] = {'state': 'missing', 'note': 'absent'}
+        elif not unit.shared[name].strip():
+            out[name] = {'state': 'empty', 'note': 'file is empty'}
+        else:
+            out[name] = {'state': 'ok', 'note': ''}
+    return out
 
 
 # --- equation de-duplication ------------------------------------------------
@@ -264,7 +291,7 @@ def statuses(sources):
     return {
         unit.path: {
             s.kind: s for s in (
-                translation_status(unit, languages),
+                translation_status(unit, languages, sources.translated_files),
                 equation_status(unit),
                 picture_status(unit),
                 value_status(unit),

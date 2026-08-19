@@ -61,8 +61,19 @@ class Report:
                 for kind, counts in out.items()}
 
 
-def audit(module_root: Path, module: str, scope: str, unit_paths) -> Report:
-    sources = read_scope(module_root, module, scope, unit_paths)
+def audit(module_root: Path, module: str, scope: str, unit_paths,
+          translated_files=None, shared_files=None) -> Report:
+    """
+    `translated_files` and `shared_files` name what a unit may hold, and come from the module's own
+    build rules -- `tools/editor` reads them off the descriptor. Omitted, `read_scope` falls back to
+    Náboj's, which is what the tests do.
+    """
+    extra = {}
+    if translated_files is not None:
+        extra['translated_files'] = translated_files
+    if shared_files is not None:
+        extra['shared_files'] = shared_files
+    sources = read_scope(module_root, module, scope, unit_paths, **extra)
     findings = []
     for c in applicable(module):
         for finding in c.run(sources):

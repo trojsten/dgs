@@ -15,6 +15,13 @@ import yaml
 #: Files beside the unit rather than inside a language directory.
 LANGUAGE_RE_LEN = 2
 
+#: The two rule families in `modules/naboj/module.mk`: `NABOJ_TRANSLATABLE` puts a file inside
+#: `<language>/`, `NABOJ_NONTRANSLATABLE` beside the unit. These are the fallback for a caller that
+#: does not say -- `tools/editor` passes the module descriptor's lists, which
+#: `core/tests/test_audit.py` pins to module.mk so the two cannot drift apart.
+TRANSLATED_FILES = ('problem.md', 'problem-extra.md', 'solution.md', 'answer-extra.md')
+SHARED_FILES = ('answer.md', 'answer-also.md', 'answer-interval.md')
+
 
 @dataclass
 class Unit:
@@ -64,6 +71,21 @@ class Sources:
     units: dict = field(default_factory=dict)   # path -> Unit, in the scope meta's order
     #: the scope's own meta.yaml -- the volume's, not a problem's -- or None if it has none
     scope_meta: dict | None = None
+    #: what a unit may hold, from the module's build rules rather than from what happens to be on
+    #: disk: a file the rules define and no problem has is a column of blanks worth seeing
+    translated_files: tuple = TRANSLATED_FILES
+    shared_files: tuple = SHARED_FILES
+
+    def present_translated(self):
+        """Translated files any problem in this scope actually has, in the rules' order."""
+        found = {name for u in self.units.values() for f in u.translated.values() for name in f}
+        found |= {n.split('/', 1)[1] for u in self.units.values() for n in u.links if '/' in n}
+        return tuple(n for n in self.translated_files if n in found)
+
+    def present_shared(self):
+        """Shared files any problem in this scope actually has, in the rules' order."""
+        found = {name for u in self.units.values() for name in u.shared}
+        return tuple(n for n in self.shared_files if n in found)
 
     @property
     def unit_list(self):
@@ -145,7 +167,8 @@ def read_unit(module_root: Path, unit_path: str) -> Unit:
     return unit
 
 
-def read_scope(module_root: Path, module_name: str, scope: str, unit_paths) -> Sources:
+def read_scope(module_root: Path, module_name: str, scope: str, unit_paths,
+               translated_files=TRANSLATED_FILES, shared_files=SHARED_FILES) -> Sources:
     """
     Read a scope, ordered the way the competition is: the scope meta's `problems:` list is the
     running order, easiest first, and it is what the builder iterates. Alphabetical order says
@@ -178,6 +201,8 @@ def read_scope(module_root: Path, module_name: str, scope: str, unit_paths) -> S
         module_root=module_root,
         units={u.path: u for u in ordered},
         scope_meta=scope_meta,
+        translated_files=tuple(translated_files),
+        shared_files=tuple(shared_files),
     )
 
 

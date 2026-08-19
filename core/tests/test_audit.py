@@ -6,11 +6,16 @@ a case that looks like that thing and is not. The second half is the point. Each
 cases is a false positive that a hand-written version of the same sweep actually produced while
 volumes 19 to 29 were being audited, and every one of them cost time to chase down.
 """
+import pathlib
+import re
+
 import pytest
+import yaml
 
 from core.audit import audit
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
-from core.audit.sources import read_scope
+from core.audit.sources import (SHARED_FILES, TRANSLATED_FILES,
+                               read_scope)
 from core.audit.status import translation_status
 
 
@@ -678,3 +683,62 @@ class TestTranslationDetail:
         """One dash for the language, not one mark per file it does not have."""
         s = self._status(tmp_path, files={'sk': {'problem.md': 'a', 'solution.md': 'b'}})
         assert s.detail['languages']['en'] == {'state': 'missing', 'note': 'no directory'}
+
+
+class TestFileFamiliesMatchTheBuild:
+    """
+    `modules/naboj/editor.yaml` mirrors module.mk's two rule families, and the audit page reads the
+    mirror. If module.mk gains a file and the descriptor does not, the page silently stops having a
+    column for it -- so the mirror is pinned here rather than trusted.
+    """
+
+    def families_from_make(self):
+        text = pathlib.Path('modules/naboj/module.mk').read_text()
+        out = {}
+        for macro, key in (('NABOJ_TRANSLATABLE', 'translated'),
+                           ('NABOJ_NONTRANSLATABLE', 'shared')):
+            m = re.search(r'\$\(foreach filename,([^,]+),\$\(eval \$\(call ' + macro, text)
+            assert m, f"no foreach driving {macro} in module.mk"
+            out[key] = m.group(1).split()
+        return out
+
+    def families_from_descriptor(self):
+        spec = yaml.safe_load(pathlib.Path('modules/naboj/editor.yaml').read_text())
+        kind = spec['units'][0]
+        translated = list(kind['translated'])
+        shared = [t for t in kind['targets'] if t not in translated]
+        return {'translated': translated, 'shared': shared}
+
+    def test_the_descriptor_lists_what_module_mk_builds(self):
+        make = self.families_from_make()
+        desc = self.families_from_descriptor()
+        assert sorted(desc['translated']) == sorted(make['translated'])
+        assert sorted(desc['shared']) == sorted(make['shared'])
+
+    def test_the_audit_defaults_match_the_descriptor(self):
+        """`core.audit` falls back to its own copy when no caller says; it must be the same copy."""
+        desc = self.families_from_descriptor()
+        assert sorted(TRANSLATED_FILES) == sorted(f'{n}.md' for n in desc['translated'])
+        assert sorted(SHARED_FILES) == sorted(f'{n}.md' for n in desc['shared'])
+
+    def test_a_file_the_rules_define_is_a_column_even_where_nothing_has_it(self, tmp_path):
+        """`present_translated` narrows to the volume; the rules decide the order and the vocabulary."""
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'answer-extra.md': 'c'}})
+        s = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert s.present_translated() == ('problem.md', 'answer-extra.md')
+
+    def test_an_unexpected_file_is_not_hidden(self, tmp_path):
+        """A file no rule defines still has to show up, or the table lies by omission."""
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'b', 'notes.md': 'c'}})
+        s = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        st = translation_status(s.unit_list[0], ['sk'], s.translated_files)
+        assert 'notes.md' in st.detail['order']
+
+    def test_shared_files_are_reported_from_the_rules(self, tmp_path):
+        make_problem(tmp_path, name='widget',
+                     shared={'answer.md': '42', 'answer-interval.md': '40-44'},
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'b'}})
+        s = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert s.present_shared() == ('answer.md', 'answer-interval.md')

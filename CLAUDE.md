@@ -44,6 +44,13 @@ Both pages learn what a module contains from `modules/<module>/editor.yaml` — 
 units live, what files they hold, and which level (`scope:`) the audit aggregates at. A
 fourth module needs a descriptor and no code.
 
+What files a unit may hold comes from `module.mk`'s two rule families —
+`NABOJ_TRANSLATABLE` inside `<language>/`, `NABOJ_NONTRANSLATABLE` beside the unit — by
+way of the descriptor's `targets`/`translated`, which mirror them. `core/tests/test_audit.py`
+fails if the mirror stops matching, so adding a file to module.mk cannot silently cost it a
+column. The audit narrows that vocabulary to what a volume actually has, and gives each
+remaining file a column of its own, grouped under its language.
+
 **The audit covers `naboj` only**, by `audit: true` in its descriptor. The checks and the
 four verdicts are Náboj's conventions — a language directory per problem, `values:` and
 `eq:` in a meta, a volume `problems:` list — and seminar and scholar are built differently

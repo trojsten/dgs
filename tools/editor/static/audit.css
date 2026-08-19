@@ -71,20 +71,40 @@ table.grid td {
 }
 
 table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
-table.grid td.lang, table.grid th.lang { width: 2.9rem; text-align: center; }
+/* One column per file. There are up to four per language and nine languages, so each column is as
+   narrow as a single glyph and the table scrolls sideways inside its pane rather than squeezing. */
+table.grid.files { width: auto; }
+table.grid td.filestate, table.grid th.filestate {
+  width: 1.35rem;
+  min-width: 1.35rem;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+table.grid th.filestate { color: #999; font-weight: normal; font-size: 0.72rem; }
 
-/* One mark per translated file. The letter names the file, so the state has to be carried by
-   weight, colour and a glyph rather than by the character itself. */
-.trans-cell { white-space: nowrap; letter-spacing: 0.04em; }
-.trans-mark { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
-.trans-mark + .trans-mark { margin-left: 0.15rem; }
-.tr-ok { color: #7ec87e; font-weight: 600; }
+/* Three columns, no repetition, so they get room for a readable word. */
+table.grid td.sharedstate, table.grid th.sharedstate {
+  width: auto;
+  min-width: 3.4rem;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+/* The group head names the language (or `beside the problem`) above its files, and the border makes
+   the grouping visible without a second colour. */
+table.grid th.group {
+  text-align: center;
+  font-size: 0.75rem;
+  border-left: 1px solid #444;
+  border-right: 1px solid #444;
+}
+table.grid td.filestate:first-of-type { border-left: 1px solid #333; }
+
+.tr-ok { color: #7ec87e; }
 .tr-symlink { color: #6fb3d2; }
 .tr-empty { color: #d7b45b; }
-/* Struck through rather than a glyph or colour alone, so "absent" reads without relying on hue. */
-.tr-missing { color: #6a6a6a; text-decoration: line-through; }
-/* Optional content: present or absent, but never a defect on its own. */
-.trans-optional { font-size: 0.68rem; opacity: 0.85; font-weight: normal; }
+.tr-missing { color: #5f5f5f; }
 table.grid td.absent { color: #555; }
 table.grid td.tags { color: #9cc; font-size: 0.78rem; }
 /* Three narrow columns beat one wide one: each role is separately unrecorded, and the blanks are

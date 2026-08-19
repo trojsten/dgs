@@ -112,24 +112,41 @@ const BUILD_HELP = "Targets that compiled the last time build checks were run he
    it is in, so a nine-language row still fits and still reads. `symlink` is not a fault: an
    unwritten translation mirrors its master rather than keeping a stale copy. */
 const TRANSLATION_MARK = {
-  ok: { glyph: "", cls: "tr-ok", word: "translated" },
+  ok: { glyph: "\u2713", cls: "tr-ok", word: "written" },
   symlink: { glyph: "\u2192", cls: "tr-symlink", word: "mirrors another language" },
   empty: { glyph: "\u2205", cls: "tr-empty", word: "file exists but is empty" },
-  missing: { glyph: "", cls: "tr-missing", word: "no such file" },
+  missing: { glyph: "\u00b7", cls: "tr-missing", word: "no such file" },
+  nodir: { glyph: "\u2014", cls: "tr-missing", word: "no directory for this language" },
 };
 
 const TRANSLATION_LEGEND =
-  "Capitals are the required files \u2014 P problem, S solution; lower case is optional extra "
-  + "content. Bold = translated \u00b7 \u2192 mirrors another language \u00b7 \u2205 empty "
-  + "\u00b7 struck through = missing";
+  "\u2713 written \u00b7 \u2192 mirrors another language \u00b7 \u2205 exists but empty "
+  + "\u00b7 \u00b7 absent \u00b7 \u2014 no directory for this language";
 
-/* `problem.md` is P and `solution.md` is S; an extra takes an initial per hyphenated part, so
-   `answer-extra.md` is `ae` and `problem-extra.md` is `pe` -- distinct from each other and from
-   the two capitals, which a bare first letter would not be. */
+/* Column heads, two or three characters wide because there are up to four of them per language.
+   `problem.md` is P and `solution.md` is S; anything else takes an initial per hyphenated part, so
+   `answer-extra.md` is `ae` and `answer-interval.md` is `ai` -- distinct from each other and from
+   the capitals, which a bare first letter would not be. */
 function fileMark(name, required) {
   const stem = name.replace(/\.md$/, "");
   if (required) return stem.charAt(0).toUpperCase();
   return stem.split("-").map((part) => part.charAt(0)).join("").toLowerCase();
+}
+
+/* The shared family has three columns and no repetition, so it can afford words: `answer.md`,
+   `answer-also.md` and `answer-interval.md` read as `answer`, `also`, `interval`. `a aa ai` was
+   shorter and told nobody anything. */
+function sharedMark(name) {
+  const stem = name.replace(/\.md$/, "");
+  return stem.includes("-") ? stem.slice(stem.indexOf("-") + 1) : stem;
+}
+
+function fileState(entry, fallback) {
+  const state = entry?.state ?? fallback;
+  const mark = TRANSLATION_MARK[state] ?? TRANSLATION_MARK.missing;
+  const td = node("td", `filestate ${mark.cls}`, mark.glyph);
+  td.title = entry?.note || mark.word;
+  return td;
 }
 
 /* The problem meta's `authors` mapping, in its own order. One column each rather than one column
@@ -468,43 +485,84 @@ function orderedUnits(d) {
 }
 
 /** The big table: one row per problem. */
-/* What this problem has in one language, file by file: which files are translated, which are
+/* One header cell spanning a group of file columns, with the group's own name above them. */
+function groupHead(label, span, help) {
+  const th = headCell("group", label, help);
+  th.colSpan = span;
+  return th;
+}
+
+function spanningHead(cls, label, help) {
+  const th = headCell(cls, label, help);
+  th.rowSpan = 2;
+  return th;
+}
+
+/* The header is two rows: a language (or `beside the problem`) spanning its files, and one cell per
+   file underneath. Everything else spans both rows. */
+function translationHeader(t, d) {
+  const files = d.translated_files ?? [];
+  const shared = d.shared_files ?? [];
+  const top = t.insertRow();
+  const sub = t.insertRow();
+
+  top.appendChild(spanningHead("num", "#",
+                               "Position in the volume meta's `problems:` list, which is the order "
+                               + "the problems are set in. Blank means the list does not name it."));
+  top.appendChild(spanningHead("", "id",
+                               "The problem's directory name. Click it to open the editor."));
+  top.appendChild(spanningHead("tags", "tags",
+                               "Tags from the meta, against the 54-entry vocabulary."));
+  for (const [role, help] of AUTHOR_ROLES) top.appendChild(spanningHead("author", role, help));
+  for (const [kind, label, help] of STATUS_KINDS) {
+    top.appendChild(spanningHead("num status", label, `${kind} \u2014 ${help} ${MARK_LEGEND}.`));
+  }
+
+  for (const lang of d.stats.language_list) {
+    const name = d.stats.language_names?.[lang] ?? lang;
+    top.appendChild(groupHead(lang, files.length,
+                              `${name}. One column per file. ${TRANSLATION_LEGEND}.`));
+    for (const f of files) {
+      sub.appendChild(headCell("filestate", fileMark(f, (d.required_files ?? []).includes(f)),
+                               `${lang}/${f}`));
+    }
+  }
+  if (shared.length) {
+    top.appendChild(groupHead("beside the problem", shared.length,
+                              "module.mk's non-translatable family: one file per problem, not one "
+                              + "per language, so there is nothing to translate and nothing "
+                              + `missing when a problem has none. ${TRANSLATION_LEGEND}.`));
+    for (const f of shared) {
+      sub.appendChild(headCell("filestate sharedstate", sharedMark(f),
+                               `${f} \u2014 one per problem, not one per language.`));
+    }
+  }
+
+  top.appendChild(spanningHead("", "findings", "What the checks reported for this problem."));
+}
+
+/* What this problem has in one language, file by file: which files are written, which are
    empty, which are missing, and which mirror another language. The verdict in the `trans` column
-   is the same data collapsed to one mark; this is the column that says why. */
-function translationCell(d, unit, lang) {
-  const td = node("td", "lang trans-cell");
+   is the same data collapsed to one mark; these columns are the ones that say why. */
+function translationCells(tr, d, unit, lang) {
   const info = unit.status?.translations?.detail?.languages?.[lang];
-  const files = unit.status?.translations?.detail?.order
-             ?? d.translated_files ?? ["problem.md", "solution.md"];
+  for (const name of d.translated_files ?? []) {
+    // no `files` at all means the language directory is absent: every cell says so, rather than
+    // one dash standing in for four different questions
+    const entry = info?.files ? info.files[name] : null;
+    const td = fileState(entry, info && !info.files ? "nodir" : "missing");
+    td.title = `${lang}/${name} \u2014 ${td.title}`;
+    tr.appendChild(td);
+  }
+}
 
-  if (!info) {
-    td.textContent = "\u00b7";
-    td.className += " absent";
-    td.title = `${lang}: nothing recorded`;
-    return td;
+function sharedCells(tr, d, unit) {
+  for (const name of d.shared_files ?? []) {
+    const td = fileState(unit.shared_state?.[name], "missing");
+    td.className += " sharedstate";
+    td.title = `${name} \u2014 ${td.title}`;
+    tr.appendChild(td);
   }
-  if (!info.files) {
-    // the whole language directory is absent -- one dash, not one per file
-    td.textContent = "\u2014";
-    td.className += " absent";
-    td.title = `${lang}: ${info.note || "no directory"}`;
-    return td;
-  }
-
-  const words = [];
-  for (const name of files) {
-    const entry = info.files[name];
-    const state = entry?.state ?? "missing";
-    const mark = TRANSLATION_MARK[state] ?? TRANSLATION_MARK.missing;
-    const required = entry?.required ?? true;
-    const cls = `trans-mark ${mark.cls}${required ? "" : " trans-optional"}`;
-    const span = node("span", cls, fileMark(name, required) + mark.glyph);
-    span.title = `${name}: ${entry?.note || mark.word}`;
-    td.appendChild(span);
-    words.push(`${name} ${entry?.note || mark.word}`);
-  }
-  td.title = `${lang} \u2014 ${words.join("; ")}`;
-  return td;
 }
 
 
@@ -515,25 +573,8 @@ function problemTable(d) {
   }
 
   const section = panel("Problems", `${d.units.length}`, orderControl());
-  const t = node("table", "grid");
-  const head = t.insertRow();
-  head.appendChild(headCell("num", "#",
-                            "Position in the volume meta's `problems:` list, which is the order the "
-                            + "problems are set in. Blank means the list does not name it."));
-  // the id column was headed `problem`, which now belongs to an author role
-  head.appendChild(headCell("", "id", "The problem's directory name. Click it to open the editor."));
-  head.appendChild(headCell("tags", "tags", "Tags from the meta, against the 54-entry vocabulary."));
-  for (const [role, help] of AUTHOR_ROLES) {
-    head.appendChild(headCell("author", role, help));
-  }
-  for (const [kind, label, help] of STATUS_KINDS) {
-    head.appendChild(headCell("num status", label, `${kind} \u2014 ${help} ${MARK_LEGEND}.`));
-  }
-  for (const lang of d.stats.language_list) {
-    const name = d.stats.language_names?.[lang] ?? lang;
-    head.appendChild(headCell("lang", lang, `${name}. ${TRANSLATION_LEGEND}.`));
-  }
-  head.appendChild(headCell("", "findings", "What the checks reported for this problem."));
+  const t = node("table", "grid files");
+  translationHeader(t, d);
 
   for (const unit of orderedUnits(d)) {
     const tr = t.insertRow();
@@ -575,9 +616,8 @@ function problemTable(d) {
     }
     for (const [kind] of STATUS_KINDS) tr.appendChild(statusCell(unit.status?.[kind]));
 
-    for (const lang of d.stats.language_list) {
-      tr.appendChild(translationCell(d, unit, lang));
-    }
+    for (const lang of d.stats.language_list) translationCells(tr, d, unit, lang);
+    sharedCells(tr, d, unit);
 
     const cell = node("td", "findings-cell");
     for (const f of byUnit[unit.unit] ?? []) {
