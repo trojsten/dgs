@@ -34,7 +34,15 @@ body.audit { overflow: hidden; }
 .hint { color: #888; font-size: 0.8rem; font-weight: normal; }
 .hint.warn { color: #d7a45b; }
 .scroll { overflow: auto; height: 100%; }
-.placeholder { color: #777; padding: 1rem; }
+/* `.placeholder` in style.css is `position: absolute; inset: 0`, which is right for the editor --
+   every pane it sits in is `position: relative`. Nothing here is positioned, so it took the initial
+   containing block instead and stretched an invisible <p> across the whole viewport, swallowing
+   every click on the page. Here the placeholder is ordinary text in ordinary flow. */
+.placeholder {
+  position: static;
+  color: #777;
+  padding: 1rem;
+}
 
 /* --- tables --- */
 

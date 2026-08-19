@@ -191,6 +191,9 @@ html, body {
 .placeholder {
   position: absolute;
   inset: 0;
+  /* It says "nothing here yet"; it is never a target. Without this, a placeholder that escapes its
+     intended containing block covers whatever is behind it and eats the clicks meant for it. */
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
