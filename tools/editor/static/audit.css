@@ -1,0 +1,163 @@
+/* The audit page. `style.css` supplies the shell -- colours, topbar, panes -- and this adds the
+   tables and the statistics panels, which the editor has no use for. */
+
+body.audit { overflow: hidden; }
+
+#audit-main {
+  --overview-height: 40vh;
+  display: grid;
+  grid-template-rows: var(--overview-height) 5px 1fr;
+  height: calc(100vh - 2.6rem);
+  min-height: 0;
+}
+
+#audit-main > .pane { min-height: 0; display: flex; flex-direction: column; }
+
+#audit-resizer {
+  cursor: row-resize;
+  background: #3a3a3a;
+}
+#audit-resizer:hover, #audit-resizer.dragging { background: #4a7ab5; }
+
+.pane-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background: #252526;
+  border-bottom: 1px solid #3a3a3a;
+  font-size: 0.85rem;
+}
+
+.spacer { flex: 1; }
+.brand { font-size: 0.95rem; }
+.hint { color: #888; font-size: 0.8rem; font-weight: normal; }
+.hint.warn { color: #d7a45b; }
+.scroll { overflow: auto; height: 100%; }
+.placeholder { color: #777; padding: 1rem; }
+
+/* --- tables --- */
+
+table.grid {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+table.grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #2d2d2e;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid #444;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+table.grid td {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid #2f2f2f;
+  vertical-align: top;
+}
+
+table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.grid td.lang, table.grid th.lang { width: 2.2rem; }
+table.grid td.absent { color: #555; }
+table.grid td.tags { color: #9cc; font-size: 0.78rem; }
+
+table.grid tr.clickable { cursor: pointer; }
+table.grid tr.clickable:hover td { background: #2a2d2e; }
+table.grid tr.selected td { background: #094771; }
+
+table.compact { width: auto; }
+table.compact td, table.compact th { padding: 0.1rem 0.4rem; }
+
+/* --- severities --- */
+
+.sev-error { color: #f08c8c; }
+.sev-warning { color: #d7b45b; }
+.sev-info { color: #7fa8c9; }
+
+.pill {
+  display: inline-block;
+  padding: 0 0.35rem;
+  margin: 0 0.15rem 0.15rem 0;
+  border-radius: 3px;
+  background: #333;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.pill.sev-error { background: #4a2323; }
+.pill.sev-warning { background: #423619; }
+.pill.sev-info { background: #23323d; }
+.pill.ok { background: #234a2c; color: #9d9; }
+.pill.bad { background: #4a2323; color: #f9a; }
+
+.findings-cell { max-width: 22rem; }
+.build-cell { white-space: nowrap; }
+
+/* --- statistics panels --- */
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  padding: 0.6rem;
+}
+
+.panel {
+  background: #232324;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: #2a2a2b;
+  border-bottom: 1px solid #333;
+  font-size: 0.85rem;
+}
+
+/* Panels holding the wide tables span the whole row rather than a column. */
+#detail-body > .panel {
+  margin: 0.6rem;
+  border: 1px solid #333;
+}
+
+/* --- tag distribution --- */
+
+.bars { padding: 0.4rem 0.6rem; }
+.bar-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr 2rem;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+.bar-label { color: #9cc; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { background: #2f2f30; height: 0.55rem; border-radius: 2px; }
+.bar-fill { display: block; height: 100%; background: #4a7ab5; border-radius: 2px; }
+.bar-count { text-align: right; color: #999; font-variant-numeric: tabular-nums; }
+
+/* --- findings --- */
+
+.finding-group { border-top: 1px solid #2f2f2f; }
+.finding-group summary { padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.82rem; }
+.finding-group summary:hover { background: #2a2d2e; }
+.finding-items {
+  margin: 0;
+  padding: 0.2rem 0.6rem 0.5rem 2rem;
+  font-size: 0.8rem;
+  color: #bbb;
+}
+.finding-items li { margin: 0.1rem 0; }
+
+#status.busy { color: #d7b45b; }
+#status.ok { color: #9d9; }
+#status.error { color: #f08c8c; }

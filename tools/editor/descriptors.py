@@ -53,6 +53,9 @@ class Module:
     languages: bool
     kinds: tuple
     root: Path
+    #: The level the audit page aggregates at -- a volume for Náboj and seminar, a year for
+    #: scholar. Named rather than numbered so a module says what it means; the depth is derived.
+    scope: str = ''
 
     def kind_for(self, unit: str):
         """Which `units:` entry this unit matches, or None if it is not a unit at all."""
@@ -84,6 +87,7 @@ def load_modules(repo_root: Path):
                 for entry in spec.get("units") or []
             ),
             root=root,
+            scope=spec.get("scope", ""),
         )
     return modules
 
@@ -125,3 +129,34 @@ def discover_units(module: Module):
             if path.is_dir() and _holds_something(path, kind, module.languages):
                 units.setdefault(unit, kind)
     return units
+
+
+def scope_depth(module: Module) -> int:
+    """
+    How many path segments a scope is: the position of the module's `scope` level, plus one.
+
+    Defaults to two, which is what all three current modules want -- `phys/28`, `FKS/41`,
+    `TA1/2025` -- so a module only needs the key if its levels are arranged differently.
+    """
+    if module.scope:
+        for kind in module.kinds:
+            if module.scope in kind.levels:
+                return kind.levels.index(module.scope) + 1
+    return 2
+
+
+def discover_scopes(module: Module):
+    """
+    Every scope in the module, mapped to the units it contains.
+
+    A scope with no units is not a scope: `source/naboj/phys/03` has a volume directory and no
+    problems in it, and offering it would be offering an empty page.
+    """
+    depth = scope_depth(module)
+    scopes = {}
+    for unit in sorted(discover_units(module)):
+        segments = unit.split("/")
+        if len(segments) < depth:
+            continue
+        scopes.setdefault("/".join(segments[:depth]), []).append(unit)
+    return scopes

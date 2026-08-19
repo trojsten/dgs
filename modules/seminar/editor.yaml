@@ -2,6 +2,9 @@
 
 label: Seminar
 
+# The level the audit page aggregates at.
+scope: volume
+
 units:
   # <competition>/<volume>/<semester>/<round>/<problem>, e.g. FKS/41/1/3/07
   - glob: '*/*/*/*/*'

@@ -5,6 +5,9 @@ label: Scholar
 # Two levels are editable here, and they are different things: a handout or homework sheet has
 # its own `text.md`, and holds a directory per problem. One standalone document serves both --
 # `modules/scholar/builder/standalone.py` picks the parts from the depth of the path.
+# The level the audit page aggregates at.
+scope: year
+
 units:
   - glob: '*/*/handouts/*'
     levels: [course, year, kind, issue]

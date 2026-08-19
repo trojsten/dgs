@@ -12,6 +12,9 @@ label: Náboj
 # rule families in module.mk put `translated` files inside it and `shared` files beside it.
 languages: true
 
+# The level the audit page aggregates at.
+scope: volume
+
 units:
   - glob: '*/*/problems/*'
     # `targets` is the full set, in the order the tabs appear; `translated` marks the subset that

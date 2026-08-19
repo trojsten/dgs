@@ -128,6 +128,10 @@ class NabojStandaloneContext(renderer.StandaloneContext):
         # merely being unannotated: `26/liquid-crane` (`difficulty`), `27/antifreeze` (`physics`,
         # `math`) and `27/half-g` (`similar`). `difficulty` and the `physics`/`math` pair look like
         # one idea before and after being split in two; `similar` points at a related problem id.
+        # `tools/editor`'s audit page reads this: a list of check ids the problem opts out of,
+        # for findings that are the point of the problem rather than a defect. `23/bats` and
+        # `28/john-doe` have invented units on purpose; `23/grammar-nazi` is misspelled on purpose.
+        Opt('audit'): {Opt('ignore'): [str]},
         Opt('difficulty'): int,
         Opt('physics'): int,
         Opt('math'): int,

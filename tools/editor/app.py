@@ -1,7 +1,9 @@
 import argparse
+import os
 import re
 import shutil
 import subprocess
+import sys
 import threading
 from pathlib import Path
 
@@ -10,9 +12,20 @@ from flask import Flask, jsonify, request, render_template, send_file
 # `descriptors`, not `modules`: the repo root holds a `modules/` namespace package, and whichever
 # came first on sys.path would win.
 from descriptors import (AUX_EXTENSIONS, RENDERABLE_AUX_EXTENSIONS,
-                         discover_units, load_modules)
+                         discover_scopes, discover_units, load_modules, scope_depth)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+# The audit library lives in `core/`, which is not on the path when this file is the entry point.
+# And several `core` modules open their data by a repository-relative path -- `core/i18n` reads
+# `core/i18n/default.yaml` at import time -- so the process has to run from the root, which is the
+# convention everything else here follows: the Makefile, `markdown-check.py`, and every subprocess
+# this app already launches with `cwd=REPO_ROOT`.
+sys.path.insert(0, str(REPO_ROOT))
+os.chdir(REPO_ROOT)
+from core.audit import audit as run_audit                                      # noqa: E402
+from core.audit import build as audit_build                                    # noqa: E402
+from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
 
 # Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed compile
 # can leave a truncated file in `output/`; serving a copy means a broken edit keeps showing the
@@ -470,6 +483,159 @@ def api_lint():
         "stderr": ANSI_RE.sub("", result.stderr),
         "returncode": result.returncode,
     })
+
+
+# --- audit ------------------------------------------------------------------
+
+def scope_units(module_name, scope):
+    """The units in a scope, or a 400 if there is no such scope."""
+    module = MODULES.get(module_name)
+    if module is None:
+        raise BadRequest(f"Unknown module: {module_name!r}")
+    units = discover_scopes(module).get(scope)
+    if units is None:
+        raise BadRequest(f"No such {module.label} scope: {scope!r}")
+    return module, units
+
+
+def finding_json(f):
+    return {"check": f.check, "severity": f.severity, "message": f.message,
+            "unit": f.unit, "problem": f.unit_name, "where": f.where, "line": f.line}
+
+
+def stats_json(stats):
+    return {
+        "problems": stats.problems,
+        "metas_present": stats.metas_present,
+        "authors": [{"name": name, **dict(roles), "total": sum(roles.values())}
+                    for name, roles in stats.people],
+        "authors_missing": stats.authors_missing,
+        "tags": stats.tags.most_common(),
+        "untagged": stats.untagged,
+        "languages": {lang: dict(counts) for lang, counts in sorted(stats.languages.items())},
+        "language_list": stats.language_list,
+        "file_kinds": stats.file_kinds,
+        "shared": dict(stats.shared),
+        "shared_kinds": stats.shared_kinds,
+        "templating": dict(stats.templating),
+    }
+
+
+@app.get("/audit")
+def audit_index():
+    return render_template("audit.html")
+
+
+@app.get("/api/audit/checks")
+def api_audit_checks():
+    """The registry, so the page can label and group findings without hard-coding any of it."""
+    return jsonify({
+        "severities": list(SEVERITIES),
+        "checks": [{"id": c.id, "severity": c.severity, "title": c.title,
+                    "modules": list(c.modules)} for c in REGISTRY.values()],
+    })
+
+
+@app.get("/api/audit/overview")
+def api_audit_overview():
+    """
+    One row per scope across every module. Recomputed on every request: a source-only pass over the
+    whole repository is about a second, so there is nothing to cache and nothing to invalidate.
+    """
+    rows = []
+    for module in sorted(MODULES.values(), key=lambda m: m.label):
+        for scope, units in sorted(discover_scopes(module).items()):
+            report = run_audit(module.root, module.name, scope, units)
+            rows.append({
+                "module": module.name,
+                "module_label": module.label,
+                "scope": scope,
+                "problems": report.stats.problems,
+                "metas_present": report.stats.metas_present,
+                "authors_missing": report.stats.authors_missing,
+                "authors": len(report.stats.authors),
+                "tags": len(report.stats.tags),
+                "untagged": report.stats.untagged,
+                "languages": report.stats.language_list,
+                "severity": report.by_severity(),
+                "checks": report.by_check(),
+                "cached_build": build_cache_summary(module.name, scope),
+            })
+    return jsonify(rows)
+
+
+@app.get("/api/audit/scope/<module>/<path:scope>")
+def api_audit_scope(module, scope):
+    resolved, units = scope_units(module, scope)
+    report = run_audit(resolved.root, resolved.name, scope, units)
+    return jsonify({
+        "module": module,
+        "module_label": resolved.label,
+        "scope": scope,
+        "scope_depth": scope_depth(resolved),
+        "units": [
+            {
+                "unit": unit.path,
+                "problem": unit.name,
+                "languages": unit.languages,
+                "has_meta": unit.meta_raw is not None,
+                "tags": (unit.meta or {}).get("tags") or [],
+                "authors": (unit.meta or {}).get("authors")
+                           if isinstance((unit.meta or {}).get("authors"), dict) else None,
+                "templating": {block: len((unit.meta or {}).get(block) or {})
+                               for block in ("values", "derived", "eq")},
+                "files": {lang: sorted(files) for lang, files in unit.translated.items()},
+                "shared": sorted(unit.shared),
+            }
+            for unit in report.sources.unit_list
+        ],
+        "findings": [finding_json(f) for f in report.findings],
+        "stats": stats_json(report.stats),
+        "build": read_build_cache(module, scope),
+    })
+
+
+def read_build_cache(module, scope):
+    """The last build-check run for a scope, with whether the sources have moved since."""
+    payload = audit_build.read_cache(REPO_ROOT, module, scope)
+    if payload is None:
+        return None
+    resolved = MODULES.get(module)
+    if resolved is not None:
+        units = discover_scopes(resolved).get(scope) or []
+        current = run_audit(resolved.root, module, scope, units).sources.fingerprint()
+        payload["stale"] = current != payload.get("fingerprint")
+    return payload
+
+
+def build_cache_summary(module, scope):
+    """Just enough of the cache for an overview row: how it went and when."""
+    payload = audit_build.read_cache(REPO_ROOT, module, scope)
+    if payload is None:
+        return None
+    return {"ok": payload.get("ok"), "total": payload.get("total"),
+            "ran_at": payload.get("ran_at")}
+
+
+@app.post("/api/audit/build/<module>/<path:scope>")
+def api_audit_build(module, scope):
+    """
+    Run the build checks for one scope. Minutes, not milliseconds -- 28 targets for volume 24 --
+    so the page asks for this explicitly and the answer is cached.
+    """
+    resolved, units = scope_units(module, scope)
+    sources = run_audit(resolved.root, module, scope, units).sources
+
+    def run(make_target, timeout):
+        with BUILD_LOCK:
+            result = run_make(make_target, timeout=timeout)
+        return {"returncode": result.returncode,
+                "log": (result.stdout or "") + (result.stderr or "")}
+
+    payload = audit_build.audit_build(REPO_ROOT, resolved.root, module, scope,
+                                      fingerprint=sources.fingerprint(), run=run)
+    payload["stale"] = False
+    return jsonify(payload)
 
 
 def main():

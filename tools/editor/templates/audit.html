@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Náboj audit</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/audit.css">
+</head>
+<body class="audit">
+  <header id="topbar">
+    <strong class="brand">Audit</strong>
+    <a class="tab-link" href="/">&#8592; editor</a>
+    <span class="spacer"></span>
+    <label>
+      <input type="checkbox" id="hide-info" checked> hide informational
+    </label>
+    <button id="refresh-btn">Refresh</button>
+    <span id="status"></span>
+  </header>
+
+  <main id="audit-main">
+    <!-- Every scope in every module. This is the picker: the table is more useful than a select,
+         because the numbers are the reason you are choosing a volume in the first place. -->
+    <section id="pane-overview" class="pane">
+      <div class="pane-label">
+        Volumes
+        <span class="hint">click one to open it</span>
+      </div>
+      <div class="scroll">
+        <table id="overview-table" class="grid"></table>
+      </div>
+    </section>
+
+    <div id="audit-resizer" role="separator" aria-orientation="horizontal"
+         aria-label="Resize the volume list"></div>
+
+    <section id="pane-detail" class="pane">
+      <div class="pane-label">
+        <span id="detail-title">Nothing selected</span>
+        <span class="spacer"></span>
+        <span id="build-state" class="hint"></span>
+        <button id="build-btn" disabled title="Render and compile every target of this volume">
+          Run build checks
+        </button>
+      </div>
+
+      <div id="detail-body" class="scroll">
+        <p class="placeholder">Pick a volume above.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/audit.js"></script>
+</body>
+</html>
