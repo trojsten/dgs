@@ -48,6 +48,90 @@ function refreshHighlight(textareaId, highlightId, lang) {
   el(highlightId).innerHTML = highlight(text + "\n", typeof lang === "function" ? lang() : lang);
 }
 
+/* Tab in a textarea moves focus, which is right for a form and wrong for an editor: every source
+   here is indented, four spaces in Markdown and two in YAML, and there was no way to type it.
+   Escape still blurs, so the keyboard is not trapped.
+
+   This is the whole text transformation, kept pure so it can be reasoned about and tested without a
+   DOM: given the value and the selection, what replaces what, and where the selection lands after.
+   `from`/`to` is the span to overwrite. */
+function indentEdit(value, selStart, selEnd, width, outdent) {
+  // A bare caret inserts; anything selected indents the lines it touches. Tab never replaces a
+  // selection here, unlike a general-purpose code editor: the text in this one is authored prose,
+  // and a stray Tab that silently eats a selected sentence is a worse bargain than losing a
+  // shortcut nobody needs.
+  if (selStart === selEnd && !outdent) {
+    // to the next tab stop rather than a fixed jump, so indentation stays in multiples of `width`
+    const lineStart = value.lastIndexOf("\n", selStart - 1) + 1;
+    const pad = width - ((selStart - lineStart) % width);
+    return {from: selStart, to: selEnd, text: " ".repeat(pad),
+            selStart: selStart + pad, selEnd: selStart + pad};
+  }
+
+  // whole lines: the block the selection touches, indented or outdented line by line
+  const from = value.lastIndexOf("\n", selStart - 1) + 1;
+  let to = value.indexOf("\n", selEnd);
+  if (to === -1) to = value.length;
+
+  const strip = new RegExp(`^ {1,${width}}`);
+  let firstDelta = null, totalDelta = 0;
+  const lines = value.slice(from, to).split("\n").map((line) => {
+    let delta = 0;
+    if (outdent) {
+      const lead = line.match(strip);
+      if (lead) {
+        delta = -lead[0].length;
+        line = line.slice(lead[0].length);
+      }
+    } else if (line.length) {
+      // a blank line gains nothing: trailing whitespace on an empty line is what `encoding` flags
+      delta = width;
+      line = " ".repeat(width) + line;
+    }
+    if (firstDelta === null) firstDelta = delta;
+    totalDelta += delta;
+    return line;
+  });
+
+  return {
+    from, to, text: lines.join("\n"),
+    selStart: Math.max(from, selStart + firstDelta),
+    selEnd: Math.max(from, selEnd + totalDelta),
+  };
+}
+
+/* Apply an edit through `execCommand` where it exists: it is the only way to change a textarea and
+   keep the browser's own undo stack, and it fires `input` so the highlight overlay follows. The
+   fallback sets `value` directly and says so with an explicit event. */
+function applyEdit(textarea, edit) {
+  textarea.setSelectionRange(edit.from, edit.to);
+  let ok = false;
+  try {
+    ok = document.execCommand("insertText", false, edit.text);
+  } catch (e) {
+    ok = false;
+  }
+  if (!ok) {
+    const value = textarea.value;
+    textarea.value = value.slice(0, edit.from) + edit.text + value.slice(edit.to);
+    textarea.dispatchEvent(new Event("input", {bubbles: true}));
+  }
+  textarea.setSelectionRange(edit.selStart, edit.selEnd);
+}
+
+function wireIndent(textarea, width) {
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      textarea.blur();                       // the way out, since Tab no longer is
+      return;
+    }
+    if (e.key !== "Tab" || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    applyEdit(textarea, indentEdit(textarea.value, textarea.selectionStart,
+                                   textarea.selectionEnd, width, e.shiftKey));
+  });
+}
+
 function wireCodeEditor(textareaId, highlightId, lang, onInput) {
   const textarea = el(textareaId);
   const pre = el(highlightId).parentElement;
@@ -663,6 +747,8 @@ function init() {
   wireResizer("col-resizer", "--source-width", SOURCE_WIDTH_KEY,
     (e, rect) => `${clamp(e.clientX - rect.left, 200, rect.width - 200)}px`);
 
+  wireIndent(el("source-editor"), 4);      // display blocks indent by four
+  wireIndent(el("meta-editor"), 2);        // YAML by two
   wireCodeEditor("source-editor", "source-highlight", sourceMode, () => {
     if (!state.activeTarget) return;
     state.buffers[state.activeTarget] = el("source-editor").value;

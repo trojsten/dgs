@@ -31,7 +31,9 @@ uv run python tools/editor/app.py [--port 5001]
 ```
 
 - `/` — the editor: pick a problem, edit its sources and `meta.yaml`, render, compile,
-  lint, and read the PDF beside them.
+  lint, and read the PDF beside them. Tab indents rather than moving focus — four spaces
+  in the sources, two in `meta.yaml`, to the next stop; Shift+Tab outdents; Escape leaves
+  the textarea, since Tab no longer does. A selection is never replaced, only indented.
 - `/audit` — every volume in one table, then one volume in detail: an author
   leaderboard, tag distribution, files by language, and a verdict per problem for
   translations, equation de-duplication, pictures and `values:` extraction.
