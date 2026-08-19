@@ -679,6 +679,35 @@ class TestTranslationDetail:
                                           'en': {'problem.md': 'a', 'solution.md': 'b'}})
         assert s.detail['order'] == ['problem.md', 'solution.md']
 
+    def test_a_mirror_names_the_language_it_mirrors(self, tmp_path):
+        """The cell shows `\u2192en`, so the target has to be a field and not only prose."""
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'b'},
+                            'en': {'problem.md': 'a'}})
+        link = tmp_path / 'phys' / '99' / 'problems' / 'widget' / 'en' / 'solution.md'
+        link.symlink_to('../sk/solution.md')
+        sources = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        entry = (translation_status(sources.unit_list[0], ['sk', 'en'])
+                 .detail['languages']['en']['files']['solution.md'])
+        assert entry['state'] == 'symlink'
+        assert entry['language'] == 'sk'
+
+    def test_a_link_that_is_not_a_language_names_none(self, tmp_path):
+        """`link_language` returning None must not put a path fragment in a two-character cell."""
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'b'},
+                            'en': {'problem.md': 'a'}})
+        elsewhere = tmp_path / 'phys' / '99' / 'shared-solution.md'
+        elsewhere.write_text('b')
+        link = tmp_path / 'phys' / '99' / 'problems' / 'widget' / 'en' / 'solution.md'
+        link.symlink_to('../../../shared-solution.md')
+        sources = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        entry = (translation_status(sources.unit_list[0], ['sk', 'en'])
+                 .detail['languages']['en']['files']['solution.md'])
+        assert entry['state'] == 'symlink'
+        assert entry['language'] is None
+        assert 'shared-solution.md' in entry['note']
+
     def test_a_missing_language_directory_has_no_file_detail(self, tmp_path):
         """One dash for the language, not one mark per file it does not have."""
         s = self._status(tmp_path, files={'sk': {'problem.md': 'a', 'solution.md': 'b'}})

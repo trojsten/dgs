@@ -86,7 +86,8 @@ table.grid.files td.tags, table.grid.files td.author, table.grid.files td.findin
 table.grid td.tags, table.grid th.tags { max-width: 14rem; }   /* `rot-mech moment-of-inertia` fits */
 table.grid td.findings-cell, table.grid th.findings-cell { max-width: 22rem; }
 table.grid td.filestate, table.grid th.filestate {
-  width: 1.35rem;
+  /* min-width, not width: a cell showing `\2192 en` needs more room than a bare glyph, and an auto
+     table layout lets exactly the columns that mirror something take it. */
   min-width: 1.35rem;
   text-align: center;
   padding-left: 0;
@@ -114,6 +115,7 @@ table.grid td.filestate:first-of-type { border-left: 1px solid #333; }
 
 .tr-ok { color: #7ec87e; }
 .tr-symlink { color: #6fb3d2; }
+.trans-target { font-size: 0.68rem; letter-spacing: 0; }
 .tr-empty { color: #d7b45b; }
 .tr-missing { color: #5f5f5f; }
 table.grid td.absent { color: #555; }

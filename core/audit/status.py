@@ -85,8 +85,11 @@ def translation_status(unit, expected_languages, translated_files=TRANSLATED):
             link = unit.links.get(f'{lang}/{name}')
             required = name in TRANSLATED
             if link is not None:
-                target = link_language(link) or link
-                entry = {'state': 'symlink', 'note': f'mirrors {target}'}
+                # the target language when the link mirrors one, which is what a two-character cell
+                # can show; anything else keeps its path in the note and shows no target
+                mirrored = link_language(link)
+                entry = {'state': 'symlink', 'language': mirrored,
+                         'note': f'mirrors {mirrored or link}'}
             elif name not in files:
                 entry = {'state': 'missing', 'note': 'absent'}
             elif not files[name].strip():
@@ -129,7 +132,8 @@ def shared_file_states(unit, shared_files):
     for name in order:
         link = unit.links.get(name)
         if link is not None:
-            out[name] = {'state': 'symlink', 'note': f'mirrors {link}'}
+            out[name] = {'state': 'symlink', 'language': link_language(link),
+                         'note': f'mirrors {link}'}
         elif name not in unit.shared:
             out[name] = {'state': 'missing', 'note': 'absent'}
         elif not unit.shared[name].strip():

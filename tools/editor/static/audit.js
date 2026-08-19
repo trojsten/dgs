@@ -120,7 +120,7 @@ const TRANSLATION_MARK = {
 };
 
 const TRANSLATION_LEGEND =
-  "\u2713 written \u00b7 \u2192 mirrors another language \u00b7 \u2205 exists but empty "
+  "\u2713 written \u00b7 \u2192en mirrors that language \u00b7 \u2205 exists but empty "
   + "\u00b7 \u00b7 absent \u00b7 \u2014 no directory for this language";
 
 /* Column heads, two or three characters wide because there are up to four of them per language.
@@ -145,6 +145,11 @@ function fileState(entry, fallback) {
   const state = entry?.state ?? fallback;
   const mark = TRANSLATION_MARK[state] ?? TRANSLATION_MARK.missing;
   const td = node("td", `filestate ${mark.cls}`, mark.glyph);
+  // which language a mirror points at, in the cell rather than only in the tooltip: "→en" answers
+  // the question the arrow raises, and a hover per cell is a poor way to read a column
+  if (state === "symlink" && entry?.language) {
+    td.appendChild(node("span", "trans-target", entry.language));
+  }
   td.title = entry?.note || mark.word;
   return td;
 }
