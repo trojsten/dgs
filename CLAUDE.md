@@ -22,6 +22,39 @@ problems no longer have one: computed quantities belong in the `derived:` mappin
 `meta.yaml` (name → Jinja expression, evaluated in document order). `preamble.md` remains
 only for computations needing real control flow.
 
+## The editor and the auditor
+
+One Flask app, two pages. Run it from the repository root:
+
+```
+uv run python tools/editor/app.py [--port 5001]
+```
+
+- `/` — the editor: pick a problem, edit its sources and `meta.yaml`, render, compile,
+  lint, and read the PDF beside them.
+- `/audit` — every volume in one table, then one volume in detail: an author
+  leaderboard, tag distribution, files by language, and a verdict per problem for
+  translations, equation de-duplication, pictures and `values:` extraction.
+
+It must run from the root, and it `chdir`s there itself: several `core` modules open
+their data by a repository-relative path, so `core/i18n` fails to import from anywhere
+else. Port 5000 is the default but is often taken.
+
+Both pages learn what a module contains from `modules/<module>/editor.yaml` — where the
+units live, what files they hold, and which level (`scope:`) the audit aggregates at. A
+fourth module needs a descriptor and no code.
+
+The audit checks live in `core/audit/`, not in the app, because they are the durable
+part: `checks.py` for the source-only ones, `status.py` for the four progress verdicts,
+`build.py` for the slow ones. A pass over the whole repository is a fifth of a second, so
+nothing is cached — except the build checks, which shell out to make and land in
+`build/.audit/` with a fingerprint of the sources.
+
+Adding a check means one function and two tests: one that it fires, one that it stays
+quiet on a case that looks like it and is not. That second half is not optional. Every
+one of those quiet cases in `core/tests/test_audit.py` is a false positive that a
+hand-written version of the same sweep actually produced.
+
 ## Code layout
 
 - `core/builder/jinja.py` — the two Jinja environments and the whole filter /
