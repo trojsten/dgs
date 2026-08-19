@@ -43,6 +43,20 @@ function node(tag, cls, text) {
   return n;
 }
 
+/* A `th` whose label is an abbreviation, carrying its expansion. The <abbr> holds the title rather
+   than the cell, so the dotted underline marks exactly the word that needs explaining. */
+function headCell(cls, label, help) {
+  const th = node("th", cls);
+  if (help) {
+    const a = node("abbr", "", label);
+    a.title = help;
+    th.appendChild(a);
+  } else {
+    th.textContent = label;
+  }
+  return th;
+}
+
 /** A cell whose value is only worth showing when it is not zero. */
 function count(value, cls) {
   const td = node("td", `num ${cls ?? ""}`);
@@ -65,12 +79,34 @@ function ago(seconds) {
  * The four things that take a volume from converted-on-paper to finished. Named here in the order
  * they are worth reading, with a short column head: the verdict is in the colour and the tooltip.
  */
+//: kind, the abbreviation shown in a narrow column, and what that column actually asks.
 const STATUS_KINDS = [
-  ["translations", "trans"],
-  ["equations", "eq"],
-  ["pictures", "pics"],
-  ["values", "vals"],
+  ["translations", "trans",
+   "Does every language this volume uses have each file, non-empty \u2014 or a deliberate symlink "
+   + "to another language?"],
+  ["equations", "eq",
+   "Does each display equation live once in meta.yaml's `eq:` and get referenced, instead of being "
+   + "written out again in every language?"],
+  ["pictures", "pics",
+   "Does every figure the Markdown references exist, and is every picture file present actually "
+   + "referenced?"],
+  ["values", "vals",
+   "Do the numbers live in meta.yaml's `values:` and reach the prose through (\u00a7 \u2026 \u00a7), "
+   + "rather than being typed into the sentence?"],
 ];
+
+const SEVERITY_HELP = {
+  error: "Something is wrong and will bite: a build failure, a dangling reference, a unit siunitx "
+       + "will refuse.",
+  warning: "A convention broken, or a difference between languages worth a look.",
+  info: "Recorded, not a complaint \u2014 a deliberate symlink, say. Hidden by default.",
+};
+
+const BUILD_HELP = "Targets that compiled the last time build checks were run here, and how long "
+                 + "ago that was. Blank means never run.";
+
+const MARK_LEGEND = "\u2713 ok \u00b7 \u25d1 partial \u00b7 \u2717 missing or broken "
+                  + "\u00b7 \u00b7 nothing to do";
 
 /** A short mark per state -- the colour carries the meaning, this keeps it legible without it. */
 const STATE_MARK = {
@@ -90,15 +126,26 @@ function statusCell(status) {
   return td;
 }
 
+//: label, cell class, how to read the value out of a row, and what the column means.
 const OVERVIEW_COLUMNS = [
-  ["volume", "", (r) => r.module_label + " " + r.scope],
-  ["problems", "num", (r) => r.problems],
-  ["metas", "num", (r) => r.metas_present === r.problems ? "" : `${r.metas_present}/${r.problems}`],
-  ["no author", "num", (r) => r.authors_missing],
-  ["people", "num", (r) => r.authors],
-  ["tags", "num", (r) => r.tags],
-  ["untagged", "num", (r) => r.untagged],
-  ["languages", "num", (r) => r.languages.length],
+  ["volume", "", (r) => r.module_label + " " + r.scope,
+   "The competition and volume. Click the row to open it."],
+  ["problems", "num", (r) => r.problems,
+   "Problem directories found under this volume."],
+  ["metas", "num", (r) => r.metas_present === r.problems ? "" : `${r.metas_present}/${r.problems}`,
+   "Problems with a meta.yaml, shown only when some have none."],
+  ["no author", "num", (r) => r.authors_missing,
+   "Problems that have an `authors:` block but name nobody in it. An unrecorded author stays "
+   + "empty on purpose \u2014 this counts how many are still waiting."],
+  ["people", "num", (r) => r.authors,
+   "Distinct people credited, across idea, problem and solution. `?` is not counted: it means "
+   + "\u201cnot classified\u201d, not a person."],
+  ["tags", "num", (r) => r.tags,
+   "Distinct tags used in this volume."],
+  ["untagged", "num", (r) => r.untagged,
+   "Problems carrying no tags at all."],
+  ["languages", "num", (r) => r.languages.length,
+   "Language directories present anywhere in this volume."],
 ];
 
 function renderOverview() {
@@ -106,15 +153,16 @@ function renderOverview() {
   table.innerHTML = "";
 
   const head = table.insertRow();
-  for (const [label, cls] of OVERVIEW_COLUMNS) head.appendChild(node("th", cls, label));
+  for (const [label, cls, , help] of OVERVIEW_COLUMNS) head.appendChild(headCell(cls, label, help));
   for (const severity of state.severities) {
     if (severity === "info" && state.hideInfo) continue;
-    head.appendChild(node("th", `num sev-${severity}`, severity));
+    head.appendChild(headCell(`num sev-${severity}`, severity, SEVERITY_HELP[severity]));
   }
-  const progress = node("th", "status-strip", "progress");
-  progress.title = STATUS_KINDS.map(([k]) => k).join(" · ");
-  head.appendChild(progress);
-  head.appendChild(node("th", "", "build"));
+  head.appendChild(headCell(
+    "status-strip", "progress",
+    "Four verdicts per volume, worst problem wins: "
+    + STATUS_KINDS.map(([, label]) => label).join(", ") + ". " + MARK_LEGEND + "."));
+  head.appendChild(headCell("", "build", BUILD_HELP));
 
   for (const row of state.overview) {
     try {
@@ -356,15 +404,14 @@ function problemTable(d) {
   const t = node("table", "grid");
   const head = t.insertRow();
   for (const h of ["problem", "tags", "authors"]) head.appendChild(node("th", "", h));
-  for (const [kind, label] of STATUS_KINDS) {
-    const th = node("th", "num status", label);
-    th.title = kind;
-    head.appendChild(th);
+  for (const [kind, label, help] of STATUS_KINDS) {
+    head.appendChild(headCell("num status", label, `${kind} \u2014 ${help} ${MARK_LEGEND}.`));
   }
   for (const lang of d.stats.language_list) {
-    head.appendChild(node("th", "num lang", lang));
+    const name = d.stats.language_names?.[lang] ?? lang;
+    head.appendChild(headCell("num lang", lang, `${name} \u2014 how many files this problem has.`));
   }
-  head.appendChild(node("th", "", "findings"));
+  head.appendChild(headCell("", "findings", "What the checks reported for this problem."));
 
   for (const unit of d.units) {
     const tr = t.insertRow();

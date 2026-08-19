@@ -187,3 +187,5 @@ th.state-ok, th.state-partial, th.state-missing, th.state-broken, th.state-none 
 
 /* The overview's compact verdict strip: one mark per kind. */
 .status-strip { white-space: nowrap; letter-spacing: 0.15em; }
+/* The spacing is there to separate four marks in a cell; the word in the header does not want it. */
+th.status-strip { letter-spacing: normal; }

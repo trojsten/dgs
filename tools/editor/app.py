@@ -27,6 +27,18 @@ from core.audit import audit as run_audit                                      #
 from core.audit import build as audit_build                                    # noqa: E402
 from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
 from core.audit.status import STATES                                           # noqa: E402
+from core.i18n import languages as LOCALES                                     # noqa: E402
+
+
+def language_name(code):
+    """`uk` means nothing in a column head two characters wide; `Ukrainian (українська)` does."""
+    locale = LOCALES.get(code)
+    if locale is None:
+        return code
+    native = locale.data.get('native') or ''
+    full = locale.full.capitalize()
+    # `English (English)` says nothing twice
+    return f'{full} ({native})' if native.casefold() != full.casefold() else full
 
 # Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed compile
 # can leave a truncated file in `output/`; serving a copy means a broken edit keeps showing the
@@ -515,6 +527,7 @@ def stats_json(stats):
         "untagged": stats.untagged,
         "languages": {lang: dict(counts) for lang, counts in sorted(stats.languages.items())},
         "language_list": stats.language_list,
+        "language_names": {lang: language_name(lang) for lang in stats.language_list},
         "file_kinds": stats.file_kinds,
         "shared": dict(stats.shared),
         "shared_kinds": stats.shared_kinds,

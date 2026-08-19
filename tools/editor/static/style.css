@@ -159,6 +159,30 @@ html, body {
   color: #e0c34a;
 }
 
+/* There was no rule for `a` at all, so every link fell back to the user agent's #0000EE -- #551A8B
+   once visited -- and neither is readable on #1e1e1e. `:visited` is reset rather than coloured:
+   these links move around inside the app, they are not places you have been on the web, so fading
+   them once used only makes the table harder to read. */
+a {
+  color: #79c0ff;
+  text-decoration: none;
+}
+
+a:visited { color: #79c0ff; }
+a:hover { color: #b6e0ff; text-decoration: underline; }
+
+/* An abbreviated column head that cannot be expanded is a puzzle. */
+abbr[title] {
+  text-decoration: underline dotted #6a6a6a;
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+
+/* Deliberately muted, and `a:visited` above would otherwise outrank the plain class. */
+.tab-link, .tab-link:visited {
+  color: #777;
+}
+
 .tab-link {
   margin-left: auto;
   align-self: center;
