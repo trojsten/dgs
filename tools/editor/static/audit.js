@@ -132,6 +132,16 @@ function fileMark(name, required) {
   return stem.split("-").map((part) => part.charAt(0)).join("").toLowerCase();
 }
 
+/* The problem meta's `authors` mapping, in its own order. One column each rather than one column
+   of everybody: the three roles are separately unrecorded, and a problem crediting an idea but no
+   solution is a different state from one crediting nobody. `?` is a real value here -- it means
+   "not classified" -- so it is shown, not swallowed. */
+const AUTHOR_ROLES = [
+  ["idea", "authors.idea \u2014 who thought of the problem."],
+  ["problem", "authors.problem \u2014 who wrote the statement."],
+  ["solution", "authors.solution \u2014 who wrote the solution."],
+];
+
 const MARK_LEGEND = "\u2713 ok \u00b7 \u25d1 partial \u00b7 \u2717 missing or broken "
                   + "\u00b7 \u00b7 nothing to do";
 
@@ -510,7 +520,12 @@ function problemTable(d) {
   head.appendChild(headCell("num", "#",
                             "Position in the volume meta's `problems:` list, which is the order the "
                             + "problems are set in. Blank means the list does not name it."));
-  for (const h of ["problem", "tags", "authors"]) head.appendChild(node("th", "", h));
+  // the id column was headed `problem`, which now belongs to an author role
+  head.appendChild(headCell("", "id", "The problem's directory name. Click it to open the editor."));
+  head.appendChild(headCell("tags", "tags", "Tags from the meta, against the 54-entry vocabulary."));
+  for (const [role, help] of AUTHOR_ROLES) {
+    head.appendChild(headCell("author", role, help));
+  }
   for (const [kind, label, help] of STATUS_KINDS) {
     head.appendChild(headCell("num status", label, `${kind} \u2014 ${help} ${MARK_LEGEND}.`));
   }
@@ -544,10 +559,20 @@ function problemTable(d) {
 
     tr.appendChild(node("td", "tags", (unit.tags ?? []).join(" ")));
 
-    const authors = unit.authors
-      ? ["idea", "problem", "solution"].flatMap((r) => unit.authors[r] ?? [])
-      : [];
-    tr.appendChild(node("td", "", [...new Set(authors)].join(", ")));
+    for (const [role] of AUTHOR_ROLES) {
+      const named = unit.authors?.[role] ?? [];
+      const td = node("td", "author", named.join(", "));
+      if (!unit.authors) {
+        // no `authors` mapping at all, which is not the same as one recording nobody
+        td.className += " absent";
+        td.textContent = unit.has_meta ? "\u2014" : "";
+        td.title = unit.has_meta ? "no `authors` mapping in the meta" : "no meta.yaml";
+      } else if (!named.length) {
+        td.className += " absent";
+        td.title = `authors.${role} is empty \u2014 unrecorded, which is the honest value`;
+      }
+      tr.appendChild(td);
+    }
     for (const [kind] of STATUS_KINDS) tr.appendChild(statusCell(unit.status?.[kind]));
 
     for (const lang of d.stats.language_list) {

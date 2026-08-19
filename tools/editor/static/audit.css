@@ -87,6 +87,10 @@ table.grid td.lang, table.grid th.lang { width: 2.9rem; text-align: center; }
 .trans-optional { font-size: 0.68rem; opacity: 0.85; font-weight: normal; }
 table.grid td.absent { color: #555; }
 table.grid td.tags { color: #9cc; font-size: 0.78rem; }
+/* Three narrow columns beat one wide one: each role is separately unrecorded, and the blanks are
+   the point -- 16 problems in 27 and 13 in 29 are still waiting for a name. */
+table.grid td.author, table.grid th.author { font-size: 0.78rem; max-width: 9rem; }
+table.grid td.author { color: #cfcfcf; }
 
 /* A problem the volume meta does not list is not in the competition, whatever its sources say. */
 table.grid tr.unlisted td { background: #2d2420; }

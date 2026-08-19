@@ -465,15 +465,18 @@ def unit_unlisted(sources):
        'The volume meta names a problem that has no directory', modules=('naboj',))
 def listed_missing(sources):
     """
-    The other direction, and the worse one: `\\protectedInput` writes `Missing file ...!` into the
-    page rather than failing, so the volume builds, exits 0, and prints that sentence where the
-    problem should be. Volume 19 shipped `onion` this way after the directory became
+    The other direction: the list names a problem that is not there.
+
+    `\\protectedInput` puts a red `Missing file ...!` box in the page, which is exactly right --
+    a hole in a booklet should be impossible to miss, not a silent gap. The check earns its keep
+    upstream of that: it names the stale entry from the sources, so nobody has to compile a volume
+    and read 46 pages to find out. Volume 19 carried `onion` for years after the directory became
     `onion-capacity`.
     """
     for name in sources.missing_from_disk:
         yield Finding('listed-missing', 'error',
                       f"`{name}` is listed in {sources.scope}/meta.yaml but no such directory "
-                      f"exists; the build prints `Missing file ...!` in its place")
+                      f"exists; the page will carry a `Missing file` box in its place")
 
 
 @check('translation-set', 'warning',

@@ -56,11 +56,12 @@ part: `checks.py` for the source-only ones, `status.py` for the four progress ve
 `build.py` for the slow ones.
 
 Problems are listed in the volume meta's `problems:` order, because that list *is* the
-running order and is what `ContextVolume` iterates -- a problem missing from it is never
-built, and one listed without a directory makes the build print `Missing file ...!` into
-the page while still exiting 0. Both directions are checked (`unit-unlisted`,
-`listed-missing`). The page can sort alphabetically instead, and keeps showing the
-competition number when it does. A pass over the whole repository is a fifth of a second, so
+running order and is what `ContextVolume` iterates. A problem missing from it is never
+built; one listed without a directory gets `\protectedInput`'s red `Missing file` box in
+the page, which is the intended behaviour — a hole in a booklet should be loud — but the
+stale entry is still worth catching in the sources rather than in a PDF. Both directions
+are checked (`unit-unlisted`, `listed-missing`). The page can sort alphabetically instead,
+and keeps showing the competition number when it does. A pass over the whole repository is a fifth of a second, so
 nothing is cached — except the build checks, which shell out to make and land in
 `build/.audit/` with a fingerprint of the sources.
 
