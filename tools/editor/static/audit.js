@@ -19,6 +19,9 @@ const state = {
   scope: null,         // {module, scope} currently open
   detail: null,        // the last /api/audit/scope response
   hideInfo: true,
+  //: 'meta' follows the volume meta's `problems:` list -- the running order, easiest first, and
+  //: what the builder iterates. 'alpha' is for finding one problem by name.
+  order: "meta",
 };
 
 const el = (id) => document.getElementById(id);
@@ -384,13 +387,50 @@ function statsPanels(stats) {
   return wrap;
 }
 
-function panel(title, subtitle) {
+function panel(title, subtitle, control) {
   const p = node("section", "panel");
   const h = node("div", "panel-head");
   h.appendChild(node("strong", "", title));
   if (subtitle) h.appendChild(node("span", "hint", subtitle));
+  if (control) {
+    h.appendChild(node("span", "spacer"));
+    h.appendChild(control);
+  }
   p.appendChild(h);
   return p;
+}
+
+/* The order toggle. The volume meta's list is the competition's own running order, so it is the
+   default; the alphabet is what you want when you know the name and not the number. */
+function orderControl() {
+  const wrap = node("span", "order-control");
+  wrap.appendChild(node("span", "hint", "order"));
+  const select = node("select", "");
+  for (const [value, label, help] of [
+    ["meta", "as in meta.yaml", "The volume's `problems:` list \u2014 the running order, and what "
+                               + "the builder iterates."],
+    ["alpha", "alphabetical", "By problem id."],
+  ]) {
+    const opt = node("option", "", label);
+    opt.value = value;
+    opt.title = help;
+    if (state.order === value) opt.selected = true;
+    select.appendChild(opt);
+  }
+  select.addEventListener("change", () => {
+    state.order = select.value;
+    renderDetail();
+  });
+  wrap.appendChild(select);
+  return wrap;
+}
+
+/* Units come from the server in meta order, with anything the meta omits last. Sorting here rather
+   than re-fetching: the order is a view of the same data, not a different question to ask. */
+function orderedUnits(d) {
+  const units = [...d.units];
+  if (state.order === "alpha") units.sort((a, b) => a.problem.localeCompare(b.problem));
+  return units;
 }
 
 /** The big table: one row per problem. */
@@ -400,9 +440,12 @@ function problemTable(d) {
     if (f.unit) (byUnit[f.unit] ??= []).push(f);
   }
 
-  const section = panel("Problems", `${d.units.length}`);
+  const section = panel("Problems", `${d.units.length}`, orderControl());
   const t = node("table", "grid");
   const head = t.insertRow();
+  head.appendChild(headCell("num", "#",
+                            "Position in the volume meta's `problems:` list, which is the order the "
+                            + "problems are set in. Blank means the list does not name it."));
   for (const h of ["problem", "tags", "authors"]) head.appendChild(node("th", "", h));
   for (const [kind, label, help] of STATUS_KINDS) {
     head.appendChild(headCell("num status", label, `${kind} \u2014 ${help} ${MARK_LEGEND}.`));
@@ -413,8 +456,20 @@ function problemTable(d) {
   }
   head.appendChild(headCell("", "findings", "What the checks reported for this problem."));
 
-  for (const unit of d.units) {
+  for (const unit of orderedUnits(d)) {
     const tr = t.insertRow();
+
+    // The competition number, and a visible mark when the volume meta does not list the problem at
+    // all -- that one is not in the competition, however complete its sources look.
+    if (unit.order === null || unit.order === undefined) {
+      const nocell = node("td", "num absent", "\u2014");
+      nocell.title = "not listed in the volume meta, so it is never built";
+      tr.appendChild(nocell);
+      tr.classList.add("unlisted");
+    } else {
+      tr.appendChild(node("td", "num", String(unit.order + 1)));
+    }
+
     const first = node("td", "");
     // the whole point of living in the same app: click through to the problem in the editor
     const link = node("a", "", unit.problem);

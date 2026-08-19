@@ -444,6 +444,38 @@ def magnitudes(text):
     return counter
 
 
+@check('unit-unlisted', 'error',
+       'A problem directory the volume meta does not name', modules=('naboj',))
+def unit_unlisted(sources):
+    """
+    A problem the volume's `problems:` list omits. `ContextVolume` iterates that list, so the
+    directory is read by nothing and reaches no PDF -- the problem simply is not in the competition.
+    Adding it is not mechanical: it changes what a past round contained and renumbers what follows,
+    so this reports and stops there.
+    """
+    if not sources.listed_order:
+        return                      # nothing to be unlisted against
+    for unit in sources.unlisted:
+        yield Finding('unit-unlisted', 'error',
+                      f"not in {sources.scope}/meta.yaml's `problems:`, so it is never built",
+                      unit.path)
+
+
+@check('listed-missing', 'error',
+       'The volume meta names a problem that has no directory', modules=('naboj',))
+def listed_missing(sources):
+    """
+    The other direction, and the worse one: `\\protectedInput` writes `Missing file ...!` into the
+    page rather than failing, so the volume builds, exits 0, and prints that sentence where the
+    problem should be. Volume 19 shipped `onion` this way after the directory became
+    `onion-capacity`.
+    """
+    for name in sources.missing_from_disk:
+        yield Finding('listed-missing', 'error',
+                      f"`{name}` is listed in {sources.scope}/meta.yaml but no such directory "
+                      f"exists; the build prints `Missing file ...!` in its place")
+
+
 @check('translation-set', 'warning',
        'A problem with different languages from its neighbours', modules=('naboj',))
 def translation_set(sources):

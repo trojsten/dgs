@@ -10,6 +10,7 @@ import pytest
 
 from core.audit import audit
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
+from core.audit.sources import read_scope
 
 
 def make_problem(tmp_path, name='widget', meta='authors:\n  idea: []\n  problem: []\n'
@@ -34,6 +35,13 @@ def make_problem(tmp_path, name='widget', meta='authors:\n  idea: []\n  problem:
 def run(tmp_path, **kwargs):
     make_problem(tmp_path, **kwargs)
     return audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/' + kwargs.get('name', 'widget')])
+
+
+def volume_meta(tmp_path, problems):
+    """The volume's own meta.yaml -- the `problems:` list is the running order and the build list."""
+    (tmp_path / 'phys' / '99').mkdir(parents=True, exist_ok=True)
+    listed = ''.join(f'  - {p}\n' for p in problems)
+    (tmp_path / 'phys' / '99' / 'meta.yaml').write_text(f'problems:\n{listed}')
 
 
 def ids(report):
@@ -551,3 +559,69 @@ class TestValueStatus:
         files = {'sk': {'problem.md': 'a pole\n'},
                  'en': {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'}}
         assert statuses_of(tmp_path, files=files)['values'].state == 'none'
+
+
+class TestVolumeListing:
+    """
+    The volume meta's `problems:` list is what `ContextVolume` iterates, so it decides both the
+    order and what gets built at all. Volume 19 listed `onion` for years after the directory became
+    `onion-capacity`: the booklet built, exited 0, and printed `Missing file ...!` on page 42.
+    """
+
+    def test_unlisted_problem_fires(self, tmp_path):
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['something-else'])
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'unit-unlisted' in ids(report)
+
+    def test_listed_problem_is_quiet(self, tmp_path):
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget'])
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'unit-unlisted' not in ids(report)
+
+    def test_no_volume_meta_is_quiet(self, tmp_path):
+        """A scope with no list to check against is not a scope where everything is unlisted."""
+        assert 'unit-unlisted' not in ids(run(tmp_path))
+
+    def test_listed_with_no_directory_fires(self, tmp_path):
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget', 'onion'])
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'listed-missing' in ids(report)
+        assert any('onion' in f.message for f in report.findings if f.check == 'listed-missing')
+
+    def test_every_listed_problem_present_is_quiet(self, tmp_path):
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget'])
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'listed-missing' not in ids(report)
+
+    def test_order_follows_the_meta_not_the_alphabet(self, tmp_path):
+        for name in ('alpha', 'beta', 'gamma'):
+            make_problem(tmp_path, name=name)
+        volume_meta(tmp_path, ['gamma', 'alpha', 'beta'])
+        sources = read_scope(tmp_path, 'naboj', 'phys/99',
+                             [f'phys/99/problems/{n}' for n in ('alpha', 'beta', 'gamma')])
+        assert [u.name for u in sources.unit_list] == ['gamma', 'alpha', 'beta']
+        assert [u.order for u in sources.unit_list] == [0, 1, 2]
+
+    def test_unlisted_units_sort_last_and_keep_their_place(self, tmp_path):
+        """An unlisted problem still has to appear, or the audit hides the thing worth seeing."""
+        for name in ('alpha', 'beta', 'stray'):
+            make_problem(tmp_path, name=name)
+        volume_meta(tmp_path, ['beta', 'alpha'])
+        sources = read_scope(tmp_path, 'naboj', 'phys/99',
+                             [f'phys/99/problems/{n}' for n in ('alpha', 'beta', 'stray')])
+        assert [u.name for u in sources.unit_list] == ['beta', 'alpha', 'stray']
+        assert sources.unit_list[-1].order is None
+
+    def test_fingerprint_ignores_the_order(self, tmp_path):
+        """Reordering the meta must not call every cached build stale."""
+        for name in ('alpha', 'beta'):
+            make_problem(tmp_path, name=name)
+        paths = ['phys/99/problems/alpha', 'phys/99/problems/beta']
+        volume_meta(tmp_path, ['alpha', 'beta'])
+        first = read_scope(tmp_path, 'naboj', 'phys/99', paths).fingerprint()
+        volume_meta(tmp_path, ['beta', 'alpha'])
+        assert read_scope(tmp_path, 'naboj', 'phys/99', paths).fingerprint() == first

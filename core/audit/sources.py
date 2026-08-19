@@ -30,6 +30,10 @@ class Unit:
     #: name -> what the symlink points at, verbatim. A translation nobody has written yet mirrors
     #: its master this way, so the target names the language it is waiting on.
     links: dict = field(default_factory=dict)
+    #: Where this unit sits in the scope meta's `problems:` list, or None when the list does not
+    #: name it. The list is what the builder iterates (`ContextVolume`, hierarchy.py:129), so a
+    #: unit it omits is a directory that never reaches a PDF.
+    order: int | None = None
 
     @property
     def name(self):
@@ -57,11 +61,32 @@ class Sources:
     module: str
     scope: str                              # e.g. 'phys/28'
     module_root: Path
-    units: dict = field(default_factory=dict)   # path -> Unit, in sorted order
+    units: dict = field(default_factory=dict)   # path -> Unit, in the scope meta's order
+    #: the scope's own meta.yaml -- the volume's, not a problem's -- or None if it has none
+    scope_meta: dict | None = None
 
     @property
     def unit_list(self):
         return list(self.units.values())
+
+    @property
+    def listed_order(self):
+        """The ids the scope meta names, in its order. Empty when there is no list to follow."""
+        if not isinstance(self.scope_meta, dict):
+            return []
+        listed = self.scope_meta.get('problems')
+        return [str(p) for p in listed] if isinstance(listed, list) else []
+
+    @property
+    def unlisted(self):
+        """Units the scope meta does not name, so the build never reaches them."""
+        return [u for u in self.units.values() if u.order is None]
+
+    @property
+    def missing_from_disk(self):
+        """Ids the scope meta names that have no directory."""
+        present = {u.name for u in self.units.values()}
+        return [p for p in self.listed_order if p not in present]
 
     def fingerprint(self):
         """
@@ -69,7 +94,9 @@ class Sources:
         the sources have moved since it ran.
         """
         h = hashlib.sha1()
-        for unit in self.units.values():
+        # sorted by path, not in `units` order: the order now follows the scope meta, and a digest
+        # that moved when the meta was reordered would call every cached build stale for nothing
+        for unit in sorted(self.units.values(), key=lambda u: u.path):
             for f in sorted(unit.root.rglob('*')):
                 if f.is_file():
                     st = f.stat()
@@ -119,11 +146,38 @@ def read_unit(module_root: Path, unit_path: str) -> Unit:
 
 
 def read_scope(module_root: Path, module_name: str, scope: str, unit_paths) -> Sources:
+    """
+    Read a scope, ordered the way the competition is: the scope meta's `problems:` list is the
+    running order, easiest first, and it is what the builder iterates. Alphabetical order says
+    nothing about a volume, so it is not the default -- but a unit the list does not name still has
+    to appear, or the audit would hide exactly the problem worth seeing. Those go last, sorted.
+    """
+    scope_meta = None
+    meta_file = module_root / scope / 'meta.yaml'
+    if meta_file.is_file():
+        try:
+            loaded = yaml.safe_load(meta_file.read_text())
+            scope_meta = loaded if isinstance(loaded, dict) else None
+        except yaml.YAMLError:
+            scope_meta = None
+
+    units = {p: read_unit(module_root, p) for p in sorted(unit_paths)}
+
+    rank = {}
+    if isinstance(scope_meta, dict) and isinstance(scope_meta.get('problems'), list):
+        for i, name in enumerate(scope_meta['problems']):
+            rank.setdefault(str(name), i)
+    for unit in units.values():
+        unit.order = rank.get(unit.name)
+
+    ordered = sorted(units.values(),
+                     key=lambda u: (u.order is None, u.order if u.order is not None else 0, u.path))
     return Sources(
         module=module_name,
         scope=scope,
         module_root=module_root,
-        units={p: read_unit(module_root, p) for p in sorted(unit_paths)},
+        units={u.path: u for u in ordered},
+        scope_meta=scope_meta,
     )
 
 

@@ -593,6 +593,9 @@ def api_audit_scope(module, scope):
             {
                 "unit": unit.path,
                 "problem": unit.name,
+                # position in the volume meta's `problems:` list; None when it does not name the
+                # problem, which means the build never reaches it
+                "order": unit.order,
                 "languages": unit.languages,
                 "has_meta": unit.meta_raw is not None,
                 "tags": (unit.meta or {}).get("tags") or [],

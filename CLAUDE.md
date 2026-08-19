@@ -46,7 +46,14 @@ fourth module needs a descriptor and no code.
 
 The audit checks live in `core/audit/`, not in the app, because they are the durable
 part: `checks.py` for the source-only ones, `status.py` for the four progress verdicts,
-`build.py` for the slow ones. A pass over the whole repository is a fifth of a second, so
+`build.py` for the slow ones.
+
+Problems are listed in the volume meta's `problems:` order, because that list *is* the
+running order and is what `ContextVolume` iterates -- a problem missing from it is never
+built, and one listed without a directory makes the build print `Missing file ...!` into
+the page while still exiting 0. Both directions are checked (`unit-unlisted`,
+`listed-missing`). The page can sort alphabetically instead, and keeps showing the
+competition number when it does. A pass over the whole repository is a fifth of a second, so
 nothing is cached — except the build checks, which shell out to make and land in
 `build/.audit/` with a fingerprint of the sources.
 
