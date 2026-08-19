@@ -409,3 +409,145 @@ class TestLiteralUnitWrappers:
     def test_a_macro_unit_with_an_exponent_is_quiet(self, tmp_path):
         files = {'sk': {'solution.md': '$\\qty{1}{\\metre\\tothe{-1}}$\n'}}
         assert 'literal-unit' not in ids(run(tmp_path, files=files))
+
+
+def statuses_of(tmp_path, **kwargs):
+    """The four status verdicts for a single problem."""
+    report = run(tmp_path, **kwargs)
+    name = kwargs.get('name', 'widget')
+    return report.statuses[f'phys/99/problems/{name}']
+
+
+class TestTranslationStatus:
+    def test_all_languages_written(self, tmp_path):
+        files = {l: {'problem.md': 'x\n', 'solution.md': 'y\n'} for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, files=files)['translations'].state == 'ok'
+
+    def test_a_missing_language(self, tmp_path):
+        files = {'sk': {'problem.md': 'x\n', 'solution.md': 'y\n'},
+                 'en': {'solution.md': 'y\n'}}
+        status = statuses_of(tmp_path, files=files)['translations']
+        assert status.state == 'missing'
+        assert status.detail['languages']['en']['files']['problem.md']['state'] == 'missing'
+
+    def test_an_empty_file(self, tmp_path):
+        files = {'sk': {'problem.md': 'x\n', 'solution.md': 'y\n'},
+                 'en': {'problem.md': 'x\n', 'solution.md': '   \n'}}
+        status = statuses_of(tmp_path, files=files)['translations']
+        assert status.state == 'partial'
+        assert status.detail['languages']['en']['files']['solution.md']['state'] == 'empty'
+
+    def test_a_mirrored_translation(self, tmp_path):
+        """
+        A translation nobody has written yet points at its master rather than keeping a stale copy.
+        That is deliberate, and the status says which language it is waiting on.
+        """
+        root = make_problem(tmp_path, files={'sk': {'problem.md': 'x\n', 'solution.md': 'y\n'},
+                                             'en': {'problem.md': 'x\n'}})
+        (root / 'en' / 'solution.md').symlink_to('../sk/solution.md')
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        status = report.statuses['phys/99/problems/widget']['translations']
+        entry = status.detail['languages']['en']['files']['solution.md']
+        assert entry['state'] == 'symlink'
+        assert 'mirrors sk' in entry['note']
+
+
+class TestEquationStatus:
+    def test_nothing_to_deduplicate(self, tmp_path):
+        # One solution, so nothing is written out twice, which is the end state rather than a
+        # not-applicable: volumes 19 and 23 have Slovak solutions only and are already there.
+        files = {'sk': {'solution.md': '$$\n    a = b\n$$ {#eq:widget:first}\n'}}
+        assert statuses_of(tmp_path, files=files)['equations'].state == 'ok'
+
+    def test_no_equations_at_all(self, tmp_path):
+        files = {'sk': {'solution.md': 'the answer is four\n'}}
+        assert statuses_of(tmp_path, files=files)['equations'].state == 'none'
+
+    def test_duplicated_and_not_hoisted(self, tmp_path):
+        block = '$$\n    a = b\n$$ {#eq:widget:first}\n'
+        files = {'sk': {'solution.md': block}, 'en': {'solution.md': block}}
+        status = statuses_of(tmp_path, files=files)['equations']
+        assert status.state == 'missing'
+        assert status.detail['duplicated'] == ['first']
+
+    def test_hoisted(self, tmp_path):
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                "eq:\n  first: 'a = b'\n")
+        files = {l: {'solution.md': '(§ eq.first|disp §)\n'} for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, meta=meta, files=files)['equations'].state == 'ok'
+
+    def test_divergent_copies_cannot_be_hoisted(self, tmp_path):
+        files = {'sk': {'solution.md':
+                        '$$\n    Q_{\\text{prijaté}} = 0\n$$ {#eq:widget:first}\n'},
+                 'en': {'solution.md':
+                        '$$\n    Q_{\\text{absorbed}} = 0\n$$ {#eq:widget:first}\n'}}
+        status = statuses_of(tmp_path, files=files)['equations']
+        assert status.state == 'partial'
+        assert status.detail['divergent'] == ['first']
+
+
+class TestPictureStatus:
+    def test_no_pictures(self, tmp_path):
+        assert statuses_of(tmp_path)['pictures'].state == 'none'
+
+    def test_properly_included(self, tmp_path):
+        files = {'sk': {'problem.md': '![](belt.svg){height=40mm}\n'}}
+        assert statuses_of(tmp_path, files=files,
+                           assets=('belt.svg',))['pictures'].state == 'ok'
+
+    def test_never_included(self, tmp_path):
+        status = statuses_of(tmp_path, assets=('orphan.svg',))['pictures']
+        assert status.state == 'partial'
+        assert status.detail['unused'] == ['orphan.svg']
+
+    def test_naming_the_built_file(self, tmp_path):
+        """
+        `x.pdf` where the repository holds `x.svg` still resolves, because make converts one into
+        the other -- so it is a naming slip rather than a hole, and must not read as broken.
+        """
+        files = {'sk': {'problem.md': '![](belt.pdf){height=40mm}\n'}}
+        status = statuses_of(tmp_path, files=files, assets=('belt.svg',))['pictures']
+        assert status.state == 'partial'
+        assert status.detail['misnamed'] and not status.detail['broken']
+
+    def test_a_file_that_exists_nowhere_is_broken(self, tmp_path):
+        files = {'sk': {'problem.md': '![](nope.svg){height=40mm}\n'}}
+        status = statuses_of(tmp_path, files=files, assets=('belt.svg',))['pictures']
+        assert status.state == 'broken'
+
+    def test_a_malformed_target_is_broken(self, tmp_path):
+        files = {'sk': {'solution.md': '![](belt.svg}{height=40mm}\n'}}
+        report = run(tmp_path, files=files, assets=('belt.svg',))
+        assert 'figure-malformed' in ids(report)
+
+
+class TestValueStatus:
+    def test_no_numbers(self, tmp_path):
+        files = {l: {'problem.md': 'a rod of length $L$\n'} for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, files=files)['values'].state == 'none'
+
+    def test_shared_number_not_extracted(self, tmp_path):
+        files = {l: {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'} for l in ('sk', 'en')}
+        status = statuses_of(tmp_path, files=files)['values']
+        assert status.state == 'missing'
+        assert status.detail['literal'] == ['30']
+
+    def test_extracted(self, tmp_path):
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                "values:\n  h:\n    magnitude: 30\n    unit: 'metre'\n")
+        files = {l: {'problem.md': 'a $(§ h §)$ pole\n'} for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, meta=meta, files=files)['values'].state == 'ok'
+
+    def test_partly_extracted(self, tmp_path):
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                "values:\n  h:\n    magnitude: 30\n    unit: 'metre'\n")
+        files = {l: {'problem.md': 'a $(§ h §)$ pole in $\\qty{5}{\\second}$\n'}
+                 for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, meta=meta, files=files)['values'].state == 'partial'
+
+    def test_a_number_in_only_one_language_is_not_evidence(self, tmp_path):
+        # it appears in one translation and not the others, so it is a translation slip or something
+        # incidental -- either way not a parameter of the problem
+        files = {'sk': {'problem.md': 'a pole\n'},
+                 'en': {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'}}
+        assert statuses_of(tmp_path, files=files)['values'].state == 'none'

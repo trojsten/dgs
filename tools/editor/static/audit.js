@@ -8,6 +8,7 @@
 const state = {
   checks: {},          // id -> {severity, title}
   severities: [],
+  states: [],          // status states, worst first
   overview: [],
   scope: null,         // {module, scope} currently open
   detail: null,        // the last /api/audit/scope response
@@ -54,6 +55,35 @@ function ago(seconds) {
 
 // --- overview ---------------------------------------------------------------
 
+/**
+ * The four things that take a volume from converted-on-paper to finished. Named here in the order
+ * they are worth reading, with a short column head: the verdict is in the colour and the tooltip.
+ */
+const STATUS_KINDS = [
+  ["translations", "trans"],
+  ["equations", "eq"],
+  ["pictures", "pics"],
+  ["values", "vals"],
+];
+
+/** A short mark per state -- the colour carries the meaning, this keeps it legible without it. */
+const STATE_MARK = {
+  ok: "\u2713",        // check
+  partial: "\u25d1",   // half-filled circle
+  missing: "\u2717",   // cross
+  broken: "\u2717",
+  none: "\u00b7",      // middle dot: nothing to do, not a complaint
+};
+
+function statusCell(status) {
+  const td = node("td", "num status");
+  if (!status) return td;
+  td.classList.add(`state-${status.state}`);
+  td.textContent = STATE_MARK[status.state] ?? "?";
+  td.title = `${status.state}: ${status.summary}`;
+  return td;
+}
+
 const OVERVIEW_COLUMNS = [
   ["volume", "", (r) => r.module_label + " " + r.scope],
   ["problems", "num", (r) => r.problems],
@@ -75,6 +105,9 @@ function renderOverview() {
     if (severity === "info" && state.hideInfo) continue;
     head.appendChild(node("th", `num sev-${severity}`, severity));
   }
+  const progress = node("th", "status-strip", "progress");
+  progress.title = STATUS_KINDS.map(([k]) => k).join(" · ");
+  head.appendChild(progress);
   head.appendChild(node("th", "", "build"));
 
   for (const row of state.overview) {
@@ -94,6 +127,22 @@ function renderOverview() {
       tr.appendChild(count(row.severity[severity], `sev-${severity}`));
     }
 
+    // Four marks, one per kind, coloured by the worst problem in the volume: the same verdicts the
+    // detail table shows per problem, collapsed to something readable in a list of 38.
+    const strip = node("td", "status-strip");
+    for (const [kind, label] of STATUS_KINDS) {
+      const summary = row.status?.[kind];
+      if (!summary) continue;
+      const mark = node("span", `state-${summary.worst}`, STATE_MARK[summary.worst] ?? "?");
+      const counts = state.states
+        .filter((s) => summary.counts[s])
+        .map((s) => `${summary.counts[s]} ${s}`)
+        .join(", ");
+      mark.title = `${kind}: ${counts}`;
+      strip.appendChild(mark);
+    }
+    tr.appendChild(strip);
+
     const build = row.cached_build;
     const cell = node("td", "build-cell");
     if (build) {
@@ -105,6 +154,7 @@ function renderOverview() {
     tr.appendChild(cell);
   }
 }
+
 
 // --- one volume -------------------------------------------------------------
 
@@ -227,6 +277,26 @@ function statsPanels(stats) {
   }
   wrap.appendChild(langs);
 
+  const progress = panel("Progress", "");
+  if (state.detail?.status_summary) {
+    const t = node("table", "grid compact");
+    const head = t.insertRow();
+    head.appendChild(node("th", "", ""));
+    for (const s of state.states) head.appendChild(node("th", `num state-${s}`, s));
+    for (const [kind] of STATUS_KINDS) {
+      const summary = state.detail.status_summary[kind];
+      if (!summary) continue;
+      const tr = t.insertRow();
+      tr.appendChild(node("td", "", kind));
+      for (const s of state.states) {
+        const cell = count(summary.counts[s] ?? 0, `state-${s}`);
+        tr.appendChild(cell);
+      }
+    }
+    progress.appendChild(t);
+  }
+  wrap.appendChild(progress);
+
   const tmpl = panel("Templating", "");
   const t = node("table", "grid compact");
   for (const block of ["values", "derived", "eq"]) {
@@ -261,8 +331,11 @@ function problemTable(d) {
   const section = panel("Problems", `${d.units.length}`);
   const t = node("table", "grid");
   const head = t.insertRow();
-  for (const h of ["problem", "tags", "authors", "values", "eq"]) {
-    head.appendChild(node("th", "", h));
+  for (const h of ["problem", "tags", "authors"]) head.appendChild(node("th", "", h));
+  for (const [kind, label] of STATUS_KINDS) {
+    const th = node("th", "num status", label);
+    th.title = kind;
+    head.appendChild(th);
   }
   for (const lang of d.stats.language_list) {
     head.appendChild(node("th", "num lang", lang));
@@ -285,8 +358,7 @@ function problemTable(d) {
       ? ["idea", "problem", "solution"].flatMap((r) => unit.authors[r] ?? [])
       : [];
     tr.appendChild(node("td", "", [...new Set(authors)].join(", ")));
-    tr.appendChild(count(unit.templating.values));
-    tr.appendChild(count(unit.templating.eq));
+    for (const [kind] of STATUS_KINDS) tr.appendChild(statusCell(unit.status?.[kind]));
 
     for (const lang of d.stats.language_list) {
       const files = unit.files[lang];
@@ -438,6 +510,7 @@ async function refresh() {
   try {
     const meta = await fetchJSON("/api/audit/checks");
     state.severities = meta.severities;
+    state.states = meta.states;
     state.checks = Object.fromEntries(meta.checks.map((c) => [c.id, c]));
     await loadOverview();
     setStatus("");

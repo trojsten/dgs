@@ -6,6 +6,7 @@ about a fifth of a second -- so there is no laziness here and no cache to invali
 through a symlink is safe; nothing in the audit ever writes.
 """
 import hashlib
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -26,7 +27,9 @@ class Unit:
     shared: dict = field(default_factory=dict)      # name -> text, for .md beside the unit
     translated: dict = field(default_factory=dict)  # lang -> {name -> text}
     assets: set = field(default_factory=set)        # every non-markdown file name
-    links: set = field(default_factory=set)         # names that are symlinks
+    #: name -> what the symlink points at, verbatim. A translation nobody has written yet mirrors
+    #: its master this way, so the target names the language it is waiting on.
+    links: dict = field(default_factory=dict)
 
     @property
     def name(self):
@@ -96,7 +99,7 @@ def read_unit(module_root: Path, unit_path: str) -> Unit:
 
     for child in sorted(root.iterdir()):
         if child.is_symlink():
-            unit.links.add(child.name)
+            unit.links[child.name] = os.readlink(child)
         if child.is_file():
             if child.suffix == '.md':
                 unit.shared[child.name] = child.read_text()
@@ -106,7 +109,7 @@ def read_unit(module_root: Path, unit_path: str) -> Unit:
             files = {}
             for f in sorted(child.iterdir()):
                 if f.is_symlink():
-                    unit.links.add(f"{child.name}/{f.name}")
+                    unit.links[f"{child.name}/{f.name}"] = os.readlink(f)
                 if f.is_file() and f.suffix == '.md':
                     files[f.name] = f.read_text()
                 elif f.is_file():
@@ -122,3 +125,16 @@ def read_scope(module_root: Path, module_name: str, scope: str, unit_paths) -> S
         module_root=module_root,
         units={p: read_unit(module_root, p) for p in sorted(unit_paths)},
     )
+
+
+def link_language(target: str):
+    """
+    The language a mirrored translation points at, or None if the link goes somewhere else.
+
+    Targets look like `../sk/solution.md`: a translation that has not been written yet mirrors its
+    master rather than keeping a stale copy, which is what `27/water-level/cs/solution.md` is.
+    """
+    parts = [p for p in target.split('/') if p not in ('..', '.')]
+    if len(parts) == 2 and len(parts[0]) == 2 and parts[0].isalpha():
+        return parts[0]
+    return None

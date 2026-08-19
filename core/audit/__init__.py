@@ -16,6 +16,7 @@ from core.audit import checks                      # noqa: F401  -- populates th
 from core.audit.model import REGISTRY, SEVERITIES, Check, Finding, applicable
 from core.audit.sources import Sources, read_scope
 from core.audit.stats import Stats, collect
+from core.audit.status import STATES, Status, statuses, worst
 
 
 @dataclass
@@ -25,6 +26,9 @@ class Report:
     findings: list = field(default_factory=list)
     stats: Stats = None
     sources: Sources = None
+    #: unit path -> kind -> Status. "How far along is this", as against the findings' "what is
+    #: wrong with this": a column wants a verdict per problem, not a list of defects.
+    statuses: dict = field(default_factory=dict)
 
     def by_unit(self):
         """Findings grouped by unit path; scope-wide ones under the empty string."""
@@ -45,6 +49,17 @@ class Report:
             counts[f.severity] += 1
         return counts
 
+    def status_summary(self):
+        """Per kind, how many problems are in each state, and the worst state overall."""
+        out = {}
+        for kinds in self.statuses.values():
+            for kind, status in kinds.items():
+                bucket = out.setdefault(kind, {s: 0 for s in STATES})
+                bucket[status.state] += 1
+        return {kind: {'counts': counts,
+                       'worst': worst([s for s, n in counts.items() if n])}
+                for kind, counts in out.items()}
+
 
 def audit(module_root: Path, module: str, scope: str, unit_paths) -> Report:
     sources = read_scope(module_root, module, scope, unit_paths)
@@ -58,4 +73,5 @@ def audit(module_root: Path, module: str, scope: str, unit_paths) -> Report:
             findings.append(finding)
     findings.sort(key=lambda f: (SEVERITIES.index(f.severity), f.unit or '', f.check))
     return Report(scope=scope, module=module, findings=findings,
-                  stats=collect(sources), sources=sources)
+                  stats=collect(sources), sources=sources,
+                  statuses=statuses(sources))

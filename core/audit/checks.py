@@ -600,7 +600,13 @@ def insert_picture(sources):
                               unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
-@check('figure-missing', 'error', 'A figure whose file does not exist')
+@check('figure-built-name', 'warning', 'A figure naming the built file, not the source')
+def figure_built_name(sources):
+    """Registered so the id is known; both cases are yielded by `figure_missing`."""
+    return ()
+
+
+@check('figure-missing', 'error', 'A figure whose file exists nowhere')
 def figure_missing(sources):
     for unit in sources.unit_list:
         for lang, name, text in unit.files():
@@ -608,11 +614,37 @@ def figure_missing(sources):
                 target = m['file'].split()[0]
                 if target.startswith(('http:', 'https:')):
                     continue
-                if not (unit.root / target).exists():
+                if (unit.root / target).exists():
+                    continue
+                # `x.pdf` where the repository holds `x.svg` still resolves -- make converts
+                # `source/**.svg` into `build/**.pdf` -- so that is a naming slip, not a hole.
+                stems = {a.rsplit('.', 1)[0] for a in unit.assets}
+                if target.rsplit('.', 1)[0] in stems:
+                    yield Finding('figure-built-name', 'warning',
+                                  f"{target} names the built file; the source holds "
+                                  f"{target.rsplit('.', 1)[0]}.svg and that is what belongs here",
+                                  unit.path, unit.label(lang, name), line_of(text, m.start()))
+                else:
                     yield Finding('figure-missing', 'error',
-                                  f"{target} is not in the problem directory; LaTeX falls back to "
+                                  f"{target} exists nowhere in the problem; LaTeX falls back to "
                                   f"`example-image`",
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
+
+
+#: `![](file.svg}` -- the target closed with a brace instead of a parenthesis. Pandoc does not read
+#: this as an image at all, so the picture silently does not appear.
+RE_FIGURE_MALFORMED = re.compile(r'!\[[^\]]*\]\([^)\n]*\}')
+
+
+@check('figure-malformed', 'error', 'A figure whose target is not closed')
+def figure_malformed(sources):
+    for unit in sources.unit_list:
+        for lang, name, text in unit.files():
+            for m in RE_FIGURE_MALFORMED.finditer(text):
+                yield Finding('figure-malformed', 'error',
+                              'the target is closed with `}` instead of `)`, so pandoc does not '
+                              'read it as an image and the picture does not appear',
+                              unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
 @check('figure-unsized', 'warning', 'A figure with no attribute block')

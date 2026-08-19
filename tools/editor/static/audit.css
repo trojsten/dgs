@@ -161,3 +161,21 @@ table.compact td, table.compact th { padding: 0.1rem 0.4rem; }
 #status.busy { color: #d7b45b; }
 #status.ok { color: #9d9; }
 #status.error { color: #f08c8c; }
+
+/* --- status verdicts --- */
+
+/* `none` is not a complaint: a problem with no pictures has nothing to include. Muted, not red. */
+td.status, th.status { width: 2.4rem; text-align: center; }
+.state-ok { color: #7ec87e; }
+.state-partial { color: #d7b45b; }
+.state-missing { color: #e08a8a; }
+.state-broken { color: #f06060; }
+.state-none { color: #555; }
+
+th.state-ok, th.state-partial, th.state-missing, th.state-broken, th.state-none {
+  font-weight: normal;
+  font-size: 0.72rem;
+}
+
+/* The overview's compact verdict strip: one mark per kind. */
+.status-strip { white-space: nowrap; letter-spacing: 0.15em; }

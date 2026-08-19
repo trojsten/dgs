@@ -26,6 +26,7 @@ os.chdir(REPO_ROOT)
 from core.audit import audit as run_audit                                      # noqa: E402
 from core.audit import build as audit_build                                    # noqa: E402
 from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
+from core.audit.status import STATES                                           # noqa: E402
 
 # Last known-good preview PDFs. `double_xelatex` runs with `-halt-on-error`, so a failed compile
 # can leave a truncated file in `output/`; serving a copy means a broken edit keeps showing the
@@ -531,6 +532,7 @@ def api_audit_checks():
     """The registry, so the page can label and group findings without hard-coding any of it."""
     return jsonify({
         "severities": list(SEVERITIES),
+        "states": list(STATES),
         "checks": [{"id": c.id, "severity": c.severity, "title": c.title,
                     "modules": list(c.modules)} for c in REGISTRY.values()],
     })
@@ -559,6 +561,7 @@ def api_audit_overview():
                 "languages": report.stats.language_list,
                 "severity": report.by_severity(),
                 "checks": report.by_check(),
+                "status": report.status_summary(),
                 "cached_build": build_cache_summary(module.name, scope),
             })
     return jsonify(rows)
@@ -586,9 +589,14 @@ def api_audit_scope(module, scope):
                                for block in ("values", "derived", "eq")},
                 "files": {lang: sorted(files) for lang, files in unit.translated.items()},
                 "shared": sorted(unit.shared),
+                # "how far along is this", one verdict per kind -- see `core/audit/status.py`
+                "status": {kind: {"state": s.state, "summary": s.summary, "detail": s.detail}
+                           for kind, s in report.statuses.get(unit.path, {}).items()},
             }
             for unit in report.sources.unit_list
         ],
+        "status_summary": report.status_summary(),
+        "states": list(STATES),
         "findings": [finding_json(f) for f in report.findings],
         "stats": stats_json(report.stats),
         "build": read_build_cache(module, scope),
