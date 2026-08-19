@@ -11,7 +11,7 @@ from pathlib import Path
 from enschema import Or, Schema
 from enschema import Optional as Opt
 
-from core import cli
+from core import cli, i18n
 from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifier
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
@@ -91,6 +91,48 @@ class NameCollisionError(Exception):
         self.block = block
 
 
+class LocalisedWords:
+    """
+    A problem's `words:` resolved on access rather than up front.
+
+    Up front is wrong: `21/troll-science` writes the equation with translated subscripts in four of
+    its six languages and differently in the other two, so resolving everything eagerly would fail a
+    Polish build over a word Polish never asks for. Access is what makes a word required.
+    """
+    def __init__(self, words, language):
+        self._words = words
+        self._language = language
+
+    def __getitem__(self, term):
+        try:
+            per_language = self._words[term]
+        except KeyError:
+            raise KeyError(f"no `words.{term}` in this problem's meta.yaml") from None
+        if self._language not in per_language:
+            raise MissingWordError(term, self._language, per_language)
+        return per_language[self._language]
+
+    def __contains__(self, term):
+        return term in self._words
+
+    def __iter__(self):
+        return iter(self._words)
+
+    def keys(self):
+        return self._words.keys()
+
+
+class MissingWordError(Exception):
+    """A `words:` term the active language does not translate."""
+    def __init__(self, term, language, available):
+        super().__init__(
+            f"`words.{term}` has no {language} translation "
+            f"(it has {', '.join(sorted(available)) or 'none'}). "
+            f"A problem's own words must cover every language the problem is written in; "
+            f"for a word that recurs, use `core/i18n` and `(§ i18n.words[...] §)` instead."
+        )
+
+
 class DerivedQuantityError(Exception):
     """
     Raised when a `derived:` expression cannot be evaluated. Names it, so the author does not have to
@@ -133,6 +175,11 @@ class StandaloneContext(FileContext):
         # Evaluated in document order, so an entry may use anything defined above it.
         Opt('derived'): dict[ValidIdentifier, str],
         Opt('eq'): dict[ValidIdentifier, str],
+        # A word that has to be translated but belongs to this problem alone: term -> language ->
+        # text, reached as `(§ w.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
+        # instead; these are the one-offs, and 167 of the 190 words found inside `\text{}` in phys
+        # appear in exactly one problem.
+        Opt('words'): dict[ValidIdentifier, dict[str, str]],
     })
 
 
@@ -185,6 +232,18 @@ class CLIInterface(cli.CLIInterface, ABC):
 
         # Constants must be present before `derived` expressions are evaluated, as they use `const.x`
         ctx.adopt(const=constants)
+
+        # The active language, so a template can reach a translated word. The Markdown stage used to
+        # parse `locale` and drop it -- only the convertor knew which language it was rendering, so
+        # no source could say `and` in nine languages without writing it out nine times.
+        locale = i18n.languages[self.args.locale]
+        ctx.add(i18n=locale.as_dict())
+
+        # This problem's own words, resolved when a template asks for one
+        if 'words' in context.data:
+            self._reject_name_collisions(context.data['words'], 'words',
+                                         taken=set(context.data.get('values') or {}))
+            ctx.add(w=LocalisedWords(context.data['words'], self.args.locale))
 
         # Process derived quantities: evaluate the expressions in document order, adding each result
         # to the context, so that a later expression may build on an earlier one. This replaces the

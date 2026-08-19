@@ -21,7 +21,7 @@ ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
 #: bare name is taken -- its subkeys are untouched, and a value named `g` coexists with `const.g`.
 #: Note `values` and `derived` themselves are section names in the file, never context names, and
 #: `id` lives only in the metadata context, so none of those three are reserved.
-RESERVED_NAMES = frozenset({'const', 'eq'})
+RESERVED_NAMES = frozenset({'const', 'eq', 'i18n', 'w'})
 
 
 class DuplicateKeyError(Exception):

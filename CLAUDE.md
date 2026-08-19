@@ -121,6 +121,33 @@ and most other rules are still meaningful on source.
 Known checker gap: `format_general` emits Python's `e+NN`, and the "spaces around
 `+`" rule flags it (`\qty{1.737e+06}{...}`). Not an authoring error — ignore.
 
+## Translated words inside maths
+
+A word that appears inside maths has to change with the language, and writing it out per
+language means a separate copy of the equation per language — which is how the copies
+drift apart. Two tiers, because the vocabulary splits cleanly:
+
+- **Recurring words** live in `core/i18n/<lang>.yaml` under `words:` and are reached as
+  `(§ i18n.words['and'] §)`. `default.yaml` holds English, so a language nobody has filled
+  in falls back to it rather than failing. `and` and `or` cannot be written
+  `i18n.words.and` — they are Jinja keywords, hence the subscript form.
+- **A word belonging to one problem** goes in its `meta.yaml` under `words:`, term →
+  language → text, and is reached as `(§ w.air §)`. Of the 190 words found inside `\text{}`
+  across phys, 167 appear in exactly one problem, so this is the common case.
+
+A problem's own word has no fallback: asking for one the active language lacks raises
+`MissingWordError`. Resolution is lazy, so a language that never asks for a word does not
+need it — `21/troll-science` writes the equation with translated subscripts in four of its
+six languages and differently in the other two.
+
+The point is that `eq:` then holds the equation once. `21/troll-science` is the worked
+example: `v_{\text{dopad}}`, `v_{\text{impact}}` and `v_{\text{becsapódás}}` became one
+equation with three `words:` entries.
+
+Notation that does **not** need this, because it is language-neutral already: water is
+`\ce{H2O}`, the Earth is `\Earth` (`core/latex/symbols.tex` defines it as `\oplus`), and a
+word subscript is always `\text{}` — `E_{kin}` is wrong, `E_{\text{kin}}` is right.
+
 ## Thin spaces, and why `\,` is banned
 
 German abbreviations take a thin, non-breaking space between their parts -- `d. h.`

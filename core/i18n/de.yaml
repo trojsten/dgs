@@ -23,3 +23,9 @@ siunitx:
   list_final_separator: 'und'
   units:
     horsepower: 'PS'
+
+# Words inside maths. These are what the sources already use, or elementary
+# enough not to be a judgement call; anything absent falls back to English.
+words:
+  and: 'und'
+  or: 'oder'

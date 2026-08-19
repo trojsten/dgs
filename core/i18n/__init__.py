@@ -48,6 +48,11 @@ class Locale:
             'listing': _ref_schema,
             'section': _ref_schema,
         },
+        # Words that appear inside maths and have to be translated: `\QQText{and}` is `and` in
+        # English and `a` in Slovak, and writing them out by hand is how the Spanish, Polish and
+        # Portuguese solutions came to say `and`. `default.yaml` carries English, so a language
+        # nobody has filled in falls back to it rather than failing the build.
+        Optional('words'): dict[str, str],
         Optional('rtl', default=False): bool,
         'siunitx': {
             'list_pair_separator': str,

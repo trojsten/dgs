@@ -101,3 +101,9 @@ siunitx:
     60: { name: 'exbi', symbol: 'Eі' }
     70: { name: 'zebi', symbol: 'Зі' }
     80: { name: 'yobi', symbol: 'Йі' }
+
+# Words inside maths. These are what the sources already use, or elementary
+# enough not to be a judgement call; anything absent falls back to English.
+words:
+  and: 'і'
+  or: 'або'
