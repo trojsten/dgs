@@ -128,17 +128,22 @@ language means a separate copy of the equation per language — which is how the
 drift apart. Two tiers, because the vocabulary splits cleanly:
 
 - **Recurring words** live in `core/i18n/<lang>.yaml` under `words:` and are reached as
-  `(§ i18n.words['and'] §)`. `default.yaml` holds English, so a language nobody has filled
-  in falls back to it rather than failing. `and` and `or` cannot be written
-  `i18n.words.and` — they are Jinja keywords, hence the subscript form.
+  `(§ i18n.words['and'] §)`. `and` and `or` cannot be written `i18n.words.and` — they are
+  Jinja keywords, hence the subscript form.
 - **A word belonging to one problem** goes in its `meta.yaml` under `words:`, term →
-  language → text, and is reached as `(§ w.air §)`. Of the 190 words found inside `\text{}`
-  across phys, 167 appear in exactly one problem, so this is the common case.
+  language → text, one language per line, and is reached as `(§ w.air §)`. Of the 190 words
+  found inside `\text{}` across phys, 167 appear in exactly one problem, so this is the
+  common case.
 
-A problem's own word has no fallback: asking for one the active language lacks raises
-`MissingWordError`. Resolution is lazy, so a language that never asks for a word does not
-need it — `21/troll-science` writes the equation with translated subscripts in four of its
-six languages and differently in the other two.
+**There is no fallback, deliberately.** Asking for a word the active language does not
+define raises `MissingWordError`, naming the word, the language and the file to add it to.
+`default.yaml` holds no `words:` for exactly this reason: `merge()` would make whatever it
+held the fallback for every language, and a fallback for prose means a Slovak booklet
+printing `therefore` — output that looks right until it is in print.
+
+Resolution is lazy, so a language that never asks for a word does not need it —
+`21/troll-science` writes the equation with translated subscripts in four of its six
+languages and differently in the other two.
 
 The point is that `eq:` then holds the equation once. `21/troll-science` is the worked
 example: `v_{\text{dopad}}`, `v_{\text{impact}}` and `v_{\text{becsapódás}}` became one

@@ -91,25 +91,44 @@ class NameCollisionError(Exception):
         self.block = block
 
 
+class MissingWordError(Exception):
+    """
+    A word the active language does not define.
+
+    Never a fallback. A word inside maths is prose, and a fallback for prose means a Slovak booklet
+    printing `therefore` -- correct-looking output that nobody notices until it is in print. Failing
+    the build is the only version of this that gets fixed.
+    """
+    def __init__(self, term, language, available, where):
+        super().__init__(
+            f"`{term}` has no {language} translation in {where} "
+            f"(it has {', '.join(sorted(available)) or 'none'}). "
+            f"Add it there; there is deliberately no fallback."
+        )
+
+
 class LocalisedWords:
     """
-    A problem's `words:` resolved on access rather than up front.
+    Words resolved on access rather than up front, for one language.
 
-    Up front is wrong: `21/troll-science` writes the equation with translated subscripts in four of
+    Up front is wrong: `21/troll-science` writes its equation with translated subscripts in four of
     its six languages and differently in the other two, so resolving everything eagerly would fail a
-    Polish build over a word Polish never asks for. Access is what makes a word required.
+    Polish build over a word Polish never asks for. Asking is what makes a word required.
     """
-    def __init__(self, words, language):
+    def __init__(self, words, language, where):
         self._words = words
         self._language = language
+        self._where = where
 
     def __getitem__(self, term):
-        try:
-            per_language = self._words[term]
-        except KeyError:
-            raise KeyError(f"no `words.{term}` in this problem's meta.yaml") from None
+        per_language = self._words.get(term)
+        if per_language is None:
+            raise MissingWordError(term, self._language, (), self._where)
+        if isinstance(per_language, str):
+            # `core/i18n` is already one language per file, so the value is the word itself
+            return per_language
         if self._language not in per_language:
-            raise MissingWordError(term, self._language, per_language)
+            raise MissingWordError(term, self._language, per_language, self._where)
         return per_language[self._language]
 
     def __contains__(self, term):
@@ -120,17 +139,6 @@ class LocalisedWords:
 
     def keys(self):
         return self._words.keys()
-
-
-class MissingWordError(Exception):
-    """A `words:` term the active language does not translate."""
-    def __init__(self, term, language, available):
-        super().__init__(
-            f"`words.{term}` has no {language} translation "
-            f"(it has {', '.join(sorted(available)) or 'none'}). "
-            f"A problem's own words must cover every language the problem is written in; "
-            f"for a word that recurs, use `core/i18n` and `(§ i18n.words[...] §)` instead."
-        )
 
 
 class DerivedQuantityError(Exception):
@@ -237,13 +245,19 @@ class CLIInterface(cli.CLIInterface, ABC):
         # parse `locale` and drop it -- only the convertor knew which language it was rendering, so
         # no source could say `and` in nine languages without writing it out nine times.
         locale = i18n.languages[self.args.locale]
-        ctx.add(i18n=locale.as_dict())
+        localised = locale.as_dict()
+        # wrapped so a word this language does not define stops the build with a message naming it,
+        # rather than resolving to something plausible in the wrong language
+        localised['words'] = LocalisedWords(localised.get('words') or {}, self.args.locale,
+                                            f'core/i18n/{self.args.locale}.yaml')
+        ctx.add(i18n=localised)
 
         # This problem's own words, resolved when a template asks for one
         if 'words' in context.data:
             self._reject_name_collisions(context.data['words'], 'words',
                                          taken=set(context.data.get('values') or {}))
-            ctx.add(w=LocalisedWords(context.data['words'], self.args.locale))
+            ctx.add(w=LocalisedWords(context.data['words'], self.args.locale,
+                                     "this problem's meta.yaml"))
 
         # Process derived quantities: evaluate the expressions in document order, adding each result
         # to the context, so that a later expression may build on an earlier one. This replaces the

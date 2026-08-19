@@ -105,10 +105,7 @@ siunitx:
     70: { name: 'zebi', symbol: 'Zi' }
     80: { name: 'yobi', symbol: 'Yi' }
 
-# Words that occur inside maths, reached as `(§ i18n.words['and'] §)`. English here is the fallback
-# every language inherits through `merge()`; a language overrides only what it needs.
-words:
-  and: 'and'
-  or: 'or'
-  therefore: 'therefore'
-  wherefrom: 'wherefrom'
+# Note there is deliberately no `words:` here. `merge()` would make whatever it held the fallback for
+# every language, and a fallback for a translated word means a Slovak booklet quietly printing
+# `therefore`. A word the active language does not define is an error instead -- see
+# `core/builder/renderer.py`.

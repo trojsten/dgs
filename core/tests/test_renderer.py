@@ -57,8 +57,15 @@ class TestTranslatedWords:
         finally:
             sys.argv = saved
 
-    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
-            "words:\n  air: {sk: 'vzduch', en: 'air', de: 'Luft'}\n")
+    META = (
+        "authors:\n  idea: []\n  problem: []\n  solution: []\n"
+        "tags: ['kinematics']\n"
+        "words:\n"
+        "  air:\n"
+        "    sk: 'vzduch'\n"
+        "    en: 'air'\n"
+        "    de: 'Luft'\n"
+    )
 
     def test_a_problem_word_follows_the_language(self, tmp_path):
         source = 'density $\\rho_{\\text{(§ w.air §)}}$\n'
@@ -72,10 +79,21 @@ class TestTranslatedWords:
         assert '\\QQText{and}' in self.render(tmp_path, 'en', self.META, source)
         assert '\\QQText{und}' in self.render(tmp_path, 'de', self.META, source)
 
-    def test_a_language_with_no_translation_falls_back_to_english(self, tmp_path):
-        """`therefore` is filled in nowhere yet; a build must not fail over that."""
+    def test_a_global_word_a_language_lacks_is_an_error(self, tmp_path):
+        """
+        Never a fallback. A word inside maths is prose, and falling back means a Slovak booklet
+        printing `therefore` -- output that looks right until it is in print.
+        """
+        from core.builder.renderer import MissingWordError
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
-        assert '\\QQText{therefore}' in self.render(tmp_path, 'sk', self.META, source)
+        with pytest.raises(MissingWordError, match='no sk translation'):
+            self.render(tmp_path, 'sk', self.META, source)
+
+    def test_the_error_names_the_file_to_fix(self, tmp_path):
+        from core.builder.renderer import MissingWordError
+        source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
+        with pytest.raises(MissingWordError, match=r'core/i18n/sk\.yaml'):
+            self.render(tmp_path, 'sk', self.META, source)
 
     def test_a_missing_problem_word_is_an_error(self, tmp_path):
         """A problem's own word has no English to fall back on, so silence would ship a hole."""
