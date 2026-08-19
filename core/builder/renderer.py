@@ -252,12 +252,15 @@ class CLIInterface(cli.CLIInterface, ABC):
                                             f'core/i18n/{self.args.locale}.yaml')
         ctx.add(i18n=localised)
 
-        # This problem's own words, resolved when a template asks for one
+        # This problem's own words, resolved when a template asks for one.
+        #
+        # No collision check, unlike `values` and `derived`: those land in the top-level namespace
+        # where a key called `const` would shadow the constants, while a word is reached as
+        # `words.const` and shadows nothing. `22/ht-conundrum` wants exactly that name -- its
+        # equations end in `= const` -- and refusing it would be a rule enforcing nothing.
         if 'words' in context.data:
-            self._reject_name_collisions(context.data['words'], 'words',
-                                         taken=set(context.data.get('values') or {}))
-            ctx.add(w=LocalisedWords(context.data['words'], self.args.locale,
-                                     "this problem's meta.yaml"))
+            ctx.add(words=LocalisedWords(context.data['words'], self.args.locale,
+                                         "this problem's meta.yaml"))
 
         # Process derived quantities: evaluate the expressions in document order, adding each result
         # to the context, so that a later expression may build on an earlier one. This replaces the

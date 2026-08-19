@@ -444,6 +444,41 @@ def magnitudes(text):
     return counter
 
 
+#: The answer files that hold the answer itself. `answer-extra.md` is prose commentary and lives per
+#: language, so a number in it is not necessarily the answer.
+ANSWER_FILES = ('answer.md', 'answer-also.md', 'answer-interval.md')
+
+
+@check('answer-literal', 'warning', 'An answer typed as a number rather than computed',
+       modules=('naboj',))
+def answer_literal(sources):
+    """
+    The answer file holds a number that nothing computes.
+
+    An answer is by definition the result of the problem, so it should come from `values:` or
+    `derived:` and be printed through a tag. Typed out, it is a second copy of a number the solution
+    also states, and the two can drift: `24/diesel` printed `\\qty{950}{...}` in its answer while the
+    line above derived it from two densities, so changing a density would have left the answer at 950.
+
+    `value_status` cannot see this -- it reads the statement, to ask whether the numbers the problem
+    *gives* are named. This asks whether the number it *produces* is computed.
+    """
+    for unit in sources.unit_list:
+        for name in ANSWER_FILES:
+            text = unit.shared.get(name)
+            if text is None or not text.strip():
+                continue
+            if RE_TAG.search(text):
+                continue                      # already reads a value
+            found = magnitudes(text)
+            if found:
+                numbers = ', '.join(str(n) for n in sorted(found)[:4])
+                yield Finding('answer-literal', 'warning',
+                              f"{name} is the literal {numbers}; a computed answer belongs in "
+                              f"`derived:` as `result` and prints as `(§ result §)`",
+                              unit.path, name)
+
+
 @check('unit-unlisted', 'error',
        'A problem directory the volume meta does not name', modules=('naboj',))
 def unit_unlisted(sources):

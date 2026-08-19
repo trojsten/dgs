@@ -68,7 +68,7 @@ class TestTranslatedWords:
     )
 
     def test_a_problem_word_follows_the_language(self, tmp_path):
-        source = 'density $\\rho_{\\text{(§ w.air §)}}$\n'
+        source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
         assert 'vzduch' in self.render(tmp_path, 'sk', self.META, source)
         assert 'air' in self.render(tmp_path, 'en', self.META, source)
         assert 'Luft' in self.render(tmp_path, 'de', self.META, source)
@@ -98,13 +98,34 @@ class TestTranslatedWords:
     def test_a_missing_problem_word_is_an_error(self, tmp_path):
         """A problem's own word has no English to fall back on, so silence would ship a hole."""
         from core.builder.renderer import MissingWordError
-        source = 'density $\\rho_{\\text{(§ w.air §)}}$\n'
+        source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
         with pytest.raises(MissingWordError, match='no hu translation'):
             self.render(tmp_path, 'hu', self.META, source)
 
+    def test_a_word_may_be_called_const(self, tmp_path):
+        """
+        `words.const` shadows nothing -- the reservation is about the top-level namespace, where a
+        `values` key called `const` would hide the constants. `22/ht-conundrum` ends its equations
+        with `= const` and needs the name.
+        """
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                "tags: ['kinematics']\n"
+                "words:\n  const:\n    sk: 'konšt'\n    en: 'const'\n")
+        source = 'the law $pV = \\text{(§ words.const §)}$\n'
+        assert 'konšt' in self.render(tmp_path, 'sk', meta, source)
+        assert 'const' in self.render(tmp_path, 'en', meta, source)
+
+    def test_values_still_may_not_be_called_const(self, tmp_path):
+        """The top-level reservation stands: there `const` really would shadow the constants."""
+        from core.builder.renderer import NameCollisionError
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                "tags: ['kinematics']\nvalues:\n  const: 4\n")
+        with pytest.raises(NameCollisionError):
+            self.render(tmp_path, 'sk', meta, 'nothing\n')
+
     def test_one_equation_serves_every_language(self, tmp_path):
         """The point of all this: `eq:` holds the equation once, the words vary."""
-        meta = self.META + "eq:\n  drag: '\\rho_{\\text{(§ w.air §)}} v^2 = ma'\n"
+        meta = self.META + "eq:\n  drag: '\\rho_{\\text{(§ words.air §)}} v^2 = ma'\n"
         source = "(§ eq.drag|disp('.') §)\n"
         for locale, word in (('sk', 'vzduch'), ('en', 'air'), ('de', 'Luft')):
             out = self.render(tmp_path, locale, meta, source)

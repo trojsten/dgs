@@ -18,7 +18,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from core.audit.checks import (RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, magnitudes,
+from core.audit.checks import (ANSWER_FILES, RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, magnitudes,
                                strip_maths_whitespace, RE_TAG)
 from core.audit.sources import link_language
 
@@ -269,11 +269,18 @@ def picture_status(unit):
 
 def value_status(unit):
     """
-    Whether the numbers a statement shares across its translations are named in `values:`.
+    Whether this problem's numbers are named rather than typed -- the ones it is given, and the one
+    it produces.
 
-    A number that appears in *every* translation is a parameter of the problem; one that appears in
-    only some is either a translation slip or something incidental, and either way not evidence for
-    extraction. A problem whose statement has no numbers at all is `none`, not `missing`.
+    A number that appears in *every* translation of the statement is a parameter of the problem; one
+    that appears in only some is either a translation slip or something incidental, and either way
+    not evidence for extraction. A problem whose statement has no numbers at all is `none`, not
+    `missing`.
+
+    The answer file counts too. It holds the result, so a number typed there is a number nothing
+    computes, and it can drift from the `values:` the solution derives it from. `answer-literal`
+    reports that per problem; this folds it into the verdict, so a problem whose statement is fully
+    extracted but whose answer is still typed reads `partial` rather than `ok`.
     """
     statements = {lang: files['problem.md'] for lang, files in unit.translated.items()
                   if 'problem.md' in files}
@@ -288,17 +295,30 @@ def value_status(unit):
     shared = shared or set()
     tagged = any(RE_TAG.search(text) for text in statements.values())
 
-    detail = {'named': named, 'literal': sorted(shared), 'tagged': tagged}
+    # the answer file: a number there is the result, and a result should be computed
+    answer = {name: text for name in ANSWER_FILES
+              if (text := unit.shared.get(name)) and text.strip()}
+    typed_answer = [name for name, text in answer.items()
+                    if not RE_TAG.search(text) and magnitudes(text)]
+
+    detail = {'named': named, 'literal': sorted(shared), 'tagged': tagged,
+              'typed_answer': sorted(typed_answer)}
     if not shared:
+        if typed_answer:
+            return Status('values', 'partial',
+                          f"{len(named)} named, but {', '.join(typed_answer)} "
+                          f"{'is' if len(typed_answer) == 1 else 'are'} typed out", detail)
         if named:
             return Status('values', 'ok', f"{len(named)} named, nothing left literal", detail)
         return Status('values', 'none',
                       'no number appears in every translation' if len(statements) > 1
                       else 'no numbers in the statement', detail)
+    also = f", and {', '.join(typed_answer)} typed" if typed_answer else ''
     if named or tagged:
         return Status('values', 'partial',
-                      f"{len(named)} named, {len(shared)} still written out", detail)
-    return Status('values', 'missing', f"{len(shared)} shared numbers, none named", detail)
+                      f"{len(named)} named, {len(shared)} still written out{also}", detail)
+    return Status('values', 'missing',
+                  f"{len(shared)} shared numbers, none named{also}", detail)
 
 
 # --- all of them ------------------------------------------------------------

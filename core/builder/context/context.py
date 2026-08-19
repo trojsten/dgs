@@ -21,7 +21,10 @@ ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
 #: bare name is taken -- its subkeys are untouched, and a value named `g` coexists with `const.g`.
 #: Note `values` and `derived` themselves are section names in the file, never context names, and
 #: `id` lives only in the metadata context, so none of those three are reserved.
-RESERVED_NAMES = frozenset({'const', 'eq', 'i18n', 'w'})
+#: `w` was reserved here for one commit and broke eight problems that use it for width, work or
+#: weight -- `22/seychelles`, `24/counting-stars`, `chem/04/maliari` among them. A single letter is
+#: the worst possible choice of reserved name in a physics repository.
+RESERVED_NAMES = frozenset({'const', 'eq', 'i18n', 'words'})
 
 
 class DuplicateKeyError(Exception):

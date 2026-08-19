@@ -922,3 +922,46 @@ class TestWordSubscripts:
         """`(§ t_up - t_down §)` names two `values:` entries. 220 of these were false positives."""
         assert 'subscript-unwrapped' not in ids(run(tmp_path, files={
             'sk': {'problem.md': 'a', 'solution.md': 'lasts $(§ t_{up} - t_{down} §)$ seconds'}}))
+
+
+class TestAnswerLiteral:
+    """
+    An answer is the result of the problem, so it should be computed. `value_status` cannot see this:
+    it reads the statement, to ask whether the numbers the problem is *given* are named.
+    """
+
+    def test_a_typed_answer_fires(self, tmp_path):
+        found = ids(run(tmp_path, shared={'answer.md': '$\\qty{950}{\\kilo\\gram}$\n'}))
+        assert 'answer-literal' in found
+
+    def test_an_answer_that_reads_a_value_is_quiet(self, tmp_path):
+        assert 'answer-literal' not in ids(run(tmp_path, shared={
+            'answer.md': '$(§ result|f0 §)$\n'}))
+
+    def test_a_non_numeric_answer_is_quiet(self, tmp_path):
+        """226 answers are a chemical formula or a word. There is nothing to compute."""
+        assert 'answer-literal' not in ids(run(tmp_path, shared={
+            'answer.md': '\\ce{Hg}, \\ce{Ra}, \\ce{Li}\n'}))
+
+    def test_an_empty_answer_is_quiet(self, tmp_path):
+        assert 'answer-literal' not in ids(run(tmp_path, shared={'answer.md': '\n'}))
+
+    def test_a_bare_integer_is_quiet(self, tmp_path):
+        """`chem/01/ciment` answers `12`. Not a quantity, so not a `values:` candidate."""
+        assert 'answer-literal' not in ids(run(tmp_path, shared={'answer.md': '12\n'}))
+
+    def test_the_verdict_notices_a_typed_answer(self, tmp_path):
+        """A statement fully extracted but an answer still typed is `partial`, not `ok`."""
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                "tags: ['kinematics']\nvalues:\n  v:\n    magnitude: 3\n    unit: 'metre'\n")
+        report = audit(*_scope(tmp_path, meta=meta,
+                              shared={'answer.md': '$\\qty{950}{\\kilo\\gram}$\n'},
+                              files={'sk': {'problem.md': 'no numbers here'}}))
+        status = report.statuses['phys/99/problems/widget']['values']
+        assert status.state == 'partial'
+        assert 'answer.md' in status.summary
+
+
+def _scope(tmp_path, **kwargs):
+    make_problem(tmp_path, **kwargs)
+    return (tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])

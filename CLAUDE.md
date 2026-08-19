@@ -64,6 +64,12 @@ The audit checks live in `core/audit/`, not in the app, because they are the dur
 part: `checks.py` for the source-only ones, `status.py` for the four progress verdicts,
 `build.py` for the slow ones.
 
+The `values` verdict covers both directions: whether the numbers a statement *gives* are
+named in `values:`, and whether the number a problem *produces* is computed. An answer
+file holding a typed number is `answer-literal` — the answer belongs in `derived:` as
+`result` and prints as `(§ result §)`, so that changing an input changes the answer.
+`24/diesel` is the worked example.
+
 Problems are listed in the volume meta's `problems:` order, because that list *is* the
 running order and is what `ContextVolume` iterates. A problem missing from it is never
 built; one listed without a directory gets `\protectedInput`'s red `Missing file` box in
@@ -131,7 +137,7 @@ drift apart. Two tiers, because the vocabulary splits cleanly:
   `(§ i18n.words['and'] §)`. `and` and `or` cannot be written `i18n.words.and` — they are
   Jinja keywords, hence the subscript form.
 - **A word belonging to one problem** goes in its `meta.yaml` under `words:`, term →
-  language → text, one language per line, and is reached as `(§ w.air §)`. Of the 190 words
+  language → text, one language per line, and is reached as `(§ words.air §)`. Of the 190 words
   found inside `\text{}` across phys, 167 appear in exactly one problem, so this is the
   common case.
 
