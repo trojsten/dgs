@@ -738,6 +738,111 @@ def encoding(sources):
                               unit.path, unit.label(lang, name))
 
 
+# --- labelling ---------------------------------------------------------------
+
+#: The file a solution lives in. Náboj's labelling rule is asymmetric, so the checks below have to
+#: know which side of it a file is on.
+SOLUTION_FILE = 'solution.md'
+
+#: Inline maths, and only inline: a lone `$` not doubled, up to the next one on the same line.
+#: Display blocks are masked out before this runs, so `$$` cannot be mistaken for two spans.
+RE_INLINE = re.compile(r'(?<!\$)\$(?!\$)((?:[^$\n]|\\\$)+)\$(?!\$)')
+
+#: An inline span longer than this is "non-trivially long". The population says where the line
+#: belongs: of 20532 spans in phys the median is 7 characters, the 99th percentile 71 and the
+#: 99.5th 83, so 90 sits just past the tail and picks out 58 -- a number somebody can read through.
+INLINE_LONG = 90
+
+
+def without_blocks(text):
+    """The text with every display block blanked, so inline maths can be found in what is left."""
+    out, last = [], 0
+    for m in blocks_of(text):
+        out.append(text[last:m.start()])
+        out.append('\n' * text.count('\n', m.start(), m.end()))
+        last = m.end()
+    out.append(text[last:])
+    return ''.join(out)
+
+
+@check('problem-labelled', 'warning', 'A labelled equation in a problem statement',
+       modules=('naboj',))
+def problem_labelled(sources):
+    """
+    Náboj labels display maths in solutions and nowhere else. A statement is read once, under time
+    pressure, and an equation number in it is a reference nobody will follow -- and the number would
+    appear in the booklet, competing with the problem's own number.
+    """
+    for unit in sources.unit_list:
+        for lang, name, text in unit.files():
+            if name == SOLUTION_FILE:
+                continue
+            for m in blocks_of(text):
+                label = RE_LABEL.search(m['tail'] or '')
+                if label:
+                    yield Finding('problem-labelled', 'warning',
+                                  f"`{label['name']}` labels a block outside a solution",
+                                  unit.path, unit.label(lang, name), line_of(text, m.start()))
+
+
+@check('solution-unlabelled', 'warning', 'An unlabelled equation in a solution',
+       modules=('naboj',))
+def solution_unlabelled(sources):
+    """
+    The other half of the same rule: in a solution every display block carries a label, whether or
+    not anything refers to it. The label is what makes pandoc emit `equation` rather than `\\[ ... \\]`,
+    so an unlabelled block is an unnumbered one sitting among numbered ones, and a solution reads
+    better when they all count.
+
+    Reported per real file: a mirrored translation is the same block, not a second one.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            if name != SOLUTION_FILE:
+                continue
+            place = unit.real_label(lang, name)
+            if place in seen:
+                continue
+            seen.add(place)
+            for m in blocks_of(text):
+                if (m['tail'] or '').startswith(']'):
+                    # a display block inside a footnote: `$$]` closes the note, and a label written
+                    # after that sits outside it. `28/a12-speed` is the only one in the repository.
+                    continue
+                if not RE_LABEL.search(m['tail'] or ''):
+                    first = m['body'].strip().split('\n')[0][:48]
+                    yield Finding('solution-unlabelled', 'warning',
+                                  f"no label on the block starting `{first}`",
+                                  unit.path, place, line_of(text, m.start()))
+
+
+@check('inline-long', 'info', 'Inline maths long enough to be worth hoisting')
+def inline_long(sources):
+    """
+    A long inline span is as hard to read in the source as a display block and gains nothing from
+    being inline. It can move into `eq:` and come back through `inl`, which is the one thing an
+    `eq:` entry can be that carries no label -- inline maths is never numbered.
+
+    Informational: whether a given span is better inline is the author's call, and the check only
+    says where to look.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)
+            if place in seen:
+                continue
+            seen.add(place)
+            masked = without_blocks(text)
+            for m in RE_INLINE.finditer(masked):
+                if len(m.group(1)) > INLINE_LONG:
+                    yield Finding('inline-long', 'info',
+                                  f"{len(m.group(1))} characters of inline maths; `eq:` with "
+                                  f"`|inl` would keep the source readable",
+                                  unit.path, place, line_of(masked, m.start()))
+
+
 # --- hoisting ---------------------------------------------------------------
 
 #: An `eq:` key has to be a Python-ish identifier (`ValidIdentifier` in

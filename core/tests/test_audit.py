@@ -825,3 +825,74 @@ class TestHoistableKeys:
         assert status.detail['unnameable'] == ['stone-x']
         assert status.detail['divergent'] == []
         assert 'not a usable key' in status.summary
+
+
+class TestLabellingRule:
+    """
+    Náboj's rule is asymmetric: every display block in a solution carries a label, and no block
+    outside a solution carries one. Both halves need a check, and each needs a case where the
+    opposite file kind must stay quiet.
+    """
+
+    BLOCK = '$$\n    x = 1\n$$'
+    LABELLED = '$$\n    x = 1\n$$ {#eq:widget:tau}'
+
+    def test_an_unlabelled_block_in_a_solution_fires(self, tmp_path):
+        assert 'solution-unlabelled' in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'text\n' + self.BLOCK + '\n'}}))
+
+    def test_a_labelled_block_in_a_solution_is_quiet(self, tmp_path):
+        assert 'solution-unlabelled' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'text\n' + self.LABELLED + '\n'}}))
+
+    def test_an_unlabelled_block_in_a_statement_is_quiet(self, tmp_path):
+        """The rule is asymmetric; a statement is where an unlabelled block belongs."""
+        found = ids(run(tmp_path, files={
+            'sk': {'problem.md': 'text\n' + self.BLOCK + '\n', 'solution.md': 'a'}}))
+        assert 'solution-unlabelled' not in found
+        assert 'problem-labelled' not in found
+
+    def test_a_labelled_block_in_a_statement_fires(self, tmp_path):
+        assert 'problem-labelled' in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'text\n' + self.LABELLED + '\n', 'solution.md': 'a'}}))
+
+    def test_a_block_closing_a_footnote_is_exempt(self, tmp_path):
+        """`$$]` closes the footnote; a label after that would sit outside it and change the page."""
+        footnote = 'text^[a note\n' + self.BLOCK + '] and on\n'
+        assert 'solution-unlabelled' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': footnote}}))
+
+    def test_an_ordinary_block_is_still_required_to_have_one(self, tmp_path):
+        """The exemption is for the footnote, not for anything that happens to follow a block."""
+        assert 'solution-unlabelled' in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'text\n' + self.BLOCK + ' and on\n'}}))
+
+    def test_a_mirrored_solution_is_not_a_second_unlabelled_block(self, tmp_path):
+        """One block reachable through two language paths is one finding, not two."""
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'text\n' + self.BLOCK + '\n'},
+                            'cs': {'problem.md': 'a'}})
+        root = tmp_path / 'phys' / '99' / 'problems' / 'widget'
+        (root / 'cs' / 'solution.md').symlink_to('../sk/solution.md')
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert len([f for f in report.findings if f.check == 'solution-unlabelled']) == 1
+
+
+class TestInlineLength:
+    """Long inline maths is worth hoisting; ordinary inline maths is not, and there is a lot of it."""
+
+    def test_a_long_span_fires(self, tmp_path):
+        long_maths = '$' + 'a + ' * 30 + 'b$'
+        assert 'inline-long' in ids(run(tmp_path, files={
+            'sk': {'problem.md': f'text {long_maths} more', 'solution.md': 'a'}}))
+
+    def test_an_ordinary_span_is_quiet(self, tmp_path):
+        """The median span is seven characters; flagging those would bury everything else."""
+        assert 'inline-long' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'the speed $v = v_0 - at$ falls', 'solution.md': 'a'}}))
+
+    def test_a_display_block_is_not_read_as_inline(self, tmp_path):
+        """`$$` masked first: otherwise one long display block reads as two inline spans."""
+        block = '$$\n    ' + 'a + ' * 40 + 'b\n$$ {#eq:widget:long}\n'
+        assert 'inline-long' not in ids(run(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block}}))
