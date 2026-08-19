@@ -74,6 +74,17 @@ table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: 
 /* One column per file. There are up to four per language and nine languages, so each column is as
    narrow as a single glyph and the table scrolls sideways inside its pane rather than squeezing. */
 table.grid.files { width: auto; }
+
+/* One row, one line. With forty-odd columns a wrapped cell makes its whole row two or three lines
+   tall, and the matrix stops lining up with the header -- the reason for having columns at all. The
+   prose columns clip instead, and carry the full text in a title. */
+table.grid.files td, table.grid.files th { white-space: nowrap; }
+table.grid.files td.tags, table.grid.files td.author, table.grid.files td.findings-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+table.grid td.tags, table.grid th.tags { max-width: 14rem; }   /* `rot-mech moment-of-inertia` fits */
+table.grid td.findings-cell, table.grid th.findings-cell { max-width: 22rem; }
 table.grid td.filestate, table.grid th.filestate {
   width: 1.35rem;
   min-width: 1.35rem;

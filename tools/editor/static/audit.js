@@ -528,13 +528,13 @@ function translationHeader(t, d) {
     }
   }
   if (shared.length) {
-    top.appendChild(groupHead("beside the problem", shared.length,
-                              "module.mk's non-translatable family: one file per problem, not one "
-                              + "per language, so there is nothing to translate and nothing "
+    top.appendChild(groupHead("common", shared.length,
+                              "module.mk's non-translatable family: one file per problem, shared by "
+                              + "every language, so there is nothing to translate and nothing "
                               + `missing when a problem has none. ${TRANSLATION_LEGEND}.`));
     for (const f of shared) {
       sub.appendChild(headCell("filestate sharedstate", sharedMark(f),
-                               `${f} \u2014 one per problem, not one per language.`));
+                               `${f} \u2014 one per problem, common to every language.`));
     }
   }
 
@@ -598,11 +598,16 @@ function problemTable(d) {
     first.appendChild(link);
     tr.appendChild(first);
 
-    tr.appendChild(node("td", "tags", (unit.tags ?? []).join(" ")));
+    // the text columns are clipped rather than wrapped, so the title carries what does not fit
+    const tagText = (unit.tags ?? []).join(" ");
+    const tagCell = node("td", "tags", tagText);
+    if (tagText) tagCell.title = tagText;
+    tr.appendChild(tagCell);
 
     for (const [role] of AUTHOR_ROLES) {
       const named = unit.authors?.[role] ?? [];
       const td = node("td", "author", named.join(", "));
+      if (named.length) td.title = named.join(", ");
       if (!unit.authors) {
         // no `authors` mapping at all, which is not the same as one recording nobody
         td.className += " absent";

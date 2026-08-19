@@ -16,7 +16,8 @@ log = logging.getLogger('dgs')
 #: This list used to name 14 tags while 62 were in use, because `valid_tag` never actually ran --
 #: enschema does not check the elements of `list[And(str, valid_tag)]` -- so nothing stopped a new
 #: spelling from being invented. Twelve pairs had drifted apart that way and have been merged:
-#: `mathematics`/`math`, `moment-inertia`/`moi`, `sound`/`acoustics`,
+#: `mathematics`/`math`, `moment-inertia`/`moi` (now spelled `moment-of-inertia`),
+#: `sound`/`acoustics`,
 #: `unit-conversions`/`units`, `thermo`/`thermodynamics`, `tricky`/`trick`,
 #: `archimedes`/`buoyancy`, `cog`/`com`, `snell`/`refraction`, `liquids`/`hydrodynamics`,
 #: `paaa`/`oblique-throw`, and `electicity`, a typo for `electricity`.
@@ -43,7 +44,7 @@ VALID_TAGS: dict[str, str] = {
 
     # -- rotation --------------------------------------------------------------------------------
     'rot-mech': 'rotational mechanics',
-    'moi': 'moment of inertia',
+    'moment-of-inertia': 'moment of inertia',
 
     # -- fluids ----------------------------------------------------------------------------------
     'buoyancy': 'buoyancy',
