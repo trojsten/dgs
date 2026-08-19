@@ -740,12 +740,23 @@ def encoding(sources):
 
 # --- hoisting ---------------------------------------------------------------
 
+#: An `eq:` key has to be a Python-ish identifier (`ValidIdentifier` in
+#: `core/builder/context/context.py`), and it also has to survive Jinja's dot notation -- `eq.stone-x`
+#: parses as `eq.stone - x`, so a hyphenated label cannot be referenced at all. Five of
+#: `22/skateboard`'s labels are hyphenated, and suggesting a hoist that cannot be written is worse
+#: than saying nothing.
+RE_EQ_KEY = re.compile(r'^[A-Za-z_][A-Za-z_0-9]*$')
+
+
 @check('hoistable-equation', 'info', 'A labelled equation written out more than once')
 def hoistable_equation(sources):
     """
     The same labelled block in more than one file is that many copies of one equation, and that is
     how they drift apart. Whitespace and a trailing full stop do not count as a difference: TeX
     ignores maths-mode whitespace, and `MathObject` carries the punctuation in its format spec.
+
+    A label that could not become an `eq:` key is not reported: the key becomes the label, so
+    hoisting it would have to rename it, which changes the label in the built page.
     """
     for unit in sources.unit_list:
         blocks = defaultdict(lambda: defaultdict(list))
@@ -756,10 +767,16 @@ def hoistable_equation(sources):
                     continue
                 key = label['name'].split(':', 1)[1]
                 body = strip_maths_whitespace(m['body']).rstrip('.,;:!?')
-                blocks[key][body].append(unit.label(lang, name))
+                # by real file: a mirrored translation is the same bytes, so counting it again
+                # would report `27/brakemaster` as seven copies of what is written five times
+                place = unit.real_label(lang, name)
+                if place not in blocks[key][body]:
+                    blocks[key][body].append(place)
         for key, variants in sorted(blocks.items()):
-            places = [p for group in variants.values() for p in group]
+            places = {p for group in variants.values() for p in group}
             if len(places) < 2:
+                continue
+            if not RE_EQ_KEY.match(key):
                 continue
             if len(variants) == 1:
                 yield Finding('hoistable-equation', 'info',

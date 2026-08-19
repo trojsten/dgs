@@ -61,6 +61,19 @@ class Unit:
     def label(self, lang, name):
         return f"{lang}/{name}" if lang else name
 
+    def real_label(self, lang, name):
+        """
+        The label of the file this one really is. `27/water-level/cs/solution.md` mirrors `sk`, so
+        both point at one set of bytes -- counting them as two copies of an equation overstates the
+        duplication and, where a file is reached only through links, invents it.
+        """
+        target = self.links.get(self.label(lang, name))
+        if target is not None:
+            mirrored = link_language(target)
+            if mirrored is not None:
+                return self.label(mirrored, name)
+        return self.label(lang, name)
+
 
 @dataclass
 class Sources:

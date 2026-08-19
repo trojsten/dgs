@@ -771,3 +771,57 @@ class TestFileFamiliesMatchTheBuild:
                      files={'sk': {'problem.md': 'a', 'solution.md': 'b'}})
         s = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
         assert s.present_shared() == ('answer.md', 'answer-interval.md')
+
+
+class TestHoistableKeys:
+    """A suggestion that cannot be carried out is worse than no suggestion."""
+
+    def _twice(self, tmp_path, label):
+        block = ('$$\n    x = 1\n$$ {#eq:widget:' + label + '}\n')
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block},
+                            'en': {'problem.md': 'a', 'solution.md': 'text\n' + block}})
+        return ids(audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget']))
+
+    def test_a_plain_label_is_reported(self, tmp_path):
+        assert 'hoistable-equation' in self._twice(tmp_path, 'tau')
+
+    def test_a_hyphenated_label_is_not(self, tmp_path):
+        """`eq.stone-x` parses as `eq.stone - x`, so there is no way to reference it."""
+        assert 'hoistable-equation' not in self._twice(tmp_path, 'stone-x')
+
+    def test_a_mirrored_translation_is_not_a_second_copy(self, tmp_path):
+        """
+        `27/brakemaster` reported seven copies of what is written five times, because `cs` and `es`
+        are symlinks. One equation reachable through two language paths is one equation.
+        """
+        block = '$$\n    x = 1\n$$ {#eq:widget:tau}\n'
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block},
+                            'cs': {'problem.md': 'a'}})
+        root = tmp_path / 'phys' / '99' / 'problems' / 'widget'
+        (root / 'cs' / 'solution.md').symlink_to('../sk/solution.md')
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'hoistable-equation' not in ids(report)
+        status = report.statuses['phys/99/problems/widget']['equations']
+        assert status.detail['duplicated'] == []
+
+    def test_two_real_files_still_count(self, tmp_path):
+        block = '$$\n    x = 1\n$$ {#eq:widget:tau}\n'
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block},
+                            'en': {'problem.md': 'a', 'solution.md': 'text\n' + block}})
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'hoistable-equation' in ids(report)
+
+    def test_unnameable_is_its_own_category(self, tmp_path):
+        """Identical everywhere and still unhoistable is not the same as differing."""
+        block = '$$\n    x = 1\n$$ {#eq:widget:stone-x}\n'
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': 'text\n' + block},
+                            'en': {'problem.md': 'a', 'solution.md': 'text\n' + block}})
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        status = report.statuses['phys/99/problems/widget']['equations']
+        assert status.detail['unnameable'] == ['stone-x']
+        assert status.detail['divergent'] == []
+        assert 'not a usable key' in status.summary

@@ -18,7 +18,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from core.audit.checks import (RE_FIGURE, RE_LABEL, blocks_of, magnitudes,
+from core.audit.checks import (RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, magnitudes,
                                strip_maths_whitespace, RE_TAG)
 from core.audit.sources import link_language
 
@@ -162,28 +162,42 @@ def equation_status(unit):
                 continue
             key = label['name'].split(':', 1)[1]
             body = strip_maths_whitespace(m['body']).rstrip('.,;:!?')
-            labelled.setdefault(key, {}).setdefault(body, []).append(unit.label(lang, name))
+            # real files, not language paths: see `Unit.real_label`
+            places = labelled.setdefault(key, {}).setdefault(body, set())
+            places.add(unit.real_label(lang, name))
 
     duplicated = {k: v for k, v in labelled.items()
-                  if sum(len(places) for places in v.values()) > 1}
-    identical = {k for k, v in duplicated.items() if len(v) == 1}
-    divergent = set(duplicated) - identical
+                  if len({p for places in v.values() for p in places}) > 1}
+    # Three reasons a duplicate is still a duplicate, and they are not the same problem:
+    # `identical` can be hoisted mechanically; `divergent` needs somebody to decide which version is
+    # right; `unnameable` is identical everywhere and still cannot be hoisted, because the key
+    # becomes the label and `eq.stone-x` is not something Jinja can read.
+    same = {k for k, v in duplicated.items() if len(v) == 1}
+    identical = {k for k in same if RE_EQ_KEY.match(k)}
+    unnameable = same - identical
+    divergent = set(duplicated) - same
 
     detail = {'hoisted': sorted(hoisted), 'inline': sorted(labelled),
-              'duplicated': sorted(duplicated), 'divergent': sorted(divergent)}
+              'duplicated': sorted(duplicated), 'divergent': sorted(divergent),
+              'unnameable': sorted(unnameable)}
     if not hoisted and not labelled:
         return Status('equations', 'none', 'no labelled equations', detail)
     if not duplicated:
         return Status('equations', 'ok',
                       f"{len(hoisted)} in eq:, nothing written out twice", detail)
+    parts = [f"{len(hoisted)} in eq:"]
+    if identical:
+        parts.append(f"{len(identical)} written out twice and identical")
     if divergent:
         # copies differ by more than whitespace or a full stop, so hoisting is not mechanical
-        return Status('equations', 'partial',
-                      f"{len(hoisted)} in eq:, {len(identical)} could be hoisted, "
-                      f"{len(divergent)} differ between languages", detail)
+        parts.append(f"{len(divergent)} differ between languages")
+    if unnameable:
+        parts.append(f"{len(unnameable)} identical but the label is not a usable key")
+    if not identical:
+        # nothing mechanical left to do here, whatever else is outstanding
+        return Status('equations', 'partial', ', '.join(parts), detail)
     return Status('equations', 'missing' if not hoisted else 'partial',
-                  f"{len(hoisted)} in eq:, {len(identical)} written out twice and identical",
-                  detail)
+                  ', '.join(parts), detail)
 
 
 # --- pictures ---------------------------------------------------------------
