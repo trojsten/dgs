@@ -103,6 +103,10 @@ class ContextVolume(ContextNaboj):
             'editors': [str],
             'head': str,
         },
+        # `chem/01`, `phys/02` and `phys/03` predate the `authors` block and list their people
+        # under `orgs` instead. Those are real names; admitting the key keeps them rather than
+        # forcing a choice between deleting them and inventing which of them wrote problems.
+        Optional('orgs'): [str],
         Optional('venues'): {
             str: {
                 'head': str,
