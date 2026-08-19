@@ -56,6 +56,11 @@ class Module:
     #: The level the audit page aggregates at -- a volume for Náboj and seminar, a year for
     #: scholar. Named rather than numbered so a module says what it means; the depth is derived.
     scope: str = ''
+    #: Whether the audit page covers this module. Off unless a descriptor asks for it: the checks
+    #: and the four verdicts encode Náboj's conventions, and seminar and scholar do not share
+    #: them -- auditing those against Náboj's rules would report differences as defects. When
+    #: either grows conventions worth checking it will want its own checks, not these.
+    audit: bool = False
 
     def kind_for(self, unit: str):
         """Which `units:` entry this unit matches, or None if it is not a unit at all."""
@@ -88,6 +93,7 @@ def load_modules(repo_root: Path):
             ),
             root=root,
             scope=spec.get("scope", ""),
+            audit=bool(spec.get("audit", False)),
         )
     return modules
 
@@ -143,6 +149,11 @@ def scope_depth(module: Module) -> int:
             if module.scope in kind.levels:
                 return kind.levels.index(module.scope) + 1
     return 2
+
+
+def audited_modules(modules):
+    """The modules the audit page covers, in label order."""
+    return [m for m in sorted(modules.values(), key=lambda m: m.label) if m.audit]
 
 
 def discover_scopes(module: Module):

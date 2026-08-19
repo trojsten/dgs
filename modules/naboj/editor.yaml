@@ -8,6 +8,13 @@
 
 label: Náboj
 
+# The audit page covers this module. It is the only one: `core/audit`'s checks and its four
+# progress verdicts are Náboj's conventions -- a language directory per problem, `values:` and
+# `eq:` in a meta, a volume `problems:` list -- and seminar and scholar are built differently
+# enough that measuring them against these rules would report the difference as a defect. If
+# either ever wants auditing it wants its own checks, not a flag here.
+audit: true
+
 # The only module whose text is translated: a unit holds a directory per language, and the two
 # rule families in module.mk put `translated` files inside it and `shared` files beside it.
 languages: true

@@ -11,7 +11,7 @@ from flask import Flask, jsonify, request, render_template, send_file
 
 # `descriptors`, not `modules`: the repo root holds a `modules/` namespace package, and whichever
 # came first on sys.path would win.
-from descriptors import (AUX_EXTENSIONS, RENDERABLE_AUX_EXTENSIONS,
+from descriptors import (AUX_EXTENSIONS, RENDERABLE_AUX_EXTENSIONS, audited_modules,
                          discover_scopes, discover_units, load_modules, scope_depth)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -26,7 +26,8 @@ os.chdir(REPO_ROOT)
 from core.audit import audit as run_audit                                      # noqa: E402
 from core.audit import build as audit_build                                    # noqa: E402
 from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
-from core.audit.status import STATES                                           # noqa: E402
+from core.audit.status import (STATES, TRANSLATED,                              # noqa: E402
+                               TRANSLATION_STATES)                              # noqa: E402
 from core.i18n import languages as LOCALES                                     # noqa: E402
 
 
@@ -501,10 +502,14 @@ def api_lint():
 # --- audit ------------------------------------------------------------------
 
 def scope_units(module_name, scope):
-    """The units in a scope, or a 400 if there is no such scope."""
+    """The units in a scope, or a 400 if there is no such scope or it is not audited."""
     module = MODULES.get(module_name)
     if module is None:
         raise BadRequest(f"Unknown module: {module_name!r}")
+    if not module.audit:
+        # The checks are Náboj's conventions; running them over a module that does not share them
+        # reports the difference as a defect. `audit: true` in the module's editor.yaml opts in.
+        raise BadRequest(f"{module.label} is not audited")
     units = discover_scopes(module).get(scope)
     if units is None:
         raise BadRequest(f"No such {module.label} scope: {scope!r}")
@@ -558,7 +563,7 @@ def api_audit_overview():
     whole repository is about a second, so there is nothing to cache and nothing to invalidate.
     """
     rows = []
-    for module in sorted(MODULES.values(), key=lambda m: m.label):
+    for module in audited_modules(MODULES):
         for scope, units in sorted(discover_scopes(module).items()):
             report = run_audit(module.root, module.name, scope, units)
             rows.append({
@@ -613,6 +618,10 @@ def api_audit_scope(module, scope):
         ],
         "status_summary": report.status_summary(),
         "states": list(STATES),
+        # the files a translation consists of, in the order the columns should read them; from
+        # `core/audit/status.py` so the table cannot disagree with the verdict it is showing
+        "translated_files": list(TRANSLATED),
+        "translation_states": list(TRANSLATION_STATES),
         "findings": [finding_json(f) for f in report.findings],
         "stats": stats_json(report.stats),
         "build": read_build_cache(module, scope),

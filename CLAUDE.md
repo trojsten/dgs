@@ -44,6 +44,13 @@ Both pages learn what a module contains from `modules/<module>/editor.yaml` — 
 units live, what files they hold, and which level (`scope:`) the audit aggregates at. A
 fourth module needs a descriptor and no code.
 
+**The audit covers `naboj` only**, by `audit: true` in its descriptor. The checks and the
+four verdicts are Náboj's conventions — a language directory per problem, `values:` and
+`eq:` in a meta, a volume `problems:` list — and seminar and scholar are built differently
+enough that measuring them against these would report the difference as a defect. The
+editor still edits all three. If either ever wants auditing it wants its own checks, not
+the flag flipped.
+
 The audit checks live in `core/audit/`, not in the app, because they are the durable
 part: `checks.py` for the source-only ones, `status.py` for the four progress verdicts,
 `build.py` for the slow ones.

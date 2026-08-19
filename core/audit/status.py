@@ -29,6 +29,12 @@ STATES = ('broken', 'missing', 'partial', 'ok', 'none')
 #: rather than in a language directory, so it is not part of the translation status.
 TRANSLATED = ('problem.md', 'solution.md')
 
+#: What one translated file can be. Not `STATES`: those rank a whole problem, these say what
+#: happened to one file. `symlink` is not a fault -- a translation nobody has written yet mirrors
+#: its master rather than keeping a stale copy -- but it is not a translation either, and the
+#: table has to be able to say which.
+TRANSLATION_STATES = ('ok', 'symlink', 'empty', 'missing')
+
 
 @dataclass(frozen=True, slots=True)
 class Status:
@@ -56,6 +62,14 @@ def translation_status(unit, expected_languages):
     `expected_languages` comes from the volume rather than the problem: a language the rest of the
     volume has and this problem does not is the interesting case, and the problem alone cannot know.
     """
+    # Every file any language of this problem has. `problem.md` and `solution.md` are required and
+    # come first; anything else -- `answer-extra.md`, `problem-extra.md` -- is optional content that
+    # only some problems carry, but once one language has it the others not having it is a gap, so
+    # it is reported per language rather than silently left out.
+    found = {name for files in unit.translated.values() for name in files}
+    found |= {n.split('/', 1)[1] for n in unit.links if '/' in n}
+    order = list(TRANSLATED) + sorted(found - set(TRANSLATED))
+
     per_language = {}
     for lang in sorted(set(expected_languages) | set(unit.translated)):
         files = unit.translated.get(lang)
@@ -63,21 +77,25 @@ def translation_status(unit, expected_languages):
             per_language[lang] = {'state': 'missing', 'note': 'no directory'}
             continue
         entries = {}
-        for name in TRANSLATED:
+        for name in order:
             link = unit.links.get(f'{lang}/{name}')
+            required = name in TRANSLATED
             if link is not None:
                 target = link_language(link) or link
-                entries[name] = {'state': 'symlink', 'note': f'mirrors {target}'}
+                entry = {'state': 'symlink', 'note': f'mirrors {target}'}
             elif name not in files:
-                entries[name] = {'state': 'missing', 'note': 'absent'}
+                entry = {'state': 'missing', 'note': 'absent'}
             elif not files[name].strip():
-                entries[name] = {'state': 'empty', 'note': 'file is empty'}
+                entry = {'state': 'empty', 'note': 'file is empty'}
             else:
-                entries[name] = {'state': 'ok', 'note': ''}
-        # `problem.md` absent is worse than `solution.md` absent: a volume with untranslated
-        # solutions still runs, a volume with untranslated statements does not.
+                entry = {'state': 'ok', 'note': ''}
+            entries[name] = entry | {'required': required}
+        # The verdict is the required files only. An optional extra one language carries and
+        # another does not is real, but it is `presence`'s finding to report -- `trans` answers
+        # "is this problem translated", and an answer sheet extra does not change that answer.
+        required_states = [e['state'] for name, e in entries.items() if e['required']]
         state = ('missing' if entries['problem.md']['state'] == 'missing'
-                 else 'ok' if all(e['state'] == 'ok' for e in entries.values())
+                 else 'ok' if all(s == 'ok' for s in required_states)
                  else 'partial')
         per_language[lang] = {'state': state, 'note': '', 'files': entries}
 
@@ -86,12 +104,12 @@ def translation_status(unit, expected_languages):
         return Status('translations', 'none', 'not translated at all')
     if counts['ok'] == len(per_language):
         return Status('translations', 'ok', f"{counts['ok']} languages complete",
-                      {'languages': per_language})
+                      {'languages': per_language, 'order': order})
     parts = [f"{n} {state}" for state, n in counts.most_common() if state != 'ok']
     if counts['ok']:
         parts.insert(0, f"{counts['ok']} complete")
     return Status('translations', 'missing' if counts['missing'] else 'partial',
-                  ', '.join(parts), {'languages': per_language})
+                  ', '.join(parts), {'languages': per_language, 'order': order})
 
 
 # --- equation de-duplication ------------------------------------------------

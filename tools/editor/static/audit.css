@@ -71,7 +71,20 @@ table.grid td {
 }
 
 table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
-table.grid td.lang, table.grid th.lang { width: 2.2rem; }
+table.grid td.lang, table.grid th.lang { width: 2.9rem; text-align: center; }
+
+/* One mark per translated file. The letter names the file, so the state has to be carried by
+   weight, colour and a glyph rather than by the character itself. */
+.trans-cell { white-space: nowrap; letter-spacing: 0.04em; }
+.trans-mark { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.trans-mark + .trans-mark { margin-left: 0.15rem; }
+.tr-ok { color: #7ec87e; font-weight: 600; }
+.tr-symlink { color: #6fb3d2; }
+.tr-empty { color: #d7b45b; }
+/* Struck through rather than a glyph or colour alone, so "absent" reads without relying on hue. */
+.tr-missing { color: #6a6a6a; text-decoration: line-through; }
+/* Optional content: present or absent, but never a defect on its own. */
+.trans-optional { font-size: 0.68rem; opacity: 0.85; font-weight: normal; }
 table.grid td.absent { color: #555; }
 table.grid td.tags { color: #9cc; font-size: 0.78rem; }
 

@@ -108,6 +108,30 @@ const SEVERITY_HELP = {
 const BUILD_HELP = "Targets that compiled the last time build checks were run here, and how long "
                  + "ago that was. Blank means never run.";
 
+/* One mark per translated file. The letter says which file, the colour and shape say what state
+   it is in, so a nine-language row still fits and still reads. `symlink` is not a fault: an
+   unwritten translation mirrors its master rather than keeping a stale copy. */
+const TRANSLATION_MARK = {
+  ok: { glyph: "", cls: "tr-ok", word: "translated" },
+  symlink: { glyph: "\u2192", cls: "tr-symlink", word: "mirrors another language" },
+  empty: { glyph: "\u2205", cls: "tr-empty", word: "file exists but is empty" },
+  missing: { glyph: "", cls: "tr-missing", word: "no such file" },
+};
+
+const TRANSLATION_LEGEND =
+  "Capitals are the required files \u2014 P problem, S solution; lower case is optional extra "
+  + "content. Bold = translated \u00b7 \u2192 mirrors another language \u00b7 \u2205 empty "
+  + "\u00b7 struck through = missing";
+
+/* `problem.md` is P and `solution.md` is S; an extra takes an initial per hyphenated part, so
+   `answer-extra.md` is `ae` and `problem-extra.md` is `pe` -- distinct from each other and from
+   the two capitals, which a bare first letter would not be. */
+function fileMark(name, required) {
+  const stem = name.replace(/\.md$/, "");
+  if (required) return stem.charAt(0).toUpperCase();
+  return stem.split("-").map((part) => part.charAt(0)).join("").toLowerCase();
+}
+
 const MARK_LEGEND = "\u2713 ok \u00b7 \u25d1 partial \u00b7 \u2717 missing or broken "
                   + "\u00b7 \u00b7 nothing to do";
 
@@ -434,6 +458,46 @@ function orderedUnits(d) {
 }
 
 /** The big table: one row per problem. */
+/* What this problem has in one language, file by file: which files are translated, which are
+   empty, which are missing, and which mirror another language. The verdict in the `trans` column
+   is the same data collapsed to one mark; this is the column that says why. */
+function translationCell(d, unit, lang) {
+  const td = node("td", "lang trans-cell");
+  const info = unit.status?.translations?.detail?.languages?.[lang];
+  const files = unit.status?.translations?.detail?.order
+             ?? d.translated_files ?? ["problem.md", "solution.md"];
+
+  if (!info) {
+    td.textContent = "\u00b7";
+    td.className += " absent";
+    td.title = `${lang}: nothing recorded`;
+    return td;
+  }
+  if (!info.files) {
+    // the whole language directory is absent -- one dash, not one per file
+    td.textContent = "\u2014";
+    td.className += " absent";
+    td.title = `${lang}: ${info.note || "no directory"}`;
+    return td;
+  }
+
+  const words = [];
+  for (const name of files) {
+    const entry = info.files[name];
+    const state = entry?.state ?? "missing";
+    const mark = TRANSLATION_MARK[state] ?? TRANSLATION_MARK.missing;
+    const required = entry?.required ?? true;
+    const cls = `trans-mark ${mark.cls}${required ? "" : " trans-optional"}`;
+    const span = node("span", cls, fileMark(name, required) + mark.glyph);
+    span.title = `${name}: ${entry?.note || mark.word}`;
+    td.appendChild(span);
+    words.push(`${name} ${entry?.note || mark.word}`);
+  }
+  td.title = `${lang} \u2014 ${words.join("; ")}`;
+  return td;
+}
+
+
 function problemTable(d) {
   const byUnit = {};
   for (const f of visibleFindings()) {
@@ -452,7 +516,7 @@ function problemTable(d) {
   }
   for (const lang of d.stats.language_list) {
     const name = d.stats.language_names?.[lang] ?? lang;
-    head.appendChild(headCell("num lang", lang, `${name} \u2014 how many files this problem has.`));
+    head.appendChild(headCell("lang", lang, `${name}. ${TRANSLATION_LEGEND}.`));
   }
   head.appendChild(headCell("", "findings", "What the checks reported for this problem."));
 
@@ -487,17 +551,7 @@ function problemTable(d) {
     for (const [kind] of STATUS_KINDS) tr.appendChild(statusCell(unit.status?.[kind]));
 
     for (const lang of d.stats.language_list) {
-      const files = unit.files[lang];
-      const td = node("td", "num lang");
-      if (!files) {
-        td.textContent = "·";
-        td.className += " absent";
-        td.title = "no directory for this language";
-      } else {
-        td.textContent = String(files.length);
-        td.title = files.join(", ");
-      }
-      tr.appendChild(td);
+      tr.appendChild(translationCell(d, unit, lang));
     }
 
     const cell = node("td", "findings-cell");

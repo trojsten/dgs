@@ -11,6 +11,7 @@ import pytest
 from core.audit import audit
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
 from core.audit.sources import read_scope
+from core.audit.status import translation_status
 
 
 def make_problem(tmp_path, name='widget', meta='authors:\n  idea: []\n  problem: []\n'
@@ -625,3 +626,55 @@ class TestVolumeListing:
         first = read_scope(tmp_path, 'naboj', 'phys/99', paths).fingerprint()
         volume_meta(tmp_path, ['beta', 'alpha'])
         assert read_scope(tmp_path, 'naboj', 'phys/99', paths).fingerprint() == first
+
+
+class TestTranslationDetail:
+    """
+    The per-language columns read this, so it has to say what happened to every file -- not only
+    the two that decide the verdict.
+    """
+
+    def _status(self, tmp_path, **kwargs):
+        make_problem(tmp_path, **kwargs)
+        sources = read_scope(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        return translation_status(sources.unit_list[0], ['sk', 'en'])
+
+    def test_required_files_are_reported_per_language(self, tmp_path):
+        s = self._status(tmp_path, files={'sk': {'problem.md': 'text', 'solution.md': 'text'},
+                                          'en': {'problem.md': 'text'}})
+        assert s.detail['languages']['sk']['files']['solution.md']['state'] == 'ok'
+        assert s.detail['languages']['en']['files']['solution.md']['state'] == 'missing'
+
+    def test_empty_is_not_missing(self, tmp_path):
+        s = self._status(tmp_path, files={'sk': {'problem.md': 'text', 'solution.md': '  \n'},
+                                          'en': {'problem.md': 'text', 'solution.md': 'text'}})
+        assert s.detail['languages']['sk']['files']['solution.md']['state'] == 'empty'
+
+    def test_an_optional_extra_is_reported_where_it_is_absent(self, tmp_path):
+        """Once one language carries an extra, another not carrying it is a gap worth showing."""
+        s = self._status(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'b', 'answer-extra.md': 'c'},
+            'en': {'problem.md': 'a', 'solution.md': 'b'},
+        })
+        assert s.detail['languages']['en']['files']['answer-extra.md']['state'] == 'missing'
+        assert s.detail['languages']['sk']['files']['answer-extra.md']['required'] is False
+        assert s.detail['languages']['sk']['files']['problem.md']['required'] is True
+
+    def test_an_absent_optional_extra_does_not_spoil_the_verdict(self, tmp_path):
+        """`trans` answers "is this translated"; an answer sheet extra does not change the answer."""
+        s = self._status(tmp_path, files={
+            'sk': {'problem.md': 'a', 'solution.md': 'b', 'answer-extra.md': 'c'},
+            'en': {'problem.md': 'a', 'solution.md': 'b'},
+        })
+        assert s.detail['languages']['en']['state'] == 'ok'
+        assert s.state == 'ok'
+
+    def test_no_extras_means_only_the_required_two(self, tmp_path):
+        s = self._status(tmp_path, files={'sk': {'problem.md': 'a', 'solution.md': 'b'},
+                                          'en': {'problem.md': 'a', 'solution.md': 'b'}})
+        assert s.detail['order'] == ['problem.md', 'solution.md']
+
+    def test_a_missing_language_directory_has_no_file_detail(self, tmp_path):
+        """One dash for the language, not one mark per file it does not have."""
+        s = self._status(tmp_path, files={'sk': {'problem.md': 'a', 'solution.md': 'b'}})
+        assert s.detail['languages']['en'] == {'state': 'missing', 'note': 'no directory'}
