@@ -5,10 +5,16 @@
  * on every request because a source-only pass over the whole repository costs about a second, so
  * there is nothing here that caches or invalidates.
  */
+//: Mirrored from `core/audit/model.py` and `core/audit/status.py`. The server sends these too, and
+//: they win when it does -- but hard-coding the defaults means a page served by an older process
+//: still renders instead of throwing on the first row it draws.
+const DEFAULT_SEVERITIES = ["error", "warning", "info"];
+const DEFAULT_STATES = ["broken", "missing", "partial", "ok", "none"];
+
 const state = {
   checks: {},          // id -> {severity, title}
-  severities: [],
-  states: [],          // status states, worst first
+  severities: DEFAULT_SEVERITIES,
+  states: DEFAULT_STATES,   // status states, worst first
   overview: [],
   scope: null,         // {module, scope} currently open
   detail: null,        // the last /api/audit/scope response
@@ -111,6 +117,21 @@ function renderOverview() {
   head.appendChild(node("th", "", "build"));
 
   for (const row of state.overview) {
+    try {
+      overviewRow(table, row);
+    } catch (e) {
+      // A row that cannot be drawn is worth one broken row, not an empty page with no explanation
+      console.error("audit: could not draw", row.module, row.scope, e);
+      const tr = table.insertRow();
+      const td = node("td", "sev-error", `${row.module}/${row.scope}: ${e.message}`);
+      td.colSpan = 12;
+      tr.appendChild(td);
+    }
+  }
+}
+
+function overviewRow(table, row) {
+  {
     const tr = table.insertRow();
     tr.className = "clickable";
     if (state.scope && state.scope.module === row.module && state.scope.scope === row.scope) {
@@ -173,7 +194,10 @@ async function openScope(module, scope) {
     renderDetail();
     setStatus("");
   } catch (e) {
-    setStatus(e.message, "error");
+    console.error(e);
+    setStatus(`${module}/${scope}: ${e.message}`, "error");
+    el("detail-body").innerHTML = "";
+    el("detail-body").appendChild(node("p", "placeholder sev-error", e.message));
   }
 }
 
@@ -492,7 +516,26 @@ async function loadOverview() {
   renderOverview();
 }
 
+/**
+ * Show every error somewhere a person will see it.
+ *
+ * Without this an exception anywhere leaves the page looking merely inert -- the table draws, or
+ * does not, and clicking achieves nothing with no hint as to why. A tool that fails silently costs
+ * more to diagnose than it ever saved.
+ */
+function wireErrorReporting() {
+  window.addEventListener("error", (e) => {
+    setStatus(`script error: ${e.message}`, "error");
+    console.error(e.error ?? e.message);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    setStatus(`failed: ${e.reason?.message ?? e.reason}`, "error");
+    console.error(e.reason);
+  });
+}
+
 async function boot() {
+  wireErrorReporting();
   wireResizer();
   el("refresh-btn").addEventListener("click", () => refresh());
   el("build-btn").addEventListener("click", runBuildChecks);
@@ -509,8 +552,8 @@ async function refresh() {
   setStatus("reading…", "busy");
   try {
     const meta = await fetchJSON("/api/audit/checks");
-    state.severities = meta.severities;
-    state.states = meta.states;
+    state.severities = meta.severities ?? DEFAULT_SEVERITIES;
+    state.states = meta.states ?? DEFAULT_STATES;
     state.checks = Object.fromEntries(meta.checks.map((c) => [c.id, c]));
     await loadOverview();
     setStatus("");
