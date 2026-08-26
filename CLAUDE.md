@@ -239,6 +239,25 @@ and after. Reading through a symlink is safe; writing is not.
   *after* substitution are fine and should be left alone.
 - Long `eq:` entries wrap as YAML `|` block scalars — that is the idiom for
   keeping meta.yaml under the limit.
+- **A vulgar fraction with a Unicode glyph is a named macro.** `core/latex/math.tex`
+  defines nine — `\OneHalf`, `\OneThird`, `\TwoThirds`, `\OneQuarter`,
+  `\ThreeQuarters`, `\OneEighth`, `\ThreeEighths`, `\FiveEighths`,
+  `\SevenEighths` — and they are the whole set because MinionPro has no glyph for
+  fifths, sixths, sevenths, ninths or tenths. **A missing glyph is not a compile
+  error**: xelatex writes `Missing character:` to the log and sets nothing, so a
+  `\TwoFifths` would silently vanish off the page. Anything the font cannot set
+  stays `\nicefrac`, which builds its fraction from digits. `\nicefrac` also stays
+  wherever a side is not a digit — `\nicefrac{r}{2}`, `\nicefrac{1}{\varkappa}`.
+- **A display block and its terminal punctuation must agree about the paragraph.**
+  Ending in a full stop ends the sentence, so a blank line follows and a new
+  paragraph starts — unless the file ends there. Ending in a comma, a semicolon or
+  nothing does not, so the prose carries straight on with no blank line between.
+  The audit's `display-paragraph` reports the disagreement; it deliberately does
+  not say which half is wrong, because a full stop with no break may be a missing
+  blank line *or* a full stop that wanted to be a comma, and only the sentence
+  says which. Three things exempt it: end of file, a next line Markdown needs a
+  blank before anyway (list, figure, heading, another display), and a block
+  indented inside a list item, where the next bullet is the break.
 - Block equations belong in `meta.yaml` under `eq:`, referenced as
   `(§ eq.<name>|disp('.') §)`. The key becomes the label, so renaming a key
   renames `{#eq:<pid>:<key>}`.
