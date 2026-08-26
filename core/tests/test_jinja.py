@@ -437,3 +437,32 @@ class TestEqualsFiltersWithoutSymbol:
         from core.builder.context.quantities import MissingSymbolError
         with pytest.raises(MissingSymbolError):
             renderer.render(f"(§ PQ(11.345, 'm/s^2') | {filt} §)", {})
+
+
+class TestQuadTextFilters:
+    """
+    `|q` and `|qq` wrap a word in `\\QText{…}` / `\\QQText{…}`, the macros
+    `core/latex/math.tex` defines as `\\quad\\text{…}\\quad` and the `\\qquad` version.
+
+    They take a plain string rather than a MathObject, because what goes inside is a
+    translated word and not an equation.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    def test_q_wraps_in_qtext(self, renderer):
+        assert renderer.render("(§ w|q §)", {'w': 'a'}) == r'\QText{a}'
+
+    def test_qq_wraps_in_qqtext(self, renderer):
+        assert renderer.render("(§ w|qq §)", {'w': 'and'}) == r'\QQText{and}'
+
+    def test_a_word_with_diacritics_survives(self, renderer):
+        """Hungarian `és`, Ukrainian `і` -- the filter must not touch the string."""
+        assert renderer.render("(§ w|qq §)", {'w': 'és'}) == r'\QQText{és}'
+
+    def test_the_two_differ_only_in_the_macro(self, renderer):
+        q = renderer.render("(§ w|q §)", {'w': 'x'})
+        qq = renderer.render("(§ w|qq §)", {'w': 'x'})
+        assert (q, qq) == (r'\QText{x}', r'\QQText{x}')

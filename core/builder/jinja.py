@@ -227,6 +227,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         self.__generate_format_functions(latex.equals_general, 'eg') |
         self.__generate_format_functions(latex.approx_float, 'af') |
         self.__generate_format_functions(latex.approx_general, 'ag') | {
+           'q': latex.quad_text,                                          # \QText{…}
+           'qq': latex.quad_quad_text,                                    # \QQText{…}
            'raw': latex.math_raw,                                       # no delimiters -- the default
            'inl': latex.math_inline,                                    # $…$
            'disp': latex.math_display,                                  # full function

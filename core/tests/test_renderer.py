@@ -131,3 +131,56 @@ class TestTranslatedWords:
             out = self.render(tmp_path, locale, meta, source)
             assert f'\\rho_{{\\text{{{word}}}}} v^2 = ma.' in out
             assert '{#eq:' in out
+
+
+class TestLocalisedI18n:
+    """
+    `i18n.<word>` reaches the locale's `words:`, so a source can write `(§ i18n.andw §)`
+    instead of `(§ i18n.words['and'] §)`.
+
+    `and` and `or` are Jinja keywords -- `(§ i18n.and §)` will not parse -- so those take a
+    `w` suffix. Nothing else does.
+    """
+
+    @staticmethod
+    def make(words, language='sk', data=None):
+        from core.builder.renderer import LocalisedI18n, LocalisedWords
+        w = LocalisedWords(words, language, f'core/i18n/{language}.yaml')
+        return LocalisedI18n(data if data is not None else {'full': 'slovak'}, w)
+
+    def test_keyword_word_takes_the_w_suffix(self):
+        assert self.make({'and': 'a'})['andw'] == 'a'
+
+    def test_or_likewise(self):
+        assert self.make({'or': 'alebo'})['orw'] == 'alebo'
+
+    def test_a_word_that_is_not_a_keyword_keeps_its_name(self):
+        assert self.make({'wherefrom': 'odkiaľ'})['wherefrom'] == 'odkiaľ'
+
+    def test_locale_data_still_wins_and_is_untouched(self):
+        """`i18n.full` is the locale's own key, not a word lookup."""
+        assert self.make({'and': 'a'})['full'] == 'slovak'
+
+    def test_words_mapping_is_still_reachable(self):
+        i18n = self.make({'and': 'a'})
+        i18n['words'] = i18n._words
+        assert i18n['words']['and'] == 'a'
+
+    def test_missing_word_raises_naming_the_unsuffixed_term(self):
+        """`andw` is the spelling; `and` is what the author has to add. Say `and`."""
+        from core.builder.renderer import MissingWordError
+        with pytest.raises(MissingWordError) as exc:
+            _ = self.make({}, language='ru')['andw']
+        assert '`and`' in str(exc.value) and 'ru' in str(exc.value)
+
+    def test_a_suffixed_non_keyword_is_not_stripped(self):
+        """`nw` must not be read as the word `n`: only keywords carry the suffix rule."""
+        from core.builder.renderer import MissingWordError
+        with pytest.raises(MissingWordError) as exc:
+            _ = self.make({'n': 'en'})['nw']
+        assert '`nw`' in str(exc.value)
+
+    def test_a_word_colliding_with_a_locale_key_is_refused(self):
+        """Otherwise `i18n.full` would silently return the locale name, not the word."""
+        with pytest.raises(ValueError, match='collide'):
+            self.make({'full': 'úplný'}, data={'full': 'slovak'})

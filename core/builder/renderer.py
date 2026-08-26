@@ -119,6 +119,7 @@ class LocalisedWords:
         self._words = words
         self._language = language
         self._where = where
+        self.where = where
 
     def __getitem__(self, term):
         per_language = self._words.get(term)
@@ -139,6 +140,44 @@ class LocalisedWords:
 
     def keys(self):
         return self._words.keys()
+
+
+#: Jinja parses these as keywords, so `(§ i18n.and §)` is a syntax error rather than a lookup.
+#: Those words are reached with a `w` suffix -- `(§ i18n.andw §)` -- and **only** these need it;
+#: every other word is spelled exactly as it appears in `core/i18n/<lang>.yaml`.
+JINJA_KEYWORDS = frozenset({
+    'and', 'or', 'not', 'if', 'else', 'elif', 'in', 'is', 'for', 'true', 'false', 'none',
+})
+
+
+class LocalisedI18n(dict):
+    """
+    The locale's data, with its `words:` also reachable directly: `(§ i18n.therefore §)` and
+    `(§ i18n.andw §)` rather than `(§ i18n.words['therefore'] §)`.
+
+    The subscript form still works and is what `words` itself is for; this is the spelling a
+    source actually wants, because a conjunction inside an equation is read far more often than
+    it is written and `i18n.words['and']` puts three kinds of bracket around one word.
+
+    A key that is not part of the locale's own data is looked up as a word, so a missing one
+    raises `MissingWordError` naming the term, the language and the file to add it to -- rather
+    than resolving to Jinja's `Undefined`, which reports the *tag* and not the word.
+    """
+    def __init__(self, data: dict, words: 'LocalisedWords'):
+        super().__init__(data)
+        collisions = sorted(set(words.keys()) & set(data.keys()))
+        if collisions:
+            raise ValueError(
+                f"Word{'s' if len(collisions) > 1 else ''} {', '.join(collisions)} in "
+                f"{words.where} collide{'' if len(collisions) > 1 else 's'} with a locale key of "
+                f"the same name, so `i18n.{collisions[0]}` would silently return the locale's "
+                f"value instead of the word. Rename the word."
+            )
+        self._words = words
+
+    def __missing__(self, key: str):
+        term = key[:-1] if key.endswith('w') and key[:-1] in JINJA_KEYWORDS else key
+        return self._words[term]
 
 
 class DerivedQuantityError(Exception):
@@ -248,8 +287,12 @@ class CLIInterface(cli.CLIInterface, ABC):
         localised = locale.as_dict()
         # wrapped so a word this language does not define stops the build with a message naming it,
         # rather than resolving to something plausible in the wrong language
-        localised['words'] = LocalisedWords(localised.get('words') or {}, self.args.locale,
-                                            f'core/i18n/{self.args.locale}.yaml')
+        words = LocalisedWords(localised.get('words') or {}, self.args.locale,
+                               f'core/i18n/{self.args.locale}.yaml')
+        # Reachable both ways: `i18n.words['and']` and, since a conjunction inside an equation is
+        # read far more often than written, `i18n.andw` -- see `LocalisedI18n`.
+        localised = LocalisedI18n(localised, words)
+        localised['words'] = words
         ctx.add(i18n=localised)
 
         # This problem's own words, resolved when a template asks for one.

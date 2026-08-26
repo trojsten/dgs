@@ -157,6 +157,25 @@ def approx_general(q: PhysicsQuantity, precision: int | None = None):
     return q.approx_general(precision)
 
 
+def quad_text(word: str) -> str:
+    """
+    A translated word set as text inside maths, with a `\\quad` either side.
+
+    `core/latex/math.tex` defines `\\QText{w}` as `\\quad\\text{w}\\quad`, which is how a
+    conjunction is joined to the equations on either side of it. Written as a filter so the
+    source says `(§ i18n.andw|q §)` rather than spelling the macro out around a lookup.
+    """
+    return rf"\QText{{{word}}}"
+
+
+def quad_quad_text(word: str) -> str:
+    """
+    The same with `\\qquad`, from `\\QQText`. The wider of the two, and the one to reach for
+    when the word joins two whole equations rather than two terms.
+    """
+    return rf"\QQText{{{word}}}"
+
+
 def math_raw(math: MathObject) -> str:
     """
     The fragment with no delimiters at all, for building a larger expression from a named piece.
