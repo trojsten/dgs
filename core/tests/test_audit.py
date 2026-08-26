@@ -965,3 +965,47 @@ class TestAnswerLiteral:
 def _scope(tmp_path, **kwargs):
     make_problem(tmp_path, **kwargs)
     return (tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+
+
+class TestTranslatedWords:
+    """
+    `word-missing` is the safety net for the red box the renderer now emits instead of failing.
+    The box alone is not one: volume 19 printed `Missing file …onion…!` on page 42 for years
+    while `make` stayed green, so the check has to read the sources.
+    """
+
+    def test_i18n_word_the_language_lacks(self, tmp_path):
+        # Russian carries no `words:` at all, so `and` is genuinely absent there
+        files = {'ru': {'solution.md': "$a (§ i18n.andw|qq §) b$\n"}}
+        assert 'word-missing' in ids(run(tmp_path, files=files))
+
+    def test_i18n_word_the_language_has_is_quiet(self, tmp_path):
+        # Slovak defines `and` as `a`; this must not fire
+        files = {'sk': {'solution.md': "$a (§ i18n.andw|qq §) b$\n"}}
+        assert 'word-missing' not in ids(run(tmp_path, files=files))
+
+    def test_the_subscript_spelling_is_seen_too(self, tmp_path):
+        files = {'ru': {'solution.md': "$a (§ i18n.words['and'] §) b$\n"}}
+        assert 'word-missing' in ids(run(tmp_path, files=files))
+
+    def test_a_locale_key_is_not_a_word(self, tmp_path):
+        """`i18n.full` is the locale's own name. It looks exactly like a word lookup and is not."""
+        files = {'sk': {'solution.md': "language: (§ i18n.full §)\n"}}
+        assert 'word-missing' not in ids(run(tmp_path, files=files))
+
+    def test_problem_word_missing_for_this_language(self, tmp_path):
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: []\n"
+                "words:\n  air:\n    sk: vzduch\n")
+        files = {'en': {'solution.md': "$V_{\\text{(§ words.air §)}}$\n"}}
+        assert 'word-missing' in ids(run(tmp_path, meta=meta, files=files))
+
+    def test_problem_word_present_for_this_language_is_quiet(self, tmp_path):
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: []\n"
+                "words:\n  air:\n    sk: vzduch\n    en: air\n")
+        files = {'en': {'solution.md': "$V_{\\text{(§ words.air §)}}$\n"}}
+        assert 'word-missing' not in ids(run(tmp_path, meta=meta, files=files))
+
+    def test_a_non_keyword_ending_in_w_is_not_stripped(self, tmp_path):
+        """`i18n.nw` must not be read as the word `n`; only Jinja keywords carry the suffix."""
+        files = {'sk': {'solution.md': "$(§ i18n.nw §)$\n"}}
+        assert 'word-missing' in ids(run(tmp_path, files=files))

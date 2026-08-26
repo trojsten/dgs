@@ -95,9 +95,12 @@ class MissingWordError(Exception):
     """
     A word the active language does not define.
 
-    Never a fallback. A word inside maths is prose, and a fallback for prose means a Slovak booklet
-    printing `therefore` -- correct-looking output that nobody notices until it is in print. Failing
-    the build is the only version of this that gets fixed.
+    Never a *silent* fallback. A word inside maths is prose, and a fallback for prose means a
+    Slovak booklet printing `therefore` -- correct-looking output that nobody notices until it is
+    in print.
+
+    Kept for callers that want the failure rather than the placeholder; the renderer itself now
+    collects misses and boxes them, see `MissingWordRegistry`.
     """
     def __init__(self, term, language, available, where):
         super().__init__(
@@ -105,6 +108,51 @@ class MissingWordError(Exception):
             f"(it has {', '.join(sorted(available)) or 'none'}). "
             f"Add it there; there is deliberately no fallback."
         )
+
+
+class MissingWordRegistry:
+    """
+    Every word a render asked for and the language did not have.
+
+    Modelled on `make_collect_undefined`: collect the lot and report once, rather than dying on
+    the first, so a translator sees every gap in one pass instead of one per rebuild.
+
+    What is emitted in place of the word is `\\errorMessage{term?lang}` -- `core/latex/utilities.tex`
+    defines that as `\\colorbox{red}{...}`, the same red box `\\protectedInput` puts where a file is
+    missing. The reasoning is the same too: one absent word should not cost you the other 39
+    problems, and a translator wants the whole booklet with the holes marked.
+
+    **The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
+    every language for years while `make` stayed green, because nobody reads page 42; and the
+    output already carries some 1500 of these boxes, so one more does not stand out. The net is
+    this registry being reported at the end of the render, and the audit reading it from the
+    sources -- exactly how the `onion` case was actually caught.
+    """
+    def __init__(self):
+        self._missing: list[tuple[str, str, str]] = []
+
+    def record(self, term: str, language: str, where: str) -> str:
+        entry = (term, language, where)
+        if entry not in self._missing:
+            self._missing.append(entry)
+        return rf"\errorMessage{{{term}?{language}}}"
+
+    def clear(self):
+        self._missing.clear()
+
+    @property
+    def missing(self):
+        return list(self._missing)
+
+    def report(self) -> str | None:
+        if not self._missing:
+            return None
+        lines = [f"  `{term}` has no {lang} translation in {where}"
+                 for term, lang, where in self._missing]
+        return ("Missing translated words, boxed in red in the output:\n"
+                + "\n".join(lines)
+                + "\nAdd them there. There is deliberately no fallback -- the box is a marker, "
+                  "not a translation, and it will print if nobody removes it.")
 
 
 class LocalisedWords:
@@ -115,21 +163,28 @@ class LocalisedWords:
     its six languages and differently in the other two, so resolving everything eagerly would fail a
     Polish build over a word Polish never asks for. Asking is what makes a word required.
     """
-    def __init__(self, words, language, where):
+    def __init__(self, words, language, where, registry=None):
         self._words = words
         self._language = language
         self._where = where
         self.where = where
+        # Without a registry the miss is fatal, which is what a caller outside a render wants.
+        self._registry = registry
+
+    def _miss(self, term):
+        if self._registry is None:
+            raise MissingWordError(term, self._language, (), self._where)
+        return self._registry.record(term, self._language, self._where)
 
     def __getitem__(self, term):
         per_language = self._words.get(term)
         if per_language is None:
-            raise MissingWordError(term, self._language, (), self._where)
+            return self._miss(term)
         if isinstance(per_language, str):
             # `core/i18n` is already one language per file, so the value is the word itself
             return per_language
         if self._language not in per_language:
-            raise MissingWordError(term, self._language, per_language, self._where)
+            return self._miss(term)
         return per_language[self._language]
 
     def __contains__(self, term):
@@ -237,6 +292,18 @@ class CLIInterface(cli.CLIInterface, ABC):
     description = "Jinja convertor"
     context_cls = StandaloneContext
 
+    def __init__(self, *args, **kwargs):
+        # Built before `build_convertor`, because `build_context` fills it while rendering.
+        self.missing_words = MissingWordRegistry()
+        super().__init__(*args, **kwargs)
+
+    def run(self) -> None:
+        super().run()
+        # After the output is written, not instead of it: the point of boxing a missing word is
+        # that the booklet still builds with the hole marked. This is the part a machine reads.
+        if (report := self.missing_words.report()) is not None:
+            log.warning(f"{c.err('missing words')} in {c.path(self.args.infile.name)}\n{report}")
+
     @staticmethod
     def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = frozenset()) -> None:
         """
@@ -288,7 +355,7 @@ class CLIInterface(cli.CLIInterface, ABC):
         # wrapped so a word this language does not define stops the build with a message naming it,
         # rather than resolving to something plausible in the wrong language
         words = LocalisedWords(localised.get('words') or {}, self.args.locale,
-                               f'core/i18n/{self.args.locale}.yaml')
+                               f'core/i18n/{self.args.locale}.yaml', registry=self.missing_words)
         # Reachable both ways: `i18n.words['and']` and, since a conjunction inside an equation is
         # read far more often than written, `i18n.andw` -- see `LocalisedI18n`.
         localised = LocalisedI18n(localised, words)
@@ -303,7 +370,8 @@ class CLIInterface(cli.CLIInterface, ABC):
         # equations end in `= const` -- and refusing it would be a rule enforcing nothing.
         if 'words' in context.data:
             ctx.add(words=LocalisedWords(context.data['words'], self.args.locale,
-                                         "this problem's meta.yaml"))
+                                         "this problem's meta.yaml",
+                                         registry=self.missing_words))
 
         # Process derived quantities: evaluate the expressions in document order, adding each result
         # to the context, so that a later expression may build on an earlier one. This replaces the

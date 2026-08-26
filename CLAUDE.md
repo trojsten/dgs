@@ -141,11 +141,26 @@ drift apart. Two tiers, because the vocabulary splits cleanly:
   found inside `\text{}` across phys, 167 appear in exactly one problem, so this is the
   common case.
 
-**There is no fallback, deliberately.** Asking for a word the active language does not
-define raises `MissingWordError`, naming the word, the language and the file to add it to.
-`default.yaml` holds no `words:` for exactly this reason: `merge()` would make whatever it
-held the fallback for every language, and a fallback for prose means a Slovak booklet
-printing `therefore` — output that looks right until it is in print.
+A word is reached as `(§ i18n.andw §)` — the `w` because `and` is a Jinja keyword and
+`i18n.and` will not parse. Only the keywords take it; `(§ i18n.therefore §)` is spelled as
+written. `(§ i18n.words['and'] §)` still works and is the older spelling. `|q` and `|qq` wrap
+a word in `\QText` / `\QQText`, so the whole thing is `(§ i18n.andw|qq §)`.
+
+**There is no silent fallback, deliberately.** `default.yaml` holds no `words:`: `merge()`
+would make whatever it held the fallback for every language, and a fallback for prose means a
+Slovak booklet printing `therefore` — output that looks right until it is in print.
+
+A word the language has not got is **boxed, not guessed**: the renderer emits
+`\errorMessage{and?pl}`, which `core/latex/utilities.tex` sets as a red `\colorbox`, and
+carries on. That is `\protectedInput`'s call for a missing file, for the same reason — one
+absent word should not cost you the other 39 problems, and a translator wants the whole
+booklet with the holes marked.
+
+**The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
+every language for years while `make` stayed green, and the output already carries some 1500
+of these boxes, so one more does not stand out. The net is two things: every miss is collected
+and reported once at the end of the render, and `core/audit`'s `word-missing` check reads them
+off the sources. Fix the word; do not ship the box.
 
 Resolution is lazy, so a language that never asks for a word does not need it —
 `21/troll-science` writes the equation with translated subscripts in four of its six

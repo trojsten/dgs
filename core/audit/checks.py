@@ -311,6 +311,71 @@ def tag_unknown(sources):
                 yield Finding('tag-unknown', 'warning', f"{tag!r} is not in VALID_TAGS", unit.path)
 
 
+# --- translated words -------------------------------------------------------
+
+#: `(§ i18n.andw §)`, `(§ i18n.words['and'] §)` and `(§ words.air §)` -- the three spellings a
+#: source can ask for a translated word by.
+RE_I18N_WORD = re.compile(r"\(§\s*i18n\.(?:words\[[\'\"](?P<sub>\w+)[\'\"]\]|(?P<attr>\w+))")
+RE_UNIT_WORD = re.compile(r"\(§\s*words\.(?P<term>\w+)")
+
+#: Mirrors `core.builder.renderer.JINJA_KEYWORDS`: those words are reached with a `w` suffix
+#: because `i18n.and` will not parse. Everything else is spelled as written.
+_KEYWORD_SUFFIXED = frozenset({
+    'and', 'or', 'not', 'if', 'else', 'elif', 'in', 'is', 'for', 'true', 'false', 'none',
+})
+
+#: Keys of the locale itself, which `i18n.<name>` reaches before any word lookup happens.
+_LOCALE_KEYS = frozenset({'id', 'full', 'native', 'locale', 'quotes', 'cref', 'words', 'rtl',
+                          'siunitx'})
+
+
+def _i18n_words(lang):
+    """The `words:` a language defines, or None if there is no such locale file."""
+    from core import i18n as core_i18n
+    locale = core_i18n.languages.get(lang)
+    if locale is None:
+        return None
+    return (locale.as_dict().get('words') or {})
+
+
+@check('word-missing', 'error', 'A translated word the language does not define')
+def word_missing(sources):
+    """
+    A word a source asks for and its language has not got.
+
+    The renderer no longer stops for this: it boxes the word in red and carries on, so the
+    booklet still builds with the hole marked. That box is not the safety net -- volume 19
+    printed `Missing file …onion…!` on page 42 in every language for years while `make` stayed
+    green, and the output already carries some 1500 such boxes, so one more does not stand out.
+    This check is the safety net, and it reads the sources rather than the PDF.
+    """
+    for unit in sources.unit_list:
+        unit_words = (unit.meta or {}).get('words') or {}
+        for lang, name, text in unit.files():
+            if not lang:
+                continue                    # shared file: no one language to resolve against
+            defined = _i18n_words(lang)
+            if defined is None:
+                continue                    # not a language we carry a locale for
+            for m in RE_I18N_WORD.finditer(text):
+                term = m.group('sub') or m.group('attr')
+                if m.group('attr') and term in _LOCALE_KEYS:
+                    continue                # `i18n.full` is locale data, not a word
+                if m.group('attr') and term.endswith('w') and term[:-1] in _KEYWORD_SUFFIXED:
+                    term = term[:-1]
+                if term not in defined:
+                    yield Finding('word-missing', 'error',
+                                  f"`{term}` has no {lang} translation in core/i18n/{lang}.yaml",
+                                  unit.path, unit.label(lang, name), line_of(text, m.start()))
+            for m in RE_UNIT_WORD.finditer(text):
+                term = m.group('term')
+                per_language = unit_words.get(term)
+                if per_language is None or lang not in per_language:
+                    yield Finding('word-missing', 'error',
+                                  f"`{term}` has no {lang} translation in the problem's meta.yaml",
+                                  unit.path, unit.label(lang, name), line_of(text, m.start()))
+
+
 # --- maths ------------------------------------------------------------------
 
 @check('delimiter-indented', 'error', 'A display delimiter is indented')

@@ -53,7 +53,25 @@ class TestTranslatedWords:
         saved = sys.argv
         try:
             sys.argv = ['r', locale, '-C', str(tmp_path / 'meta.yaml'), str(src), str(out)]
-            return CLIInterface().convertor.run()
+            cli = CLIInterface()
+            return cli.convertor.run()
+        finally:
+            sys.argv = saved
+
+    @staticmethod
+    def render_collecting(tmp_path, locale, meta, source):
+        """As `render`, but hands back the interface so a test can read what it collected."""
+        import sys
+        from modules.naboj.builder.renderer import CLIInterface
+        (tmp_path / 'meta.yaml').write_text(meta)
+        src = tmp_path / 'solution.md'
+        src.write_text(source)
+        out = tmp_path / 'out.md'
+        saved = sys.argv
+        try:
+            sys.argv = ['r', locale, '-C', str(tmp_path / 'meta.yaml'), str(src), str(out)]
+            cli = CLIInterface()
+            return cli.convertor.run(), cli
         finally:
             sys.argv = saved
 
@@ -79,28 +97,28 @@ class TestTranslatedWords:
         assert '\\QQText{and}' in self.render(tmp_path, 'en', self.META, source)
         assert '\\QQText{und}' in self.render(tmp_path, 'de', self.META, source)
 
-    def test_a_global_word_a_language_lacks_is_an_error(self, tmp_path):
+    def test_a_global_word_a_language_lacks_is_boxed_not_guessed(self, tmp_path):
         """
-        Never a fallback. A word inside maths is prose, and falling back means a Slovak booklet
-        printing `therefore` -- output that looks right until it is in print.
+        Never a *silent* fallback. A word inside maths is prose, and falling back means a Slovak
+        booklet printing `therefore` -- output that looks right until it is in print. A red box
+        does not look right, which is the whole point of using one.
         """
-        from core.builder.renderer import MissingWordError
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
-        with pytest.raises(MissingWordError, match='no sk translation'):
-            self.render(tmp_path, 'sk', self.META, source)
+        out = self.render(tmp_path, 'sk', self.META, source)
+        assert r'\errorMessage{therefore?sk}' in out
+        assert 'therefore}' not in out.replace(r'\errorMessage{therefore?sk}', '')
 
-    def test_the_error_names_the_file_to_fix(self, tmp_path):
-        from core.builder.renderer import MissingWordError
+    def test_the_report_names_the_file_to_fix(self, tmp_path):
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
-        with pytest.raises(MissingWordError, match=r'core/i18n/sk\.yaml'):
-            self.render(tmp_path, 'sk', self.META, source)
+        _, cli = self.render_collecting(tmp_path, 'sk', self.META, source)
+        assert 'core/i18n/sk.yaml' in cli.missing_words.report()
 
-    def test_a_missing_problem_word_is_an_error(self, tmp_path):
+    def test_a_missing_problem_word_is_boxed_and_recorded(self, tmp_path):
         """A problem's own word has no English to fall back on, so silence would ship a hole."""
-        from core.builder.renderer import MissingWordError
         source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
-        with pytest.raises(MissingWordError, match='no hu translation'):
-            self.render(tmp_path, 'hu', self.META, source)
+        out, cli = self.render_collecting(tmp_path, 'hu', self.META, source)
+        assert r'\errorMessage{air?hu}' in out
+        assert [t for t, _, _ in cli.missing_words.missing] == ['air']
 
     def test_a_word_may_be_called_const(self, tmp_path):
         """
@@ -184,3 +202,59 @@ class TestLocalisedI18n:
         """Otherwise `i18n.full` would silently return the locale name, not the word."""
         with pytest.raises(ValueError, match='collide'):
             self.make({'full': 'úplný'}, data={'full': 'slovak'})
+
+
+class TestMissingWordRegistry:
+    """
+    A missing word is boxed rather than fatal, so the booklet still builds with the hole marked --
+    the same call `\\protectedInput` makes for a missing file. The registry is what keeps that from
+    being silent: it collects every miss for one report at the end.
+    """
+
+    @staticmethod
+    def words(mapping, language='ru', registry=None):
+        from core.builder.renderer import LocalisedWords
+        return LocalisedWords(mapping, language, f'core/i18n/{language}.yaml', registry=registry)
+
+    def test_a_miss_becomes_a_red_box(self):
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        assert self.words({}, registry=reg)['and'] == r'\errorMessage{and?ru}'
+
+    def test_the_miss_is_recorded(self):
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        _ = self.words({}, registry=reg)['and']
+        assert reg.missing == [('and', 'ru', 'core/i18n/ru.yaml')]
+
+    def test_the_same_miss_is_recorded_once(self):
+        """An equation reused in six places should not report the same gap six times."""
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        w = self.words({}, registry=reg)
+        _, _, _ = w['and'], w['and'], w['and']
+        assert len(reg.missing) == 1
+
+    def test_a_word_that_is_present_is_not_recorded(self):
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        assert self.words({'and': 'a'}, language='sk', registry=reg)['and'] == 'a'
+        assert reg.missing == []
+
+    def test_report_is_none_when_nothing_is_missing(self):
+        from core.builder.renderer import MissingWordRegistry
+        assert MissingWordRegistry().report() is None
+
+    def test_report_names_every_gap(self):
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        w = self.words({}, registry=reg)
+        _, _ = w['and'], w['therefore']
+        report = reg.report()
+        assert '`and`' in report and '`therefore`' in report and 'ru' in report
+
+    def test_without_a_registry_it_still_raises(self):
+        """Callers outside a render want the failure, not a box they will never look at."""
+        from core.builder.renderer import MissingWordError
+        with pytest.raises(MissingWordError):
+            _ = self.words({})['and']

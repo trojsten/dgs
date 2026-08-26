@@ -50,8 +50,13 @@ class Locale:
         },
         # Words that appear inside maths and have to be translated: `\QQText{and}` is `and` in
         # English and `a` in Slovak, and writing them out by hand is how the Spanish, Polish and
-        # Portuguese solutions came to say `and`. `default.yaml` carries English, so a language
-        # nobody has filled in falls back to it rather than failing the build.
+        # Portuguese solutions came to say `and`.
+        #
+        # `default.yaml` deliberately carries **no** `words:`. `merge()` would make whatever it
+        # held the fallback for every language, and a fallback for prose means a Slovak booklet
+        # printing `therefore` -- output that looks right until it is in print. A word this
+        # language has not got is boxed in red instead, and collected for one report at the end of
+        # the render; `core/audit`'s `word-missing` is what catches it from the sources.
         Optional('words'): dict[str, str],
         Optional('rtl', default=False): bool,
         'siunitx': {
