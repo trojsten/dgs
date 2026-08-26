@@ -454,5 +454,17 @@
 
 \NewDocumentCommand{\OneQuarter}{}{\text{¼}}
 \NewDocumentCommand{\ThreeQuarters}{}{\text{¾}}
-% (and maybe more but later)
+
+\NewDocumentCommand{\OneEighth}{}{\text{⅛}}
+\NewDocumentCommand{\ThreeEighths}{}{\text{⅜}}
+\NewDocumentCommand{\FiveEighths}{}{\text{⅝}}
+\NewDocumentCommand{\SevenEighths}{}{\text{⅞}}
+
+% These nine are the whole set, and not for want of trying: halves, thirds, quarters and eighths
+% are the only vulgar fractions MinionPro has a glyph for. Fifths, sixths, sevenths, ninths and
+% tenths -- U+2150, U+2151, U+2152 and U+2155 to U+215A -- are absent from the font, and a missing
+% glyph is not a compile error. xelatex writes `Missing character:` into the log and sets nothing
+% at all, so a \TwoFifths would be a fraction that silently vanishes off the page. Hence there is
+% no \TwoFifths: anything the font cannot set stays \nicefrac, which builds its fraction out of
+% digits, and digits always exist.
 \makeatother
