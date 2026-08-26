@@ -1009,3 +1009,53 @@ class TestTranslatedWords:
         """`i18n.nw` must not be read as the word `n`; only Jinja keywords carry the suffix."""
         files = {'sk': {'solution.md': "$(§ i18n.nw §)$\n"}}
         assert 'word-missing' in ids(run(tmp_path, files=files))
+
+
+class TestDisplayParagraph:
+    """
+    A display ending in a full stop ends the sentence, so a blank line follows it. One ending in a
+    comma, a semicolon or nothing does not, so the prose carries straight on.
+    """
+
+    def test_full_stop_without_a_break(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp('.') §)\nĎalšia veta.\n"}}
+        assert 'display-paragraph' in ids(run(tmp_path, files=files))
+
+    def test_full_stop_with_a_break_is_quiet(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp('.') §)\n\nĎalšia veta.\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_comma_with_a_break(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp(',') §)\n\nkde $x$ je nieco.\n"}}
+        assert 'display-paragraph' in ids(run(tmp_path, files=files))
+
+    def test_comma_without_a_break_is_quiet(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp(',') §)\nkde $x$ je nieco.\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_end_of_file_exempts_the_rule(self, tmp_path):
+        """Nothing can follow the last block in a file, whatever it ends with."""
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp('.') §)\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_a_list_after_a_comma_is_quiet(self, tmp_path):
+        """Markdown needs the blank line before a list however the sentence is going."""
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp(',') §)\n\n-   polozka\n-   druha\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_a_figure_after_a_comma_is_quiet(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n(§ eq.a|disp(',') §)\n\n![c](p.svg){#fig:x}\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_a_display_nested_in_a_list_is_quiet(self, tmp_path):
+        """
+        `28/tetristor` indents six blocks inside list items, where the next bullet is the break.
+        The paragraph rule is about prose, so an indented block is not its business.
+        """
+        files = {'sk': {'solution.md':
+                        "-   prva\n    $$\n        x = 1.\n    $$ {#eq:t:a}\n-   druha\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_a_literal_block_is_seen_too(self, tmp_path):
+        files = {'sk': {'solution.md': "text\n$$\n    x = 1.\n$$ {#eq:t:a}\nDalsia veta.\n"}}
+        assert 'display-paragraph' in ids(run(tmp_path, files=files))

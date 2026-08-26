@@ -311,6 +311,91 @@ def tag_unknown(sources):
                 yield Finding('tag-unknown', 'warning', f"{tag!r} is not in VALID_TAGS", unit.path)
 
 
+# --- paragraphs around display maths ----------------------------------------
+
+#: A display reference on a line of its own: `(§ eq.foo|disp('.') §)`, `|dispd`, `|align(',')`.
+#: Anchored at column 0, like `RE_BLOCK`. An indented display sits inside a list item, where the
+#: next bullet is the break and the paragraph rule does not apply -- `28/tetristor` writes six of
+#: them that way. No source indents a *reference* today; matching one would invent a finding.
+RE_DISPLAY_REF = re.compile(
+    r"^\(§\s*eq\.\w+\s*\|\s*(?:disp|align)"
+    r"(?:\((?P<arg>[^)]*)\)|(?P<suf>[dcsqe]))?\s*§\)[ \t]*$", re.M)
+
+#: `|dispd` and friends bind their punctuation in the name.
+_PUNCT_SUFFIX = {'d': '.', 'c': ',', 's': ';', 'q': '?', 'e': '!'}
+
+SENTENCE_ENDERS = frozenset('.?!')
+
+#: Markdown wants a blank line before each of these however the sentence is going, so a break
+#: after a comma is correct here and must not be reported.
+RE_NEEDS_OWN_PARAGRAPH = re.compile(r'^[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|!\[|#|\$\$|\(§\s*eq\.)')
+
+
+def display_blocks(text):
+    """
+    Every display block, as (index of its last line, terminal punctuation).
+
+    Both spellings: a literal `$$ … $$`, whose punctuation is the last character of its body,
+    and a `(§ eq.x|disp('.') §)` reference, whose punctuation is in the filter.
+    """
+    lines = text.splitlines()
+    for m in blocks_of(text):
+        body = [l for l in m.group('body').splitlines() if l.strip()]
+        last = body[-1].rstrip() if body else ''
+        punct = last[-1] if last and last[-1] in ',.;?!' else ''
+        yield line_of(text, m.end()) - 1, punct
+    for m in RE_DISPLAY_REF.finditer(text):
+        punct = (_PUNCT_SUFFIX[m.group('suf')] if m.group('suf')
+                 else (m.group('arg') or '').strip().strip("'\""))
+        yield line_of(text, m.start()) - 1, punct
+
+
+@check('display-paragraph', 'warning',
+       'A display block agrees with its punctuation about ending the paragraph')
+def display_paragraph(sources):
+    """
+    A display equation ending in a full stop ends the sentence, so a paragraph starts after it and
+    a blank line follows. One ending in a comma, a semicolon or nothing does not, so the prose
+    continues on the next line with no blank between.
+
+    Which half is wrong is not for a check to decide: `(§ eq.x|disp('.') §)` followed straight
+    away by a lowercase `kde` may be a missing blank line or a full stop that wanted to be a
+    comma. The message says what it sees and leaves the choice to whoever knows the sentence.
+
+    End of file exempts the rule -- nothing can follow -- as does a next line Markdown would
+    demand a blank before anyway: a list item, a figure, a heading or another display.
+    """
+    for unit in sources.unit_list:
+        # A mirrored translation is one set of bytes reached by two names; reporting the same line
+        # once per language would have volume 27's 81 links doubling most of its findings.
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)
+            if place in seen:
+                continue
+            seen.add(place)
+            lines = text.splitlines()
+            for end, punct in display_blocks(text):
+                if end + 1 >= len(lines) or not any(l.strip() for l in lines[end + 1:]):
+                    continue                                    # nothing follows
+                blank = not lines[end + 1].strip()
+                ends_sentence = punct in SENTENCE_ENDERS
+                if ends_sentence == blank:
+                    continue                                    # agrees
+                following = next(l for l in lines[end + 1:] if l.strip())
+                if not ends_sentence and RE_NEEDS_OWN_PARAGRAPH.match(following):
+                    continue                                    # Markdown needs the break
+                if ends_sentence:
+                    message = (f"ends with `{punct}` but no paragraph break follows; "
+                               f"either the blank line is missing or the `{punct}` wanted to be a comma")
+                else:
+                    shown = f"`{punct}`" if punct else "no punctuation"
+                    message = (f"ends with {shown} but a paragraph break follows; "
+                               f"either the blank line is spurious or the sentence wanted a full stop")
+                yield Finding('display-paragraph', 'warning', message,
+                              unit.path, unit.label(lang, name), end + 1)
+
+
 # --- translated words -------------------------------------------------------
 
 #: `(§ i18n.andw §)`, `(§ i18n.words['and'] §)` and `(§ words.air §)` -- the three spellings a
