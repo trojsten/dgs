@@ -227,3 +227,12 @@ and after. Reading through a symlink is safe; writing is not.
 - Block equations belong in `meta.yaml` under `eq:`, referenced as
   `(§ eq.<name>|disp('.') §)`. The key becomes the label, so renaming a key
   renames `{#eq:<pid>:<key>}`.
+- **The delimiters are the filter's job, not the fragment's.** `|disp` and `|align`
+  make a display block, `|inl` makes `$…$`, and a *bare* `(§ eq.x §)` is the raw
+  LaTeX with nothing around it — which is what lets one equation be spliced into
+  another (`x = (§ eq.res §)` inside a bigger `eq:` entry). Never write
+  `$(§ eq.x §)$` by hand; that is `|inl`, spelled longer. The default is raw
+  because wrapping a bare fragment is one filter away, while unwrapping a
+  pre-wrapped one is not possible in a template at all. Both mistakes fail the
+  build loudly — bare in prose gives `! Missing $ inserted.`, and a `$` nested in
+  a `$$` block gives `! Display math should end with $$.` — so neither is silent.
