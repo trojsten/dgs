@@ -907,6 +907,35 @@ def symlink(sources):
                           unit.path, link)
 
 
+def trailing_whitespace_is_meaningful(line: str, following: str) -> bool:
+    """
+    Whether the whitespace at the end of `line` is doing something.
+
+    Two cases, and both were found the hard way -- by a sweep that stripped them and
+    broke the page:
+
+    - **Two or more spaces before a line with content** is a Markdown hard line break.
+      `chem/02/hviezdoslavov-kubín` is a poem and needs them between its verses;
+      `chem/04/zase-nmr` hangs NMR data under each list item; an FKS solution sets a
+      three-line author byline inside one italic span. Before a *blank* line the same
+      spaces are inert -- a break at the end of a paragraph does nothing -- so those are
+      still reported.
+    - **A space after an odd run of backslashes is escaped.** `\\ ` is this project's
+      non-breaking space (CLAUDE.md: `v\\ istej`), and thirteen `answer.md` files end a
+      line with one. Strip it and the bare `\\` left behind is a hard line break, which
+      pushes the figure that follows onto its own line. An *even* run is escaped
+      backslashes and the space after it is ordinary, so that is reported.
+    """
+    stripped = line.rstrip()
+    if line == stripped or not stripped:
+        return False                                    # nothing trailing, or a blank line
+    ws = line[len(stripped):]
+    if len(ws) >= 2 and ws == ' ' * len(ws) and following.strip():
+        return True                                     # hard line break
+    backslashes = len(stripped) - len(stripped.rstrip('\\'))
+    return backslashes % 2 == 1 and ws.startswith(' ')  # escaped space
+
+
 @check('encoding', 'warning', 'CRLF, tabs or trailing whitespace')
 def encoding(sources):
     for unit in sources.unit_list:
@@ -916,7 +945,11 @@ def encoding(sources):
                 problems.append('CRLF line endings')
             if '\t' in text:
                 problems.append('tabs')
-            if any(line != line.rstrip() for line in text.split('\n')):
+            lines = text.split('\n')
+            if any(line != line.rstrip()
+                   and not trailing_whitespace_is_meaningful(
+                       line, lines[i + 1] if i + 1 < len(lines) else '')
+                   for i, line in enumerate(lines)):
                 problems.append('trailing whitespace')
             if problems:
                 yield Finding('encoding', 'warning', ', '.join(problems),

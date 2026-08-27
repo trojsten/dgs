@@ -1059,3 +1059,43 @@ class TestDisplayParagraph:
     def test_a_literal_block_is_seen_too(self, tmp_path):
         files = {'sk': {'solution.md': "text\n$$\n    x = 1.\n$$ {#eq:t:a}\nDalsia veta.\n"}}
         assert 'display-paragraph' in ids(run(tmp_path, files=files))
+
+
+class TestEncodingTrailingWhitespace:
+    """
+    Trailing whitespace is reported unless it is doing something. Two idioms are, and
+    both were found by a sweep that stripped them and broke the page.
+    """
+
+    def test_a_plain_trailing_space_is_reported(self, tmp_path):
+        files = {'sk': {'solution.md': 'text with a trailing space \nmore text\n'}}
+        assert 'encoding' in ids(run(tmp_path, files=files))
+
+    def test_a_whitespace_only_line_is_reported(self, tmp_path):
+        """A line of spaces is never a break -- a break needs content before it."""
+        files = {'sk': {'solution.md': 'text\n   \nmore\n'}}
+        assert 'encoding' in ids(run(tmp_path, files=files))
+
+    def test_two_spaces_before_content_is_a_line_break(self, tmp_path):
+        """`chem/02/hviezdoslavov-kubín` is a poem and needs these between its verses."""
+        files = {'sk': {'solution.md': 'prvý verš  \ndruhý verš.\n'}}
+        assert 'encoding' not in ids(run(tmp_path, files=files))
+
+    def test_two_spaces_before_a_blank_line_is_reported(self, tmp_path):
+        """A break at the end of a paragraph does nothing, so it is not an idiom."""
+        files = {'sk': {'solution.md': 'text  \n\nnew paragraph\n'}}
+        assert 'encoding' in ids(run(tmp_path, files=files))
+
+    def test_an_escaped_space_is_the_non_breaking_space(self, tmp_path):
+        r"""`\ ` is CLAUDE.md's non-breaking space; stripping it leaves a hard break."""
+        files = {'sk': {'answer.md': '\\ \n\n![](fig.svg)\n'}}
+        assert 'encoding' not in ids(run(tmp_path, files=files))
+
+    def test_an_even_run_of_backslashes_does_not_escape(self, tmp_path):
+        r"""`\\ ` is an escaped backslash then an ordinary space -- report it."""
+        files = {'sk': {'solution.md': 'text \\\\ \nmore\n'}}
+        assert 'encoding' in ids(run(tmp_path, files=files))
+
+    def test_a_clean_file_is_quiet(self, tmp_path):
+        files = {'sk': {'solution.md': 'text\nmore text\n'}}
+        assert 'encoding' not in ids(run(tmp_path, files=files))
