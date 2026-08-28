@@ -199,6 +199,30 @@ Do not use U+202F for a preposition either. That is `\ `, a normal non-breaking
 space -- `v\ istej`, not a thin one. Nine chemistry problems had 57 of these from
 a word processor; they are gone.
 
+## Trailing whitespace — two kinds of it mean something
+
+Strip trailing whitespace freely **except** in two cases, both of which a sweep has
+already broken once:
+
+- **A space after an odd run of backslashes is escaped.** That is the `\ `
+  non-breaking space above, and thirteen `answer.md` files end a line with one.
+  Strip the space and the bare `\` left behind is a Markdown hard line break, which
+  pushes the figure below onto its own line -- `~` becomes `\hfill\break` in the
+  TeX. An *even* run is escaped backslashes and the space after it is ordinary.
+- **Two or more spaces before a line with content force a line break.**
+  `chem/02/hviezdoslavov-kubín` is a poem and needs them between its verses,
+  `chem/04/zase-nmr` hangs NMR data under each list item, and `FKS/39/1/2/06` holds
+  a three-line author byline inside one italic span. The same spaces before a
+  *blank* line are inert -- a break at the end of a paragraph does nothing.
+
+A line that is *entirely* whitespace is never either of these, since a break needs
+content before it. Empty it -- but check what it renders to first: volume 24's
+Farsi statements each ended with a lone U+2003 EM SPACE, which pandoc set as its own
+paragraph, so removing them changed the page rather than merely tidying it.
+
+`core/audit/checks.py`'s `trailing_whitespace_is_meaningful` is the one place this
+rule lives; the `encoding` check calls it, and a sweep should too.
+
 ## Symlinks — check before any bulk edit
 
 **84 files under `source/` are symlinks, and `Path.write_text` follows them.**
