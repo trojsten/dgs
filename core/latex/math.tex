@@ -10,6 +10,7 @@
 \DeclarePairedDelimiter{\dgsparen@}{(}{)}
 \DeclarePairedDelimiter{\dgsbracket@}{[}{]}
 \DeclarePairedDelimiter{\dgsabs@}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\dgsdist@}{\lvert}{\rvert}
 \DeclarePairedDelimiter{\dgsfloor@}{\lfloor}{\rfloor}
 \DeclarePairedDelimiter{\dgsceil@}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\dgschevrons@}{\langle}{\rangle}
@@ -17,6 +18,10 @@
 % Nice parentheses
 \NewDocumentCommand{\Paren}{m}{\dgsparen@*{#1}}
 \NewDocumentCommand{\Abs}{m}{\dgsabs@*{#1}}
+% The length of a segment, as in \Dist{AB}. Sets identically to \Abs today, but it means a
+% distance between two points, not an absolute value -- so it gets its own delimiter and the
+% two can be told apart later without touching a single call site.
+\NewDocumentCommand{\Dist}{m}{\dgsdist@*{#1}}
 % Shorthands for floor and ceiling functions
 \NewDocumentCommand{\Floor}{m}{\dgsfloor@*{#1}}
 \NewDocumentCommand{\Ceil}{m}{\dgsceil@*{#1}}

@@ -25,7 +25,11 @@ around parentheses no longer requires manual `\!` corrections.
 Sized delimiters:
 
 - `\Paren{expr}`     → `\left(expr\right)`
-- `\Abs{expr}`       → `\left| expr \right|`
+- `\Abs{expr}`       → `\left| expr \right|` — an absolute value or a magnitude
+- `\Dist{AB}`        → the same bars, but meaning the length of a segment. Use it whenever the
+                       argument is two point names rather than an expression; it has its own
+                       paired delimiter, so the two can be distinguished later without touching
+                       any call site.
 - `\Floor{expr}`     → `\lfloor…\rfloor`
 - `\Ceil{expr}`      → `\lceil…\rceil` (also enforced in answer files — see
                        `Adam_ISIC` result `\Ceil{t}`)
