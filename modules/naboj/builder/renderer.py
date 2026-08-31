@@ -102,6 +102,7 @@ VALID_TAGS: dict[str, str] = {
     'silly': 'something silly in the story; the physics is sound',
     'unreal': 'the physics does not model the real world, but is still computable as stated',
     'truth-or-dare': 'a list of statements to be judged true or false',
+    'ordering': 'a list of items to be sorted, the answer being the order itself',
     'incorrect': 'the problem is wrong. Kept as it stands because it was used this way years ago '
                  '-- do not "fix" it',
 }
