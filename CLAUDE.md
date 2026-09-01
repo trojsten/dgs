@@ -13,14 +13,17 @@ Render a single file (two passes; the second expands tags that came from `eq:`):
 ```
 uv run python -m modules.naboj.builder.renderer sk \
     -C source/naboj/phys/29/problems/<pid>/meta.yaml \
-    [-P source/naboj/phys/29/problems/<pid>/preamble.md] \
     source/naboj/phys/29/problems/<pid>/sk/solution.md /tmp/out.md
 ```
 
-Pass `-P` only when `preamble.md` exists — the renderer errors out if it is missing. Most
-problems no longer have one: computed quantities belong in the `derived:` mapping in
-`meta.yaml` (name → Jinja expression, evaluated in document order). `preamble.md` remains
-only for computations needing real control flow.
+Computed quantities belong in the `derived:` mapping in `meta.yaml` (name → Jinja
+expression, evaluated in document order). **No problem has a `preamble.md` any more** —
+the last nine, all in chem, moved into `derived:` and the file is gone from every volume,
+so there is nothing left for the renderer's `-P` to point at. The flag and the prepending
+behind it still exist in `core/builder/renderer.py` with no callers: neither `module.mk`
+nor the editor mentions a preamble, and `chem/04/zinkový-plech` is the worked example of
+what the migration looks like — five `@J set` lines became five `derived:` entries with
+byte-identical output.
 
 ## The editor and the auditor
 

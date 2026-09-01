@@ -1,6 +1,6 @@
 ---
 name: naboj-authoring
-description: Author, edit, and debug Náboj competition problem sources (source/naboj/**) using DGS's Markdown+Jinja+LaTeX pipeline. Use whenever the user is creating a new problem, editing problem.md / solution.md / answer.md / preamble.md / meta.yaml under source/naboj/phys/*/problems/** or source/naboj/chem/*/problems/**, debugging mdcheck violations, Jinja MissingVariablesError, pandoc/XeLaTeX errors, or extending core/ or modules/naboj (new filters, new physical constants in core/data/constants.yaml, new LaTeX macros in core/latex/*.tex, new templates in modules/naboj/templates). Applies to all Náboj volumes (phys/26, phys/27, phys/28, chem/*, ...) — the format is stable across volumes with only minor differences.
+description: Author, edit, and debug Náboj competition problem sources (source/naboj/**) using DGS's Markdown+Jinja+LaTeX pipeline. Use whenever the user is creating a new problem, editing problem.md / solution.md / answer.md / meta.yaml under source/naboj/phys/*/problems/** or source/naboj/chem/*/problems/**, debugging mdcheck violations, Jinja MissingVariablesError, pandoc/XeLaTeX errors, or extending core/ or modules/naboj (new filters, new physical constants in core/data/constants.yaml, new LaTeX macros in core/latex/*.tex, new templates in modules/naboj/templates). Applies to all Náboj volumes (phys/26, phys/27, phys/28, chem/*, ...) — the format is stable across volumes with only minor differences.
 ---
 
 # Náboj problem authoring (DGS)
@@ -9,7 +9,7 @@ DGS renders each problem through this pipeline:
 
 ```
 source/naboj/<comp>/<vol>/problems/<pid>/<lang>/{problem,solution}.md   (Markdown + Jinja)
-       + source/naboj/<comp>/<vol>/problems/<pid>/{preamble,answer,answer-also,answer-interval}.md
+       + source/naboj/<comp>/<vol>/problems/<pid>/{answer,answer-also,answer-interval}.md
        + source/naboj/<comp>/<vol>/problems/<pid>/meta.yaml
   →  render/naboj/<comp>/<vol>/problems/<pid>/<lang>/*.md                (pure Markdown, no Jinja)
   →  build/naboj/<comp>/<vol>/problems/<pid>/<lang>/*.tex                (pandoc → XeLaTeX)
@@ -25,7 +25,7 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
 
 **Route by task:**
 
-- Authoring / editing a problem (`problem.md`, `solution.md`, `meta.yaml`, `preamble.md`,
+- Authoring / editing a problem (`problem.md`, `solution.md`, `meta.yaml`,
   `answer*.md`) → read `references/layout.md`, then `references/markdown-extensions.md`.
 - Using `(§ … §)` templating, `@J set …`, math filters, `PQ(…)`, `const.g`, etc. →
   `references/jinja-templating.md`.
@@ -60,7 +60,7 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
 ## Rendering pipeline entry points
 
 - Convertor for problems: `modules.naboj.builder.renderer` (subclass of
-  `core.builder.renderer.CLIInterface`). Meta.yaml + preamble.md become the context.
+  `core.builder.renderer.CLIInterface`). `meta.yaml` alone becomes the context.
 - Jinja setup: `core/builder/jinja.py` — see `MarkdownJinjaRenderer` for the exact filter /
   global table.
 - Style linter: `core/markdown-check.py` runs `core/mdcheck/check.py` rules per line.
@@ -86,7 +86,6 @@ The project uses **uv** (see recent commit "Switched to uv"). To build one probl
 ```
 uv run python -m modules.naboj.builder.renderer \
     -C source/naboj/phys/28/problems/archery/meta.yaml \
-    -P source/naboj/phys/28/problems/archery/preamble.md \
     source/naboj/phys/28/problems/archery/en/solution.md \
     /tmp/out.md
 ```

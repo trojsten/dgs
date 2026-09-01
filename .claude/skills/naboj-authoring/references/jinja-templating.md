@@ -39,10 +39,12 @@ Everything else about the environments is identical.
 
 `core/builder/renderer.py::JinjaConvertor.run` does **two passes**:
 
-1. Prepend `preamble.md` (if any).
-2. First render pass: expands values, equations, `@J set …`.
-3. Second render pass: re-renders the intermediate so that any Jinja tags that
+1. First render pass: expands values, equations, `@J set …`.
+2. Second render pass: re-renders the intermediate so that any Jinja tags that
    appear **inside expanded content** (e.g. inside a MathObject) get expanded too.
+
+(There used to be a step 0 that prepended `preamble.md`. No source has one now — see
+`layout.md`.)
 
 This is why you can write things like `(§ result|f0 §)` in `answer.md` and have `result`
 come from the problem's `derived:` mapping — every derived quantity is evaluated while the
@@ -244,9 +246,11 @@ See `layout.md` for the details (ordering, quoting, error reporting). Idiomatic 
 compute a rounded-constant version for `answer.md` and an exact-constant version for
 `solution.md`.
 
-`@J set` in a `preamble.md` still works and is the escape hatch for the rare computation
-that needs real control flow, but it is no longer the everyday tool: a loop can nearly
-always be unrolled into a few named `derived:` steps.
+`@J set` in a `preamble.md` was the escape hatch for a computation needing real control
+flow. Nothing ever used it as one — every preamble that survived to the end held plain
+`@J set` lines — so all of them are now `derived:` entries and no `preamble.md` remains.
+A loop can nearly always be unrolled into a few named `derived:` steps; if one truly
+cannot, that is a case for a filter, not for reviving the preamble.
 
 ## Control flow (`.jtex` templates)
 
@@ -274,9 +278,9 @@ insertion order. Typical causes:
 
 - Typo in `(§ v_0 §)` when the value is defined as `v0`.
 - Value defined in `derived:` but misspelled at the use site (or vice versa).
-- Value defined in a `preamble.md` that was not prepended — the Makefile falls back to a
-  no-preamble rule when the file is absent, so a typo'd filename fails this way.
 - Cross-problem reference. Values are scoped to a single problem.
+- A name that a `derived:` expression sets *later* in the mapping. The entries are
+  evaluated in document order, so one may build on an earlier one but never on a later.
 
 ## Common pitfalls
 

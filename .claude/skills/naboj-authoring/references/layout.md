@@ -17,7 +17,6 @@ source/naboj/<comp>/<vol>/
 └── problems/
     └── <problem-id>/
         ├── meta.yaml                      # per-problem metadata (see below)
-        ├── preamble.md                    # (optional) Jinja preamble with @J set …
         ├── answer.md                      # the answer expression (Jinja, non-translatable)
         ├── answer-also.md                 # (optional) accepted alternative
         ├── answer-interval.md             # (optional) accepted interval
@@ -68,8 +67,8 @@ authors: ['Kvík']
 tags: ['kinematics']
 ```
 
-With values (used as Jinja variables inside `problem.md`, `solution.md`, `preamble.md`,
-`answer.md`, ...):
+With values (used as Jinja variables inside `problem.md`, `solution.md`, `answer.md`,
+...):
 
 ```yaml
 authors: ['Kvík']
@@ -179,16 +178,19 @@ Convention: compute a rounded-`const.g` variant (`.approx`) alongside an exact-`
 variant so both `answer.md` (rounded target for competitors) and `solution.md` (exact
 expression) get sensible values.
 
-## `preamble.md`
+## `preamble.md` — gone
 
-Optional, and only for computations `derived:` cannot express — i.e. genuine control flow.
-It is Jinja **prepended** to the file being rendered, and it must be passed explicitly with
-`-P`. Prefer `derived:`: a loop can nearly always be unrolled into a few named steps, which
-is both clearer and checkable.
+There is none left anywhere under `source/`. Every computation lives in `derived:`.
+
+The last nine were all in chem: two were empty, and seven were plain sequences of
+`@J set <name> = <expression>` — which is precisely what `derived:` evaluates, in the same
+Jinja environment and in the same document order. So not one of them needed the control
+flow the preamble existed for. Do not create one: the renderer's `-P` still accepts a path
+but nothing in the build, the editor or `module.mk` passes it.
 
 ## `answer.md` / `answer-also.md` / `answer-interval.md`
 
-Single line (no trailing newline needed), typically referencing a preamble variable:
+Single line (no trailing newline needed), typically referencing a `derived:` quantity:
 
 ```
 (§ result|f0 §)

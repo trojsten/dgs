@@ -1,6 +1,6 @@
 # Markdown dialect used by DGS
 
-Source Markdown files (`problem.md`, `solution.md`, `answer.md`, `preamble.md`, ...)
+Source Markdown files (`problem.md`, `solution.md`, `answer.md`, ...)
 are Pandoc-flavour Markdown with Jinja pre-processing on top and DGS-specific style
 rules enforced by `core/mdcheck/`. This document lists the surface features you
 actually need when writing problems, and the checker rules you must not trigger.
