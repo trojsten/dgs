@@ -145,6 +145,9 @@ class PhysicsQuantity:
     def __neg__(self):
         return PhysicsQuantity(-self._quantity)
 
+    def __abs__(self):
+        return PhysicsQuantity(abs(self._quantity))
+
     def __str__(self):
         return format(self, 'g')
 
@@ -172,6 +175,35 @@ class PhysicsQuantity:
             return self._quantity == other.quantity
         else:
             return NotImplemented
+
+    def _compare(self, other, op: Callable[[Any, Any], bool]):
+        """
+        Order two quantities, so that `|max`, `|min` and `sorted` work on them.
+
+        Not routed through `_binop`, which wraps its result in a `PhysicsQuantity`: a comparison
+        yields a bool. Incomparable dimensions raise from pint rather than quietly comparing
+        magnitudes, which is the point -- `\\qty{1}{\\metre} < \\qty{1}{\\second}` is not false,
+        it is meaningless. Different units of the same dimension compare fine, pint converting
+        as it goes.
+        """
+        if isinstance(other, PhysicsQuantity):
+            return op(self._quantity, other._quantity)
+        elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
+            return op(self._quantity, other)
+        else:
+            return NotImplemented
+
+    def __lt__(self, other):
+        return self._compare(other, operator.lt)
+
+    def __le__(self, other):
+        return self._compare(other, operator.le)
+
+    def __gt__(self, other):
+        return self._compare(other, operator.gt)
+
+    def __ge__(self, other):
+        return self._compare(other, operator.ge)
 
     @property
     def quantity(self):

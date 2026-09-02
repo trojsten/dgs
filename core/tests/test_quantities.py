@@ -204,6 +204,11 @@ class TestMetadataDropped:
         assert result.symbol is None
         assert result.si_extra == {}
 
+    def test_abs_drops(self, labelled):
+        result = abs(labelled)
+        assert result.symbol is None
+        assert result.si_extra == {}
+
     def test_pow_drops(self, labelled):
         result = labelled ** 2
         assert result.symbol is None
@@ -961,6 +966,88 @@ class TestEquality:
         m = PhysicsQuantity.construct(5, 'kg')
         with pytest.raises(TypeError):
             hash(m)
+
+
+class TestAbs:
+    """
+    `abs` keeps the unit and drops the sign, like `floor` and `ceil` keep the unit and round.
+
+    It exists so `|abs` works in a `derived:` expression: a result that is the magnitude of a
+    difference had no way to say so, because Jinja's `abs` filter calls Python's `abs`, and
+    without `__abs__` that is a `TypeError` on a quantity.
+    """
+
+    def test_negative_becomes_positive(self):
+        assert abs(PhysicsQuantity.construct(-3, 'metre')).mag == pytest.approx(3)
+
+    def test_positive_is_unchanged(self):
+        assert abs(PhysicsQuantity.construct(3, 'metre')).mag == pytest.approx(3)
+
+    def test_zero(self):
+        assert abs(PhysicsQuantity.construct(0, 'metre')).mag == pytest.approx(0)
+
+    def test_preserves_unit(self):
+        m = PhysicsQuantity.construct(-5.7, 'kg')
+        assert abs(m).unit == m.unit
+
+    def test_returns_physics_quantity(self):
+        assert isinstance(abs(PhysicsQuantity.construct(-1, 'kg')), PhysicsQuantity)
+
+    def test_of_a_difference(self):
+        """The case it is for: `\\Abs{\\FDiff{p}}`, a drop stated as a magnitude."""
+        p1 = PhysicsQuantity.construct(0.7, 'megapascal')
+        p2 = PhysicsQuantity.construct(10.5, 'megapascal')
+        assert abs(p1 - p2).mag == pytest.approx(9.8)
+
+
+class TestOrdering:
+    """
+    Quantities compare, so `|max`, `|min` and `sorted` work on them.
+
+    Only equality existed before, which made a result like "the larger of the two branches"
+    inexpressible in `derived:` -- Jinja's `max` filter sorts, and sorting needs `<`.
+    """
+
+    def test_less_than(self):
+        assert PhysicsQuantity.construct(3, 'metre') < PhysicsQuantity.construct(5, 'metre')
+
+    def test_greater_than(self):
+        assert PhysicsQuantity.construct(5, 'metre') > PhysicsQuantity.construct(3, 'metre')
+
+    def test_equal_values_are_neither_less_nor_greater(self):
+        a, b = (PhysicsQuantity.construct(3, 'metre') for _ in range(2))
+        assert not a < b and not a > b
+        assert a <= b and a >= b
+
+    def test_across_units_of_the_same_dimension(self):
+        """pint converts, so 400 cm is more than 3 m rather than less."""
+        assert PhysicsQuantity.construct(400, 'cm') > PhysicsQuantity.construct(3, 'metre')
+
+    def test_max_picks_the_larger(self):
+        quantities = [PhysicsQuantity.construct(3, 'metre'), PhysicsQuantity.construct(400, 'cm')]
+        assert max(quantities).mag == pytest.approx(400)
+
+    def test_sorted_orders_by_physical_value(self):
+        given = [PhysicsQuantity.construct(5, 'metre'),
+                 PhysicsQuantity.construct(50, 'cm'),
+                 PhysicsQuantity.construct(3, 'metre')]
+        assert [q.mag for q in sorted(given)] == [50, 3, 5]
+
+    def test_incomparable_dimensions_raise(self):
+        """
+        Not `False`. A metre is not less than a second, nor more, and answering either would
+        compare two magnitudes that mean nothing to each other.
+        """
+        with pytest.raises(pint.DimensionalityError):
+            _ = PhysicsQuantity.construct(1, 'metre') < PhysicsQuantity.construct(1, 'second')
+
+    def test_dimensionless_compares_with_a_plain_number(self):
+        assert PhysicsQuantity.construct(3, '1') < 5
+
+    def test_comparison_with_a_string_raises(self):
+        """`__eq__` returns False for a non-quantity; ordering has no such answer to give."""
+        with pytest.raises(TypeError):
+            _ = PhysicsQuantity.construct(3, 'metre') < 'tall'
 
 
 # --- PhysicsConstant -----------------------------------------------------
