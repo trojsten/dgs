@@ -566,6 +566,46 @@ class TestValueStatus:
                  'en': {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'}}
         assert statuses_of(tmp_path, files=files)['values'].state == 'none'
 
+    EXTRACTED = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                 "values:\n  h:\n    magnitude: 30\n    unit: 'metre'\n")
+    TAGGED = {l: {'problem.md': 'a $(§ h §)$ pole\n'} for l in ('sk', 'en')}
+    TYPED = {'answer.md': '$\\qty{950}{\\kilo\\gram}$\n'}
+
+    def test_a_typed_answer_holds_the_verdict_at_partial(self, tmp_path):
+        """The statement is fully extracted, so the answer is the only thing left saying `partial`."""
+        status = statuses_of(tmp_path, meta=self.EXTRACTED, files=self.TAGGED,
+                             shared=self.TYPED)['values']
+        assert status.state == 'partial'
+        assert status.detail['typed_answer'] == ['answer.md']
+
+    def test_opting_out_of_answer_literal_frees_the_verdict(self, tmp_path):
+        """
+        A problem whose answer is not the output of a calculation opts out of `answer-literal`, and
+        then a typed answer must stop holding the verdict at `partial`. `28/central-lamp` answers
+        100 % whatever its refractive index is: nothing to compute, so nothing to report.
+        """
+        meta = self.EXTRACTED.replace('values:', "audit:\n  ignore: ['answer-literal']\nvalues:")
+        status = statuses_of(tmp_path, meta=meta, files=self.TAGGED, shared=self.TYPED)['values']
+        assert status.state == 'ok'
+        assert status.detail['typed_answer'] == []
+
+    def test_opting_out_of_another_check_does_not_free_it(self, tmp_path):
+        """Per check, so an unrelated opt-out must leave the answer counted."""
+        meta = self.EXTRACTED.replace('values:', "audit:\n  ignore: ['encoding']\nvalues:")
+        assert statuses_of(tmp_path, meta=meta, files=self.TAGGED,
+                           shared=self.TYPED)['values'].state == 'partial'
+
+    def test_the_opt_out_does_not_excuse_an_unextracted_statement(self, tmp_path):
+        """
+        It frees the answer half only. `28/gravity-sudoku` had both halves wanting: an answer of 0
+        by symmetry, which is not a calculation, and a cell size still written out, which is.
+        """
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                "audit:\n  ignore: ['answer-literal']\n")
+        files = {l: {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'} for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, meta=meta, files=files,
+                           shared=self.TYPED)['values'].state == 'missing'
+
 
 class TestVolumeListing:
     """

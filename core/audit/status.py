@@ -9,7 +9,8 @@ actually finished.
     translations   is every language present, written, and not still mirroring its master
     equations      is a display equation that appears twice hoisted into `eq:`
     pictures       is every picture that exists actually included, and every inclusion resolvable
-    values         are the numbers a statement shares across its translations named in `values:`
+    values         are the numbers a statement shares across its translations named in `values:`,
+                   and is the number it produces computed rather than typed
 
 Five states, ordered worst first so a column sorts usefully. `NONE` is not a complaint: a problem
 with no pictures has nothing to include, and saying "n/a" is the honest answer.
@@ -18,8 +19,8 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from core.audit.checks import (ANSWER_FILES, RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, magnitudes,
-                               strip_maths_whitespace, RE_TAG)
+from core.audit.checks import (ANSWER_FILES, RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, ignored,
+                               magnitudes, strip_maths_whitespace, RE_TAG)
 from core.audit.sources import link_language
 
 #: Worst first. A scope's column is as bad as its worst problem, so the order is the ranking.
@@ -295,11 +296,19 @@ def value_status(unit):
     shared = shared or set()
     tagged = any(RE_TAG.search(text) for text in statements.values())
 
-    # the answer file: a number there is the result, and a result should be computed
+    # the answer file: a number there is the result, and a result should be computed -- unless the
+    # problem has opted out of `answer-literal`, which it does when the answer is not the output of
+    # a calculation at all. `28/central-lamp` answers 100 % whatever its refractive index is,
+    # `28/gravity-sudoku` answers 0 because a solved sudoku's rows all sum to 45, and
+    # `28/balance-me` answers which two of nine planets are left over. For those a typed number is
+    # the right answer, and counting it would hold the verdict at `partial` for ever -- a column
+    # reporting a problem where there is none, which is worse here than one that misses something:
+    # this list cannot be complete anyway, but it can be trusted.
     answer = {name: text for name in ANSWER_FILES
               if (text := unit.shared.get(name)) and text.strip()}
-    typed_answer = [name for name, text in answer.items()
-                    if not RE_TAG.search(text) and magnitudes(text)]
+    typed_answer = [] if ignored(unit, 'answer-literal') else [
+        name for name, text in answer.items()
+        if not RE_TAG.search(text) and magnitudes(text)]
 
     detail = {'named': named, 'literal': sorted(shared), 'tagged': tagged,
               'typed_answer': sorted(typed_answer)}
