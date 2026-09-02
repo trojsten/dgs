@@ -43,8 +43,8 @@ Everything else about the environments is identical.
 2. Second render pass: re-renders the intermediate so that any Jinja tags that
    appear **inside expanded content** (e.g. inside a MathObject) get expanded too.
 
-(There used to be a step 0 that prepended `preamble.md`. No source has one now — see
-`layout.md`.)
+(There used to be a step 0 that prepended `preamble.md`. Both the file and the step are
+gone — see `layout.md`.)
 
 This is why you can write things like `(§ result|f0 §)` in `answer.md` and have `result`
 come from the problem's `derived:` mapping — every derived quantity is evaluated while the
@@ -248,9 +248,13 @@ compute a rounded-constant version for `answer.md` and an exact-constant version
 
 `@J set` in a `preamble.md` was the escape hatch for a computation needing real control
 flow. Nothing ever used it as one — every preamble that survived to the end held plain
-`@J set` lines — so all of them are now `derived:` entries and no `preamble.md` remains.
-A loop can nearly always be unrolled into a few named `derived:` steps; if one truly
-cannot, that is a case for a filter, not for reviving the preamble.
+`@J set` lines — so all of them became `derived:` entries and the mechanism was removed:
+no file, no prepending step, no `-P`.
+
+A loop can nearly always be unrolled into a few named `derived:` steps. If one truly
+cannot, that is a case for a filter in `core/filters/`, where it gets tests — not for
+bringing the preamble back. `@J set` itself still works inside a `.jtex` template, which
+is where real control flow belongs.
 
 ## Control flow (`.jtex` templates)
 

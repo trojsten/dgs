@@ -210,8 +210,11 @@ There is none left anywhere under `source/`. Every computation lives in `derived
 The last nine were all in chem: two were empty, and seven were plain sequences of
 `@J set <name> = <expression>` — which is precisely what `derived:` evaluates, in the same
 Jinja environment and in the same document order. So not one of them needed the control
-flow the preamble existed for. Do not create one: the renderer's `-P` still accepts a path
-but nothing in the build, the editor or `module.mk` passes it.
+flow the preamble existed for.
+
+Do not create one: nothing would read it. `JinjaConvertor` takes no preamble, has no
+`prepare_template` step, and `-P` is no longer a flag — argparse exits on it rather than
+ignoring it, so an old command line fails instead of appearing to work.
 
 ## `answer.md` / `answer-also.md` / `answer-interval.md`
 

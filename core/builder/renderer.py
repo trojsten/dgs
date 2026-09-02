@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import io
 import logging
 import numbers
 import pprint
@@ -32,7 +31,6 @@ class JinjaConvertor:
                  template_file: TextIOWrapper,
                  context: Context,
                  *,
-                 preamble: io.TextIOWrapper | None = None,
                  debug: bool = False):
         """
         Parameters
@@ -41,13 +39,10 @@ class JinjaConvertor:
             The Jinja template file to render.
         context:
             The context to use for rendering the template.
-        preamble:
-            The Jinja preamble file to use (optional). May contain computations.
         debug:
             Activate debug mode.
         """
         self.context: Context = context
-        self.preamble: str | None = preamble.read() if preamble else None
         self.template: str = template_file.read()
 
         if debug:
@@ -58,25 +53,11 @@ class JinjaConvertor:
 
         self.renderer = MarkdownJinjaRenderer()
 
-    def prepare_template(self,
-                         template: str) -> str:
-        """
-        Prepare a template for rendering.
-
-        Currently just prepends the preamble, if available, separated from
-        the template by exactly one newline. An empty (or whitespace-only)
-        preamble is treated as absent, so no leading blank line is added.
-        """
-        if self.preamble and self.preamble.strip():
-            return self.preamble.rstrip("\n") + "\n" + template
-        else:
-            return template
-
     def run(self):
         # First pass: expand all equations and values
-        intermediate = self.renderer.render(self.prepare_template(self.template), self.context.data)
+        intermediate = self.renderer.render(self.template, self.context.data)
         # Second pass: expand all tags within equations
-        return self.renderer.render(self.prepare_template(intermediate), self.context.data)
+        return self.renderer.render(intermediate, self.context.data)
 
 
 class NameCollisionError(Exception):
@@ -374,8 +355,10 @@ class CLIInterface(cli.CLIInterface, ABC):
                                          registry=self.missing_words))
 
         # Process derived quantities: evaluate the expressions in document order, adding each result
-        # to the context, so that a later expression may build on an earlier one. This replaces the
-        # old `preamble.md` full of `@J set` lines for everything but genuine control flow.
+        # to the context, so that a later expression may build on an earlier one. This is the only
+        # place a problem computes anything: it replaced `preamble.md`, whose every surviving line
+        # turned out to be a plain `@J set` and none of them the control flow it existed for, so
+        # the file and the prepending step that read it are both gone.
         if 'derived' in context.data:
             self._reject_name_collisions(context.data['derived'], 'derived',
                                          taken=set(context.data.get('values') or {}))
@@ -395,18 +378,9 @@ class CLIInterface(cli.CLIInterface, ABC):
         return ctx
 
     def build_convertor(self, args, **kwargs):
-        if self.args.preamble is not None:
-            if not Path(self.args.preamble).exists():
-                log.error(f"Preamble file {Path(self.args.preamble)} specified but not found")
-            preamble = open(self.args.preamble, 'r')
-        else:
-            preamble = None
-
         return JinjaConvertor(self.args.infile,
                               self.build_context(),
-                              preamble=preamble,
                               debug=self.args.debug)
 
     def add_extra_arguments(self):
         self.parser.add_argument('-C', '--context', type=argparse.FileType('r'))
-        self.parser.add_argument('-P', '--preamble', type=str)

@@ -17,13 +17,15 @@ uv run python -m modules.naboj.builder.renderer sk \
 ```
 
 Computed quantities belong in the `derived:` mapping in `meta.yaml` (name → Jinja
-expression, evaluated in document order). **No problem has a `preamble.md` any more** —
-the last nine, all in chem, moved into `derived:` and the file is gone from every volume,
-so there is nothing left for the renderer's `-P` to point at. The flag and the prepending
-behind it still exist in `core/builder/renderer.py` with no callers: neither `module.mk`
-nor the editor mentions a preamble, and `chem/04/zinkový-plech` is the worked example of
-what the migration looks like — five `@J set` lines became five `derived:` entries with
-byte-identical output.
+expression, evaluated in document order). **`preamble.md` is gone, mechanism and all** —
+no source has one, and `JinjaConvertor` no longer takes a preamble, no longer has a
+`prepare_template` step, and no longer accepts `-P`. The last nine files were all in chem
+and every surviving line in them was a plain `@J set`, never the control flow the preamble
+existed for, so `derived:` took the lot. `chem/04/zinkový-plech` is the worked example:
+five `@J set` lines became five `derived:` entries with byte-identical output.
+
+If you meet a `-P` in an old note or transcript, drop it — argparse now exits on it, which
+is deliberate. A flag silently ignored would read as though it still worked.
 
 ## The editor and the auditor
 

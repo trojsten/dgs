@@ -3,30 +3,39 @@ import pytest
 from core.builder.renderer import JinjaConvertor
 
 
-def make_convertor(preamble):
-    convertor = JinjaConvertor.__new__(JinjaConvertor)
-    convertor.preamble = preamble
-    return convertor
+class TestNoPreamble:
+    """
+    There is no preamble any more: no source has a `preamble.md`, every computation lives in
+    `derived:`, and the prepending step and its `-P` flag are gone with them.
 
+    `TestPrepareTemplate` used to live here and tested how a preamble was glued onto a template --
+    whitespace-only treated as absent, trailing newlines collapsed to one. Nothing to glue now.
+    """
 
-class TestPrepareTemplate:
-    def test_no_preamble(self):
-        assert make_convertor(None).prepare_template("body") == "body"
+    def test_the_convertor_takes_no_preamble(self):
+        """The keyword is gone, not merely defaulted, so a stale caller fails loudly."""
+        import inspect
+        assert 'preamble' not in inspect.signature(JinjaConvertor.__init__).parameters
 
-    def test_empty_preamble(self):
-        assert make_convertor("").prepare_template("body") == "body"
+    def test_there_is_no_prepare_step(self):
+        assert not hasattr(JinjaConvertor, 'prepare_template')
 
-    def test_whitespace_only_preamble(self):
-        assert make_convertor("   \n\n").prepare_template("body") == "body"
+    def test_the_P_flag_is_refused(self, tmp_path):
+        """`-P` silently ignored would be worse than rejected: it would look like it still worked."""
+        import sys
 
-    def test_single_trailing_newline(self):
-        assert make_convertor("@J set x = 1\n").prepare_template("body") == "@J set x = 1\nbody"
-
-    def test_multiple_trailing_newlines_collapse_to_one(self):
-        assert make_convertor("@J set x = 1\n\n\n").prepare_template("body") == "@J set x = 1\nbody"
-
-    def test_no_trailing_newline_still_gets_one(self):
-        assert make_convertor("@J set x = 1").prepare_template("body") == "@J set x = 1\nbody"
+        from modules.naboj.builder.renderer import CLIInterface
+        (tmp_path / 'meta.yaml').write_text("authors:\n  idea: []\ntags: ['kinematics']\n")
+        (tmp_path / 'solution.md').write_text('nothing\n')
+        saved = sys.argv
+        try:
+            sys.argv = ['r', 'sk', '-C', str(tmp_path / 'meta.yaml'),
+                        '-P', str(tmp_path / 'preamble.md'),
+                        str(tmp_path / 'solution.md'), str(tmp_path / 'out.md')]
+            with pytest.raises(SystemExit):
+                CLIInterface()
+        finally:
+            sys.argv = saved
 
 
 class TestTranslatedWords:
