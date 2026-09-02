@@ -332,11 +332,11 @@ class TestOnlyUnit:
 
     def test_meter_per_second_squared(self):
         assert PhysicsQuantity.construct(9.8, 'meter/second^2').only_unit() == \
-               r'\unit{\meter\per\second\squared}'
+               r'\unit{\metre\per\second\squared}'
 
     def test_meter_per_second(self):
         assert PhysicsQuantity.construct(10, 'meter/second').only_unit() == \
-               r'\unit{\meter\per\second}'
+               r'\unit{\metre\per\second}'
 
     def test_celsius(self):
         """Degree-Celsius is converted to siunitx \\celsius."""
@@ -363,7 +363,7 @@ class TestOnlyUnit:
     def test_symbol_ignored(self):
         """The symbol is a display label for the quantity, not part of its unit."""
         m = PhysicsQuantity.construct(5, 'meter', symbol='d')
-        assert m.only_unit() == r'\unit{\meter}'
+        assert m.only_unit() == r'\unit{\metre}'
 
     def test_after_unit_conversion(self):
         """Unit reflects the converted unit, not the original."""
@@ -387,7 +387,7 @@ class TestOnlyUnit:
         renderer = MarkdownJinjaRenderer()
         ctx = {'q': PhysicsQuantity.construct(9.8, 'meter/second^2')}
         result = renderer.render('(§ q | unit §)', ctx)
-        assert result == r'\unit{\meter\per\second\squared}'
+        assert result == r'\unit{\metre\per\second\squared}'
 
 
 class TestMag:
@@ -914,11 +914,11 @@ class TestEqualsApproxWithoutSymbol:
 
     def test_symbol_less_formatting_still_works(self, anonymous):
         """Only the symbol forms are affected; plain formatting is untouched."""
-        assert anonymous.full == r'\qty{11.345}{\meter\per\second\squared}'
-        assert f'{anonymous:.1f}' == r'\qty{11.3}{\meter\per\second\squared}'
+        assert anonymous.full == r'\qty{11.345}{\metre\per\second\squared}'
+        assert f'{anonymous:.1f}' == r'\qty{11.3}{\metre\per\second\squared}'
 
     def test_aliasing_fixes_it(self, anonymous):
-        assert anonymous.alias('a').equals_float(2) == r'a = \qty{11.35}{\meter\per\second\squared}'
+        assert anonymous.alias('a').equals_float(2) == r'a = \qty{11.35}{\metre\per\second\squared}'
 
     def test_symbol_set_to_none_again_raises(self, mass_mega):
         """The symbol is the one mutable field -- clearing it must re-arm the check."""
@@ -1067,7 +1067,7 @@ class TestPhysicsConstant:
 
     def test_full(self, g):
         assert r'\qty{' in g.full
-        assert r'\meter' in g.full
+        assert r'\metre' in g.full
 
     def test_approx(self, g):
         """g with 2 digits rounds to 9.8 m/s^2."""
@@ -1134,13 +1134,57 @@ class TestUnitMacros:
         with pytest.raises(UnknownUnitMacroError):
             f"{PhysicsQuantity.construct(1, 'mps'):g}"
         # ... while the same physical unit spelled out is fine
-        assert PhysicsQuantity.construct(1, 'm/s').only_unit() == r'\unit{\meter\per\second}'
+        assert PhysicsQuantity.construct(1, 'm/s').only_unit() == r'\unit{\metre\per\second}'
 
     @pytest.mark.parametrize("unit,macro", [
         pytest.param('kg', r'\kilo\gram', id='prefixed'),
-        pytest.param('km/h', r'\kilo\meter\per\hour', id='per'),
-        pytest.param('kg/m^3', r'\kilo\gram\per\meter\cubed', id='power'),
+        pytest.param('km/h', r'\kilo\metre\per\hour', id='per'),
+        pytest.param('kg/m^3', r'\kilo\gram\per\metre\cubed', id='power'),
         pytest.param('J', r'\joule', id='named'),
     ])
     def test_ordinary_units_untouched(self, unit, macro):
         assert PhysicsQuantity.construct(1, unit).only_unit() == rf'\unit{{{macro}}}'
+
+
+class TestBritishSpelling:
+    r"""
+    pint names two SI units the American way. siunitx declares both spellings and they typeset
+    identically, so this is about the rendered *source*, which the repository writes in British
+    English throughout -- and which used to come out mixed, sometimes within one sentence, once a
+    hand-written `\qty{4}{\milli\litre}` sat beside the same quantity taken from `values:`.
+    """
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('metre', r'\metre', id='metre-in'),
+        pytest.param('meter', r'\metre', id='meter-in'),
+        pytest.param('litre', r'\litre', id='litre-in'),
+        pytest.param('liter', r'\litre', id='liter-in'),
+    ])
+    def test_either_spelling_renders_british(self, unit, macro):
+        """Whichever the source writes -- and pint accepts both -- one spelling comes out."""
+        assert PhysicsQuantity.construct(1, unit).only_unit() == rf'\unit{{{macro}}}'
+
+    @pytest.mark.parametrize("unit,macro", [
+        pytest.param('cm', r'\centi\metre', id='prefix'),
+        pytest.param('ml', r'\milli\litre', id='prefix-litre'),
+        pytest.param('kg/m^3', r'\kilo\gram\per\metre\cubed', id='compound'),
+        pytest.param('m/s^2', r'\metre\per\second\squared', id='power'),
+    ])
+    def test_through_prefixes_and_compounds(self, unit, macro):
+        assert PhysicsQuantity.construct(1, unit).only_unit() == rf'\unit{{{macro}}}'
+
+    def test_other_units_are_left_alone(self):
+        """
+        Two names and no others. Unlike `PINT_TO_SIUNITX`, which raises for anything it does not
+        know, an unlisted spelling here is simply not its business.
+        """
+        assert PhysicsQuantity.construct(1, 'gram').only_unit() == r'\unit{\gram}'
+        assert PhysicsQuantity.construct(1, 'second').only_unit() == r'\unit{\second}'
+
+    def test_whole_names_only(self):
+        r"""
+        A `str.replace` of `\meter` would also rewrite the head of a longer name that happens to
+        start the same way; `\minute` and `\metric_ton` are the neighbours in reach today.
+        """
+        assert PhysicsQuantity.construct(1, 'minute').only_unit() == r'\unit{\minute}'
+        assert PhysicsQuantity.construct(1, 't').only_unit() == r'\unit{\tonne}'

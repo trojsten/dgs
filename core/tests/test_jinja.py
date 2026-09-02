@@ -395,7 +395,7 @@ class TestQuantityConstructorGlobals:
         assert renderer.render("(§ PQ(96.7, 'kg') | f2 §)", {}) == r'\qty{96.70}{\kilo\gram}'
 
     def test_pq_is_usable_in_arithmetic(self, renderer):
-        assert renderer.render("(§ (PQ(2, 'm') * PQ(3, 'm')) | f0 §)", {}) == r'\qty{6}{\meter\squared}'
+        assert renderer.render("(§ (PQ(2, 'm') * PQ(3, 'm')) | f0 §)", {}) == r'\qty{6}{\metre\squared}'
 
     def test_bare_q_is_not_a_global(self, renderer):
         """

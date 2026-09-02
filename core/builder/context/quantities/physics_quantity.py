@@ -75,6 +75,27 @@ class PhysicsQuantity:
     #: multi-word unit name. `\kilo\meter_per_hour` matches only the second part.
     _UNDERSCORE_MACRO = re.compile(r'\\([A-Za-z]+(?:_[A-Za-z0-9]+)+)')
 
+    #: pint names two SI units the American way, and only these two: `meter`, 266 times across the
+    #: repository's `values:`, and `liter`, 21 times. siunitx declares both spellings of each and
+    #: they typeset identically, so this changes no printed page.
+    #:
+    #: It is about the rendered source, which the sources themselves write in British English
+    #: throughout. Before this, a hand-written `\qty{4}{\milli\litre}` and the same quantity taken
+    #: from `values:` came out spelled differently, sometimes in one sentence -- and every literal
+    #: that becomes a tag turns one `\metre` into a `\meter`, so the mixture spreads as the
+    #: migration to computed answers proceeds.
+    #:
+    #: Separate from `PINT_TO_SIUNITX`, which exists for names that are not valid TeX at all and
+    #: raises for anything it does not know. An unlisted spelling here is simply left alone.
+    PINT_SPELLING = {
+        r'\meter': r'\metre',
+        r'\liter': r'\litre',
+    }
+
+    #: Any complete `\macro` name, so a spelling is rewritten as a whole word: a bare `str.replace`
+    #: would also rewrite the head of a longer name that merely starts the same way.
+    _MACRO = re.compile(r'\\[A-Za-z]+')
+
     def __init__(self,
                  quantity: pint.Quantity | float,
                  *,
@@ -362,6 +383,9 @@ class PhysicsQuantity:
         Rewrite pint's multi-word unit macros into the siunitx macros DGS declares.
         Raises `UnknownUnitMacroError` for anything unmapped rather than emitting
         an invalid `\foo_bar`.
+
+        Then put the two units pint spells American into British, to match the sources.
+        Multi-word names go first, so a mapping that produces one of them is caught too.
         """
         def substitute(match: re.Match) -> str:
             name = match.group(1)
@@ -369,7 +393,8 @@ class PhysicsQuantity:
                 raise UnknownUnitMacroError(name, unit)
             return cls.PINT_TO_SIUNITX[name]
 
-        return cls._UNDERSCORE_MACRO.sub(substitute, unit)
+        unit = cls._UNDERSCORE_MACRO.sub(substitute, unit)
+        return cls._MACRO.sub(lambda m: cls.PINT_SPELLING.get(m.group(0), m.group(0)), unit)
 
     @staticmethod
     def format_si_extra(si_extra) -> str:

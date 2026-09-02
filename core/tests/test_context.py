@@ -149,7 +149,7 @@ class TestEvaluate:
         from core.builder.context.quantities import PhysicsQuantity
         v = renderer.evaluate("s / t", {'s': PhysicsQuantity.construct(100, 'm'),
                                         't': PhysicsQuantity.construct(4, 's')})
-        assert f'{v:g}' == r'\qty{25}{\meter\per\second}'
+        assert f'{v:g}' == r'\qty{25}{\metre\per\second}'
 
     def test_unknown_name_raises(self, renderer):
         """A typo must not silently evaluate to an empty string, as bare rendering would."""
