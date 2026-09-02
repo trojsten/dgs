@@ -63,9 +63,34 @@ Every id listed must exist as `problems/<id>/`.
 Minimal (no computed values, hard-coded numbers in the Markdown):
 
 ```yaml
-authors: ['Kvík']
+authors:
+  idea: ['Kvík']          # whoever thought of the problem
+  problem: []             # whoever wrote the statement
+  solution: []            # whoever wrote up the solution
 tags: ['kinematics']
 ```
+
+`authors` is a mapping of those three roles, not a list of names — all three keys are
+optional, so a problem records only what is known, and `authors: {}` is the honest form when
+nobody wrote it down. A bare `author: 'Kvík'` appears in two chemistry problems and the
+schema rejects it.
+
+### `tags:`
+
+At least one, every one from `VALID_TAGS` in `modules/naboj/builder/renderer.py`, which is
+the whole vocabulary and carries a one-line gloss per tag. Grouped there by area: the physics
+topics, then the chemistry ones, then a handful describing what *kind* of problem it is rather
+than what it is about (`troll`, `silly`, `trick`, `puzzle`, `matching`, `ordering`,
+`truth-or-dare`, `incorrect`).
+
+Read the list before inventing a spelling. `valid_tag` is in the schema but never actually
+runs — enschema does not check the elements of `list[And(str, valid_tag)]` — so a typo costs
+nothing at build time and twelve pairs of near-synonyms drifted apart that way before being
+merged. What does catch it is `core/audit`'s `tag-unknown`.
+
+Tags are shared across competitions wherever the word already means the right thing:
+chemistry problems use `gases` for the state equation, `nuclear` for decay, and
+`calorimetry`, `mixing`, `buoyancy`, `geometry`, `math` and `units` as written.
 
 With values (used as Jinja variables inside `problem.md`, `solution.md`, `answer.md`,
 ...):

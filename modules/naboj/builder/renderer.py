@@ -83,6 +83,66 @@ VALID_TAGS: dict[str, str] = {
     # -- modern ----------------------------------------------------------------------------------
     'nuclear': 'nuclear physics',
 
+    # == chemistry ===============================================================================
+    # Chemistry Náboj had no vocabulary at all: every problem in volumes 01 to 04 carried either
+    # no `tags:` key or the placeholder `['?']`. These cover all 144 of them. Physics tags are
+    # shared where they already say the right thing -- `gases` for the state equation, `nuclear`
+    # for decay, `calorimetry`, `mixing`, `buoyancy`, `geometry`, `math`, `units` -- so this block
+    # adds only what chemistry needs and physics has no word for.
+
+    # -- chemistry: the sub-disciplines, as a chemist would name them -----------------------------
+    # Coarse, and deliberately so: they answer "which course is this from", which is the first
+    # thing anyone browsing the archive wants, and they are the only tags that apply to a problem
+    # whose actual content is a structure drawing.
+    'inorganic': 'inorganic chemistry',
+    'organic': 'organic chemistry',
+    'analytical': 'analytical chemistry -- determining what and how much',
+    'physical-chemistry': 'physical chemistry',
+    'biochemistry': 'the chemistry of living things',
+
+    # -- chemistry: how much of what -------------------------------------------------------------
+    'stoichiometry': 'balancing an equation, or reasoning from its coefficients',
+    'molar-mass': 'molar and relative atomic masses',
+    'formula': 'deducing a formula from composition, mass loss or analysis',
+    'yield': 'how much product a reaction actually gives',
+    'concentration': 'the concentration of a solution, and converting between ways of stating it',
+
+    # -- chemistry: solutions and equilibria -----------------------------------------------------
+    'acid-base': 'acids, bases, pH and neutralisation',
+    'buffer': 'a solution that resists a change of pH',
+    'equilibrium': 'chemical equilibrium and its constant',
+    'solubility': 'dissolving, saturation, and the solubility product',
+    'redox': 'oxidation and reduction',
+    'electrochemistry': 'electrolysis, cells, and electric current driving chemistry',
+    'complex': 'coordination compounds and other host-guest binding',
+
+    # -- chemistry: rates and energy -------------------------------------------------------------
+    'kinetics': 'how fast a reaction goes',
+    'thermochemistry': 'the heat a reaction takes or gives, and bond energies',
+    'colligative': 'a property set by how many particles are dissolved, not by which',
+
+    # -- chemistry: structure --------------------------------------------------------------------
+    'atomic-structure': 'electron configuration, orbitals, quantum numbers',
+    'crystallography': 'unit cells and lattices, and what they imply about density',
+    'periodic-table': 'the table itself -- symbols, groups, trends',
+    'isotopes': 'isotopes and isotopic composition',
+    'stereochemistry': 'chirality, enantiomers, diastereomers, geometric isomers',
+    'isomerism': 'counting isomers, or telling them apart',
+    'structure-elucidation': 'deducing an unknown structure from the evidence',
+    'synthesis': 'a synthetic route, and what it gives at each step',
+    'mechanism': 'how a reaction proceeds, step by step',
+    'radical': 'radical reactions',
+
+    # -- chemistry: the methods themselves -------------------------------------------------------
+    'titration': 'volumetric analysis -- titrating to an endpoint',
+    'gravimetry': 'weighing before and after to find out what something is',
+    'spectroscopy': 'absorbance and emission, the Beer-Lambert law',
+    'nmr': 'nuclear magnetic resonance spectra',
+    'chromatography': 'separating a mixture by how fast its parts travel',
+    'qualitative': 'identifying a substance by what it does, not by measuring it',
+    'lab-technique': 'the difficulty is in the practical procedure',
+    'lab-safety': 'hazards, pictograms, and handling',
+
     # -- method rather than topic ----------------------------------------------------------------
     'geometry': 'the difficulty is geometric',
     'math': 'the difficulty is mathematical',
@@ -103,6 +163,10 @@ VALID_TAGS: dict[str, str] = {
     'unreal': 'the physics does not model the real world, but is still computable as stated',
     'truth-or-dare': 'a list of statements to be judged true or false',
     'ordering': 'a list of items to be sorted, the answer being the order itself',
+    # Both are shapes a problem takes, not subjects it is about, which is why they sit here with
+    # `truth-or-dare` rather than among the chemistry topics that happen to use them most.
+    'puzzle': 'a grid, crossword, word search or cipher wrapped around the chemistry',
+    'matching': 'two lists to be paired up',
     'incorrect': 'the problem is wrong. Kept as it stands because it was used this way years ago '
                  '-- do not "fix" it',
 }
