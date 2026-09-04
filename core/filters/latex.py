@@ -4,7 +4,8 @@ from typing import Any
 
 from enschema import Or, Schema
 
-from core.builder.context.quantities import PhysicsQuantity
+from core.builder.context.quantities import (PhysicsQuantity, QuantityList, QuantityProduct,
+                                             QuantityRange)
 
 from ..builder.context.quantities.math import MathObject
 from .numbers import _nth, format_float, format_general
@@ -126,19 +127,34 @@ def format_people(people: str | list | dict, *, func: Callable = identity, and_w
                        func=func, and_word=and_word)
 
 
+#: Types that format themselves as a complete siunitx call -- `\num{…}` when dimensionless,
+#: `\qty{…}{…}` otherwise, and `\qtyrange`, `\qtylist`, `\qtyproduct` for the collections.
+#: `format_float` and `format_general` delegate to their `__format__`, so what comes back is
+#: already a call and must not be wrapped in another one.
+_SELF_FORMATTING = (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)
+
+
 def num(x: float):
-    """ Format as a `siunitx` \num{} input (as is)"""
-    return rf'\num{{{x}}}'
+    r"""
+    Format as a `siunitx` \num{} input (as is).
+
+    Idempotent: a quantity already renders as `\num{…}` or `\qty{…}{…}`, and wrapping that gives
+    `\num{\num{0.0072}}`, which siunitx cannot parse. `28/enrichment` is how this surfaced -- the
+    obvious way to write it hands a dimensionless quantity straight to `|ng`.
+    """
+    return f'{x}' if isinstance(x, _SELF_FORMATTING) else rf'\num{{{x}}}'
 
 
 def num_float(x: float, precision: int | None = None):
-    """ Format as a `siunitx` \num{} input (float)"""
-    return rf'\num{{{format_float(x, precision)}}}'
+    r""" Format as a `siunitx` \num{} input (float). Idempotent, see `num`. """
+    printed = format_float(x, precision)
+    return printed if isinstance(x, _SELF_FORMATTING) else rf'\num{{{printed}}}'
 
 
 def num_general(x: float, precision: int | None = None):
-    """ Format as a `siunitx` \num{} input (general)"""
-    return rf'\num{{{format_general(x, precision)}}}'
+    r""" Format as a `siunitx` \num{} input (general). Idempotent, see `num`. """
+    printed = format_general(x, precision)
+    return printed if isinstance(x, _SELF_FORMATTING) else rf'\num{{{printed}}}'
 
 
 def equals_float(q: PhysicsQuantity, precision: int | None = None):

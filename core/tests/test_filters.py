@@ -11,6 +11,9 @@ from core.filters.latex import (
     format_gender_suffix,
     format_people,
     isotex,
+    num,
+    num_float,
+    num_general,
     render_list,
     textbf,
     textit,
@@ -245,3 +248,46 @@ class TestNth:
     ])
     def test_nth(self, number, ordinal):
         assert nth(number) == ordinal
+
+
+class TestNumFamilyIsIdempotent:
+    r"""
+    The `n*` filters put a bare number inside `\num{}`. Handed something that already renders as a
+    siunitx call they must give it back unchanged, not wrap it again: a dimensionless quantity
+    formats itself as `\num{0.0072}`, and `\num{\num{0.0072}}` is not input siunitx can parse.
+
+    `28/enrichment` is where this surfaced. Its enrichment fractions are percentages in the
+    statement and bare fractions in the algebra, and the obvious way to write that hands a
+    dimensionless quantity straight to `|ng`.
+    """
+
+    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    def test_a_plain_number_is_wrapped(self, filt):
+        assert filt(0.25).startswith(r'\num{')
+
+    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    def test_a_dimensionless_quantity_is_not_wrapped_again(self, filt):
+        q = PhysicsQuantity.construct(0.0072, '')
+        out = filt(q)
+        assert out.count(r'\num') == 1, out
+        assert '0.0072' in out
+
+    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    def test_a_dimensional_quantity_keeps_its_unit(self, filt):
+        """It renders as `\\qty{…}{…}`, so wrapping it in `\\num` would lose the unit's meaning."""
+        out = filt(PhysicsQuantity.construct(5, 'metre'))
+        assert out.startswith(r'\qty{') and r'\metre' in out
+        assert r'\num' not in out
+
+    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    def test_a_range_is_left_alone(self, filt):
+        """`\\qtyrange` is a call of its own; the collections must survive these filters too."""
+        rng = PhysicsQuantity.construct(1, 'metre') % PhysicsQuantity.construct(2, 'metre')
+        assert filt(rng).startswith(r'\qtyrange{')
+
+    def test_precision_still_reaches_the_quantity(self):
+        q = PhysicsQuantity.construct(0.0072, '')
+        assert num_float(q, 3) == r'\num{0.007}'
+
+    def test_precision_still_reaches_a_plain_number(self):
+        assert num_float(0.0072, 3) == r'\num{0.007}'
