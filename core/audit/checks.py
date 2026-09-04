@@ -586,10 +586,32 @@ def reference_dangling(sources):
 
 # --- translations -----------------------------------------------------------
 
+def defines_a_unit(call) -> bool:
+    r"""
+    Whether this call is a unit being *defined* rather than a quantity being given.
+
+    `\qty[forbid-literal-units=false]{1}{glg}` says "one glg is ...", introducing a unit the
+    problem invents. There is no version of the problem where that 1 is a 2, so it is not a
+    parameter and extracting it into `values:` would name nothing.
+
+    Narrow on purpose: a magnitude of exactly 1, and the option that marks the unit as invented.
+    A real `\qty{1}{\metre}` is still a number the statement gives.
+    """
+    return 'forbid-literal-units=false' in call.opts and call.magnitudes == ['1']
+
+
 def magnitudes(text):
-    """The bare magnitudes in a text, Jinja tags removed. A tag is the same in every language."""
+    """
+    The bare magnitudes in a text, Jinja tags removed. A tag is the same in every language.
+
+    Definitions of invented units do not count -- see `defines_a_unit`. `28/john-doe` introduces
+    three units that way and `23/bats` and `27/escalator` two apiece, and counting those held
+    their `values` verdict below `ok` over numbers nobody should extract.
+    """
     counter = Counter()
     for call in si_calls(RE_TAG.sub('', text)):
+        if defines_a_unit(call):
+            continue
         counter.update(call.magnitudes)
     return counter
 

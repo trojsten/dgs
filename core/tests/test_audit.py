@@ -607,6 +607,37 @@ class TestValueStatus:
                            shared=self.TYPED)['values'].state == 'missing'
 
 
+class TestUnitDefinitionsAreNotParameters:
+    r"""
+    `\qty[forbid-literal-units=false]{1}{glg}` introduces a unit the problem invents. The 1 is
+    part of the definition, not a number the statement gives, and there is no version of the
+    problem where it is a 2 -- so it must not hold the `values` verdict below `ok`.
+
+    `28/john-doe` defines three units this way, `23/bats` and `27/escalator` two apiece.
+    """
+
+    DEFINES = ('- $\\qty[forbid-literal-units=false]{1}{glg}$ is the volume he can swallow\n')
+
+    def test_a_unit_definition_is_not_a_shared_number(self, tmp_path):
+        files = {l: {'problem.md': self.DEFINES} for l in ('sk', 'en')}
+        status = statuses_of(tmp_path, files=files)['values']
+        assert status.state == 'none', status.detail
+        assert status.detail['literal'] == []
+
+    def test_a_real_one_is_still_counted(self, tmp_path):
+        """The narrowness is the point: `\qty{1}{\metre}` is a number the problem gives."""
+        files = {l: {'problem.md': 'a pole $\\qty{1}{\\metre}$ long\n'} for l in ('sk', 'en')}
+        status = statuses_of(tmp_path, files=files)['values']
+        assert status.state == 'missing'
+        assert status.detail['literal'] == ['1']
+
+    def test_an_invented_unit_with_another_magnitude_is_counted(self, tmp_path):
+        """`23/bats` asks for a mass in `ugh`; the number there is a real answer, not a definition."""
+        files = {l: {'problem.md': 'weighs $\\qty[forbid-literal-units=false]{5}{ugh}$\n'}
+                 for l in ('sk', 'en')}
+        assert statuses_of(tmp_path, files=files)['values'].detail['literal'] == ['5']
+
+
 class TestVolumeListing:
     """
     The volume meta's `problems:` list is what `ContextVolume` iterates, so it decides both the
