@@ -862,6 +862,12 @@ class TestEqualsApprox:
     def test_approx_general(self, mass_mega):
         assert mass_mega.approx_general(2) == r'm_D \approx \qty{97}{\kilo\gram}'
 
+    def test_equals_exponential(self, mass_mega):
+        assert mass_mega.equals_exponential(2) == r'm_D = \qty{9.67e+01}{\kilo\gram}'
+
+    def test_approx_exponential(self, mass_mega):
+        assert mass_mega.approx_exponential(2) == r'm_D \approx \qty{9.67e+01}{\kilo\gram}'
+
     def test_approx_float_precision_zero(self, mass_mega):
         assert mass_mega.approx_float(0) == r'm_D \approx \qty{97}{\kilo\gram}'
 
@@ -869,6 +875,7 @@ class TestEqualsApprox:
         """`approx_*` should format identically to `equals_*` other than `=` vs `\\approx`."""
         assert mass_mega.approx_float(3).replace(r'\approx', '=') == mass_mega.equals_float(3)
         assert mass_mega.approx_general(3).replace(r'\approx', '=') == mass_mega.equals_general(3)
+        assert mass_mega.approx_exponential(3).replace(r'\approx', '=') == mass_mega.equals_exponential(3)
 
     def test_precision_is_optional(self, mass_mega):
         """Omitting precision falls back to the bare 'f'/'g' spec, as in `format_float`."""
@@ -876,6 +883,7 @@ class TestEqualsApprox:
         assert mass_mega.approx_general() == r'm_D \approx \qty{96.7}{\kilo\gram}'
         assert mass_mega.equals_float() == r'm_D = \qty{96.700000}{\kilo\gram}'
         assert mass_mega.equals_general() == r'm_D = \qty{96.7}{\kilo\gram}'
+        assert mass_mega.equals_exponential() == r'm_D = \qty{9.670000e+01}{\kilo\gram}'
 
     def test_explicit_none_precision_matches_omitted(self, mass_mega):
         """`None` is the documented way to say "no precision", not an error."""
@@ -893,12 +901,14 @@ class TestEqualsApproxWithoutSymbol:
     def anonymous(self):
         return PhysicsQuantity.construct(11.345, 'm/s^2')
 
-    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'equals_exponential',
+                                        'approx_float', 'approx_general', 'approx_exponential'])
     def test_raises_without_symbol(self, anonymous, method):
         with pytest.raises(MissingSymbolError):
             getattr(anonymous, method)(2)
 
-    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'approx_float', 'approx_general'])
+    @pytest.mark.parametrize('method', ['equals_float', 'equals_general', 'equals_exponential',
+                                        'approx_float', 'approx_general', 'approx_exponential'])
     def test_raises_without_symbol_no_precision(self, anonymous, method):
         with pytest.raises(MissingSymbolError):
             getattr(anonymous, method)()

@@ -204,15 +204,22 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                          **kwargs)
 
         self.env.filters |= ({
+            # The last letter is the format -- 'f' fixed, 'g' Python's general, 'e' always
+            # scientific -- and the first is the wrapper: none, 'n' for \num{}, 'e' for
+            # `<symbol> = `, 'a' for `<symbol> \approx `. So 'ee' is equals-exponential.
             'f': numbers.format_float,
             'g': numbers.format_general,
+            'e': numbers.format_exponential,
             'n': latex.num,
             'nf': latex.num_float,
             'ng': latex.num_general,
+            'ne': latex.num_exponential,
             'ef': latex.equals_float,
             'eg': latex.equals_general,
+            'ee': latex.equals_exponential,
             'af': latex.approx_float,
             'ag': latex.approx_general,
+            'ae': latex.approx_exponential,
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': lambda q: q.mag,
@@ -221,12 +228,16 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |
+        self.__generate_format_functions(numbers.format_exponential, 'e') |
         self.__generate_format_functions(latex.num_float, 'nf') |
         self.__generate_format_functions(latex.num_general, 'ng') |
+        self.__generate_format_functions(latex.num_exponential, 'ne') |
         self.__generate_format_functions(latex.equals_float, 'ef') |
         self.__generate_format_functions(latex.equals_general, 'eg') |
+        self.__generate_format_functions(latex.equals_exponential, 'ee') |
         self.__generate_format_functions(latex.approx_float, 'af') |
-        self.__generate_format_functions(latex.approx_general, 'ag') | {
+        self.__generate_format_functions(latex.approx_general, 'ag') |
+        self.__generate_format_functions(latex.approx_exponential, 'ae') | {
            'q': latex.quad_text,                                          # \QText{…}
            'qq': latex.quad_quad_text,                                    # \QQText{…}
            'raw': latex.math_raw,                                       # no delimiters -- the default

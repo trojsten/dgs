@@ -84,13 +84,17 @@ digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`,
 | -------------------- | --------------------------------------------------------- |
 | `|f`, `|f0`, ..., `|f9` | Fixed-decimal formatting. `q|f2` → `\qty{50.00}{...}`  |
 | `|g`, `|g0`, ..., `|g9` | General formatting (may use scientific). `q|g3`       |
+| `|e`, `|e0`, ..., `|e9` | Scientific notation, always. `q|e3` → `\qty{1.004e-04}{…}` |
 | `|n`                 | Wrap raw value in `\num{…}` (no unit).                    |
 | `|nf`, `|nf0..9`     | `\num{…}` with fixed precision.                           |
 | `|ng`, `|ng0..9`     | `\num{…}` with general precision.                         |
+| `|ne`, `|ne0..9`     | `\num{…}` in scientific notation.                         |
 | `|ef`, `|ef0..9`     | `symbol = \qty{…}` fixed. Uses `PhysicsQuantity.symbol`.  |
 | `|eg`, `|eg0..9`     | Same, general precision.                                  |
+| `|ee`, `|ee0..9`     | Same, scientific notation.                                |
 | `|af`, `|af0..9`     | `symbol \approx \qty{…}` fixed — like `|ef` but `\approx`. |
 | `|ag`, `|ag0..9`     | Same, general precision.                                  |
+| `|ae`, `|ae0..9`     | Same, scientific notation.                                |
 | `|mag`               | Extract raw magnitude (pint magnitude, not a string).     |
 | `|unit`              | Just the unit, formatted as `\unit{…}`.                   |
 | `|sim`               | `.simplify()` — convert to base SI units.                 |

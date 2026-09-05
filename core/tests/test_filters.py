@@ -4,21 +4,24 @@ import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.latex import (
+    approx_exponential,
     approx_float,
     approx_general,
+    equals_exponential,
     equals_float,
     equals_general,
     format_gender_suffix,
     format_people,
     isotex,
     num,
+    num_exponential,
     num_float,
     num_general,
     render_list,
     textbf,
     textit,
 )
-from core.filters.numbers import nth, plural, roman
+from core.filters.numbers import format_exponential, format_general, nth, plural, roman
 
 
 class TestRender:
@@ -215,11 +218,18 @@ class TestApproxEqualsFilters:
     def test_approx_general(self, q):
         assert approx_general(q, 2) == q.approx_general(2)
 
+    def test_equals_exponential(self, q):
+        assert equals_exponential(q, 2) == q.equals_exponential(2)
+
+    def test_approx_exponential(self, q):
+        assert approx_exponential(q, 2) == q.approx_exponential(2)
+
     def test_approx_float_uses_approx_sign(self, q):
         assert r'\approx' in approx_float(q, 2)
         assert '=' not in approx_float(q, 2)
 
-    @pytest.mark.parametrize('filt', [equals_float, equals_general, approx_float, approx_general])
+    @pytest.mark.parametrize('filt', [equals_float, equals_general, equals_exponential,
+                                      approx_float, approx_general, approx_exponential])
     def test_symbol_less_quantity_raises(self, filt):
         """`(§ x|ef2 §)` on a symbol-less quantity must crash, not render `None = ...`."""
         anonymous = PhysicsQuantity.construct(96.7, 'kg')
@@ -261,25 +271,30 @@ class TestNumFamilyIsIdempotent:
     dimensionless quantity straight to `|ng`.
     """
 
-    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    @pytest.mark.parametrize('filt', [num, num_float, num_general, num_exponential])
     def test_a_plain_number_is_wrapped(self, filt):
         assert filt(0.25).startswith(r'\num{')
 
-    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    @pytest.mark.parametrize('filt', [num, num_float, num_general, num_exponential])
     def test_a_dimensionless_quantity_is_not_wrapped_again(self, filt):
         q = PhysicsQuantity.construct(0.0072, '')
         out = filt(q)
         assert out.count(r'\num') == 1, out
-        assert '0.0072' in out
 
-    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    @pytest.mark.parametrize('filt,printed', [(num, '0.0072'), (num_float, '0.0072'),
+                                              (num_general, '0.0072'), (num_exponential, '7.2')])
+    def test_the_magnitude_survives(self, filt, printed):
+        """`num_exponential` writes it as `7.200000e-03`; the others leave it decimal."""
+        assert printed in filt(PhysicsQuantity.construct(0.0072, ''))
+
+    @pytest.mark.parametrize('filt', [num, num_float, num_general, num_exponential])
     def test_a_dimensional_quantity_keeps_its_unit(self, filt):
         """It renders as `\\qty{…}{…}`, so wrapping it in `\\num` would lose the unit's meaning."""
         out = filt(PhysicsQuantity.construct(5, 'metre'))
         assert out.startswith(r'\qty{') and r'\metre' in out
         assert r'\num' not in out
 
-    @pytest.mark.parametrize('filt', [num, num_float, num_general])
+    @pytest.mark.parametrize('filt', [num, num_float, num_general, num_exponential])
     def test_a_range_is_left_alone(self, filt):
         """`\\qtyrange` is a call of its own; the collections must survive these filters too."""
         rng = PhysicsQuantity.construct(1, 'metre') % PhysicsQuantity.construct(2, 'metre')
@@ -291,3 +306,34 @@ class TestNumFamilyIsIdempotent:
 
     def test_precision_still_reaches_a_plain_number(self):
         assert num_float(0.0072, 3) == r'\num{0.007}'
+
+
+class TestFormatExponential:
+    r"""
+    `24/venus` answers `\num{1.004e-4}`. Python's `g` -- and so `format_general` -- only reaches
+    for an exponent below `1e-5`, so it gives `0.0001004` instead, which is why the `e` family
+    exists at all.
+    """
+
+    def test_general_keeps_this_one_decimal(self):
+        """The behaviour that made the family necessary. If this ever changes, so can `e`."""
+        assert format_general(1.00356e-4, 4) == '0.0001004'
+
+    def test_exponential_does_not(self):
+        assert format_exponential(1.00356e-4, 3) == '1.004e-04'
+
+    def test_precision_counts_decimals_not_significant_figures(self):
+        """Python's `e`, unlike its `g`: `|e3` is four figures, `|g3` is three."""
+        assert format_exponential(1.00356e-4, 3) == '1.004e-04'
+        assert format_general(1.00356e-4, 3) == '0.0001'
+
+    def test_a_quantity_keeps_its_unit(self):
+        q = PhysicsQuantity.construct(1.00356e-4, 'metre')
+        assert format_exponential(q, 3) == r'\qty{1.004e-04}{\metre}'
+
+    def test_no_precision_is_pythons_default(self):
+        assert format_exponential(1.5) == '1.500000e+00'
+
+    def test_a_string_is_a_type_error(self):
+        with pytest.raises(TypeError):
+            format_exponential('1.004e-4')

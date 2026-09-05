@@ -448,9 +448,10 @@ class PhysicsQuantity:
     @staticmethod
     def _format_spec(kind: str, precision: int | None) -> str:
         """
-        Build a format spec of the requested kind ('f' or 'g'). `None` precision
+        Build a format spec of the requested kind ('f', 'g' or 'e'). `None` precision
         means the bare spec, i.e. Python's default for that kind -- the same
-        convention as `core.filters.numbers.format_float` / `format_general`.
+        convention as `core.filters.numbers.format_float` / `format_general` /
+        `format_exponential`.
         """
         return kind if precision is None else f'.{precision}{kind}'
 
@@ -468,6 +469,13 @@ class PhysicsQuantity:
         """
         return rf"{self._require_symbol('equals_general')} = {self:{self._format_spec('g', precision)}}"
 
+    def equals_exponential(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and equal sign,
+        `<symbol> = <full>`
+        """
+        return rf"{self._require_symbol('equals_exponential')} = {self:{self._format_spec('e', precision)}}"
+
     def approx_float(self, precision: int | None = None) -> str:
         """
         Full form with symbol and approx sign,
@@ -481,6 +489,13 @@ class PhysicsQuantity:
         `<symbol> \\approx <full>`
         """
         return rf"{self._require_symbol('approx_general')} \approx {self:{self._format_spec('g', precision)}}"
+
+    def approx_exponential(self, precision: int | None = None) -> str:
+        """
+        Full form with symbol and approx sign,
+        `<symbol> \\approx <full>`
+        """
+        return rf"{self._require_symbol('approx_exponential')} \approx {self:{self._format_spec('e', precision)}}"
 
 
 def construct_quantity(magnitude, unit, *, symbol: str | None = None):

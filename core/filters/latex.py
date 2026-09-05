@@ -8,7 +8,7 @@ from core.builder.context.quantities import (PhysicsQuantity, QuantityList, Quan
                                              QuantityRange)
 
 from ..builder.context.quantities.math import MathObject
-from .numbers import _nth, format_float, format_general
+from .numbers import _nth, format_exponential, format_float, format_general
 
 
 def isotex(date):
@@ -157,6 +157,12 @@ def num_general(x: float, precision: int | None = None):
     return printed if isinstance(x, _SELF_FORMATTING) else rf'\num{{{printed}}}'
 
 
+def num_exponential(x: float, precision: int | None = None):
+    r""" Format as a `siunitx` \num{} input (scientific notation). Idempotent, see `num`. """
+    printed = format_exponential(x, precision)
+    return printed if isinstance(x, _SELF_FORMATTING) else rf'\num{{{printed}}}'
+
+
 def equals_float(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_float(precision)
 
@@ -165,12 +171,20 @@ def equals_general(q: PhysicsQuantity, precision: int | None = None):
     return q.equals_general(precision)
 
 
+def equals_exponential(q: PhysicsQuantity, precision: int | None = None):
+    return q.equals_exponential(precision)
+
+
 def approx_float(q: PhysicsQuantity, precision: int | None = None):
     return q.approx_float(precision)
 
 
 def approx_general(q: PhysicsQuantity, precision: int | None = None):
     return q.approx_general(precision)
+
+
+def approx_exponential(q: PhysicsQuantity, precision: int | None = None):
+    return q.approx_exponential(precision)
 
 
 def quad_text(word: str) -> str:

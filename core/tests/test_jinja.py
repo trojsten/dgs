@@ -362,9 +362,19 @@ class TestApproxEqualsFilters:
     def test_ag_bare(self, renderer, context):
         assert renderer.render('(§ m | ag §)', context) == r'm_D \approx \qty{96.7}{\kilo\gram}'
 
+    def test_ee_bare(self, renderer, context):
+        assert renderer.render('(§ m | ee §)', context) == r'm_D = \qty{9.670000e+01}{\kilo\gram}'
+
+    def test_ae_bare(self, renderer, context):
+        assert renderer.render('(§ m | ae §)', context) == r'm_D \approx \qty{9.670000e+01}{\kilo\gram}'
+
+    def test_ee2(self, renderer, context):
+        assert renderer.render('(§ m | ee2 §)', context) == r'm_D = \qty{9.67e+01}{\kilo\gram}'
+
     @pytest.mark.parametrize("equals,approx", [
         pytest.param('ef', 'af', id='float'),
         pytest.param('eg', 'ag', id='general'),
+        pytest.param('ee', 'ae', id='exponential'),
     ])
     def test_bare_approx_matches_bare_equals(self, renderer, context, equals, approx):
         """The bare forms may only differ in the relation symbol."""
@@ -374,6 +384,7 @@ class TestApproxEqualsFilters:
     @pytest.mark.parametrize("bare,suffixed", [
         pytest.param('ag', 'ag6', id='eg'),
         pytest.param('af', 'af6', id='ef'),
+        pytest.param('ae', 'ae6', id='ee'),
     ])
     def test_bare_matches_default_precision(self, renderer, context, bare, suffixed):
         """Python's default for both 'f' and 'g' is six digits, so these coincide here."""
@@ -432,7 +443,7 @@ class TestEqualsFiltersWithoutSymbol:
     def renderer(self):
         return MarkdownJinjaRenderer()
 
-    @pytest.mark.parametrize("filt", ['ef', 'ef2', 'eg', 'eg2', 'af', 'af2', 'ag', 'ag2'])
+    @pytest.mark.parametrize("filt", ['ef', 'ef2', 'eg', 'eg2', 'ee', 'ee2', 'af', 'af2', 'ag', 'ag2', 'ae', 'ae2'])
     def test_symbol_less_render_raises(self, renderer, filt):
         from core.builder.context.quantities import MissingSymbolError
         with pytest.raises(MissingSymbolError):
