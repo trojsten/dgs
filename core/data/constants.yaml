@@ -337,9 +337,11 @@ density_water:
     unit:       'kilogram / metre cubed'
     digits:     3
 
+# Ice at 0 degC. The table used to round it to 917 while `27/antifreeze` rounded it down to
+# 916; storing the real figure lets each caller round as it likes, and `.approx` still gives 917.
 density_ice:
-    symbol:     '\rho_{\ce{H2O}}'
-    magnitude:  917
+    symbol:     '\rho_{\ce{H2O(s)}}'
+    magnitude:  916.7
     unit:       'kilogram / metre cubed'
     digits:     3
 
