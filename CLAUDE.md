@@ -301,15 +301,26 @@ and after. Reading through a symlink is safe; writing is not.
   *after* substitution are fine and should be left alone.
 - Long `eq:` entries wrap as YAML `|` block scalars — that is the idiom for
   keeping meta.yaml under the limit.
-- **A vulgar fraction with a Unicode glyph is a named macro.** `core/latex/math.tex`
-  defines nine — `\OneHalf`, `\OneThird`, `\TwoThirds`, `\OneQuarter`,
-  `\ThreeQuarters`, `\OneEighth`, `\ThreeEighths`, `\FiveEighths`,
-  `\SevenEighths` — and they are the whole set because MinionPro has no glyph for
-  fifths, sixths, sevenths, ninths or tenths. **A missing glyph is not a compile
-  error**: xelatex writes `Missing character:` to the log and sets nothing, so a
-  `\TwoFifths` would silently vanish off the page. Anything the font cannot set
-  stays `\nicefrac`, which builds its fraction from digits. `\nicefrac` also stays
-  wherever a side is not a digit — `\nicefrac{r}{2}`, `\nicefrac{1}{\varkappa}`.
+- **How to spell a fraction — four tiers, in order.**
+  1. **A Unicode vulgar glyph**, wherever the fraction is a standalone value, and
+     above all in a mixed number: `33\OneThird`, `666\TwoThirds`. `core/latex/math.tex`
+     defines nine — `\OneHalf`, `\OneThird`, `\TwoThirds`, `\OneQuarter`,
+     `\ThreeQuarters`, `\OneEighth`, `\ThreeEighths`, `\FiveEighths`,
+     `\SevenEighths` — and they are the whole set because MinionPro has no glyph for
+     fifths, sixths, sevenths, ninths or tenths. **A missing glyph is not a compile
+     error**: xelatex writes `Missing character:` to the log and sets nothing, so a
+     `\TwoFifths` would silently vanish off the page.
+  2. **`\dfrac`** in an answer file, where a full-height fraction is wanted — that is
+     where 251 of the repository's 309 `\dfrac` uses already are.
+  3. **`\nicefrac` only inside `^{}` and `_{}`**, where `\frac` would stack a
+     full-size fraction at script size: `x^{\nicefrac{2}{5}}`,
+     `\int_{-\nicefrac{\ell}{2}}`.
+  4. **`\frac`** everywhere else, prose included, and for a coefficient inside a
+     formula: `\frac{1}{2} m v^2` stays, and `\frac{r}{2}` inline is right.
+
+  `\nicefrac` used to be tier 4's answer and is not any more. It stays *defined*
+  regardless — `math.tex` takes it as one of `\Drv`'s fraction styles, so removing the
+  macro would break the derivative notation.
 - **A display block and its terminal punctuation must agree about the paragraph.**
   Ending in a full stop ends the sentence, so a blank line follows and a new
   paragraph starts — unless the file ends there. Ending in a comma, a semicolon or
