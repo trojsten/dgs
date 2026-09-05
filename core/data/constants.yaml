@@ -393,14 +393,28 @@ heat_melting_ice:
     digits:     3
     aliases:    ['hmi']
 
+# Water's beta is strongly temperature-dependent -- negative below 4 degC, 3.03e-4 at 40 degC --
+# so the figure only means anything with a temperature attached. This is the 20 degC one.
+# It used to read 1.8e-4, which is mercury's, and `24/thermometer` was reading it for a mercury
+# thermometer and getting the right answer by coincidence.
 thermal_expansion_water:
     symbol:     '\beta_{\ce{H2O}}'
-    magnitude:  1.8e-4
+    magnitude:  2.07e-4
     unit:       '1 / kelvin'
     si_extra:
       per-mode: 'reciprocal'
     digits:     2
-    aliases:    ['tew']  
+    aliases:    ['tew']
+
+# Mercury's, by contrast, barely moves with temperature over a thermometer's range,
+# which is why thermometers are filled with it. No `si_extra`: the statements that
+# print it write a plain `\per\kelvin`.
+thermal_expansion_mercury:
+    symbol:     '\beta_{\ce{Hg}}'
+    magnitude:  1.8e-4
+    unit:       '1 / kelvin'
+    digits:     2
+    aliases:    ['tem']
 
 molar_mass_oxygen:
     symbol:     'M_{\ce{O}}'
