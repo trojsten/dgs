@@ -274,6 +274,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'atan2': np.atan2,
             'ceil': lambda x: PhysicsQuantity.ceil(x) if isinstance(x, PhysicsQuantity) else np.ceil(x),
             'floor': lambda x: PhysicsQuantity.floor(x) if isinstance(x, PhysicsQuantity) else np.floor(x),
+            'round': lambda x: PhysicsQuantity.round(x) if isinstance(x, PhysicsQuantity) else np.round(x),
             'sqrt': lambda x: (x ** 0.5),
             'cbrt': np.cbrt,
             'rad': np.radians,

@@ -460,6 +460,23 @@ class TestFloorCeil:
         m = PhysicsQuantity.construct(0, 'kg')
         assert m.floor().mag == pytest.approx(0)
 
+    def test_round_goes_to_the_nearer_side(self):
+        assert PhysicsQuantity.construct(5.7, 'kg').round().mag == pytest.approx(6)
+        assert PhysicsQuantity.construct(5.3, 'kg').round().mag == pytest.approx(5)
+
+    def test_round_negative(self):
+        """Toward the nearer whole number either way, unlike floor and ceil."""
+        assert PhysicsQuantity.construct(-2.3, 'meter').round().mag == pytest.approx(-2)
+        assert PhysicsQuantity.construct(-2.7, 'meter').round().mag == pytest.approx(-3)
+
+    def test_round_keeps_the_unit(self):
+        assert PhysicsQuantity.construct(5.7, 'kg').round() == PhysicsQuantity.construct(6, 'kg')
+
+    def test_round_halves_go_to_even(self):
+        """numpy's rule, and Python's: 2.5 rounds to 2, not 3."""
+        assert PhysicsQuantity.construct(2.5, 'kg').round().mag == pytest.approx(2)
+        assert PhysicsQuantity.construct(3.5, 'kg').round().mag == pytest.approx(4)
+
     def test_ceil_of_zero(self):
         m = PhysicsQuantity.construct(0, 'kg')
         assert m.ceil().mag == pytest.approx(0)

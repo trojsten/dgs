@@ -100,10 +100,20 @@ gforce:
     digits:     1
     force_f:    true
 
+# The *mean* radius, which is what a problem almost always wants; `digits: 4` prints it as
+# the familiar 6371 km. This used to be the equatorial figure, and phys was split between the
+# two -- `18/ballooner`, which circles the equator, is the one problem that genuinely wants
+# `radius_earth_equatorial`.
 radius_earth:
     symbol:     'R_{\oplus}'
     aliases:    ['r_E']
-    magnitude:  6378000
+    magnitude:  6371008.7714
+    unit:       'metre'
+    digits:     4
+
+radius_earth_equatorial:
+    symbol:     'R_{\oplus,\mathrm{e}}'
+    magnitude:  6378137
     unit:       'metre'
     digits:     4
 

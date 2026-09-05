@@ -343,6 +343,15 @@ class PhysicsQuantity:
     def floor(self):
         return PhysicsQuantity(np.floor(self._quantity))
 
+    def round(self):
+        """
+        Nearest whole multiple of the unit, the third of the trio with `ceil` and `floor`.
+
+        `20/equinox` rounds an arc length to tens of kilometres, which is
+        `round(d.to('kilometre') / 10) * 10` -- and there was no `round` to write it with.
+        """
+        return PhysicsQuantity(np.round(self._quantity))
+
     def approximate(self, digits: int):
         """
         Return an approximate value of the constant (not just formatted output, but truly rounded).
