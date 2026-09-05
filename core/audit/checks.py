@@ -1163,3 +1163,90 @@ def hoistable_equation(sources):
                               f"`{key}` appears in {len(places)} files in {len(variants)} "
                               f"variants, so it cannot be hoisted as it stands",
                               unit.path, ' '.join(places))
+
+
+@check('file-empty', 'error', 'A source file exists but has no content')
+def file_empty(sources):
+    """
+    An empty file is worse than a missing one. `\\protectedInput` boxes a *missing* file in red, so
+    a hole in the booklet is loud; an empty one renders as nothing at all and `make` still exits 0.
+
+    Volume 29 shipped three of these -- `brake-fade/en/problem.md`, `brake-fade/en/solution.md` and
+    `starlight/en/solution.md`, all zero bytes -- which would have printed one blank problem and
+    two blank solutions in the English booklet. `29/that/sk/solution.md` had been emptied once
+    before that, so this is not a one-off.
+
+    Whitespace-only counts as empty: a file holding a single newline sets nothing either.
+
+    **An empty `answer.md` beside a written `answer-extra.md` is not reported.** That is a
+    documented idiom, not an oversight: an answer that needs translated words cannot live in a
+    shared file, so it moves to the translated extra and `answer.md` is left empty on purpose.
+    `blocks/answer-body.jtex` even suppresses the joining comma for exactly this case, and
+    `28/john-doe` and `20/big-brother` both rely on it. An empty `answer.md` beside an
+    `answer-interval.md` *is* reported -- there the comma is not suppressed, so the answer cell
+    opens with a stray one.
+    """
+    for unit in sources.unit_list:
+        answer_moved = any(text.strip()
+                           for files in unit.translated.values()
+                           for name, text in files.items() if name == 'answer-extra.md')
+        for lang, name, text in unit.files():
+            if text.strip():
+                continue
+            if name == 'answer.md' and answer_moved:
+                continue
+            yield Finding('file-empty', 'error', f'`{name}` is empty',
+                          unit.path, unit.real_label(lang, name))
+
+
+#: A Jinja tag's insides, and a quoted string literal within them. Jinja decodes a string literal
+#: with `unicode-escape`, so these are the characters that make a backslash disappear.
+RE_JINJA_BODY = re.compile(r'\(§(.*?)§\)', re.S)
+RE_STRING_LITERAL = re.compile(r"'([^'\n]*)'|\"([^\"\n]*)\"")
+RE_PYTHON_ESCAPE = re.compile(r'(?<!\\)(?:\\\\)*\\([abfnrtv01234567xNuU])')
+
+
+@check('jinja-string-escape', 'error', 'A LaTeX macro inside a Jinja string is being eaten')
+def jinja_string_escape(sources):
+    r"""
+    `.alias('f_{\text{min}}')` does not do what it looks like. Two layers eat backslashes: YAML
+    unescapes a double-quoted scalar, and Jinja then decodes the string literal with
+    `unicode-escape`. `\t` becomes a tab, and `f_{<TAB>ext{min}}` sets as an italic "ext".
+
+    It is silent -- a tab is whitespace to TeX, so the build stays green and the page is wrong.
+    Volume 29 carried thirteen such lines for a month because `\mathrm` had been rewritten to
+    `\text` and `\m` happens not to be an escape while `\t` is.
+
+    The class is wide: `\rho`, `\nu`, `\alpha`, `\beta`, `\nabla`, `\varkappa`, `\forall` and
+    `\times` would all corrupt. What is checked is the *parsed* value, because that is what Jinja
+    receives, so the fix is a doubled backslash in a single-quoted YAML scalar.
+
+    Only inside a `(§ … §)` tag, and inside a `derived:` value, which is a Jinja expression whole.
+    LaTeX outside a tag never reaches a Python literal -- `29/starlight`'s `t'_1 = 0 … t'_2 = T`
+    is two apostrophes in maths, not a string, and reporting it would be the obvious false
+    positive.
+    """
+    def offenders(expression):
+        for m in RE_STRING_LITERAL.finditer(expression):
+            literal = m.group(1) if m.group(1) is not None else m.group(2)
+            for esc in RE_PYTHON_ESCAPE.finditer(literal):
+                yield esc.group(1)
+
+    for unit in sources.unit_list:
+        if not unit.meta:
+            continue
+        for key, value in (unit.meta.get('derived') or {}).items():
+            if not isinstance(value, str):
+                continue
+            for char in offenders(value):
+                yield Finding('jinja-string-escape', 'error',
+                              rf'`derived.{key}` has a lone `\{char}` in a string; double it',
+                              unit.path, 'meta.yaml')
+        texts = [('meta.yaml', str(unit.meta.get('eq') or ''))]
+        texts += [(f'{lang}/{name}' if lang else name, text) for lang, name, text in unit.files()]
+        for where, text in texts:
+            for tag in RE_JINJA_BODY.finditer(text):
+                for char in offenders(tag.group(1)):
+                    yield Finding('jinja-string-escape', 'error',
+                                  rf'a lone `\{char}` in a Jinja string; double it',
+                                  unit.path, where)

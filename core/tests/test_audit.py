@@ -1170,3 +1170,86 @@ class TestEncodingTrailingWhitespace:
     def test_a_clean_file_is_quiet(self, tmp_path):
         files = {'sk': {'solution.md': 'text\nmore text\n'}}
         assert 'encoding' not in ids(run(tmp_path, files=files))
+
+
+class TestFileEmpty:
+    """
+    A missing file is boxed in red by `\\protectedInput`; an empty one renders as nothing at all,
+    and `make` still exits 0. Volume 29 carried three zero-byte files in its `en/` directories.
+    """
+
+    def test_an_empty_solution_is_reported(self, tmp_path):
+        assert 'file-empty' in ids(run(tmp_path, files={'sk': {'problem.md': 'p\n',
+                                                               'solution.md': ''}}))
+
+    def test_a_whitespace_only_file_is_reported(self, tmp_path):
+        """A lone newline sets exactly as much as no bytes at all."""
+        assert 'file-empty' in ids(run(tmp_path, files={'sk': {'solution.md': '   \n\n'}}))
+
+    def test_an_empty_answer_beside_a_written_extra_is_quiet(self, tmp_path):
+        """
+        The documented idiom, not an oversight: an answer needing translated words cannot live in
+        a shared file, so it moves to `answer-extra.md` and `answer.md` is deliberately left
+        empty. `blocks/answer-body.jtex` suppresses the joining comma for exactly this case, and
+        `28/john-doe` and `20/big-brother` both rely on it.
+        """
+        report = run(tmp_path, shared={'answer.md': ''},
+                     files={'sk': {'answer-extra.md': 'Tomáš, o $\\qty{0.5}{\\second}$.\n'}})
+        assert 'file-empty' not in ids(report)
+
+    def test_an_empty_answer_beside_only_an_interval_is_reported(self, tmp_path):
+        """
+        The comma is suppressed only for `answer-extra`, so here the answer cell would open with a
+        stray one. `22/hop` does this today.
+        """
+        report = run(tmp_path, shared={'answer.md': '',
+                                       'answer-interval.md': '$\\qtyrange{2.4}{2.5}{\\second}$\n'})
+        assert 'file-empty' in ids(report)
+
+    def test_a_written_file_is_quiet(self, tmp_path):
+        assert 'file-empty' not in ids(run(tmp_path, files={'sk': {'solution.md': 'text\n'}}))
+
+
+class TestJinjaStringEscape:
+    r"""
+    Two layers eat backslashes: YAML unescapes a double-quoted scalar, and Jinja decodes the
+    string literal inside the expression with `unicode-escape`. `.alias('f_{\text{min}}')`
+    therefore aliases `f_{<TAB>ext{min}}`, which sets as an italic "ext" -- silently, because a
+    tab is whitespace to TeX and the build stays green.
+    """
+
+    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+            "values:\n  x:\n    magnitude: 1\n    unit: 'metre'\n"
+            "derived:\n  y: {expr}\n")
+
+    def test_a_lone_backslash_t_is_reported(self, tmp_path):
+        meta = self.META.format(expr='"x.alias(\'f_{\\\\text{min}}\')"')
+        assert 'jinja-string-escape' in ids(run(tmp_path, meta=meta))
+
+    def test_a_lone_backslash_in_a_greek_macro_is_reported(self, tmp_path):
+        r"""`\rho` is a carriage return, `\nu` a newline, `\alpha` a bell -- the class is wide."""
+        meta = self.META.format(expr='"x.alias(\'\\\\rho\')"')
+        assert 'jinja-string-escape' in ids(run(tmp_path, meta=meta))
+
+    def test_a_doubled_backslash_is_quiet(self, tmp_path):
+        """The fix: single-quoted YAML, so the pair survives to Jinja and comes out as one."""
+        meta = self.META.format(expr="'x.alias(\"f_{\\\\text{min}}\")'")
+        assert 'jinja-string-escape' not in ids(run(tmp_path, meta=meta))
+
+    def test_a_macro_that_is_not_an_escape_is_quiet(self, tmp_path):
+        r"""`\m` and `\p` are not escapes, which is why `\mathrm` survived where `\text` did not."""
+        meta = self.META.format(expr='"x.alias(\'\\\\mathrm{min}\')"')
+        assert 'jinja-string-escape' not in ids(run(tmp_path, meta=meta))
+
+    def test_latex_outside_a_tag_is_quiet(self, tmp_path):
+        r"""
+        The obvious false positive. `29/starlight` writes `t'_1 = 0 \QQText{a} t'_2 = T` -- two
+        apostrophes in maths, not a string literal -- and every `eq:` entry is full of backslashes
+        that never reach a Python literal at all.
+        """
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n"
+                "eq:\n  times: \"t'_1 = 0 \\\\QQText{a} t'_2 = T\"\n"
+                "  tan: '\\tan\\phi = \\frac{\\nu}{\\rho}'\n")
+        report = run(tmp_path, meta=meta,
+                     files={'sk': {'solution.md': "$t'_1 = 0$ and $\\nu_{\\text{a}}$\n"}})
+        assert 'jinja-string-escape' not in ids(report)
