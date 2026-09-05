@@ -179,6 +179,39 @@ Notation that does **not** need this, because it is language-neutral already: wa
 `\ce{H2O}`, the Earth is `\Earth` (`core/latex/symbols.tex` defines it as `\oplus`), and a
 word subscript is always `\text{}` — `E_{kin}` is wrong, `E_{\text{kin}}` is right.
 
+## Deduplicating across translations — and when not to
+
+Hoisting an equation into `eq:` removes the per-language latitude a translator otherwise
+has, deliberately: the physics is the same in every language, and copies drift. But it is
+not worth any cost. **A troll answer, an argument that only prose carries, an answer made of
+words — these are worth leaving alone**, and the metas that do so say why in place.
+
+Volume 28 is the worked set. All 22 of its drifted equations turned out to be localised
+notation rather than disagreement, and the same three questions decided every one:
+
+- **Does a subscript abbreviate a prose word, or is it declared?** `28/elevator` wrote `m_v`
+  for an elevator in English, because Slovak's *výťah* had leaked everywhere — an undeclared
+  abbreviation, so it follows the language, and is upright. `28/refills` says outright
+  "denote the small bottle by the subscripts $s$" — a letter its own sentence defines is
+  already right for its reader whatever it abbreviates, so those stay as declared, and stay
+  italic, being indices rather than words.
+- **Is it a term the statement defines?** Then it follows the reader's *statement*, not the
+  prose it stands in. `28/john-doe` invents three units named per language, so Polish reads
+  an English solution using `łyk` — the unit its own statement introduced. That is the
+  opposite of the subscript rule above, and for a reason: the statement is what tells the
+  reader what the word means.
+- **Do the derivations actually agree?** `28/egging`'s Ukrainian reaches the answer another
+  way and its `h` is the others' `H - h`. Bending one route onto the other to satisfy a
+  check would be rewriting physics, so the four that agree share an `eq:` entry and Ukrainian
+  keeps its own. Nothing is then duplicated, and the check goes quiet because there is
+  genuinely nothing left to hoist.
+
+The same applies to answers. `answer-literal` wants the result computed, and `28/central-lamp`
+answers 100 % whatever its refractive index is, `28/gravity-sudoku` answers 0 because a
+solved sudoku's rows all sum to 45, and `28/balance-me` answers which two of nine planets
+are left over. None is the output of a calculation; all three carry
+`audit: {ignore: ['answer-literal']}` with the reason, and `value_status` honours that.
+
 ## Thin spaces, and why `\,` is banned
 
 German abbreviations take a thin, non-breaking space between their parts -- `d. h.`
