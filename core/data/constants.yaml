@@ -195,9 +195,12 @@ parsec:
     unit:       'metre'
     digits:     4
 
+# 1361 is the post-2010 accepted figure; this read 1366, the older one, while three phys
+# problems already used 1361 or 1370 and `23/yankees` said outright that it was quoting the
+# table and then printed 1361.
 solar_flux:
     symbol:     'F_{\odot}'
-    magnitude:  1366
+    magnitude:  1361
     unit:       'watt per metre squared'
     digits:     4
 
