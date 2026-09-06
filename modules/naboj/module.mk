@@ -71,10 +71,22 @@ define prepare_arguments
 	$(eval words := $(subst /, ,$*))
 endef
 
+# The problem *directories*, not the files in them. `booklet.tex` and `answers.tex` fall out of
+# this recipe, and which `\protectedInput` lines they carry depends on which files each problem
+# has -- `blocks/answer-body.jtex` asks `path_exists` at render time. A file list would not do:
+# `wildcard` only names what exists, so deleting `answer-interval.md` would shrink the list and
+# leave every remaining prerequisite older than the target. A directory's mtime moves when a file
+# inside it is added or removed, which is exactly the event that has to invalidate the booklet.
+#
+# Without this, deleting `22/solar-shield/answer-interval.md` left the line in `answers.tex` and
+# printed `Missing file …/answer-interval.tex` in a red box on the answer sheet, with make green.
+naboj_problem_dirs = $(subst $(cdir),,$(wildcard $(abspath source/naboj/$(1)/../../problems/*)))
+
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../.static/logo/logo.pdf)) \
 	source/naboj/$$*/meta.yaml \
+	$$(call naboj_problem_dirs,$$*) \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml
 	$(call prepare_arguments,language)
 	python -m modules.naboj.builder.language 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
