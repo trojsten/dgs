@@ -29,9 +29,51 @@ class QuantityRange:
 
         self.si_extra = strict_merge(self.minimum.si_extra, self.maximum.si_extra)
 
+    @staticmethod
+    def _quantum(printed: str) -> float | None:
+        """The value of one unit in the last place of an already-formatted number."""
+        mantissa, _, exponent = printed.lower().partition('e')
+        if not mantissa.lstrip('-').replace('.', '').isdigit():
+            return None                                 # not a plain number; leave it alone
+        decimals = len(mantissa.partition('.')[2])
+        try:
+            return 10.0 ** ((int(exponent) if exponent else 0) - decimals)
+        except ValueError:
+            return None
+
+    @classmethod
+    def _outward(cls, endpoint: PhysicsQuantity, fmt: str, *, down: bool) -> PhysicsQuantity:
+        """
+        Move `endpoint` to the nearest printable value *away* from the other one.
+
+        A range in this repository is the set of answers a marker accepts, so shrinking it
+        rejects correct work. Rounding each end to nearest does shrink it: `29/bouncy-v` spans
+        `[3.67749, 3.75]` metres and printed `3.7 – 3.8`, which excludes the very answer a solver
+        using the exact `g` would hand in. Five of the nine intervals in phys were cut this way,
+        `24/crane` among them, and the two that were not survived only because a `|w` happened to
+        be generous enough.
+
+        So the minimum is floored and the maximum ceiled, at whatever precision the format spec
+        prints. With no precision nothing is dropped and this is a no-op.
+        """
+        import math
+        printed = f'{endpoint.mag:{fmt}}' if fmt else None
+        if printed is None:
+            return endpoint
+        quantum = cls._quantum(printed)
+        if not quantum:
+            return endpoint
+        scaled = endpoint.mag / quantum
+        # A value already on the grid must not be nudged off it by floating-point noise, so the
+        # comparison gets a relative tolerance rather than an exact one.
+        eps = 1e-9 * max(1.0, abs(scaled))
+        rounded = math.floor(scaled + eps) if down else math.ceil(scaled - eps)
+        return PhysicsQuantity.construct(rounded * quantum, endpoint.unit,
+                                         si_extra=endpoint.si_extra)
+
     def __format__(self, fmt: str):
-        minr = self.minimum.format_struct(fmt)
-        maxr = self.maximum.format_struct(fmt)
+        minr = self._outward(self.minimum, fmt, down=True).format_struct(fmt)
+        maxr = self._outward(self.maximum, fmt, down=False).format_struct(fmt)
 
         si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
         minf = f"{{{minr['magnitude']}}}"

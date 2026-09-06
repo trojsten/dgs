@@ -84,6 +84,48 @@ class TestRange:
             _ = mass1 % length1
 
 
+class TestRangeRoundsOutward:
+    """
+    A range in this repository is the set of answers a marker accepts, so a printed interval must
+    contain the computed one. Rounding both ends to nearest can only shrink it: `29/bouncy-v`
+    spans 3.67749 to 3.75 metres and used to print `3.7 – 3.8`, which excludes the answer a solver
+    using the exact `g` would hand in. Five of the nine intervals in phys were cut that way.
+    """
+
+    @staticmethod
+    def span(low, high, unit='metre'):
+        return QuantityRange(PhysicsQuantity.construct(low, unit),
+                             PhysicsQuantity.construct(high, unit))
+
+    def test_the_minimum_is_floored(self):
+        assert f'{self.span(3.67749375, 3.75):.1f}' == r'\qtyrange{3.6}{3.8}{\metre}'
+
+    def test_the_maximum_is_ceiled(self):
+        assert f'{self.span(2.4644, 2.51327):.2f}' == r'\qtyrange{2.46}{2.52}{\metre}'
+
+    def test_the_printed_interval_contains_the_computed_one(self):
+        """The property the whole thing exists for, checked at four precisions."""
+        low, high = 0.427521, 0.440973
+        for precision in range(1, 5):
+            printed = f'{self.span(low, high):.{precision}f}'
+            a, b = (float(x) for x in re.findall(r'\{([\d.]+)\}', printed)[:2])
+            assert a <= low and b >= high, f'{precision}: {printed}'
+
+    def test_an_endpoint_already_on_the_grid_is_not_nudged(self):
+        """Floating-point noise must not turn 3.7 into 3.6, nor 3.8 into 3.9."""
+        assert f'{self.span(3.7, 3.8):.1f}' == r'\qtyrange{3.7}{3.8}{\metre}'
+
+    def test_whole_numbers_survive(self):
+        assert f'{self.span(5560, 5570, "kilometre"):.0f}' == r'\qtyrange{5560}{5570}{\kilo\metre}'
+
+    def test_no_precision_drops_nothing_and_so_changes_nothing(self):
+        """With the bare spec the magnitude prints in full, so there is nothing to round away."""
+        assert f'{self.span(3.67749375, 3.75)}' == r'\qtyrange{3.67749375}{3.75}{\metre}'
+
+    def test_a_dimensionless_range_still_uses_numrange(self):
+        assert f'{self.span(0.101, 0.209, ""):.1f}' == r'\numrange{0.1}{0.3}'
+
+
 class TestList:
     def test_masses(self, mass1, mass2, mass_mega):
         expected = r'\qtylist{1;7;96.7}{\kilo\gram}'
