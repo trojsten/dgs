@@ -3,11 +3,13 @@
 define RULE_TEMPLATE_SEMINAR
 render/seminar/%/$(1).md: \
 	source/seminar/$$$$*/$(1).md \
-	source/seminar/$$$$*/meta.yaml
+	source/seminar/$$$$*/meta.yaml \
+	$$(PIPELINE_STAMP)
 	$$(call jinja,modules.seminar.builder.renderer,$$(lang),source/seminar/$$*/meta.yaml)
 
 build/seminar/%/$(1).tex: \
-	render/seminar/$$*/$(1).md
+	render/seminar/$$*/$(1).md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 endef
 $(foreach target,problem solution,$(eval $(call RULE_TEMPLATE_SEMINAR,$(target))))
@@ -16,7 +18,8 @@ $(foreach target,problem solution,$(eval $(call RULE_TEMPLATE_SEMINAR,$(target))
 render/seminar/%.gp:\
 	source/seminar/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/seminar/%.gp)*.dat)) \
-	$$(abspath source/seminar/$$(dir $$*)/meta.yaml)
+	$$(abspath source/seminar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
 	$(call jinja,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 ### Standalone problems #########################
@@ -90,7 +93,8 @@ else
 endif
 
 build/seminar/%.tex: \
-	render/seminar/%.md
+	render/seminar/%.md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,sk)
 
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \

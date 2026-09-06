@@ -3,11 +3,13 @@
 define RULE_TEMPLATE_SCHOLAR
 render/scholar/%/$(1).md: \
 	source/scholar/$$$$*/$(1).md \
-	source/scholar/$$$$*/meta.yaml
+	source/scholar/$$$$*/meta.yaml \
+	$$(PIPELINE_STAMP)
 	$$(call jinja,modules.scholar.builder.renderer,$$(lang),source/scholar/$$*/meta.yaml)
 
 build/scholar/%/$(1).tex: \
-	render/scholar/$$*/$(1).md
+	render/scholar/$$*/$(1).md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 endef
 $(foreach target,text problem solution,$(eval $(call RULE_TEMPLATE_SCHOLAR,$(target))))
@@ -16,7 +18,8 @@ $(foreach target,text problem solution,$(eval $(call RULE_TEMPLATE_SCHOLAR,$(tar
 render/scholar/%.gp:\
 	source/scholar/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/scholar/%.gp)*.dat)) \
-	$$(abspath source/scholar/$$(dir $$*)/meta.yaml)
+	$$(abspath source/scholar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
 	$(call jinja,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
 ### Standalone units ############################
@@ -83,15 +86,18 @@ build/scholar/%/build-lecture: \
 	python -m modules.scholar.builder.lecture 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
 build/scholar/%/problem.tex: \
-	render/scholar/$$*/problem.md
+	render/scholar/$$*/problem.md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
 build/scholar/%/solution.tex: \
-	render/scholar/$$*/solution.md
+	render/scholar/$$*/solution.md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
 build/scholar/%/text.tex: \
-	render/scholar/$$*/text.md
+	render/scholar/$$*/text.md \
+	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
 # <subject>/<year>/<target>/<issue>

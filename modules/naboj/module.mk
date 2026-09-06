@@ -15,7 +15,8 @@ source/naboj/%/i18n: \
 define NABOJ_TRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
-	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja,\
 		modules.naboj.builder.renderer,\
@@ -23,7 +24,8 @@ render/naboj/%/$(1).md: \
 		$$(abspath $$(dir $$<)/../meta.yaml))
 
 build/naboj/%/$(1).tex: \
-	render/naboj/$$$$*/$(1).md
+	render/naboj/$$$$*/$(1).md \
+	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
@@ -32,12 +34,14 @@ $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call NAB
 define NABOJ_NONTRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
-	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml)
+	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
 
 build/naboj/%/$(1).tex: \
-	render/naboj/$$$$*/$(1).md
+	render/naboj/$$$$*/$(1).md \
+	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
 endef
@@ -47,11 +51,13 @@ $(foreach filename,answer answer-also answer-interval,$(eval $(call NABOJ_NONTRA
 render/naboj/%.gp:\
 	source/naboj/%.gp \
 	$$(subst source/,build/,$$(wildcard $$(dir source/naboj/%.gp)*.dat)) \
-	$$(abspath source/naboj/$$(dir $$*)/meta.yaml)
+	$$(abspath source/naboj/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
 	$(call jinja,modules.naboj.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
 
 build/naboj/%.tex: \
-	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@))))
+	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@)))) \
+	$$(PIPELINE_STAMP)
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))
 

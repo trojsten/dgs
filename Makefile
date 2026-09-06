@@ -124,6 +124,29 @@ define _copy
 	cp $< $@
 endef
 
+# Everything whose change can alter a rendered document: the Jinja environment and its filters,
+# the quantity classes, the constants table, the i18n words, the per-module renderers, and pandoc's
+# wrapper. A render target depends on the *renderer*, not only on its input.
+#
+# Without this, correcting `QuantityRange.__format__` to round an answer interval outward moved
+# five printed intervals and `make` reported every one of them up to date -- `answers.pdf` would
+# have been rebuilt from `.tex` files that were already wrong. That is the same class as the `lang`
+# bug above: a stale intermediate lets make skip the rule, and the build stays green.
+#
+# A stamp rather than the list itself. The list is some eighty files and make would compare every
+# one of them against each of several thousand render targets; the stamp collapses that to one.
+PIPELINE_SOURCES := $(shell find core/builder core/filters core/utilities modules -name '*.py' \
+                                 -not -path '*/__pycache__/*' 2>/dev/null) \
+	pandoc.py \
+	core/data/constants.yaml \
+	$(wildcard core/i18n/*.yaml)
+
+PIPELINE_STAMP := build/.pipeline-stamp
+
+$(PIPELINE_STAMP): $(PIPELINE_SOURCES)
+	@mkdir -p $(dir $@)
+	@touch $@
+
 include modules/*/module.mk
 
 build/core/i18n/%.tex: \
