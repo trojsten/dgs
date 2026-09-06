@@ -28,6 +28,10 @@ class Unit:
     """One problem (or handout, or whatever the module's editable thing is)."""
     path: str                               # relative to the module root, e.g. '28/problems/nevera'
     root: Path                              # absolute
+    #: False when the scope meta lists this unit but there is no directory for it. Such a unit is
+    #: still constructed, so a crash does not take the whole audit down, but it must not count as
+    #: present -- `missing_from_disk` is what `listed-missing` reads.
+    exists: bool = True
     meta_raw: str | None = None             # None when there is no meta.yaml at all
     meta: dict | None = None                # parsed; None when absent, empty or unparseable
     meta_error: str | None = None
@@ -120,7 +124,7 @@ class Sources:
     @property
     def missing_from_disk(self):
         """Ids the scope meta names that have no directory."""
-        present = {u.name for u in self.units.values()}
+        present = {u.name for u in self.units.values() if u.exists}
         return [p for p in self.listed_order if p not in present]
 
     def fingerprint(self):
@@ -144,8 +148,20 @@ def _is_language_dir(path: Path):
 
 
 def read_unit(module_root: Path, unit_path: str) -> Unit:
+    """
+    A unit that is listed but not on disk comes back empty rather than raising.
+
+    `listed-missing` is an `error`-severity check written for exactly that case -- its docstring
+    says it exists so nobody has to compile a volume and read 46 pages to find the hole -- but it
+    could never fire, because `iterdir()` below raised `FileNotFoundError` before any check ran.
+    `phys/03` lists one problem and has no `problems/` directory at all, so auditing it died, and
+    the editor's `/audit` page aggregates at volume scope and would have died with it.
+    """
     root = module_root / unit_path
     unit = Unit(path=unit_path, root=root)
+    if not root.is_dir():
+        unit.exists = False
+        return unit
 
     meta = root / 'meta.yaml'
     if meta.is_file():

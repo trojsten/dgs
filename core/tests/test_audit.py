@@ -1172,6 +1172,46 @@ class TestEncodingTrailingWhitespace:
         assert 'encoding' not in ids(run(tmp_path, files=files))
 
 
+class TestListedButNotOnDisk:
+    """
+    `listed-missing` is an error-severity check that could never fire: `read_unit` called
+    `iterdir()` on the directory before any check ran, so a listed-but-absent problem raised
+    `FileNotFoundError` and took the whole audit with it. `phys/03` lists one problem and has no
+    `problems/` directory at all, and the editor's `/audit` page aggregates at volume scope.
+    """
+
+    def test_a_listed_problem_with_no_directory_is_reported(self, tmp_path):
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget', 'ghost'])
+        report = audit(tmp_path, 'naboj', 'phys/99',
+                       ['phys/99/problems/widget', 'phys/99/problems/ghost'])
+        assert 'listed-missing' in ids(report)
+
+    def test_it_does_not_raise(self, tmp_path):
+        """The point: one absent directory must not cost the other thirty-nine their audit."""
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget', 'ghost'])
+        report = audit(tmp_path, 'naboj', 'phys/99',
+                       ['phys/99/problems/widget', 'phys/99/problems/ghost'])
+        assert any(f.unit_name == 'widget' or not f.unit for f in report.findings)
+
+    def test_it_is_not_also_called_meta_missing(self, tmp_path):
+        """
+        A unit with no directory has no meta.yaml either, and saying so would be true and
+        misleading in the same breath -- the reader would go looking for a directory to fix.
+        """
+        make_problem(tmp_path, name='widget')
+        volume_meta(tmp_path, ['widget', 'ghost'])
+        report = audit(tmp_path, 'naboj', 'phys/99',
+                       ['phys/99/problems/widget', 'phys/99/problems/ghost'])
+        assert not [f for f in report.findings
+                    if f.check == 'meta-missing' and f.unit_name == 'ghost']
+
+    def test_a_problem_that_exists_but_has_no_meta_still_is(self, tmp_path):
+        """The quiet half: `meta-missing` must keep working for a directory that is really there."""
+        assert 'meta-missing' in ids(run(tmp_path, name='widget', meta=None))
+
+
 class TestFileEmpty:
     """
     A missing file is boxed in red by `\\protectedInput`; an empty one renders as nothing at all,

@@ -213,7 +213,9 @@ def line_of(text, offset):
 @check('meta-missing', 'error', 'No meta.yaml at all')
 def meta_missing(sources):
     for unit in sources.unit_list:
-        if unit.meta_raw is None:
+        # A unit with no directory at all is `listed-missing`'s business; saying it has no
+        # meta.yaml would be true and misleading in the same breath.
+        if unit.exists and unit.meta_raw is None:
             yield Finding('meta-missing', 'error', 'the problem has no meta.yaml', unit.path)
 
 
