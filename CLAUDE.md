@@ -27,47 +27,11 @@ five `@J set` lines became five `derived:` entries with byte-identical output.
 If you meet a `-P` in an old note or transcript, drop it — argparse now exits on it, which
 is deliberate. A flag silently ignored would read as though it still worked.
 
-## The editor and the auditor
+## The audit's conventions
 
-One Flask app, two pages. Run it from the repository root:
-
-```
-uv run python tools/editor/app.py [--port 5001]
-```
-
-- `/` — the editor: pick a problem, edit its sources and `meta.yaml`, render, compile,
-  lint, and read the PDF beside them. Tab indents rather than moving focus — four spaces
-  in the sources, two in `meta.yaml`, to the next stop; Shift+Tab outdents; Escape leaves
-  the textarea, since Tab no longer does. A selection is never replaced, only indented.
-- `/audit` — every volume in one table, then one volume in detail: an author
-  leaderboard, tag distribution, files by language, and a verdict per problem for
-  translations, equation de-duplication, pictures and `values:` extraction.
-
-It must run from the root, and it `chdir`s there itself: several `core` modules open
-their data by a repository-relative path, so `core/i18n` fails to import from anywhere
-else. Port 5000 is the default but is often taken.
-
-Both pages learn what a module contains from `modules/<module>/editor.yaml` — where the
-units live, what files they hold, and which level (`scope:`) the audit aggregates at. A
-fourth module needs a descriptor and no code.
-
-What files a unit may hold comes from `module.mk`'s two rule families —
-`NABOJ_TRANSLATABLE` inside `<language>/`, `NABOJ_NONTRANSLATABLE` beside the unit — by
-way of the descriptor's `targets`/`translated`, which mirror them. `core/tests/test_audit.py`
-fails if the mirror stops matching, so adding a file to module.mk cannot silently cost it a
-column. The audit narrows that vocabulary to what a volume actually has, and gives each
-remaining file a column of its own, grouped under its language.
-
-**The audit covers `naboj` only**, by `audit: true` in its descriptor. The checks and the
-four verdicts are Náboj's conventions — a language directory per problem, `values:` and
-`eq:` in a meta, a volume `problems:` list — and seminar and scholar are built differently
-enough that measuring them against these would report the difference as a defect. The
-editor still edits all three. If either ever wants auditing it wants its own checks, not
-the flag flipped.
-
-The audit checks live in `core/audit/`, not in the app, because they are the durable
-part: `checks.py` for the source-only ones, `status.py` for the four progress verdicts,
-`build.py` for the slow ones.
+How to run the editor and the `/audit` page, and how a module declares itself to them,
+is in `.claude/skills/dgs-editor`. What the checks *mean* is here, because it governs
+editing problems rather than running the app.
 
 The `values` verdict covers both directions: whether the numbers a statement *gives* are
 named in `values:`, and whether the number a problem *produces* is computed. An answer
@@ -92,17 +56,10 @@ hand-written version of the same sweep actually produced.
 
 ## Code layout
 
-- `core/builder/jinja.py` — the two Jinja environments and the whole filter /
-  global table. `MarkdownJinjaRenderer` is what `.md` sources see; the pint
-  registry (including the `eur`/`€` currency unit) is set up at module level.
-- `core/builder/context/quantities/` — `PhysicsQuantity`, `PhysicsConstant`
-  (`constant.py`), `QuantityRange`, `QuantityList`, `QuantityProduct`,
-  `MathObject` (`math.py`). All immutable except the symbol.
-- `core/filters/` — thin Jinja-facing wrappers (`latex.py`, `numbers.py`,
-  `hacks.py`). Most just delegate to a `PhysicsQuantity` method.
-- `core/data/constants.yaml` — physical constants; the header comment documents
-  the schema. `core/latex/*.tex` — the DGS class, macros, `siunitx` units.
-- `modules/naboj/` — Náboj-specific renderer, templates (`*.jtex`), `module.mk`.
+Two things `ls` will not tell you: the pint registry, including the `eur`/`€`
+currency unit, is set up at module level in `core/builder/jinja.py`, which also
+holds the whole filter / global table; and everything in
+`core/builder/context/quantities/` is immutable except the symbol.
 
 ## Tests
 

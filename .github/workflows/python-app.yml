@@ -29,25 +29,17 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends librsvg2-bin lcdf-typetools
-    # pandoc and pandoc-crossref have to match: the filter is compiled against one pandoc and
-    # warns that anything else "is not supported, strange things may (and likely will) happen
-    # silently". So pin only the filter, ask the binary which pandoc it was built with, install
-    # exactly that one, and fail the job if the pair still disagrees. Bumping = one version here.
+    # The same script a developer runs from install.sh, so CI and a workstation cannot drift onto
+    # different pandocs. It pins the filter, asks the binary which pandoc it was built with,
+    # installs exactly that one and fails if the pair still disagrees; why, and how to bump the
+    # pair, is in install-pandoc.sh.
     - name: "Set up pandoc and pandoc-crossref"
-      env:
-        PANDOC_CROSSREF_VERSION: v0.3.25
       run: |
-        set -euo pipefail
-        curl -fsSL "https://github.com/lierdakil/pandoc-crossref/releases/download/${PANDOC_CROSSREF_VERSION}/pandoc-crossref-Linux-X64.tar.xz" | tar -xJ
-        install -m755 pandoc-crossref /usr/local/bin/pandoc-crossref
-        PANDOC_VERSION="$(pandoc-crossref --version | sed -n 's/.*built with Pandoc v\([0-9][0-9.]*\).*/\1/p')"
-        echo "pandoc-crossref ${PANDOC_CROSSREF_VERSION} was built with pandoc ${PANDOC_VERSION}"
-        curl -fsSLO "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-1-amd64.deb"
-        sudo dpkg -i "pandoc-${PANDOC_VERSION}-1-amd64.deb"
-        printf 'x [-@eq:d]\n\n$$E=mc^2$$ {#eq:d}\n' > /tmp/crossref-check.md
-        pandoc --filter pandoc-crossref --to latex /tmp/crossref-check.md 2>&1 | tee /tmp/crossref-check.out
-        ! grep -q 'WARNING' /tmp/crossref-check.out
-        grep -q 'ref{eq:d}' /tmp/crossref-check.out
+        ./install-pandoc.sh
+        # The script installs into ~/.local/bin, which is not on a runner's PATH. It verifies
+        # itself by absolute path, so this is for the later steps -- pytest and make shell out
+        # to `pandoc` by name. $GITHUB_PATH only affects subsequent steps, hence not before.
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
     # Must precede FontPro: its scripts run tex, fontinst, vptovf, pltotf, mktexlsr and
     # updmap-sys, and it installs into TEXMFLOCAL. This used to work by accident, because the
     # pandoc action we no longer use dragged in a TeX distribution of its own.
