@@ -54,6 +54,51 @@ quiet on a case that looks like it and is not. That second half is not optional.
 one of those quiet cases in `core/tests/test_audit.py` is a false positive that a
 hand-written version of the same sweep actually produced.
 
+## An answer interval is a span, not a tolerance
+
+`answer-interval.md` is the set of answers a marker accepts, so it is **the span over every
+admissible value of every constant, and nothing else**. No padding.
+
+Admissible means two values per constant: the one in `core/data/constants.yaml`, and the one
+the constants sheet prints — that constant's `digits:` applied, which is what `.approx`
+returns. The competitor is holding the sheet, so both are legitimate arithmetic.
+
+So `derived:` carries the pair, and the names are `result` and `result_approx`:
+
+    derived:
+      result:        "(k * L0**2 / (2 * m * const.g)).to('cm')"
+      result_approx: "(k * L0**2 / (2 * m * const.g.approx)).to('cm')"
+
+The solution and `answer.md` print **`result_approx`** — that is the number a competitor
+computes, and the solution has to be followable with the sheet in front of them. The interval
+is `(§ (result % result_approx)|fN §)`, smaller endpoint first, since `%` refuses a reversed
+range. `29/folding-bath` and `29/bolognese` are the worked examples.
+
+Nothing needs padding because `QuantityRange.__format__` floors the minimum and ceils the
+maximum at whatever precision is printed, so the printed band always contains the computed
+one. **`|widen` (`|w`) is not for this.** It was the workaround from when both ends rounded to
+nearest, and it hid the defect rather than fixing it: `29/bouncy-v` spanned `[3.67749, 3.75]`,
+printed `3.7 – 3.8`, and turned away the solver who used the exact `g`. **There is no `|w` or
+`|widen` left anywhere in phys.** The filter is still defined — `widen` is a real operation on a
+range and the tests cover it — but no answer interval should reach for it.
+
+Name the pair this way round even where it reads oddly. `28/nevera` and `28/avocado` used to
+call the sheet's value `result` and the real one `result_exact`, the inverse of here, and the
+cost was not cosmetic: `%` refuses a reversed range, so the two problems ordered their operands
+oppositely — `(result % result_exact)` in one, `(result_exact % result)` in the other — and both
+were right. Whoever wrote the next one had to work out which name meant which before they could
+write the interval at all.
+
+Two things to check when writing one:
+
+- **More than one constant that moves?** Then the extremes need not be the all-exact and
+  all-sheet corners — evaluate them. Every interval in 29 is safe, but only for a reason:
+  `bolognese`'s density cancels algebraically and its heat capacity does not move, leaving the
+  latent heat alone; `folding-bath`'s density and `g` enter solely as the product `ρg`.
+- **Does any constant move at all?** A `digits:` that reproduces the magnitude exactly does not
+  — `refraction_water` is `1.3330` to four digits, so `29/speedy-reflection` spans on `g` alone.
+  If *none* moves, the pair is a single point and the sheet prints `x – x`.
+
 ## Code layout
 
 Two things `ls` will not tell you: the pint registry, including the `eur`/`€`
@@ -200,10 +245,12 @@ Strip trailing whitespace freely **except** in two cases, both of which a sweep 
 already broken once:
 
 - **A space after an odd run of backslashes is escaped.** That is the `\ `
-  non-breaking space above, and thirteen `answer.md` files end a line with one.
-  Strip the space and the bare `\` left behind is a Markdown hard line break, which
-  pushes the figure below onto its own line -- `~` becomes `\hfill\break` in the
-  TeX. An *even* run is escaped backslashes and the space after it is ordinary.
+  non-breaking space above. Strip the space and the bare `\` left behind is a
+  Markdown hard line break -- `~` becomes `\hfill\break` in the TeX. An *even* run
+  is escaped backslashes and the space after it is ordinary. Eleven `answer.md`
+  files used to open with one of these; they do not any more (see *A picture as the
+  whole answer* below), and the only file left ending a line with one is
+  `chem/02/oganesón`, whose six are the spacing between orbitals inside a `$$` block.
 - **Two or more spaces before a line with content force a line break.**
   `chem/02/hviezdoslavov-kubín` is a poem and needs them between its verses,
   `chem/04/zase-nmr` hangs NMR data under each list item, and `FKS/39/1/2/06` holds
@@ -288,6 +335,45 @@ and after. Reading through a symlink is safe; writing is not.
   says which. Three things exempt it: end of file, a next line Markdown needs a
   blank before anyway (list, figure, heading, another display), and a block
   indented inside a list item, where the next bullet is the break.
+- **A picture as the whole answer needs nothing around it.** Write the image on its
+  own and stop -- no leading `\ `, no `\vspace`. Eleven answer files used to carry
+  both, and the reason is worth knowing because the symptom comes back looking like
+  a Markdown problem when it is a TeX one: the problem number is a `titlesec`
+  `[runin]` subsection title, which needs a paragraph to sit in, and `\insertPicture`
+  is vertical-mode material, so the title was deferred to the *next* paragraph and
+  the number printed **under** its own picture. The escaped non-breaking space was
+  there to open a paragraph for it; the negative `\vspace` -- `-8mm` to `-13mm`,
+  tuned per drawing -- then cancelled the `\topsep` that `center` had added. Both
+  halves were invisible to the author and went stale whenever a picture was resized.
+  `\tightPictures` in `core/latex/utilities.tex` now does it in one place: inside an
+  answer block only, `\insertPicture` opens the paragraph with `\leavevmode` and sets
+  the drawing on the number's own line, raised so its top edge is level with it and
+  centred between two `\hfill` in whatever width the number leaves. Nothing there is
+  a tuned length, and the picture cannot collide with the number however wide it
+  grows. Everywhere else -- a picture in a problem or a solution -- `\insertPicture`
+  is unchanged and keeps its `center`.
+
+  The same block/inline split decides the punctuation. `answer-extra`,
+  `answer-interval` and `answer-also` are glued onto the answer with `\answerJoin`,
+  which is a comma while the answer is running text and **nothing** once the answer
+  has ended its own paragraph -- there is no line left for a comma to sit on, so it
+  would open a new paragraph and print alone, which is what `21/pv-to-vt-2` did under
+  its diagram. `\answerJoin` tests `\ifvmode` rather than inspecting the source, so it
+  is right for a picture, a list, a display, and for an `answer.md` that exists but is
+  empty (`28/john-doe`, `20/big-brother`, whose whole answer is the extra). Nothing to
+  do when authoring either way: write the extra and the join sorts itself out.
+- **The booklet's closing credits are one block.** The four author lists and the
+  colophon under their rule are one credit, so `blocks/booklet/footer.jtex` wraps
+  them in `footerBlock`, which collects them into a box -- a box cannot be broken --
+  measures it, and takes a new page *before* laying down the fill if what is left of
+  the page will not hold it. `21/sk` used to split it four names from the end, with
+  `Obrázky` dangling on the foot of one page and the colophon stranded at the top of
+  the next. A `\vfill` on its own cannot fix that in either direction: glue is a legal
+  breakpoint, so TeX breaks *inside* the block, and glue is discarded both at a break
+  and at the head of a fresh page, so the fill that was meant to seat the block at the
+  foot evaporates -- hence the box, the explicit `\newpage`, and `\vspace*{\fill}`
+  rather than `\vfill`. Adding a name costs nothing; a block taller than a page would
+  overrun the margin and say so as an Overfull `\vbox`.
 - Block equations belong in `meta.yaml` under `eq:`, referenced as
   `(§ eq.<name>|disp('.') §)`. The key becomes the label, so renaming a key
   renames `{#eq:<pid>:<key>}`.
