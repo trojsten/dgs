@@ -72,7 +72,24 @@ So `derived:` carries the pair, and the names are `result` and `result_approx`:
 The solution and `answer.md` print **`result_approx`** — that is the number a competitor
 computes, and the solution has to be followable with the sheet in front of them. The interval
 is `(§ (result % result_approx)|fN §)`, smaller endpoint first, since `%` refuses a reversed
-range. `29/folding-bath` and `29/bolognese` are the worked examples.
+range. `29/folding-bath` is the worked example, and `29/drenched` is the one to read for why:
+its solution names the air's density only as `\rho_a` and never prints a figure for it, so
+nothing anchors the derivation to the table and the competitor's 955 ml is simply the right
+number to show.
+
+**Unless the solution quotes the constants, in which case it must compute with the ones it
+quotes.** That is the real invariant, and printing `result_approx` is only the usual way of
+satisfying it. `29/bolognese` states ρ = 1000, c = 4180 and l = 2260 in its prose, all
+`constants.yaml` values, and so computes 334 kJ and 4.506 h from them and prints **`result`**;
+the interval still reaches the sheet's arithmetic, so the competitor who read 2300 off the
+sheet is still accepted. `00/horsing-around` and `24/crane` are the same shape, printing
+`const.gforce` and `const.g` respectively. The failure this rule exists to prevent is a
+solution that shows one set of constants and computes with the other — which is what
+`bolognese` used to do, printing 2260 while computing with 2300.
+
+So the check is not "does it print `result_approx`" but "does every number shown come from one
+chain". A quick sweep for the mismatch: any problem defining both, whose displayed material
+names no `const.` value, should print `result_approx` throughout.
 
 Nothing needs padding because `QuantityRange.__format__` floors the minimum and ceils the
 maximum at whatever precision is printed, so the printed band always contains the computed
