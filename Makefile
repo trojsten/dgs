@@ -48,6 +48,14 @@ c_default   := $(shell tput sgr0; tput setaf 7)
 # far worse than a loud failure, and this is the one-line cure.
 .DELETE_ON_ERROR:
 
+# The same silent-empty shape from the other direction, and make cannot cure this one: *deleting*
+# a source leaves its built `.tex` behind, because a target whose prerequisite has vanished has
+# no rule left to remove it. `\protectedInput` then finds that orphan and includes it, so the
+# document keeps printing the deleted problem -- or, where the source was empty, keeps printing
+# nothing at all where a red `Missing file` box was owed. Deleting the three zero-byte English
+# files in `29` moved not one box until the three 1-byte `.tex` files under `build/` went too.
+# So: remove a source, remove its counterpart under `build/` and `render/` in the same breath.
+
 # No interactive mode with texfot
 # and ignore underfull warnings
 TEXFOT_ARGS=--no-interactive \

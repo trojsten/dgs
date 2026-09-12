@@ -1,5 +1,12 @@
 .SECONDEXPANSION:
 
+# Every seminar template. The per-document ones are already named by the rule that builds them,
+# but `base.jtex` and `base-booklets.jtex` -- which every one of those extends -- were named by no
+# rule at all, and `semester.tex` named no template whatever. A wildcard so that a template added
+# later is picked up without anyone remembering to list it; regenerating a `.tex` is one fast
+# python call, so the extra breadth costs nothing next to shipping a stale document.
+SEMINAR_TEMPLATES := $(wildcard modules/seminar/templates/*.jtex)
+
 define RULE_TEMPLATE_SEMINAR
 render/seminar/%/$(1).md: \
 	source/seminar/$$$$*/$(1).md \
@@ -29,7 +36,7 @@ render/seminar/%.gp:\
 
 # % <competition>/<volume>/<semester>/<round>/<problem>
 build/seminar/%/build-standalone: \
-	modules/seminar/templates/standalone.jtex
+	$(SEMINAR_TEMPLATES)
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Building standalone for $(c_filename)$*$(c_action):$(c_default)'
 	python -m modules.seminar.builder.standalone $* -o '$(dir $@)'
@@ -98,7 +105,8 @@ build/seminar/%.tex: \
 	$(call pandoctex,sk)
 
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
-	modules/seminar/templates/$$(notdir $$@)
+	modules/seminar/templates/$$(notdir $$@) \
+	$$(SEMINAR_TEMPLATES)
 	$(call _prepare_arguments)
 	python -m modules.seminar.builder.volume 'source/seminar/' 'source/seminar/$*/' \
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)' || exit 1;
@@ -109,16 +117,19 @@ build/seminar/%/semester.tex: \
 	$$(wildcard source/seminar/$$*/*/*/problem.md) \
 	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
+	$$(SEMINAR_TEMPLATES) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_semester,semester)
 
 build/seminar/%/invite.tex: \
 	modules/seminar/templates/$$(notdir $$@) \
+	$$(SEMINAR_TEMPLATES) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_semester,invite)
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
 	modules/seminar/templates/$$(subst .tex,.jtex,$$(notdir $$@)) \
+	$$(SEMINAR_TEMPLATES) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml
 	$(call prepare_arguments_round,round)

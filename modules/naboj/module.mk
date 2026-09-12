@@ -80,24 +80,59 @@ endef
 #
 # Without this, deleting `22/solar-shield/answer-interval.md` left the line in `answers.tex` and
 # printed `Missing file …/answer-interval.tex` in a red box on the answer sheet, with make green.
-naboj_problem_dirs = $(subst $(cdir),,$(wildcard $(abspath source/naboj/$(1)/../../problems/*)))
+#
+# Both depths, because the two rule families put files at both. `answer*.md` sits beside the
+# unit, so adding or removing one moves `problems/<unit>/`; but `problem.md` and `solution.md`
+# live inside `<language>/`, and deleting one of those moves only `problems/<unit>/<language>/`.
+# Matching the first depth alone caught the shared files and missed every translated one --
+# deleting `29/starlight/en/solution.md` left the booklet believing it was still there.
+# The trailing slash is what restricts the glob to directories; `patsubst` takes it back off.
+naboj_problem_dirs = $(subst $(cdir),,$(patsubst %/,%,\
+	$(wildcard $(abspath source/naboj/$(1)/../../problems)/*/ \
+	           $(abspath source/naboj/$(1)/../../problems)/*/*/)))
+
+# Every template the three naboj builders can read, at all three depths `templates/` uses.
+#
+# A wildcard rather than a list, because the list was wrong in both directions. The four documents
+# themselves -- `booklet.jtex`, `answers.jtex`, `solutions.jtex`, `cover.jtex` -- together with
+# `blocks/problem.jtex` and `blocks/solution.jtex`, were named by no rule at all, so editing one
+# invalidated nothing and `make` reported the old PDF up to date. The blocks that *were* named
+# were named on `build/naboj/%/booklet.tex`, whose recipe is empty: make then marks the target out
+# of date, runs nothing, and leaves the stale file in place. That is the trap `build-standalone`
+# below already documents, and it was documented there while still live here.
+#
+# So the templates hang off the stamps, which have real recipes, and a template added later is
+# picked up without anyone remembering to list it.
+NABOJ_TEMPLATES := $(wildcard modules/naboj/templates/*.jtex \
+                              modules/naboj/templates/*/*.jtex \
+                              modules/naboj/templates/*/*/*.jtex)
 
 build/naboj/%/build-language: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../.static/logo/logo.pdf)) \
 	source/naboj/$$*/meta.yaml \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
+	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../meta.yaml)) \
 	$$(call naboj_problem_dirs,$$*) \
+	$$(NABOJ_TEMPLATES) \
+	$$(wildcard source/naboj/$$*/intro.jtex) \
 	source/naboj/$$(word 1,$$(subst /, ,$$*))/.static/i18n/$$(word 4,$$(subst /, ,$$*)).yaml
 	$(call prepare_arguments,language)
 	python -m modules.naboj.builder.language 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 	touch $@
 
 # % <competition>/<volume>/venues/<venue>
+# The volume and competition metas were already here and missing from `build-language`, which is
+# how `29/meta.yaml` -- the `problems:` running order, the author list, the constants sheet's
+# contents -- could change without the booklet moving. The problem directories are here for the
+# same reason they are there: `answers-modulo.jtex` embeds an answer block per problem.
 build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../meta.yaml)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
+	$$(call naboj_problem_dirs,$$*) \
+	$$(NABOJ_TEMPLATES) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
@@ -137,8 +172,14 @@ build/naboj/%/booklet.tex build/naboj/%/answers.tex build/naboj/%/cover.tex buil
 
 # Introduction page for booklet
 # % <competition>/<volume>/languages/<language>
+# `intro.jtex` is a prerequisite of the stamp above, not of this target, for the reason the
+# stamp's own comment gives: this recipe is empty, so naming the source here marked the target
+# out of date, ran nothing, and left the stale `intro.tex` in place. Editing an intro therefore
+# changed no PDF at all -- five volumes were printing `problems / pictures / editors / head`,
+# the literal keys of the authors mapping, under a heading reading "Zbierku zostavili", and no
+# rebuild would have shown it. Every language directory has an intro, but `wildcard` guards the
+# stamp against one that does not rather than failing with "No rule to make target".
 build/naboj/%/intro.tex: \
-	source/naboj/$$*/intro.jtex \
 	build/naboj/$$*/build-language ;
 
 # Constants sheet
@@ -233,9 +274,7 @@ $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language
 # `standalone.tex` has an empty recipe -- listing them there would mark it out of date
 # without ever regenerating it.
 build/naboj/%/build-standalone: \
-	modules/naboj/templates/base.jtex \
-	modules/naboj/templates/standalone.jtex \
-	modules/naboj/templates/blocks/answer-body.jtex
+	$$(NABOJ_TEMPLATES)
 	$(call prepare_arguments,standalone)
 	python -m modules.naboj.builder.standalone \
 		$(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) $(word 5,$(words)) -o '$(dir $@)'

@@ -28,6 +28,7 @@ render/scholar/%.gp:\
 
 # % <course>/<year>/<kind>/<issue>[/<problem>]
 build/scholar/%/build-standalone: \
+	modules/scholar/templates/base.jtex \
 	modules/scholar/templates/standalone.jtex
 	@mkdir -p $(dir $@)
 	@echo -e '$(c_action)Building standalone for $(c_filename)$*$(c_action):$(c_default)'
