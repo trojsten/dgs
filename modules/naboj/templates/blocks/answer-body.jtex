@@ -1,27 +1,32 @@
 (# The answer as it actually reads: one run-on line, never a list.
 
-   `answer.tex` comes first, then whichever extras exist, each glued on with `\!` before its
-   comma. Every part is a separate pandoc file and so ends in a newline, which TeX turns into
-   a space -- the negative thin space pulls that back so the comma sits tight against the
-   fragment before it. `answer-interval` and `answer-also` additionally carry an i18n lead-in
-   ("uznajte výsledky v intervale", "also accept", ...) and are closed with a full stop.
-
-   `answer-extra` gets no lead-in, only the comma, and even that is suppressed when
-   `answer.md` is empty -- a problem whose whole answer lives in the extra must not open with
-   a stray comma.
+   `answer.tex` comes first, then whichever extras exist, each glued on with `\answerJoin`.
+   That is a comma while the answer is running text, and nothing at all when the answer
+   ended block-level -- a picture, a list -- because there is no line for a comma to sit on;
+   `core/latex/utilities.tex` has the reasoning. `answer-interval` and `answer-also`
+   additionally carry an i18n lead-in ("uznajte výsledky v intervale", "also accept", ...)
+   and are closed with a full stop; `answer-extra` gets the join and no lead-in.
 
    Shared by `blocks/answer.jtex` (booklet, answer sheets, modulo sheets) and by
    `standalone.jtex` (the one-problem preview), so the preview cannot drift from the real
-   thing. Needs `path_exists` / `file_size`, which decide against the *source* tree: the
-   built `.tex` for a part that does not exist is simply never produced. #)
+   thing. Needs `path_exists`, which decides against the *source* tree: the built `.tex` for
+   a part that does not exist is simply never produced. An `answer.md` that exists but is
+   empty needs no test of its own -- it leaves TeX in vertical mode and `\answerJoin` sees
+   that.
+
+   `\tightPictures` is what keeps a picture-only answer sitting under its problem number
+   rather than a \topsep below it; the group confines it to this block. See
+   `core/latex/utilities.tex`. #)
+\begingroup\tightPictures%
 \protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
 (@ set prefix = "{}/{}/{}/problems/{}".format(module.id, competition.id, volume.id, problem.id) @)%
 (@ if path_exists("source/{}/{}/answer-extra.md".format(prefix, language.id)) -@)%
-(@ if path_exists("source/{}/answer.md".format(prefix)) and file_size("source/{}/answer.md".format(prefix)) > 0 @)\!\textit{, }(@ endif @)\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
+\answerJoin\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
 (@- endif -@)%
 (@- if path_exists("source/{}/answer-interval.md".format(prefix)) -@)%
-\!\textit{, (* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
+\answerJoin\textit{(* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
 (@- endif -@)%
 (@- if path_exists("source/{}/answer-also.md".format(prefix)) -@)%
-\!\textit{, (* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
+\answerJoin\textit{(* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
 (@- endif -@)
+\endgroup%

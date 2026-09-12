@@ -37,6 +37,117 @@
     \end{center}
 }
 
+% An answer that is nothing but a picture. Two things went wrong here, and the eleven
+% `answer.md` files that opened with an escaped non-breaking space and then a negative
+% \vspace -- from -8mm to -13mm, one tuned number per drawing -- were papering over both.
+%
+% First, a run-in \subsection title needs a paragraph to sit in, and \insertPicture's
+% `center` is vertical-mode material, so the title got deferred to the *next* paragraph and
+% the problem number came out under its own picture. The non-breaking space was there to
+% open a paragraph for the number to land in. \leavevmode does that without putting a
+% character on the page.
+%
+% Second, `center` contributes \topsep above the drawing, which then floated a line and a
+% half clear of the number. Here the picture instead stays in the number's own paragraph,
+% raised so its top edge is level with the top of that line, and centred between two \hfill
+% in whatever width the number leaves -- so it cannot collide with the number however wide
+% it grows, and there is no length left to tune when a drawing is rescaled. A picture shorter
+% than a line of text has no gap to close and is left on the baseline where it belongs.
+%
+% \parfillskip has to go to zero for the trailing \hfill to survive the line break, and is
+% put back straight after, so an `answer-extra` following the picture still sets ragged.
+% Local to a group: only the answer block turns this on, and a picture inside a problem or a
+% solution keeps the breathing room \topsep is there for.
+\newsavebox{\dgsPictureBox}
+\NewDocumentCommand{\tightPictures}{}{%
+    \RenewDocumentCommand{\insertPicture}{O{} m}{%
+        \sbox\dgsPictureBox{%
+            \IfFileExists{\activeDirectory/##2}{%
+                \includegraphics[##1]{\activeDirectory/##2}%
+            }{%
+                \includegraphics[##1]{example-image}%
+            }%
+        }%
+        \leavevmode
+        \edef\dgsRestoreParfillskip{\parfillskip=\the\parfillskip\relax}%
+        \parfillskip=0pt
+        \hfill
+        \ifdim\ht\dgsPictureBox>\ht\strutbox
+            \raisebox{\dimexpr\ht\strutbox-\ht\dgsPictureBox\relax}{\usebox\dgsPictureBox}%
+        \else
+            \usebox\dgsPictureBox
+        \fi
+        \hfill\hbox{}%
+        \par
+        \dgsRestoreParfillskip
+    }%
+}
+
+% The join between the answer and an `answer-extra`, `answer-interval` or `answer-also`.
+%
+% Every part is a separate pandoc file and so ends in a newline, which TeX turns into a
+% space; the negative thin space pulls that back, so the comma sits tight against the
+% fragment before it. All of that is right only while the answer is running text. An answer
+% that is a picture -- or a list, or a display, or anything else block-level -- has already
+% ended its paragraph, so the comma opens a new one and prints on a line of its own with
+% nothing before it. That is what `21/pv-to-vt-2` was doing: a diagram, then a paragraph
+% opening ", Dbajte na to, ...".
+%
+% \ifvmode asks TeX which of the two actually happened instead of guessing from the source,
+% so this is also right for an `answer.md` that is empty -- a problem whose whole answer
+% lives in the extra, `28/john-doe` and `20/big-brother` -- and for whatever block-level
+% answer is written next.
+\NewDocumentCommand{\answerJoin}{}{%
+    \ifvmode\noindent\else\!\textit{, }\fi
+}
+
+% The trailing block of a booklet -- the four author lists and the colophon under their rule.
+% It is one credit, so it reads as one thing or not at all, and `21/sk` was splitting it
+% four names from the end: the `Obrázky` heading dangling on the foot of page 48 with its one
+% name overleaf, and the colophon stranded at the top of a mostly empty page 49.
+%
+% \vfill alone cannot prevent that. Glue is a legal breakpoint, so when the block does not
+% fit TeX breaks inside it, and the \vfill that was meant to seat it at the foot of the page
+% is discarded at the break -- which is why the remainder came out at the *top* of the next
+% page rather than the bottom. The fill has to be \vspace*{\fill} for the same reason from
+% the other side: plain glue is discarded at the head of a fresh page too, so after the
+% \newpage below it would vanish and leave the block at the top again. The star is what makes
+% it survive.
+%
+% So the block is collected into a box first, which cannot be broken at all, and only then is
+% there anything to measure: if what is left of the page will not hold it, take a new page
+% *before* laying down the \vfill, so the block is seated at the foot of whichever page it
+% ends up on. \pagegoal is \maxdimen while a page is still empty, which is not a height and
+% must not be compared against one.
+%
+% The \par\penalty is not decoration. \pagegoal and \pagetotal only describe the page as of
+% the last time the page builder ran, and after an answer they can still be describing the
+% page before: measured without it, `chem/03` read 744pt used of 692pt on a page holding one
+% structural formula, and took a page it did not need. Contributing a penalty exercises the
+% builder, and -100 doubles as a mildly attractive breakpoint, so if TeX does have to break
+% it breaks here rather than somewhere worse. The idiom is `needspace`'s \Needspace*.
+%
+% It follows that a block taller than a whole page cannot be placed: it would overrun the
+% bottom margin and say so, loudly, as an Overfull \vbox. At four author lists it is nowhere
+% near, and splitting it would be the wrong answer anyway.
+\newsavebox{\dgsFooterBox}
+\NewDocumentEnvironment{footerBlock}{}{%
+    \par
+    \begin{lrbox}{\dgsFooterBox}%
+    \begin{minipage}{\linewidth}%
+}{%
+    \end{minipage}%
+    \end{lrbox}%
+    \par\penalty-100
+    \ifdim\pagegoal<\maxdimen
+        \ifdim\dimexpr\pagegoal-\pagetotal\relax<\dimexpr\ht\dgsFooterBox+\dp\dgsFooterBox\relax
+            \newpage
+        \fi
+    \fi
+    \vspace*{\fill}%
+    \usebox{\dgsFooterBox}%
+}
+
 % \exampleIO[verbatim input][verbatim output]
 % Input and output for KSP
 %   - verbatim input
