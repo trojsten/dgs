@@ -267,3 +267,42 @@ class TestMissingWordRegistry:
         from core.builder.renderer import MissingWordError
         with pytest.raises(MissingWordError):
             _ = self.words({})['and']
+
+
+class TestVerbatimBlocks:
+    """
+    `blocks:` holds text that is reused as written -- a gnuplot preamble, a block of options.
+
+    Neither of the two existing keys could carry one. `derived:` evaluates its value as a Jinja
+    *expression*, so a preamble reaches it as `TemplateSyntaxError: chunk after expression` at the
+    second directive; `eq:` wraps its fragment in a `MathObject` that prints with an `{#eq:...}`
+    label attached. `values:` does pass a bare string through untouched, which is how the gnuplot
+    preamble in `FKS/42/1/1/03` first shipped, but the name then says the text is a given quantity.
+
+    It is namespaced, unlike `values` and `derived`, for the reason `words` is: a block reached as
+    `(§ blocks.setup §)` shadows nothing, so it may be called anything.
+    """
+
+    render = staticmethod(TestTranslatedWords.render)
+
+    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+            "tags: ['kinematics']\n")
+
+    def test_a_block_is_inserted_as_written(self, tmp_path):
+        """Newlines and all -- gnuplot wants one directive per line, which is why `|` not `>`."""
+        meta = self.META + "blocks:\n  setup: |\n    set grid\n    set xtics 30\n"
+        out = self.render(tmp_path, 'sk', meta, '(§ blocks.setup §)\n')
+        assert 'set grid\nset xtics 30' in out
+
+    def test_a_tag_inside_a_block_is_expanded(self, tmp_path):
+        """The second pass does this, which is what lets a preamble interpolate a value."""
+        meta = (self.META + "values:\n  tcold: 10\n"
+                "blocks:\n  setup: |\n    tcold = (§ tcold §)\n")
+        assert 'tcold = 10' in self.render(tmp_path, 'sk', meta, '(§ blocks.setup §)\n')
+
+    def test_a_block_may_share_a_name_with_a_value(self, tmp_path):
+        """The namespace is the point: `blocks.g` and `g` are different things, and both resolve."""
+        meta = (self.META + "values:\n  g: 42\n"
+                "blocks:\n  g: 'a block'\n")
+        out = self.render(tmp_path, 'sk', meta, '(§ g §) then (§ blocks.g §)\n')
+        assert '42 then a block' in out

@@ -258,6 +258,11 @@ class StandaloneContext(FileContext):
         # Evaluated in document order, so an entry may use anything defined above it.
         Opt('derived'): dict[ValidIdentifier, str],
         Opt('eq'): dict[ValidIdentifier, str],
+        # Text kept exactly as written, with no evaluation and no wrapper: a gnuplot
+        # preamble, a block of options, anything reused verbatim across files. `derived`
+        # evaluates its value as a Jinja expression and `eq` wraps its fragment in a
+        # `MathObject` carrying an `{#eq:…}` label; a preamble is neither of those.
+        Opt('blocks'): dict[ValidIdentifier, str],
         # A word that has to be translated but belongs to this problem alone: term -> language ->
         # text, reached as `(§ w.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
         # instead; these are the one-offs, and 167 of the 190 words found inside `\text{}` in phys
@@ -368,6 +373,14 @@ class CLIInterface(cli.CLIInterface, ABC):
                     ctx.add(**{key: renderer.evaluate(expression, ctx.data)})
                 except Exception as e:
                     raise DerivedQuantityError(key, expression, e) from e
+
+        # Verbatim blocks, stored as written. Namespaced under `blocks` rather than spread into
+        # the top-level namespace the way `values` and `derived` are, for the reason `words` is:
+        # a block reached as `(§ blocks.setup §)` shadows nothing, so it may be called anything.
+        # Tags inside one are expanded by the second pass, which is what lets a gnuplot preamble
+        # interpolate `(§ tcold.mag §)` without this step knowing anything about it.
+        if 'blocks' in context.data:
+            ctx.add(blocks=context.data['blocks'])
 
         # Process all equations: create MathObject and store under the `eq` key in the context
         if 'eq' in context.data:

@@ -151,6 +151,33 @@ and most other rules are still meaningful on source.
 Known checker gap: `format_general` emits Python's `e+NN`, and the "spaces around
 `+`" rule flags it (`\qty{1.737e+06}{...}`). Not an authoring error — ignore.
 
+## Reusable text: `blocks:`
+
+A meta's four content keys each do something to what they hold, and until recently there was
+nowhere to put text that should simply come back as written:
+
+- `values:` — a given quantity. A bare string does pass through verbatim, but the name then
+  claims the text is a number the statement gives.
+- `derived:` — evaluated as a **Jinja expression**, in document order. Anything with two
+  statements in it fails as `TemplateSyntaxError: chunk after expression`.
+- `eq:` — wrapped in a `MathObject` and printed with an `{#eq:<pid>:<key>}` label attached.
+- `blocks:` — **verbatim, namespaced**, reached as `(§ blocks.setup §)`.
+
+The case it exists for is a gnuplot preamble. `FKS/42/1/1/03` plots three curves from one set of
+axes, so its `normal.gp`, `abnormal-first.gp` and `abnormal-second.gp` each open with
+`(§ blocks.setup §)` and add a single `plot` line. Two details matter when writing one:
+
+- **`|`, never `>`.** A folded scalar collapses newlines into spaces, and gnuplot wants one
+  directive per line — folded, the whole preamble arrives as a single unreadable line.
+- **Tags inside a block are expanded by the second pass**, which is what lets the preamble write
+  `tcold = (§ tcold.mag §)` and stay in step with the `values:` above it.
+
+It is namespaced rather than spread into the top-level namespace, for the reason `words` is: a
+block shadows nothing, so it may be called anything — `blocks.g` and the constant `g` coexist,
+and a test says so. `blocks` itself is in `RESERVED_NAMES`, so no `values:` entry may take the
+name. Adding it there was checked against every meta under `source/` first; reserving `w` once
+broke eight problems, which is why that check is not optional.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per

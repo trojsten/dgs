@@ -24,7 +24,7 @@ ValidIdentifier = Regex(r'^[A-Za-z_][A-Za-z_0-9]*$')
 #: `w` was reserved here for one commit and broke eight problems that use it for width, work or
 #: weight -- `22/seychelles`, `24/counting-stars`, `chem/04/maliari` among them. A single letter is
 #: the worst possible choice of reserved name in a physics repository.
-RESERVED_NAMES = frozenset({'const', 'eq', 'i18n', 'words'})
+RESERVED_NAMES = frozenset({'blocks', 'const', 'eq', 'i18n', 'words'})
 
 
 class DuplicateKeyError(Exception):

@@ -10,6 +10,7 @@ from core.builder.context import (
     ContextModule,
     FileSystemTreeContext,
 )
+from core.builder.renderer import StandaloneContext
 from core.utilities.schema import valid_language
 from modules.seminar.builder.validators import SeminarRoundValidator
 
@@ -140,11 +141,19 @@ class ContextProblem(ContextSeminar):
                      'name': str,
                      'gender': Or(Literal('m'), Literal('f'), Literal('?')),
                  }]))
-    _schema = Schema({
+    # A problem's meta is read twice: here, when a whole round is built, and by the standalone
+    # renderer through `--context`, which is what renders its `.md` and `.gp` files. Only the
+    # renderer uses `values`, `derived`, `eq` and `words` -- but this schema is closed, so without
+    # them a meta carrying any of the four fails the round build with `Wrong key 'values'` while
+    # rendering the very same file on its own succeeds. Taken from the base rather than copied,
+    # so the two readers cannot drift apart about what a meta may hold; `id` comes from it too.
+    #
+    # Náboj never met this: its hierarchy has no problem-level context at all, so a Náboj problem
+    # meta is only ever seen by the renderer.
+    _schema = StandaloneContext._schema | Schema({
         'title': And(str, len),
         'categories': list,
         'number': And(int, lambda x: 1 <= x),
-        'id': str,
         'evaluation': persons,
         'solution': persons,
         'points': {
