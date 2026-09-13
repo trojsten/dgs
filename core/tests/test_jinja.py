@@ -218,6 +218,23 @@ class TestMathFilters:
         result = renderer.render('(§ eq | disp(",") §)', context)
         assert '    a + b = c,\n$$' in result
 
+    def test_disp_closes_at_column_zero(self, renderer, context):
+        """
+        The closing delimiter is flush left whatever indent the tag itself sits at, which is
+        why a bare `disp` inside a list item breaks out of the bullet.
+        """
+        assert renderer.render("(§ eq | disp('.') §)", context).splitlines()[-1] == '$$ {#eq:e1}'
+
+    def test_disp_chains_with_indent_for_list_items(self, renderer, context):
+        """
+        Jinja's own `indent` fixes that, and its defaults are exactly right: `first=False`
+        because the tag's own indent already covers the opening `$$`, and `blank=False` so
+        no trailing whitespace is invented. `28/tetristor` keeps three equations inside
+        their bullets this way; before it, nothing in the repository indented an equation.
+        """
+        result = renderer.render("(§ eq | disp('.') | indent(4) §)", context)
+        assert result.splitlines() == ['$$', '        a + b = c.', '    $$ {#eq:e1}']
+
     def test_align_no_arg(self, renderer, context):
         result = renderer.render('(§ multi | align §)', context)
         assert '    b &= 2c\n}$$' in result

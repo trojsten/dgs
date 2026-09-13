@@ -403,3 +403,17 @@ and after. Reading through a symlink is safe; writing is not.
   pre-wrapped one is not possible in a template at all. Both mistakes fail the
   build loudly — bare in prose gives `! Missing $ inserted.`, and a `$` nested in
   a `$$` block gives `! Display math should end with $$.` — so neither is silent.
+- **An equation inside a list item needs `|indent(4)`.** `disp` and `align` close at
+  column 0 whatever indent the tag sits at, so a bare `(§ eq.x|disp('.') §)` inside a
+  bullet puts its `$$ {#eq:…}` flush left and breaks out of the list. Jinja's own
+  `indent` filter chains on and fixes it — its defaults are exactly right, `first=False`
+  because the tag's own indent already covers the opening `$$`, and `blank=False` so no
+  trailing whitespace is invented:
+
+      -   … so the total resistance is
+          (§ eq.r1|disp('.')|indent(4) §)
+
+  `28/tetristor` is the worked example, and was the reason this was found: its three
+  equations sat in bullets and so had been written out in all five solution files rather
+  than hoisted. Nothing in the repository had ever indented an equation before, which is
+  why the gap went unnoticed; `core/tests/test_jinja.py` now pins both halves.
