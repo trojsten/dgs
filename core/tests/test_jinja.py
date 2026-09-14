@@ -577,3 +577,41 @@ class TestArrayIsVisibleToTheAudit:
 
     def test_disp_and_align_still_read_their_own_argument(self):
         assert self.punct("(§ eq.x|disp(',') §)\n(§ eq.y|alignd §)\n") == [',', '.']
+
+
+class TestArrayShieldsLeadingBrackets:
+    r"""
+    LaTeX's `\\` takes an optional length, so a row starting with `[` is read as `\\[…]` and the
+    compile dies on `Missing number, treated as zero`. amsmath's `aligned` never scans for that
+    argument and so tolerates it -- which is why `chem/01/rovnováha` had written `[A] … \\ [B] …`
+    for years and only broke on the way *into* an array.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @staticmethod
+    def obj(content):
+        from core.builder.context.quantities.math import MathObject
+        return {'c': MathObject('c1', content)}
+
+    def test_a_row_starting_with_a_bracket_is_shielded(self, renderer):
+        ctx = self.obj('[A] &=& 1 \\\\\n[B] &=& 2')
+        result = renderer.render("(§ c | arr('rcl') §)", ctx)
+        assert '{}[A] &=& 1' in result
+        assert '{}[B] &=& 2' in result
+
+    def test_indentation_is_preserved_before_the_shield(self, renderer):
+        ctx = self.obj('[A] &=& 1 \\\\\n    [B] &=& 2')
+        assert '    {}[B]' in renderer.render("(§ c | arr('rcl') §)", ctx)
+
+    def test_a_bracket_elsewhere_in_the_row_is_untouched(self, renderer):
+        ctx = self.obj('x &=& [A] \\\\\ny &=& [B]')
+        result = renderer.render("(§ c | arr('rcl') §)", ctx)
+        assert '{}' not in result
+
+    def test_align_is_left_alone(self, renderer):
+        """`aligned` tolerates it, so nothing is inserted there and no page moves."""
+        ctx = self.obj('[A] &= 1 \\\\\n[B] &= 2')
+        assert '{}' not in renderer.render('(§ c | align §)', ctx)
