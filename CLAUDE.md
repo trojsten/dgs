@@ -446,12 +446,42 @@ and after. Reading through a symlink is safe; writing is not.
 
       (§ eq.sys|arr('rcrcrcl') §)        (§ eq.MCaO|arrd('rclcl') §)
 
-  It does two things for you. Every column is put in **display style**, because `array` sets its
-  cells in text style and a `\frac` inside one would otherwise come out at script size -- that is
-  what `\RequirePackage{array}` in `wrt.tex` is for. And the terminal punctuation lands **inside
-  the final cell**: after `\end{array}` a stop floats at the array's vertical centre, beside the
-  middle row. `27/highway` is the worked example and the only conversion so far; a scan found 64
-  candidates across 47 problems, 33 of them in chem.
+  It does three things for you, all of them `array` defects that would otherwise be the author's
+  to remember. Every column is put in **display style**, because `array` sets its cells in text
+  style and a `\frac` inside one would otherwise come out at script size -- that is what
+  `\RequirePackage{array}` in `wrt.tex` is for. The terminal punctuation lands **inside the final
+  cell**: after `\end{array}` a stop floats at the array's vertical centre, beside the middle row.
+  And every row separator gets **`\jot`** of glue, because `array` zeroes `\baselineskip` and
+  `\lineskip` and spaces its rows by a strut alone -- two rows of display-style fractions
+  otherwise touch, which is what `20/star-triangle` did, one row's denominator sitting on the next
+  row's numerator. `aligned` avoids that with `\openup\jot`; array ignores `\openup`, because it
+  zeroes the very lengths `\openup` raises, so the glue has to ride on the separator. `\jot` by
+  name rather than a length of the filter's own, because it is the document's setting for exactly
+  this gap: `dgs.cls` puts it at 10pt, against plain LaTeX's 3pt, so anything tuned by eye in a
+  scratch `article` would be wrong in a booklet.
+
+  **What decides a conversion is how many relations a row carries.** `aligned` sets columns
+  right, left, right, left … and pairs them, one `rl` pair per equation. So it is right for a
+  chain with a single relation, and right for a *grid* of independent equations -- `22/seychelles`
+  writes six coordinates as `T_1 &= … & T_2 &= … & T_3 &= …`, three perfect pairs -- and it is
+  wrong for a **chain of two or more relations in one row**, whichever way that chain is spelled.
+  `A &= B &= C` leaves `= C` in a right-aligned column, so the second relation is ragged.
+  `A &=& B &=& C` looks like it fixes that and does not: `B` is now the *right* half of a pair,
+  so it is pushed to the right edge of its column and a gap opens between the first `=` and the
+  expression it introduces, as wide as the longest row needs. That was true of all 24 chemistry
+  chains. The one spelling that does work is an empty right half, `A &= B &&= C &&= D`, which is
+  what `chem/03/sírovka` uses.
+
+  A scan for rows with two or more `&` found 74 blocks; a bit under half were worth moving, and
+  the rest were grids, single chains, or a `&&=` already doing the right thing. `27/highway` and
+  `20/star-triangle` are the worked examples.
+
+  A **literal** `\begin{array}` -- the monolingual trees, where hoisting into `eq:` buys nothing --
+  gets none of that automatically. Use the `L`, `C` and `R` column types from `core/latex/math.tex`
+  for display style and write `\\[\jot]` on the separators yourself: `chem/03/veronikin-roztok`
+  and `FKS/34/2/3/06` are the examples. Note that pandoc wraps display maths containing `\\` in an
+  `aligned` of its own -- which is what the `$${ … }$$` idiom relies on -- but leaves a block
+  alone once it opens with an explicit environment.
 - **A block scalar takes its indentation from its first line.** If that line is deeper than the
   rows below it -- which is what lining up empty leading columns does -- YAML ends the block at the
   first shallower row and reports `expected <block end>` several lines later. Write `|2` rather

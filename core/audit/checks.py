@@ -336,16 +336,27 @@ SENTENCE_ENDERS = frozenset('.?!')
 RE_NEEDS_OWN_PARAGRAPH = re.compile(r'^[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|!\[|#|\$\$|\(§\s*eq\.)')
 
 
+#: A line that is nothing but `\end{…}`. `display_blocks` steps over these to find the stop.
+RE_ENVIRONMENT_CLOSE = re.compile(r'^[ \t]*\\end\{[A-Za-z*]+\}[ \t]*$')
+
+
 def display_blocks(text):
     """
     Every display block, as (index of its last line, terminal punctuation).
 
     Both spellings: a literal `$$ … $$`, whose punctuation is the last character of its body,
     and a `(§ eq.x|disp('.') §)` reference, whose punctuation is in the filter.
+
+    A body that closes an environment of its own -- `\\end{array}`, which is where a literal
+    array puts its last line -- hides the stop one line further up, because in an array the
+    terminal punctuation has to sit *inside* the final cell: after `\\end{array}` it would float
+    at the array's vertical centre, beside the middle row. So closing lines are stepped over.
     """
     lines = text.splitlines()
     for m in blocks_of(text):
         body = [l for l in m.group('body').splitlines() if l.strip()]
+        while body and RE_ENVIRONMENT_CLOSE.match(body[-1]):
+            body.pop()
         last = body[-1].rstrip() if body else ''
         punct = last[-1] if last and last[-1] in ',.;?!' else ''
         yield line_of(text, m.end()) - 1, punct

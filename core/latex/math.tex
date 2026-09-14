@@ -517,4 +517,20 @@
 % These nine are for a standalone value, above all a mixed number -- 33\OneThird, 666\TwoThirds.
 % A coefficient inside a formula stays \frac: \frac{1}{2} m v^2, not \OneHalf m v^2. See CLAUDE.md
 % for all four tiers; \nicefrac survives only inside ^{} and _{}, and as one of \Drv's styles.
+
+%%%%%%%%%%%%%%%%%%%%%% Display-style array columns %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% `array` sets its cells in text style, so a \frac inside one comes out at script size. The
+% `arr` filter writes the `>{\displaystyle}` prefixes itself for an equation hoisted into `eq:`;
+% a solution file that writes \begin{array} by hand -- the monolingual trees, where hoisting
+% buys nothing -- would otherwise have to repeat the prefix once per column. So:
+%
+%     \begin{array}{RCL}   instead of   \begin{array}{>{\displaystyle}r>{\displaystyle}c...}
+%
+% Upper case because l, c and r are taken, and mean text style -- still what a column of plain
+% symbols wants.
+\newcolumntype{L}{>{\displaystyle}l}
+\newcolumntype{C}{>{\displaystyle}c}
+\newcolumntype{R}{>{\displaystyle}r}
+
 \makeatother

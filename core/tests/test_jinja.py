@@ -579,6 +579,47 @@ class TestArrayIsVisibleToTheAudit:
         assert self.punct("(§ eq.x|disp(',') §)\n(§ eq.y|alignd §)\n") == [',', '.']
 
 
+class TestArrayOpensUpRows:
+    r"""
+    `array` zeroes `\baselineskip` and `\lineskip` and spaces its rows by a strut, so two rows
+    of display-style fractions touch -- `20/star-triangle` had one row's denominator sitting on
+    the next row's numerator. `aligned` avoids that with `\openup\jot`, which array ignores
+    because array zeroes the very lengths `\openup` raises, so the separator carries the glue
+    instead.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @staticmethod
+    def obj(content):
+        from core.builder.context.quantities.math import MathObject
+        return {'c': MathObject('c1', content)}
+
+    def test_every_row_separator_gets_the_glue(self, renderer):
+        ctx = self.obj('a &=& 1 \\\\\nb &=& 2 \\\\\nc &=& 3')
+        result = renderer.render("(§ c | arr('rcl') §)", ctx)
+        assert result.count("\\\\[\\jot]") == 2
+
+    def test_the_last_row_gets_none(self, renderer):
+        """There is no separator after it -- an extra one would set an empty row."""
+        ctx = self.obj('a &=& 1 \\\\\nb &=& 2')
+        assert renderer.render("(§ c | arr('rcl') §)", ctx).rstrip().count('\\jot') == 1
+
+    def test_a_separator_that_already_has_a_gap_is_left_alone(self, renderer):
+        """The author asked for that length; `\\jot` would be added to it, not replace it."""
+        ctx = self.obj('a &=& 1 \\\\[2ex]\nb &=& 2')
+        result = renderer.render("(§ c | arr('rcl') §)", ctx)
+        assert '\\\\[2ex]' in result
+        assert '\\jot' not in result
+
+    def test_align_is_left_alone(self, renderer):
+        r"""`aligned` does its own `\openup\jot`; a second one would double the gap."""
+        ctx = self.obj('a &= 1 \\\\\nb &= 2')
+        assert '\\jot' not in renderer.render('(§ c | align §)', ctx)
+
+
 class TestArrayShieldsLeadingBrackets:
     r"""
     LaTeX's `\\` takes an optional length, so a row starting with `[` is read as `\\[…]` and the

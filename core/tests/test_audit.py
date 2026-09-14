@@ -1131,6 +1131,30 @@ class TestDisplayParagraph:
         files = {'sk': {'solution.md': "text\n$$\n    x = 1.\n$$ {#eq:t:a}\nDalsia veta.\n"}}
         assert 'display-paragraph' in ids(run(tmp_path, files=files))
 
+    def test_a_literal_array_hides_its_stop_behind_the_close(self, tmp_path):
+        r"""
+        An array puts the terminal stop *inside* the final cell -- after `\end{array}` it would
+        float at the array's vertical centre -- so the last body line is the close, not the stop.
+        """
+        files = {'sk': {'solution.md':
+                        "text\n$$\n    \\begin{array}{rcl}\n        x &=& 1.\n"
+                        "    \\end{array}\n$$ {#eq:t:a}\nDalsia veta.\n"}}
+        assert 'display-paragraph' in ids(run(tmp_path, files=files))
+
+    def test_a_literal_array_with_the_break_is_quiet(self, tmp_path):
+        """The same block followed by a blank line agrees with its own stop."""
+        files = {'sk': {'solution.md':
+                        "text\n$$\n    \\begin{array}{rcl}\n        x &=& 1.\n"
+                        "    \\end{array}\n$$ {#eq:t:a}\n\nDalsia veta.\n"}}
+        assert 'display-paragraph' not in ids(run(tmp_path, files=files))
+
+    def test_a_literal_array_ending_in_a_comma_wants_no_break(self, tmp_path):
+        """And the close must not read as "no punctuation" and invert the verdict."""
+        files = {'sk': {'solution.md':
+                        "text\n$$\n    \\begin{array}{rcl}\n        x &=& 1,\n"
+                        "    \\end{array}\n$$ {#eq:t:a}\n\nkde $x$ je nieco.\n"}}
+        assert 'display-paragraph' in ids(run(tmp_path, files=files))
+
 
 class TestEncodingTrailingWhitespace:
     """

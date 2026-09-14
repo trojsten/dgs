@@ -54,6 +54,29 @@ class MathObject:
             out.append(row)
         return '\n'.join(out)
 
+    @staticmethod
+    def _open_up_rows(content: str) -> str:
+        r"""
+        Give every row separator a `\jot` of glue.
+
+        `array` sets `\baselineskip` and `\lineskip` to zero and spaces its rows by a strut
+        alone, so two rows whose content is taller than that strut -- which is every row holding
+        a display-style `\frac` -- end up touching: in `20/star-triangle` the denominator of one
+        row sat directly on the numerator of the next. `aligned` avoids it by doing `\openup\jot`,
+        which array ignores because array zeroes the very lengths `\openup` raises. The one lever
+        left is explicit glue on the separator.
+
+        `\jot` by name rather than a length of our own, because it is the document's own
+        setting for exactly this: the gap between the rows of a display. `dgs.cls` puts it at
+        10pt, five times greater than plain LaTeX's default and a good deal more than the 3pt a
+        bare `article` would give -- so a fixed length tuned in a scratch document would have
+        been wrong in the booklets, and is wrong again the day anyone retunes `\setDisplaySkips`.
+
+        A separator that already carries its own `[…]` is left alone -- the author asked for a
+        particular gap.
+        """
+        return re.sub(r'\\\\(?=\n)', r'\\\\[\\jot]', content)
+
     @classmethod
     def _display_columns(cls, columns: str) -> str:
         r"""
@@ -89,7 +112,7 @@ class MathObject:
             # rows sit inside it. The punctuation lands on the end of the last row -- inside the
             # final cell, where it belongs. Put after `\end{array}` it would float at the array's
             # vertical centre, beside the middle row.
-            body = self._shield_brackets(self.content)
+            body = self._open_up_rows(self._shield_brackets(self.content))
             content = re.sub(r'^(?!\Z)', '        ', body, flags=re.MULTILINE)
             return (f"$$\n    \\begin{{array}}{{{self._display_columns(columns)}}}\n"
                     f"{content}{interpunction}\n"
