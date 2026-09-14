@@ -83,17 +83,37 @@
 % nothing in the repository ever used and which was quietly dangerous: an `o` argument scans
 % forward for `[`, so `\FDiff [A]` -- a concentration, an interval, a bracketed unit -- was
 % swallowed as a superscript and set as \Delta^A. Embellishments never look for a bracket.
-\NewDocumentCommand{\Diff}{e{^_} m}{%
-    \diff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
+% A `[` straight after one of these is the retired `[power]` syntax. `t[` only reports whether the
+% bracket is there, so the build stops with a message instead of setting something wrong: with no
+% guard, `\FDiff[2]{x}` quietly sets as \Delta[2]x, and a silent wrong answer is the one outcome
+% worth ruling out. (xparse's `!` prefix would let a *spaced* bracket through, which is what we
+% would rather have, but this kernel -- LaTeX2e 2024-11-01 -- does not implement it.)
+\NewDocumentCommand{\DiffBracket@}{m}{%
+    \ClassError{dgs}{%
+        \protect#1 does not take a bracketed argument%
+    }{%
+        The [power] form was retired when the differentials took embellishments.^^J%
+        Write the power as a caret group and a subscript as an underscore group,^^J%
+        for example \protect#1 caret 2 braces x.^^J%
+        If you meant a bracketed quantity, put braces around it.%
+    }%
 }
-\NewDocumentCommand{\PDiff}{e{^_} m}{%
-    \pdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
+
+\NewDocumentCommand{\Diff}{e{^_} t[ m}{%
+    \IfBooleanT{#3}{\DiffBracket@{\Diff}}%
+    \diff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #4%
 }
-\NewDocumentCommand{\FDiff}{e{^_} m}{%
-    \fdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
+\NewDocumentCommand{\PDiff}{e{^_} t[ m}{%
+    \IfBooleanT{#3}{\DiffBracket@{\PDiff}}%
+    \pdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #4%
 }
-\NewDocumentCommand{\UDiff}{e{^_} m}{%
-    \udiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
+\NewDocumentCommand{\FDiff}{e{^_} t[ m}{%
+    \IfBooleanT{#3}{\DiffBracket@{\FDiff}}%
+    \fdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #4%
+}
+\NewDocumentCommand{\UDiff}{e{^_} t[ m}{%
+    \IfBooleanT{#3}{\DiffBracket@{\UDiff}}%
+    \udiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #4%
 }
 
 % Inner derivative with any differential symbol
