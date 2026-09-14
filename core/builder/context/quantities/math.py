@@ -29,11 +29,50 @@ class MathObject:
     _BASE_SPECS = {'', 'inl', 'disp', 'align'}
     _SPECS_ACCEPTING_PUNCTUATION = {'disp', 'align'}
 
+    #: `arr:<columns>` is the one spec that carries an argument, because an array has no sensible
+    #: default column layout the way `aligned` does.
+    _ARRAY_PREFIX = 'arr:'
+    _COLUMN_TYPES = frozenset('lcr')
+
+    @classmethod
+    def _display_columns(cls, columns: str) -> str:
+        r"""
+        Put every column of an array in display style.
+
+        `array` sets its cells in **text** style, so a `\frac` inside one comes out at script
+        size -- next to an `aligned` block on the same page the difference is glaring. `array`'s
+        `>{…}` prefix fixes it per column, which is why `core/latex/wrt.tex` requires the `array`
+        package. Authors never write this; they write `|arr('rclcl')` and get it.
+        """
+        return ''.join(f'>{{\\displaystyle}}{c}' if c in cls._COLUMN_TYPES else c
+                       for c in columns)
+
     def __format__(self, spec: str = ''):
         interpunction = ''
         if len(spec) > 0 and spec[-1] in self._INTERPUNCTION:
             interpunction = spec[-1]
             spec = spec[:-1]
+
+        if spec.startswith(self._ARRAY_PREFIX):
+            columns = spec[len(self._ARRAY_PREFIX):]
+            if not columns:
+                raise ValueError(
+                    "`arr` needs a column spec and has no default: write `|arr('rclcl')`"
+                )
+            unknown = set(columns) - self._COLUMN_TYPES - set('|')
+            if unknown:
+                raise ValueError(
+                    f"Unknown array column type(s) {''.join(sorted(unknown))!r}; "
+                    f"expected only {''.join(sorted(self._COLUMN_TYPES))} and `|`"
+                )
+            # Eight spaces, not four: `\begin{array}` sits where `disp`'s content would, and the
+            # rows sit inside it. The punctuation lands on the end of the last row -- inside the
+            # final cell, where it belongs. Put after `\end{array}` it would float at the array's
+            # vertical centre, beside the middle row.
+            content = re.sub(r'^(?!\Z)', '        ', self.content, flags=re.MULTILINE)
+            return (f"$$\n    \\begin{{array}}{{{self._display_columns(columns)}}}\n"
+                    f"{content}{interpunction}\n"
+                    f"    \\end{{array}}\n$$ {{#eq:{self.id}}}")
 
         # Distinguish "unknown base spec" from "valid base spec with invalid
         # trailing character," because the latter is the much more common

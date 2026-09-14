@@ -234,6 +234,25 @@ def math_display(math: MathObject, punct: str = '') -> str:
     return f"{math:disp{punct}}"
 
 
+def math_array(math: MathObject, columns: str, punct: str = '') -> str:
+    r"""
+    Display inside an \array{} environment with a label, optionally with trailing punctuation.
+
+    Unlike `disp` and `align` this one takes an argument, and must: an array has no sensible
+    default column layout. Use it where more than one column has to line up -- a system of
+    equations whose operators align, or the quantity/formula/value chains chemistry writes.
+    For a chain aligned on a single relation, `align` is better: it spaces the relation as a
+    relation rather than as a table column.
+
+    Every column is put in display style for you, so fractions do not shrink.
+
+    Usage in templates:
+        (* eq | arr('rclcl') *)       →  $$\n    \begin{array}{…}\n        a &=& b\n …
+        (* eq | arr('rclcl', '.') *)  →  … with the stop inside the final cell
+    """
+    return f"{math:arr:{columns}{punct}}"
+
+
 def math_aligned(math: MathObject, punct: str = '') -> str:
     r"""
     Display inside an \aligned{} environment with a label, optionally with

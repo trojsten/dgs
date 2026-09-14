@@ -320,8 +320,11 @@ def tag_unknown(sources):
 #: next bullet is the break and the paragraph rule does not apply -- `28/tetristor` writes six of
 #: them that way. No source indents a *reference* today; matching one would invent a finding.
 RE_DISPLAY_REF = re.compile(
-    r"^\(§\s*eq\.\w+\s*\|\s*(?:disp|align)"
-    r"(?:\((?P<arg>[^)]*)\)|(?P<suf>[dcsqe]))?\s*§\)[ \t]*$", re.M)
+    r"^\(§\s*eq\.\w+\s*\|\s*(?:"
+    r"(?:disp|align)(?:\((?P<arg>[^)]*)\)|(?P<suf>[dcsqe]))?"
+    #: `arr` always takes a column spec, so its punctuation is the *second* argument, if any.
+    r"|arr(?P<asuf>[dcsqe])?\((?P<aarg>[^)]*)\)"
+    r")\s*§\)[ \t]*$", re.M)
 
 #: `|dispd` and friends bind their punctuation in the name.
 _PUNCT_SUFFIX = {'d': '.', 'c': ',', 's': ';', 'q': '?', 'e': '!'}
@@ -347,8 +350,14 @@ def display_blocks(text):
         punct = last[-1] if last and last[-1] in ',.;?!' else ''
         yield line_of(text, m.end()) - 1, punct
     for m in RE_DISPLAY_REF.finditer(text):
-        punct = (_PUNCT_SUFFIX[m.group('suf')] if m.group('suf')
-                 else (m.group('arg') or '').strip().strip("'\""))
+        if m.group('aarg') is not None:
+            # `arr('rclcl')` or `arr('rclcl', '.')` -- the columns come first, never the stop.
+            args = [a.strip().strip("'\"") for a in m.group('aarg').split(',')]
+            punct = (_PUNCT_SUFFIX[m.group('asuf')] if m.group('asuf')
+                     else (args[1] if len(args) > 1 else ''))
+        else:
+            punct = (_PUNCT_SUFFIX[m.group('suf')] if m.group('suf')
+                     else (m.group('arg') or '').strip().strip("'\""))
         yield line_of(text, m.start()) - 1, punct
 
 

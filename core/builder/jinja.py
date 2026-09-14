@@ -254,6 +254,12 @@ class MarkdownJinjaRenderer(JinjaRenderer):
            'aligns': functools.partial(latex.math_aligned, punct=';'),  # shorthand with semicolon
            'alignq': functools.partial(latex.math_aligned, punct='?'),  # shorthand with question mark
            'aligne': functools.partial(latex.math_aligned, punct='!'),  # shorthand with exclamation mark
+           'arr': latex.math_array,                                      # needs a column spec
+           'arrd': functools.partial(latex.math_array, punct='.'),      # shorthand with dot
+           'arrc': functools.partial(latex.math_array, punct=','),      # shorthand with comma
+           'arrs': functools.partial(latex.math_array, punct=';'),      # shorthand with semicolon
+           'arrq': functools.partial(latex.math_array, punct='?'),      # shorthand with question mark
+           'arre': functools.partial(latex.math_array, punct='!'),      # shorthand with exclamation mark
         })
 
         self.env.globals |= {

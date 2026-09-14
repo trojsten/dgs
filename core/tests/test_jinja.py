@@ -494,3 +494,86 @@ class TestQuadTextFilters:
         q = renderer.render("(§ w|q §)", {'w': 'x'})
         qq = renderer.render("(§ w|qq §)", {'w': 'x'})
         assert (q, qq) == (r'\QText{x}', r'\QQText{x}')
+
+
+class TestArrayFilter:
+    r"""
+    `arr` is the third display filter, for a block where more than one column has to line up:
+    a system whose operators align, or chemistry's quantity/formula/value chains. `align` pairs
+    its columns `rl rl rl`, so the second relation in such a block comes out ragged and the
+    values do not line up at all.
+
+    It differs from `disp` and `align` in two ways, both forced by the environment. It **needs**
+    a column spec, because an array has no sensible default layout; and every column is put in
+    display style, because `array` sets its cells in text style and a `\frac` inside one would
+    otherwise come out at script size.
+    """
+
+    @pytest.fixture
+    def renderer(self):
+        return MarkdownJinjaRenderer()
+
+    @pytest.fixture
+    def context(self):
+        from core.builder.context.quantities.math import MathObject
+        return {'sys': MathObject('s1', 'a &=& b &=& c, \\\\\nd &=& e &=& f')}
+
+    def test_wraps_in_an_array_with_the_given_columns(self, renderer, context):
+        result = renderer.render("(§ sys | arr('rclcl') §)", context)
+        assert result.startswith('$$\n    \\begin{array}{')
+        assert result.endswith('    \\end{array}\n$$ {#eq:s1}')
+
+    def test_every_column_is_display_style(self, renderer, context):
+        r"""`array` cells are text style, so a \frac in one shrinks. `>{\displaystyle}` fixes it."""
+        result = renderer.render("(§ sys | arr('rcl') §)", context)
+        assert '{>{\\displaystyle}r>{\\displaystyle}c>{\\displaystyle}l}' in result
+
+    def test_a_bar_column_survives(self, renderer, context):
+        """A rule is not a column type and must not collect a `\\displaystyle` of its own."""
+        result = renderer.render("(§ sys | arr('rc|l') §)", context)
+        assert '{>{\\displaystyle}r>{\\displaystyle}c|>{\\displaystyle}l}' in result
+
+    def test_punctuation_lands_inside_the_last_cell(self, renderer, context):
+        """
+        Not after `\\end{array}`: there it would float at the array's vertical centre, beside the
+        middle row rather than at the end of the last one.
+        """
+        result = renderer.render("(§ sys | arr('rclcl', '.') §)", context)
+        assert 'd &=& e &=& f.\n    \\end{array}' in result
+
+    def test_shorthand_matches_the_explicit_form(self, renderer, context):
+        assert (renderer.render("(§ sys | arrd('rclcl') §)", context)
+                == renderer.render("(§ sys | arr('rclcl', '.') §)", context))
+
+    def test_column_spec_is_required(self, renderer, context):
+        with pytest.raises(Exception, match='column spec'):
+            renderer.render("(§ sys | arr('') §)", context)
+
+    def test_unknown_column_type_is_named(self, renderer, context):
+        with pytest.raises(Exception, match="Unknown array column type"):
+            renderer.render("(§ sys | arr('rxl') §)", context)
+
+
+class TestArrayIsVisibleToTheAudit:
+    """
+    `display_paragraph` reads a display's terminal punctuation out of the filter, never from
+    inside the fragment. `arr` puts the columns first, so the check has to take the *second*
+    argument -- getting that wrong would read `rclcl` as the punctuation.
+    """
+
+    @staticmethod
+    def punct(source):
+        from core.audit.checks import display_blocks
+        return [p for _, p in display_blocks(source)]
+
+    def test_columns_are_not_mistaken_for_punctuation(self):
+        assert self.punct("(§ eq.sys|arr('rclcl') §)\n") == ['']
+
+    def test_second_argument_is_the_punctuation(self):
+        assert self.punct("(§ eq.sys|arr('rclcl', '.') §)\n") == ['.']
+
+    def test_shorthand_suffix_is_read(self):
+        assert self.punct("(§ eq.sys|arrd('rclcl') §)\n") == ['.']
+
+    def test_disp_and_align_still_read_their_own_argument(self):
+        assert self.punct("(§ eq.x|disp(',') §)\n(§ eq.y|alignd §)\n") == [',', '.']
