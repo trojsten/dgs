@@ -71,18 +71,29 @@
 % Small delta differential
 \NewDocumentCommand{\udiff@}{}{\mathop{}\!\delta}
 
-% Differential, optionally with power
-\NewDocumentCommand{\Diff}{o m}{%
-    \IfNoValueTF{#1}{\diff@}{\diff@^{#1}} #2%
+% Differential, optionally with a power and/or a subscript, written where the maths writes them:
+%
+%     \Diff{x}                      d x
+%     \Diff^2{x}                    d^2 x
+%     \FDiff_{\mathrm{vap}}{H}      \Delta_vap H      -- an enthalpy of vaporisation
+%     \FDiff^2_{\mathrm{vap}}{H}    \Delta^2_vap H    -- both, in either order
+%
+% `e{^_}` is xparse's embellishment argument: it collects a `^{…}` and a `_{…}` in whichever
+% order they appear, and neither has to be given. It replaces the older `[power]` optional, which
+% nothing in the repository ever used and which was quietly dangerous: an `o` argument scans
+% forward for `[`, so `\FDiff [A]` -- a concentration, an interval, a bracketed unit -- was
+% swallowed as a superscript and set as \Delta^A. Embellishments never look for a bracket.
+\NewDocumentCommand{\Diff}{e{^_} m}{%
+    \diff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
 }
-\NewDocumentCommand{\PDiff}{o m}{%
-    \IfNoValueTF{#1}{\pdiff@}{\pdiff@^{#1}} #2%
+\NewDocumentCommand{\PDiff}{e{^_} m}{%
+    \pdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
 }
-\NewDocumentCommand{\FDiff}{o m}{%
-    \IfNoValueTF{#1}{\fdiff@}{\fdiff@^{#1}} #2%
+\NewDocumentCommand{\FDiff}{e{^_} m}{%
+    \fdiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
 }
-\NewDocumentCommand{\UDiff}{o m}{%
-    \IfNoValueTF{#1}{\udiff@}{\udiff@^{#1}} #2%
+\NewDocumentCommand{\UDiff}{e{^_} m}{%
+    \udiff@\IfValueT{#1}{^{#1}}\IfValueT{#2}{_{#2}} #3%
 }
 
 % Inner derivative with any differential symbol
