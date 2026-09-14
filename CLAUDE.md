@@ -349,6 +349,13 @@ and after. Reading through a symlink is safe; writing is not.
   *after* substitution are fine and should be left alone.
 - Long `eq:` entries wrap as YAML `|` block scalars — that is the idiom for
   keeping meta.yaml under the limit.
+- **A `magnitude:` in scientific notation must be written `1.0e+15`.** YAML 1.1 wants both a
+  decimal point *and* a sign before it will read an exponent as a number, so `1e15`, `1e+15`
+  and `1.0e15` all parse as bare **strings**. Nothing complains at that point — the schema
+  accepts `Or(str, float, int, PhysicsConstant)` for a value, because a bare string is the
+  documented way to pass LaTeX through verbatim — so the first sign of trouble is `derived:`
+  reporting `unsupported operand type(s) for /: 'str' and 'float'`, a long way from the cause.
+  `27/kamiokande`'s neutrino flux is the worked example.
 - **How to spell a fraction — four tiers, in order.**
   1. **A Unicode vulgar glyph**, wherever the fraction is a standalone value, and
      above all in a mixed number: `33\OneThird`, `666\TwoThirds`. `core/latex/math.tex`
