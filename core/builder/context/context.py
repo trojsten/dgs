@@ -90,13 +90,23 @@ class Context(abc.ABC):
 
     def load_yaml(self, path: Path):
         """
-        Load context metadata from a YAML file. Replace with an empty dictionary if empty.
+        Load context metadata from a YAML file, over whatever `_defaults` the class carries.
+
+        Over, not instead of: this used to assign `self._data` outright, which threw away the
+        defaults `__init__` had just deep-copied and left `_defaults` meaning nothing for any
+        context that reads a meta -- which is all of them. `ContextRound` is the one class that
+        declares any, an `instagram` skin, and the 41 FKS rounds written before that block
+        existed stopped the build on `Missing variables in instagram.jtex` rather than taking
+        the default that was sitting right there.
+
+        A top-level key is replaced whole, not merged into: a meta that gives `instagram` means
+        the one it gives, and half of one filled in from the defaults would be nobody's setting.
         """
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(path)}")
         try:
             with open(path, 'r') as f:
                 contents = yaml.load(f, Loader=UniqueKeyLoader)
-            self._data = {} if contents is None else contents
+            self._data = copy.deepcopy(self._defaults) | ({} if contents is None else contents)
         except FileNotFoundError:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))
             raise

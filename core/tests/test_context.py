@@ -41,6 +41,47 @@ def context_numbered():
     return Context(id=123, number=456)
 
 
+class TestLoadYamlKeepsDefaults:
+    """
+    `load_yaml` reads a meta over the class's `_defaults`, not instead of them. It used to assign
+    `_data` outright, so `_defaults` meant nothing for any context that reads a meta -- and 41 FKS
+    rounds written before `ContextRound` grew an `instagram` default stopped the build rather than
+    taking it.
+    """
+
+    class Defaulted(Context):
+        _defaults = {'instagram': {'skin': 'orange'}, 'deadline': None}
+
+    def write(self, tmp_path, text):
+        path = tmp_path / 'meta.yaml'
+        path.write_text(text)
+        return path
+
+    def test_a_key_the_meta_omits_comes_from_the_defaults(self, tmp_path):
+        ctx = self.Defaulted().load_yaml(self.write(tmp_path, 'deadline: 2021-10-11\n'))
+        assert ctx.data['instagram'] == {'skin': 'orange'}
+
+    def test_a_key_the_meta_gives_wins(self, tmp_path):
+        ctx = self.Defaulted().load_yaml(self.write(tmp_path, 'instagram:\n  skin: grey\n'))
+        assert ctx.data['instagram'] == {'skin': 'grey'}
+
+    def test_a_given_key_is_replaced_whole_not_merged(self, tmp_path):
+        """A meta that names `instagram` means the one it names; half of each is nobody's."""
+        ctx = self.Defaulted().load_yaml(self.write(tmp_path, 'instagram:\n  text_colour: red\n'))
+        assert ctx.data['instagram'] == {'text_colour': 'red'}
+
+    def test_an_empty_meta_leaves_the_defaults_standing(self, tmp_path):
+        ctx = self.Defaulted().load_yaml(self.write(tmp_path, ''))
+        assert ctx.data == {'instagram': {'skin': 'orange'}, 'deadline': None}
+
+    def test_the_defaults_are_not_shared_between_instances(self, tmp_path):
+        """They are deep-copied, so one round's skin cannot follow the class into the next."""
+        first = self.Defaulted().load_yaml(self.write(tmp_path, 'deadline: 2021-10-11\n'))
+        first.data['instagram']['skin'] = 'grey'
+        second = self.Defaulted().load_yaml(self.write(tmp_path, 'deadline: 2021-10-11\n'))
+        assert second.data['instagram']['skin'] == 'orange'
+
+
 class TestContext:
     def test_empty(self, context_empty):
         assert context_empty.data == {}
