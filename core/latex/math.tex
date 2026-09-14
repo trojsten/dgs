@@ -364,7 +364,7 @@
 
 % Nuclide[A][Z]{symbol}
 % \Nuclide[235][92]{U} for uranium
-% Molar concentration of a species: `\Emc{\ce{H3O+}}` sets as [H3O+].
+% Molar concentration of a species: `\Concentration{\ce{H3O+}}` sets as [H3O+].
 %
 % Square brackets are the notation, but writing them literally makes the species invisible to
 % anything that reads the source, and -- more sharply -- a display row may not *begin* with one.
@@ -372,7 +372,7 @@
 % `\\[B]` and the compile dies on `Missing number`. amsmath's `aligned` happens not to look, which
 % is why `01/rovnováha` wrote it that way for years without anyone noticing. A macro removes the
 % hazard at the source rather than escaping it at every call site.
-\NewDocumentCommand{\Emc}{m}{\left[#1\right]}
+\NewDocumentCommand{\Concentration}{m}{\left[#1\right]}
 
 \NewDocumentCommand{\Nuclide}{O{} O{} m}{\ce{^{#1}_{#2}#3}}
 
