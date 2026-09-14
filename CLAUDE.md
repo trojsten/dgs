@@ -437,6 +437,26 @@ and after. Reading through a symlink is safe; writing is not.
   pre-wrapped one is not possible in a template at all. Both mistakes fail the
   build loudly — bare in prose gives `! Missing $ inserted.`, and a `$` nested in
   a `$$` block gives `! Display math should end with $$.` — so neither is silent.
+- **`|arr` is for a display where more than one column has to line up**; `|align` is for a chain
+  aligned on a single relation, and is right for 297 of the repository's 373 such blocks. `align`
+  pairs its columns `rl rl rl`, so a block with two alignment points -- chemistry's
+  quantity/formula/value chains, a system whose operators align -- comes out with the second
+  relation ragged and the values not lining up at all. `arr` takes a column spec and must; an
+  array has no sensible default:
+
+      (§ eq.sys|arr('rcrcrcl') §)        (§ eq.MCaO|arrd('rclcl') §)
+
+  It does two things for you. Every column is put in **display style**, because `array` sets its
+  cells in text style and a `\frac` inside one would otherwise come out at script size -- that is
+  what `\RequirePackage{array}` in `wrt.tex` is for. And the terminal punctuation lands **inside
+  the final cell**: after `\end{array}` a stop floats at the array's vertical centre, beside the
+  middle row. `27/highway` is the worked example and the only conversion so far; a scan found 64
+  candidates across 47 problems, 33 of them in chem.
+- **A block scalar takes its indentation from its first line.** If that line is deeper than the
+  rows below it -- which is what lining up empty leading columns does -- YAML ends the block at the
+  first shallower row and reports `expected <block end>` several lines later. Write `|2` rather
+  than `|`: the indicator is relative to the parent node, so for an `eq:` entry it means the usual
+  four spaces. `27/highway` carries one.
 - **An equation inside a list item needs `|indent(4)`.** `disp` and `align` close at
   column 0 whatever indent the tag sits at, so a bare `(§ eq.x|disp('.') §)` inside a
   bullet puts its `$$ {#eq:…}` flush left and breaks out of the list. Jinja's own
