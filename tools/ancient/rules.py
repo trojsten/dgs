@@ -39,6 +39,15 @@ LINTED = [
 #: `\mathplus` and `\mathminus` are used in the archive and defined in no shipped `mathab.sty`:
 #: the characters were made active and these were meant to be the saved originals.
 SHORTHAND = [
+    # `.` was made active in maths to print the decimal comma, so `\.` was how the archive
+    # wrote a *literal* full stop -- in `\mrm{priem\.}`, and at the end of a display. Today the
+    # decimal comma is siunitx's `output_decimal_marker` and a `.` is a `.`; `mdcheck`'s `tgc`
+    # rule bans `\.` outright.
+    (re.compile(r'\\\.'), '.'),
+    # And the thin space the archive put before that stop. There is not one `\,.` or `\,,` left
+    # in phys: the house form sets the punctuation straight after the expression. A `\,` between
+    # *digits* is a group separator and is left to `quantities`, which has already run.
+    (re.compile(r'\\,(?=[.,;])'), ''),
     (re.compile(r'\\matheq(?![a-zA-Z])'), '='),
     (re.compile(r'\\mathplus(?![a-zA-Z])'), '+'),
     (re.compile(r'\\mathminus(?![a-zA-Z])'), '-'),
@@ -215,29 +224,42 @@ ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', '
             'ninth', 'tenth', 'eleventh', 'twelfth']
 
 
+#: A display, in each of the three spellings the archive uses. `align*` (12 uses) and
+#: `equation*` (2) are ordinary amsmath; `$$…$$` is plain TeX. The remaining two environments
+#: are left for a person: `alignat*` takes a column count and is what `|arr` is for, and `array`
+#: only ever appears *inside* a display, where it stays.
+RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
+                        r'|\\begin\{(align\*)\}(.*?)\\end\{align\*\}'
+                        r'|\\begin\{(equation\*)\}(.*?)\\end\{equation\*\}', re.S)
+
+
 def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]]:
     r"""
-    `$$…$$` -> the block form, body indented four spaces.
+    Every display -> the house block form, body indented four spaces.
 
-    With `label_prefix` (a problem id) every block gets `{#eq:<id>:<ordinal>}`, which is what
+    An aligned block is `$${…}$$` and a single equation `$$…$$`; that is what `MathObject`'s
+    `align` and `disp` emit, so a hand-written display should look like a rendered one. With
+    `label_prefix` (a problem id) each gets `{#eq:<id>:<ordinal>}`, which is what
     `solution-unlabelled` asks of a solution. Statements mostly go unlabelled, so problem bodies
     are converted without one.
 
-    The terminal `\,\.` or `\,,` is kept as plain punctuation and reported: whether a display ends
-    the sentence decides whether a blank line follows it, and only the sentence knows.
+    Terminal punctuation is kept and reported: whether a display ends the sentence decides
+    whether a blank line follows it, and only the sentence knows.
     """
     notes = []
     counter = iter(ORDINALS)
 
     def sub(m):
-        body = m.group(1).strip()
+        aligned = m.group(2) is not None
+        body = (m.group(1) if m.group(1) is not None
+                else m.group(3) if aligned else m.group(5)).strip()
         punct = ''
-        tail = re.search(r'(\\,)?\s*(\\\.|\\,|[.,;])\s*$', body)
+        tail = re.search(r'\s*([.,;])\s*$', body)
         if tail:
-            punct = tail.group(2).replace('\\.', '.').replace('\\,', ',')
+            punct = tail.group(1)
             body = body[:tail.start()].rstrip()
-            notes.append(f'display: ended with `{tail.group(0).strip()}`, kept as `{punct}` -- '
-                         f'check the blank line after it agrees (see `display-paragraph`)')
+            notes.append(f'display: ends with `{punct}` -- check the blank line after it '
+                         f'agrees (see `display-paragraph`)')
         lines = [('    ' + l.strip()) if l.strip() else '' for l in body.split('\n')]
         label = ''
         if label_prefix:
@@ -245,9 +267,10 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
                 label = f' {{#eq:{label_prefix}:{next(counter)}}}'
             except StopIteration:
                 notes.append('display: more than twelve blocks -- name the rest by hand')
-        return '$$\n' + '\n'.join(lines) + punct + '\n$$' + label
+        open_, close = ('$${', '}$$') if aligned else ('$$', '$$')
+        return f'{open_}\n' + '\n'.join(lines) + punct + f'\n{close}' + label
 
-    return re.sub(r'\$\$(.*?)\$\$', sub, text, flags=re.S), notes
+    return RE_DISPLAY.sub(sub, text), notes
 
 
 #: Binary operators `mdcheck` insists on having spaces around (`EqualsSpaces`, `PlusSpaces`,
@@ -300,6 +323,10 @@ def report_only(text: str) -> list[str]:
         if m.group(1) not in TIED:
             notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
                          f'not a one-letter preposition')
+    for name in ('alignat*', 'enumerate'):
+        for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
+            notes.append(f'environment: `{name}` has no mechanical translation -- '
+                         f'`alignat*` is what `|arr` is for, `enumerate` is a Markdown list')
     for name in ('footnote', 'hskip', 'vskip', 'break', 'par', 'texttt', 'uv'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
