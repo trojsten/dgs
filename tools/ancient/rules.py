@@ -296,7 +296,13 @@ ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', '
 RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
                         r'|\\begin\{(align\*)\}(.*?)\\end\{align\*\}'
                         r'|\\begin\{(equation\*?)\}(.*?)\\end\{equation\*?\}'
+                        r'|\\begin\{(eqnarray\*?)\}(?P<eqnarray>.*?)\\end\{eqnarray\*?\}'
                         r'|\\\[(?P<bracket>.*?)\\\]', re.S)
+#: `eqnarray`'s middle column, which `aligned` does not have and does not want. `A &=& B` in an
+#: `aligned` makes `B` the *right* half of an `rl` pair, so it is pushed to the right edge of its
+#: column and a gap opens after the `=` as wide as the longest row needs -- exactly the failure
+#: CLAUDE.md records for the 24 chemistry chains. The right spelling is `A &= B`.
+RE_EQNARRAY_RELATION = re.compile(r'&\s*(=|\\approx|\\doteq|\\leq|\\geq|\\equiv|<|>)\s*&')
 
 
 def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]]:
@@ -316,11 +322,14 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
     counter = iter(ORDINALS)
 
     def sub(m):
-        aligned = m.group(2) is not None
+        aligned = m.group(2) is not None or m.group('eqnarray') is not None
         body = (m.group(1) if m.group(1) is not None
-                else m.group(3) if aligned
+                else m.group(3) if m.group(2) is not None
                 else m.group(5) if m.group(5) is not None
+                else m.group('eqnarray') if m.group('eqnarray') is not None
                 else m.group('bracket')).strip()
+        if m.group('eqnarray') is not None:
+            body = RE_EQNARRAY_RELATION.sub(lambda r: f'&{r.group(1)} ', body)
         punct = ''
         tail = re.search(r'\s*([.,;])\s*$', body)
         if tail:
@@ -471,8 +480,16 @@ def report_only(text: str) -> list[str]:
                          f'is what `|arr` is for, `enumerate` and `itemize` are Markdown lists, '
                          f'`tabular` is a Markdown table, and `multipic` sets two drawings side '
                          f'by side (see `tools/ancient/compose.py`)')
+    # A macro *definition* in a problem body is always bookkeeping, and always points at
+    # something outside the problem. 2010's `ELEK/drotena_kocka` opens
+    # `\edef\drotenakocka{\the\cislo}` so that `ELEK/elektrostavebnica` can cite its number;
+    # the modern tree has no counter to read, so both halves need a person.
+    for m in re.finditer(r'\\(?:e|g|x)?def\\([a-zA-Z@]+)|\\newcommand\s*\{?\\([a-zA-Z@]+)',
+                         text):
+        notes.append(f'macro: `\\{m.group(1) or m.group(2)}` is *defined* here -- bookkeeping '
+                     f'for something outside the problem, which has no equivalent')
     for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'paragraph',
-                 'multiobrazok'):
+                 'multiobrazok', 'the'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
     # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so
