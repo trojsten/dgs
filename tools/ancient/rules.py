@@ -331,7 +331,10 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
                 label = f' {{#eq:{label_prefix}:{next(counter)}}}'
             except StopIteration:
                 notes.append('display: more than twelve blocks -- name the rest by hand')
-        open_, close = ('$${', '}$$') if aligned else ('$$', '$$')
+        # An `align*` with nothing to align is a plain display. The archive reaches for the
+        # environment out of habit -- `MAT/mravce` wraps a single `&`-less row in one -- and
+        # `$${…}$$` would put it through `aligned` for no reason.
+        open_, close = ('$${', '}$$') if aligned and '&' in body else ('$$', '$$')
         return f'{open_}\n' + '\n'.join(lines) + punct + f'\n{close}' + label
 
     return RE_DISPLAY.sub(sub, text), notes
