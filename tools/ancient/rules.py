@@ -42,6 +42,7 @@ SHORTHAND = [
     (re.compile(r'\\matheq\b'), '='),
     (re.compile(r'\\mathplus\b'), '+'),
     (re.compile(r'\\mathminus\b'), '-'),
+    (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{(\d+)\}'), r'\1'),
     (re.compile(r'\\mrm\b'), r'\\text'),
     (re.compile(r'\\textrm\b'), r'\\text'),
     (re.compile(r'\\mathrm\b'), r'\\text'),
@@ -56,17 +57,70 @@ def ties(text: str) -> str:
     return re.sub(r'(?<![a-zA-ZáäčďéíĺľňóôŕšťúýžÁČĎÉÍĽŇÓŠŤÚÝŽ])([a-zA-Z])~', sub, text)
 
 
-def over_to_frac(text: str) -> str:
-    r"""plain TeX `{a \over b}` -> `\frac{a}{b}`, which is what pandoc can read."""
+def _enclosing_group(text: str, pos: int) -> tuple[int, int] | None:
+    r"""
+    The innermost brace group containing `pos`, as (start, end past the `}`), or None.
+
+    A backward `rfind('{')` will not do, and this is not a hypothetical: the numerator of
+    `{\bigl(\lambda d + \tfrac{1}{2}M\bigr)g \over \sin\alpha}` ends in a *closed* group, so the
+    nearest `{` behind the `\over` is `\tfrac`'s `{2`, whose own `}` comes before the `\over`.
+    Slicing on it yields an empty denominator and leaves the `\over` in place -- which spun
+    forever. So scan forward, keeping the open groups on a stack; the top of it is the answer.
+    """
+    stack, i = [], 0
+    while i < pos:
+        c = text[i]
+        if c == '\\':
+            i += 2
+            continue
+        if c == '{':
+            stack.append(i)
+        elif c == '}' and stack:
+            stack.pop()
+        i += 1
+    if not stack:
+        return None
+    return stack[-1], match_brace(text, stack[-1])
+
+
+def _unwrap(body: str) -> str:
+    r"""
+    `{v+c}` -> `v+c`, where the braces only held the operand together for `\over`.
+
+    `\frac` takes its arguments in braces of its own, so a group that wraps the *whole* operand
+    is now doing nothing. One that wraps only part of it -- `{a}b` -- is left alone.
+    """
+    if body.startswith('{'):
+        try:
+            if match_brace(body, 0) == len(body):
+                return body[1:-1].strip()
+        except ValueError:
+            pass
+    return body
+
+
+def over_to_frac(text: str) -> tuple[str, list[str]]:
+    r"""
+    plain TeX `{a \over b}` -> `\frac{a}{b}`, which is what pandoc can read.
+
+    A `\over` with no group around it -- legal plain TeX, `$a \over b$` -- is left alone and
+    reported: its numerator is everything back to the opening `$`, which is a judgement about
+    where the formula starts rather than a brace to match. 2009 has none.
+    """
+    notes, skip = [], 0
     while True:
-        m = re.search(r'\\over\b', text)
-        if not m:
-            return text
-        start = text.rfind('{', 0, m.start())
-        if start < 0:
-            return text
-        end = match_brace(text, start)
-        num, den = text[start + 1:m.start()].strip(), text[m.end():end - 1].strip()
+        found = list(re.finditer(r'\\over\b', text))
+        if skip >= len(found):
+            return text, notes
+        m = found[skip]
+        group = _enclosing_group(text, m.start())
+        if group is None:
+            notes.append(r'over: a bare `\over` with no brace group around it, left as written')
+            skip += 1
+            continue
+        start, end = group
+        num = _unwrap(text[start + 1:m.start()].strip())
+        den = _unwrap(text[m.end():end - 1].strip())
         text = f'{text[:start]}\\frac{{{num}}}{{{den}}}{text[end:]}'
 
 

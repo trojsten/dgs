@@ -89,7 +89,8 @@ def convert_body(text: str, dialect: Dialect, slug: str,
     text = rules.expand_unit_macros(text, dialect)
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
-    text = rules.over_to_frac(text)
+    text, over_notes = rules.over_to_frac(text)
+    notes += over_notes
     for pattern, replacement in rules.SHORTHAND + rules.LINTED:
         text = pattern.sub(replacement, text)
     text = rules.markup(text)
