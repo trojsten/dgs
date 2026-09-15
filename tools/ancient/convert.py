@@ -49,14 +49,17 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
         # statement (`_zad`) or the solution (`_ries`). The modern layout does not encode that
         # in the filename, so the figure takes the slug's name.
         if stem.endswith('_zad'):
-            name = slug
+            name = label = slug
         elif stem.endswith('_ries'):
-            name = f'{slug}-solution'
+            name, label = f'{slug}-solution', f'{slug}:solution'
         else:
             name = re.sub(r'[^a-z0-9-]+', '-', stem.lower()).strip('-')
+            label = f'{slug}:{name}'
         wanted.append((stem, name))
         notes.append(f'figure: `{name}.svg` -- set a real height, 40mm is a placeholder')
-        return f'![{caption.strip()}]({name}.svg){{#fig:{slug} height=40mm}}'
+        # `#fig:<id>` or `#fig:<id>:<name>`, and nothing else: `markdown-check`'s `lfn` rule
+        # rejects a label that does not open with the problem's own id.
+        return f'![{caption.strip()}]({name}.svg){{#fig:{label} height=40mm}}'
 
     for name, arity in ((('obrazok'), dialect.figure_arity), ('pict', 2)):
         while True:
