@@ -353,6 +353,33 @@ def footnotes(text: str) -> str:
         text = f'{text[:m.start()]}^[{body}]{text[end:]}'
 
 
+#: siunitx macros, whose arguments are already a number and must not be wrapped again.
+RE_SIUNITX = re.compile(r'\\(?:qty|num|qtylist|numlist|ang|qtyrange|numrange)'
+                        r'(?:\[[^\]]*\])?\{[^}]*\}(?:\{[^}]*\})?')
+#: A decimal literal: a digit run, a dot, a digit run, with no digit or dot either side of it.
+RE_DECIMAL = re.compile(r'(?<![\d.])(\d+\.\d+)(?![\d.])')
+
+
+def decimals(text: str) -> str:
+    r"""
+    A bare `$0.8c$` in maths -> `$\num{0.8}c$`, so the decimal separator stays Slovak.
+
+    `mathab.sty` made `.` active in maths and set it as a comma, so the archive's `$0.8c$`
+    *printed* `0,8c`. Today the comma is siunitx's `output_decimal_marker`, which reaches only
+    what siunitx sets -- so an unwrapped decimal would print a point on a page where every
+    `\qty` beside it prints a comma. Found in `MAT/squash` and `TERM/decibely` by reading the
+    built booklet, not by any check.
+    """
+    def one(m: re.Match) -> str:
+        guarded = RE_SIUNITX.split(m.group(0))
+        pieces = RE_SIUNITX.findall(m.group(0))
+        out = [RE_DECIMAL.sub(r'\\num{\1}', guarded[0])]
+        for piece, rest in zip(pieces, guarded[1:]):
+            out += [piece, RE_DECIMAL.sub(r'\\num{\1}', rest)]
+        return ''.join(out)
+    return RE_MATH.sub(one, text)
+
+
 def markup(text: str) -> str:
     """TeX font styling -> Markdown, which is what `mdcheck`'s `txp` rule demands."""
     for macro, wrap in (('textbf', '**'), ('textit', '_'), ('emph', '_')):

@@ -140,6 +140,7 @@ def convert_body(text: str, dialect: Dialect, slug: str,
     text = rules.markup(text)
     text = rules.ties(text)
     text = rules.operator_spaces(text)
+    text = rules.decimals(text)
     text, display_notes = rules.displays(text, slug if label else None)
     notes += display_notes
     text = '\n'.join(line.rstrip() for line in text.split('\n'))

@@ -1,4 +1,9 @@
+(# A list nobody is on prints nothing at all, heading included. `itemize` refuses to be
+    empty -- `Something's wrong--perhaps a missing \item` -- and six volumes have at least one
+    empty list: the legacy and part-converted ones, 02, 03, 10, 12, 18 and chem/01. A heading
+    with nothing under it would be worse than no heading anyway. #)
 (@ macro list(title, people) @)
+    (@ if people|length > 0 @)
     \subsubsection*{(* title|capitalize *)}
     \setlength{\columnsep}{-15mm}
     \begin{multicols}{3}
@@ -10,6 +15,7 @@
             (@ if people|length % 3 == 2 @)\item(@ endif @)
         \end{itemize}
     \end{multicols}
+    (@ endif @)
 (@ endmacro @)
 
 \begin{footerBlock}
