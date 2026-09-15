@@ -257,6 +257,7 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
                  source_stem: str = '') -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
+    text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug, source_stem)
     notes += fig_notes

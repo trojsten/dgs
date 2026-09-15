@@ -81,6 +81,23 @@ def ties(text: str) -> str:
     return re.sub(r'(?<![a-zA-ZáäčďéíĺľňóôŕšťúýžÁČĎÉÍĽŇÓŠŤÚÝŽ])([a-zA-Z])~', sub, text)
 
 
+#: `5{,}97` -- the archive's way of writing a decimal comma that stays a decimal *marker*
+#: rather than becoming punctuation with a space after it.
+RE_DECIMAL_BRACES = re.compile(r'(?<=\d)\{,\}(?=\d)')
+
+
+def decimal_braces(text: str) -> str:
+    r"""
+    `5{,}97` -> `5.97`, before anything looks for a magnitude.
+
+    Today the comma is siunitx's `output_decimal_marker` and the *input* marker is `.`, so the
+    braces come off and the comma with them. It has to happen first: `quantities` reading
+    `5{,}97\times 10^{24}\unit{kg}` would find `97` as the magnitude, since a `}` is neither a
+    digit nor a dot, and write `\qty{97e24}{\kilo\gram}` -- out by a factor of sixteen million.
+    """
+    return RE_DECIMAL_BRACES.sub('.', text)
+
+
 def trhaciealt(text: str) -> str:
     r"""
     `\trhaciealt{A}{B}` -> `A`. The tear-off sheet's version, and there is only one now.
@@ -181,7 +198,8 @@ RE_MAGNITUDE = re.compile(
     # because the plain form below would otherwise match the exponent's digits alone: `10^5\unit{Pa}`
     # came out `10^\qty{5}{\pascal}`, which is silent -- a magnitude was found, so nothing was
     # reported -- and wrong by five orders of magnitude.
-    r'(?:(?P<mantissa>-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*\\cdot\s*)?10\^\{?(?P<exponent>-?\d+)\}?\s*$'
+    r'(?:(?P<mantissa>-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*\\(?:cdot|times)\s*)?'
+    r'10\^\{?(?P<exponent>-?\d+)\}?\s*$'
     # Or a plain literal. `(?<![\d.])` keeps the run maximal -- without it the regex answers a
     # *shorter* suffix rather than failing, and `\frac{74\unit{m}}{...}` came out
     # `\frac{7\qty{4}{\metre}}{...}`, the number cut in two and nothing reported. Whether the
