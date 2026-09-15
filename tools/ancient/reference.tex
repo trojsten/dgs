@@ -1,0 +1,44 @@
+% A minimal driver written for this conversion: it typesets the 2009 problem bodies so they
+% can be read, and makes no attempt to reproduce the original booklet's layout.
+\documentclass[a4paper,11pt]{article}
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
+\usepackage[slovak]{babel}
+\usepackage[margin=20mm]{geometry}
+\usepackage{amsmath,amssymb,graphicx}
+\usepackage{fancyvrb}
+
+% --- the 2009 dialect, from .ancient/2009/ulohy/include.tex and install/mathab/mathab.sty
+\def\unit#1{\,\ensuremath{\mathrm{#1}}}
+\def\mrm#1{\ensuremath{\mathrm{#1}}}
+\def\e#1{\cdot 10^{#1}}
+\def\kmh{\mrm{km\,h^{-1}}}
+\def\ms{\mrm{m\,s^{-1}}}
+\def\Ce{\ensuremath{^\circ}C}
+\def\sdeg{\ensuremath{{}^\circ}}
+% `\matheq`, `\mathplus` and `\mathminus` are used in five 2009 files and defined nowhere in
+% the archive -- mathab makes `=`, `+` and `-` active and these were evidently meant to be the
+% saved originals, but no shipped version of mathab.sty defines them.
+\def\matheq{=}
+\def\mathplus{+}
+\def\mathminus{-}
+\def\R{\mathbb{R}}
+\def\then{\ensuremath{\Rightarrow}}
+\def\.{.}
+\def\bodka{\,\text{.}}
+\def\ciarka{\,,}
+\def\obrazok#1#2{\begin{center}\includegraphics[scale=#1]{#2}\end{center}}
+\def\trhaciealt#1#2{#2}
+\def\web#1{\texttt{#1}}
+\providecommand{\uv}[1]{\quotedblbase #1\textquotedblleft}
+
+\newcounter{pnum}
+\long\def\zadanie#1{\par\medskip\noindent\textbf{\thepnum. \texttt{\ptitle}}\par\nopagebreak
+  \textbf{Zadanie.} #1\par}
+\long\def\vzorak#1{\par\textbf{Vzorák.} #1\par}
+\long\def\comment#1{\par\textbf{Comment.} #1\par\medskip\hrule}
+\def\priklad#1{\stepcounter{pnum}\def\ptitle{#1}\input{#1}}
+
+\begin{document}
+\input{priklady.tex}
+\end{document}
