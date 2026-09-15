@@ -194,7 +194,7 @@ RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
 #: `$120\,\textrm{km.h}^{-1}$`, `$2\,\mathrm{cm}$`. It is a unit in every way except that
 #: `mathab.sty`'s `\unit` was not asked to set it.
 RE_UPRIGHT_UNIT = re.compile(
-    r'\\,\s*\\(?:textrm|mathrm|mrm|text)\{(?P<body>[^{}]*)\}(?:\^\{?(?P<exponent>-?\d+)\}?)?')
+    r'\\,\s*(?P<degree>\^\{?\\circ\}?\s*)?\\(?:textrm|mathrm|mrm|text)\{(?P<body>[^{}]*)\}(?:\^\{?(?P<exponent>-?\d+)\}?)?')
 
 
 def upright_units(text: str) -> str:
@@ -210,6 +210,9 @@ def upright_units(text: str) -> str:
         body = m.group('body')
         if m.group('exponent'):
             body = f"{body}^{{{m.group('exponent')}}}"
+        if m.group('degree'):
+            # `$0.12\,^{\circ}\text{C}$` -- the degree sign outside the box, the letter in it.
+            body = f'^\\circ {body}'
         return f'\\unit{{{body}}}' if units.lookup(body) else m.group(0)
     return RE_UPRIGHT_UNIT.sub(one, text)
 #: A literal magnitude sitting immediately before a unit, digit groups and all. The `\,` groups

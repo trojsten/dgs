@@ -53,7 +53,12 @@ UNITS = {
     r'F\,m^{-1}': r'\farad\per\metre',
     r'g\,mol^{-1}': r'\gram\per\mole',
     # other
-    'Hz': r'\hertz', 'dB': r'\decibel', 'l': r'\litre', r'\%': r'\percent',
+    'Hz': r'\hertz', 'dB': r'\decibel', 'l': r'\litre', 'L': r'\litre',
+    r'\%': r'\percent', r'^\circ': r'\degree', '^{\\circ}': r'\degree',
+    'kms^{-1}': r'\kilo\metre\per\second', r'km\,s^{-1}': r'\kilo\metre\per\second',
+    'J.kg^{-1}K^{-1}': r'\joule\per\kilo\gram\per\kelvin',
+    r'J\,kg^{-1}\,K^{-1}': r'\joule\per\kilo\gram\per\kelvin',
+    'J/kg': r'\joule\per\kilo\gram',
     'nm': r'\nano\metre', 'kPa': r'\kilo\pascal', 'MPa': r'\mega\pascal',
     r'g\,cm^{-3}': r'\gram\per\centi\metre\cubed',
     r'kg/m^3': r'\kilo\gram\per\metre\cubed',
