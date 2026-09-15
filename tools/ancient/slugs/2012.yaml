@@ -1,0 +1,36 @@
+# Náboj 2012 -> volume 15. `priklady.tex` order; the position in this file is the printed number.
+# Checked against all 685 existing ids in phys and chem. One collision: `tetrahedron` is already
+# volume 26's, so this year's two resistor networks are `wire-tetrahedron` and `lc-tetrahedron`,
+# which also says what distinguishes them from each other.
+KIN/posledny_vagon.tex: last-carriage
+KIN/vesmirna_pechota.tex: marines
+DYN/mur.tex: brick-wall
+ELEK/hadrony.tex: hadrons
+MAT/buffon1d.tex: buffon
+KIN/gerlach.tex: train-window
+DYN/kopce.tex: hills
+DYN/cinka.tex: barbell
+KIN/lopticka.tex: third-bounce
+TERM/miesanie.tex: mixing-water
+TERM/niagara.tex: waterfall
+DYN/kladivo.tex: hammer-throw
+OPT/hrubka_skla.tex: glass-plate
+ELEK/trojsten1.tex: wire-tetrahedron
+MAT/vytah.tex: bus-stops
+MAT/panak.tex: stick-figure
+OPT/sosovka_a_zrkadlo.tex: mirror-behind
+TERM/kruhovy_dej.tex: vt-diagram
+DYN/tycka.tex: sliding-rod
+GRAV/tri_smery.tex: three-orbits
+ELEK/kondenzator.tex: plate-force
+DYN/odporova_sila.tex: sweeping
+KIN/fontana.tex: fountain
+DYN/valec_a_dosky.tex: two-boards
+KVAP/kuzel.tex: plug
+KIN/geometricky_rad.tex: bounce-series
+TERM/reakcia.tex: dimer
+GRAV/mimozemstania.tex: aliens
+KVAP/plavacik.tex: bobbing
+OPT/detektor.tex: cone-mirror
+ELEK/trojsten2.tex: lc-tetrahedron
+KVAP/ponorka.tex: nautilus

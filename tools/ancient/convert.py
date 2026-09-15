@@ -51,7 +51,8 @@ def provisional(rel: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', stem.lower()).strip('-')
 
 
-def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], list[str]]:
+def figures(text: str, dialect: Dialect, slug: str,
+            source_stem: str = '') -> tuple[str, list[str], list[str]]:
     r"""
     `\obrazok`/`\pict`/`\includegraphics` -> `![](x.svg){#fig:slug height=…}`.
 
@@ -71,12 +72,17 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
         # numbered or lettered when a problem has more than one: 2010 writes `korytko_ries1`,
         # `korytko_ries2`, `den_ries_a`. Matching only the bare suffixes left seven figures
         # named after their Slovak stem.
-        part = re.match(r'^(?P<body>.*?)_(?P<which>zad|ries)_?(?P<index>[0-9A-Za-z]*)$', stem)
+        part = re.match(r'^(?P<body>.*?)[-_](?:o[-_])?(?P<which>zad|ries)[-_]?'
+                        r'(?P<index>[0-9A-Za-z]*)$', stem)
         if part:
             name = slug if part['which'] == 'zad' else f'{slug}-solution'
             if part['index']:
                 name = f'{name}-{part["index"].lower()}'
             label = slug if name == slug else f'{slug}:{name[len(slug) + 1:]}'
+        elif re.sub(r'_o$', '', stem) == source_stem:
+            # A figure named after the problem and nothing else is its statement's: 2012's
+            # `DYN/kopce.eps` belongs to `DYN/kopce.tex` and carries no `_zad`.
+            name = label = slug
         else:
             name = re.sub(r'[^a-z0-9-]+', '-', stem.lower()).strip('-')
             label = f'{slug}:{name}'
@@ -161,15 +167,98 @@ def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, lis
                         '--export-plain-svg', '-o', str(cached), str(cached)],
                        check=True, capture_output=True, timeout=300)
         return cached, notes
+    # Last, and only last: an `.eps` is an *export*, and a `.odg` or `.svg` beside it is the
+    # thing it was exported from. Preferring it would throw away the text of every figure that
+    # still has its source -- which is what it did to volume 12's four ODG drawings.
+    for eps in ancient.rglob(f'{stem}.eps'):
+        cache.mkdir(parents=True, exist_ok=True)
+        return _from_eps(eps, cache / f'{stem}.svg')
     return None, []
 
 
-def convert_body(text: str, dialect: Dialect, slug: str,
-                 label: bool = False) -> tuple[str, list[str], list[str]]:
+def _ink(svg: Path) -> float:
+    """How much of a rendering is not white. Zero when nothing drew."""
+    png = svg.with_suffix('.check.png')
+    try:
+        subprocess.run(['rsvg-convert', '-z', '1', '-b', 'white', '-o', str(png), str(svg)],
+                       check=True, capture_output=True, timeout=120)
+        out = subprocess.run(['magick', str(png), '-format', '%[fx:1-mean]', 'info:'],
+                             check=True, capture_output=True, timeout=120, text=True)
+        return float(out.stdout.strip() or 0)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+        return 0.0
+    finally:
+        png.unlink(missing_ok=True)
+
+
+def _from_eps(eps: Path, out: Path) -> tuple[Path | None, list[str]]:
+    r"""
+    An EPS export -> SVG, keeping the text as text where that is possible at all.
+
+    2012 is EPS-only for 15 of its 21 figures: no `.svg`, no `.odg`, and the `.eps` is a cairo
+    or StarOffice export rather than a build product of anything we still have. Ghostscript
+    turns it into a PDF, and then there are two ways on, neither of which always works:
+
+    - **`mutool convert -F svg -O text=text`** keeps the text as real `<text>` with the font
+      named, which is what the Minion pass needs. It relies on the embedded subset carrying a
+      **ToUnicode** map, and `pdffonts` shows several of 2012's do not -- a cmmi12 without one
+      comes out as a row of U+FFFD. It also silently dropped every hairline stroke of
+      `OPT/sosovky`, which converted to a blank page.
+    - **`pdftocairo -svg`** always draws what the PDF draws, and outlines every glyph into a
+      path. Correct on the page, and unreachable by any font pass afterwards.
+
+    So mutool is tried first and kept only if it produced no U+FFFD and drew about as much ink
+    as pdftocairo did; otherwise the outlined version is used and the loss is reported.
+    """
+    pdf = out.with_suffix('.pdf')
+    subprocess.run(['gs', '-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=pdfwrite',
+                    '-dEPSCrop', f'-sOutputFile={pdf}', str(eps)],
+                   check=True, capture_output=True, timeout=300)
+
+    outlined = out.with_suffix('.outlined.svg')
+    subprocess.run(['pdftocairo', '-svg', str(pdf), str(outlined)],
+                   check=True, capture_output=True, timeout=300)
+
+    textual = out.with_suffix('.text.svg')
+    subprocess.run(['mutool', 'convert', '-F', 'svg', '-O', 'text=text',
+                    '-o', str(out.parent / f'{out.stem}%d.svg'), str(pdf)],
+                   check=True, capture_output=True, timeout=300)
+    pages = sorted(out.parent.glob(f'{out.stem}[0-9]*.svg'))
+    for extra in pages[1:]:
+        extra.unlink()
+    note = []
+    if pages:
+        pages[0].replace(textual)
+        body = textual.read_text(encoding='utf-8', errors='replace')
+        # A numeric character reference is mutool saying it had no Unicode for that glyph
+        # and is passing the raw byte through: `&#xdf;` where a `V` was meant. Those come
+        # out as tofu on the page, so they count as a failed conversion exactly as U+FFFD
+        # does -- and they are what `pdffonts`' `uni: no` column predicts.
+        lost = ('\ufffd' in body
+                or re.search(r'&#x?[0-9A-Fa-f]+;', body) is not None)
+        if not lost and _ink(textual) >= 0.8 * _ink(outlined):
+            textual.replace(out)
+            outlined.unlink(missing_ok=True)
+            pdf.unlink(missing_ok=True)
+            return out, []
+        note = [f'eps: `{eps.name}` converted with its glyphs outlined -- '
+                + ('the embedded font carries no ToUnicode map, so the characters cannot be '
+                   'recovered' if lost else 'the text-preserving conversion lost part of the '
+                   'drawing')
+                + '. The drawing is right and the font pass cannot reach it.']
+        textual.unlink(missing_ok=True)
+    outlined.replace(out)
+    pdf.unlink(missing_ok=True)
+    return out, note or [f'eps: `{eps.name}` converted with its glyphs outlined; the font pass '
+                         f'cannot reach them']
+
+
+def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
+                 source_stem: str = '') -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
     text = rules.trhaciealt(text)
-    text, wanted, fig_notes = figures(text, dialect, slug)
+    text, wanted, fig_notes = figures(text, dialect, slug, source_stem)
     notes += fig_notes
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
@@ -235,7 +324,9 @@ def main() -> int:
             if body is None:
                 notes.append(f'{macro}: absent from the source')
                 continue
-            converted, w, n = convert_body(body, dialect, slug, label=(macro == 'vzorak'))
+            converted, w, n = convert_body(body, dialect, slug,
+                                           label=(macro == 'vzorak'),
+                                           source_stem=Path(rel).stem)
             pieces[target] = (converted, list(n))
             wanted += w
             notes += [f'{macro}: {x}' for x in n]

@@ -60,8 +60,8 @@ DEFAULT_TEXT_FAMILIES = {'times new roman', 'times', 'arial', 'helvetica', 'book
 #: Every transliteration is reported, because this table is asserted from the Symbol encoding
 #: rather than measured from the font, and the source sentence is what confirms it.
 SYMBOL_GREEK = dict(zip(
-    'abcdefghiklmnopqrstuvwxyz',
-    'αβχδεφγηικλμνοπθρστυϖωξψζ'))
+    'abcdefghiklmnopqrstuvwxyz' 'ABGDEZHQIKLMNXOPRSTUFCYW',
+    'αβχδεφγηικλμνοπθρστυϖωξψζ' 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ'))
 SYMBOL_FAMILIES = {'Mathematica1', 'Symbol'}
 
 #: A label that is a single maths variable, in whatever font the drawer reached for. cmmi has no
@@ -94,16 +94,22 @@ RE_POSITION = re.compile(r'<tspan class="TextPosition" x="([-\d.]+)" y="([-\d.]+
 #: One `style="…"` attribute, or one `font-family="…"` XML attribute.
 RE_STYLE = re.compile(r'style="([^"]*)"')
 RE_ATTR_FAMILY = re.compile(r'font-family="([^"]*)"')
-RE_FAMILY = re.compile(r"font-family:\s*'?([^;'\"]+?)'?\s*(?=;|\"|$)")
+#: The first family in a `font-family:` declaration. A declaration may be a *list* --
+#: `font-family:'Palatino Linotype', serif` -- and only the first name is the one that was
+#: chosen; matching the whole list left `Palatino Linotype', serif` as a family name.
+RE_FAMILY = re.compile(r"font-family:\s*'([^']*)'"
+                       r"|font-family:\s*([^;,\"]+?)\s*(?=[;,\"]|$)")
 #: One whole `<text>` element. These never nest.
 RE_TEXT = re.compile(r'<text\b.*?</text>', re.S)
 #: Any family declaration, in either spelling.
-RE_ANY_FAMILY = re.compile(r"""font-family:\s*'?([^;'"]+?)'?\s*(?=;|")|font-family="([^"]*)\"""")
+RE_ANY_FAMILY = re.compile(r"""font-family:\s*'([^']*)'"""
+                           r"""|font-family:\s*([^;,"]+?)\s*(?=[;,"])"""
+                           r'''|font-family="([^"]*)"''')
 
 
 def _families(chunk: str) -> set[str]:
     """Every family named anywhere in one element, in either spelling."""
-    return {(m.group(1) or m.group(2)).strip().strip("'")
+    return {(m.group(1) or m.group(2) or m.group(3)).strip().strip("'")
             for m in RE_ANY_FAMILY.finditer(chunk)}
 
 
@@ -135,7 +141,11 @@ def _set_family(chunk: str, slant: str) -> str:
         return f'style="{body}"'
 
     chunk = RE_STYLE.sub(block, chunk)
-    chunk = RE_ATTR_FAMILY.sub(lambda _: f'font-family="Minion Pro" font-style="{slant}"', chunk)
+    # The `font-style` that may already sit beside the family is swallowed rather than left to
+    # sit next to the new one: a repeated attribute is invalid XML, and it happens whenever a
+    # span has been through one of the label rules already.
+    chunk = re.sub(RE_ATTR_FAMILY.pattern + r'(\s+font-style="[^"]*")?',
+                   lambda _: f'font-family="Minion Pro" font-style="{slant}"', chunk)
     return chunk
 
 
@@ -144,7 +154,7 @@ def _rewrite_style(block: str, others: list[str]) -> tuple[str, int]:
     m = RE_FAMILY.search(block)
     if not m:
         return block, 0
-    family = m.group(1).strip()
+    family = (m.group(1) or m.group(2)).strip()
     if family.lower() not in CM_FAMILIES:
         if family.lower() not in ACCEPTED:
             others.append(family)
@@ -185,15 +195,31 @@ def _by_label(svg: str) -> tuple[str, list[str]]:
                    and not f.endswith(' embedded')}
         if not foreign:
             return chunk
-        symbol = foreign & SYMBOL_FAMILIES
-        if symbol:
-            greek = ''.join(SYMBOL_GREEK.get(c, c) for c in label)
-            if greek != label:
-                notes.append(f'{", ".join(sorted(symbol))}: {label!r} is Symbol-encoded Greek, '
-                             f'read as {greek!r} -- confirm against the problem text')
-                chunk = chunk.replace(f'>{label}<', f'>{greek}<')
-                label = greek
-            return _set_family(chunk, 'italic')
+        if foreign & SYMBOL_FAMILIES:
+            # Per *span*, not per element: a `<text>` may mix a Symbol span with ordinary ones,
+            # and 2012's do -- a Latin `v`, a Mathematica1 `D` and a Latin `t` set `vΔt`, where
+            # transliterating the whole label would have given `ϖΔτ`.
+            def span_text(s: re.Match) -> str:
+                fam = (s.group(1) or s.group(2) or s.group(3) or '').strip().strip("'")
+                if fam not in SYMBOL_FAMILIES:
+                    return s.group(0)
+                greek = ''.join(SYMBOL_GREEK.get(c, c) for c in s.group(5))
+                if greek != s.group(5):
+                    notes.append(f'{fam}: {s.group(5)!r} is Symbol-encoded Greek, read as '
+                                 f'{greek!r} -- confirm against the problem text')
+                return f'font-family="Minion Pro" font-style="italic"{s.group(4)}>{greek}<'
+
+            chunk = re.sub(RE_ANY_FAMILY.pattern + r'([^>]*)>([^<]*)<', span_text, chunk)
+            for family in SYMBOL_FAMILIES:
+                chunk = chunk.replace(f'font-family="{family} embedded"',
+                                      'font-family="Minion Pro embedded"')
+            # and fall through: the other spans of a mixed element still need deciding.
+            foreign = {f for f in _families(chunk)
+                       if f.lower() not in CM_FAMILIES and f.lower() not in ACCEPTED
+                       and not f.endswith(' embedded')}
+            if not foreign:
+                return chunk
+            label = _label(chunk)
         if RE_MATHS_LABEL.match(label):
             notes.append(f'{", ".join(sorted(foreign))}: the label {label!r} is a single maths '
                          f'variable, set in Minion Pro {_slant(label)} like the rest')
