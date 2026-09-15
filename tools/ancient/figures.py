@@ -32,8 +32,25 @@ CM_FAMILIES = {
     'cmex10': False, 'cmbx12': False, 'cmti12': True,
 }
 
+#: `CM_FAMILIES` is matched case-insensitively. 2009's figures name `cmmi12`, 2010's name
+#: `CMR7` and `CMSY10`, and a table keyed on one spelling reports the other as a foreign font
+#: and leaves TeX's own maths set in Noto Sans.
+CM_FAMILIES = {name.lower(): italic for name, italic in CM_FAMILIES.items()}
+
 #: Families that are already fine, so neither rewritten nor reported.
 ACCEPTED = {'minion pro', 'sans-serif', 'serif', 'sans', 'monospace'}
+
+#: A word processor's or drawing program's *default* text font, which is not a choice the way a
+#: display face is. Every figure in this repository is set in Minion Pro; these carry labels that
+#: were simply typed, so they follow, keeping whatever slant the drawing already declares --
+#: 2010's Times New Roman holds `Mg`, `α''`, `r = a - e` and `slnečný lúč` alike, and guessing a
+#: slant per label would be inventing where the author already said.
+#:
+#: A face that *is* a choice -- `Biondi` on a machine's nameplate, `Reprise Script` on a factory
+#: sign -- is not here, stays as drawn, and is reported.
+DEFAULT_TEXT_FAMILIES = {'times new roman', 'times', 'arial', 'helvetica', 'book antiqua',
+                         'verdana', 'calibri', 'liberation serif', 'nimbus roman',
+                         'thorndale amt', 'albany amt', 'comic sans ms'}
 
 #: Symbol-encoded Greek: the font puts the Greek alphabet at the Latin letter positions, so the
 #: *text* of such a label is Latin and only the font makes it Greek -- `a` sets α. The four ODG
@@ -58,6 +75,13 @@ RE_MATHS_LABEL = re.compile(r'^[A-Za-zΑ-Ωα-ω]\d?$')
 #: booklet: lowercase Greek and Latin letters are italic, uppercase Greek (`\Delta`) is upright.
 def _slant(label: str) -> str:
     return 'normal' if 'Α' <= label[0] <= 'Ω' else 'italic'
+
+
+def _declared_slant(chunk: str) -> str:
+    """The slant the element already asks for, defaulting to upright as SVG does."""
+    m = re.search(r'font-style:\s*([a-zA-Z]+)|font-style="([^"]*)"', chunk)
+    found = (m.group(1) or m.group(2)).strip().lower() if m else 'normal'
+    return 'italic' if found in ('italic', 'oblique') else 'normal'
 
 #: LibreOffice's export writes one `TextPosition` span per laid-out *line*, all at the same `x`.
 RE_PARAGRAPH = re.compile(r'<tspan class="TextParagraph">(.*?)</tspan></text>', re.S)
@@ -121,12 +145,12 @@ def _rewrite_style(block: str, others: list[str]) -> tuple[str, int]:
     if not m:
         return block, 0
     family = m.group(1).strip()
-    if family not in CM_FAMILIES:
+    if family.lower() not in CM_FAMILIES:
         if family.lower() not in ACCEPTED:
             others.append(family)
         return block, 0
 
-    italic = CM_FAMILIES[family]
+    italic = CM_FAMILIES[family.lower()]
     block = RE_FAMILY.sub(lambda _: f'font-family:{HOUSE}', block, count=1)
     spec = f"'Minion Pro, {'Italic' if italic else 'Normal'}'"
     if '-inkscape-font-specification:' in block:
@@ -157,7 +181,7 @@ def _by_label(svg: str) -> tuple[str, list[str]]:
     def element(m: re.Match) -> str:
         chunk, label = m.group(0), _label(m.group(0))
         foreign = {f for f in _families(chunk)
-                   if f not in CM_FAMILIES and f.lower() not in ACCEPTED
+                   if f.lower() not in CM_FAMILIES and f.lower() not in ACCEPTED
                    and not f.endswith(' embedded')}
         if not foreign:
             return chunk
@@ -174,6 +198,10 @@ def _by_label(svg: str) -> tuple[str, list[str]]:
             notes.append(f'{", ".join(sorted(foreign))}: the label {label!r} is a single maths '
                          f'variable, set in Minion Pro {_slant(label)} like the rest')
             return _set_family(chunk, _slant(label))
+        if all(f.lower() in DEFAULT_TEXT_FAMILIES for f in foreign):
+            # The slant is the drawing's own: this face was a default, not a decision, so the
+            # family follows the house and nothing else about the label changes.
+            return _set_family(chunk, _declared_slant(chunk))
         return chunk
 
     return RE_TEXT.sub(element, svg), notes
@@ -205,7 +233,7 @@ def repair(svg: str) -> tuple[str, list[str], int, list[str]]:
         # LibreOffice declares each face twice, once as `<font-face font-family="cmr12 embedded">`
         # in `<defs>`. The suffix is its own; the family behind it is the same one.
         bare = re.sub(r'\s+embedded$', '', family)
-        if bare not in CM_FAMILIES:
+        if bare.lower() not in CM_FAMILIES:
             if bare.lower() not in ACCEPTED:
                 others.append(bare)
             return m.group(0)
@@ -214,7 +242,7 @@ def repair(svg: str) -> tuple[str, list[str], int, list[str]]:
         # An XML `font-family` attribute needs its slant as an attribute too: a `font-style` in a
         # parent's CSS would not reach it, and cmmi is maths italic.
         style_attr = ('' if suffix
-                      else f' font-style="{"italic" if CM_FAMILIES[bare] else "normal"}"')
+                      else f' font-style="{"italic" if CM_FAMILIES[bare.lower()] else "normal"}"')
         return f'font-family="Minion Pro{suffix}"{style_attr}'
 
     out = RE_ATTR_FAMILY.sub(attr, out)
@@ -235,7 +263,7 @@ def _foreign(svg: str) -> list[str]:
     for m in RE_TEXT.finditer(svg):
         if _label(m.group(0)):
             seen |= {f for f in _families(m.group(0))
-                     if f not in CM_FAMILIES and f.lower() not in ACCEPTED}
+                     if f.lower() not in CM_FAMILIES and f.lower() not in ACCEPTED}
     return sorted(seen)
 
 

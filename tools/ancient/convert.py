@@ -34,6 +34,23 @@ def order(ancient: Path) -> list[str]:
             for m in re.finditer(r'^[^%\n]*\\priklad\{\s*(.*?)\s*\}', text, re.M)]
 
 
+#: Slovak letters that carry a diacritic, and what they are underneath. A slug is ASCII.
+FOLD = str.maketrans('áäčďéěíĺľňóôöŕřšťúůüýžÁÄČĎÉĚÍĹĽŇÓÔÖŔŘŠŤÚŮÜÝŽ',
+                     'aacdeeillnooorrstuuuyzAACDEEILLNOOORRSTUUUYZ')
+
+
+def provisional(rel: str) -> str:
+    """
+    A stand-in slug: the Slovak stem, folded to ASCII. Only ever for `--dry-run`.
+
+    It exists so a report covers every problem instead of skipping them for want of a name.
+    Naming is a separate sitting -- a slug has to read in English and be unique across every
+    volume of every competition -- and these are neither.
+    """
+    stem = Path(rel).stem.translate(FOLD)
+    return re.sub(r'[^a-z0-9]+', '-', stem.lower()).strip('-')
+
+
 def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], list[str]]:
     r"""
     `\obrazok`/`\pict`/`\includegraphics` -> `![](x.svg){#fig:slug height=…}`.
@@ -154,14 +171,21 @@ def main() -> int:
     p.add_argument('--year', type=int, required=True)
     p.add_argument('--volume', type=int, required=True)
     p.add_argument('--ancient', type=Path, required=True)
-    p.add_argument('--slugs', type=Path, required=True)
+    p.add_argument('--slugs', type=Path,
+                   help='source path -> slug. Without it every problem takes its Slovak stem, '
+                        'transliterated, which is enough for --dry-run and never enough for the '
+                        'tree: a slug has to be readable and unique across every volume.')
     p.add_argument('--out', type=Path, required=True)
     p.add_argument('--only', help='one source path, e.g. TAZ/kornutok.tex')
     p.add_argument('--dry-run', action='store_true', help='write the report and nothing else')
     a = p.parse_args()
 
     dialect = Dialect.read(a.ancient, a.year)
-    slugs = yaml.safe_load(a.slugs.read_text())
+    slugs = yaml.safe_load(a.slugs.read_text()) if a.slugs else {}
+    if not a.slugs and not a.dry_run:
+        raise SystemExit('--slugs is required unless --dry-run: provisional names must not reach '
+                         'the tree, where renaming one means moving a directory and rewriting '
+                         'every `#fig:` and `#eq:` label inside it.')
     sources = order(a.ancient)
     report = [f'# {a.year} -> volume {a.volume:02d}\n',
               f'{len(sources)} problems in `priklady.tex`.\n']
@@ -170,7 +194,7 @@ def main() -> int:
     for number, rel in enumerate(sources, 1):
         if a.only and rel != a.only:
             continue
-        slug = slugs.get(rel)
+        slug = slugs.get(rel) or provisional(rel)
         if not slug:
             report.append(f'\n## {number}. `{rel}` -- **no slug**, skipped\n')
             continue

@@ -1,0 +1,46 @@
+# Náboj 2010 -> volume 13. `priklady.tex` order; the position in this file is the printed number.
+# Every slug was checked against all 644 existing ids in phys and chem. One hard collision --
+# `trough` is volume 19's -- and five names were moved further away from an existing one that
+# would be easy to confuse with: `ant` (21), `cubes` (19), `satellite` (19), `sticks` (23) and
+# `pv-to-vt` (21), which is a *different* conversion from this year's.
+MAT/D1.tex: lanes
+DYN/medailon.tex: pendant
+MAT/kmen.tex: sawing
+KIN/zelovoc.tex: grocer
+MAT/klzisko.tex: rink
+KVAP/tlak.tex: sea-depth
+DYN/squash.tex: squash-ball
+MAT/uhorky.tex: cucumbers
+KIN/holub.tex: droppings
+DYN/paky.tex: levers
+MAT/mravce.tex: two-ants
+zvysne/grafen.tex: graphene
+KIN/banan.tex: toss
+KVAP/kocky.tex: two-cubes
+KIN/savana.tex: cheetah
+KVAP/tazisko.tex: treasure
+TERM/dej.tex: tv-diagram
+zvysne/kocka.tex: flat-roll
+DYN/lopta.tex: gym-ball
+TERM/blanc.tex: mont-blanc
+ELEK/drotena_kocka.tex: cut-cube
+KVAP/vytah.tex: hoisting
+OPT/korytko.tex: half-cylinder
+DYN/kladky.tex: pulleys
+ELEK/nabity_banan.tex: beans
+zvysne/spiderman.tex: spiderman
+TERM/disky.tex: disks
+GRAV/unik.tex: escape
+DYN/cyklista.tex: cyclist
+KVAP/palicka.tex: floating-stick
+DYN/skatula.tex: five-balls
+ELEK/pole_v_kondenzatore.tex: plate-edge
+GRAV/druzice.tex: same-ellipse
+DYN/trubica.tex: l-tubes
+ELEK/elektrostavebnica.tex: breadboard
+DYN/valec.tex: rolling-up
+zvysne/ziarenie.tex: two-plates
+DYN/koberec.tex: carpet
+OPT/kvety.tex: florist
+MAT/den.tex: daybreak
+GRAV/star_gate.tex: stargate
