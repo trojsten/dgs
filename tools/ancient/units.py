@@ -11,6 +11,7 @@ dimensional-analysis engine, and it would be wrong in exactly the cases that mat
 appears once in 2009 and is either radian-seconds or a typo for rad/s, which no parser can settle.
 Anything not in the table is left alone and reported.
 """
+import re
 
 #: `\unit{…}` body -> siunitx unit macros. Keys are the exact source text with whitespace
 #: collapsed. Built from what 2009 actually uses; other years extend it.
@@ -25,7 +26,7 @@ UNITS = {
     # speed and acceleration
     'm/s': r'\metre\per\second', r'm\,s^{-1}': r'\metre\per\second',
     'km/h': r'\kilo\metre\per\hour', r'km\,h^{-1}': r'\kilo\metre\per\hour',
-    r'm\,s^{-2}': r'\metre\per\second\squared',
+    r'm\,s^{-2}': r'\metre\per\second\squared', 'm/s^2': r'\metre\per\second\squared',
     r'km\,h^{-2}': r'\kilo\metre\per\hour\squared',
     # temperature
     'K': r'\kelvin', r'^\circ C': r'\celsius', '^{\\circ}C': r'\celsius',
@@ -46,7 +47,9 @@ UNITS = {
     r'F\,m^{-1}': r'\farad\per\metre',
     r'g\,mol^{-1}': r'\gram\per\mole',
     # other
-    'Hz': r'\hertz', 'dB': r'\decibel', 'l': r'\litre',
+    'Hz': r'\hertz', 'dB': r'\decibel', 'l': r'\litre', r'\%': r'\percent',
+    'nm': r'\nano\metre', 'kPa': r'\kilo\pascal', 'MPa': r'\mega\pascal',
+    r'g\,cm^{-3}': r'\gram\per\centi\metre\cubed',
     r'kg/m^3': r'\kilo\gram\per\metre\cubed',
     r'kg\,m^{-3}': r'\kilo\gram\per\metre\cubed',
 }
@@ -70,13 +73,24 @@ MACRO_UNITS = {
 }
 
 
+#: `^{3}` and `^3` are the same exponent. The archive spells them both, sometimes in one file,
+#: and a table holding only one of them misses the other silently -- 2010 writes `kg/m^{3}` where
+#: 2009 wrote `kg/m^3`.
+RE_BRACED_EXPONENT = re.compile(r'\^\{(-?\d+)\}')
+
+
+def _normal(body: str) -> str:
+    """One spelling of a unit body: no spaces, and exponents unbraced."""
+    return RE_BRACED_EXPONENT.sub(r'^\1', ''.join(body.split()))
+
+
 def lookup(body: str) -> str | None:
     """siunitx for a `\\unit{…}` body, or None if it is not in the table."""
     key = ' '.join(body.split())
     if key in UNITS:
         return UNITS[key]
-    stripped = key.replace(' ', '')
+    stripped = _normal(key)
     for k, v in UNITS.items():
-        if k.replace(' ', '') == stripped:
+        if _normal(k) == stripped:
             return v
     return MACRO_UNITS.get(stripped)

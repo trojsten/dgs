@@ -336,6 +336,22 @@ def operator_spaces(text: str) -> str:
     return RE_MATH.sub(space, text)
 
 
+def quotes(text: str) -> str:
+    r"""
+    `\uv{...}` -> `"..."`, which pandoc's `+smart` sets as the Slovak pair.
+
+    `\uv` is csquotes' Czech/Slovak "uvozovky" and typesets `\u201e...\u201c`. The house convention is
+    ASCII quotes in the source -- 507 of them across phys -- with pandoc making the pair, and
+    `mdcheck`'s `uni` rule bans the curly characters outright. Three in 2010.
+    """
+    while True:
+        m = re.search(r'\\uv(?![a-zA-Z])\s*(?=\{)', text)
+        if not m:
+            return text
+        end = match_brace(text, m.end())
+        text = f'{text[:m.start()]}"{text[m.end() + 1:end - 1]}"{text[end:]}'
+
+
 def footnotes(text: str) -> str:
     r"""
     `\footnote{...}` -> Markdown's inline `^[...]`.
@@ -406,7 +422,7 @@ def report_only(text: str) -> list[str]:
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
             notes.append(f'environment: `{name}` has no mechanical translation -- '
                          f'`alignat*` is what `|arr` is for, `enumerate` is a Markdown list')
-    for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'uv', 'paragraph'):
+    for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'paragraph'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
     # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so
