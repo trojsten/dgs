@@ -178,9 +178,19 @@ RE_MAGNITUDE = re.compile(
     # came out `10^\qty{5}{\pascal}`, which is silent -- a magnitude was found, so nothing was
     # reported -- and wrong by five orders of magnitude.
     r'(?:(?P<mantissa>-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*\\cdot\s*)?10\^\{?(?P<exponent>-?\d+)\}?\s*$'
-    # Or a plain literal, which a `^` or `_` immediately before disqualifies: those digits are
-    # somebody's exponent or index, not the number the unit belongs to.
-    r'|(?<![\^_{])(?P<plain>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
+    # Or a plain literal. `(?<![\d.])` keeps the run maximal -- without it the regex answers a
+    # *shorter* suffix rather than failing, and `\frac{74\unit{m}}{...}` came out
+    # `\frac{7\qty{4}{\metre}}{...}`, the number cut in two and nothing reported. Whether the
+    # run is an exponent or index is then decided in code, where the two characters before it
+    # can both be looked at; a `{` alone must not disqualify it, since `\frac{74\unit{m}}` is a
+    # perfectly good magnitude inside a brace.
+    r'|(?<![\d.])(?P<plain>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
+
+
+def _is_script(before: str, at: int) -> bool:
+    """Is the literal at `at` somebody's exponent or index -- `x^2`, `x^{12}`, `T_1`?"""
+    head = before[:at]
+    return head.endswith(('^', '_')) or (head.endswith('{') and head[:-1].endswith(('^', '_')))
 #: `\e{8}` is the year's `\def\e#1{\cdot 10^{#1}}`. siunitx spells that natively as `5e8`, and
 #: `core/latex/siunitx.tex` already sets `exponent-product = \cdot`, so it prints as it printed.
 RE_E = re.compile(r'\\e\{(-?\d+)\}')
@@ -217,6 +227,8 @@ def quantities(text: str) -> tuple[str, list[str]]:
             continue
         before = text[i:m.start()]
         num = RE_MAGNITUDE.search(before)
+        if num and num.group('plain') is not None and _is_script(before, num.start('plain')):
+            num = None
         written = (num.group('plain') if num and num.group('plain') is not None
                    else f"{num.group('mantissa') or '1'}e{num.group('exponent')}" if num else '')
         out.append(text[i:i + num.start()] if num else before)
@@ -381,8 +393,9 @@ def footnotes(text: str) -> str:
 #: siunitx macros, whose arguments are already a number and must not be wrapped again.
 RE_SIUNITX = re.compile(r'\\(?:qty|num|qtylist|numlist|ang|qtyrange|numrange)'
                         r'(?:\[[^\]]*\])?\{[^}]*\}(?:\{[^}]*\})?')
-#: A decimal literal: a digit run, a dot, a digit run, with no digit or dot either side of it.
-RE_DECIMAL = re.compile(r'(?<![\d.])(\d+\.\d+)(?![\d.])')
+#: A number siunitx should be setting rather than the author: a decimal, or a run with the
+#: archive's manual `\,` between digit groups. Neither may have a digit or dot either side.
+RE_DECIMAL = re.compile(r'(?<![\d.])(\d+\.\d+(?:\\,\d+)*|\d+(?:\\,\d+)+)(?![\d.])')
 
 
 def decimals(text: str) -> str:
@@ -394,13 +407,22 @@ def decimals(text: str) -> str:
     what siunitx sets -- so an unwrapped decimal would print a point on a page where every
     `\qty` beside it prints a comma. Found in `MAT/squash` and `TERM/decibely` by reading the
     built booklet, not by any check.
+
+    The same applies to a digit group the archive spelled by hand: `$3\,600$` is `\num{3600}`,
+    which lets `group-separator` and `group-minimum-digits` decide, as they do for every other
+    number in the booklet. 2010 writes eleven of these.
     """
+    def wrap(m: re.Match) -> str:
+        # siunitx groups digits itself, from `\\num`'s own settings, so the archive's manual
+        # `\\,` between groups comes out of the number.
+        return '\\num{' + m.group(1).replace('\\,', '') + '}'
+
     def one(m: re.Match) -> str:
         guarded = RE_SIUNITX.split(m.group(0))
         pieces = RE_SIUNITX.findall(m.group(0))
-        out = [RE_DECIMAL.sub(r'\\num{\1}', guarded[0])]
+        out = [RE_DECIMAL.sub(wrap, guarded[0])]
         for piece, rest in zip(pieces, guarded[1:]):
-            out += [piece, RE_DECIMAL.sub(r'\\num{\1}', rest)]
+            out += [piece, RE_DECIMAL.sub(wrap, rest)]
         return ''.join(out)
     return RE_MATH.sub(one, text)
 
