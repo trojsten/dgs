@@ -166,7 +166,15 @@ RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
 #: have to be part of the match, not left behind it: `0.133\,33\unit{rad}` otherwise matched only
 #: the final `33` and came out `0.133\,\qty{33}{\radian}` -- a corruption, and a silent one, since
 #: a magnitude *was* found and so nothing was reported.
-RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
+RE_MAGNITUDE = re.compile(
+    # `10^{8}` and `8.85 \cdot 10^{-12}`, which siunitx spells `1e8` and `8.85e-12`. First,
+    # because the plain form below would otherwise match the exponent's digits alone: `10^5\unit{Pa}`
+    # came out `10^\qty{5}{\pascal}`, which is silent -- a magnitude was found, so nothing was
+    # reported -- and wrong by five orders of magnitude.
+    r'(?:(?P<mantissa>-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*\\cdot\s*)?10\^\{?(?P<exponent>-?\d+)\}?\s*$'
+    # Or a plain literal, which a `^` or `_` immediately before disqualifies: those digits are
+    # somebody's exponent or index, not the number the unit belongs to.
+    r'|(?<![\^_{])(?P<plain>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
 #: `\e{8}` is the year's `\def\e#1{\cdot 10^{#1}}`. siunitx spells that natively as `5e8`, and
 #: `core/latex/siunitx.tex` already sets `exponent-product = \cdot`, so it prints as it printed.
 RE_E = re.compile(r'\\e\{(-?\d+)\}')
@@ -203,14 +211,16 @@ def quantities(text: str) -> tuple[str, list[str]]:
             continue
         before = text[i:m.start()]
         num = RE_MAGNITUDE.search(before)
-        out.append(text[i:i + num.start(1)] if num else before)
-        if num and '\\,' in num.group(1):
+        written = (num.group('plain') if num and num.group('plain') is not None
+                   else f"{num.group('mantissa') or '1'}e{num.group('exponent')}" if num else '')
+        out.append(text[i:i + num.start()] if num else before)
+        if num and '\\,' in written:
             # siunitx groups digits itself, from `\qty`'s own settings, so the archive's manual
             # `\,` between groups has to come out of the number.
-            notes.append(f'unit: `{num.group(1)}` had its digit groups spelled with `\\,`; '
+            notes.append(f'unit: `{written}` had its digit groups spelled with `\\,`; '
                          f'siunitx groups them itself, so the number is now '
-                         f'`{num.group(1).replace(chr(92) + ",", "")}`')
-        magnitude = RE_E.sub(r'e\1', num.group(1).replace('\\,', '')) if num else ''
+                         f'`{written.replace(chr(92) + ",", "")}`')
+        magnitude = RE_E.sub(r'e\1', written.replace('\\,', '')) if num else ''
         if num and siunitx == r'\degree':
             # An angle is `\ang{45}` here, not `\qty{45}{\degree}` -- 176 files say so.
             out.append(f'\\ang{{{magnitude}}}')
