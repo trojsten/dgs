@@ -302,10 +302,11 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
 #: A display, or an inline formula. Inline maths may run over a line break -- 15 of 2009's do --
 #: but never over a blank line, which would mean an unmatched `$` had swallowed a paragraph.
 RE_MATH = re.compile(r'\$\$.*?\$\$|\$(?:[^$\n]|\n(?!\n))*\$', re.S)
-RE_RELATION = re.compile(r'\s*(\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll|=)\s*')
-#: A `+` with something either side of it, and not the unary one that opens a group or follows
-#: another operator, nor one inside a superscript like `10^{+3}`.
-RE_PLUS = re.compile(r'(?<=[\w}\)\]])\s*\+\s*(?=[\w\\{\(])')
+RE_RELATION = re.compile(r'\s*(\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll|[=<>])\s*')
+#: A `+` or `-` with something either side of it, and not the unary one that opens a group or
+#: follows another operator, nor one inside a superscript like `10^{+3}` or `x^{-1}`. The
+#: preceding character must be the *end* of an operand, which `{`, `^` and `_` never are.
+RE_PLUS = re.compile(r'(?<=[\w}\)\]])\s*([-+])\s*(?=[\w\\{\(])')
 RE_CDOT = re.compile(r'\s*\\cdot\s*')
 
 
@@ -318,7 +319,7 @@ def operator_spaces(text: str) -> str:
         guarded = re.split(r'(\\(?:qty|num|qtylist|ang)\{[^}]*\}(?:\{[^}]*\})?)', body)
         for i in range(0, len(guarded), 2):
             piece = RE_RELATION.sub(lambda r: f' {r.group(1)} ', guarded[i])
-            piece = RE_PLUS.sub(' + ', piece)
+            piece = RE_PLUS.sub(lambda r: f' {r.group(1)} ', piece)
             piece = RE_CDOT.sub(r' \\cdot ', piece)
             guarded[i] = piece
         return ''.join(guarded)
