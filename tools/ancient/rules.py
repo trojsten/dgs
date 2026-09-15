@@ -28,25 +28,25 @@ TIED = set('vszokaiuVSZOKAIU')
 
 #: Everything `mdcheck` bans outright, with what it wants instead.
 LINTED = [
-    (re.compile(r'\\varepsilon\b'), r'\\epsilon'),          # vep
-    (re.compile(r'\\implies\b'), r'\\Implies'),             # imp
-    (re.compile(r'\\Rightarrow\b'), r'\\Implies'),          # rar
-    (re.compile(r'\\then\b'), r'\\Implies'),                # mathab's spelling of the same
-    (re.compile(r'\\SI\b'), r'\\qty'),                      # osi
+    (re.compile(r'\\varepsilon(?![a-zA-Z])'), r'\\epsilon'),          # vep
+    (re.compile(r'\\implies(?![a-zA-Z])'), r'\\Implies'),             # imp
+    (re.compile(r'\\Rightarrow(?![a-zA-Z])'), r'\\Implies'),          # rar
+    (re.compile(r'\\then(?![a-zA-Z])'), r'\\Implies'),                # mathab's spelling of the same
+    (re.compile(r'\\SI(?![a-zA-Z])'), r'\\qty'),                      # osi
 ]
 
 #: `mathab.sty` and `include.tex` shorthands with an unambiguous modern spelling. `\matheq`,
 #: `\mathplus` and `\mathminus` are used in the archive and defined in no shipped `mathab.sty`:
 #: the characters were made active and these were meant to be the saved originals.
 SHORTHAND = [
-    (re.compile(r'\\matheq\b'), '='),
-    (re.compile(r'\\mathplus\b'), '+'),
-    (re.compile(r'\\mathminus\b'), '-'),
+    (re.compile(r'\\matheq(?![a-zA-Z])'), '='),
+    (re.compile(r'\\mathplus(?![a-zA-Z])'), '+'),
+    (re.compile(r'\\mathminus(?![a-zA-Z])'), '-'),
     (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{(\d+)\}'), r'\1'),
-    (re.compile(r'\\mrm\b'), r'\\text'),
-    (re.compile(r'\\textrm\b'), r'\\text'),
-    (re.compile(r'\\mathrm\b'), r'\\text'),
-    (re.compile(r'\\R\b'), r'\\mathbb{R}'),
+    (re.compile(r'\\mrm(?![a-zA-Z])'), r'\\text'),
+    (re.compile(r'\\textrm(?![a-zA-Z])'), r'\\text'),
+    (re.compile(r'\\mathrm(?![a-zA-Z])'), r'\\text'),
+    (re.compile(r'\\R(?![a-zA-Z])'), r'\\mathbb{R}'),
 ]
 
 
@@ -129,7 +129,7 @@ def over_to_frac(text: str) -> tuple[str, list[str]]:
     """
     notes, skip = [], 0
     while True:
-        found = list(re.finditer(r'\\over\b', text))
+        found = list(re.finditer(r'\\over(?![a-zA-Z])', text))
         if skip >= len(found):
             return text, notes
         m = found[skip]
@@ -148,8 +148,11 @@ def over_to_frac(text: str) -> tuple[str, list[str]]:
 #: zero-argument macros standing for a whole unit. Both reach `units.lookup`, which knows both.
 RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
                      '|'.join(n[1:] for n in units.MACRO_UNITS) + r')(?![a-zA-Z])')
-#: A literal magnitude sitting immediately before a unit.
-RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?)\s*$')
+#: A literal magnitude sitting immediately before a unit, digit groups and all. The `\,` groups
+#: have to be part of the match, not left behind it: `0.133\,33\unit{rad}` otherwise matched only
+#: the final `33` and came out `0.133\,\qty{33}{\radian}` -- a corruption, and a silent one, since
+#: a magnitude *was* found and so nothing was reported.
+RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*$')
 
 
 def quantities(text: str) -> tuple[str, list[str]]:
@@ -184,11 +187,18 @@ def quantities(text: str) -> tuple[str, list[str]]:
         before = text[i:m.start()]
         num = RE_MAGNITUDE.search(before)
         out.append(text[i:i + num.start(1)] if num else before)
+        if num and '\\,' in num.group(1):
+            # siunitx groups digits itself, from `\qty`'s own settings, so the archive's manual
+            # `\,` between groups has to come out of the number.
+            notes.append(f'unit: `{num.group(1)}` had its digit groups spelled with `\\,`; '
+                         f'siunitx groups them itself, so the number is now '
+                         f'`{num.group(1).replace(chr(92) + ",", "")}`')
+        magnitude = num.group(1).replace('\\,', '') if num else ''
         if num and siunitx == r'\degree':
             # An angle is `\ang{45}` here, not `\qty{45}{\degree}` -- 176 files say so.
-            out.append(f'\\ang{{{num.group(1)}}}')
+            out.append(f'\\ang{{{magnitude}}}')
         elif num:
-            out.append(f'\\qty{{{num.group(1)}}}{{{siunitx}}}')
+            out.append(f'\\qty{{{magnitude}}}{{{siunitx}}}')
         else:
             out.append(f'\\unit{{{siunitx}}}')
             notes.append(f'unit: `\\unit{{{body}}}` had no literal magnitude before it; '
@@ -242,7 +252,9 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
 
 #: Binary operators `mdcheck` insists on having spaces around (`EqualsSpaces`, `PlusSpaces`,
 #: `CdotSpaces`). The archive writes `mh+MH` and `={H(2m+3M)\over…}` freely.
-RE_MATH = re.compile(r'\$\$.*?\$\$|\$[^$\n]*\$', re.S)
+#: A display, or an inline formula. Inline maths may run over a line break -- 15 of 2009's do --
+#: but never over a blank line, which would mean an unmatched `$` had swallowed a paragraph.
+RE_MATH = re.compile(r'\$\$.*?\$\$|\$(?:[^$\n]|\n(?!\n))*\$', re.S)
 RE_RELATION = re.compile(r'\s*(\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll|=)\s*')
 #: A `+` with something either side of it, and not the unary one that opens a group or follows
 #: another operator, nor one inside a superscript like `10^{+3}`.
@@ -281,7 +293,7 @@ def markup(text: str) -> str:
 def report_only(text: str) -> list[str]:
     r"""Everything that needs a person. Nothing here is rewritten."""
     notes = []
-    for m in re.finditer(r'\\tfrac\b', text):
+    for m in re.finditer(r'\\tfrac(?![a-zA-Z])', text):
         notes.append('tfrac: `\\tfrac` -- pick from the four fraction tiers '
                      '(vulgar glyph, `\\dfrac`, `\\nicefrac`, `\\frac`)')
     for m in re.finditer(r'(?<![a-zA-Z])([a-zA-Z]?)~', text):
