@@ -261,6 +261,7 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug, source_stem)
     notes += fig_notes
+    text = rules.upright_units(text)
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
     text, exponent_notes = rules.exponents(text)

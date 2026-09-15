@@ -189,6 +189,29 @@ def over_to_frac(text: str) -> tuple[str, list[str]]:
 #: zero-argument macros standing for a whole unit. Both reach `units.lookup`, which knows both.
 RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
                      '|'.join(n[1:] for n in units.MACRO_UNITS) + r')(?![a-zA-Z])')
+#: The archive's *other* way of writing a unit, 66 times across five years: a thin space, an
+#: upright box, and sometimes an exponent hung outside it -- `$360\,\textrm{m}$`,
+#: `$120\,\textrm{km.h}^{-1}$`, `$2\,\mathrm{cm}$`. It is a unit in every way except that
+#: `mathab.sty`'s `\unit` was not asked to set it.
+RE_UPRIGHT_UNIT = re.compile(
+    r'\\,\s*\\(?:textrm|mathrm|mrm|text)\{(?P<body>[^{}]*)\}(?:\^\{?(?P<exponent>-?\d+)\}?)?')
+
+
+def upright_units(text: str) -> str:
+    r'''
+    `$360\,\textrm{m}$` -> `$360\unit{m}$`, so that `quantities` can see it.
+
+    Only when the body is a unit the table knows. `\,\textrm{litrov kyslíka}` is a Slovak
+    noun phrase and stays exactly where it is; so would anything else with no entry. An
+    exponent written *outside* the box is folded back in, which is how `km.h` becomes
+    `km.h^{-1}` and then, through the table, `\kilo\metre\per\hour`.
+    '''
+    def one(m: re.Match) -> str:
+        body = m.group('body')
+        if m.group('exponent'):
+            body = f"{body}^{{{m.group('exponent')}}}"
+        return f'\\unit{{{body}}}' if units.lookup(body) else m.group(0)
+    return RE_UPRIGHT_UNIT.sub(one, text)
 #: A literal magnitude sitting immediately before a unit, digit groups and all. The `\,` groups
 #: have to be part of the match, not left behind it: `0.133\,33\unit{rad}` otherwise matched only
 #: the final `33` and came out `0.133\,\qty{33}{\radian}` -- a corruption, and a silent one, since
@@ -312,7 +335,8 @@ ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', '
 #: are left for a person: `alignat*` takes a column count and is what `|arr` is for, and `array`
 #: only ever appears *inside* a display, where it stays.
 RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
-                        r'|\\begin\{(align\*)\}(.*?)\\end\{align\*\}'
+                        r'|\\begin\{(align\*|flalign\*|gather\*)\}(.*?)'
+                        r'\\end\{(?:align\*|flalign\*|gather\*)\}'
                         r'|\\begin\{(equation\*?)\}(.*?)\\end\{equation\*?\}'
                         r'|\\begin\{(eqnarray\*?)\}(?P<eqnarray>.*?)\\end\{eqnarray\*?\}'
                         r'|\\\[(?P<bracket>.*?)\\\]', re.S)

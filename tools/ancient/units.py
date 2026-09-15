@@ -26,6 +26,12 @@ UNITS = {
     # speed and acceleration
     'm/s': r'\metre\per\second', r'm\,s^{-1}': r'\metre\per\second',
     'km/h': r'\kilo\metre\per\hour', r'km\,h^{-1}': r'\kilo\metre\per\hour',
+    # The 2007 dialect spells a compound unit with a `.` between the parts, and 2012 still
+    # carries a few: `\textrm{km.h}^{-1}`, `\textrm{m.s}^{-1}`.
+    'km.h^{-1}': r'\kilo\metre\per\hour', 'm.s^{-1}': r'\metre\per\second',
+    'm.s^{-2}': r'\metre\per\second\squared',
+    'g.cm^{-3}': r'\gram\per\centi\metre\cubed',
+    'kg.m^{-3}': r'\kilo\gram\per\metre\cubed',
     r'm\,s^{-2}': r'\metre\per\second\squared', 'm/s^2': r'\metre\per\second\squared',
     r'km\,h^{-2}': r'\kilo\metre\per\hour\squared',
     # temperature
