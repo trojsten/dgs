@@ -34,7 +34,7 @@ GRAV/unik.tex: escape
 DYN/cyklista.tex: cyclist
 KVAP/palicka.tex: floating-stick
 DYN/skatula.tex: five-balls
-ELEK/pole_v_kondenzatore.tex: plate-edge
+ELEK/pole_v_kondenzatore.tex: plate-corner
 GRAV/druzice.tex: same-ellipse
 DYN/trubica.tex: l-tubes
 ELEK/elektrostavebnica.tex: breadboard
