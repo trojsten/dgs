@@ -59,20 +59,30 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
     reported: it is a visual choice and the old `scale` does not carry over.
     """
     notes, wanted = [], []
+    #: The year's own `\label{}` -> the `#fig:` label it became, so `\ref{}` can be rewritten.
+    labels: dict[str, str] = {}
 
-    def markdown(path: str, caption: str = '') -> str:
+    def markdown(path: str, caption: str = '', tag: str = '') -> str:
         stem = Path(path.strip()).stem
         # The archive names a figure after the Slovak problem and whether it belongs to the
         # statement (`_zad`) or the solution (`_ries`). The modern layout does not encode that
         # in the filename, so the figure takes the slug's name.
-        if stem.endswith('_zad'):
-            name = label = slug
-        elif stem.endswith('_ries'):
-            name, label = f'{slug}-solution', f'{slug}:solution'
+        # `_zad` is the statement's figure and `_ries` the solution's, each optionally
+        # numbered or lettered when a problem has more than one: 2010 writes `korytko_ries1`,
+        # `korytko_ries2`, `den_ries_a`. Matching only the bare suffixes left seven figures
+        # named after their Slovak stem.
+        part = re.match(r'^(?P<body>.*?)_(?P<which>zad|ries)_?(?P<index>[0-9A-Za-z]*)$', stem)
+        if part:
+            name = slug if part['which'] == 'zad' else f'{slug}-solution'
+            if part['index']:
+                name = f'{name}-{part["index"].lower()}'
+            label = slug if name == slug else f'{slug}:{name[len(slug) + 1:]}'
         else:
             name = re.sub(r'[^a-z0-9-]+', '-', stem.lower()).strip('-')
             label = f'{slug}:{name}'
         wanted.append((stem, name))
+        if tag:
+            labels[tag.strip()] = label
         notes.append(f'figure: `{name}.svg` -- set a real height, 40mm is a placeholder')
         # `#fig:<id>` or `#fig:<id>:<name>`, and nothing else: `markdown-check`'s `lfn` rule
         # rejects a label that does not open with the problem's own id.
@@ -86,8 +96,10 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
             start, end, args = found[0]
             cap = args[dialect.figure_caption] if (name == 'obrazok'
                                                    and dialect.figure_caption is not None) else ''
+            tag = args[dialect.figure_label] if (name == 'obrazok'
+                                                 and dialect.figure_label is not None) else ''
             path = args[dialect.figure_file if name == 'obrazok' else 1]
-            text = text[:start] + markdown(path, cap) + text[end:]
+            text = text[:start] + markdown(path, cap, tag) + text[end:]
 
     while True:
         m = re.search(r'\\includegraphics(?:\[[^\]]*\])?\s*(?=\{)', text)
@@ -98,6 +110,20 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
         text = text[:m.start()] + markdown(text[m.end() + 1:e - 1]) + text[e:]
 
     text = re.sub(r'\\begin\{center\}\s*|\s*\\end\{center\}', '', text)
+
+    # `\ref{zemA}` -> `[@fig:daybreak:solution-a]`. The archive labels a figure in `\obrazok`'s
+    # own arguments, so by this point the mapping is known exactly and nothing has to be guessed.
+    # A `\ref` to something else -- `\multiobrazok`, an `equation` -- has no target here and is
+    # reported rather than turned into a link that resolves to nothing.
+    def reference(m: re.Match) -> str:
+        target = labels.get(m.group(1).strip())
+        if target is None:
+            notes.append(f'ref: `\\ref{{{m.group(1)}}}` points at a label this conversion did '
+                         f'not create -- give it a `#fig:` or `#eq:` target by hand')
+            return m.group(0)
+        return f'[@fig:{target}]'
+
+    text = re.sub(r'\\ref\{([^}]*)\}', reference, text)
     return text, wanted, notes
 
 

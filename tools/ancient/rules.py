@@ -52,7 +52,13 @@ SHORTHAND = [
     # And the thin space the archive put before that stop. There is not one `\,.` or `\,,` left
     # in phys: the house form sets the punctuation straight after the expression. A `\,` between
     # *digits* is a group separator and is left to `quantities`, which has already run.
-    (re.compile(r'\\,(?=[.,;])'), ''),
+    (re.compile(r'\\[,:;](?=[.,;])'), ''),
+    # `\tg`, `\arctg` and `\cotg` are the Slovak and Czech names for the same three functions
+    # LaTeX spells `\tan`, `\arctan` and `\cot`. `mathab.sty` defines them as operators; the
+    # modern tree has no such macro and would set them as three italic letters.
+    (re.compile(r'\\arctg(?![a-zA-Z])'), r'\\arctan'),
+    (re.compile(r'\\cotg(?![a-zA-Z])'), r'\\cot'),
+    (re.compile(r'\\tg(?![a-zA-Z])'), r'\\tan'),
     (re.compile(r'\\matheq(?![a-zA-Z])'), '='),
     (re.compile(r'\\mathplus(?![a-zA-Z])'), '+'),
     (re.compile(r'\\mathminus(?![a-zA-Z])'), '-'),
@@ -264,7 +270,8 @@ ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', '
 #: only ever appears *inside* a display, where it stays.
 RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
                         r'|\\begin\{(align\*)\}(.*?)\\end\{align\*\}'
-                        r'|\\begin\{(equation\*)\}(.*?)\\end\{equation\*\}', re.S)
+                        r'|\\begin\{(equation\*?)\}(.*?)\\end\{equation\*?\}'
+                        r'|\\\[(?P<bracket>.*?)\\\]', re.S)
 
 
 def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]]:
@@ -286,7 +293,9 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
     def sub(m):
         aligned = m.group(2) is not None
         body = (m.group(1) if m.group(1) is not None
-                else m.group(3) if aligned else m.group(5)).strip()
+                else m.group(3) if aligned
+                else m.group(5) if m.group(5) is not None
+                else m.group('bracket')).strip()
         punct = ''
         tail = re.search(r'\s*([.,;])\s*$', body)
         if tail:
@@ -418,11 +427,14 @@ def report_only(text: str) -> list[str]:
         if m.group(1) not in TIED:
             notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
                          f'not a one-letter preposition')
-    for name in ('alignat*', 'enumerate'):
+    for name in ('alignat*', 'enumerate', 'itemize', 'tabular', 'multipic'):
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
-            notes.append(f'environment: `{name}` has no mechanical translation -- '
-                         f'`alignat*` is what `|arr` is for, `enumerate` is a Markdown list')
-    for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'paragraph'):
+            notes.append(f'environment: `{name}` has no mechanical translation -- `alignat*` '
+                         f'is what `|arr` is for, `enumerate` and `itemize` are Markdown lists, '
+                         f'`tabular` is a Markdown table, and `multipic` sets two drawings side '
+                         f'by side (see `tools/ancient/compose.py`)')
+    for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'paragraph',
+                 'multiobrazok'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
     # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so
