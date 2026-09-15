@@ -125,7 +125,6 @@ def convert_body(text: str, dialect: Dialect, slug: str,
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug)
     notes += fig_notes
-    text = rules.expand_unit_macros(text, dialect)
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
     text, over_notes = rules.over_to_frac(text)

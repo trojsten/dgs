@@ -144,51 +144,52 @@ def over_to_frac(text: str) -> tuple[str, list[str]]:
         text = f'{text[:start]}\\frac{{{num}}}{{{den}}}{text[end:]}'
 
 
-def expand_unit_macros(text: str, dialect) -> str:
-    r"""
-    `\kmh`, `\ms`, `\Ce`, `\sdeg` outside a `\unit{}` -- expand to the year's own meaning.
-
-    Taken from the year's `include.tex` rather than `mathab.sty`, because the two disagree about
-    `\kmh` and the later definition is the one that was printed.
-    """
-    for name, siunitx in units.MACRO_UNITS.items():
-        if name == r'\sdeg':
-            continue                                    # an angle, handled with its number
-        # A function, not a string: `re.sub` reads escapes in a replacement, and this one is
-        # data -- `\celsius` would be rejected as a bad escape `\c`.
-        text = re.sub(re.escape(name) + r'(?![a-zA-Z])',
-                      lambda _, u=siunitx: '\\unit{' + u + '}', text)
-    return text
+#: A unit, in either spelling the archive uses: `\unit{km/h}` with a literal body, or one of the
+#: zero-argument macros standing for a whole unit. Both reach `units.lookup`, which knows both.
+RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
+                     '|'.join(n[1:] for n in units.MACRO_UNITS) + r')(?![a-zA-Z])')
+#: A literal magnitude sitting immediately before a unit.
+RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?)\s*$')
 
 
 def quantities(text: str) -> tuple[str, list[str]]:
     r"""
-    `$120\unit{km/h}$` -> `$\qty{120}{\kilo\metre\per\hour}$`.
+    `$120\unit{km/h}$` -> `$\qty{120}{\kilo\metre\per\hour}$`, and `$30\unit{\sdeg}$` -> `\ang{30}`.
 
-    Only where the magnitude is a plain literal immediately before the `\unit`. A magnitude that
-    is an expression -- `$\tfrac{160}{9}\unit{km\,h^{-2}}$` -- cannot become a `\qty`, which
-    refuses anything but a number, so those are reported instead.
+    Both of the archive's spellings are handled in one pass, and they have to be: `\kmh` expands
+    to `\mrm{km\,h^{-1}}`, so 2009 writes it *inside* the old `\unit{}` -- `$72\unit{\kmh}$` --
+    and expanding the macro first would build `\unit{\unit{\kilo\metre\per\hour}}`. Two `\Ce` are
+    bare, with no `\unit{}` around them, so both forms are real.
+
+    Only where the magnitude is a plain literal immediately before. A magnitude that is an
+    expression -- `$\tfrac{160}{9}\unit{km\,h^{-2}}$` -- cannot become a `\qty`, which refuses
+    anything but a number, so those are reported instead.
     """
     notes, out, i = [], [], 0
-    for m in re.finditer(r'\\unit(?![a-zA-Z])\s*(?=\{)', text):
+    for m in RE_UNIT.finditer(text):
         if m.start() < i:
-            continue
-        try:
-            end = match_brace(text, m.end())
-        except ValueError:
-            continue
-        body = text[m.end() + 1:end - 1]
+            continue                                    # inside a `\unit{}` already consumed
+        if m.group(0).startswith('\\unit'):
+            try:
+                end = match_brace(text, m.end())
+            except ValueError:
+                continue
+            body = text[m.end() + 1:end - 1]
+        else:
+            end, body = m.end(), m.group(0)
         siunitx = units.lookup(body)
         if siunitx is None:
             notes.append(f'unit: `\\unit{{{body}}}` is not in the table, left as written')
             continue
         before = text[i:m.start()]
-        num = re.search(r'(-?\d+(?:[.,]\d+)?)\s*$', before)
-        if num:
-            out.append(text[i:i + num.start(1)])
+        num = RE_MAGNITUDE.search(before)
+        out.append(text[i:i + num.start(1)] if num else before)
+        if num and siunitx == r'\degree':
+            # An angle is `\ang{45}` here, not `\qty{45}{\degree}` -- 176 files say so.
+            out.append(f'\\ang{{{num.group(1)}}}')
+        elif num:
             out.append(f'\\qty{{{num.group(1)}}}{{{siunitx}}}')
         else:
-            out.append(before)
             out.append(f'\\unit{{{siunitx}}}')
             notes.append(f'unit: `\\unit{{{body}}}` had no literal magnitude before it; '
                          f'wrote `\\unit{{}}`, check whether a `\\qty{{}}{{}}` is meant')
