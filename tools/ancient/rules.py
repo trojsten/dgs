@@ -36,8 +36,9 @@ LINTED = [
 ]
 
 #: `mathab.sty` and `include.tex` shorthands with an unambiguous modern spelling. `\matheq`,
-#: `\mathplus` and `\mathminus` are used in the archive and defined in no shipped `mathab.sty`:
-#: the characters were made active and these were meant to be the saved originals.
+#: `\mathplus`, `\mathminus`, `\mathdiv` and `\mathless` are used in the archive and defined
+#: in no shipped `mathab.sty`: the characters were made active and these were meant to be the
+#: saved originals. There are 23 across the seven years, and every one is the plain character.
 SHORTHAND = [
     # `.` was made active in maths to print the decimal comma, so `\.` was how the archive
     # wrote a *literal* full stop -- in `\mrm{priem\.}`, and at the end of a display. Today the
@@ -62,6 +63,9 @@ SHORTHAND = [
     (re.compile(r'\\matheq(?![a-zA-Z])'), '='),
     (re.compile(r'\\mathplus(?![a-zA-Z])'), '+'),
     (re.compile(r'\\mathminus(?![a-zA-Z])'), '-'),
+    (re.compile(r'\\mathdiv(?![a-zA-Z])'), '/'),
+    (re.compile(r'\\mathless(?![a-zA-Z])'), '<'),
+    (re.compile(r'\\mathgreater(?![a-zA-Z])'), '>'),
     (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{(\d+)\}'), r'\1'),
     (re.compile(r'\\mrm(?![a-zA-Z])'), r'\\text'),
     (re.compile(r'\\textrm(?![a-zA-Z])'), r'\\text'),
