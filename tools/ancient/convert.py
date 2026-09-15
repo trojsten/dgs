@@ -14,6 +14,7 @@ re-run. Review a re-run with `diff -ru <out>/problems/<pid> source/naboj/phys/<v
 the rule table is missing before committing to it.
 """
 import argparse
+import collections
 import re
 import subprocess
 from pathlib import Path
@@ -52,7 +53,7 @@ def provisional(rel: str) -> str:
 
 
 def figures(text: str, dialect: Dialect, slug: str,
-            source_stem: str = '') -> tuple[str, list[str], list[str]]:
+            body_role: str = 'problem') -> tuple[str, list[str], list[str]]:
     r"""
     `\obrazok`/`\pict`/`\includegraphics` -> `![](x.svg){#fig:slug height=…}`.
 
@@ -60,39 +61,39 @@ def figures(text: str, dialect: Dialect, slug: str,
     reported: it is a visual choice and the old `scale` does not carry over.
     """
     notes, wanted = [], []
+    #: How many figures of each role this body has so far, so they can be numbered -- and,
+    #: at the end, so that a role with exactly one can drop its number again.
+    counts: collections.Counter[str] = collections.Counter()
     #: The year's own `\label{}` -> the `#fig:` label it became, so `\ref{}` can be rewritten.
     labels: dict[str, str] = {}
 
     def markdown(path: str, caption: str = '', tag: str = '') -> str:
         stem = Path(path.strip()).stem
-        # The archive names a figure after the Slovak problem and whether it belongs to the
-        # statement (`_zad`) or the solution (`_ries`). The modern layout does not encode that
-        # in the filename, so the figure takes the slug's name.
-        # `_zad` is the statement's figure and `_ries` the solution's, each optionally
-        # numbered or lettered when a problem has more than one: 2010 writes `korytko_ries1`,
-        # `korytko_ries2`, `den_ries_a`. Matching only the bare suffixes left seven figures
-        # named after their Slovak stem.
+        # A figure is named after the *role* it plays, not after its problem: the directory
+        # already says which problem this is, and `crane/lift.svg`, `northern-sun/solstices.svg`
+        # are what the finished volumes look like. So `problem.svg` and `solution.svg`, matching
+        # `problem.md` and `solution.md` beside them.
+        #
+        # The role comes from the archive's own suffix where there is one -- `_zad` is the
+        # statement's and `_ries` the solution's, each optionally numbered or lettered when a
+        # problem has several (`korytko_ries1`, `den_ries_A`) -- and otherwise simply from the
+        # body being converted, which knows. Guessing it from the filename instead put 2012's
+        # `DYN/kopce.eps`, which is referenced in a solution, into `problem.svg`.
         part = re.match(r'^(?P<body>.*?)[-_](?:o[-_])?(?P<which>zad|ries)[-_]?'
                         r'(?P<index>[0-9A-Za-z]*)$', stem)
-        if part:
-            name = slug if part['which'] == 'zad' else f'{slug}-solution'
-            if part['index']:
-                name = f'{name}-{part["index"].lower()}'
-            label = slug if name == slug else f'{slug}:{name[len(slug) + 1:]}'
-        elif re.sub(r'_o$', '', stem) == source_stem:
-            # A figure named after the problem and nothing else is its statement's: 2012's
-            # `DYN/kopce.eps` belongs to `DYN/kopce.tex` and carries no `_zad`.
-            name = label = slug
-        else:
-            name = re.sub(r'[^a-z0-9-]+', '-', stem.lower()).strip('-')
-            label = f'{slug}:{name}'
+        role = ('problem' if part['which'] == 'zad' else 'solution') if part else body_role
+        counts[role] += 1
+        name = f'{role}-{counts[role]}'
         wanted.append((stem, name))
         if tag:
-            labels[tag.strip()] = label
+            labels[tag.strip()] = f'{slug}:{name}'
         notes.append(f'figure: `{name}.svg` -- set a real height, 40mm is a placeholder')
         # `#fig:<id>` or `#fig:<id>:<name>`, and nothing else: `markdown-check`'s `lfn` rule
-        # rejects a label that does not open with the problem's own id.
-        return f'![{caption.strip()}]({name}.svg){{#fig:{label} height=40mm}}'
+        # rejects a label that does not open with the problem's own id -- and rejects a label
+        # in an `answer.md` outright, whatever it says, since only a statement and a solution
+        # may carry one. An answer's picture is therefore written bare.
+        label = '' if body_role == 'answer' else f'#fig:{slug}:{name} '
+        return f'![{caption.strip()}]({name}.svg){{{label}height=40mm}}'
 
     for name, arity in ((('obrazok'), dialect.figure_arity), ('pict', 2)):
         while True:
@@ -130,6 +131,19 @@ def figures(text: str, dialect: Dialect, slug: str,
         return f'[@fig:{target}]'
 
     text = re.sub(r'\\ref\{([^}]*)\}', reference, text)
+
+    # A role with one figure needs no number, and the statement's only figure takes the bare
+    # `#fig:<id>` the `lfn` rule expects of a problem.
+    for role, count in counts.items():
+        if count != 1:
+            continue
+        text = text.replace(f']({role}-1.svg)', f']({role}.svg)')
+        text = text.replace(f'{{#fig:{slug}:{role}-1 ', f'{{#fig:{slug} ' if role == 'problem'
+                            else f'{{#fig:{slug}:{role} ')
+        wanted[:] = [(s, role if n == f'{role}-1' else n) for s, n in wanted]
+        for tag, target in labels.items():
+            if target == f'{slug}:{role}-1':
+                labels[tag] = slug if role == 'problem' else f'{slug}:{role}'
     return text, wanted, notes
 
 
@@ -254,12 +268,12 @@ def _from_eps(eps: Path, out: Path) -> tuple[Path | None, list[str]]:
 
 
 def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
-                 source_stem: str = '') -> tuple[str, list[str], list[str]]:
+                 role: str = 'problem') -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
     text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
-    text, wanted, fig_notes = figures(text, dialect, slug, source_stem)
+    text, wanted, fig_notes = figures(text, dialect, slug, role)
     notes += fig_notes
     text = rules.upright_units(text)
     text, unit_notes = rules.quantities(text)
@@ -328,7 +342,8 @@ def main() -> int:
                 continue
             converted, w, n = convert_body(body, dialect, slug,
                                            label=(macro == 'vzorak'),
-                                           source_stem=Path(rel).stem)
+                                           role={'zadanie': 'problem',
+                                                 'vzorak': 'solution'}.get(macro, 'answer'))
             pieces[target] = (converted, list(n))
             wanted += w
             notes += [f'{macro}: {x}' for x in n]
