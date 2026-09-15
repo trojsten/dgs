@@ -1,0 +1,21 @@
+# Line endings are LF in the repository and LF in the working tree, on every platform.
+#
+# `eol=lf` rather than a bare `text=auto`, which would still hand a Windows checkout CRLF: the
+# toolchain is pandoc, gnuplot and xelatex, and a CRLF working copy has already cost us once.
+# Python's text I/O reads CRLF and writes LF, so any script that round-trips a file silently
+# rewrites every line of it -- which turned a one-wrapper change in `FKS/41/2/1/03/solution.md`
+# into a 99-line diff. 51 files were normalised in `Line endings: 51 files go from CRLF to LF`.
+* text=auto eol=lf
+
+# Binary, so git neither inspects nor normalises them. Its own detection would almost certainly
+# get these right; naming them means it cannot get them wrong.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.otf   binary
+*.ttf   binary
+*.docx  binary
+*.xlsx  binary
+*.kmz   binary
