@@ -184,7 +184,10 @@ RE_MAGNITUDE = re.compile(
     # run is an exponent or index is then decided in code, where the two characters before it
     # can both be looked at; a `{` alone must not disqualify it, since `\frac{74\unit{m}}` is a
     # perfectly good magnitude inside a brace.
-    r'|(?<![\d.])(?P<plain>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
+    r'|(?<![\d.])(?P<plain>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$'
+    # Or that literal wrapped in a brace group of its own, which the archive writes 38 times
+    # across the seven years -- `\approx{2.42}\unit{s}`. The braces did nothing even then.
+    r'|\{(?P<braced>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\}\s*$')
 
 
 def _is_script(before: str, at: int) -> bool:
@@ -227,9 +230,15 @@ def quantities(text: str) -> tuple[str, list[str]]:
             continue
         before = text[i:m.start()]
         num = RE_MAGNITUDE.search(before)
-        if num and num.group('plain') is not None and _is_script(before, num.start('plain')):
-            num = None
-        written = (num.group('plain') if num and num.group('plain') is not None
+        if num is not None:
+            # A braced literal is a script exactly when its opening brace is, so the position
+            # tested is one before the digits: `x^{12}` must stay an exponent.
+            at = (num.start('plain') if num.group('plain') is not None
+                  else num.start('braced') - 1 if num.group('braced') is not None else None)
+            if at is not None and _is_script(before, at):
+                num = None
+        written = ((num.group('plain') or num.group('braced')) if num and
+                   (num.group('plain') or num.group('braced')) is not None
                    else f"{num.group('mantissa') or '1'}e{num.group('exponent')}" if num else '')
         out.append(text[i:i + num.start()] if num else before)
         if num and '\\,' in written:
