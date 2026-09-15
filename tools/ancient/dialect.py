@@ -1,0 +1,88 @@
+r"""
+What the macros meant, in the year they were used.
+
+The archive is not one dialect but several, and the differences are silent. `\obrazok` takes two
+arguments in 2009 and has no caption or label at all; four in 2010–2013, with the label third;
+five in 2014–2015, with caption and label **swapped**:
+
+    2009  \def\obrazok#1#2{\begin{center}\includegraphics[scale = #1]{#2}\end{center}}
+    2013  \def\obrazok#1#2#3#4{\begin{figure}[H]\pict{#1}{#2}\caption{#4}\label{#3}\end{figure}}
+    2014  \def\obrazok#1#2#3#4#5{\begin{figure}[#5]\pict{#1}{#2}\caption{#3}\label{#4}\end{figure}}
+
+`\kmh` is `km / h` in `mathab.sty` and `km\,h^{-1}` in `2009/ulohy/include.tex`, which is loaded
+afterwards and wins. A table written once and applied to every year would transpose a hundred
+captions into labels and print the wrong units, and nothing would say so.
+
+So the year's own `include.tex` is parsed, and what it says is checked against what we expect.
+A mismatch is a hard error: it means this is a year nobody has looked at yet.
+"""
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+#: `\def\name#1#2…{body}` -- TeX's own definition syntax, which is all these files use.
+RE_DEF = re.compile(r'\\def\\([a-zA-Z@]+)((?:#\d)*)\s*\{', re.M)
+
+
+def definitions(path: Path) -> dict[str, tuple[int, str]]:
+    """Every `\\def` in a style file, as name -> (arity, body)."""
+    from tools.ancient.lex import match_brace, strip_comments
+    text = strip_comments(path.read_text(encoding='utf-8', errors='replace'))
+    out = {}
+    for m in RE_DEF.finditer(text):
+        try:
+            end = match_brace(text, m.end() - 1)
+        except ValueError:
+            continue
+        out[m.group(1)] = (len(m.group(2)) // 2, text[m.end():end - 1])
+    return out
+
+
+@dataclass
+class Dialect:
+    """One year's macro conventions, verified against that year's `include.tex`."""
+    year: int
+    root: Path
+    #: `\obrazok`'s arity, and which argument (0-based) holds what. `None` means the year's
+    #: version does not carry that piece at all -- 2009 has no caption and no label.
+    figure_arity: int = 2
+    figure_file: int = 1
+    figure_caption: int | None = None
+    figure_label: int | None = None
+    defs: dict[str, tuple[int, str]] = field(default_factory=dict)
+
+    @classmethod
+    def read(cls, root: Path, year: int) -> 'Dialect':
+        include = root / 'include.tex'
+        if not include.is_file():
+            raise SystemExit(f'{include} does not exist; is {root} really a year of problems?')
+        defs = definitions(include)
+
+        known = {
+            2009: dict(figure_arity=2, figure_file=1, figure_caption=None, figure_label=None),
+            2010: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
+            2011: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
+            2012: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
+            2013: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
+            2014: dict(figure_arity=5, figure_file=1, figure_caption=2, figure_label=3),
+            2015: dict(figure_arity=5, figure_file=1, figure_caption=2, figure_label=3),
+        }
+        if year not in known:
+            raise SystemExit(
+                f'{year} has no descriptor. Read {include} -- in particular the arity and '
+                f'argument order of \\obrazok -- and add one; do not guess.')
+        d = cls(year=year, root=root, defs=defs, **known[year])
+
+        if 'obrazok' in defs:
+            arity = defs['obrazok'][0]
+            if arity != d.figure_arity:
+                raise SystemExit(
+                    f'{include} defines \\obrazok with {arity} arguments, but the descriptor for '
+                    f'{year} says {d.figure_arity}. The argument order almost certainly moved '
+                    f'too -- read the definition before changing the descriptor.')
+        return d
+
+    def expansion(self, name: str) -> str | None:
+        """The year's body for a zero-argument macro, e.g. `\\kmh` -> `\\mrm{km\\,h^{-1}}`."""
+        entry = self.defs.get(name)
+        return entry[1] if entry and entry[0] == 0 else None

@@ -1,0 +1,226 @@
+r"""
+The rewrite table: old TeX in, DGS Markdown out.
+
+Two kinds of rule, and the distinction is the whole design.
+
+**Silent rules** have one right answer. `\mrm{x}` is `\text{x}`; `v~ktorom` is `v\ ktorom`;
+`\varepsilon` is `\epsilon` because `mdcheck`'s `vep` rule says so. These are applied and not
+mentioned.
+
+**Reported rules** do not. Whether a display ends a sentence, whether `\tfrac{2}{3}` wants
+`\frac` or `\TwoThirds`, which part of an evaluator's note is the answer — only the sentence
+decides, and a converter that picked would be inventing. These leave the source as it stands and
+add a `%# TODO(rule)` line, which is Jinja's own comment prefix: stripped before pandoc, invisible
+in the PDF, and greppable. The conversion is not finished while one remains.
+
+**Nothing from `mathab.sty` survives into the output.** Every one of its macros is expanded here
+into either plain maths or a DGS macro; none is carried across and none is redefined on the DGS
+side. That is deliberate — the new tree should not inherit a 2009 dialect.
+"""
+import re
+
+from tools.ancient import units
+from tools.ancient.lex import match_brace
+
+#: One-letter Slovak prepositions and conjunctions. `vlna` tied these to the following word, and
+#: the house convention writes that tie as `\ `. Capitals included: sentences start with them.
+TIED = set('vszokaiuVSZOKAIU')
+
+#: Everything `mdcheck` bans outright, with what it wants instead.
+LINTED = [
+    (re.compile(r'\\varepsilon\b'), r'\\epsilon'),          # vep
+    (re.compile(r'\\implies\b'), r'\\Implies'),             # imp
+    (re.compile(r'\\Rightarrow\b'), r'\\Implies'),          # rar
+    (re.compile(r'\\then\b'), r'\\Implies'),                # mathab's spelling of the same
+    (re.compile(r'\\SI\b'), r'\\qty'),                      # osi
+]
+
+#: `mathab.sty` and `include.tex` shorthands with an unambiguous modern spelling. `\matheq`,
+#: `\mathplus` and `\mathminus` are used in the archive and defined in no shipped `mathab.sty`:
+#: the characters were made active and these were meant to be the saved originals.
+SHORTHAND = [
+    (re.compile(r'\\matheq\b'), '='),
+    (re.compile(r'\\mathplus\b'), '+'),
+    (re.compile(r'\\mathminus\b'), '-'),
+    (re.compile(r'\\mrm\b'), r'\\text'),
+    (re.compile(r'\\textrm\b'), r'\\text'),
+    (re.compile(r'\\mathrm\b'), r'\\text'),
+    (re.compile(r'\\R\b'), r'\\mathbb{R}'),
+]
+
+
+def ties(text: str) -> str:
+    r"""`v~ktorom` -> `v\ ktorom`, leaving every other `~` for a human."""
+    def sub(m):
+        return f'{m.group(1)}\\ ' if m.group(1) in TIED else m.group(0)
+    return re.sub(r'(?<![a-zA-ZáäčďéíĺľňóôŕšťúýžÁČĎÉÍĽŇÓŠŤÚÝŽ])([a-zA-Z])~', sub, text)
+
+
+def over_to_frac(text: str) -> str:
+    r"""plain TeX `{a \over b}` -> `\frac{a}{b}`, which is what pandoc can read."""
+    while True:
+        m = re.search(r'\\over\b', text)
+        if not m:
+            return text
+        start = text.rfind('{', 0, m.start())
+        if start < 0:
+            return text
+        end = match_brace(text, start)
+        num, den = text[start + 1:m.start()].strip(), text[m.end():end - 1].strip()
+        text = f'{text[:start]}\\frac{{{num}}}{{{den}}}{text[end:]}'
+
+
+def expand_unit_macros(text: str, dialect) -> str:
+    r"""
+    `\kmh`, `\ms`, `\Ce`, `\sdeg` outside a `\unit{}` -- expand to the year's own meaning.
+
+    Taken from the year's `include.tex` rather than `mathab.sty`, because the two disagree about
+    `\kmh` and the later definition is the one that was printed.
+    """
+    for name, siunitx in units.MACRO_UNITS.items():
+        if name == r'\sdeg':
+            continue                                    # an angle, handled with its number
+        # A function, not a string: `re.sub` reads escapes in a replacement, and this one is
+        # data -- `\celsius` would be rejected as a bad escape `\c`.
+        text = re.sub(re.escape(name) + r'(?![a-zA-Z])',
+                      lambda _, u=siunitx: '\\unit{' + u + '}', text)
+    return text
+
+
+def quantities(text: str) -> tuple[str, list[str]]:
+    r"""
+    `$120\unit{km/h}$` -> `$\qty{120}{\kilo\metre\per\hour}$`.
+
+    Only where the magnitude is a plain literal immediately before the `\unit`. A magnitude that
+    is an expression -- `$\tfrac{160}{9}\unit{km\,h^{-2}}$` -- cannot become a `\qty`, which
+    refuses anything but a number, so those are reported instead.
+    """
+    notes, out, i = [], [], 0
+    for m in re.finditer(r'\\unit(?![a-zA-Z])\s*(?=\{)', text):
+        if m.start() < i:
+            continue
+        try:
+            end = match_brace(text, m.end())
+        except ValueError:
+            continue
+        body = text[m.end() + 1:end - 1]
+        siunitx = units.lookup(body)
+        if siunitx is None:
+            notes.append(f'unit: `\\unit{{{body}}}` is not in the table, left as written')
+            continue
+        before = text[i:m.start()]
+        num = re.search(r'(-?\d+(?:[.,]\d+)?)\s*$', before)
+        if num:
+            out.append(text[i:i + num.start(1)])
+            out.append(f'\\qty{{{num.group(1)}}}{{{siunitx}}}')
+        else:
+            out.append(before)
+            out.append(f'\\unit{{{siunitx}}}')
+            notes.append(f'unit: `\\unit{{{body}}}` had no literal magnitude before it; '
+                         f'wrote `\\unit{{}}`, check whether a `\\qty{{}}{{}}` is meant')
+        i = end
+    out.append(text[i:])
+    return ''.join(out), notes
+
+
+#: What solutions here call their displays. `solution-unlabelled` wants every block in a solution
+#: labelled -- the label is what makes pandoc number the equation -- and the repository's own
+#: habit is ordinals: `third` 29 times, `fourth` 27, `second` 21, `first` 18.
+ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth',
+            'ninth', 'tenth', 'eleventh', 'twelfth']
+
+
+def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]]:
+    r"""
+    `$$…$$` -> the block form, body indented four spaces.
+
+    With `label_prefix` (a problem id) every block gets `{#eq:<id>:<ordinal>}`, which is what
+    `solution-unlabelled` asks of a solution. Statements mostly go unlabelled, so problem bodies
+    are converted without one.
+
+    The terminal `\,\.` or `\,,` is kept as plain punctuation and reported: whether a display ends
+    the sentence decides whether a blank line follows it, and only the sentence knows.
+    """
+    notes = []
+    counter = iter(ORDINALS)
+
+    def sub(m):
+        body = m.group(1).strip()
+        punct = ''
+        tail = re.search(r'(\\,)?\s*(\\\.|\\,|[.,;])\s*$', body)
+        if tail:
+            punct = tail.group(2).replace('\\.', '.').replace('\\,', ',')
+            body = body[:tail.start()].rstrip()
+            notes.append(f'display: ended with `{tail.group(0).strip()}`, kept as `{punct}` -- '
+                         f'check the blank line after it agrees (see `display-paragraph`)')
+        lines = [('    ' + l.strip()) if l.strip() else '' for l in body.split('\n')]
+        label = ''
+        if label_prefix:
+            try:
+                label = f' {{#eq:{label_prefix}:{next(counter)}}}'
+            except StopIteration:
+                notes.append('display: more than twelve blocks -- name the rest by hand')
+        return '$$\n' + '\n'.join(lines) + punct + '\n$$' + label
+
+    return re.sub(r'\$\$(.*?)\$\$', sub, text, flags=re.S), notes
+
+
+#: Binary operators `mdcheck` insists on having spaces around (`EqualsSpaces`, `PlusSpaces`,
+#: `CdotSpaces`). The archive writes `mh+MH` and `={H(2m+3M)\over…}` freely.
+RE_MATH = re.compile(r'\$\$.*?\$\$|\$[^$\n]*\$', re.S)
+RE_RELATION = re.compile(r'\s*(\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll|=)\s*')
+#: A `+` with something either side of it, and not the unary one that opens a group or follows
+#: another operator, nor one inside a superscript like `10^{+3}`.
+RE_PLUS = re.compile(r'(?<=[\w}\)\]])\s*\+\s*(?=[\w\\{\(])')
+RE_CDOT = re.compile(r'\s*\\cdot\s*')
+
+
+def operator_spaces(text: str) -> str:
+    r"""`mh+MH` -> `mh + MH`, inside maths only."""
+    def space(m):
+        body = m.group(0)
+        # `\qty{2.5}{\kilo\gram}` and label braces must not be touched: a space inside a siunitx
+        # argument is a different thing entirely.
+        guarded = re.split(r'(\\(?:qty|num|qtylist|ang)\{[^}]*\}(?:\{[^}]*\})?)', body)
+        for i in range(0, len(guarded), 2):
+            piece = RE_RELATION.sub(lambda r: f' {r.group(1)} ', guarded[i])
+            piece = RE_PLUS.sub(' + ', piece)
+            piece = RE_CDOT.sub(r' \\cdot ', piece)
+            guarded[i] = piece
+        return ''.join(guarded)
+    return RE_MATH.sub(space, text)
+
+
+def markup(text: str) -> str:
+    """TeX font styling -> Markdown, which is what `mdcheck`'s `txp` rule demands."""
+    for macro, wrap in (('textbf', '**'), ('textit', '_'), ('emph', '_')):
+        while True:
+            m = re.search(r'\\' + macro + r'(?![a-zA-Z])\s*(?=\{)', text)
+            if not m:
+                break
+            end = match_brace(text, m.end())
+            text = text[:m.start()] + wrap + text[m.end() + 1:end - 1] + wrap + text[end:]
+    return text
+
+
+def report_only(text: str) -> list[str]:
+    r"""Everything that needs a person. Nothing here is rewritten."""
+    notes = []
+    for m in re.finditer(r'\\tfrac\b', text):
+        notes.append('tfrac: `\\tfrac` -- pick from the four fraction tiers '
+                     '(vulgar glyph, `\\dfrac`, `\\nicefrac`, `\\frac`)')
+    for m in re.finditer(r'(?<![a-zA-Z])([a-zA-Z]?)~', text):
+        if m.group(1) not in TIED:
+            notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
+                         f'not a one-letter preposition')
+    for name in ('footnote', 'hskip', 'vskip', 'break', 'par', 'texttt', 'uv'):
+        for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
+            notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
+    # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so
+    # does the modern pipeline (`core/i18n/sk.yaml`'s `output_decimal_marker`), so it transcribes
+    # as itself. A `.` in maths that is *not* between digits would need a ruling -- 2009 has none,
+    # but later years may.
+    for m in re.finditer(r'\$[^$\n]*\$', text):
+        for d in re.finditer(r'(?<![0-9\\])\.(?![0-9])', m.group(0)):
+            notes.append(f'dot: a `.` in maths that is not a decimal point, in `{m.group(0)[:40]}`')
+    return notes
