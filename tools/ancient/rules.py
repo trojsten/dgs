@@ -57,6 +57,26 @@ def ties(text: str) -> str:
     return re.sub(r'(?<![a-zA-ZáäčďéíĺľňóôŕšťúýžÁČĎÉÍĽŇÓŠŤÚÝŽ])([a-zA-Z])~', sub, text)
 
 
+def trhaciealt(text: str) -> str:
+    r"""
+    `\trhaciealt{A}{B}` -> `A`. The tear-off sheet's version, and there is only one now.
+
+    2009's `include.tex` defines it twice: `\def\trhaciealt#1#2{#2}` at the top, and `#1` again
+    inside the trhačka, so the booklet printed the second version and the tear-off sheet the
+    first. `OPT/polsosovka` is the only user, and its two are one drawing at 100 % and 80 % --
+    `polsosovka_zad.svg` is 400.5 x 231, `polsosovka_zad_small.svg` 320.4 x 184.8, same two
+    labels. So take the first: it is the master, and in the modern layout the size is a
+    `height=` on the Markdown rather than a second export.
+    """
+    while True:
+        m = re.search(r'\\trhaciealt(?![a-zA-Z])\s*(?=\{)', text)
+        if not m:
+            return text
+        first = match_brace(text, m.end())
+        second = match_brace(text, first)
+        text = text[:m.start()] + text[m.end() + 1:first - 1] + text[second:]
+
+
 def _enclosing_group(text: str, pos: int) -> tuple[int, int] | None:
     r"""
     The innermost brace group containing `pos`, as (start, end past the `}`), or None.

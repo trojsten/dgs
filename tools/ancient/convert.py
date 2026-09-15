@@ -15,11 +15,12 @@ the rule table is missing before committing to it.
 """
 import argparse
 import re
-import shutil
+import subprocess
 from pathlib import Path
 
 import yaml
 
+from tools.ancient import figures as svgfix
 from tools.ancient import rules
 from tools.ancient.dialect import Dialect
 from tools.ancient.lex import calls, macro_body, strip_comments
@@ -80,10 +81,48 @@ def figures(text: str, dialect: Dialect, slug: str) -> tuple[str, list[str], lis
     return text, wanted, notes
 
 
+def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, list[str]]:
+    """
+    The SVG for a figure stem, exporting the `.odg` if that is all there is.
+
+    The EPS beside these are *exports*; the `.svg` and `.odg` are the sources. 2009 has four
+    figures with only the `.odg` -- `MAT/papier_ries`, `KIN/lietadlo_ries`, `KIN/kvapky_zad`
+    and `KIN/kvapky_ries` -- and LibreOffice exports them with their text still text, which is
+    what makes the font pass below work on them. The export goes to a cache under `--out`,
+    never back into the archive, which is a read-only clone.
+    """
+    for svg in ancient.rglob(f'{stem}.svg'):
+        return svg, []
+    cached = cache / f'{stem}.svg'
+    if cached.exists():
+        return cached, []
+    for odg in ancient.rglob(f'{stem}.odg'):
+        cache.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['soffice', '--headless', '--convert-to', 'svg',
+                        '--outdir', str(cache), str(odg)],
+                       check=True, capture_output=True, timeout=300)
+        if not cached.exists():
+            return None, []
+        # Before the crop, because a label wrapped onto two lines makes the drawing taller than
+        # it is and the crop would take its bounding box from that.
+        unwrapped, notes = svgfix.unwrap(cached.read_text(encoding='utf-8'))
+        cached.write_text(unwrapped, encoding='utf-8')
+        # LibreOffice exports the whole page, so the drawing arrives on an A4 sheet with the
+        # rest of it blank -- 1588x2246 against the 229x266 of the drawing itself. A `height=`
+        # on such a figure would size the sheet and shrink the picture to nothing, so crop to
+        # the drawing here rather than leaving a trap for whoever sets the height.
+        subprocess.run(['inkscape', '--export-type=svg', '--export-area-drawing',
+                        '--export-plain-svg', '-o', str(cached), str(cached)],
+                       check=True, capture_output=True, timeout=300)
+        return cached, notes
+    return None, []
+
+
 def convert_body(text: str, dialect: Dialect, slug: str,
                  label: bool = False) -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
+    text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug)
     notes += fig_notes
     text = rules.expand_unit_macros(text, dialect)
@@ -168,11 +207,20 @@ def main() -> int:
             header = ''.join(f'%# TODO({n})\n' for n in own)
             path.write_text(header + body, encoding='utf-8')
         for stem, name in dict.fromkeys(wanted):
-            for svg in a.ancient.rglob(f'{stem}.svg'):
-                shutil.copy(svg, out / f'{name}.svg')
-                break
-            else:
-                report.append(f'- figure: no `{stem}.svg` anywhere under {a.ancient}\n')
+            source, fig_notes = find_figure(stem, a.ancient, a.out / '.odg')
+            for note in fig_notes:
+                report.append(f'- figure: `{name}.svg` -- {note}\n')
+            if source is None:
+                report.append(f'- figure: no `{stem}.svg` and no `{stem}.odg` anywhere under '
+                              f'{a.ancient}\n')
+                continue
+            fixed, others, n, greek = svgfix.repair(source.read_text(encoding='utf-8'))
+            (out / f'{name}.svg').write_text(fixed, encoding='utf-8')
+            for note in greek:
+                report.append(f'- figure: `{name}.svg` -- {note}\n')
+            if others:
+                report.append(f'- figure: `{name}.svg` keeps {", ".join(others)} -- '
+                              f'not a CM font, left alone\n')
 
     a.out.mkdir(parents=True, exist_ok=True)
     (a.out / 'report.md').write_text(''.join(report), encoding='utf-8')
