@@ -44,6 +44,11 @@ SHORTHAND = [
     # decimal comma is siunitx's `output_decimal_marker` and a `.` is a `.`; `mdcheck`'s `tgc`
     # rule bans `\.` outright.
     (re.compile(r'\\\.'), '.'),
+    # csplain's compound hyphen, which the archive writes between a symbol and a Slovak ending:
+    # `$y$\=ová`, `$k$\=krát`. It is a hyphen that also permits hyphenation on both sides, and
+    # Markdown has no spelling for the second half -- nor any need of one here, since these are
+    # all short.
+    (re.compile(r'\\='), '-'),
     # And the thin space the archive put before that stop. There is not one `\,.` or `\,,` left
     # in phys: the house form sets the punctuation straight after the expression. A `\,` between
     # *digits* is a group separator and is left to `quantities`, which has already run.
@@ -161,7 +166,10 @@ RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
 #: have to be part of the match, not left behind it: `0.133\,33\unit{rad}` otherwise matched only
 #: the final `33` and came out `0.133\,\qty{33}{\radian}` -- a corruption, and a silent one, since
 #: a magnitude *was* found and so nothing was reported.
-RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?(?:\\,\d+)*)\s*$')
+RE_MAGNITUDE = re.compile(r'(-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\s*$')
+#: `\e{8}` is the year's `\def\e#1{\cdot 10^{#1}}`. siunitx spells that natively as `5e8`, and
+#: `core/latex/siunitx.tex` already sets `exponent-product = \cdot`, so it prints as it printed.
+RE_E = re.compile(r'\\e\{(-?\d+)\}')
 
 
 def quantities(text: str) -> tuple[str, list[str]]:
@@ -202,7 +210,7 @@ def quantities(text: str) -> tuple[str, list[str]]:
             notes.append(f'unit: `{num.group(1)}` had its digit groups spelled with `\\,`; '
                          f'siunitx groups them itself, so the number is now '
                          f'`{num.group(1).replace(chr(92) + ",", "")}`')
-        magnitude = num.group(1).replace('\\,', '') if num else ''
+        magnitude = RE_E.sub(r'e\1', num.group(1).replace('\\,', '')) if num else ''
         if num and siunitx == r'\degree':
             # An angle is `\ang{45}` here, not `\qty{45}{\degree}` -- 176 files say so.
             out.append(f'\\ang{{{magnitude}}}')
@@ -215,6 +223,22 @@ def quantities(text: str) -> tuple[str, list[str]]:
         i = end
     out.append(text[i:])
     return ''.join(out), notes
+
+
+def exponents(text: str) -> tuple[str, list[str]]:
+    r"""
+    `$6\e{23}$` -> `$\num{6e23}$`, for the ones with no unit after them.
+
+    Run after `quantities`, which has already folded `\e` into the magnitude of every `\qty` it
+    built. What is left is a bare power of ten -- Avogadro's number, the answer's `1.0\e{11}` --
+    and those want `\num`, so that siunitx sets the exponent rather than the author.
+    """
+    notes = []
+    out = re.sub(r'(-?\d+(?:[.,]\d+)?)\\e\{(-?\d+)\}', r'\\num{\1e\2}', text)
+    for m in RE_E.finditer(out):
+        notes.append(f'exponent: `\\e{{{m.group(1)}}}` with no literal before it -- '
+                     f'write the whole number by hand')
+    return out, notes
 
 
 #: What solutions here call their displays. `solution-unlabelled` wants every block in a solution
@@ -327,7 +351,7 @@ def report_only(text: str) -> list[str]:
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
             notes.append(f'environment: `{name}` has no mechanical translation -- '
                          f'`alignat*` is what `|arr` is for, `enumerate` is a Markdown list')
-    for name in ('footnote', 'hskip', 'vskip', 'break', 'par', 'texttt', 'uv'):
+    for name in ('footnote', 'hskip', 'vskip', 'break', 'par', 'texttt', 'uv', 'paragraph'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
     # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so

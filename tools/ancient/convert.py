@@ -127,6 +127,8 @@ def convert_body(text: str, dialect: Dialect, slug: str,
     notes += fig_notes
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
+    text, exponent_notes = rules.exponents(text)
+    notes += exponent_notes
     text, over_notes = rules.over_to_frac(text)
     notes += over_notes
     for pattern, replacement in rules.SHORTHAND + rules.LINTED:
