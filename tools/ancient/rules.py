@@ -326,6 +326,23 @@ def operator_spaces(text: str) -> str:
     return RE_MATH.sub(space, text)
 
 
+def footnotes(text: str) -> str:
+    r"""
+    `\footnote{...}` -> Markdown's inline `^[...]`.
+
+    pandoc's own spelling, and the house one: `24/signal`, `24/venus`, `23/thief-pro` and
+    `23/worldbuilder` all carry one. The body is taken brace-matched, because two of the
+    archive's four span several lines and contain maths.
+    """
+    while True:
+        m = re.search(r'\\footnote(?![a-zA-Z])\s*(?=\{)', text)
+        if not m:
+            return text
+        end = match_brace(text, m.end())
+        body = ' '.join(text[m.end() + 1:end - 1].split())
+        text = f'{text[:m.start()]}^[{body}]{text[end:]}'
+
+
 def markup(text: str) -> str:
     """TeX font styling -> Markdown, which is what `mdcheck`'s `txp` rule demands."""
     for macro, wrap in (('textbf', '**'), ('textit', '_'), ('emph', '_')):
@@ -352,7 +369,7 @@ def report_only(text: str) -> list[str]:
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
             notes.append(f'environment: `{name}` has no mechanical translation -- '
                          f'`alignat*` is what `|arr` is for, `enumerate` is a Markdown list')
-    for name in ('footnote', 'hskip', 'vskip', 'break', 'par', 'texttt', 'uv', 'paragraph'):
+    for name in ('hskip', 'vskip', 'break', 'par', 'texttt', 'uv', 'paragraph'):
         for _ in re.finditer(r'\\' + name + r'(?![a-zA-Z])', text):
             notes.append(f'macro: `\\{name}` has no Markdown equivalent here')
     # A `.` between digits needs no thought: `mathab.sty` printed it as a decimal comma, and so

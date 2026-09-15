@@ -136,6 +136,7 @@ def convert_body(text: str, dialect: Dialect, slug: str,
     notes += over_notes
     for pattern, replacement in rules.SHORTHAND + rules.LINTED:
         text = pattern.sub(replacement, text)
+    text = rules.footnotes(text)
     text = rules.markup(text)
     text = rules.ties(text)
     text = rules.operator_spaces(text)
