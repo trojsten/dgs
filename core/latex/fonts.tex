@@ -22,13 +22,20 @@
     BoldItalicFont  = *-BoldIt
 ]{MinionPro}
 
+% The monospace font takes no `tex-text` mapping, and this is not cosmetic. That mapping turns
+% a straight `"` into `”`, a `'` into `’` and `--` into an en dash, which is exactly right for prose
+% and wrong in every code listing: a solution's Python printed `print(f”Najvacsiu...”)`, which will
+% not run, and neither the source nor the TeX showed it -- the substitution happens in the font.
+% An empty `Mapping` overrides the default above for this family alone; the ligature key stays,
+% because UbuntuMono has no f-ligatures to suppress.
 \setmonofont[
     Path            = assets/fonts/UbuntuMono/ ,
     Extension       = .ttf ,
     UprightFont     = *-r ,
     BoldFont        = *-b ,
     ItalicFont      = *-i ,
-    BoldItalicFont  = *-bi
+    BoldItalicFont  = *-bi ,
+    Mapping         =
 ]{UbuntuMono}
 
 \setsansfont[

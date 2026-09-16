@@ -13,17 +13,29 @@
 % default, and `Shaded` is its no-background form (the version that shades reaches for
 % `framed`'s snugshade*, which would be a design decision rather than a fix).
 %
-% `fancyvrb` and `xcolor` are already required by the class; `fancyvrb`'s "currently unused"
+% `xcolor` and `fancyvrb` are already required by the class; `fancyvrb`'s "currently unused"
 % note there is now out of date.
 %
-% Verbatim does not break long lines -- it lets them run into the margin and says so as an
-% Overfull \hbox. Ubuntu Mono at 12pt fits about 85 columns in the 180mm text block, and
-% adding `,fontsize=\small` to the environment below buys roughly 17 more if a listing ever
-% needs them.
+% One line below is *not* pandoc's: the options on `Highlighting`. Plain `Verbatim` sets each
+% line in a box it never breaks and -- unlike a paragraph -- reports no Overfull \hbox when the
+% line runs off the paper, so a listing too wide for the page is lost in silence. `kaboom.py`'s
+% longest line is 107 characters and Ubuntu Mono at 12pt fits about 98 in the 180mm text block,
+% so this was not hypothetical. Hence `fvextra`, and:
+%
+%   fontsize=\small     98 columns becomes about 107, which is every listing in the repository
+%   breaklines          a line that still does not fit wraps, with fvextra's hookrightarrow
+%   breakanywhere       ... even a long string or URL, which has nowhere else to break
+%
+% so the failure mode is a visibly wrapped line rather than one that walks off the page.
 
 \newcommand{\VerbBar}{|}
 \newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{%
+    commandchars=\\\{\},
+    fontsize=\small,
+    breaklines=true,
+    breakanywhere=true,
+}
 \newenvironment{Shaded}{}{}
 \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
 \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}

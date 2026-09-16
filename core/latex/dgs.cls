@@ -59,6 +59,7 @@
 \RequirePackage[weather]{ifsym}
 \RequirePackage{nth}
 \RequirePackage{fancyvrb}                                   % fancy verbatim, for pandoc's Highlighting environment
+\RequirePackage{fvextra}                                    % ... and the line breaking fancyvrb has not got
 \RequirePackage{framed}
 
 \RequirePackage[
