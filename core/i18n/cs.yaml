@@ -26,4 +26,5 @@ siunitx:
 # enough not to be a judgement call; anything absent falls back to English.
 words:
   and: 'a'
+  const: 'konst.'
   or: 'nebo'

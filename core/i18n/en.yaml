@@ -29,6 +29,7 @@ siunitx:
 # for one a language has not defined is an error rather than a silent fall back to this file.
 words:
   and: 'and'
+  const: 'const.'
   or: 'or'
   therefore: 'therefore'
   wherefrom: 'wherefrom'
