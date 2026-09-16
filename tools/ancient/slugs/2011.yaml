@@ -1,0 +1,49 @@
+# Náboj 2011 -> volume 14. `priklady.tex` order; the position in this file is the printed number.
+# Ten further `\priklad` lines in that file are commented out, all marked `von!` ("out!") --
+# `KIN/vlaky`, `DYN/zrazky_guliciek`, `KVAP/kuzel`, `DYN/kmitajuci_kruh`, `KIN/gerlach`,
+# `OPT/stihacky`, `KIN/nemci`, `OPT/nater_na_skle`, `KVAP/plavacik`, `OPT/oracina` -- and are not
+# converted: they did not run.
+#
+# **Six of the 33 have no `.tex` in the archive.** The round ran with them, so they keep their
+# place in the volume's `problems:` and the booklet prints `\protectedInput`'s red `Missing file`
+# box; see `errors/14.md`. A lost problem cannot be named for its content, so its slug is the
+# archive's own filename, transliterated -- that is the only honest name available and it points
+# straight back at what is missing.
+#
+# Checked against all 697 existing ids in phys. Three first choices collided with problems that
+# are genuinely other problems -- `clock-hands` (29), `heating` (26) and `train-window` (15) --
+# so this year's are `hands-overtake` and `window-water`; the third, `TERM/kurime`, is one of the
+# six lost ones and takes its filename anyway.
+DYN/brzdenie.tex: abs-braking
+DYN/zrazenina.tex: zrazenina           # source lost
+KIN/bezec_a_cyklista.tex: runner-cyclist
+KIN/dve_auta.tex: two-prototypes
+DYN/pes.tex: pes                       # source lost
+KIN/dve_lopticky.tex: dropped-pair
+KIN/hodinky.tex: hands-overtake
+TERM/kurime.tex: kurime                # source lost
+KIN/skoda.tex: double-speed
+OPT/zrkadlo.tex: zrkadlo               # source lost
+KIN/tien.tex: lamp-shadow
+DYN/skrutka.tex: screw-thread
+GRAV/druzica.tex: far-satellite
+KIN/winnetou.tex: winnetou
+TERM/kyslik.tex: oxygen-intake
+ELEK/elektricky_graf.tex: complete-graph
+ELEK/instalater.tex: instalater        # source lost
+DYN/nl_oscilator.tex: cubic-spring
+DYN/okno_vlaku.tex: window-water
+KVAP/olej_voda.tex: oil-on-water
+DYN/hook.tex: hook                     # source lost
+ELEK/odpory.tex: wire-cube
+DYN/pruzina.tex: free-spring
+GRAV/opity_navigator.tex: drunk-navigator
+DYN/koleso.tex: disc-in-pit
+OPT/sluch.tex: diver-hearing
+KIN/biliard_2011.tex: billiard-2011
+OPT/zdroj_a_zrkadlo.tex: mirrored-lamp
+DYN/chladnutie.tex: cooling-planet
+TERM/pokrievka.tex: teapot-lid
+ELEK/odpory2.tex: complete-cube
+DYN/melon.tex: melon-wedge
+MAT/uzlik.tex: fermat-point
