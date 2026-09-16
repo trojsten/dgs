@@ -85,6 +85,13 @@ class ContextSemester(ContextSeminar):
         'number': And(int, lambda x: x in [1, 2]),
         'neuter': Schema({'nominative': str, 'genitive': str}),
         'feminine': Schema({'nominative': str, 'genitive': str}),
+        # The camp this semester ends with -- accommodation, transport, packing list, children.
+        # `invite.jtex` reads some thirty `semester.camp.*` paths and the three semesters that
+        # held a camp have carried the block for years, but the schema had never heard of it,
+        # so `33/1`, `34/2` and `37/2` failed at validation and none of their nine rounds had
+        # ever produced a PDF. Typed as an opaque dict, the way `organisation` is above: the
+        # template is what knows the shape, and it is the only reader.
+        Optional('camp'): dict,
     })
 
     def populate(self, competition, volume, semester):
