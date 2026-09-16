@@ -1,0 +1,44 @@
+# Náboj 2007 -> volume 10. The year has no `priklady.tex` list of `\priklad{}` includes: its
+# `07priklady.tex` *is* the problems, one `\zadanie`/`\vzorak`/`\comment` group after another, so
+# the key is the group's position in that file and the position is the printed number.
+#
+# **Only the 31 `\zadanie` problems are here.** `07priklady.tex` also holds six `\extra` groups,
+# which `07naboj.pdf` and the answer sheet number 32+ to 37+ — but the tear-off sheets handed to
+# the teams (`07strihacie.tex`) define `\extra` as empty, and the organisers' own report says
+# "pre družstvá bolo pripravených 31 príkladov". They were a bonus sheet, not part of the round;
+# `errors/10.md` records all six.
+#
+# Two names are not chosen here but kept: `support` (1) and `southeast` (25) were converted by
+# hand years ago and are already in the tree. Checked against all 728 existing ids in phys; those
+# two are the only collisions and are deliberate.
+07priklady.tex#1: support
+07priklady.tex#2: meeting-balls
+07priklady.tex#3: weak-stove
+07priklady.tex#4: hanging-chain
+07priklady.tex#5: danube-boat
+07priklady.tex#6: tin-cup
+07priklady.tex#7: two-resistors
+07priklady.tex#8: lit-cube
+07priklady.tex#9: two-hotplates
+07priklady.tex#10: soapy-bath
+07priklady.tex#11: frog-jump
+07priklady.tex#12: drift-speed
+07priklady.tex#13: elongation
+07priklady.tex#14: barrel-float
+07priklady.tex#15: hollow-planet
+07priklady.tex#16: airship
+07priklady.tex#17: crosswind
+07priklady.tex#18: tipping-tank
+07priklady.tex#19: velocity-selector
+07priklady.tex#20: draining-bath
+07priklady.tex#21: bead-hoop
+07priklady.tex#22: lens-focus
+07priklady.tex#23: little-prince
+07priklady.tex#24: stuck-lid
+07priklady.tex#25: southeast
+07priklady.tex#26: bouncy-pair
+07priklady.tex#27: four-charges
+07priklady.tex#28: hanging-spheres
+07priklady.tex#29: glass-marble
+07priklady.tex#30: bowl-stick
+07priklady.tex#31: dodecahedron

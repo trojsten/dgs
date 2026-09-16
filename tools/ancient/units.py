@@ -19,6 +19,7 @@ UNITS = {
     # length
     'm': r'\metre', 'cm': r'\centi\metre', 'mm': r'\milli\metre', 'km': r'\kilo\metre',
     'm^2': r'\metre\squared', 'km^2': r'\kilo\metre\squared', 'm^3': r'\metre\cubed',
+    'mm^2': r'\milli\metre\squared', 'cm^2': r'\centi\metre\squared',
     # mass
     'kg': r'\kilo\gram', 'g': r'\gram', 't': r'\tonne',
     # time
@@ -70,6 +71,12 @@ UNITS = {
     r'\%': r'\percent', r'^\circ': r'\degree', '^{\\circ}': r'\degree',
     'kms^{-1}': r'\kilo\metre\per\second', r'km\,s^{-1}': r'\kilo\metre\per\second',
     'J.kg^{-1}K^{-1}': r'\joule\per\kilo\gram\per\kelvin',
+    # 2007 puts a full stop between *every* factor, where 2010 dropped the last one.
+    'J.kg^{-1}.K^{-1}': r'\joule\per\kilo\gram\per\kelvin',
+    'kJ.kg^{-1}.K^{-1}': r'\kilo\joule\per\kilo\gram\per\kelvin',
+    'kg.m^{-3}': r'\kilo\gram\per\metre\cubed',
+    'm.s^{-2}': r'\metre\per\second\squared',
+    'km.s^{-1}': r'\kilo\metre\per\second',
     r'J\,kg^{-1}\,K^{-1}': r'\joule\per\kilo\gram\per\kelvin',
     'J/kg': r'\joule\per\kilo\gram',
     'nm': r'\nano\metre', 'kPa': r'\kilo\pascal', 'MPa': r'\mega\pascal',

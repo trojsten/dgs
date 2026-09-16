@@ -330,6 +330,10 @@ def line_breaks(text: str) -> str:
 #: in no shipped `mathab.sty`: the characters were made active and these were meant to be the
 #: saved originals. There are 23 across the seven years, and every one is the plain character.
 SHORTHAND = [
+    # `\uv{}` is `slovak.sty`'s quotation macro -- 2007 is the only year that loads the
+    # package directly and so the only one that has it. Pandoc's `+smart` makes the Slovak
+    # pair out of plain ASCII quotes, which is what every other volume carries.
+    (re.compile(r'\\uv\{([^{}]*)\}'), r'"\1"'),
     # `.` was made active in maths to print the decimal comma, so `\.` was how the archive
     # wrote a *literal* full stop -- in `\mrm{priem\.}`, and at the end of a display. Today the
     # decimal comma is siunitx's `output_decimal_marker` and a `.` is a `.`; `mdcheck`'s `tgc`
@@ -415,6 +419,18 @@ def ties(text: str) -> str:
 #: `5{,}97` -- the archive's way of writing a decimal comma that stays a decimal *marker*
 #: rather than becoming punctuation with a space after it.
 RE_DECIMAL_BRACES = re.compile(r'(?<=\d)\{,\}(?=\d)')
+
+
+def thin_comma(text: str) -> str:
+    r"""
+    `4,\!2` -> `4.2`, 2007's spelling of a decimal marker.
+
+    `\!` is a negative thin space, put there to close the gap a comma opens in maths. Today the
+    comma is siunitx's output marker and the input marker is a full stop, so both go. It has to
+    happen before `decimals` and before the comma-space rule, which would otherwise read the
+    comma as punctuation and write `4, \!2`.
+    """
+    return re.sub(r'(?<=\d),\\!(?=\d)', '.', text)
 
 
 def decimal_braces(text: str) -> str:
@@ -525,7 +541,61 @@ RE_UNIT = re.compile(r'\\unit(?![a-zA-Z])\s*(?=\{)|\\(?:' +
 #: `$120\,\textrm{km.h}^{-1}$`, `$2\,\mathrm{cm}$`. It is a unit in every way except that
 #: `mathab.sty`'s `\unit` was not asked to set it.
 RE_UPRIGHT_UNIT = re.compile(
-    r'\\,\s*(?P<degree>\^\{?\\circ\}?\s*)?\\(?:textrm|mathrm|mrm|text)\{(?P<body>[^{}]*)\}(?:\^\{?(?P<exponent>-?\d+)\}?)?')
+    r'\\,\s*(?P<degree>\^\{?\\circ\}?\s*)?\\(?:textrm|mathrm|mrm|text)\{'
+    # One level of nesting, because a body may carry its own exponent: 2007 writes
+    # `\textrm{kJ.kg^{-1}.K^{-1}}`, where the middle factor's exponent cannot be hoisted
+    # outside the box the way a single factor's can.
+    r'(?P<body>(?:[^{}]|\{[^{}]*\})*)\}(?:\^\{?(?P<exponent>-?\d+)\}?)?')
+
+
+#: One upright box and whatever exponent hangs off it: `\mathrm{h}^{-1}`.
+RE_BOX = re.compile(r'\\(?:textrm|mathrm|mrm|text)\{(?P<body>[^{}]*)\}'
+                    r'(?:\^\{?(?P<exponent>-?\d+)\}?)?')
+
+
+def spaced_units(text: str) -> str:
+    r"""
+    2007's spelling of a unit, rewritten into the one every later year uses.
+
+    2007 predates `\unit{}` -- there is no style file at all -- and writes a quantity out by
+    hand: a medium space, then one upright box per factor with a full stop between them, and
+    each factor's exponent outside its own box:
+
+        $120\:\mathrm{km}.\mathrm{h}^{-1}$        $4,\!2\:\textrm{kJ}.\textrm{kg}^{-1}.\textrm{K}^{-1}$
+        $9\:\Omega$                               $80^\circ\textrm{C}$
+
+    `upright_units` reads one box after a `\,`, and `units.lookup` already knows the
+    full-stop-joined bodies because 2013 writes `\textrm{km.h}^{-1}` -- so all this has to do
+    is collapse the chain into a single box and normalise the spacer. Then the existing pass
+    turns it into `\unit{km.h^{-1}}` and `quantities` into `\qty{120}{\kilo\metre\per\hour}`.
+
+    Three shapes are not boxes and are handled here:
+
+    - **`\:\Omega`** is the ohm. A bare `\Omega` is not -- 2007's `KVAP/kvapka` spins a planet
+      at angular velocity `\Omega` -- so only a spaced one is converted, which is exactly the
+      discrimination the archive itself makes.
+    - **`N^\circ\textrm{C}`** puts the degree sign between the magnitude and the box, where
+      `upright_units` expects a `\,` first. The sign is moved inside the spacer so that the
+      table sees `^\circ C` as one body, as it does for 2013.
+    - **`N\%`** in prose, which is a percentage and wants siunitx like any other unit.
+    """
+    def chain(m: re.Match) -> str:
+        parts, pos = [], 0
+        for box in RE_BOX.finditer(m.group('boxes')):
+            parts.append(box['body'] + (f"^{{{box['exponent']}}}" if box['exponent'] else ''))
+            pos = box.end()
+        return f"\\,\\textrm{{{'.'.join(parts)}}}" if parts else m.group(0)
+
+    # A run of upright boxes joined by full stops, introduced by 2007's medium space.
+    text = re.sub(r'\\:\s*(?P<boxes>\\(?:textrm|mathrm|mrm|text)\{[^{}]*\}'
+                  r'(?:\^\{?-?\d+\}?)?'
+                  r'(?:\s*\.\s*\\(?:textrm|mathrm|mrm|text)\{[^{}]*\}(?:\^\{?-?\d+\}?)?)*)',
+                  chain, text)
+    text = re.sub(r'\\:\s*\\Omega(?![a-zA-Z])', r'\\,\\textrm{\\Omega}', text)
+    text = re.sub(r'(?<![\d.])(\d+(?:[.,]\\!)?\d*)\s*\^\{?\\circ\}?\s*'
+                  r'\\(?:textrm|mathrm|mrm|text)\{C\}', r'\1\\,^{\\circ}\\textrm{C}', text)
+    text = re.sub(r'(?<![\d.$])(\d+(?:\.\d+)?)\s*\\%', r'$\\qty{\1}{\\percent}$', text)
+    return text
 
 
 def upright_units(text: str) -> str:

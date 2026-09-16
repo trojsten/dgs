@@ -2,7 +2,8 @@
 
 `source/naboj/fks-naboj/.ancient/` holds the Náboj years the current system never received —
 2007 and 2009–2015, which are volumes 10 and 12–18 (volume = year − 1997, and each year states
-its own ročník in `uvod.tex`). This directory holds the tools for converting them.
+its own ročník in `uvod.tex`). This directory holds the tools that converted them. **All eight
+are in the tree now**; 2008 exists nowhere, and volume 11 is the hole that leaves.
 
 ## `reference.tex` — read a year as it was printed
 
@@ -77,11 +78,33 @@ The new tree should not inherit a 2009 dialect.
 ### The dialect is read from the year, never hard-coded
 
 `\obrazok` changes arity *and* argument order across the archive — two arguments in 2009, four in
-2010–2013 with the label third, five in 2014–2015 with caption and label swapped — and `\kmh` is
+2010–2013 with the label third, five in 2014–2015 with caption and label swapped, and in 2007 no
+`\obrazok` at all, only a bare `\includegraphics` — and `\kmh` is
 `km / h` in `mathab.sty` but `km\,h^{-1}` in 2009's own `include.tex`, which is loaded later and
 wins. One regex across seven years would silently transpose captions into labels and print wrong
 units. `dialect.py` parses the year's `include.tex`, **asserts** the arity against a per-year
-descriptor, and aborts on a year the table does not cover.
+descriptor, and aborts on a year the table does not cover. 2007 has no style file at all — its
+four macros are defined inside each of the five driver documents — so `Dialect.MACROS` names
+`07naboj.tex` for it.
+
+**2007 is the one year with its own code path**, and it earns it: there is no `priklady.tex`
+list of `\priklad{}` includes, because `07priklady.tex` *is* the problems, one
+`\zadanie`/`\vzorak`/`\comment` group after another. `--monolith` makes a problem's key its
+position in that file and `--encoding iso-8859-2` reads it:
+
+```sh
+uv run python -m tools.ancient.convert --year 2007 --volume 10 \
+    --ancient   source/naboj/fks-naboj/.ancient/2007 \
+    --monolith  07priklady.tex --encoding iso-8859-2 \
+    --slugs     tools/ancient/slugs/2007.yaml --out /tmp/draft/10
+```
+
+Its notation is pre-`\unit{}` throughout: a quantity is a medium space, one upright box per
+factor and a full stop between them (`$120\:\mathrm{km}.\mathrm{h}^{-1}$`), a decimal marker is
+`4,\!2`, and the file holds not one `~`, so nothing gave its one-letter prepositions a
+non-breaking space. `rules.spaced_units` and `rules.thin_comma` handle the first two; the third
+is a volume-level pass, since which words take a tie is the year's convention and not a
+sentence's.
 
 ### Four traps that cost real time, all of them silent
 
@@ -118,6 +141,34 @@ nothing. Render a contact sheet:
 for f in <out>/problems/*/*.svg; do rsvg-convert -z 2 -b white -o "$(basename "$f" .svg).png" "$f"; done
 montage *.png -tile 4x -geometry +6+6 contact.png
 ```
+
+### `outlines.py` — a figure whose labels were outlined
+
+`_from_eps` says so when it happens: an EPS that embeds its fonts as Type 1 subsets **with no
+ToUnicode map** tells nothing downstream what a glyph is, so `mutool` writes a row of U+FFFD and
+`pdftocairo` writes outlines, and the outlines ship because they at least draw the right
+picture. 2007 is the whole of that problem today — all 21 of its figures are CorelDRAW 11
+exports and every one lost its text this way.
+
+The outlines are recoverable, because `pdftocairo` is tidy: it defines each distinct shape once
+as `<g id="glyph-1-0">` and places it at a baseline with `<use x= y=>`. So a table naming the
+shapes turns every placement into a `<text>` at coordinates the drawing already uses, and
+nothing moves.
+
+```sh
+uv run python -m tools.ancient.outlines --year 2007 source/naboj/phys/10/problems
+```
+
+`glyphs/2007.yaml` is that table: 92 shapes across 19 figures, read once off a rendered sheet of
+them all. Each entry is `[character, style, size]`, where the style is `i` for a variable, `u`
+for a digit, a unit, an operator or a degree sign, and `-` to leave the shape outlined — which
+is right for an accent, since the arrow of a `\vec{F}` belongs to the drawing rather than to the
+label. Figures are matched by a fingerprint of their own outlines rather than by filename,
+because a figure reaches the tree under the role it plays and has lost the archive's name by
+then.
+
+Build the sheet the same way the contact sheet above is built: render each `<g id="glyph-…">`
+on its own, montage them in order, and read them in one sitting.
 
 ### `compose.py` — two drawings, one figure
 

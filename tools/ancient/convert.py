@@ -29,12 +29,56 @@ from tools.ancient.dialect import Dialect
 from tools.ancient.lex import calls, macro_body, match_brace, strip_comments
 
 
-def order(ancient: Path) -> list[str]:
-    """The running order: `priklady.tex`, whose line positions were the problem numbers."""
-    text = (ancient / 'priklady.tex').read_text(encoding='utf-8', errors='replace')
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
+def order(ancient: Path, monolith: str | None = None,
+          encoding: str = 'utf-8') -> list[str]:
+    r"""
+    The running order, as keys that `read_problem` can resolve.
+
+    Two shapes, because 2007 predates the one every year after it uses. From 2009 on there is a
+    `priklady.tex` holding nothing but `\priklad{DIR/slug.tex}` lines, and a line's position in
+    it was the problem's printed number, so the key is the path. 2007 has no such list: its
+    `07priklady.tex` *is* the problems, one `\zadanie`/`\vzorak`/`\comment` group after another,
+    and the number is simply the position of the group. The key is then `<file>#<n>`.
+    """
+    if monolith:
+        text = _text(ancient / monolith, encoding)
+        return [f'{monolith}#{i}'
+                for i, _ in enumerate(re.finditer(r'(?m)^\\zadanie(?![a-zA-Z])', text), 1)]
+    text = _text(ancient / 'priklady.tex', encoding)
     return [m.group(1).strip()
             for m in re.finditer(r'^[^%\n]*\\priklad\{\s*(.*?)\s*\}', text, re.M)]
+
+
+def _text(path: Path, encoding: str) -> str:
+    """One archive file, decoded and with its line endings normalised."""
+    text = path.read_text(encoding=encoding, errors='replace')
+    return text.replace('\r\n', '\n').replace('\r', '\n')
+
+
+def read_problem(ancient: Path, rel: str, encoding: str = 'utf-8') -> str | None:
+    r"""
+    One problem's TeX, or None if the archive has not got it.
+
+    A `<file>#<n>` key names the nth `\zadanie` group of a monolith and everything up to the
+    next one, which is exactly the statement, the solution and the answer. A `\extra` group --
+    2007 has six, a bonus sheet that was never part of the round -- is not a `\zadanie` and so
+    is never a block: the `31 problems` the organisers' own report names are the 31 this finds.
+    """
+    if '#' in rel:
+        name, index = rel.rsplit('#', 1)
+        path = ancient / name
+        if not path.is_file():
+            return None
+        text = _text(path, encoding)
+        starts = [m.start() for m in re.finditer(r'(?m)^\\zadanie(?![a-zA-Z])', text)]
+        i = int(index) - 1
+        if not 0 <= i < len(starts):
+            return None
+        rest = re.search(r'(?m)^\\(?:zadanie|extra)(?![a-zA-Z])', text[starts[i] + 1:])
+        end = starts[i] + 1 + rest.start() if rest else len(text)
+        return text[starts[i]:end]
+    path = ancient / rel
+    return _text(path, encoding) if path.is_file() else None
 
 
 #: Slovak letters that carry a diacritic, and what they are underneath. A slug is ASCII.
@@ -360,10 +404,12 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
     text = rules.layout(text)
     text, list_notes = rules.lists(text)
     notes += list_notes
+    text = rules.thin_comma(text)
     text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug, role, seen)
     notes += fig_notes
+    text = rules.spaced_units(text)
     text = rules.upright_units(text)
     text, unit_notes = rules.quantities(text)
     notes += unit_notes
@@ -411,6 +457,12 @@ def main() -> int:
                         "languages and is written whichever is converted, so a second language "
                         "overwrites the first's -- convert the one whose answers you want last, "
                         "or keep the answer from the first and let the rest be a comparison.")
+    p.add_argument('--monolith',
+                   help='the archive file that IS the problems, one `\\zadanie` group\n'
+                        'after another, when the year has no `priklady.tex` list of\n'
+                        '`\\priklad{}` includes. 2007 is the only such year.')
+    p.add_argument('--encoding', default='utf-8',
+                   help="the archive's own encoding; 2007 is `iso-8859-2`.")
     p.add_argument('--only', help='one source path, e.g. TAZ/kornutok.tex')
     p.add_argument('--dry-run', action='store_true', help='write the report and nothing else')
     a = p.parse_args()
@@ -421,7 +473,7 @@ def main() -> int:
         raise SystemExit('--slugs is required unless --dry-run: provisional names must not reach '
                          'the tree, where renaming one means moving a directory and rewriting '
                          'every `#fig:` and `#eq:` label inside it.')
-    sources = order(a.ancient)
+    sources = order(a.ancient, a.monolith, a.encoding)
     report = [f'# {a.year} -> volume {a.volume:02d}\n',
               f'{len(sources)} problems in `priklady.tex`.\n']
     total = 0
@@ -433,8 +485,8 @@ def main() -> int:
         if not slug:
             report.append(f'\n## {number}. `{rel}` -- **no slug**, skipped\n')
             continue
-        source_file = a.ancient / rel
-        if not source_file.is_file():
+        body = read_problem(a.ancient, rel, a.encoding)
+        if body is None:
             # 2011 lists six problems whose `.tex` is not in the archive; the round ran, so the
             # entry stays in `problems:` and the booklet prints `\protectedInput`'s red
             # `Missing file` box. A hole in a past round is a fact, and should be loud.
@@ -443,7 +495,7 @@ def main() -> int:
                           f'the volume meta and let the booklet say so\n')
             total += 1
             continue
-        raw = strip_comments(source_file.read_text(encoding='utf-8', errors='replace'))
+        raw = strip_comments(body)
         out = a.out / 'problems' / slug
         notes, wanted = [], []
         #: One map per problem, so the three bodies agree on what each drawing is called.

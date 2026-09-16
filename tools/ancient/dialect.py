@@ -83,14 +83,25 @@ class Dialect:
     #: label). `\obrazok` is merely the one the descriptor above pins down.
     figures: dict[str, tuple[int, int, int | None, int | None]] = field(default_factory=dict)
 
+    #: The file a year keeps its macros in. Every year from 2009 on has an `include.tex`;
+    #: 2007 has no style file at all and defines `\zadanie`, `\vzorak`, `\comment` and
+    #: `\extra` inside each of its five driver documents, which is why the year is named here
+    #: rather than discovered.
+    MACROS = {2007: '07naboj.tex'}
+
     @classmethod
     def read(cls, root: Path, year: int) -> 'Dialect':
-        include = root / 'include.tex'
+        include = root / cls.MACROS.get(year, 'include.tex')
         if not include.is_file():
             raise SystemExit(f'{include} does not exist; is {root} really a year of problems?')
         defs = definitions(include)
 
         known = {
+            # 2007 has no figure macro: a picture is a bare `\includegraphics` inside a
+            # `center`, which `figures()` reads directly, so the descriptor below is never
+            # consulted. It is written out anyway rather than left absent, because an absent
+            # year is the signal that nobody has looked at it.
+            2007: dict(figure_arity=2, figure_file=1, figure_caption=None, figure_label=None),
             2009: dict(figure_arity=2, figure_file=1, figure_caption=None, figure_label=None),
             2010: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
             2011: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
