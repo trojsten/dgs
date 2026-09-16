@@ -58,7 +58,7 @@
 \RequirePackage[normalem]{ulem}
 \RequirePackage[weather]{ifsym}
 \RequirePackage{nth}
-\RequirePackage{fancyvrb}                                   % fancy verbatim (currently unused)
+\RequirePackage{fancyvrb}                                   % fancy verbatim, for pandoc's Highlighting environment
 \RequirePackage{framed}
 
 \RequirePackage[
@@ -190,5 +190,6 @@
 \input{core/latex/utilities.tex}
 \input{core/latex/math.tex}
 \input{core/latex/hacks.tex}
+\input{core/latex/highlighting.tex}
 \input{core/latex/symbols.tex}
 \input{core/latex/siunitx.tex}
