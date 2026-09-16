@@ -656,3 +656,69 @@ class TestArrayShieldsLeadingBrackets:
         """`aligned` tolerates it, so nothing is inserted there and no page moves."""
         ctx = self.obj('[A] &= 1 \\\\\n[B] &= 2')
         assert '{}' not in renderer.render('(§ c | align §)', ctx)
+
+
+class TestInclude:
+    r"""
+    `(§ include('x.py') §)` pastes a file from beside the template.
+
+    This is what a fenced code block holds: the Python a solution walks through lives in its own
+    runnable `.py`, which `module.mk` also copies to `output/` for the reader to download, so the
+    listing has to be that same file rather than a second copy that goes stale. Pandoc used to do
+    it with `pandoc-include`'s `!include`; the filter was dropped and nothing replaced it, so
+    three solutions printed the literal directive where the code belonged.
+    """
+
+    @pytest.fixture
+    def problem(self, tmp_path):
+        (tmp_path / 'code.py').write_text("print('hello')\nprint('bye')\n")
+        return tmp_path
+
+    def test_the_file_comes_back_verbatim(self, problem):
+        renderer = MarkdownJinjaRenderer(root=problem)
+        assert renderer.render("(§ include('code.py') §)", {}) == "print('hello')\nprint('bye')"
+
+    def test_the_trailing_newline_is_dropped(self, problem):
+        """A blank last line inside `Highlighting` sets an empty row; the fence supplies the break."""
+        renderer = MarkdownJinjaRenderer(root=problem)
+        assert not renderer.render("(§ include('code.py') §)", {}).endswith('\n')
+
+    def test_the_content_is_not_escaped(self, problem):
+        r"""Autoescape is off, so `&`, `<` and a backslash survive into the listing as written."""
+        (problem / 'raw.py').write_text(r'a = b & c < d  # \tau')
+        renderer = MarkdownJinjaRenderer(root=problem)
+        assert renderer.render("(§ include('raw.py') §)", {}) == r'a = b & c < d  # \tau'
+
+    def test_it_chains_with_indent_for_a_list_item(self, problem):
+        """The same idiom an equation inside a bullet uses -- Jinja's own `indent`, defaults and all."""
+        renderer = MarkdownJinjaRenderer(root=problem)
+        assert renderer.render("(§ include('code.py')|indent(4) §)", {}) \
+            == "print('hello')\n    print('bye')"
+
+    def test_a_missing_file_is_loud(self, problem):
+        """An empty code block compiles perfectly and prints nothing, which is how a listing ships stale."""
+        from core.builder.jinja import IncludeNotFoundError
+        renderer = MarkdownJinjaRenderer(root=problem)
+        with pytest.raises(IncludeNotFoundError):
+            renderer.render("(§ include('absent.py') §)", {})
+
+    def test_a_directory_is_not_a_file(self, problem):
+        from core.builder.jinja import IncludeNotFoundError
+        (problem / 'sub').mkdir()
+        renderer = MarkdownJinjaRenderer(root=problem)
+        with pytest.raises(IncludeNotFoundError):
+            renderer.render("(§ include('sub') §)", {})
+
+    def test_without_a_root_it_refuses_rather_than_guessing(self):
+        """
+        Resolving against the working directory would make the same source render differently
+        depending on where `make` was run from.
+        """
+        from core.builder.jinja import IncludeWithoutRootError
+        renderer = MarkdownJinjaRenderer()
+        with pytest.raises(IncludeWithoutRootError):
+            renderer.render("(§ include('code.py') §)", {})
+
+    def test_a_template_that_never_includes_needs_no_root(self):
+        """The quiet case: `include` is a global, not a requirement, and nothing else changes."""
+        assert MarkdownJinjaRenderer().render('(§ five §)', {'five': 5}) == '5'

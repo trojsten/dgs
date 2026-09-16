@@ -22,6 +22,29 @@ ureg.define("eur = [currency] = € = EUR")
 pint.set_application_registry(ureg)
 
 
+class IncludeWithoutRootError(Exception):
+    """
+    `include()` on a renderer that was not told where the template came from. Resolving against
+    the process\'s working directory instead would make the same source render differently
+    depending on where `make` was run from.
+    """
+    def __init__(self, name):
+        super().__init__(f"Cannot include {c.path(name)}: this renderer has no root directory. "
+                         f"Pass `root=` when constructing it.")
+        self.name = name
+
+
+class IncludeNotFoundError(Exception):
+    """
+    A file an `include()` names is not beside the template. Loud rather than empty: an empty code
+    block compiles perfectly and prints nothing, which is how a stale listing ships.
+    """
+    def __init__(self, name, root):
+        super().__init__(f"Cannot include {c.path(name)}: no such file in {c.path(root)}")
+        self.name = name
+        self.root = root
+
+
 class MissingVariablesError(Exception):
     def __init__(self, missing, *, template):
         super().__init__(f"Missing variables in {c.path(template)}: {missing}")
@@ -195,13 +218,18 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         """
         return {f'{tag}{prec:d}': functools.partial(func, precision=prec) for prec in range(10)}
 
-    def __init__(self, **kwargs):
+    def __init__(self, *, root: Path | None = None, **kwargs):
         """
         Markdown renderer overrides variable tags to `(§ §)` so as not to clash with Markdown syntax.
+
+        `root` is the directory the template was read from, and is what `include()` resolves
+        against. A renderer built without one -- `derived:` used to build a bare one -- cannot
+        include, and says so rather than guessing a working directory.
         """
         super().__init__(variable_start_string='(§',
                          variable_end_string='§)',
                          **kwargs)
+        self.root = None if root is None else Path(root)
 
         self.env.filters |= ({
             # The last letter is the format -- 'f' fixed, 'g' Python's general, 'e' always
@@ -263,6 +291,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         })
 
         self.env.globals |= {
+            'include': self.include,
+        } | {
             'PQ': PhysicsQuantity.construct,
             'QuantityList': QuantityList,
             'QL': QuantityList,
@@ -296,6 +326,37 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'tau': math.tau,
             'euler': math.e,
         }
+
+    def include(self, name: str) -> str:
+        """
+        The contents of a file next to the template, verbatim: `(§ include(\'vetranie.py\') §)`.
+
+        This is what a fenced code block is for -- the Python a solution walks through lives in
+        its own runnable `.py`, which `module.mk` also copies to `output/` for the reader to
+        download, and the listing has to be that same file rather than a second copy of it that
+        goes stale. Pandoc used to do this through `pandoc-include`\'s `!include` directive; the
+        filter was dropped for the warnings it emitted, and nothing replaced it, so three
+        solutions had been printing the literal line `!include kaboom.py` where the code belonged.
+
+        Doing it here rather than in a pandoc filter means the code arrives before pandoc reads
+        the document, so it is highlighted like any other fenced block, and the path is resolved
+        against the source tree rather than against whatever directory pandoc was started in.
+
+        Like `blocks:`, the text comes back as written and is expanded by the second pass -- so an
+        included file may itself carry tags. A trailing newline is stripped, because the fence
+        supplies its own line break and a blank last line inside `Highlighting` sets an empty row.
+
+        Inside a list item, chain Jinja\'s own `indent`, exactly as an equation does:
+        `(§ include(\'x.py\')|indent(4) §)`.
+        """
+        if self.root is None:
+            raise IncludeWithoutRootError(name)
+
+        path = self.root / name
+        if not path.is_file():
+            raise IncludeNotFoundError(name, self.root)
+
+        return path.read_text().rstrip('\n')
 
     def _render(self,
                 template: str,

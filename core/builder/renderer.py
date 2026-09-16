@@ -44,6 +44,9 @@ class JinjaConvertor:
         """
         self.context: Context = context
         self.template: str = template_file.read()
+        # Where `include()` looks. The template's own directory, so a solution names the file
+        # sitting beside it and nothing depends on where `make` was invoked from.
+        self.root: Path = Path(template_file.name).parent
 
         if debug:
             log.debug(f"{c.debug('Template to render into')}:")
@@ -51,7 +54,7 @@ class JinjaConvertor:
             log.debug(f"{c.debug('Context data')}:")
             pprint.pprint(context.data)
 
-        self.renderer = MarkdownJinjaRenderer()
+        self.renderer = MarkdownJinjaRenderer(root=self.root)
 
     def run(self):
         # First pass: expand all equations and values
@@ -367,7 +370,9 @@ class CLIInterface(cli.CLIInterface, ABC):
         if 'derived' in context.data:
             self._reject_name_collisions(context.data['derived'], 'derived',
                                          taken=set(context.data.get('values') or {}))
-            renderer = MarkdownJinjaRenderer()
+            # Same root as the template that will use these: the meta sits beside its problem's
+            # files, so a `derived:` expression may reach for `include()` on equal terms.
+            renderer = MarkdownJinjaRenderer(root=Path(self.args.context.name).parent)
             for key, expression in context.data['derived'].items():
                 try:
                     ctx.add(**{key: renderer.evaluate(expression, ctx.data)})

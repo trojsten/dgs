@@ -178,6 +178,45 @@ and a test says so. `blocks` itself is in `RESERVED_NAMES`, so no `values:` entr
 name. Adding it there was checked against every meta under `source/` first; reserving `w` once
 broke eight problems, which is why that check is not optional.
 
+## A code listing: `include()`
+
+A solution that walks through a program shows the program, and the program is a real file —
+`module.mk` copies every `source/seminar/<round>/<problem>/*.py` into `output/` for the reader to
+download. So the listing must *be* that file, not a second copy of it that goes stale. Write the
+fence and include it:
+
+    ```python
+    (§ include('vetranie.py') §)
+    ```
+
+The path is relative to the file the tag is written in, so it names the `.py` sitting beside the
+`solution.md`. Inside a list item, chain Jinja's own `indent` exactly as an equation does:
+`(§ include('x.py')|indent(4) §)`. Like `blocks:`, the text comes back as written and the second
+pass expands it, so an included file may itself carry tags; unlike `blocks:`, a missing file
+raises rather than resolving to nothing, because an empty code block compiles perfectly and
+prints nothing.
+
+This used to be `pandoc-include`'s `!include <file>` directive. That filter was dropped for the
+warnings it emitted and nothing replaced it, so `FKS/39/1/2/05`, `40/1/3/07` and `40/2/1/05`
+printed the literal line `!include kaboom.py` where the code belonged — and could not have shown
+it anyway, because `Shaded` and `Highlighting` were undefined and those rounds never compiled at
+all. Doing it in the renderer rather than in a filter means the code arrives before pandoc reads
+the document, so it is syntax-highlighted like any other fenced block.
+
+Three things the TeX side had to learn, all of them in `core/latex/`:
+
+- **`Verbatim` does not report an overfull line.** It sets each one in a box it never breaks and
+  never complains about, so a listing wider than the page walks off the paper in silence —
+  `kaboom.py`'s longest line is 107 characters against about 98 that fit at 12pt. `Highlighting`
+  therefore takes `fontsize=\small` and, through `fvextra`, `breaklines`/`breakanywhere`: anything
+  still too wide wraps with a visible hookrightarrow instead of disappearing.
+- **The monospace font takes no `tex-text` mapping.** That mapping is what turns `"` into `”`,
+  `'` into `’` and `--` into an en dash — right for prose, and fatal in code, since the printed
+  program will not run. It happens inside the font, so neither the Markdown nor the TeX shows it.
+  `\setmonofont` in `fonts.tex` passes an empty `Mapping` to opt out.
+- **Pandoc's highlighting macros are ours to supply.** `core/latex/highlighting.tex` is pandoc's
+  own default block taken verbatim, so an upgrade can be diffed against it.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per

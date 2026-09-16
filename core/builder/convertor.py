@@ -2,7 +2,6 @@ import re
 import subprocess
 import tempfile
 from collections.abc import Callable
-from pathlib import Path
 from tempfile import SpooledTemporaryFile
 
 from core import i18n
@@ -276,8 +275,6 @@ class Convertor:
             "--wrap=preserve",
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
-            "-M", f"include-entry={Path(self.infile.name).parent}/",
-            "-M", "rewrite-path=false",
             "--lua-filter", "./core/filters/quotes.lua",
         ]
         if self.output_format == 'html':

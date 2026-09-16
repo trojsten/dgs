@@ -11,6 +11,7 @@ define RULE_TEMPLATE_SEMINAR
 render/seminar/%/$(1).md: \
 	source/seminar/$$$$*/$(1).md \
 	source/seminar/$$$$*/meta.yaml \
+	$$$$(wildcard source/seminar/$$$$*/*.py) \
 	$$(PIPELINE_STAMP)
 	$$(call jinja,modules.seminar.builder.renderer,$$(lang),source/seminar/$$*/meta.yaml)
 
