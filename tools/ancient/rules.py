@@ -24,20 +24,8 @@ from tools.ancient.lex import match_brace
 
 #: One-letter Slovak prepositions and conjunctions. `vlna` tied these to the following word, and
 #: the house convention writes that tie as `\ `. Capitals included: sentences start with them.
-TIED = set('vszokaiuVSZOKAIU')
-#: Prepositions of more than one letter that take the same non-breaking space. 2009 to 2012 tie
-#: almost nothing but the one-letter ones, so these went unnoticed until 2013, which has 43 --
-#: and they were neither rewritten nor reported, because the reporter's own lookbehind made a
-#: `zo~` invisible to it. A `~` after any other word is still a person's to decide.
-TIED_WORDS = {'vo', 'zo', 'so', 'ku', 'po', 'od', 'na', 'do', 'za', 'bez',
-              'pre', 'pri', 'nad', 'pod', 'cez'}
 #: Slovak, so the word before a `~` may be accented.
 LETTER = 'a-zA-ZáäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ'
-
-
-def _tied(word: str) -> bool:
-    """Is this the kind of word a `~` binds to what follows -- a short preposition?"""
-    return word in TIED if len(word) == 1 else word.lower() in TIED_WORDS
 
 #: Everything `mdcheck` bans outright, with what it wants instead.
 LINTED = [
@@ -377,10 +365,21 @@ SHORTHAND = [
 
 
 def ties(text: str) -> str:
-    r"""`v~ktorom` -> `v\ ktorom`, leaving every other `~` for a human."""
-    def sub(m):
-        return f'{m.group(1)}\\ ' if _tied(m.group(1)) else m.group(0)
-    return re.sub(f'(?<![{LETTER}])([{LETTER}]{{1,3}})~', sub, text)
+    r"""
+    `v~ktorom` -> `v\ ktorom`, and every other `~` outside maths with it.
+
+    A `~` in TeX's text mode *is* a non-breaking space; there is nothing else it can be. This
+    used to convert only a list of Slovak prepositions and report the rest, which was right for
+    2009 to 2014 -- they tie almost nothing else -- and wrong the moment 2015 arrived with a
+    Czech and an English translation: `ve~`, `ze~`, and 192 English ties after `the`, `of`, `to`
+    and anything else the translator thought should not break. A per-language list of function
+    words would have been three lists to keep and still wrong for the fourth language.
+
+    Of the archive's 7962 tildes, **five** are inside maths, where `~` is not a space at all.
+    Those are reported by `report_only` and left exactly as they are.
+    """
+    return RE_MATH.sub(lambda m: m.group(0).replace('~', '\x00'), text) \
+                  .replace('~', '\\ ').replace('\x00', '~')
 
 
 #: `5{,}97` -- the archive's way of writing a decimal comma that stays a decimal *marker*
@@ -905,10 +904,10 @@ def report_only(text: str) -> list[str]:
     for m in re.finditer(r'\\tfrac(?![a-zA-Z])', text):
         notes.append('tfrac: `\\tfrac` -- pick from the four fraction tiers '
                      '(vulgar glyph, `\\dfrac`, `\\nicefrac`, `\\frac`)')
-    for m in re.finditer(f'(?<![{LETTER}])([{LETTER}]{{0,3}})~', text):
-        if not _tied(m.group(1)):
-            notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
-                         f'not a preposition')
+    for m in RE_MATH.finditer(text):
+        if '~' in m.group(0):
+            notes.append(f'tie: `{m.group(0)[:40]}` has a `~` inside maths, where it is not a '
+                         f'space -- five in the whole archive, and each one is its own question')
     # Text mode meeting a subscript stops the build with `! Missing $ inserted.`, and the only
     # sign beforehand is that nothing looks wrong. 2014's `\mathrm{H_2O}` is the case that found
     # it, and water has a rule of its own; anything else here is a person's to spell.

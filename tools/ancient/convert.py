@@ -398,6 +398,11 @@ def main() -> int:
                         'transliterated, which is enough for --dry-run and never enough for the '
                         'tree: a slug has to be readable and unique across every volume.')
     p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--language', default='sk',
+                   help="the language of this `--ancient` tree. `answer.md` is shared across "
+                        "languages and is written whichever is converted, so a second language "
+                        "overwrites the first's -- convert the one whose answers you want last, "
+                        "or keep the answer from the first and let the rest be a comparison.")
     p.add_argument('--only', help='one source path, e.g. TAZ/kornutok.tex')
     p.add_argument('--dry-run', action='store_true', help='write the report and nothing else')
     a = p.parse_args()
@@ -426,9 +431,9 @@ def main() -> int:
         #: One map per problem, so the three bodies agree on what each drawing is called.
         seen: dict[str, str] = {}
         pieces = {}
-        for macro, target in (('zadanie', 'sk/problem.md'),
-                              ('vzorak', 'sk/solution.md'),
-                              ('comment', 'answer.md')):
+        for macro, target in ((('zadanie', f'{a.language}/problem.md'),
+                               ('vzorak', f'{a.language}/solution.md'),
+                               ('comment', 'answer.md'))):
             body = macro_body(raw, macro)
             if body is None:
                 notes.append(f'{macro}: absent from the source')
