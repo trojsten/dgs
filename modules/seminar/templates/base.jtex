@@ -1,4 +1,14 @@
-\documentclass[12pt, oneside]{dgs}
+% Two-sided, like every other booklet the repository builds -- `naboj/base.jtex` and
+% `scholar/base.jtex` both are -- and like this one was until `65c3dc1`, which set it
+% `oneside` while fixing the page geometry and left the page styles below untouched. They
+% are written throughout for two sides (`\fancyhead[LO,RE]`, `\fancyfoot[LE,RO]`), so
+% fancyhdr has been warning seven times per document that the even-page halves are
+% useless, and every even page has been carrying an odd page's header.
+%
+% `semester-print` imposes the semester booklet with `pdfbook --short-edge`, so two sides
+% is what it is for. The block is there so a child can say otherwise -- `standalone.jtex`
+% sets its own class and does.
+\documentclass[12pt, (@ block documentclass @)twoside(@ endblock @)]{dgs}
 
 \newgeometry{
     left                    = 15mm,
