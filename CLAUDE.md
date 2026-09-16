@@ -217,6 +217,13 @@ Three things the TeX side had to learn, all of them in `core/latex/`:
 - **Pandoc's highlighting macros are ours to supply.** `core/latex/highlighting.tex` is pandoc's
   own default block taken verbatim, so an upgrade can be diffed against it.
 
+And one trap that only matters now that a listing can be a real file: **a line beginning with `%`
+is a comment and is deleted**, by `RegexReplacement(r'^%.*$', …)` in `convertor.py`'s `pre_regexes`.
+That rule is blind to fences, so it eats the comments out of any language whose comment character
+is `%` — MATLAB, Octave, Erlang, PostScript, TeX — and leaves a blank line in their place, with no
+warning. Python and gnuplot comment with `#` and are unaffected, which is every listing in the
+repository today.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per
