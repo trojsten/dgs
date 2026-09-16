@@ -111,15 +111,15 @@ def figures(text: str, dialect: Dialect, slug: str, body_role: str = 'problem',
     # wrong way round, so `solution-1` was the picture that came second on the page.
     def earliest():
         best = None
-        for name, arity in (('obrazok', dialect.figure_arity), ('pict', 2)):
+        # Every macro the year's own `include.tex` defines as drawing a figure, not just
+        # `\obrazok`: 2014 also has `\zadobrazok` and `\obtekobrazok`, and a problem whose only
+        # picture was one of those converted without it and said nothing.
+        for name, (arity, file, caption, label) in dialect.figures.items():
             for start, end, args in calls(text, name, arity):
-                cap = args[dialect.figure_caption] if (name == 'obrazok' and
-                                                       dialect.figure_caption is not None) else ''
-                tag = args[dialect.figure_label] if (name == 'obrazok' and
-                                                     dialect.figure_label is not None) else ''
-                path = args[dialect.figure_file if name == 'obrazok' else 1]
+                cap = args[caption] if caption is not None else ''
+                tag = args[label] if label is not None else ''
                 if best is None or start < best[0]:
-                    best = (start, end, path, cap, tag)
+                    best = (start, end, args[file], cap, tag)
                 break                       # `calls` yields in order; the rest are later
         m = re.search(r'\\includegraphics(?:\[[^\]]*\])?\s*(?=\{)', text)
         if m and (best is None or m.start() < best[0]):

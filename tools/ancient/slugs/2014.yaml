@@ -1,0 +1,45 @@
+# Náboj 2014 -> volume 17. `priklady.tex` order; the position in this file is the printed number.
+# Checked against all 618 existing ids in phys. The only three collisions are the three problems
+# that are *already* in the tree under the wrong volume: `phys/18` holds `dee-cone`, the 2014
+# `MAT/kuzel`, `great-combinator`, its `MAT/rezistory`, and `cern`, its `ELMAG/urychlovac` --
+# positions 5, 12 and 26 of this very list. They keep their names and move here.
+KIN/trabant.tex: to-senec
+DYN/peracnik.tex: pencil-case
+KIN/priemer.tex: average-fall
+DYN/smyklavka.tex: slide
+MAT/kuzel.tex: dee-cone
+DYN/kocka.tex: tip-or-slide
+ELEK/trojstenik.tex: trojsten-logo
+ZVYS/cylinder.tex: top-hat
+KIN/graf.tex: force-graph
+KVAP/potrubie.tex: double-pipe
+ZVYS/nahrdelnik.tex: necklace
+MAT/rezistory.tex: great-combinator
+GRAV/planety.tex: synodic
+DYN/rande.tex: leaning-cards
+OPT/hranol.tex: rhombus-prism
+ELEK/okno.tex: window-grid
+TERM/pluca.tex: lungs
+DYN/gula.tex: spinning-ball
+DYN/curling.tex: curling
+ELEK/ikosaeder.tex: icosahedron
+ZVYS/disk.tex: bored-disk
+ZVYS/utopena.tex: tethered-ball
+OPT/terc.tex: laser-target
+ELEK/gulocky.tex: charged-triangle
+ZVYS/detektor.tex: detector
+ELMAG/urychlovac.tex: cern
+OPT/stvorec.tex: glass-universe
+ELEK/kondenzator.tex: inserted-plate
+ZVYS/kmity.tex: pulley-spring
+ELEK/spagat.tex: grounded-plate
+ELEK/ledka.tex: led
+DYN/skumavka.tex: test-tube
+DYN/rebrina.tex: wall-bars
+TERM/klimatizacia.tex: air-conditioning
+GRAV/kozmicka.tex: solar-escape
+GRAV/prelet.tex: flyby
+ZVYS/antena.tex: antenna
+DYN/odyseus.tex: odysseus
+DYN/kokos.tex: coconut
+TERM/jazero.tex: freezing-lake

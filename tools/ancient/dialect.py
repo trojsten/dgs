@@ -23,6 +23,35 @@ from pathlib import Path
 #: `\def\name#1#2…{body}` -- TeX's own definition syntax, which is all these files use.
 RE_DEF = re.compile(r'\\def\\([a-zA-Z@]+)((?:#\d)*)\s*\{', re.M)
 
+#: Which argument a figure macro's body hands to `\includegraphics` or `\pict`, and which to
+#: `\caption` and `\label`. `\pict{#1}{#2}` scales with the first and draws the second.
+RE_DRAWS = re.compile(r'\\includegraphics\s*(?:\[[^\]]*\])?\s*\{#(\d)\}'
+                      r'|\\pict\s*\{#\d\}\s*\{#(\d)\}')
+RE_CAPTIONS = re.compile(r'\\caption\s*\{#(\d)\}')
+RE_LABELS = re.compile(r'\\label\s*\{#(\d)\}')
+
+
+def figure_macro(arity: int, body: str) -> tuple[int, int, int | None, int | None] | None:
+    """
+    `(arity, file, caption, label)` for a macro that draws a figure, indices 0-based.
+
+    Read off the definition rather than tabulated, because a year has more than one of these
+    and they are not the same shape. 2014 defines `\obrazok`, `\zadobrazok` and
+    `\obtekobrazok`; only the first was ever handled, so `ELEK/ikosaeder` and `ZVYS/cylinder`
+    -- whose only drawing is a `\zadobrazok` -- converted with no figure at all and nothing
+    said so. Returns None for a macro that draws nothing, or draws something fixed: the logos
+    take no argument and are not a problem's picture.
+    """
+    draws = RE_DRAWS.search(body)
+    if draws is None:
+        return None
+    file = int(draws.group(1) or draws.group(2)) - 1
+    caption = RE_CAPTIONS.search(body)
+    label = RE_LABELS.search(body)
+    return (arity, file,
+            int(caption.group(1)) - 1 if caption else None,
+            int(label.group(1)) - 1 if label else None)
+
 
 def definitions(path: Path) -> dict[str, tuple[int, str]]:
     """Every `\\def` in a style file, as name -> (arity, body)."""
@@ -50,6 +79,9 @@ class Dialect:
     figure_caption: int | None = None
     figure_label: int | None = None
     defs: dict[str, tuple[int, str]] = field(default_factory=dict)
+    #: Every macro in the year's `include.tex` that draws a figure -> (arity, file, caption,
+    #: label). `\obrazok` is merely the one the descriptor above pins down.
+    figures: dict[str, tuple[int, int, int | None, int | None]] = field(default_factory=dict)
 
     @classmethod
     def read(cls, root: Path, year: int) -> 'Dialect':
@@ -73,6 +105,9 @@ class Dialect:
                 f'argument order of \\obrazok -- and add one; do not guess.')
         d = cls(year=year, root=root, defs=defs, **known[year])
 
+        d.figures = {name: shape for name, (arity, body) in defs.items()
+                     if (shape := figure_macro(arity, body)) is not None and arity}
+
         if 'obrazok' in defs:
             arity = defs['obrazok'][0]
             if arity != d.figure_arity:
@@ -80,6 +115,14 @@ class Dialect:
                     f'{include} defines \\obrazok with {arity} arguments, but the descriptor for '
                     f'{year} says {d.figure_arity}. The argument order almost certainly moved '
                     f'too -- read the definition before changing the descriptor.')
+            # The descriptor is the thing a person checked; the derivation is what the file
+            # actually says. They have to agree, or one of them is reading the year wrongly.
+            derived = d.figures.get('obrazok')
+            expected = (d.figure_arity, d.figure_file, d.figure_caption, d.figure_label)
+            if derived != expected:
+                raise SystemExit(
+                    f'{include} defines \\obrazok as {derived} (arity, file, caption, label) '
+                    f'but the descriptor for {year} says {expected}. Read the definition.')
         return d
 
     def expansion(self, name: str) -> str | None:
