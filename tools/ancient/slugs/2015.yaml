@@ -1,0 +1,54 @@
+# Náboj 2015 -> volume 18. `priklady.tex` order; the position in this file is the printed number.
+# All three languages -- sk, cz, en -- name the same 47 problems in the same order, so one table
+# serves them all.
+# Checked against all 658 existing ids in phys. Five of these problems were already in the tree,
+# in `phys/18` where they belong -- `ballooner`, `stable-frog`, `takeoff`, `cowboy` and `meteor`
+# -- and keep their names. One collision: `exoplanet` is volume 26's, so 2015's is `cimermanos`,
+# after the planet its own statement names.
+KIN/klobuk.tex: rain-hat
+KVAP/vodovod.tex: water-tower
+MAT/prehnutie.tex: paper-folds
+DYN/utes.tex: overhang
+TERM/ohrievac.tex: shower-heater
+KIN/ponorka.tex: submarine
+KVAP/caj.tex: iced-tea
+MAT/krizovatka.tex: crossroads
+OPT/lasery.tex: three-lasers
+DYN/balon.tex: ballooner
+DYN/kvadre.tex: two-blocks
+DYN/krok.tex: walking
+ELMAG/voltmeter.tex: voltmeter
+DYN/zaba.tex: stable-frog
+TERM/chladenie.tex: fuel-generator
+DYN/blana.tex: soap-film
+ZVYS/lodka.tex: paper-boat
+KIN/sebastian.tex: gunslinger
+DYN/kladky.tex: pulley-hoist
+MAT/homeopati.tex: homeopathy
+DYN/macka.tex: toilet-roll
+KVAP/kohutik.tex: tap-stream
+DYN/voziky.tex: carts
+KIN/vcielka.tex: firework-bee
+ZVYS/numerika.tex: icy-hill
+OPT/zobrazenie.tex: lens-and-mirror
+ELMAG/skrupinka.tex: charged-shell
+KIN/lietadlo.tex: takeoff
+DYN/prak.tex: y-slingshot
+DYN/roztoclano.tex: cowboy
+OPT/miestnost.tex: mirror-room
+KVAP/jaromiso.tex: bathmobile
+ZVYS/vodic.tex: hot-wire
+GRAV/venusa.tex: venus-transit
+TERM/planety.tex: cimermanos
+DYN/concorde.tex: concorde
+ELMAG/stvorsten.tex: subdivided-tetrahedron
+TERM/croissant.tex: croissant
+DYN/ozubenekolesa.tex: gears
+DYN/slucka.tex: lasso-loop
+GRAV/meteor.tex: meteor
+ZVYS/relativita.tex: closing-speed
+TERM/termorovnovaha.tex: mirror-box
+OPT/ziarenie.tex: radiation-pressure
+ZVYS/stvorec.tex: misos-square
+DYN/loadedhoop.tex: holed-wheel
+ELMAG/hojdacka.tex: swinging-rod

@@ -33,6 +33,10 @@ LINTED = [
     (re.compile(r'\\implies(?![a-zA-Z])'), r'\\Implies'),             # imp
     (re.compile(r'\\Rightarrow(?![a-zA-Z])'), r'\\Implies'),          # rar
     (re.compile(r'\\then(?![a-zA-Z])'), r'\\Implies'),                # mathab's spelling of the same
+    # `\SI[per = symbol]{…}` is siunitx v2; v3 calls the key `per-mode`, and
+    # `core/latex/siunitx.tex` already sets it for the whole document, so the option
+    # is redundant as well as wrong -- v3 stops the build on the unknown key.
+    (re.compile(r'\\(SI|si|qty|unit|num)\[per\s*=\s*symbol\]'), r'\\\1'),
     (re.compile(r'\\SI(?![a-zA-Z])'), r'\\qty'),                      # osi
     # Nothing sits between a delimiter and what it delimits: `\left( x \right)` and
     # `\dfrac{ ab + ac}{ bc }` are how 2013 writes almost every bracket, and `mdcheck` has a
@@ -70,7 +74,7 @@ LINTED = [
     # Spaces around `=`: `\alpha=\beta` is how 2014 writes most of them.
     # …but not a Markdown attribute block: `{#fig:x height=40mm}` is not maths, and spacing
     # its `=` stops pandoc reading the attribute at all.
-    (re.compile(r'(?<!height)(?<!width)(?<=[\w}\)])=(?=[\\\w{(])'), ' = '),
+    (re.compile(r'(?<!height)(?<!width)(?<!numbers)(?<=[\w}\)])=(?=[\\\w{(])'), ' = '),
     # An aligned row's separator is spaced off what precedes it: `… =\\` is what `mdcheck`
     # calls "No space before ending \\".
     (re.compile(r'(?m)(?<=[^\s\\])(?=\\\\[ \t]*$)'), ' '),
@@ -268,6 +272,19 @@ def inline_math(text: str) -> str:
     of these and the years before it none. Runs after `displays`, so a `$$` block is already
     on its own lines and every `$` left on a line of prose opens or closes inline maths.
     """
+    # An inline span may run over several lines and close with a `$` on a line of its own --
+    # `$U_{max}\n= …\n$`. The character before that `$` is then a newline, which is whitespace,
+    # so pandoc does not close the maths and the rest of the file is swallowed. Join it back on.
+    lines, joined, open_ = text.split('\n'), [], 0
+    for line in lines:
+        if line.strip() == '$' and open_ % 2 == 1 and joined and joined[-1].strip():
+            joined[-1] = joined[-1].rstrip() + '$'
+            open_ += 1
+            continue
+        open_ += line.count('$')
+        joined.append(line)
+    text = '\n'.join(joined)
+
     out, display = [], False
     for line in text.split('\n'):
         stripped = line.strip()
@@ -329,6 +346,10 @@ SHORTHAND = [
     # An upright full stop or comma is just that character. 2014 reaches it through its own
     # `\bodka`, which expands to `\,\text{.}`, and the thin space then goes with the rule
     # below -- which is why this has to come first.
+    # An ellipsis is `\dots`, not three stops wrapped in text -- `\mathrm{...}` becomes
+    # `\text{...}` through the rule below and `mdcheck` asks for it back.
+    (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{\.\.\.\}'), r'\\dots'),
+    (re.compile(r'(?<!\\)\.\.\.(?=[^.])'), r'\\dots'),
     (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{([.,;])\}'), r'\1'),
     (re.compile(r'\\[,:; ](?=\\?[.,;])'), ''),
     # `\tg`, `\arctg` and `\cotg` are the Slovak and Czech names for the same three functions
@@ -356,6 +377,15 @@ SHORTHAND = [
     # build stops. CLAUDE.md spells water `\\ce{H2O}`, which is language-neutral and legal in
     # a subscript.
     (re.compile(r'(?:\\(?:text|mathrm|mrm))?\{H_\{?2\}?O\}'), r'{\\ce{H2O}}'),
+    # A subscript that is a word is upright -- `core/audit`'s `subscript-unwrapped`, whose
+    # pattern this is. Left bare it sets as a product of italic variables, which is what
+    # it looks like. A subscript that is *declared* indices rather than a word is the
+    # exception and takes `audit: {ignore: …}` in its meta, as `16/open-box` does.
+    (re.compile(r'_\{([a-zà-ɏ]{2,})\}'), r'_{\\text{\1}}'),
+    # A bare `konšt.` in maths sets its `š` from the math-italic alphabet, which has no
+    # such glyph: xelatex writes `Missing character:` to the log and the letter is simply
+    # not there. Every constant in the archive is one of these three words.
+    (re.compile(r'(?<![\\\w{])(kon[sš]t|const)\.'), r'\\text{\1.}'),
     (re.compile(r'\\R(?![a-zA-Z])'), r'\\mathbb{R}'),
     # `\par` ends a paragraph, and Markdown's way of saying that is a blank line. 2014 writes
     # 39 of them on a line of their own and one at the end of a sentence; both mean the same
@@ -743,6 +773,11 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
     """
     notes = []
     counter = iter(ORDINALS)
+    # 2015 writes the terminal punctuation *outside* the closing delimiter -- `$$…$$.` -- where
+    # it is invisible to everything below: the block reads as ending in nothing, the stop comes
+    # out as a paragraph of its own, and every `display-paragraph` judgement is made on the
+    # wrong information. 59 displays in 2015 and none before. Move it inside first.
+    text = re.sub(r'\$\$([.,;])', r'\1$$', text)
 
     def sub(m):
         aligned = m.group(2) is not None or m.group('eqnarray') is not None
@@ -764,7 +799,12 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
             body = re.sub(r'(?<!\\)((?:\\\\)*)\\$', r'\1', body)
             notes.append(f'display: ends with `{punct}` -- check the blank line after it '
                          f'agrees (see `display-paragraph`)')
-        lines = [('    ' + l.strip()) if l.strip() else '' for l in body.split('\n')]
+        # A blank line inside a display is fatal and is never meant: Markdown ends the
+        # paragraph there, so pandoc closes the maths early and reads the rest as prose --
+        # `paper-folds`' two `\log_{2}` then became a pair of emphasis marks and the build
+        # stopped at `Missing $ inserted`. They arrive when `layout` strips a line that held
+        # nothing but scaffolding, `\hspace*{1cm}` on a line of its own.
+        lines = ['    ' + l.strip() for l in body.split('\n') if l.strip()]
         label = ''
         if label_prefix:
             try:

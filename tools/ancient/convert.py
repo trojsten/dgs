@@ -18,6 +18,7 @@ import collections
 import re
 import shutil
 import subprocess
+import textwrap
 from pathlib import Path
 
 import yaml
@@ -345,6 +346,13 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
                  role: str = 'problem',
                  seen: dict[str, str] | None = None) -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
+    # The archive indents a macro's body as TeX source -- 2015 writes every `\vzorak{%` with
+    # its prose four spaces in, and 50 of its files are like that. TeX does not care; Markdown
+    # reads four spaces as a code block, so the whole solution came out verbatim and ran off
+    # the page. Dedent before anything else; the displays and lists below add their own indent.
+    # Tabs first: 2015's English mixes three spaces, four spaces and a tab, and `dedent` takes
+    # the *common* prefix, which a single tab line reduces to nothing at all.
+    text = textwrap.dedent(text.expandtabs(4))
     notes = list(dict.fromkeys(rules.report_only(text)))
     # The year's own shorthands, before anything reads what they stand for.
     for name, body in dialect.shorthands().items():
@@ -425,7 +433,17 @@ def main() -> int:
         if not slug:
             report.append(f'\n## {number}. `{rel}` -- **no slug**, skipped\n')
             continue
-        raw = strip_comments((a.ancient / rel).read_text(encoding='utf-8', errors='replace'))
+        source_file = a.ancient / rel
+        if not source_file.is_file():
+            # 2011 lists six problems whose `.tex` is not in the archive; the round ran, so the
+            # entry stays in `problems:` and the booklet prints `\protectedInput`'s red
+            # `Missing file` box. A hole in a past round is a fact, and should be loud.
+            report.append(f'\n## {number}. `{rel}` -> `{slug}`\n')
+            report.append(f'- **source lost** -- no `{rel}` under {a.ancient}; list the slug in '
+                          f'the volume meta and let the booklet say so\n')
+            total += 1
+            continue
+        raw = strip_comments(source_file.read_text(encoding='utf-8', errors='replace'))
         out = a.out / 'problems' / slug
         notes, wanted = [], []
         #: One map per problem, so the three bodies agree on what each drawing is called.
@@ -447,11 +465,11 @@ def main() -> int:
             wanted += w
             notes += [f'{macro}: {x}' for x in n]
 
-        solution, answer = pieces.get('sk/solution.md'), pieces.get('answer.md')
+        solution, answer = pieces.get(f'{a.language}/solution.md'), pieces.get('answer.md')
         if solution and answer and solution[0] == answer[0]:
             note = 'identical to the comment -- this problem has no model solution'
             notes.append(f'vzorak: {note}')
-            pieces['sk/solution.md'][1].append(note)
+            pieces[f'{a.language}/solution.md'][1].append(note)
         if answer:
             note = ("`\\comment{}` is the evaluator's note, not an expression -- reduce it to the "
                     'answer and keep the marking guidance as a `%#` comment at the head of the '
