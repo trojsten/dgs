@@ -50,6 +50,8 @@ LINTED = [
     # `\dfrac{ ab + ac}{ bc }` are how 2013 writes almost every bracket, and `mdcheck` has a
     # rule per side of each. Newlines are left alone -- a display body is indented on its own
     # line and this runs before `displays` puts one there.
+    (re.compile(r'\\left\s+(?=[([{|.])'), r'\\left'),                # slp
+    (re.compile(r'\\right\s+(?=[)\]}|.])'), r'\\right'),             # srp
     (re.compile(r'\\left([([])[ \t]+'), r'\\left\1'),                  # slp
     (re.compile(r'[ \t]+\\right([)\]])'), r'\\right\1'),              # srp
     (re.compile(r'\{[ \t]+(?=\S)'), '{'),                             # lbw
@@ -57,6 +59,12 @@ LINTED = [
     # `\frac 1 2` -- single-token arguments with the braces left off, which `mdcheck` reads as
     # a `\frac` with no numerator at all.
     (re.compile(r'\\([dt]?frac)[ \t]+(\w)[ \t]+(\w)'), r'\\\1{\2}{\3}'),
+    # A delimiter and its bracket are one token; 2014 writes `\left ( x \right )`.
+    # `\frac {3}{4}` -- the space makes `mdcheck` read a `\frac` with no numerator.
+    (re.compile(r'\\([dt]?frac)\s+(?=\{)'), r'\\\1'),
+    # `2\cdot\frac{…}` -- `mdcheck` wants the operator spaced like any other.
+    (re.compile(r'(?<=[^\s])\\cdot(?![a-zA-Z])'), r' \\cdot'),
+    (re.compile(r'\\cdot(?![a-zA-Z\s])'), r'\\cdot '),
     (re.compile(r'([Mm])ôžme(?![a-záäčďéíĺľňóôŕšťúýž])'), r'\1ôžeme'),   # mzm
     (re.compile(r'\bt\.j\.'), 't. j.'),                                # tjj
     # An angle written by hand rather than through `\unit{}`: `$\alpha = 45^{\circ}$`, and
@@ -64,8 +72,181 @@ LINTED = [
     # `upright_units` has already folded it into the box and the table will make it `\celsius`.
     (re.compile(r'(?<![\d.])(\d+(?:\.\d+)?)\s*(?:\^\{\\circ\}|\^\\circ(?![a-zA-Z]))'
                 r'(?!\s*\\?(?:text|mathrm)?\{?C)'), r'\\ang{\1}'),
+
+    # A comma is followed by a space, in maths as in prose. Not a decimal marker:
+    # `decimals` has already made those, and a digit on either side is left alone.
+    # …and only before something a word or a formula starts with. Not before `'`, which is
+    # how a Jinja tag spells `disp(',')`, and not before `^`, which attaches a footnote to
+    # the word before it: both are in the finished volumes and neither wants a space.
+    (re.compile(r',(?=[\\{a-zA-Z\u00e1\u00e4\u010d\u010f\u00e9\u00ed\u013a\u013e\u0148\u00f3\u00f4\u0155\u0161\u0165\u00fa\u00fd\u017e])'), ', '),
+    # Spaces around `=`: `\alpha=\beta` is how 2014 writes most of them.
+    # …but not a Markdown attribute block: `{#fig:x height=40mm}` is not maths, and spacing
+    # its `=` stops pandoc reading the attribute at all.
+    (re.compile(r'(?<!height)(?<!width)(?<=[\w}\)])=(?=[\\\w{(])'), ' = '),
+    # An aligned row's separator is spaced off what precedes it: `… =\\` is what `mdcheck`
+    # calls "No space before ending \\".
+    (re.compile(r'(?m)(?<=[^\s\\])(?=\\\\[ \t]*$)'), ' '),
 ]
 
+
+#: Typography with nothing behind it: a length nudged, a paragraph indented, a float wrapped.
+#: None of it survives into Markdown, and all of it would reach the TeX as literal text.
+RE_LAYOUT = [
+    (re.compile(r'\\[vh]space\*?\s*\{[^{}]*\}'), ''),
+    (re.compile(r'\\(?:centering|indent|noindent)(?![a-zA-Z])'), ''),
+    (re.compile(r'\\itemsep\s*[-\d.]+\s*(?:pt|mm|cm|em|ex|in|bp|sp)?'), ''),
+    # The float's wrapper goes; whatever it wrapped has already become a figure.
+    (re.compile(r'\\begin\{wrapfigure\}(?:\s*\{[^{}]*\}){0,2}'), ''),
+    (re.compile(r'\\end\{wrapfigure\}'), ''),
+    # `{\sc Svanci}` is a name set in small caps. Markdown has no small caps and the name is
+    # the content, so the braces and the switch go and the name stays.
+    (re.compile(r'\{\\(?:sc|scshape)\s+([^{}]*)\}'), r'\1'),
+]
+
+
+#: `itemize` and `enumerate`, body and all. Non-greedy, so a pair nests outwards correctly.
+RE_LIST = re.compile(r'\\begin\{(itemize|enumerate)\}(?P<body>.*?)\\end\{\1\}', re.S)
+
+
+def break_displays(text: str, width: int = 100, limit: int = 120) -> str:
+    r"""
+    Break a display body that runs past the limit, at a relation or a leading sign.
+
+    The house form, which volumes 12, 13 and 15 already use: the continuation is indented
+    under what it continues -- beneath the first `=` where there is one, four spaces further
+    in where there is not. `wrap` cannot do this, because a formula has no spaces it may break
+    at freely: a break inside `\frac{a}{b}` or between `\left(` and its `\right)` is still
+    legal TeX but unreadable, so only an operator outside every bracket will do.
+
+    Depth counts braces *and* `\left`/`\right`. A piece that is still too long after the
+    top-level breaks -- `= \sqrt{2 \cdot a \cdot b \cdot \left(…\right)}`, whose operators all
+    sit inside the root -- is broken again one level in, which is still legal and still
+    readable. A fraction that fills a line by itself has neither and stays long.
+    """
+    def operators(body: str, deepest: int) -> list[int]:
+        """Positions of a binary operator at nesting depth `deepest` or less."""
+        found, depth, i = [], 0, 0
+        while i < len(body):
+            if body.startswith('\\left', i):
+                depth += 1; i += 5; continue
+            if body.startswith('\\right', i):
+                depth -= 1; i += 6; continue
+            if body[i] == '\\':
+                if body.startswith('\\cdot', i) and depth <= deepest and i and body[i - 1] == ' ':
+                    found.append(i)
+                i += 2; continue
+            if body[i] == '{':
+                depth += 1
+            elif body[i] == '}':
+                depth -= 1
+            elif (depth <= deepest and body[i] in '=+-<>' and i
+                  and body[i - 1] in ' &'):
+                # An aligned row writes `&=`, and the alignment mark belongs to the relation
+                # after it: breaking between them leaves a `&` alone on a line and moves the
+                # column. A break at the very start of a row is no break at all.
+                at = i - 1 if body[i - 1] == '&' else i
+                if at > 1:
+                    found.append(at)
+            i += 1
+        return found
+
+    def split(body: str, lead: int, deepest: int) -> list[str]:
+        """`body` as pieces, each meant to sit `lead` columns in."""
+        # The end of the line counts as a position, or the last candidate before it is never
+        # taken and a body whose only operators sit early stays long.
+        breaks = operators(body, deepest)
+        if not breaks:
+            return [body]
+        pieces, start, candidate = [], 0, None
+        for position in breaks + [len(body)]:
+            if candidate is not None and lead + (position - start) > width:
+                pieces.append(body[start:candidate].rstrip())
+                start = candidate
+            candidate = position
+        pieces.append(body[start:])
+        return pieces
+
+    out, display = [], False
+    for line in text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('$$') or stripped.startswith('}$$'):
+            display = not display
+            out.append(line)
+            continue
+        if not display or len(line) <= limit:
+            out.append(line)
+            continue
+        indent = line[:len(line) - len(line.lstrip())]
+        body = line.strip()
+        relation = body.find('= ')
+        deeper = indent + ' ' * (relation if 0 < relation <= 20 else 4)
+        pieces = split(body, len(indent), 0)
+        if len(pieces) == 1:
+            pieces = split(body, len(indent), 1)
+        rendered, first = [], True
+        for piece in pieces:
+            lead = indent if first else deeper
+            if len(lead) + len(piece) > limit:
+                deep = split(piece, len(lead), 1)
+                rendered.append(lead + deep[0])
+                rendered.extend(deeper + more for more in deep[1:])
+            else:
+                rendered.append(lead + piece)
+            first = False
+        out.extend(rendered)
+    return '\n'.join(out)
+
+def lists(text: str) -> tuple[str, list[str]]:
+    r"""
+    `\begin{itemize}\item …` -> a Markdown list, four-space continuation.
+
+    A list whose item holds a **display** is left alone and reported: `disp` and `align` close
+    at column 0 whatever indent the tag sits at, so an equation in a bullet needs `|indent(4)`
+    and the item has to be looked at. None of the archive's nineteen lists has one, but the
+    rule is the reason this does not simply convert everything.
+    """
+    notes = []
+
+    def one(m):
+        if '$$' in m.group('body') or '\\[' in m.group('body'):
+            notes.append(f'environment: `{m.group(1)}` holds a display -- an equation in a list '
+                         f'item needs `|indent(4)`, so this one is left for a person')
+            return m.group(0)
+        items = [i.strip() for i in re.split(r'\\item(?![a-zA-Z])', m.group('body'))[1:]]
+        out = []
+        for number, item in enumerate(items, 1):
+            lines = [l.strip() for l in item.split('\n') if l.strip()]
+            if not lines:
+                continue
+            out.append(('-   ' if m.group(1) == 'itemize' else f'{number}.  ') + lines[0])
+            out += ['    ' + l for l in lines[1:]]
+        return '\n' + '\n'.join(out) + '\n'
+
+    return RE_LIST.sub(one, text), notes
+
+def layout(text: str) -> str:
+    """Strip the typographic scaffolding. See `RE_LAYOUT`."""
+    for pattern, replacement in RE_LAYOUT:
+        text = pattern.sub(replacement, text)
+    return text
+
+def fractions(text: str, role: str) -> str:
+    r"""
+    `\dfrac` in an answer, `\frac` everywhere else -- the third and fourth of CLAUDE.md's tiers.
+
+    Which one the archive wrote is an accident of the year: 2009, 2010 and 2012 have no
+    `\dfrac` at all, 2013 has 788 against 849 `\frac`, and 2014 has 83 against 1126. So the
+    archive's choice carries no meaning to preserve, and passing it through put 204 `\dfrac`
+    into volume 16's solutions where volumes 12, 13 and 15 have none between them.
+
+    `markdown-check`'s `fra` rule enforces the answer half; the other half is a style CLAUDE.md
+    sets out and nothing checks, which is how volume 16 came to break it while passing the lint.
+    Neither tier above these is mechanical: a vulgar glyph is for a standalone value and
+    `\nicefrac` for a fraction at script size, and both stay a person's call.
+    """
+    if role == 'answer':
+        return re.sub(r'(?<!d)\\frac(?![a-zA-Z])', r'\\dfrac', text)
+    return re.sub(r'\\dfrac(?![a-zA-Z])', r'\\frac', text)
 
 def lone_dollars(text: str) -> str:
     r"""
@@ -157,6 +338,10 @@ SHORTHAND = [
     # And the thin space the archive put before that stop. There is not one `\,.` or `\,,` left
     # in phys: the house form sets the punctuation straight after the expression. A `\,` between
     # *digits* is a group separator and is left to `quantities`, which has already run.
+    # An upright full stop or comma is just that character. 2014 reaches it through its own
+    # `\bodka`, which expands to `\,\text{.}`, and the thin space then goes with the rule
+    # below -- which is why this has to come first.
+    (re.compile(r'\\(?:mrm|mathrm|text|textrm)\{([.,;])\}'), r'\1'),
     (re.compile(r'\\[,:; ](?=\\?[.,;])'), ''),
     # `\tg`, `\arctg` and `\cotg` are the Slovak and Czech names for the same three functions
     # LaTeX spells `\tan`, `\arctan` and `\cot`. `mathab.sty` defines them as operators; the
@@ -178,6 +363,11 @@ SHORTHAND = [
     # so the `ľ` and the `á` dropped out of the page in silence (xelatex only writes
     # `Missing character:` to the log) and the subscript printed as `ad` and `npoj`.
     (re.compile(r'\\tt(?![a-zA-Z])'), r'\\text'),
+    # Water. `\\rho_\\mathrm{H_2O}` becomes `\\rho_\\text{H_2O}` through the rule above, and a
+    # `_` inside `\\text{}` is text mode meeting a subscript: `! Missing $ inserted.`, and the
+    # build stops. CLAUDE.md spells water `\\ce{H2O}`, which is language-neutral and legal in
+    # a subscript.
+    (re.compile(r'(?:\\(?:text|mathrm|mrm))?\{H_\{?2\}?O\}'), r'{\\ce{H2O}}'),
     (re.compile(r'\\R(?![a-zA-Z])'), r'\\mathbb{R}'),
     # `\par` ends a paragraph, and Markdown's way of saying that is a blank line. 2014 writes
     # 39 of them on a line of their own and one at the end of a sentence; both mean the same
@@ -465,7 +655,8 @@ def exponents(text: str) -> tuple[str, list[str]]:
 #: labelled -- the label is what makes pandoc number the equation -- and the repository's own
 #: habit is ordinals: `third` 29 times, `fourth` 27, `second` 21, `first` 18.
 ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth',
-            'ninth', 'tenth', 'eleventh', 'twelfth']
+            'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth',
+            'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth']
 
 
 #: A display, in each of the three spellings the archive uses. `align*` (12 uses) and
@@ -513,6 +704,13 @@ def wrap(text: str, width: int = 100, limit: int = 120) -> str:
         if stripped.startswith('$$') or stripped.startswith('}$$'):
             display = not display
             out.append(line)
+            continue
+        if stripped.startswith('![') and len(line) > limit and '](' in line:
+            # A caption is inline content: pandoc sets a break inside it as a space, and the
+            # `](` must stay on the tail so the image itself is never split.
+            head, tail = line.split('](', 1)
+            cut = head.rfind(' ', 0, width)
+            out.extend([head[:cut], head[cut + 1:] + '](' + tail] if cut > 2 else [line])
             continue
         if display or line.startswith('%#') or stripped.startswith('![') or len(line) <= limit:
             out.append(line)
@@ -711,6 +909,12 @@ def report_only(text: str) -> list[str]:
         if not _tied(m.group(1)):
             notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
                          f'not a preposition')
+    # Text mode meeting a subscript stops the build with `! Missing $ inserted.`, and the only
+    # sign beforehand is that nothing looks wrong. 2014's `\mathrm{H_2O}` is the case that found
+    # it, and water has a rule of its own; anything else here is a person's to spell.
+    for m in re.finditer(r'\\(?:text|mathrm|mrm|textrm)\{[^{}]*[_^][^{}]*\}', text):
+        notes.append(f'script: `{m.group(0)}` puts a subscript inside text mode, which stops '
+                     f'the build -- spell it in maths, or as `\\ce{{}}` if it is a formula')
     for name in ('alignat*', 'enumerate', 'itemize', 'tabular', 'multipic'):
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
             notes.append(f'environment: `{name}` has no mechanical translation -- `alignat*` '

@@ -129,7 +129,12 @@ def figures(text: str, dialect: Dialect, slug: str, body_role: str = 'problem',
 
     while (found := earliest()) is not None:
         start, end, path, cap, tag = found
-        text = text[:start] + markdown(path, cap, tag) + text[end:]
+        # A figure stands on its own line. 2014 wraps one in a `wrapfigure` in the middle of a
+        # paragraph -- `DYN/rebrina` -- and the prose ran on straight after the attribute block,
+        # which Markdown reads as part of the caption's line and the lint as one long line.
+        head = '' if start == 0 or text[start - 1] == '\n' else '\n'
+        tail = '' if end >= len(text) or text[end] == '\n' else '\n'
+        text = text[:start] + head + markdown(path, cap, tag) + tail + text[end:]
 
     text = re.sub(r'\\begin\{center\}\s*|\s*\\end\{center\}', '', text)
 
@@ -155,6 +160,11 @@ def figures(text: str, dialect: Dialect, slug: str, body_role: str = 'problem',
         text = text.replace(f']({role}-1.svg)', f']({role}.svg)')
         text = text.replace(f'{{#fig:{slug}:{role}-1 ', f'{{#fig:{slug} ' if role == 'problem'
                             else f'{{#fig:{slug}:{role} ')
+        # The `\ref{}`s were rewritten before this, off the names as they then stood, so the
+        # cross-references have to come along -- five of 2014's pointed at a `solution-1` that
+        # had since become `solution`, and the audit called every one of them dangling.
+        text = text.replace(f'[@fig:{slug}:{role}-1]',
+                            f'[@fig:{slug}]' if role == 'problem' else f'[@fig:{slug}:{role}]')
         wanted[:] = [(s, role if n == f'{role}-1' else n) for s, n in wanted]
         for stem, given in seen.items():
             if given == f'{role}-1':
@@ -339,6 +349,9 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
     # The year's own shorthands, before anything reads what they stand for.
     for name, body in dialect.shorthands().items():
         text = re.sub(rf'\\{name}(?![a-zA-Z])', body.replace('\\', '\\\\'), text)
+    text = rules.layout(text)
+    text, list_notes = rules.lists(text)
+    notes += list_notes
     text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug, role, seen)
@@ -358,11 +371,17 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
     text = rules.ties(text)
     text = rules.operator_spaces(text)
     text = rules.decimals(text)
+    # Whatever `\,` is left is optical spacing -- before a `\frac`, a differential or a unit
+    # letter. `decimals` has already turned the ones that grouped digits into `\num{}`, the
+    # `tgc` rule bans the rest, and volumes 12, 13, 15 and 16 have none between them.
+    text = re.sub(r'\\,(?=\s*[\\a-zA-Z])', '', text)
+    text = rules.fractions(text, role)
     text = rules.lone_dollars(text)
     text, display_notes = rules.displays(text, slug if label else None)
     notes += display_notes
     text = rules.inline_math(text)
     text = rules.line_breaks(text)
+    text = rules.break_displays(text)
     text = rules.wrap(text)
     text = '\n'.join(line.rstrip() for line in text.split('\n'))
     text = re.sub(r'\n{3,}', '\n\n', text).strip() + '\n'
