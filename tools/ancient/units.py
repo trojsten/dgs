@@ -36,6 +36,12 @@ UNITS = {
     r'km\,h^{-2}': r'\kilo\metre\per\hour\squared',
     # temperature
     'K': r'\kelvin', r'^\circ C': r'\celsius', '^{\\circ}C': r'\celsius',
+    # 2013's own spellings.
+    'ml': r'\milli\litre', 'l': r'\litre', 'dm^2': r'\deci\metre\squared',
+    'ms^{-1}': r'\metre\per\second',
+    'Wm^{-1}K^{-1}': r'\watt\per\metre\per\kelvin',
+    r'\dfrac{J}{kg\.K}': r'\joule\per\kilo\gram\per\kelvin',
+    r'\dfrac{J}{kg}': r'\joule\per\kilo\gram',
     # angle
     'rad': r'\radian',
     # force, pressure, energy, power

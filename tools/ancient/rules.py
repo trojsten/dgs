@@ -25,6 +25,19 @@ from tools.ancient.lex import match_brace
 #: One-letter Slovak prepositions and conjunctions. `vlna` tied these to the following word, and
 #: the house convention writes that tie as `\ `. Capitals included: sentences start with them.
 TIED = set('vszokaiuVSZOKAIU')
+#: Prepositions of more than one letter that take the same non-breaking space. 2009 to 2012 tie
+#: almost nothing but the one-letter ones, so these went unnoticed until 2013, which has 43 --
+#: and they were neither rewritten nor reported, because the reporter's own lookbehind made a
+#: `zo~` invisible to it. A `~` after any other word is still a person's to decide.
+TIED_WORDS = {'vo', 'zo', 'so', 'ku', 'po', 'od', 'na', 'do', 'za', 'bez',
+              'pre', 'pri', 'nad', 'pod', 'cez'}
+#: Slovak, so the word before a `~` may be accented.
+LETTER = 'a-zA-ZáäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ'
+
+
+def _tied(word: str) -> bool:
+    """Is this the kind of word a `~` binds to what follows -- a short preposition?"""
+    return word in TIED if len(word) == 1 else word.lower() in TIED_WORDS
 
 #: Everything `mdcheck` bans outright, with what it wants instead.
 LINTED = [
@@ -33,7 +46,98 @@ LINTED = [
     (re.compile(r'\\Rightarrow(?![a-zA-Z])'), r'\\Implies'),          # rar
     (re.compile(r'\\then(?![a-zA-Z])'), r'\\Implies'),                # mathab's spelling of the same
     (re.compile(r'\\SI(?![a-zA-Z])'), r'\\qty'),                      # osi
+    # Nothing sits between a delimiter and what it delimits: `\left( x \right)` and
+    # `\dfrac{ ab + ac}{ bc }` are how 2013 writes almost every bracket, and `mdcheck` has a
+    # rule per side of each. Newlines are left alone -- a display body is indented on its own
+    # line and this runs before `displays` puts one there.
+    (re.compile(r'\\left([([])[ \t]+'), r'\\left\1'),                  # slp
+    (re.compile(r'[ \t]+\\right([)\]])'), r'\\right\1'),              # srp
+    (re.compile(r'\{[ \t]+(?=\S)'), '{'),                             # lbw
+    (re.compile(r'(?<=\S)[ \t]+\}'), '}'),                            # rbw
+    # `\frac 1 2` -- single-token arguments with the braces left off, which `mdcheck` reads as
+    # a `\frac` with no numerator at all.
+    (re.compile(r'\\([dt]?frac)[ \t]+(\w)[ \t]+(\w)'), r'\\\1{\2}{\3}'),
+    (re.compile(r'([Mm])ôžme(?![a-záäčďéíĺľňóôŕšťúýž])'), r'\1ôžeme'),   # mzm
+    (re.compile(r'\bt\.j\.'), 't. j.'),                                # tjj
+    # An angle written by hand rather than through `\unit{}`: `$\alpha = 45^{\circ}$`, and
+    # `\sin\left(90^{\circ} - \alpha\right)`. Not a temperature -- a `C` after the sign means
+    # `upright_units` has already folded it into the box and the table will make it `\celsius`.
+    (re.compile(r'(?<![\d.])(\d+(?:\.\d+)?)\s*(?:\^\{\\circ\}|\^\\circ(?![a-zA-Z]))'
+                r'(?!\s*\\?(?:text|mathrm)?\{?C)'), r'\\ang{\1}'),
 ]
+
+
+def lone_dollars(text: str) -> str:
+    r"""
+    A line that is nothing but `$` is a display delimiter the author spelled short.
+
+    From 2013 on the archive writes a display as a single `$` on its own line, the body, and
+    another `$` -- 27 in 2013, 15 in 2014, 48 in 2015, and none before. TeX takes that as
+    *inline* maths with the newlines as spaces, which is what the 2013 booklet printed: page 19
+    sets $\Delta t = t/N$ in the middle of the paragraph and runs straight on into the next
+    sentence with no break. The `$$` two lines further down the same file is the author saying
+    what was meant. Runs before `displays`, which then sees an ordinary block.
+    """
+    return RE_LONE_DISPLAY.sub(
+        lambda m: f"$$\n{m['body'].rstrip()}{m['punct']}\n$$", text)
+
+
+#: The pair, matched as one: an opening line that is nothing but `$`, a body, and a closing line
+#: that is `$` and at most a full stop, comma or semicolon. As a pair, because `KVAP/divnavoda`
+#: closes with `$.` -- converting the two lines independently would have turned the opener into
+#: `$$` and left the closer alone, and every paragraph after it was swallowed into the display.
+RE_LONE_DISPLAY = re.compile(r'(?m)^[ \t]*\$[ \t]*\n(?P<body>.*?)\n[ \t]*\$(?P<punct>[.,;]?)[ \t]*$',
+                             re.S)
+
+def inline_math(text: str) -> str:
+    r"""
+    `$ x $` -> `$x$`. Pandoc will not read either delimiter with a space beside it.
+
+    Its rule is that an opening `$` is followed by a non-space and a closing one preceded by
+    one, so `ako $ \dfrac{a}{b} = c$` is not maths at all: the dollars stay literal, the
+    backslashes reach TeX as text, and the build stops at `Missing $ inserted`. 2013 writes 17
+    of these and the years before it none. Runs after `displays`, so a `$$` block is already
+    on its own lines and every `$` left on a line of prose opens or closes inline maths.
+    """
+    out, display = [], False
+    for line in text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('$$') or stripped.startswith('}$$'):
+            display = not display
+        if display or line.startswith('%#') or '$' not in line:
+            out.append(line)
+            continue
+        # Split on the delimiters: with an even number of them the odd pieces are the maths,
+        # and each is stripped at both ends. Prose keeps its spaces, including the one after a
+        # closing `$`.
+        pieces = line.split('$')
+        if len(pieces) % 2 == 0:                      # odd number of `$`, so none of them pair
+            out.append(line)
+            continue
+        out.append('$'.join(p.strip() if i % 2 else p for i, p in enumerate(pieces)))
+        continue
+    return '\n'.join(out)
+
+def line_breaks(text: str) -> str:
+    r"""
+    A prose line ending in `\\` is a paragraph break, and is written as one.
+
+    The archive uses `\\` both ways: as the row separator inside a display, where it means
+    what it says, and at the end of a paragraph of prose, where TeX's forced break is how the
+    author asked for the next sentence to start on its own line. Markdown's forced break is a
+    blank line, and a trailing `\\` left in prose sets a literal one. Runs after `displays`,
+    so a display's rows are recognisable by their delimiters and left alone.
+    """
+    out, display = [], False
+    for line in text.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('$$') or stripped.startswith('}$$'):
+            display = not display
+        if not display and stripped.endswith('\\\\'):
+            out.extend([line.rstrip()[:-2].rstrip(), ''])
+            continue
+        out.append(line)
+    return '\n'.join(out)
 
 #: `mathab.sty` and `include.tex` shorthands with an unambiguous modern spelling. `\matheq`,
 #: `\mathplus`, `\mathminus`, `\mathdiv` and `\mathless` are used in the archive and defined
@@ -53,7 +157,7 @@ SHORTHAND = [
     # And the thin space the archive put before that stop. There is not one `\,.` or `\,,` left
     # in phys: the house form sets the punctuation straight after the expression. A `\,` between
     # *digits* is a group separator and is left to `quantities`, which has already run.
-    (re.compile(r'\\[,:;](?=[.,;])'), ''),
+    (re.compile(r'\\[,:; ](?=\\?[.,;])'), ''),
     # `\tg`, `\arctg` and `\cotg` are the Slovak and Czech names for the same three functions
     # LaTeX spells `\tan`, `\arctan` and `\cot`. `mathab.sty` defines them as operators; the
     # modern tree has no such macro and would set them as three italic letters.
@@ -70,6 +174,10 @@ SHORTHAND = [
     (re.compile(r'\\mrm(?![a-zA-Z])'), r'\\text'),
     (re.compile(r'\\textrm(?![a-zA-Z])'), r'\\text'),
     (re.compile(r'\\mathrm(?![a-zA-Z])'), r'\\text'),
+    # 2013 sets a word subscript in typewriter -- `m_{\tt{ľad}}`. `cmtt8` has no Slovak letters,
+    # so the `ľ` and the `á` dropped out of the page in silence (xelatex only writes
+    # `Missing character:` to the log) and the subscript printed as `ad` and `npoj`.
+    (re.compile(r'\\tt(?![a-zA-Z])'), r'\\text'),
     (re.compile(r'\\R(?![a-zA-Z])'), r'\\mathbb{R}'),
 ]
 
@@ -77,8 +185,8 @@ SHORTHAND = [
 def ties(text: str) -> str:
     r"""`v~ktorom` -> `v\ ktorom`, leaving every other `~` for a human."""
     def sub(m):
-        return f'{m.group(1)}\\ ' if m.group(1) in TIED else m.group(0)
-    return re.sub(r'(?<![a-zA-ZáäčďéíĺľňóôŕšťúýžÁČĎÉÍĽŇÓŠŤÚÝŽ])([a-zA-Z])~', sub, text)
+        return f'{m.group(1)}\\ ' if _tied(m.group(1)) else m.group(0)
+    return re.sub(f'(?<![{LETTER}])([{LETTER}]{{1,3}})~', sub, text)
 
 
 #: `5{,}97` -- the archive's way of writing a decimal comma that stays a decimal *marker*
@@ -214,6 +322,11 @@ def upright_units(text: str) -> str:
             # `$0.12\,^{\circ}\text{C}$` -- the degree sign outside the box, the letter in it.
             body = f'^\\circ {body}'
         return f'\\unit{{{body}}}' if units.lookup(body) else m.group(0)
+
+    # 2013 puts the degree outside a box that is already a `\unit{}`: `$t_V=2^{\circ}\unit{C}$`.
+    # The table knows `^\circ C` but only as one body, so fold the sign back in before the
+    # match below, or the unit reads as a coulomb and the degree is left stranded in the maths.
+    text = re.sub(r'\^\{?\\circ\}?\s*\\unit\{C\}', r'\\unit{^\\circ C}', text)
     return RE_UPRIGHT_UNIT.sub(one, text)
 #: A literal magnitude sitting immediately before a unit, digit groups and all. The `\,` groups
 #: have to be part of the match, not left behind it: `0.133\,33\unit{rad}` otherwise matched only
@@ -236,6 +349,21 @@ RE_MAGNITUDE = re.compile(
     # Or that literal wrapped in a brace group of its own, which the archive writes 38 times
     # across the seven years -- `\approx{2.42}\unit{s}`. The braces did nothing even then.
     r'|\{(?P<braced>-?\d+(?:[.,]\d+)?(?:\\,\d+)*(?:\\e\{-?\d+\})?)\}\s*$')
+
+
+def _is_argument(before: str, at: int) -> bool:
+    r"""
+    Is the group opening at `at` a macro's argument -- `\dfrac{1}{11}`, `\sqrt{2}`?
+
+    `$d=\dfrac{1}{11}\unit{m}$` is the case this exists for. The braced literal nearest the
+    unit is the *denominator*, and taking it for the magnitude produced `\dfrac{1}\qty{11}{m}`
+    -- a fraction with one argument, and a number that was never a number on its own. A group
+    that follows a control word is that word's first argument; one that follows another group
+    is its next. Neither is a magnitude, and both are expressions, which `\qty` refuses anyway,
+    so they take the "no literal magnitude" note instead.
+    """
+    head = before[:at].rstrip()
+    return head.endswith('}') or re.search(r'\\[a-zA-Z]+$', head) is not None
 
 
 def _is_script(before: str, at: int) -> bool:
@@ -283,7 +411,9 @@ def quantities(text: str) -> tuple[str, list[str]]:
             # tested is one before the digits: `x^{12}` must stay an exponent.
             at = (num.start('plain') if num.group('plain') is not None
                   else num.start('braced') - 1 if num.group('braced') is not None else None)
-            if at is not None and _is_script(before, at):
+            if at is not None and (_is_script(before, at) or
+                                   (num.group('braced') is not None
+                                    and _is_argument(before, at))):
                 num = None
         written = ((num.group('plain') or num.group('braced')) if num and
                    (num.group('plain') or num.group('braced')) is not None
@@ -295,7 +425,8 @@ def quantities(text: str) -> tuple[str, list[str]]:
             notes.append(f'unit: `{written}` had its digit groups spelled with `\\,`; '
                          f'siunitx groups them itself, so the number is now '
                          f'`{written.replace(chr(92) + ",", "")}`')
-        magnitude = RE_E.sub(r'e\1', written.replace('\\,', '')) if num else ''
+        magnitude = (RE_E.sub(r'e\1', written.replace('\\,', '').replace(',', '.'))
+                     if num else '')
         if num and siunitx == r'\degree':
             # An angle is `\ang{45}` here, not `\qty{45}{\degree}` -- 176 files say so.
             out.append(f'\\ang{{{magnitude}}}')
@@ -350,6 +481,52 @@ RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
 RE_EQNARRAY_RELATION = re.compile(r'&\s*(=|\\approx|\\doteq|\\leq|\\geq|\\equiv|<|>)\s*&')
 
 
+def wrap(text: str, width: int = 100, limit: int = 120) -> str:
+    r"""
+    Hard-wrap prose. 2013 is the first year whose sources are one long line per paragraph.
+
+    2009 to 2012 were wrapped by hand at about eighty columns and the conversion simply kept
+    their breaks; 2013's `TERM/rozhranie.tex` and the rest write a paragraph on one line, which
+    came out as 115 lines over the 120-column limit. Pandoc runs with `--wrap=preserve`, so the
+    break a source line takes is the break the TeX gets, and reflowing rendered output is
+    forbidden -- which leaves the source as the only place to do it.
+
+    Three things are never broken: a display block's body and delimiters, a `%#` marker, and a
+    figure. And a line never *ends* in a backslash: `v\ istej` is a non-breaking space, so a
+    break at that space would leave a bare `\` at the end of the line -- a Markdown hard line
+    break, and `\hfill\break` in the TeX.
+
+    Only a line that breaks the 120-column limit is reflowed, and it is reflowed to 100. A line
+    the archive wrapped for itself is left exactly as it is, however short: 2010's longest is
+    107 columns and re-breaking those would have moved text in volumes already converted and
+    read, to no end.
+    """
+    out, display = [], False
+    for line in text.split('\n'):
+        stripped = line.strip()
+        # `$$`, `$${`, `}$$` and the closing `$$ {#eq:…}` all delimit; everything between is a
+        # formula and is never re-broken.
+        if stripped.startswith('$$') or stripped.startswith('}$$'):
+            display = not display
+            out.append(line)
+            continue
+        if display or line.startswith('%#') or stripped.startswith('![') or len(line) <= limit:
+            out.append(line)
+            continue
+        indent = line[:len(line) - len(line.lstrip())]
+        # Break points are the spaces a break may fall on: not one that belongs to a `\ `.
+        parts, current = [], indent
+        for word in re.split(r'(?<!\\) ', line.strip()):
+            if current.strip() and len(current) + 1 + len(word) > width:
+                parts.append(current)
+                current = indent + word
+            else:
+                current = f'{current} {word}' if current.strip() else current + word
+        parts.append(current)
+        out.extend(parts)
+    return '\n'.join(out)
+
+
 def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]]:
     r"""
     Every display -> the house block form, body indented four spaces.
@@ -380,6 +557,10 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
         if tail:
             punct = tail.group(1)
             body = body[:tail.start()].rstrip()
+            # `\ .` -- the space belonged to the escape, so rstrip left the backslash bare and
+            # re-appending the stop spelled `\.`, which is a Markdown escape rather than the
+            # thin space it looks like. An odd run of backslashes here was an escaped space.
+            body = re.sub(r'(?<!\\)((?:\\\\)*)\\$', r'\1', body)
             notes.append(f'display: ends with `{punct}` -- check the blank line after it '
                          f'agrees (see `display-paragraph`)')
         lines = [('    ' + l.strip()) if l.strip() else '' for l in body.split('\n')]
@@ -393,9 +574,16 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
         # environment out of habit -- `MAT/mravce` wraps a single `&`-less row in one -- and
         # `$${…}$$` would put it through `aligned` for no reason.
         open_, close = ('$${', '}$$') if aligned and '&' in body else ('$$', '$$')
-        return f'{open_}\n' + '\n'.join(lines) + punct + f'\n{close}' + label
+        # 2013 opens a display in the middle of a line of prose -- `\ldots platiť, že $$…$$`.
+        # `$$` has to start its own line, or `display-paragraph` and the lint read the prose and
+        # the opening delimiter as one line and every judgement about the break is made on it.
+        head = '' if m.start() == 0 or text[m.start() - 1] == '\n' else '\n'
+        # A marker rather than a newline, because the prose that follows is separated from the
+        # display by the space that used to sit inside the line, and it has to go with it.
+        tail = '' if m.end() >= len(text) or text[m.end()] == '\n' else '\x00'
+        return head + f'{open_}\n' + '\n'.join(lines) + punct + f'\n{close}' + label + tail
 
-    return RE_DISPLAY.sub(sub, text), notes
+    return re.sub('\x00[ \t]*', '\n', RE_DISPLAY.sub(sub, text)), notes
 
 
 #: Binary operators `mdcheck` insists on having spaces around (`EqualsSpaces`, `PlusSpaces`,
@@ -515,10 +703,10 @@ def report_only(text: str) -> list[str]:
     for m in re.finditer(r'\\tfrac(?![a-zA-Z])', text):
         notes.append('tfrac: `\\tfrac` -- pick from the four fraction tiers '
                      '(vulgar glyph, `\\dfrac`, `\\nicefrac`, `\\frac`)')
-    for m in re.finditer(r'(?<![a-zA-Z])([a-zA-Z]?)~', text):
-        if m.group(1) not in TIED:
+    for m in re.finditer(f'(?<![{LETTER}])([{LETTER}]{{0,3}})~', text):
+        if not _tied(m.group(1)):
             notes.append(f'tie: `{text[max(0, m.start() - 12):m.end() + 12]!r}` -- a `~` that is '
-                         f'not a one-letter preposition')
+                         f'not a preposition')
     for name in ('alignat*', 'enumerate', 'itemize', 'tabular', 'multipic'):
         for _ in re.finditer(r'\\begin\{' + re.escape(name) + r'\}', text):
             notes.append(f'environment: `{name}` has no mechanical translation -- `alignat*` '

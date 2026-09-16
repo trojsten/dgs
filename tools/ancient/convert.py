@@ -16,6 +16,7 @@ the rule table is missing before committing to it.
 import argparse
 import collections
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -24,7 +25,7 @@ import yaml
 from tools.ancient import figures as svgfix
 from tools.ancient import rules
 from tools.ancient.dialect import Dialect
-from tools.ancient.lex import calls, macro_body, strip_comments
+from tools.ancient.lex import calls, macro_body, match_brace, strip_comments
 
 
 def order(ancient: Path) -> list[str]:
@@ -52,8 +53,8 @@ def provisional(rel: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', stem.lower()).strip('-')
 
 
-def figures(text: str, dialect: Dialect, slug: str,
-            body_role: str = 'problem') -> tuple[str, list[str], list[str]]:
+def figures(text: str, dialect: Dialect, slug: str, body_role: str = 'problem',
+            seen: dict[str, str] | None = None) -> tuple[str, list[str], list[str]]:
     r"""
     `\obrazok`/`\pict`/`\includegraphics` -> `![](x.svg){#fig:slug height=…}`.
 
@@ -61,6 +62,12 @@ def figures(text: str, dialect: Dialect, slug: str,
     reported: it is a visual choice and the old `scale` does not carry over.
     """
     notes, wanted = [], []
+    #: Archive stem -> the name it was given, shared across one problem's three bodies. An
+    #: answer that shows the solution's picture names the *same* drawing, and converting the
+    #: bodies one at a time would otherwise give it a second name and a second copy of the
+    #: file -- which is what four of 2013's problems, and three of volumes 12, 13 and 15's,
+    #: had to have undone by hand.
+    seen = {} if seen is None else seen
     #: How many figures of each role this body has so far, so they can be numbered -- and,
     #: at the end, so that a role with exactly one can drop its number again.
     counts: collections.Counter[str] = collections.Counter()
@@ -81,10 +88,13 @@ def figures(text: str, dialect: Dialect, slug: str,
         # `DYN/kopce.eps`, which is referenced in a solution, into `problem.svg`.
         part = re.match(r'^(?P<body>.*?)[-_](?:o[-_])?(?P<which>zad|ries)[-_]?'
                         r'(?P<index>[0-9A-Za-z]*)$', stem)
-        role = ('problem' if part['which'] == 'zad' else 'solution') if part else body_role
-        counts[role] += 1
-        name = f'{role}-{counts[role]}'
-        wanted.append((stem, name))
+        if stem in seen:
+            name = seen[stem]
+        else:
+            role = ('problem' if part['which'] == 'zad' else 'solution') if part else body_role
+            counts[role] += 1
+            name = seen[stem] = f'{role}-{counts[role]}'
+            wanted.append((stem, name))
         if tag:
             labels[tag.strip()] = f'{slug}:{name}'
         notes.append(f'figure: `{name}.svg` -- set a real height, 40mm is a placeholder')
@@ -95,26 +105,31 @@ def figures(text: str, dialect: Dialect, slug: str,
         label = '' if body_role == 'answer' else f'#fig:{slug}:{name} '
         return f'![{caption.strip()}]({name}.svg){{{label}height=40mm}}'
 
-    for name, arity in ((('obrazok'), dialect.figure_arity), ('pict', 2)):
-        while True:
-            found = list(calls(text, name, arity))
-            if not found:
-                break
-            start, end, args = found[0]
-            cap = args[dialect.figure_caption] if (name == 'obrazok'
-                                                   and dialect.figure_caption is not None) else ''
-            tag = args[dialect.figure_label] if (name == 'obrazok'
-                                                 and dialect.figure_label is not None) else ''
-            path = args[dialect.figure_file if name == 'obrazok' else 1]
-            text = text[:start] + markdown(path, cap, tag) + text[end:]
-
-    while True:
+    # One pass in document order, not one pass per macro. A solution may draw with `\pict` in
+    # one place and `\includegraphics` in another -- 2010's `DYN/skatula` does exactly that --
+    # and taking every `\pict` before any `\includegraphics` numbered its two figures the
+    # wrong way round, so `solution-1` was the picture that came second on the page.
+    def earliest():
+        best = None
+        for name, arity in (('obrazok', dialect.figure_arity), ('pict', 2)):
+            for start, end, args in calls(text, name, arity):
+                cap = args[dialect.figure_caption] if (name == 'obrazok' and
+                                                       dialect.figure_caption is not None) else ''
+                tag = args[dialect.figure_label] if (name == 'obrazok' and
+                                                     dialect.figure_label is not None) else ''
+                path = args[dialect.figure_file if name == 'obrazok' else 1]
+                if best is None or start < best[0]:
+                    best = (start, end, path, cap, tag)
+                break                       # `calls` yields in order; the rest are later
         m = re.search(r'\\includegraphics(?:\[[^\]]*\])?\s*(?=\{)', text)
-        if not m:
-            break
-        from tools.ancient.lex import match_brace
-        e = match_brace(text, m.end())
-        text = text[:m.start()] + markdown(text[m.end() + 1:e - 1]) + text[e:]
+        if m and (best is None or m.start() < best[0]):
+            e = match_brace(text, m.end())
+            best = (m.start(), e, text[m.end() + 1:e - 1], '', '')
+        return best
+
+    while (found := earliest()) is not None:
+        start, end, path, cap, tag = found
+        text = text[:start] + markdown(path, cap, tag) + text[end:]
 
     text = re.sub(r'\\begin\{center\}\s*|\s*\\end\{center\}', '', text)
 
@@ -141,6 +156,9 @@ def figures(text: str, dialect: Dialect, slug: str,
         text = text.replace(f'{{#fig:{slug}:{role}-1 ', f'{{#fig:{slug} ' if role == 'problem'
                             else f'{{#fig:{slug}:{role} ')
         wanted[:] = [(s, role if n == f'{role}-1' else n) for s, n in wanted]
+        for stem, given in seen.items():
+            if given == f'{role}-1':
+                seen[stem] = role
         for tag, target in labels.items():
             if target == f'{slug}:{role}-1':
                 labels[tag] = slug if role == 'problem' else f'{slug}:{role}'
@@ -157,9 +175,20 @@ def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, lis
     what makes the font pass below work on them. The export goes to a cache under `--out`,
     never back into the archive, which is a read-only clone.
     """
-    for svg in ancient.rglob(f'{stem}.svg'):
-        return svg, []
     cached = cache / f'{stem}.svg'
+    for svg in ancient.rglob(f'{stem}.svg'):
+        if _fills_its_canvas(svg):
+            return svg, []
+        # 2013 drew every figure on a full A4 sheet and left it there -- `ELEK/boromir.svg` is
+        # 614x587 of drawing on 745x1053 of page. That is the same trap the `.odg` export below
+        # is cropped for: a `height=` would size the *sheet*, so the drawing comes out at half
+        # the height asked for, with the rest of the box empty. Crop into the cache, never over
+        # the archive, which is a read-only clone.
+        cache.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(svg, cached)
+        _crop(cached)
+        return cached, [f'figure: `{stem}` was drawn on a whole page and has been cropped '
+                        f'to the drawing']
     if cached.exists():
         return cached, []
     for odg in ancient.rglob(f'{stem}.odg'):
@@ -177,9 +206,7 @@ def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, lis
         # rest of it blank -- 1588x2246 against the 229x266 of the drawing itself. A `height=`
         # on such a figure would size the sheet and shrink the picture to nothing, so crop to
         # the drawing here rather than leaving a trap for whoever sets the height.
-        subprocess.run(['inkscape', '--export-type=svg', '--export-area-drawing',
-                        '--export-plain-svg', '-o', str(cached), str(cached)],
-                       check=True, capture_output=True, timeout=300)
+        _crop(cached)
         return cached, notes
     # Last, and only last: an `.eps` is an *export*, and a `.odg` or `.svg` beside it is the
     # thing it was exported from. Preferring it would throw away the text of every figure that
@@ -188,6 +215,43 @@ def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, lis
         cache.mkdir(parents=True, exist_ok=True)
         return _from_eps(eps, cache / f'{stem}.svg')
     return None, []
+
+
+def _crop(svg: Path) -> None:
+    """Shrink the canvas to the drawing, in place."""
+    subprocess.run(['inkscape', '--export-type=svg', '--export-area-drawing',
+                    '--export-plain-svg', '-o', str(svg), str(svg)],
+                   check=True, capture_output=True, timeout=300)
+
+
+def _fills_its_canvas(svg: Path, enough: float = 0.75) -> bool:
+    """
+    Is this drawing already the size of its own canvas, or is it adrift on a page?
+
+    Measured off a rendering rather than off the geometry, because the geometry is whatever
+    the drawing program left behind -- `width` in one unit, a `viewBox` in another, groups
+    with transforms on them. The two populations do not overlap and the threshold sits in the
+    gap between them: the tightest figure in volumes 12, 13 and 15 covers 0.87 of its canvas
+    (`12/galvanometer`, which has a little slack under it and is left alone), and the loosest
+    of 2013's whole-page drawings covers 0.65. Anything that fails to render measures zero and
+    is cropped, which is the harmless way round.
+    """
+    png = svg.with_suffix('.canvas.png')
+    try:
+        subprocess.run(['rsvg-convert', '-z', '1', '-b', 'white', '-o', str(png), str(svg)],
+                       check=True, capture_output=True, timeout=120)
+        def measure(*trim):
+            out = subprocess.run(['magick', str(png), *trim, '-format', '%w %h', 'info:'],
+                                 check=True, capture_output=True, timeout=120, text=True)
+            return (float(x) for x in out.stdout.split())
+
+        w, h = measure()
+        tw, th = measure('-trim')
+        return tw >= enough * w and th >= enough * h
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+        return False
+    finally:
+        png.unlink(missing_ok=True)
 
 
 def _ink(svg: Path) -> float:
@@ -268,12 +332,13 @@ def _from_eps(eps: Path, out: Path) -> tuple[Path | None, list[str]]:
 
 
 def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
-                 role: str = 'problem') -> tuple[str, list[str], list[str]]:
+                 role: str = 'problem',
+                 seen: dict[str, str] | None = None) -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
     text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
-    text, wanted, fig_notes = figures(text, dialect, slug, role)
+    text, wanted, fig_notes = figures(text, dialect, slug, role, seen)
     notes += fig_notes
     text = rules.upright_units(text)
     text, unit_notes = rules.quantities(text)
@@ -290,8 +355,12 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
     text = rules.ties(text)
     text = rules.operator_spaces(text)
     text = rules.decimals(text)
+    text = rules.lone_dollars(text)
     text, display_notes = rules.displays(text, slug if label else None)
     notes += display_notes
+    text = rules.inline_math(text)
+    text = rules.line_breaks(text)
+    text = rules.wrap(text)
     text = '\n'.join(line.rstrip() for line in text.split('\n'))
     text = re.sub(r'\n{3,}', '\n\n', text).strip() + '\n'
     return text, wanted, notes
@@ -332,6 +401,8 @@ def main() -> int:
         raw = strip_comments((a.ancient / rel).read_text(encoding='utf-8', errors='replace'))
         out = a.out / 'problems' / slug
         notes, wanted = [], []
+        #: One map per problem, so the three bodies agree on what each drawing is called.
+        seen: dict[str, str] = {}
         pieces = {}
         for macro, target in (('zadanie', 'sk/problem.md'),
                               ('vzorak', 'sk/solution.md'),
@@ -343,7 +414,8 @@ def main() -> int:
             converted, w, n = convert_body(body, dialect, slug,
                                            label=(macro == 'vzorak'),
                                            role={'zadanie': 'problem',
-                                                 'vzorak': 'solution'}.get(macro, 'answer'))
+                                                 'vzorak': 'solution'}.get(macro, 'answer'),
+                                           seen=seen)
             pieces[target] = (converted, list(n))
             wanted += w
             notes += [f'{macro}: {x}' for x in n]

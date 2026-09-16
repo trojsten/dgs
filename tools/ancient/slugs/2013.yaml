@@ -1,0 +1,48 @@
+# Náboj 2013 -> volume 16. `priklady.tex` order; the position in this file is the printed number.
+# Seven further `\priklad` lines in that file are commented out -- `KIN/kolona`, `DYN/kolesa`,
+# `DYN/koch5`, `DYN/jojo_dva`, `ZVYS/voda`, `OPT/valce` -- and are not converted: they did not run.
+# Checked against all 576 existing ids in phys. Five collisions, all genuinely other problems:
+# `elevator` (28), `escalator` (27), `pigeons` (12), `teapot` (19) and `yoyo` (23), so this year's
+# are `fifth-floor`, `escalator-ball`, `pigeon-bomb`, `tea-jug` and `falling-yoyo`.
+MAT/skok.tex: one-second
+MAT/stvorcek.tex: drawing-grid
+KIN/eskalator.tex: escalator-ball
+ELEK/varice.tex: hotplates
+KVAP/titanic.tex: titanic
+DYN/krabica.tex: open-box
+TERM/zmes.tex: iced-juice
+KIN/vytah.tex: fifth-floor
+DYN/kladka.tex: unwinding-rope
+MAT/vlejd.tex: juggler
+KIN/holuby.tex: pigeon-bomb
+GRAV/druzica.tex: planet-density
+OPT/lazors.tex: lasers
+GRAV/geopot.tex: geopotential
+KIN/husenica.tex: caterpillars
+DYN/oscilator.tex: phase-space
+DYN/dosky.tex: three-boards
+TERM/rozhranie.tex: ice-interface
+DYN/doppler.tex: paintball
+KIN/vlak.tex: jerk
+ELEK/zapajam.tex: zero-ammeter
+DYN/jojo.tex: falling-yoyo
+ELEK/boromir.tex: three-rings
+TERM/kanva.tex: tea-jug
+DYN/karty.tex: card-decks
+ZVYS/reprak.tex: speakers
+ELEK/kruhy.tex: olympic-rings
+GRAV/planety.tex: double-planet
+DYN/koch.tex: koch-square
+KIN/gravelek.tex: charged-ball
+KVAP/valec.tex: leaking-cylinder
+ELEK/pentagram.tex: pentagram
+GRAV/raketa.tex: to-the-moon
+ELEK/gulicky1.tex: charged-square
+KVAP/sprcha.tex: shower-head
+DYN/perioda.tex: cut-spring
+OPT/duha.tex: glass-rainbow
+KVAP/divnavoda.tex: strange-liquid
+ELEK/rebrik.tex: capacitor-ladder
+DYN/pruzina.tex: orbiting-spring
+DYN/prak.tex: slingshot
+KIN/niagara.tex: niagara
