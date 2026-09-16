@@ -336,6 +336,9 @@ def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,
                  seen: dict[str, str] | None = None) -> tuple[str, list[str], list[str]]:
     """One `\\zadanie`/`\\vzorak`/`\\comment` body, through the whole table."""
     notes = list(dict.fromkeys(rules.report_only(text)))
+    # The year's own shorthands, before anything reads what they stand for.
+    for name, body in dialect.shorthands().items():
+        text = re.sub(rf'\\{name}(?![a-zA-Z])', body.replace('\\', '\\\\'), text)
     text = rules.decimal_braces(text)
     text = rules.trhaciealt(text)
     text, wanted, fig_notes = figures(text, dialect, slug, role, seen)

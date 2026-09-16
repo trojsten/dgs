@@ -179,6 +179,10 @@ SHORTHAND = [
     # `Missing character:` to the log) and the subscript printed as `ad` and `npoj`.
     (re.compile(r'\\tt(?![a-zA-Z])'), r'\\text'),
     (re.compile(r'\\R(?![a-zA-Z])'), r'\\mathbb{R}'),
+    # `\par` ends a paragraph, and Markdown's way of saying that is a blank line. 2014 writes
+    # 39 of them on a line of their own and one at the end of a sentence; both mean the same
+    # thing. A `\par` in the middle of a line would not, and is still reported.
+    (re.compile(r'(?m)[ \t]*\\par(?![a-zA-Z])[ \t]*%?[ \t]*$'), '\n'),
 ]
 
 

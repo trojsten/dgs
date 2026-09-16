@@ -36,6 +36,13 @@ UNITS = {
     r'km\,h^{-2}': r'\kilo\metre\per\hour\squared',
     # temperature
     'K': r'\kelvin', r'^\circ C': r'\celsius', '^{\\circ}C': r'\celsius',
+    # 2014's own spellings.
+    'km/s': r'\kilo\metre\per\second', 'kg/m': r'\kilo\gram\per\metre',
+    'ms': r'\milli\second', 'ns': r'\nano\second',
+    'T': r'\tesla', 'TeV': r'\tera\electronvolt',
+    # `TERM/jazero` writes the compound with a full stop between the parts, and the stop
+    # reaches the table already spelled `\text{.}`.
+    r'W/m\text{.}K': r'\watt\per\metre\per\kelvin',
     # 2013's own spellings.
     'ml': r'\milli\litre', 'l': r'\litre', 'dm^2': r'\deci\metre\squared',
     'ms^{-1}': r'\metre\per\second',

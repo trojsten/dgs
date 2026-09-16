@@ -32,7 +32,7 @@ RE_LABELS = re.compile(r'\\label\s*\{#(\d)\}')
 
 
 def figure_macro(arity: int, body: str) -> tuple[int, int, int | None, int | None] | None:
-    """
+    r"""
     `(arity, file, caption, label)` for a macro that draws a figure, indices 0-based.
 
     Read off the definition rather than tabulated, because a year has more than one of these
@@ -129,3 +129,26 @@ class Dialect:
         """The year's body for a zero-argument macro, e.g. `\\kmh` -> `\\mrm{km\\,h^{-1}}`."""
         entry = self.defs.get(name)
         return entry[1] if entry and entry[0] == 0 else None
+
+    def shorthands(self) -> dict[str, str]:
+        r"""
+        The year's zero-argument macros that are safe to expand where they stand.
+
+        2014 defines `\ciarka` as `\,,` and `\bodka` as `\,\text{.}` -- its own names for the
+        comma and the full stop that end a display. Left unexpanded they are invisible to
+        `displays`, which reads the terminal punctuation off the end of the body and decides
+        from it whether a blank line follows; every one of those judgements would have been
+        made on a display that appeared to end in nothing.
+
+        Two kinds are held back. One the units table already knows -- `\kmh` is
+        `\kilo\metre\per\hour` and is expanded *there*, after the `\unit{}` around it has been
+        read, because expanding it first builds `\unit{\unit{…}}`. And one whose body reaches
+        for a TeX primitive: 2009's `\slash` is `\delimiter"02F30E`, which means `/` and says
+        so in a way nothing downstream could read. Those stay as written and are reported.
+        """
+        from tools.ancient import units
+        primitive = re.compile(r'\\(?:delimiter|mathchar|char|hbox|vbox|kern|hskip|vskip|penalty)'
+                               r'(?![a-zA-Z])')
+        return {name: body for name, (arity, body) in self.defs.items()
+                if arity == 0 and units.lookup(f'\\{name}') is None
+                and not primitive.search(body)}
