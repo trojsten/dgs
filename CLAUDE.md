@@ -271,6 +271,18 @@ Notation that does **not** need this, because it is language-neutral already: wa
 `\ce{H2O}`, the Earth is `\Earth` (`core/latex/symbols.tex` defines it as `\oplus`), and a
 word subscript is always `\text{}` — `E_{kin}` is wrong, `E_{\text{kin}}` is right.
 
+> **`\text{}` against `\mathrm{}` is being reopened, and nothing has been changed yet.** The rule
+> above, and `subscript-unwrapped`'s message in `core/audit/checks.py`, both say `\text{}`
+> outright. The revision is that **`\mathrm{}` is the right wrapper for a *symbol*, and `\text{}`
+> stays for a *word*** — which is a real distinction and not a mechanical one, since deciding
+> which a given subscript is takes judgement per site. Deliberately deferred until the whole
+> ancient archive has landed, so the pass is done once over the finished corpus rather than twice.
+>
+> The scale, so nobody starts it by accident: **1975 `\text{}` in phys** (762 of them subscripts,
+> 4 superscripts) against 20 `\mathrm{}`; 1532 against 58 in seminar; 237 against 0 in chem; 537
+> against 1 in scholar. Until it is settled, keep writing `\text{}` — a mixed corpus is worse than
+> a consistent one that is about to change, and the check enforces `\text{}` today.
+
 ## Deduplicating across translations — and when not to
 
 Hoisting an equation into `eq:` removes the per-language latitude a translator otherwise

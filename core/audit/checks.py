@@ -1017,6 +1017,10 @@ def subscript_unwrapped(sources):
     """
     Kvík's rule: a subscript that is a word is always `\\text{}` (`\\mathrm{}` would do, `\\text{}` is
     preferred). Left bare it is a product of italic variables, which is what it looks like.
+
+    The `\\text{}`/`\\mathrm{}` preference is under review -- the coming rule is `\\mathrm{}` for a
+    symbol and `\\text{}` for a word -- and this message will have to follow it. See CLAUDE.md;
+    nothing here changes until the ancient archive has landed and the pass is done in one go.
     """
     for unit in sources.unit_list:
         seen = set()
