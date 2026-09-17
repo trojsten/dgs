@@ -21,6 +21,12 @@ RE_HEADER = re.compile(r'^\s*\d?\.?\s*(Zadania|Rie[sš]enia)\s*\d*\s*$')
 RE_CHAPTER = re.compile(r'(Zadania|Rie[sš]enia)')
 #: `12.` or `12 .` at the head of a line, which is how every problem starts.
 RE_ITEM = re.compile(r'^\s*(\d{1,2})\s*\.\s+(\S.*)$')
+#: The chapter's own title, which is what opens the solutions. **This has to be looked for
+#: before the running header**, because the opening page of a chapter carries no running head
+#: -- so splitting on the header lands on the *second* page of solutions and silently drops
+#: however many were printed on the first. In 07 that was five of forty-five.
+RE_TITLE = re.compile(r'(?:Kapitola\s*\d+\s*)?Rie[sš]enia')
+
 #: A bare page number on its own line.
 RE_FOLIO = re.compile(r'^\s*\d{1,3}\s*$')
 
@@ -40,19 +46,33 @@ def _strip_furniture(lines: list[str]) -> list[str]:
 
 def _split_chapters(lines: list[str]) -> tuple[list[str], list[str]]:
     """
-    (statements, solutions), split on the **running header**.
+    (statements, solutions), split where **the numbering restarts**.
 
-    Not on the chapter title. The title is a single line reading `Riešenia`, which is also
-    exactly what the running header reduces to once its folio is stripped -- so stripping the
-    furniture first deletes the title, and looking for the title first means finding whichever
-    the stripper left behind. The header is the reliable landmark because it repeats: the
-    first page carrying `2. Riešenia` at the top is the first page of solutions, whatever the
-    title page looks like.
+    Neither landmark in the document is reliable. The chapter title is set in a display font
+    that does not always decode, and the running header is absent from the chapter's opening
+    page -- so splitting on the header lands on the *second* page of solutions and silently
+    drops whatever was printed on the first. In 07 that was five of forty-five.
+
+    What is reliable is the numbering itself: both chapters count from 1, so the boundary is
+    where a `1.` appears after the count has climbed. That needs no furniture at all, which is
+    why it survives a booklet whose typography differs from its neighbours'.
     """
-    for i, ln in enumerate(lines):
-        if (m := RE_HEADER.match(ln)) and 'Rie' in m.group(1):
-            return lines[:i], lines[i:]
-    return lines, []
+    candidates = [i for i, ln in enumerate(lines)
+                  if (m := RE_ITEM.match(ln)) and int(m.group(1)) == 1]
+    if len(candidates) < 2:
+        return lines, []
+
+    # A statement may itself contain an enumerated list, so a `1.` is not on its own evidence
+    # of the chapter boundary -- taking the first one found eight problems where there are
+    # forty-five. The boundary is the split that leaves *both* halves with a long unbroken
+    # run, which only the real one does: a list inside a statement gives a short run on one
+    # side and a truncated chapter on the other.
+    best, best_score = None, 0
+    for i in candidates:
+        score = min(len(_items(lines[:i])), len(_items(lines[i:])))
+        if score > best_score:
+            best, best_score = i, score
+    return (lines[:best], lines[best:]) if best else (lines, [])
 
 
 def _items(lines: list[str]) -> list[tuple[int, list[str]]]:

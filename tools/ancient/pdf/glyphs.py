@@ -18,6 +18,7 @@ shift produces nonsense Slovak and so announces itself, and because 09 has no sh
 from __future__ import annotations
 
 import functools
+import hashlib
 import re
 import subprocess
 from dataclasses import dataclass
@@ -181,8 +182,12 @@ def fit_shift(raw: str) -> int:
     return best
 
 
+class WrongBookletError(Exception):
+    """A glyph table read from one booklet, handed to another."""
+
+
 @functools.cache
-def identified(volume: str) -> dict[str, dict[int, str]]:
+def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[int, str]]:
     """
     The glyphs a person has read off a contact sheet, for one booklet.
 
@@ -195,7 +200,23 @@ def identified(volume: str) -> dict[str, dict[int, str]]:
     path = Path(__file__).parent / 'glyphs' / f'{volume}.yaml'
     if not path.is_file():
         return {}
-    return yaml.safe_load(path.read_text()) or {}
+    data = yaml.safe_load(path.read_text()) or {}
+    declared = data.pop('source-md5', None)
+    # A table is only valid for the file it was read from. Each booklet is subset separately,
+    # so the same G-number means different characters in different years -- and a table
+    # applied to the wrong file does not fail, it silently returns confident wrong letters.
+    # That is the one failure mode worth an exception rather than a warning.
+    if declared and fingerprint and declared != fingerprint:
+        raise WrongBookletError(
+            f'{path.name} was read from a booklet with md5 {declared}, but this one is '
+            f'{fingerprint}. Glyph numbering is per subset; run `sheet.py` for this file.')
+    return data
+
+
+@functools.lru_cache(maxsize=None)
+def _fingerprint(pdf: Path) -> str:
+    """The booklet's md5, which is what a glyph table is valid for."""
+    return hashlib.md5(Path(pdf).read_bytes()).hexdigest()
 
 
 def _family(font: str) -> str:
@@ -218,7 +239,7 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
     mb = RE_MEDIABOX.search(raw)
     height = float(mb.group(4)) if mb else 842.0
 
-    table = identified(volume) if volume else {}
+    table = identified(volume, _fingerprint(pdf)) if volume else {}
     glyphs = []
     for font, n, uni, x, y, adv, size in _numbers(raw):
         role, style = encodings.classify(font)

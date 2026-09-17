@@ -1,3 +1,4 @@
+source-md5: b67dd8783f3fdac137ad15440bc826d5
 # Glyph identifications for `08.pdf`, read off the contact sheets `sheet.py` produces.
 #
 # These fonts are subset with glyph names that are *indices*, not character codes. `cmmi`
