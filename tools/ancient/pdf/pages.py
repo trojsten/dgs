@@ -57,9 +57,10 @@ def gutter(glyphs: list[Glyph]) -> float | None:
     for a, b in zip(inner, inner[1:]):
         if b - a > best_gap:
             best_gap, best_at = b - a, (a + b) / 2
-    # A gutter is wide. A word space is a couple of points; anything under twenty is just the
-    # gap between two columns of the same paragraph, or luck.
-    return best_at if best_gap >= 20 else None
+    # A gutter is wide *relative to the sheet*. A fixed threshold in points fails on a sheet
+    # printed at a reduction: one sheet of volume 02 kept its two columns interleaved, and the
+    # run of pages after it was lost.
+    return best_at if best_gap >= max(12.0, span * 0.025) else None
 
 
 def _folio(glyphs: list[Glyph]) -> int | None:
