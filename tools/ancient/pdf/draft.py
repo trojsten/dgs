@@ -107,12 +107,18 @@ def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]
     # and the physical order is the better guess.
     folios = [f for f, _ in collected]
     imposed = totals['halves'] > totals['pages']
+    # A folio cannot exceed the number of pages by much. Volume 02 misreads one as `78` on a
+    # twenty-page booklet, and a single outlier like that puts the whole window in the wrong
+    # place -- so it is discarded rather than trusted, and recovered along with the pages that
+    # gave up nothing.
+    limit = len(folios) + 2
+    folios = [f if f is not None and f <= limit else None for f in folios]
     known = [f for f in folios if f is not None]
 
     # A page or two will not give up its folio -- a title page has none, and a crop can lose
     # one. Those are recoverable: the numbers *missing* from the run are exactly as many as the
     # pages missing a number, so they can be handed out in physical order and then checked.
-    if imposed and known and len(known) >= len(folios) - 3:
+    if imposed and known and len(known) >= len(folios) - max(3, len(folios) // 4):
         hi = max(known)
         # The run ends at the highest folio and is exactly as long as there are pages, so the
         # missing numbers are whatever that window does not already contain.

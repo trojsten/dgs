@@ -21,6 +21,12 @@ RE_HEADER = re.compile(r'^\s*\d?\.?\s*(Zadania|Rie[sš]enia)\s*\d*\s*$')
 RE_CHAPTER = re.compile(r'(Zadania|Rie[sš]enia)')
 #: `12.` or `12 .` at the head of a line, which is how every problem starts.
 RE_ITEM = re.compile(r'^\s*(\d{1,2})\s*\.\s+(\S.*)$')
+
+#: The same thing *inside* a line, after a sentence has ended. Volume 02 sets its solutions as
+#: running prose rather than one paragraph each, so the fourteenth begins halfway along the
+#: line that finishes the thirteenth -- `… teda $a_1 = a_2$. 14. Nech vzdialenosť …`. Anchoring
+#: on the line start alone found eleven solutions of thirty-six.
+RE_INLINE_ITEM = re.compile(r'(?<=[.?!])\s+(\d{1,2})\s*\.\s+(?=\S)')
 #: The chapter's own title, which is what opens the solutions. **This has to be looked for
 #: before the running header**, because the opening page of a chapter carries no running head
 #: -- so splitting on the header lands on the *second* page of solutions and silently drops
@@ -79,23 +85,38 @@ def _items(lines: list[str]) -> list[tuple[int, list[str]]]:
     """
     Runs of lines keyed by the number that opens them.
 
-    A number only opens a problem if it is the one expected next. That single rule keeps a
-    date, a figure caption or `2.` inside a sentence from starting a spurious problem, and it
-    is why the result can be trusted as a running order rather than a guess.
+    A number only opens an item if it is roughly the one expected next. That single rule keeps
+    a date, a figure caption or a `2.` inside a sentence from starting a spurious problem, and
+    it is why the result can be trusted as a running order rather than a guess. A small forward
+    jump is allowed, because an item can be missing from the glyph stream: volume 04's solution
+    8 is, and a strict rule stopped there and lost the remaining thirty-nine.
+
+    An item may also begin *partway along a line*. Volume 02 sets its solutions as running
+    prose rather than one paragraph each, so the fourteenth starts on the line that finishes
+    the thirteenth. Only the expected number splits a line -- any other digit before a stop is
+    a date or the end of a sentence, and splitting on those would shred the prose.
     """
     out: list[tuple[int, list[str]]] = []
     want = 1
-    for ln in lines:
-        m = RE_ITEM.match(ln)
-        # A small forward jump is a *missing* item, not the end of the chapter. Volume 04's
-        # solution 8 never made it into the glyph stream, and a strictly consecutive rule
-        # stopped there and lost the remaining thirty-nine. A backward or distant number is
-        # still refused, so a `2.` inside a sentence cannot start a problem.
-        if m and want <= (number := int(m.group(1))) <= want + 3:
-            out.append((number, [m.group(2)]))
-            want = number + 1
+
+    def take(line: str) -> None:
+        nonlocal want
+        if (m := RE_ITEM.match(line)) and want <= (n := int(m.group(1))) <= want + 3:
+            out.append((n, [m.group(2)]))
+            want = n + 1
         elif out:
-            out[-1][1].append(ln)
+            out[-1][1].append(line)
+
+    for raw in lines:
+        rest = raw
+        while (m := RE_INLINE_ITEM.search(rest)):
+            n = int(m.group(1))
+            head = rest[:m.start()]
+            if not (want <= n <= want + 3 and head.strip()):
+                break
+            take(head)
+            rest = rest[m.start():].lstrip()
+        take(rest)
     return out
 
 
