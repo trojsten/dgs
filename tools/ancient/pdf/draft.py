@@ -113,6 +113,7 @@ def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]
     totals = {'lines': 0, 'y-spliced': 0, 'composed': 0, 'maths-marked': 0, 'pages': npages, 'halves': 0, 'ordered-by-folio': False,
               'values': [], 'unknown-units': []}
     shift = None
+    prose = glyphs.prose_roles(pdf)
     for page in range(1, npages + 1):
         gs, boxes, shift = glyphs.read_page(pdf, page, shift, volume)
         # A sheet may carry two pages. Splitting is a no-op for the six booklets that are not
@@ -120,7 +121,7 @@ def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]
         # are.
         for half in pages.split(gs, boxes):
             totals['halves'] += 1
-            got, rep = assemble.page_text(half.glyphs, half.boxes)
+            got, rep = assemble.page_text(half.glyphs, half.boxes, prose)
             collected.append((half.folio, got))
             for k in ('lines', 'y-spliced', 'composed', 'maths-marked'):
                 totals[k] += rep[k]

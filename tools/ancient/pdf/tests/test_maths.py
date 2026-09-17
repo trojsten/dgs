@@ -104,3 +104,54 @@ class TestAssignment:
 
     def test_a_bare_number_is_not_one_either(self):
         assert maths.assignment('f = 0,1') is None
+
+
+class TestUnicodeMaths:
+    r"""
+    What a font with readable glyph names hands back, spelled as TeX.
+
+    Only `11.pdf` names its fonts well enough for mupdf to resolve them, so these characters
+    reach the text from that booklet alone -- and none of the encoding tables ever sees them.
+    """
+
+    def test_a_minus_sign_becomes_a_hyphen(self):
+        assert maths.unicode_maths('v−5') == 'v-5'
+
+    def test_the_degree_ring_becomes_a_macro(self):
+        assert maths.unicode_maths('30◦') == r'30\circ'
+
+    def test_greek_becomes_a_macro(self):
+        assert maths.unicode_maths('α') == r'\alpha'
+
+    def test_a_macro_is_kept_off_the_letter_after_it(self):
+        # `\kappav` is a different control word, and an undefined one: the build stops there.
+        assert maths.unicode_maths('κv') == r'\kappa v'
+
+    def test_ascii_maths_is_untouched(self):
+        assert maths.unicode_maths('v = 5 - 3') == 'v = 5 - 3'
+
+
+class TestPunctuationRuns:
+    r"""
+    A maths run that is only punctuation, and what decides whether it stays maths.
+
+    `11.pdf` sets a decimal comma, a unit solidus and the `.` of a compound unit in maths
+    mode, so `4,2 kJ.kg` arrived as `4$,$2 kJ$.$kg`.
+    """
+
+    def test_a_comma_inside_a_number_is_prose(self):
+        assert maths.is_punctuation(',', '4')
+
+    def test_a_solidus_inside_a_unit_is_prose(self):
+        assert maths.is_punctuation('/', 'km')
+
+    def test_a_solidus_standing_alone_is_a_symbol(self):
+        # `04/p04` writes "klesá nadol so zrýchlením $/$" -- the character stands in for a
+        # symbol the decode could not read, and unwrapping it hides that from the reader.
+        assert not maths.is_punctuation('/', 'zrýchlením ')
+
+    def test_nothing_before_it_is_not_attached_either(self):
+        assert not maths.is_punctuation('.', '')
+
+    def test_a_formula_is_never_punctuation(self):
+        assert not maths.is_punctuation('v = 5', '4')

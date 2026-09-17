@@ -194,8 +194,13 @@ def _character(code: int | None, uni: str, role: str, shift: int) -> tuple[str |
     if role in encodings.MATH_ROLES and shifted is not None:
         if (ch := encodings.decode(shifted, role)) is not None:
             return ch, shifted
+    uni = encodings.unligate(uni)
     if uni and uni != REPLACEMENT:
-        return uni, shifted if shifted is not None else ord(uni)
+        # A ligature resolves to more than one character -- `ffi` is one glyph and three
+        # code points -- so there is no single code to report for it. `11.pdf` is the first
+        # booklet whose fonts are named well enough for mupdf to resolve those at all.
+        code_point = ord(uni) if len(uni) == 1 else 0
+        return uni, shifted if shifted is not None else code_point
     if shifted is None:
         return None, 0
     return encodings.decode(shifted, role), shifted
@@ -261,6 +266,30 @@ def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[in
 
 
 @functools.lru_cache(maxsize=None)
+def prose_roles(pdf: Path) -> frozenset[str]:
+    """
+    Which font roles carry this booklet's *prose*, as opposed to its formulas.
+
+    For nine of the ten booklets the answer is `t1` and nothing else: prose is set in `dcr`
+    (T1/Cork, which is what gives Slovak its accented letters in one byte) and `cmr` is the
+    upright roman *inside* maths -- the digits of a quantity, the `d` of a differential. A
+    `cmr` run is therefore a formula, and that is what tells `_text` where a formula begins.
+
+    **`11.pdf` has no T1 font at all.** It is the one booklet set in CSfonts -- `csr12`,
+    `csbx12`, `csti12`, the Czech/Slovak cut of Computer Modern -- with real glyph names and
+    WinAnsi encoding, and its prose is `csr`, which classifies as `ot1` like `cmr`. Read with
+    the usual rule every line of it came out as one enormous formula, correctly spelled and
+    entirely unusable: `$1.KamiónsavydalzmestaAdomestaB$`.
+
+    So it is measured rather than assumed, from the fonts the file actually embeds. A booklet
+    with a T1 font keeps the narrow rule; one without admits `ot1` as prose too.
+    """
+    info = subprocess.run(['mutool', 'info', '-F', str(pdf)], capture_output=True, text=True).stdout
+    roles = {encodings.classify(m)[0] for m in re.findall(r"'([^']+)'", info)}
+    return frozenset({'t1'}) if 't1' in roles else frozenset({'t1', 'ot1'})
+
+
+@functools.lru_cache(maxsize=None)
 def _widths(pdf: Path) -> dict[str, dict[int, list[int]]]:
     """`metrics.candidates`, once per booklet rather than once per page."""
     try:
@@ -322,6 +351,8 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
     glyphs = []
     for font, n, uni, x, y, adv, size in _numbers(raw):
         role, style = encodings.classify(font)
+        if role == 'drawing':
+            continue                # a bitmap tile inside a figure -- see `encodings.classify`
         # A read identification beats every table: it is what the glyph looks like, not what
         # an encoding says the code ought to mean.
         family, stem = _family(font), _stem(font)

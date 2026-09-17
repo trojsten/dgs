@@ -213,6 +213,19 @@ TABLES = {
 MATH_ROLES = {'math-italic', 'math-symbol', 'math-extension', 'ams'}
 
 
+#: Typographic ligatures, which arrive whole from a font whose glyph names mupdf can read.
+#: `11.pdf` is the one booklet like that, and it printed `Kirchhoﬀových` and `ﬁčí`. The
+#: characters are correct and the word is not searchable, not spell-checkable, and not what
+#: any other volume writes, so they are taken apart again; TeX re-forms them when it sets.
+LIGATURES = {'ﬀ': 'ff', 'ﬁ': 'fi', 'ﬂ': 'fl',
+             'ﬃ': 'ffi', 'ﬄ': 'ffl', 'ﬅ': 'st', 'ﬆ': 'st'}
+
+
+def unligate(text: str) -> str:
+    """`ﬁ` -> `fi`. One glyph, two letters."""
+    return ''.join(LIGATURES.get(c, c) for c in text)
+
+
 def classify(font: str) -> tuple[str, str]:
     """
     (role, style) for a PDF font name.
@@ -232,6 +245,12 @@ def classify(font: str) -> tuple[str, str]:
         ('cmbx', 'ot1'), ('cmti', 'ot1'), ('cmsl', 'ot1'), ('cmtt', 'ot1'), ('cmr', 'ot1'),
         ('csbx', 'ot1'), ('csti', 'ot1'), ('csr', 'ot1'),
         ('symbol', 'symbol'), ('math1', 'symbol'),
+        # A Type 3 font is a font of *drawings*: dvips falls back to one when a face exists
+        # only as a METAFONT bitmap, and mupdf, which cannot decode it, reports every glyph
+        # in it as `a`. In `11.pdf` all 570 of them are on one page and all of them are the
+        # water hatching inside a figure -- a tile repeated across the river. They are not
+        # text and `read_page` drops them; the figure is redrawn like every other.
+        ('unnamed-t3', 'drawing'),
     ):
         if stem.startswith(prefix):
             style = ('bold' if 'bx' in prefix else

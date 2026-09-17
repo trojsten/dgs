@@ -165,9 +165,77 @@ def composites(body: str) -> str:
     return body
 
 
+#: What mupdf resolves some maths glyphs to, against what LaTeX needs. These arrive only from
+#: a font named well enough for mupdf to read its glyph names -- `11.pdf` is the one booklet
+#: like that -- so the encoding tables never see them and nothing else would fix them up.
+UNICODE_MATHS = {
+    '−': '-',          # MINUS SIGN, which TeX writes as a plain hyphen inside maths
+    '◦': r'\circ',     # WHITE BULLET, which is how `cmsy`'s degree ring resolves
+    '∘': r'\circ',
+    '√': r'\sqrt',
+    '·': r'\cdot',
+    '≤': r'\leq', '≥': r'\geq', '≠': r'\neq',
+    '≈': r'\approx', '≡': r'\equiv', '±': r'\pm',
+    '→': r'\rightarrow', '⇒': r'\Rightarrow',
+    '∞': r'\infty', '∂': r'\partial',
+    # Greek, which a font with readable glyph names resolves to the letter itself.
+    # XeLaTeX would set some of these from the text font and drop the rest with a
+    # `Missing character` in the log and nothing on the page -- the failure mode
+    # `core/latex/math.tex` warns about -- so they are spelled as macros throughout.
+    'α': r'\alpha', 'β': r'\beta', 'γ': r'\gamma', 'δ': r'\delta',
+    'ε': r'\varepsilon', 'ζ': r'\zeta', 'η': r'\eta', 'θ': r'\theta',
+    'ι': r'\iota', 'κ': r'\kappa', 'λ': r'\lambda', 'μ': r'\mu',
+    'ν': r'\nu', 'ξ': r'\xi', 'π': r'\pi', 'ρ': r'\rho',
+    'σ': r'\sigma', 'τ': r'\tau', 'υ': r'\upsilon', 'φ': r'\varphi',
+    'χ': r'\chi', 'ψ': r'\psi', 'ω': r'\omega', 'Γ': r'\Gamma',
+    'Δ': r'\Delta', 'Θ': r'\Theta', 'Λ': r'\Lambda', 'Ξ': r'\Xi',
+    'Π': r'\Pi', 'Σ': r'\Sigma', 'Υ': r'\Upsilon', 'Φ': r'\Phi',
+    'Ψ': r'\Psi', 'Ω': r'\Omega', 'ϕ': r'\phi', 'ϑ': r'\vartheta',
+    'ϱ': r'\varrho',
+}
+
+RE_UNICODE_MATHS = re.compile('|'.join(map(re.escape, UNICODE_MATHS)))
+
+
+def unicode_maths(body: str) -> str:
+    """
+    `−` -> `-`, `◦` -> `\\circ`, `κ` -> `\\kappa`: what a readable font gives, as TeX.
+
+    A control word that runs into a letter is a *different* control word, so `κv` has to come
+    out as `\\kappa v` and not `\\kappav`, which is undefined and stops the build.
+    """
+    def substitute(m: re.Match[str]) -> str:
+        macro = UNICODE_MATHS[m.group(0)]
+        tail = m.string[m.end():m.end() + 1]
+        return macro + (' ' if macro[:1] == '\\' and tail.isalpha() else '')
+
+    return RE_UNICODE_MATHS.sub(substitute, body)
+
+
+#: A run that is nothing but punctuation, *and is attached to what precedes it*, is
+#: punctuation, whatever font it was set in. These booklets write a decimal comma, a unit
+#: solidus and the `.` between the parts of a compound unit in maths mode, so `11.pdf`
+#: produced `4$,$2 kJ$.$kg` -- five dollar signs around three characters of ordinary prose.
+RE_PUNCTUATION = re.compile(r'^[.,/;:!?\-]+$')
+
+
+def is_punctuation(body: str, before: str) -> bool:
+    """
+    Is this whole maths run punctuation to be set as prose, given what it follows?
+
+    **Attachment is what decides it, not the character.** A `/` butted against a letter is a
+    solidus -- `km/h`, `kg.m`, `4,2` -- while a `/` standing alone with a space either side is
+    a *symbol*: in the volumes whose subset fonts are scrambled, `cmmi`'s `/` is what an
+    unreadable letter decodes to, and `04/p04` says "klesá nadol so zrýchlením $/$", denoting
+    an acceleration by it. Unwrapping that one loses the reader the only signal that the
+    character is standing in for a symbol. So the rule reaches only inside a word or a number.
+    """
+    return bool(RE_PUNCTUATION.match(body)) and before[-1:] not in ('', ' ')
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
-    body, missing = quantities(body)
+    body, missing = quantities(unicode_maths(body))
     return spacing(accents(composites(operators(differences(body))))), missing
 
 

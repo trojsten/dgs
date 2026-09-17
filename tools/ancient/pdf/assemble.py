@@ -20,7 +20,8 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass, field
+from collections import Counter
+from dataclasses import dataclass, field, replace
 
 from tools.ancient.pdf import maths
 from tools.ancient.pdf.glyphs import Box, Glyph
@@ -228,6 +229,37 @@ def _attach_scripts(lines: list[Line]) -> None:
             break
 
 
+def _inline_scripts(lines: list[Line]) -> None:
+    """
+    Mark the scripts that never left their line.
+
+    `_attach_scripts` deals with a script that `_baseline_groups` put on a row of its own,
+    which is what happens when it is far enough off the baseline. **It need not be.** `11.pdf`
+    sets `C_t` with the `t` at 7.97pt against the line's 11.96 and only 1.8pt low -- inside the
+    grouping tolerance, so the two share a row and no amount of row-level work will separate
+    them. Every subscript and superscript in that booklet is like this, and they were coming
+    out flat: `C_t` as `Ct`, `v_1` as `v1`.
+
+    So the same two tests are applied within the row: markedly smaller than the line, and off
+    its baseline. A smaller face that sits *on* the baseline is not a script -- that is a size
+    change, and these booklets make plenty of them.
+    """
+    for line in lines:
+        if len(line.glyphs) < 2:
+            continue
+        sizes = Counter(round(g.size, 1) for g in line.glyphs)
+        body = sizes.most_common(1)[0][0]
+        baseline = Counter(round(g.y, 1) for g in line.glyphs
+                           if round(g.size, 1) == body).most_common(1)[0][0]
+        for i, g in enumerate(line.glyphs):
+            if g.script or g.size >= body * 0.85:
+                continue
+            offset = g.y - baseline
+            if abs(offset) < body * 0.05:
+                continue
+            line.glyphs[i] = replace(g, script='sup' if offset > 0 else 'sub')
+
+
 def _lift_marks(lines: list[Line]) -> None:
     """
     Separate the accents from the letters. These booklets use **two** mechanisms, and missing
@@ -388,7 +420,21 @@ HOIST = '\u27e6hoist:{key}|{symbol}|{magnitude}|{unit}\u27e7'
 RE_HOIST = re.compile(r'\u27e6hoist:([^|\u27e7]*)\|([^|\u27e7]*)\|([^|\u27e7]*)\|([^\u27e7]*)\u27e7')
 
 
-def _text(line: Line, values: list, missing: list[str]) -> tuple[str, list[str]]:
+def _continues(g: Glyph, prev: Glyph | None) -> bool:
+    """
+    Is this prose-font glyph part of the formula in front of it?
+
+    Only a **digit**, and only with no word space before it. `11.pdf` sets its maths italic in
+    `cmmi` but its digits in the same face as its prose, so `L/7` arrived as `$L/$7` -- the
+    divisor outside the formula it divides. Restricting it to digits is what keeps the rest of
+    the sentence out: `rýchlosťou $v$1.` joins the `1` and leaves the full stop alone.
+    """
+    return (prev is not None and g.char.isdigit()
+            and g.x - (prev.x + prev.adv) <= prev.size * 0.17)
+
+
+def _text(line: Line, values: list, missing: list[str],
+          prose: frozenset[str] = frozenset(PROSE_ROLES)) -> tuple[str, list[str]]:
     """
     One line's characters, with word spaces restored -- and its formulas marked, not guessed.
 
@@ -436,14 +482,20 @@ def _text(line: Line, values: list, missing: list[str]) -> tuple[str, list[str]]
             else:
                 tidied, unknown = maths.tidy(body)
                 missing.extend(unknown)
-                out.append(f'${tidied}$')
+                joined = maths.is_punctuation(tidied, out[-1] if out else '')
+                out.append(tidied if joined else f'${tidied}$')
         else:
             dropped.append(body)
             out.append(MATH_MARK)
         run.clear()
 
     for g in line.glyphs:
-        if g.role not in PROSE_ROLES:
+        # A script, or a digit butted against it, belongs to the run. `11.pdf` sets the minus of
+        # `kg^{-1}` in `cmsy` and the `1` in its prose face, so without this the exponent
+        # closed after the minus and printed `kg$^{-}$1`. It only ever *continues* a run:
+        # a scripted glyph on its own is left as prose, because starting one here would
+        # make a formula out of an ordinary raised letter.
+        if g.role not in prose or (run and (g.script or _continues(g, prev))):
             if not run and prev is not None:
                 gap = g.x - (prev.x + prev.adv)
                 if gap > prev.size * 0.17:
@@ -482,7 +534,8 @@ def _dehyphenate(lines: list[str]) -> list[str]:
 RE_SPACES = re.compile(r'[ \t]+')
 
 
-def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
+def page_text(glyphs: list[Glyph], boxes: list[Box],
+              prose: frozenset[str] = frozenset(PROSE_ROLES)) -> tuple[list[str], dict]:
     """
     A page's glyphs as lines of text, plus what had to be repaired to get there.
 
@@ -493,6 +546,7 @@ def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
     lines = _baseline_groups(glyphs)
     fractions = _fractions(lines, boxes)
     _attach_scripts(lines)
+    _inline_scripts(lines)
     _lift_marks(lines)
     _compose(lines)
     spliced = _splice_images(lines, boxes)
@@ -503,7 +557,7 @@ def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
     for ln in lines:
         if not ln.glyphs:
             continue
-        text, runs = _text(ln, values, missing)
+        text, runs = _text(ln, values, missing, prose)
         text = RE_SPACES.sub(' ', text).strip()
         if text:
             rendered.append(text)
