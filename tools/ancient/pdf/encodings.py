@@ -96,6 +96,14 @@ T1 = _build_t1()
 # booklet set in `cmr` rather than `dcr` has to compose every diacritic from a separate mark.
 
 _OT1_LOW = {
+    # OT1 opens with the *upper-case Greek*, which is why `\Delta` and `\Omega` appear in a
+    # text font at all -- plain TeX's `\Delta` is `\mathchar"7101`, family 0, character 0x01,
+    # and family 0 is `cmr`. Leaving these out cost nothing visible for a long time, because
+    # `glyphs/NN.yaml` had been made to carry `123: '\Delta'` and `108: '\Omega'` by hand; the
+    # font metrics later confirmed both, and confirmed that the gap was here rather than there.
+    0x00: r'\Gamma', 0x01: r'\Delta', 0x02: r'\Theta', 0x03: r'\Lambda', 0x04: r'\Xi',
+    0x05: r'\Pi', 0x06: r'\Sigma', 0x07: r'\Upsilon', 0x08: r'\Phi', 0x09: r'\Psi',
+    0x0A: r'\Omega',
     0x0B: 'ff', 0x0C: 'fi', 0x0D: 'fl', 0x0E: 'ffi', 0x0F: 'ffl',
     0x10: 'ı', 0x11: 'ȷ',
     0x12: '̀', 0x13: '́', 0x14: '̌', 0x15: '̆', 0x16: '̄',
@@ -150,6 +158,11 @@ MATH_ITALIC = {
     0x3A: '.', 0x3B: ',', 0x3C: '<', 0x3D: '/', 0x3E: '>', 0x3F: r'\star',
     0x40: r'\partial', 0x5C: r'\natural', 0x5E: r'\smile', 0x5F: r'\frown',
     0x60: r'\ell', 0x7B: r'\imath', 0x7C: r'\jmath', 0x7D: r'\wp',
+    # The **vector accent**: plain TeX's `\vec` is `\mathaccent"017E`, family 1, character
+    # 0x7E -- so an arrow over a symbol arrives as its own glyph in `cmmi`, placed over the
+    # letter rather than beside it. Leaving it out of this table did not mark it unreadable;
+    # it dropped it, and `02.pdf` alone sets sixteen. `maths.accents` puts it back on.
+    0x7E: r'\vec',
 }
 for _c in range(0x30, 0x3A):
     MATH_ITALIC.setdefault(_c, chr(_c))

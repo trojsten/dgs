@@ -36,5 +36,8 @@ cmr:
 cmsy:
   31: '\circ'
   51: '-'
-  # G30 occurs 31 times and looks like a prime, but "looks like" is not the standard these
-  # tables are held to. Left out, so it is reported and can be settled in context.
+  # `G115` (and `G73`, the same character in the 8pt subset) is the **radical sign**, not a
+  # solidus. Read off the sheet it is a thin diagonal stroke and was written down as `/`;
+  # `metrics.py` matches its width to `cmsy`'s `\surd`, and a crop with its formula around it
+  # settles it -- `06.pdf` sets $\sqrt{2}$ there, and printed `/2`.
+  # `G30` is the **prime**, which every one of these tables had left out as unreadable.

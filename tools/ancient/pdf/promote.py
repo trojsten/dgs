@@ -20,6 +20,13 @@ so when the draft has stopped being a draft.
   `--force` is given, because `phys/02` already holds three hand-made problems that came from
   the same booklet and must not be flattened by a machine.
 
+`--reconcile` is the answer to that last case, and it is not `--force`. Volume 02's
+`speed-halved`, `first-cosmic` and `rolling-ball` **are** the booklet's problems 1, 3 and 19;
+they were transcribed by hand years ago and are better than any decode. So the draft names
+them in its slug table, and reconciling keeps the tree's copy untouched while putting the slug
+in its printed position in `problems:` -- which is the one thing the decode knows and the
+existing volume does not. Nothing is written, and nothing is duplicated either.
+
 A volume that fails any gate is reported in full and nothing is written. Partial promotion is
 worse than none: it leaves a tree that looks converted and is not.
 """
@@ -45,7 +52,8 @@ def _problems(draft: Path) -> list[str]:
 
 
 def check(draft: Path, slugs: dict[str, str], target: Path,
-          force: bool = False, incomplete: bool = False) -> list[str]:
+          force: bool = False, incomplete: bool = False,
+          reconcile: bool = False) -> list[str]:
     """
     Everything wrong with promoting this draft, in the order a person would fix it.
 
@@ -68,7 +76,7 @@ def check(draft: Path, slugs: dict[str, str], target: Path,
             complaints.append(f'{pid}: not named in the slug table')
         elif not RE_SLUG.match(slug):
             complaints.append(f'{pid}: `{slug}` is not a valid slug')
-        elif (target / 'problems' / slug).exists() and not force:
+        elif (target / 'problems' / slug).exists() and not (force or reconcile):
             complaints.append(f'{pid} -> {slug}: already exists in the tree')
 
         if incomplete:
@@ -91,7 +99,7 @@ def check(draft: Path, slugs: dict[str, str], target: Path,
 
 def promote(draft: Path, target: Path, slugs: dict[str, str],
             force: bool = False, dry_run: bool = False,
-            incomplete: bool = False) -> list[str]:
+            incomplete: bool = False, reconcile: bool = False) -> list[str]:
     """
     Copy a checked draft into the tree, under its real names.
 
@@ -99,7 +107,7 @@ def promote(draft: Path, target: Path, slugs: dict[str, str],
     printed order -- position in that list *is* the running order, and it is what the build
     iterates, so a problem missing from it is never built at all.
     """
-    if (complaints := check(draft, slugs, target, force, incomplete)):
+    if (complaints := check(draft, slugs, target, force, incomplete, reconcile)):
         return ['refusing to promote:', *(f'  {c}' for c in complaints)]
 
     problems = _problems(draft)
@@ -107,6 +115,9 @@ def promote(draft: Path, target: Path, slugs: dict[str, str],
     done = []
     for pid in problems:
         src, dst = draft / 'problems' / pid, target / 'problems' / slugs[pid]
+        if reconcile and not force and dst.exists():
+            done.append(f'{pid} -> {slugs[pid]} (kept, already in the tree)')
+            continue
         if not dry_run:
             if dst.exists():
                 shutil.rmtree(dst)
@@ -149,11 +160,13 @@ def main() -> None:
     ap.add_argument('--force', action='store_true', help='overwrite problems already there')
     ap.add_argument('--incomplete', action='store_true',
                     help='waive the quality gates; keeps the overwrite protection')
+    ap.add_argument('--reconcile', action='store_true',
+                    help='keep a problem the tree already has, but place it in the order')
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
     slugs = yaml.safe_load(a.slugs.read_text()) if a.slugs and a.slugs.is_file() else {}
     print('\n'.join(promote(a.draft, a.target, slugs or {}, a.force, a.dry_run,
-                             a.incomplete)))
+                             a.incomplete, a.reconcile)))
 
 
 if __name__ == '__main__':

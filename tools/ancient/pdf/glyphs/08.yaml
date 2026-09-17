@@ -112,13 +112,19 @@ cmsy:
   9: '\pm'
   28: '\approx'
   29: '\pm'
+  30: '\prime'
   31: '\circ'
   36: '\rightarrow'
   44: '\Rightarrow'
   51: '-'
   53: '\notin'
-  73: '/'
+  73: '\sqrt'
   107: '\langle'
   108: '\rangle'
   109: '|'
-  115: '/'
+  115: '\sqrt'
+  # `G115` (and `G73`, the same character in the 8pt subset) is the **radical sign**, not a
+  # solidus. Read off the sheet it is a thin diagonal stroke and was written down as `/`;
+  # `metrics.py` matches its width to `cmsy`'s `\surd`, and a crop with its formula around it
+  # settles it -- `06.pdf` sets $\sqrt{2}$ there, and printed `/2`.
+  # `G30` is the **prime**, which every one of these tables had left out as unreadable.

@@ -1,0 +1,109 @@
+source-md5: 24c880d539b39be90b004bd680bcf074
+# Glyph identifications for `02.pdf`.
+#
+# **This booklet is two documents merged, and they are subset differently.** Every other year
+# here has one numbering per family, which is why `_family` drops the size; `02.pdf` has two,
+# and they disagree -- `G4` is `h` in one `cmr` and `\Delta` in the other, `G51` is `(` in one
+# and `0` in the other. So this table is keyed by **font stem** rather than by family, which
+# `glyphs.read_page` looks up first.
+#
+# The split runs by design size, not by scale: the 10, 7 and 5 point cuts of `cmr`, `cmmi`
+# and `cmsy` are **plain OT1 shifted by three** and need no table at all -- they are
+# declared trusted below, and the sheet confirms them glyph for glyph, `G14` alpha through
+# `G90` W. The 12, 8 and 6 point cuts are the merged scramble that 03, 04 and 05 also carry,
+# and are listed.
+#
+# The scrambled `cmr` agrees with `03.yaml` and `04.yaml` wherever the two overlap, which is
+# the useful part: the scramble is a property of the toolchain these authors ran, not of one
+# booklet. The scrambled `cmmi` is this year's own, and `metrics.py` -- matching each glyph's
+# `/Widths` entry against `cmmi12.tfm` -- agrees with every character read off the contact
+# sheet. Where the width was unique it decided outright; where two characters share a width
+# the sheet chose between them, and the sheet's choice was inside the allowed set every time.
+trust:
+  - cmr100385
+  - cmr70269
+  - cmr50192
+  - cmmi100385
+  - cmmi70269
+  - cmmi50192
+  - cmsy100385
+  - cmsy70269
+
+# --- the 12/8/6 pt stream, subset as one scrambled merge ----------------------
+cmr120462: &cmr
+  4: 'h'
+  6: 'A'
+  12: '3'
+  25: 'C'
+  28: ')'
+  33: 'k'
+  39: '='
+  50: '2'
+  52: 'm'
+  68: '5'
+  69: '('
+  73: '%'
+  83: '6'
+  85: 'c'
+  97: 'J'
+  98: '9'
+  101: '4'
+  102: '0'
+  108: '\Omega'
+  113: '?'
+  116: 's'
+  120: '\Phi'
+  125: 'g'
+  129: '1'
+cmr80308: *cmr
+cmr60231: *cmr
+
+cmmi120462: &cmmi
+  5: 'h'
+  8: 'A'
+  11: '\varrho'
+  15: 'v'
+  18: 'B'
+  27: 'P'
+  28: 'C'
+  37: 'x'
+  39: 'Q'
+  40: 'D'
+  41: '\varphi'
+  42: '/'
+  43: 'y'
+  45: 'R'
+  47: '\omega'
+  52: '\rho'
+  54: 'm'
+  55: 'S'
+  58: '>'
+  62: '\mu'
+  64: 'a'
+  65: 'T'
+  67: 'G'
+  75: 'b'
+  77: 'H'
+  79: '\vec'
+  82: 'p'
+  83: 'c'
+  84: 'V'
+  85: 'I'
+  94: 'q'
+  95: 'd'
+  98: '\lambda'
+  105: '\vartheta'
+  106: '\sigma'
+  107: '\alpha'
+  114: 's'
+  115: 'f'
+  117: 'L'
+  124: 't'
+  127: 'M'
+  # G99 is a narrow mark the widths place among `.`, `,`, `\lfloor` and `\rfloor` and the
+  # sheet cannot split; left out, so its two occurrences are reported rather than guessed.
+cmmi80308: *cmmi
+
+cmsy80308:
+  30: '\prime'
+  31: '\circ'

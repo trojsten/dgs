@@ -117,10 +117,58 @@ def operators(body: str) -> str:
     return RE_OPERATOR.sub(lambda m: '\\' + m.group(1), body)
 
 
+#: A maths accent is set *over* its symbol, so it reaches the decode as a separate glyph at
+#: almost the same x. TeX puts the accent's origin a hair to the *left* of the letter it
+#: covers -- `m\vec v` traces as `m`@343.1, the arrow@354.0, `v`@354.5 -- so the glyph after
+#: the accent is the one it belongs to, and that rule is applied first.
+RE_ACCENT_PREFIX = re.compile(r'\\vec\s*(\\?[A-Za-z]+)')
+#: Only for an accent the prefix pass could not place, which happens when the accent ends a
+#: row. The `{` in the look-ahead matters as much as the letters: without it this fires again
+#: on the `\vec{v}` the prefix pass just wrote and takes the `m` in front of it as well. Running this as one alternation with the rule above gets `m\vec v` wrong: the suffix
+#: branch starts a character earlier, so it wins the match and yields `\vec{m} v` -- the arrow
+#: on the mass rather than on the velocity, which is a statement about different physics.
+RE_ACCENT_SUFFIX = re.compile(r'(\\?[A-Za-z]+)\s*\\vec(?![A-Za-z{])')
+
+
+def accents(body: str) -> str:
+    r"""`\vec B` and a stranded `B\vec` both -> `\vec{B}`."""
+    body = RE_ACCENT_PREFIX.sub(lambda m: f'\\vec{{{m.group(1)}}}', body)
+    return RE_ACCENT_SUFFIX.sub(lambda m: f'\\vec{{{m.group(1)}}}', body)
+
+
+#: Relations TeX builds by **overstriking two glyphs**, and the pieces they arrive as.
+#:
+#: `\doteq` is a `.` set over an `=` and `\notin` a `/` over an `\in`; the PDF records two
+#: placements at almost the same x, and the decode -- which reads along a baseline -- emits
+#: both. So `04/p12` came out as `= \doteq 10`, two relations where the booklet printed one,
+#: and `08/p23` as `V\notin/\langle …`, with the slash stranded after the symbol it belongs
+#: on. Both orders are handled, because which piece is laid down first is the typesetter's
+#: business and not stable.
+#:
+#: This is the whole list. It is not the general problem of overstriking -- that would need
+#: the positions, which `assemble` has already spent -- but these two are what this corpus
+#: actually contains, and naming them is better than leaving the doubled relation in the text.
+COMPOSITES = (
+    (r'=\s*\\doteq', r'\\doteq'),
+    (r'\\doteq\s*=', r'\\doteq'),
+    (r'\\notin\s*/', r'\\notin'),
+    (r'/\s*\\notin', r'\\notin'),
+)
+
+RE_COMPOSITES = tuple((re.compile(a), b) for a, b in COMPOSITES)
+
+
+def composites(body: str) -> str:
+    r"""Put an overstruck relation back together: `= \doteq` -> `\doteq`."""
+    for pattern, replacement in RE_COMPOSITES:
+        body = pattern.sub(replacement, body)
+    return body
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
     body, missing = quantities(body)
-    return spacing(operators(differences(body))), missing
+    return spacing(accents(composites(operators(differences(body))))), missing
 
 
 #: `s = 100 km` and nothing else: a single symbol, a relation, a number, a unit. Anything

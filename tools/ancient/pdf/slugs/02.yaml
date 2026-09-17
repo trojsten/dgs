@@ -1,0 +1,15 @@
+# Náboj 1999 -> volume 02. The key is the provisional id `draft.py` gave each problem, which is
+# its printed number in the `Zadania` chapter; the value is the slug it takes in the tree.
+#
+# **Only three entries, and they are the reconciliation.** `phys/02` has held `speed-halved`,
+# `first-cosmic` and `rolling-ball` since long before this conversion -- transcribed by hand
+# from the same booklet, and better than any decode of it. What was never recorded is *where*
+# they sat in the round. The decode answers that: they are problems 1, 3 and 19, matched on
+# their text, not on their names.
+#
+# So `promote --reconcile` leaves all three files exactly as they are and uses this table only
+# to put them in their printed positions in `problems:`. The other thirty-three problems keep
+# their provisional ids until the volume is named in one sitting.
+p01: speed-halved
+p03: first-cosmic
+p19: rolling-ball

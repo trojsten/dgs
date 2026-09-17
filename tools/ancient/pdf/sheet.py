@@ -37,6 +37,10 @@ class Specimen:
     adv: float
     size: float
     count: int
+    #: Whether the page this specimen sits on is printed on its side. `glyphs._numbers` maps a
+    #: rotated page into the upright space everything downstream assumes, so a crop has to
+    #: undo that mapping to find the glyph again on the paper.
+    rotated: bool = False
 
 
 def collect(pdf: Path, roles: set[str] | None = None) -> list[Specimen]:
@@ -52,15 +56,18 @@ def collect(pdf: Path, roles: set[str] | None = None) -> list[Specimen]:
     best: dict[tuple[str, int], Specimen] = {}
     counts: dict[tuple[str, int], int] = {}
     for page in range(1, pages + 1):
-        for font, n, _uni, x, y, adv, size in glyphs._numbers(glyphs.trace(pdf, page)):
+        raw = glyphs.trace(pdf, page)
+        turned = glyphs.page_rotated(raw)
+        for font, n, _uni, x, y, adv, size in glyphs._numbers(raw):
             role, _ = encodings.classify(font)
             if n is None or role not in roles:
                 continue
             key = (font, n)
             counts[key] = counts.get(key, 0) + 1
             if key not in best:
-                best[key] = Specimen(font, n, page, x, y, adv * size, size, 0)
-    return sorted((Specimen(s.font, s.number, s.page, s.x, s.y, s.adv, s.size, counts[k])
+                best[key] = Specimen(font, n, page, x, y, adv * size, size, 0, turned)
+    return sorted((Specimen(s.font, s.number, s.page, s.x, s.y, s.adv, s.size,
+                            counts[k], s.rotated)
                    for k, s in best.items()),
                   key=lambda s: (s.font, -s.count))
 
@@ -75,21 +82,38 @@ def crop(pdf: Path, spec: Specimen, out: Path, dpi: int = DPI) -> Path:
     crop is a glyph identified wrongly.
     """
     scale = dpi / 72.0
-    height = 842.0
-    # Tight to the glyph's own advance. A generous box shows the neighbours too, and then the
-    # sheet asks which of three characters the label refers to -- which is how a contact sheet
+    # Glyph coordinates come out of `glyphs.read_page` in device space with y negated, so that
+    # larger means higher up. The raster measures y downward from the head of the page, which
+    # is exactly the un-negated device value -- no page height involved, and none assumed.
+    #
+    # Tight to the glyph's own advance: a generous box shows the neighbours too, and then the
+    # sheet asks which of three characters the label refers to, which is how a contact sheet
     # produces confident wrong answers.
     pad = spec.size * 0.06
-    x0 = (spec.x - pad) * scale
-    y0 = (height - spec.y - spec.size * 0.95) * scale
-    w = (spec.adv + 2 * pad) * scale
-    h = (spec.size * 1.35) * scale
+    if spec.rotated:
+        # `_numbers` turned this page a quarter turn to put it in the upright space, by
+        # `(x, y) = (-device_y, -device_x)`. Undo exactly that: the baseline runs *up* the
+        # paper, so the advance is a height and the glyph's own body is a width.
+        x0 = (-spec.y - spec.size * 0.95) * scale
+        y0 = (-spec.x - spec.adv - pad) * scale
+        w = (spec.size * 1.35) * scale
+        h = (spec.adv + 2 * pad) * scale
+    else:
+        x0 = (spec.x - pad) * scale
+        y0 = (-spec.y - spec.size * 0.95) * scale
+        w = (spec.adv + 2 * pad) * scale
+        h = (spec.size * 1.35) * scale
     out.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         ['pdftocairo', '-png', '-r', str(dpi), '-f', str(spec.page), '-l', str(spec.page),
          '-x', str(int(x0)), '-y', str(int(y0)), '-W', str(max(int(w), 8)),
          '-H', str(max(int(h), 8)), '-singlefile', str(pdf), str(out.with_suffix(''))],
         check=True, capture_output=True)
+    if spec.rotated:
+        # Set the tile back on its feet, or the sheet asks to be read sideways -- which is how
+        # a `2` and a `-` become indistinguishable.
+        subprocess.run(['magick', str(out), '-rotate', '90', str(out)],
+                       check=True, capture_output=True)
     return out
 
 

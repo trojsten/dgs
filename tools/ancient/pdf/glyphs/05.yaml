@@ -1,18 +1,21 @@
-source-md5: adb483ee7511d259e881c7a8638b610e
-# Glyph identifications for `03.pdf`, read off the contact sheet `sheet.py` produces.
+source-md5: 1a0a7f1e8ea24771f6bc33add6cfa834
+# Glyph identifications for `05.pdf`. `cmmi` is trusted rather than read -- see `03.yaml`.
 #
-# `cmmi` is declared trusted rather than read: its Greek sits exactly three above its own code
-# points -- alpha at G14, lambda at G24, mu at G25, pi at G28, tau at G31, varepsilon at G37 --
-# which the sheet confirms rather than establishes. `cmr` is a merged subset and scrambled
-# (`=` at G39, `x` at G32, and a `Delta` at G123 that OT1 has no room for), so it is read.
+# The `cmr` numbering here is the same scramble as `03` and `04`, glyph for glyph, which the
+# sheet *confirms* rather than assumes: 05 was read cold and every number it shares with those
+# two agrees. That is worth more than the table itself, because it says the merged subset is a
+# property of the toolchain these authors ran, not of a single booklet -- and the sheet catches
+# it if a year ever departs from it.
+#
+# This volume is imposed two-up, so it carries three sizes of `cmr` (1204, 8030, 6022) and two
+# of `cmsy`. `_family` keys them together, and the sizes agree with one another throughout.
 trust: [cmmi]
 cmr:
+  7: '\doteq'
   12: '3'
   16: 'i'
-  25: 'C'
   28: ')'
   32: 'x'
-  33: 'k'
   39: '='
   46: '7'
   50: '2'
@@ -21,14 +24,10 @@ cmr:
   64: 'a'
   68: '5'
   69: '('
-  71: ':'
   72: '8'
   76: 'o'
   83: '6'
   85: 'c'
-  86: 'V'
-  96: 'W'
-  97: 'J'
   98: '9'
   101: '4'
   102: '0'
@@ -42,13 +41,19 @@ cmr:
   129: '1'
 cmsy:
   3: '-'
-  28: '\approx'
+  4: '\cdot'
+  9: '\pm'
+  23: '\leq'
+  24: '\geq'
   30: '\prime'
   31: '\circ'
+  32: '\gg'
   36: '\rightarrow'
   44: '\Rightarrow'
   51: '-'
   52: '\infty'
+  53: '\in'
+  66: '\perp'
   109: '|'
   115: '\sqrt'
   # `G115` (and `G73`, the same character in the 8pt subset) is the **radical sign**, not a

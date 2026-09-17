@@ -26,7 +26,7 @@ from pathlib import Path
 
 import yaml
 
-from tools.ancient.pdf import encodings
+from tools.ancient.pdf import encodings, metrics
 
 RE_SPAN = re.compile(r'<span font="([^"]*)"[^>]*trm="([^"]*)"')
 RE_TEXTBLOCK = re.compile(r'<fill_text[^>]*transform="([^"]*)"')
@@ -261,14 +261,41 @@ def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[in
 
 
 @functools.lru_cache(maxsize=None)
+def _widths(pdf: Path) -> dict[str, dict[int, list[int]]]:
+    """`metrics.candidates`, once per booklet rather than once per page."""
+    try:
+        return metrics.candidates(pdf)
+    except Exception:
+        # A booklet whose fonts carry no usable metric -- 09 and 10, whose fonts are TrueType
+        # and CID -- must still convert. The other channels have always been enough there.
+        return {}
+
+
+@functools.lru_cache(maxsize=None)
 def _fingerprint(pdf: Path) -> str:
     """The booklet's md5, which is what a glyph table is valid for."""
     return hashlib.md5(Path(pdf).read_bytes()).hexdigest()
 
 
+def _stem(font: str) -> str:
+    """`ILLJBL+cmr120450` -> `cmr1204`. The subset prefix goes; nothing else does."""
+    return font.split('+')[-1].lower()
+
+
 def _family(font: str) -> str:
-    """`ILLJBL+cmmi120450` -> `cmmi`. The size is dropped: cmr8 and cmr12 share a numbering."""
-    stem = font.split('+')[-1].lower().lstrip('0123456789')
+    """
+    `ILLJBL+cmmi120450` -> `cmmi`. The size is dropped, because one booklet's `cmr8` and
+    `cmr12` are normally cut from one merged subset and share a numbering.
+
+    **Normally, not always.** `02.pdf` carries two independent `cmr` subsets: `cmr1003`,
+    `cmr7026` and `cmr5019` are plain OT1 shifted by three, while `cmr1204`, `cmr8030` and
+    `cmr6023` are the scrambled merge that 03, 04 and 05 also use -- so in that booklet G51
+    is `0` in one and `(` in the other. A table keyed on the family alone would hand the
+    scramble to the plain subset and produce a page of confident wrong letters, which is the
+    one failure these tables exist to prevent. Hence `read_page` looks the stem up first and
+    only falls back here, and `glyphs/02.yaml` is keyed by stem.
+    """
+    stem = _stem(font).lstrip('0123456789')
     return re.match(r'^[a-z]+', stem).group(0) if re.match(r'^[a-z]+', stem) else stem
 
 
@@ -287,20 +314,32 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
     height = float(mb.group(4)) if mb else 842.0
 
     table = identified(volume, _fingerprint(pdf)) if volume else {}
+    # The second channel. `metrics` reads each subset font's own `/Widths` against the TeX
+    # metric it names, which identifies a glyph without anyone looking at it -- see that
+    # module for why it is worth having beside the hand-read tables rather than instead of
+    # them. It is consulted only where the table is silent.
+    widths = _widths(pdf)
     glyphs = []
     for font, n, uni, x, y, adv, size in _numbers(raw):
         role, style = encodings.classify(font)
         # A read identification beats every table: it is what the glyph looks like, not what
         # an encoding says the code ought to mean.
-        family = _family(font)
-        ch = table.get(family, {}).get(n) if n is not None else None
+        family, stem = _family(font), _stem(font)
+        # The stem wins where a booklet names one: see `_family` for the booklet that needs it.
+        entries = table.get(stem) or table.get(family) or {}
+        ch = entries.get(n) if n is not None else None
         # A family listed under `trust:` decodes by its standard table rather than by reading.
         # `cmmi` earns that in every booklet checked so far -- its Greek sits exactly three
         # above its own code points, which is a proof the sheet only confirms -- while `cmr`
         # is a merged subset and is scrambled, so it is never trusted.
-        sure = (ch is not None or family in table.get('_trust', ())
+        trusted = table.get('_trust', ())
+        sure = (ch is not None or family in trusted or stem in trusted
                 or (role in ('t1', 'ot1') and not table))
         code = n if n is not None else 0
+        if ch is None and n is not None:
+            if len(found := widths.get(stem, {}).get(n, ())) == 1:
+                ch, code = encodings.decode(found[0], role), found[0]
+                sure = sure or ch is not None
         if ch is None:
             ch, code = _character(n, uni, role, shift)
             sure = sure or role == 't1' or (uni not in ('', REPLACEMENT))
