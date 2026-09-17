@@ -93,9 +93,79 @@ def _baseline_groups(glyphs: list[Glyph], tolerance: float = 2.0) -> list[Line]:
     return lines
 
 
-#: The true combining code points, which T1 puts at 0x00-0x0C. A glyph carrying one of these
-#: is always an accent, wherever it sits.
-COMBINING_CHARS = {c for c in MARKS if c >= '\u0300'}
+#: Marks that are always an accent, wherever they sit: the true combining code points T1 puts
+#: at 0x00-0x0C, **and the spacing modifiers** `ˇ` and `´`. The second group matters -- volume
+#: 09 sets its carons with U+02C7, which sorts below U+0300 and so was being left in the text
+#: as a literal character, giving `ˇze` for `že` and `súˇcet` for `súčet`.
+#:
+#: A comma, an apostrophe and a backtick stay out: those are punctuation far more often than
+#: they are accents, and are lifted only when a whole line is made of them.
+COMBINING_CHARS = ({c for c in MARKS if c >= '\u0300'} |
+                   {'\u02C7', '\u00B4', '\u02D8', '\u02DA', '\u02DD'})
+
+
+def _fractions(lines: list[Line], boxes: list[Box]) -> int:
+    r"""
+    Rebuild `\frac{}{}` from a rule and the two rows around it.
+
+    A fraction leaves three marks in a PDF and no markup at all: a short horizontal rule, a
+    row of glyphs above it and a row below, both set smaller than the text they sit in. Nothing
+    says they belong together except their geometry.
+
+    **This has to run before `_attach_scripts`**, which would otherwise take the two rows for a
+    superscript and a subscript and produce `3^{}_{4}` where `\frac{3}{4}` belongs -- which is
+    what `f = \frac{3}{4}\tan\alpha` was coming out as.
+
+    Size is what separates the parts from the line they interrupt: a numerator is 9pt against
+    the host's 13.5pt, and the host's own glyphs run through the same x range.
+    """
+    if not lines:
+        return 0
+    # The *modal* size, not the largest. A chapter title is the largest thing on its page, and
+    # measuring against it made every line of body text count as "small" -- so on volume 09's
+    # opening page the fraction pass consumed the prose itself and segmented nothing.
+    weights: dict[float, int] = {}
+    for ln in lines:
+        if ln.glyphs:
+            weights[ln.size] = weights.get(ln.size, 0) + len(ln.glyphs)
+    if not weights:
+        return 0
+    host_size = max(weights, key=weights.get)
+    small = [ln for ln in lines if ln.glyphs and ln.size < host_size * 0.9]
+    built = 0
+
+    for bar in boxes:
+        if not bar.rule or bar.width > 60:
+            continue
+        span = (bar.x0 - 1, bar.x1 + 1)
+        above, below = [], []
+        for ln in small:
+            reach = ln.size * 2.2
+            part = [g for g in ln.glyphs if span[0] <= g.x <= span[1]]
+            if not part:
+                continue
+            if 0 < ln.y - bar.y0 < reach:
+                above.append((ln, part))
+            elif 0 < bar.y0 - ln.y < reach:
+                below.append((ln, part))
+        if not above or not below:
+            continue
+
+        num = ''.join(g.char for _, part in above for g in part)
+        den = ''.join(g.char for _, part in below for g in part)
+        for ln, part in above + below:
+            ln.glyphs = [g for g in ln.glyphs if g not in part]
+
+        host = min((ln for ln in lines if ln.glyphs and ln.size >= host_size * 0.9),
+                   key=lambda ln: abs(ln.y - bar.y0), default=None)
+        if host is None:
+            continue
+        ref = host.glyphs[0]
+        host.glyphs.append(Glyph(f'\\frac{{{num}}}{{{den}}}', bar.x0, host.y,
+                                 bar.width, ref.size, 'math-italic', 'italic', 0, True))
+        host.glyphs.sort(key=lambda g: g.x)
+        built += 1
+    return built
 
 
 def _attach_scripts(lines: list[Line]) -> None:
@@ -234,8 +304,10 @@ def _splice_images(lines: list[Line], boxes: list[Box], char: str = 'ý') -> int
                 at = j
                 break
         ref = target.glyphs[min(at, len(target.glyphs) - 1)]
+        # Always prose, whatever it lands next to. Inheriting the neighbour's role put the `ý`
+        # of `rovný` inside the formula that followed it, which then read `rovn$ýf = …$`.
         target.glyphs.insert(at, Glyph(char, box.x0, target.y, box.width,
-                                       ref.size, ref.role, ref.style, 0xFD))
+                                       ref.size, 't1', ref.style, 0xFD))
         spliced += 1
     return spliced
 
@@ -377,6 +449,7 @@ def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
     went well.
     """
     lines = _baseline_groups(glyphs)
+    fractions = _fractions(lines, boxes)
     _attach_scripts(lines)
     _lift_marks(lines)
     _compose(lines)
@@ -397,6 +470,7 @@ def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
         'lines': len(rendered),
         'maths-marked': len(dropped),
         'y-spliced': spliced,
+        'fractions': fractions,
         'composed': sum(1 for ln in lines for g in ln.glyphs
                         if len(unicodedata.normalize('NFD', g.char)) > 1),
         'values': values,

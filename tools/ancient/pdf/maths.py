@@ -104,10 +104,23 @@ def spacing(body: str) -> str:
     return RE_RELATION.sub(r' \1 ', body).strip()
 
 
+#: Function names TeX sets upright and spaces properly. Written out rather than detected,
+#: because a bare `sin` in a formula is three italic variables to LaTeX and looks it.
+OPERATORS = ('arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh',
+             'sin', 'cos', 'tan', 'cot', 'log', 'ln', 'exp', 'max', 'min')
+
+RE_OPERATOR = re.compile(r'(?<!\\)\b(' + '|'.join(OPERATORS) + r')\b')
+
+
+def operators(body: str) -> str:
+    r"""`tan\alpha` -> `\tan\alpha`. Longest first, so `arctan` is not read as `arc` + `tan`."""
+    return RE_OPERATOR.sub(lambda m: '\\' + m.group(1), body)
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
     body, missing = quantities(body)
-    return spacing(differences(body)), missing
+    return spacing(operators(differences(body))), missing
 
 
 #: `s = 100 km` and nothing else: a single symbol, a relation, a number, a unit. Anything
