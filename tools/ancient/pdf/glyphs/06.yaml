@@ -1,0 +1,47 @@
+source-md5: 3af335a6d09c005fbb67402bc6f3cfe9
+# Glyph identifications for `06.pdf`. `cmmi` is trusted rather than read -- see `03.yaml`.
+#
+# This year puts accented letters in `cmr`, which the others do not, and its G14 does not look
+# like the same character at 12pt as at 8pt -- `š` against `č`. Since a family is keyed once
+# for all its sizes here, G14 is left out and reported rather than settled by eye from two
+# contaminated crops.
+trust: [cmmi]
+cmr:
+  12: '3'
+  16: 'i'
+  28: ')'
+  39: '='
+  46: '7'
+  50: '2'
+  63: 'n'
+  64: 'a'
+  68: '5'
+  69: '('
+  71: ':'
+  72: '8'
+  76: 'o'
+  83: '6'
+  85: 'c'
+  98: '9'
+  101: '4'
+  102: '0'
+  104: 'r'
+  110: '+'
+  116: 's'
+  123: '\Delta'
+  124: 't'
+  125: 'g'
+  129: '1'
+cmsy:
+  3: '-'
+  5: '\times'
+  31: '\circ'
+  36: '\rightarrow'
+  44: '\Rightarrow'
+  51: '-'
+  102: '\times'
+  107: '\langle'
+  108: '\rangle'
+  109: '|'
+  115: '/'
+  # G30 and G73 are unclear; left out so they are reported.

@@ -1,0 +1,53 @@
+source-md5: adb483ee7511d259e881c7a8638b610e
+# Glyph identifications for `03.pdf`, read off the contact sheet `sheet.py` produces.
+#
+# `cmmi` is declared trusted rather than read: its Greek sits exactly three above its own code
+# points -- alpha at G14, lambda at G24, mu at G25, pi at G28, tau at G31, varepsilon at G37 --
+# which the sheet confirms rather than establishes. `cmr` is a merged subset and scrambled
+# (`=` at G39, `x` at G32, and a `Delta` at G123 that OT1 has no room for), so it is read.
+trust: [cmmi]
+cmr:
+  12: '3'
+  16: 'i'
+  25: 'C'
+  28: ')'
+  32: 'x'
+  33: 'k'
+  39: '='
+  46: '7'
+  50: '2'
+  52: 'm'
+  63: 'n'
+  64: 'a'
+  68: '5'
+  69: '('
+  71: ':'
+  72: '8'
+  76: 'o'
+  83: '6'
+  85: 'c'
+  86: 'V'
+  96: 'W'
+  97: 'J'
+  98: '9'
+  101: '4'
+  102: '0'
+  104: 'r'
+  108: '\Omega'
+  110: '+'
+  116: 's'
+  123: '\Delta'
+  124: 't'
+  125: 'g'
+  129: '1'
+cmsy:
+  3: '-'
+  28: '\approx'
+  31: '\circ'
+  36: '\rightarrow'
+  44: '\Rightarrow'
+  51: '-'
+  52: '\infty'
+  109: '|'
+  115: '/'
+  # G30 is unclear on the sheet and is left out, so it is reported rather than guessed.

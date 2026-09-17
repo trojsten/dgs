@@ -10,6 +10,7 @@ source-md5: b67dd8783f3fdac137ad15440bc826d5
 # Keyed by font family rather than by size: cmr8 and cmr12 agree glyph for glyph in this
 # booklet, as do cmmi6, cmmi8 and cmmi12, so one table serves all sizes. Anything absent is
 # reported by `draft.py`, never guessed.
+trust: [cmmi]
 cmr:
   4: 'h'
   5: 'N'

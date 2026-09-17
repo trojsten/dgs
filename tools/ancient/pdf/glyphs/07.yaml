@@ -9,6 +9,7 @@ source-md5: 51e01f4944101450d950faf32ea9ae91
 # one workflow over several years produces. It is still read per file rather than inherited:
 # `glyphs.identified` binds a table to the md5 above, because the same G-number meaning a
 # different character is exactly the silent corruption a table exists to prevent.
+trust: [cmmi]
 cmr:
   12: '3'
   16: 'i'

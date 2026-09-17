@@ -202,6 +202,7 @@ def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[in
         return {}
     data = yaml.safe_load(path.read_text()) or {}
     declared = data.pop('source-md5', None)
+    data['_trust'] = set(data.pop('trust', []) or [])
     # A table is only valid for the file it was read from. Each booklet is subset separately,
     # so the same G-number means different characters in different years -- and a table
     # applied to the wrong file does not fail, it silently returns confident wrong letters.
@@ -245,8 +246,14 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
         role, style = encodings.classify(font)
         # A read identification beats every table: it is what the glyph looks like, not what
         # an encoding says the code ought to mean.
-        ch = table.get(_family(font), {}).get(n) if n is not None else None
-        sure = ch is not None or role in ('t1', 'ot1') and not table
+        family = _family(font)
+        ch = table.get(family, {}).get(n) if n is not None else None
+        # A family listed under `trust:` decodes by its standard table rather than by reading.
+        # `cmmi` earns that in every booklet checked so far -- its Greek sits exactly three
+        # above its own code points, which is a proof the sheet only confirms -- while `cmr`
+        # is a merged subset and is scrambled, so it is never trusted.
+        sure = (ch is not None or family in table.get('_trust', ())
+                or (role in ('t1', 'ot1') and not table))
         code = n if n is not None else 0
         if ch is None:
             ch, code = _character(n, uni, role, shift)

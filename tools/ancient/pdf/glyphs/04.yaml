@@ -1,0 +1,40 @@
+source-md5: bb492d8170166fc4a71991c289bd7cc9
+# Glyph identifications for `04.pdf`. `cmmi` is trusted rather than read -- see `03.yaml`.
+trust: [cmmi]
+cmr:
+  7: '\doteq'
+  12: '3'
+  16: 'i'
+  25: 'C'
+  28: ')'
+  32: 'x'
+  39: '='
+  50: '2'
+  52: 'm'
+  63: 'n'
+  64: 'a'
+  68: '5'
+  69: '('
+  71: ':'
+  72: '8'
+  76: 'o'
+  83: '6'
+  85: 'c'
+  98: '9'
+  100: '['
+  101: '4'
+  102: '0'
+  104: 'r'
+  108: '\Omega'
+  110: '+'
+  111: ']'
+  116: 's'
+  123: '\Delta'
+  124: 't'
+  125: 'g'
+  129: '1'
+cmsy:
+  31: '\circ'
+  51: '-'
+  # G30 occurs 31 times and looks like a prime, but "looks like" is not the standard these
+  # tables are held to. Left out, so it is reported and can be settled in context.

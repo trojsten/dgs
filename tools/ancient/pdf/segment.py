@@ -87,9 +87,13 @@ def _items(lines: list[str]) -> list[tuple[int, list[str]]]:
     want = 1
     for ln in lines:
         m = RE_ITEM.match(ln)
-        if m and int(m.group(1)) == want:
-            out.append((want, [m.group(2)]))
-            want += 1
+        # A small forward jump is a *missing* item, not the end of the chapter. Volume 04's
+        # solution 8 never made it into the glyph stream, and a strictly consecutive rule
+        # stopped there and lost the remaining thirty-nine. A backward or distant number is
+        # still refused, so a `2.` inside a sentence cannot start a problem.
+        if m and want <= (number := int(m.group(1))) <= want + 3:
+            out.append((number, [m.group(2)]))
+            want = number + 1
         elif out:
             out[-1][1].append(ln)
     return out
@@ -103,10 +107,13 @@ def problems(lines: list[str]) -> tuple[list[Problem], list[str]]:
     worth converting, and `draft.py` puts the complaint in `report.md` where it can be acted
     on per problem instead of stopping the whole year.
     """
-    # Split first, strip second: the furniture and the chapter title are the same string.
+    # Strip the furniture *first*. A running header reads `1. Zadania 3`, which matches the
+    # shape of an item exactly -- so with the headers left in, every page of statements looked
+    # like a chapter boundary and the real one was indistinguishable from them. This is safe
+    # now only because the split is on the numbering rather than on the header itself.
+    lines = _strip_furniture(lines)
     zad, rie = _split_chapters(lines)
-    statements = _items(_strip_furniture(zad))
-    solutions = dict(_items(_strip_furniture(rie)))
+    statements, solutions = _items(zad), dict(_items(rie))
 
     complaints: list[str] = []
     if not statements:
