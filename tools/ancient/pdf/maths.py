@@ -231,9 +231,19 @@ def pint_unit(tail: str) -> str | None:
     So the exponent form is rewritten to a solidus first, and whatever comes out is *parsed*
     before it is accepted. A unit that fails is not hoisted at all -- it stays in the prose as
     `\qty{}`, where `units.py`'s macro is right and no pint ever sees it.
+
+    **And it must be a unit this corpus is known to write**, which is what `units.py` records.
+    That gate is not belt-and-braces: pint will happily read `hg` as a hectogram and `c` as the
+    speed of light, so a fountain came out playing at two hectograms, and `08/p30`'s `v = 0.2c`
+    -- which is perfectly good physics -- hoisted to a unit pint renders as `\speed_of_light`,
+    which is not TeX and stopped the build. Neither is a unit these authors write in a
+    statement, and `units.py` says so. A unit outside it is reported, which is that module's
+    documented contract, and the prose keeps it as written.
     """
     candidate = _reciprocal(tail) or tail
     if not re.fullmatch(r'[A-Za-z]+(?:/[A-Za-z]+)?', candidate):
+        return None
+    if candidate not in UNITS:
         return None
     try:
         from core.builder.jinja import ureg

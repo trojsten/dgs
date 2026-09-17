@@ -168,6 +168,17 @@ def _fractions(lines: list[Line], boxes: list[Box]) -> int:
     return built
 
 
+def _is_mark_row(line: Line) -> bool:
+    """
+    Is this whole line a raised row of accents rather than text?
+
+    `ď ľ ť` are set with a comma-shaped mark on a baseline of its own above the line, so such a
+    row is made of nothing but marks. Both `_attach_scripts` and `_lift_marks` need to know,
+    and they must agree: the test lives here so it cannot be written twice and drift.
+    """
+    return bool(line.glyphs) and all(g.char in MARKS and not g.maths for g in line.glyphs)
+
+
 def _attach_scripts(lines: list[Line]) -> None:
     r"""
     Fold exponents and indices back into the line they belong to.
@@ -179,26 +190,42 @@ def _attach_scripts(lines: list[Line]) -> None:
     A script line is *smaller* and *near*: a fraction of the host's size, within about
     two-thirds of it vertically. Both tests are needed. Size alone would swallow a footnote;
     proximity alone would swallow the next line of prose.
+
+    **It goes to the nearest host, and a row of accents is not a host.** Slovak sets `ď ľ ť`
+    with the mark on a raised row of its own, and such a row sits between the prose lines --
+    so it is both nearer to a superscript than the line the superscript belongs to, and, being
+    full size and made of ordinary comma glyphs rather than combining ones, eligible under the
+    two tests above. Taking the first eligible host in document
+    order put `08/p25`'s `^{-1}` on the comma row above it, which left the boat's speed
+    reading `3 ms` -- three milliseconds, hoisted into `values:` and printed without complaint,
+    because a millisecond is a perfectly good unit. Four of the eight booklets had one.
     """
-    hosts = [ln for ln in lines if ln.glyphs]
-    for line in list(hosts):
-        if line not in lines:
-            continue
-        for other in list(hosts):
-            if other is line or other not in lines or not other.glyphs:
+    attached = True
+    while attached:
+        attached = False
+        for other in [ln for ln in lines if ln.glyphs]:
+            best, best_offset = None, None
+            for line in lines:
+                if line is other or not line.glyphs or _is_mark_row(line):
+                    continue
+                if other.size >= line.size * 0.85:
+                    continue
+                offset = other.y - line.y
+                if offset == 0 or abs(offset) > line.size * 0.7:
+                    continue
+                if best is None or abs(offset) < abs(best_offset):
+                    best, best_offset = line, offset
+            if best is None:
                 continue
-            if other.size >= line.size * 0.85:
-                continue
-            offset = other.y - line.y
-            if abs(offset) > line.size * 0.7 or offset == 0:
-                continue
-            kind = 'sup' if offset > 0 else 'sub'
-            line.glyphs.extend(
-                Glyph(g.char, g.x, line.y, g.adv, g.size, g.role, g.style, g.code,
+            kind = 'sup' if best_offset > 0 else 'sub'
+            best.glyphs.extend(
+                Glyph(g.char, g.x, best.y, g.adv, g.size, g.role, g.style, g.code,
                       g.sure, kind)
                 for g in other.glyphs)
-            line.glyphs.sort(key=lambda g: g.x)
+            best.glyphs.sort(key=lambda g: g.x)
             lines.remove(other)
+            attached = True
+            break
 
 
 def _lift_marks(lines: list[Line]) -> None:
@@ -217,7 +244,7 @@ def _lift_marks(lines: list[Line]) -> None:
     not what was printed.
     """
     for line in lines:
-        if line.glyphs and all(g.char in MARKS and not g.maths for g in line.glyphs):
+        if _is_mark_row(line):
             line.marks, line.glyphs = line.glyphs, []          # a raised accent row
         else:
             inline = [g for g in line.glyphs if g.char in COMBINING_CHARS and not g.maths]
@@ -355,7 +382,13 @@ def _script_runs(run: list[Glyph]) -> list[str]:
     return out
 
 
-def _text(line: Line, values: dict, missing: list[str]) -> tuple[str, list[str]]:
+#: A hoisted quantity, carried in the text until a problem claims it. The brackets are
+#: U+27E6/U+27E7, which nothing in these booklets contains and no rule in `rules.py` touches.
+HOIST = '\u27e6hoist:{key}|{symbol}|{magnitude}|{unit}\u27e7'
+RE_HOIST = re.compile(r'\u27e6hoist:([^|\u27e7]*)\|([^|\u27e7]*)\|([^|\u27e7]*)\|([^\u27e7]*)\u27e7')
+
+
+def _text(line: Line, values: list, missing: list[str]) -> tuple[str, list[str]]:
     """
     One line's characters, with word spaces restored -- and its formulas marked, not guessed.
 
@@ -389,8 +422,17 @@ def _text(line: Line, values: dict, missing: list[str]) -> tuple[str, list[str]]
             # appears. Anything more elaborate is a formula and stays as maths.
             if (found := maths.assignment(body)) is not None:
                 key, symbol, magnitude, unit = found
-                values[key] = (symbol, magnitude, unit)
-                out.append(f'$(§ {key}.eq §)$')
+                values.append(found)
+                # **The hoist travels inside the line, not beside it.** `values:` is a
+                # per-problem mapping, and the problems are not split until much later --
+                # segmentation strips furniture and reorders folios, so a line's index here
+                # means nothing there. Keyed by symbol in a booklet-wide dictionary, the last
+                # `v = ...` in the file silently won for every problem containing a `v`, and
+                # `08/p07`'s gas vessel ended up with the volume of `08/p25`'s boat's speed.
+                # So the value rides along in the placeholder and `draft.py` resolves it
+                # against the problem that actually owns the line.
+                out.append(HOIST.format(key=key, symbol=symbol,
+                                        magnitude=magnitude, unit=unit))
             else:
                 tidied, unknown = maths.tidy(body)
                 missing.extend(unknown)
@@ -456,7 +498,7 @@ def page_text(glyphs: list[Glyph], boxes: list[Box]) -> tuple[list[str], dict]:
     spliced = _splice_images(lines, boxes)
 
     rendered, dropped = [], []
-    values: dict[str, tuple[str, str, str]] = {}
+    values: list[tuple[str, str, str, str]] = []
     missing: list[str] = []
     for ln in lines:
         if not ln.glyphs:

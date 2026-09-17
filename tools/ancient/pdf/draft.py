@@ -57,6 +57,37 @@ ANSWER = """\
 """
 
 
+def claim(lines: list[str]) -> tuple[list[str], dict[str, tuple[str, str, str]]]:
+    """
+    Resolve one problem's hoisted quantities, and give it the `values:` they belong to.
+
+    A quantity the statement gives is found while the page is assembled, long before the
+    problems are split -- so the value rides along inside the line as a placeholder and is
+    claimed here, by the problem that actually owns it. Both halves of a problem are passed in
+    together, so a symbol its statement gives and its solution uses is one entry.
+
+    **A key is per problem, so a clash is per problem too.** Two different quantities sharing a
+    symbol inside one problem would otherwise silently take each other's number; the second is
+    given a suffixed key instead, which prints as its own symbol and is visible in the meta.
+    """
+    values: dict[str, tuple[str, str, str]] = {}
+    seen: dict[str, str] = {}
+
+    def resolve(m):
+        key, symbol, magnitude, unit = m.groups()
+        record = (symbol, magnitude, unit)
+        if seen.get(key) not in (None, record):
+            n = 2
+            while seen.get(f'{key}{n}') not in (None, record):
+                n += 1
+            key = f'{key}{n}'
+        seen[key] = record
+        values[key] = record
+        return f'$(§ {key}.eq §)$'
+
+    return [assemble.RE_HOIST.sub(resolve, ln) for ln in lines], values
+
+
 def body(lines: list[str]) -> str:
     """
     A problem's lines as Markdown, normalised the way every other converted volume is.
@@ -80,7 +111,7 @@ def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]
                  .stdout.split('Pages: ')[1].split()[0])
     collected: list[tuple[int | None, list[str]]] = []
     totals = {'lines': 0, 'y-spliced': 0, 'composed': 0, 'maths-marked': 0, 'pages': npages, 'halves': 0, 'ordered-by-folio': False,
-              'values': {}, 'unknown-units': []}
+              'values': [], 'unknown-units': []}
     shift = None
     for page in range(1, npages + 1):
         gs, boxes, shift = glyphs.read_page(pdf, page, shift, volume)
@@ -93,7 +124,7 @@ def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]
             collected.append((half.folio, got))
             for k in ('lines', 'y-spliced', 'composed', 'maths-marked'):
                 totals[k] += rep[k]
-            totals['values'].update(rep['values'])
+            totals['values'].extend(rep['values'])
             totals['unknown-units'].extend(rep['unknown-units'])
     # **Order the whole booklet by folio, not each sheet on its own.** Saddle-stitching pairs
     # the first page with the last, so the sheets arrive 2/34, 4/32, 6/30 -- sorting within a
@@ -165,8 +196,9 @@ def write(out: Path, volume: str, pdf: Path, dry_run: bool = False) -> str:
             pid = provisional(p.number)
             root = out / volume / 'problems' / pid
             (root / 'sk').mkdir(parents=True, exist_ok=True)
-            text = '\n'.join(p.statement + p.solution)
-            used = {k: v for k, v in totals['values'].items() if f'({chr(167)} {k}.' in text}
+            claimed, used = claim(p.statement + p.solution)
+            statement = claimed[:len(p.statement)]
+            solution = claimed[len(p.statement):]
             meta = META.format(source=pdf.name, number=p.number, volume=volume)
             if used:
                 meta += VALUES + ''.join(
@@ -174,9 +206,9 @@ def write(out: Path, volume: str, pdf: Path, dry_run: bool = False) -> str:
                     for k, (sym, mag, unit) in sorted(used.items()))
             (root / 'meta.yaml').write_text(meta)
             (root / 'answer.md').write_text(ANSWER)
-            (root / 'sk' / 'problem.md').write_text(body(p.statement) + '\n')
+            (root / 'sk' / 'problem.md').write_text(body(statement) + '\n')
             (root / 'sk' / 'solution.md').write_text(
-                body(p.solution) + '\n' if p.solution else
+                body(solution) + '\n' if solution else
                 '%# TODO(solution): the booklet prints none for this problem.\n')
         (out / volume / 'report.md').write_text('\n'.join(report))
 

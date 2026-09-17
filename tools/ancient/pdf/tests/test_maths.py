@@ -60,3 +60,47 @@ class TestDifferences:
 
     def test_a_lone_delta_is_the_letter(self):
         assert maths.differences(r'\Delta = 5') == r'\Delta = 5'
+
+
+class TestPintUnit:
+    r"""
+    What may be hoisted into `values:`, which pint reads and `units.py` does not.
+
+    Every rejection below is a quantity that reached a `meta.yaml` before this gate existed.
+    """
+
+    def test_the_exponent_form_becomes_a_solidus(self):
+        # The booklets write a metre per second as `ms^{-1}`. pint reads that same string as
+        # one over a millisecond -- wrong by nine orders of magnitude, and silent.
+        assert maths.pint_unit('ms^{-1}') == 'm/s'
+
+    def test_a_plain_unit_passes(self):
+        assert maths.pint_unit('kg') == 'kg'
+
+    def test_the_speed_of_light_is_not_a_unit_to_hoist(self):
+        # `08/p30` gives v = 0.2c, which is good physics. pint reads `c` as the speed of light
+        # and renders it `\speed_of_light`, which is not TeX, and the build stopped there.
+        assert maths.pint_unit('c') is None
+
+    def test_a_unit_the_corpus_never_writes_is_refused(self):
+        # A fountain came out playing at two hectograms, because pint knows `hg`.
+        assert maths.pint_unit('hg') is None
+
+    def test_a_compound_that_did_not_split_is_refused(self):
+        # A spring constant is N/m; `Nm` is a newton-metre, which is a different quantity.
+        assert maths.pint_unit('Nm') is None
+
+
+class TestAssignment:
+    def test_a_given_quantity_is_hoisted(self):
+        assert maths.assignment('s=100km') == ('s', 's', '100', 'km')
+
+    def test_a_decimal_comma_becomes_a_point(self):
+        # These booklets are Slovak and write `1,5`; YAML and pint want `1.5`.
+        assert maths.assignment('t=1,5h')[2] == '1.5'
+
+    def test_a_formula_is_not_a_given_quantity(self):
+        assert maths.assignment('E=mc^{2}') is None
+
+    def test_a_bare_number_is_not_one_either(self):
+        assert maths.assignment('f = 0,1') is None
