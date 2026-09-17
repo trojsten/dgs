@@ -24,7 +24,7 @@ import argparse
 from pathlib import Path
 
 from tools.ancient import rules
-from tools.ancient.pdf import assemble, glyphs, segment
+from tools.ancient.pdf import assemble, glyphs, pages, segment
 
 
 #: Until a slug table names them, problems are `p07` and so on -- provisional on purpose, and
@@ -76,20 +76,26 @@ def body(lines: list[str]) -> str:
 def read_booklet(pdf: Path, volume: str | None = None) -> tuple[list[str], dict]:
     """Every line of a booklet, in reading order, with the repair counts."""
     import subprocess
-    pages = int(subprocess.run(['mutool', 'info', str(pdf)], capture_output=True, text=True)
-                .stdout.split('Pages: ')[1].split()[0])
+    npages = int(subprocess.run(['mutool', 'info', str(pdf)], capture_output=True, text=True)
+                 .stdout.split('Pages: ')[1].split()[0])
     lines: list[str] = []
-    totals = {'lines': 0, 'y-spliced': 0, 'composed': 0, 'maths-marked': 0, 'pages': pages,
+    totals = {'lines': 0, 'y-spliced': 0, 'composed': 0, 'maths-marked': 0, 'pages': npages, 'halves': 0,
               'values': {}, 'unknown-units': []}
     shift = None
-    for page in range(1, pages + 1):
+    for page in range(1, npages + 1):
         gs, boxes, shift = glyphs.read_page(pdf, page, shift, volume)
-        got, rep = assemble.page_text(gs, boxes)
-        lines.extend(got)
-        for k in ('lines', 'y-spliced', 'composed', 'maths-marked'):
-            totals[k] += rep[k]
-        totals['values'].update(rep['values'])
-        totals['unknown-units'].extend(rep['unknown-units'])
+        # A sheet may carry two pages. Splitting is a no-op for the six booklets that are not
+        # imposed, and the difference between prose and interleaved nonsense for the two that
+        # are.
+        halves = pages.split(gs, boxes)
+        totals['halves'] += len(halves)
+        for half in halves:
+            got, rep = assemble.page_text(half.glyphs, half.boxes)
+            lines.extend(got)
+            for k in ('lines', 'y-spliced', 'composed', 'maths-marked'):
+                totals[k] += rep[k]
+            totals['values'].update(rep['values'])
+            totals['unknown-units'].extend(rep['unknown-units'])
     totals['shift'] = shift
     return lines, totals
 
@@ -99,7 +105,8 @@ def write(out: Path, volume: str, pdf: Path, dry_run: bool = False) -> str:
     found, complaints = segment.problems(lines)
 
     report = [f'# {pdf.name} -> volume {volume}', '',
-              f'- pages: {totals["pages"]}, lines: {totals["lines"]}',
+              f'- sheets: {totals["pages"]}, logical pages: {totals["halves"]}, '
+              f'lines: {totals["lines"]}',
               f'- encoding shift: {totals["shift"]}',
               f'- `ý` bitmaps spliced: {totals["y-spliced"]}',
               f'- accents composed: {totals["composed"]}',

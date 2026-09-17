@@ -29,6 +29,7 @@ import yaml
 from tools.ancient.pdf import encodings
 
 RE_SPAN = re.compile(r'<span font="([^"]*)"[^>]*trm="([^"]*)"')
+RE_TEXTBLOCK = re.compile(r'<fill_text[^>]*transform="([^"]*)"')
 RE_GLYPH = re.compile(r'<g unicode="([^"]*)" glyph="([^"]*)" x="([-\d.]+)" y="([-\d.]+)" adv="([-\d.]+)"')
 RE_GNAME = re.compile(r'^G?(\d+)$')
 
@@ -109,6 +110,21 @@ def trace(pdf: Path, page: int) -> str:
         capture_output=True, text=True, check=True).stdout
 
 
+def page_rotated(raw: str) -> bool:
+    """Is this page's text turned on its side? True when most spans say so."""
+    turned = upright = 0
+    for m in RE_SPAN.finditer(raw):
+        try:
+            a, b = (abs(float(v)) for v in m.group(2).split()[:2])
+        except ValueError:
+            continue
+        if b > a:
+            turned += 1
+        else:
+            upright += 1
+    return turned > upright
+
+
 def _numbers(raw: str) -> list[tuple[str, int | None, str, float, float, float, float]]:
     """
     (font, glyph number or None, mupdf's unicode, x, y, adv, size) in drawing order.
@@ -118,19 +134,49 @@ def _numbers(raw: str) -> list[tuple[str, int | None, str, float, float, float, 
     unicode, which is the case for 10.pdf, where the names are real (`one`, `period`, `Z`).
     """
     out = []
-    font, size = '', 10.0
+    font, size, rotated = '', 10.0, False
+    # The current transformation matrix of the text block. **Each block carries its own**, and
+    # on an imposed sheet the two columns are two blocks with different ones -- so ignoring it
+    # laid volume 05's two logical pages exactly on top of each other, which is why its folios
+    # read as one page and its gutter could not be found. It also carries the A4-to-A5
+    # reduction these booklets are printed at.
+    ctm = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
     for line in raw.splitlines():
+        if (mb := RE_TEXTBLOCK.search(line)):
+            try:
+                ctm = tuple(float(v) for v in mb.group(1).split()[:6])
+            except ValueError:
+                ctm = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
         if (m := RE_SPAN.search(line)):
             font = m.group(1)
+            # The text matrix is `a b c d`. Upright text has the size in `a`; text turned on
+            # its side has `a = 0` and the size in `b`, which is why volume 02 -- printed two
+            # up and rotated ninety degrees -- came out with every glyph at size zero and
+            # every line a single character.
             try:
-                size = abs(float(m.group(2).split()[0]))
+                a, b = (abs(float(v)) for v in m.group(2).split()[:2])
+                size = max(a, b) or 10.0
+                rotated = b > a
             except (ValueError, IndexError):
-                size = 10.0
+                size, rotated = 10.0, False
         for g in RE_GLYPH.finditer(line):
             uni, name, x, y, adv = g.groups()
             n = RE_GNAME.match(name)
-            out.append((font, int(n.group(1)) if n else None, uni,
-                        float(x), float(y), float(adv), size))
+            a, b, c, d, e, f = ctm
+            gx0, gy0 = float(x), float(y)
+            # Into device space, then negate y so that larger still means higher up, which is
+            # what the line clustering assumes.
+            gx = a * gx0 + c * gy0 + e
+            gy = -(b * gx0 + d * gy0 + f)
+            scale = abs(a * d - b * c) ** 0.5 or 1.0
+            gsize = size * scale
+            if rotated:
+                # Rotated text runs up the page at constant x, so lines share an *x* and
+                # advance in *y*. Mapped here into the one space everything downstream
+                # assumes: a line shares a baseline and advances rightwards.
+                gx, gy = gy, -gx
+            out.append((font, int(n.group(1)) if n else None, uni, gx, gy,
+                        float(adv), gsize))
     return out
 
 
@@ -264,7 +310,14 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
 
     boxes = []
     kind, pts = None, []
+    turned = page_rotated(raw)
+    pctm = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
     for line in raw.splitlines():
+        if (mt := re.search(r'transform="([^"]*)"', line)) and ('path' in line or 'image' in line):
+            try:
+                pctm = tuple(float(v) for v in mt.group(1).split()[:6])
+            except ValueError:
+                pctm = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
         if (m := RE_PATHOPEN.search(line)):
             if kind and pts:
                 xs, ys = [p[0] for p in pts], [p[1] for p in pts]
@@ -280,13 +333,31 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
             # happens to be nearest.
             parts = RE_IMAGE.search(line).group(1).split()
             try:
-                a, _b, _c, d, e, f = (float(v) for v in parts[:6])
-                top, bottom = f, f + abs(d)
-                boxes.append(Box('image', e, height - bottom, e + abs(a), height - top))
+                a, ib, ic, d, e, f = (float(v) for v in parts[:6])
+                # The CTM maps the unit square onto the placement, so the box is the transform
+                # of its four corners -- not `|a|` by `|d|`, which is zero for a rotated
+                # placement, and not the column lengths either, which give the right numbers
+                # the wrong way round and then get rotated a second time.
+                corners = [(a * u + ic * v + e, ib * u + d * v + f)
+                           for u, v in ((0, 0), (1, 0), (0, 1), (1, 1))]
+                cxs = [c[0] for c in corners]
+                cys = [c[1] for c in corners]
+                # Same space as the glyphs: device coordinates with y negated, so that
+                # `larger` still means `higher up`. Matching a bitmap to its line is the whole
+                # point, and the two have to be measured the same way.
+                bx0, by0, bx1, by1 = min(cxs), -max(cys), max(cxs), -min(cys)
+                if turned:
+                    # The glyphs were mapped out of the rotated space; a bitmap sitting among
+                    # them has to make the same journey or it lands a page away from its word.
+                    bx0, by0, bx1, by1 = by0, -bx1, by1, -bx0
+                boxes.append(Box('image', bx0, by0, bx1, by1))
             except ValueError:
                 pass
         for p in RE_POINT.finditer(line):
-            pts.append((float(p.group(1)), float(p.group(2))))
+            pa, pb, pc, pd, pe, pf = pctm
+            px, py = float(p.group(1)), float(p.group(2))
+            tx, ty = pa * px + pc * py + pe, -(pb * px + pd * py + pf)
+            pts.append((ty, -tx) if turned else (tx, ty))
     if kind and pts:
         xs, ys = [p[0] for p in pts], [p[1] for p in pts]
         boxes.append(Box(kind, min(xs), min(ys), max(xs), max(ys)))
