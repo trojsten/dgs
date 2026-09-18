@@ -254,6 +254,8 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'mag': lambda q: q.mag,
             'unit': PhysicsQuantity.only_unit,
             'sim': PhysicsQuantity.simplify,
+            # An angle as degrees, arcminutes and arcseconds -- see `angle_dms`.
+            'dms': latex.angle_dms,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |

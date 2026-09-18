@@ -99,6 +99,7 @@ digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`,
 | `|unit`              | Just the unit, formatted as `\unit{…}`.                   |
 | `|sim`               | `.simplify()` — convert to base SI units.                 |
 | `|snap(quantum)` | Round a range's ends outward onto a grid: `r|snap(10)` → 11550–11570. |
+| `|dms(places)` | An angle as degrees, arcminutes, arcseconds: `a|dms(2)` → `\ang{44;9;}`. |
 
 Every family exists both bare and suffixed `0`–`9`. Bare means "no precision in
 the format spec", i.e. Python's default for that kind: `f` gives six decimals

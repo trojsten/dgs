@@ -263,3 +263,35 @@ def math_aligned(math: MathObject, punct: str = '') -> str:
         (* eq | align('.') *)    →  $${\n    a &= b.\n}$$ {#eq:id}
     """
     return f"{math:align{punct}}"
+
+
+def angle_dms(x, places: int = 3) -> str:
+    r"""
+    An angle as siunitx's `\ang{d;m;s}`: degrees, arcminutes, arcseconds.
+
+    `\ang{44;9;}` prints `44° 9′`, which is how an older booklet states an angle and how most
+    people still read one off a protractor. It is the same number as `\ang{44.15}`, so it
+    belongs in `answer-also.md` -- *uznajte aj* -- rather than replacing the decimal form.
+
+    `places` chooses how far to go: 1 degrees, 2 degrees and minutes, 3 with seconds. The
+    rounding happens once, in the smallest place, and carries upward -- rounding each component
+    on its own turns 44° 59′ 59.6″ into 44° 59′ 60″, which is not a time anyone writes.
+
+    A bare number is taken to be degrees already; a `PhysicsQuantity` is converted, so a
+    quantity in radians or gradians comes out right.
+    """
+    if places not in (1, 2, 3):
+        raise ValueError(f"angle_dms places must be 1, 2 or 3, got {places}")
+    degrees = x.to('degree').mag if hasattr(x, 'to') else float(x)
+    sign = '-' if degrees < 0 else ''
+    total = round(abs(degrees) * 60 ** (places - 1))
+    components = []
+    for _ in range(places - 1):
+        total, remainder = divmod(total, 60)
+        components.insert(0, str(remainder))
+    components.insert(0, f'{sign}{total}')
+    if places == 1:
+        return rf'\ang{{{components[0]}}}'
+    # siunitx takes the three fields positionally and accepts an empty one, so stopping at
+    # minutes is a trailing `;` rather than a different macro.
+    return rf'\ang{{{";".join(components + [""] * (3 - places))}}}'

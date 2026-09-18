@@ -1,9 +1,11 @@
+import math
 import datetime
 
 import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.latex import (
+    angle_dms,
     approx_exponential,
     approx_float,
     approx_general,
@@ -360,3 +362,41 @@ class TestSnapFilter:
         assert env.from_string('(§ r|f0 §)').render(r=span) == \
             r'\qtyrange{11555}{11569}{\kilo\metre}'
 
+
+
+class TestAngleDms:
+    r"""`|dms` writes an angle the way a protractor is read: `\ang{44;9;}` -> 44° 9′."""
+
+    @staticmethod
+    def deg(value):
+        return PhysicsQuantity.construct(value, 'degree')
+
+    def test_degrees_minutes_and_seconds(self):
+        assert angle_dms(self.deg(44.1495)) == r'\ang{44;8;58}'
+
+    def test_stopping_at_minutes_leaves_the_field_empty(self):
+        # siunitx takes the three fields positionally, so this is a trailing `;` and not a
+        # different macro. `08/hohmann` prints 44 deg 9 min, which is what its booklet states.
+        assert angle_dms(self.deg(44.1495), 2) == r'\ang{44;9;}'
+
+    def test_degrees_alone_need_no_separators(self):
+        assert angle_dms(self.deg(44.1495), 1) == r'\ang{44}'
+
+    def test_the_rounding_carries(self):
+        # The quiet case. Rounding each component on its own gives `44;59;60`, which is not an
+        # angle anyone writes; the rounding happens once, in the smallest place.
+        assert angle_dms(self.deg(44.99999), 2) == r'\ang{45;0;}'
+        assert angle_dms(self.deg(44.999999), 3) == r'\ang{45;0;0}'
+
+    def test_a_negative_angle_keeps_its_sign_on_the_degrees(self):
+        assert angle_dms(self.deg(-12.5)) == r'\ang{-12;30;0}'
+
+    def test_an_angle_in_another_unit_is_converted(self):
+        assert angle_dms(PhysicsQuantity.construct(math.pi, 'radian'), 1) == r'\ang{180}'
+
+    def test_a_bare_number_is_taken_as_degrees(self):
+        assert angle_dms(90.0, 1) == r'\ang{90}'
+
+    def test_an_impossible_number_of_places_is_refused(self):
+        with pytest.raises(ValueError, match='places'):
+            angle_dms(self.deg(1), 4)
