@@ -88,6 +88,37 @@ class QuantityRange:
             unitf = ''
         return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
 
+    def snap(self, quantum: float) -> Self:
+        """
+        Round the ends outward onto a grid of `quantum`, in this range's own unit.
+
+        `__format__` already moves each end outward to the last place it prints, which is what
+        keeps the printed band from rejecting a correct answer. This is the same operation with
+        the grid chosen rather than inferred, and it exists because the format spec cannot ask
+        for one coarser than a whole unit: `.0f` is as far as it goes, and an answer good to
+        four figures in kilometres needs ten.
+
+        `08/same-parallel` is the case. Its band runs 11555 - 11569 km across the two Earth
+        radii, and a solver who takes the 6378 km their school taught gets 11568.7 and writes
+        11570. Snapping to 10 km prints 11550 - 11570 and accepts them. That is not padding:
+        the endpoints do not move by a chosen margin, they move onto the precision the answer
+        is actually good to, and the band still contains exactly the admissible values.
+
+        **Not `widen`.** `widen` multiplies the width by a factor of someone's choosing, which
+        is how `29/bouncy-v` came to hide a rounding defect rather than fix it. This moves each
+        end to the next grid point and no further, and snapping an already-snapped range is a
+        no-op.
+        """
+        import math
+        assert quantum > 0, f"snap quantum must be positive, got {quantum}"
+        eps = 1e-9 * max(1.0, abs(self.minimum.mag / quantum), abs(self.maximum.mag / quantum))
+        low = math.floor(self.minimum.mag / quantum + eps) * quantum
+        high = math.ceil(self.maximum.mag / quantum - eps) * quantum
+        return self.__class__(
+            PhysicsQuantity.construct(low, self.minimum.unit, si_extra=self.minimum.si_extra),
+            PhysicsQuantity.construct(high, self.maximum.unit, si_extra=self.maximum.si_extra),
+        )
+
     def widen(self, value: float) -> Self:
         """
         Return a new range whose width is multiplied by ``(1 + value)``,

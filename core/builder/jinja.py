@@ -248,6 +248,9 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'af': latex.approx_float,
             'ag': latex.approx_general,
             'ae': latex.approx_exponential,
+            # Round a range's ends outward onto a grid, where the format spec cannot:
+            # `.0f` is the coarsest it offers and an answer may be good to less.
+            'snap': lambda obj, quantum: obj.snap(quantum),
             'w': lambda obj, value: obj.widen(value),      # This is so that we can call it on both Quantity and Range
             'widen': lambda obj, value: obj.widen(value),
             'mag': lambda q: q.mag,

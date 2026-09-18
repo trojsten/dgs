@@ -337,3 +337,26 @@ class TestFormatExponential:
     def test_a_string_is_a_type_error(self):
         with pytest.raises(TypeError):
             format_exponential('1.004e-4')
+
+
+class TestSnapFilter:
+    """`|snap(q)` on a range, which is how a template asks for a grid coarser than `.0f`."""
+
+    def test_it_reaches_the_range(self):
+        from core.builder.context.quantities import PhysicsQuantity, QuantityRange
+        from core.builder.jinja import MarkdownJinjaRenderer
+        env = MarkdownJinjaRenderer().env
+        span = QuantityRange(PhysicsQuantity.construct(11555.9, 'kilometre'),
+                             PhysicsQuantity.construct(11568.6, 'kilometre'))
+        out = env.from_string('(§ r|snap(10)|f0 §)').render(r=span)
+        assert out == r'\qtyrange{11550}{11570}{\kilo\metre}'
+
+    def test_without_it_the_grid_is_the_last_printed_place(self):
+        from core.builder.context.quantities import PhysicsQuantity, QuantityRange
+        from core.builder.jinja import MarkdownJinjaRenderer
+        env = MarkdownJinjaRenderer().env
+        span = QuantityRange(PhysicsQuantity.construct(11555.9, 'kilometre'),
+                             PhysicsQuantity.construct(11568.6, 'kilometre'))
+        assert env.from_string('(§ r|f0 §)').render(r=span) == \
+            r'\qtyrange{11555}{11569}{\kilo\metre}'
+

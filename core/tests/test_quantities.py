@@ -630,6 +630,61 @@ class TestQuantityWiden:
 # --- Range guardrails ----------------------------------------------------
 
 
+class TestRangeSnap:
+    """
+    `snap` chooses the grid the ends round outward onto, where the format spec cannot: `.0f`
+    is the coarsest precision it offers, and an answer may be good to less than a whole unit.
+
+    `08/same-parallel` spans 11555 to 11569 km across the two admissible Earth radii, and a
+    solver who takes the 6378 km their school teaches gets 11568.7 and writes 11570.
+    """
+
+    @staticmethod
+    def span(low, high, unit='kilometre'):
+        return QuantityRange(PhysicsQuantity.construct(low, unit),
+                             PhysicsQuantity.construct(high, unit))
+
+    def test_the_ends_move_outward_onto_the_grid(self):
+        r = self.span(11555.9, 11568.6).snap(10)
+        assert r.minimum.mag == pytest.approx(11550)
+        assert r.maximum.mag == pytest.approx(11570)
+
+    def test_it_only_ever_widens(self):
+        low, high = 4.2, 7.9
+        r = self.span(low, high).snap(2)
+        assert r.minimum.mag <= low and r.maximum.mag >= high
+
+    def test_a_range_already_on_the_grid_does_not_move(self):
+        # The quiet case. Nudging an exact endpoint off its own grid by floating-point noise
+        # would widen the interval a little further on every pass.
+        r = self.span(11550, 11570).snap(10)
+        assert r.minimum.mag == pytest.approx(11550)
+        assert r.maximum.mag == pytest.approx(11570)
+
+    def test_snapping_twice_is_the_same_as_once(self):
+        once = self.span(11555.9, 11568.6).snap(10)
+        twice = once.snap(10)
+        assert twice.minimum.mag == pytest.approx(once.minimum.mag)
+        assert twice.maximum.mag == pytest.approx(once.maximum.mag)
+
+    def test_a_finer_grid_than_the_span_leaves_it_almost_alone(self):
+        r = self.span(11555.9, 11568.6).snap(0.1)
+        assert r.minimum.mag == pytest.approx(11555.9)
+        assert r.maximum.mag == pytest.approx(11568.6)
+
+    def test_the_unit_survives(self):
+        r = self.span(11555.9, 11568.6).snap(10)
+        assert str(r.minimum.unit) == 'kilometer' and r.minimum.unit == r.maximum.unit
+
+    def test_it_prints_as_a_range(self):
+        assert f'{self.span(11555.9, 11568.6).snap(10):.0f}' == \
+            r'\qtyrange{11550}{11570}{\kilo\metre}'
+
+    def test_a_non_positive_quantum_is_refused(self):
+        with pytest.raises(AssertionError, match="positive"):
+            self.span(1, 2).snap(0)
+
+
 class TestRangeGuardrails:
     """Ranges with invalid bounds should be rejected at construction."""
 
