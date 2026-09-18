@@ -47,7 +47,7 @@ build/scholar/%/standalone-prerequisites: \
 	$$(subst source/,build/,$$(subst .tikz,.pdf,$$(wildcard source/scholar/$$*/*.tikz))) \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/scholar/$$*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*.gp))) \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 
 # `text` belongs to a sheet and `problem`/`solution` to a problem inside one; the wildcards pick
 # whichever of the three actually exist, so one rule serves both depths.
@@ -139,7 +139,7 @@ build/scholar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/scholar/$$*/*/*/*.gp))) \
 	source/scholar/$$*/meta.yaml \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 
 build/scholar/%/handout: \
 	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \

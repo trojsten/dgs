@@ -163,8 +163,12 @@ build/core/i18n/%.tex: \
 	@mkdir -p $(dir $@)
 	python -m core.builder.i18n 'core/i18n/' 'core/templates/' $* -o $(dir $@)
 
-build/core/i18n: \
-	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex) ;
+# A stamp *beside* the directory, not the directory itself: a directory's mtime only moves when
+# an entry is added or removed, never when one is edited, so `build/core/i18n` was permanently
+# older than the `.tex` files inside it and every target depending on it rebuilt every run.
+build/core/i18n.stamp: \
+	$$(foreach lang,$$(SUPPORTED_LANGUAGES),build/core/i18n/$$(lang).tex)
+	@mkdir -p $(@D) && touch $@
 
 # Jinja template: render Markdown to Markdown. XFAIL: this should never be called!
 # This rule is here just for debugging -- should be used if no language is provided

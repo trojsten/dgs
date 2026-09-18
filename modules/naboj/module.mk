@@ -238,28 +238,33 @@ build/naboj/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/problems/*/*/*.gp))) \
 	$$(wildcard source/naboj/$$*/meta.yaml) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../meta.yaml)) \
-	build/core/i18n ;
+	build/core/i18n.stamp
+	@mkdir -p $(@D) && touch $@
 
 # All problems, solutions and answers for every language, and overall
 # <competition>/<volume>
 define RULE_TEMPLATE
 build/naboj/%/problems/$(1): \
 	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem.md))) \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem-extra.md))) ;
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/problem-extra.md)))
+	@mkdir -p $$(@D) && touch $$@
 
 build/naboj/%/solutions/$(1): \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md))) ;
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/solution.md)))
+	@mkdir -p $$(@D) && touch $$@
 
 build/naboj/%/answers/$(1): \
 	$$$$(subst answer.md,$(1)/answer.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer.md))) \
 	$$$$(subst answer-also.md,$(1)/answer-also.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-also.md))) \
 	$$$$(subst answer-interval.md,$(1)/answer-interval.tex,$$$$(subst source/,build/,$$$$(wildcard source/naboj/$$$$*/problems/*/answer-interval.md))) \
-	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md))) ;
+	$$$$(subst source/,build/,$$$$(subst .md,.tex,$$$$(wildcard source/naboj/$$$$*/problems/*/$(1)/answer-extra.md)))
+	@mkdir -p $$(@D) && touch $$@
 
 build/naboj/%/$(1): \
 	build/naboj/%/problems/$(1) \
 	build/naboj/%/solutions/$(1) \
-	build/naboj/%/answers/$(1) ;
+	build/naboj/%/answers/$(1)
+	@mkdir -p $$(@D) && touch $$@
 endef
 $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language))))
 
@@ -303,7 +308,7 @@ build/naboj/%/standalone-prerequisites: \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*.gp))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/naboj/$$*/*/*.gp))) \
 	$$(call truepath, build/naboj/$$*/../../../copy-static) \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 
 # % <competition>/<volume>/problems/<problem>/<language>
 # Every part is optional -- `$(if $(wildcard ...))` asks the source tree what exists, and the
@@ -452,7 +457,7 @@ output/naboj/%/languages: \
 # <competition>/<volume>/venues/<venue>
 output/naboj/%/instructions.pdf: \
 	build/naboj/%/instructions.tex \
-	build/core/i18n \
+	build/core/i18n.stamp \
 	$$(subst source/,build/,$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.tex)))) \
 	build/naboj/$$*/build-venue
 	$(call double_xelatex,naboj)
@@ -469,7 +474,7 @@ output/naboj/%/answers-modulo.pdf: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers-modulo.tex \
 	build/naboj/$$*/build-venue \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 	echo xxx $(subst source/,build/,$(subst $(cdir),,$(abspath $(wildcard source/naboj/$*/../../languages/*/evaluators.jtex))))
 	$(call double_xelatex,naboj)
 

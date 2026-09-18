@@ -57,7 +57,7 @@ build/seminar/%/standalone-prerequisites: \
 	$$(subst source/,build/,$$(subst .svg,.pdf,$$(wildcard source/seminar/$$*/*.svg))) \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*.gp))) \
 	$$(call truepath, build/seminar/$$*/../../../../copy-static) \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 
 output/seminar/%/standalone.pdf: \
 	build/seminar/%/standalone-prerequisites \
@@ -146,7 +146,7 @@ build/seminar/%/pdf-prerequisites: \
 	$$(subst source/,build/,$$(subst .gp,.pdf,$$(wildcard source/seminar/$$*/*/*.gp))) \
 	$$(wildcard source/seminar/$$*/*/meta.yaml) \
 	source/seminar/$$*/meta.yaml \
-	build/core/i18n ;
+	build/core/i18n.stamp ;
 
 output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
