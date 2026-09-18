@@ -1,0 +1,39 @@
+# Náboj 2005 -> volume 08. The key is the provisional id `draft.py` gave each problem, which is
+# its printed number in the `Zadania` chapter; the value is the slug it took in the tree.
+#
+# Named from the *story* rather than the physics, which is the house habit and the reason for
+# it: a corpus named after the physics fills up with `inclined-plane-3`, and twenty-eight years
+# of Náboj have a great many inclined planes. Short, and checked for collisions against every
+# other volume and `pool/` -- a slug has to be unique across the whole archive, because `pool`
+# problems move between years.
+p01: venus-again
+p02: track-works
+p03: slippery-slope
+p04: odd-edge
+p05: deflector
+p06: same-parallel
+p07: two-gases
+p08: stick-house
+p09: square-image
+p10: runout
+p11: thread-pull
+p12: boat-run
+p13: bank-shot
+p14: three-points
+p15: passenger
+p16: stick-swing
+p17: card-house
+p18: hohmann
+p19: plasticine
+p20: square-mesh
+p21: sunken-cone
+p22: escape-match
+p23: hottest
+p24: garter
+p25: danube-wake
+p26: monogram
+p27: rungs
+p28: sunbather
+p29: charged-pendulum
+p30: slow-clock
+p31: cube-capacitor
