@@ -83,21 +83,42 @@ def _reciprocal(tail: str) -> str | None:
 #: out at `\qty{0.954}{\milli\second}`, and the reader has no way to tell. The reciprocal form
 #: still converts -- `_reciprocal` splits it to `m/s` -- and only the bare one is refused, so
 #: it lands in `report.md` as an unknown unit and stays in the prose as written.
-AMBIGUOUS = {'ms'}
+#: `C` is the other. A bare upright `C` after a number occurs five times in the whole archive:
+#: three are the word *Celková* opening a sentence after a formula, one is `02/alcohol`'s
+#: boiling point, whose degree ring the assembler leaves on another baseline row, and exactly
+#: one -- `08/p07`'s `Q = 1C` -- is really a coulomb. A booklet for sixteen-year-olds writes
+#: temperatures constantly and charges in coulombs almost never, so the entry earns one right
+#: answer and one wrong one. Refused, `100C` stays as written, which is both visibly
+#: unfinished and what a reader would take it for anyway.
+AMBIGUOUS = {'ms', 'C'}
 
 
-def quantities(body: str) -> tuple[str, list[str]]:
+def quantities(body: str, upright: frozenset[str] | None = None) -> tuple[str, list[str]]:
     """
     `100km` -> `\\qty{100}{\\kilo\\metre}`, and a report of what was not recognised.
 
-    The unit must follow a number with nothing between: `s=100km` has a `s` that is a variable
-    and a `km` that is a unit, and only the adjacency to `100` distinguishes them. That is the
-    whole rule, and it is why this is safe to run unattended -- a bare letter is never touched.
+    The unit must follow a number with nothing between -- and **it must have been set
+    upright**. Adjacency alone is not enough, which is what `upright` is for: it is the set of
+    tokens this run actually printed in a roman face, and `assemble` reads it off the glyphs.
+
+    Adjacency alone was the rule once, on the reasoning that a bare letter is never touched and
+    only a number beside it makes a unit. In a statement that holds, because a statement gives
+    quantities. In a *solution* it is false, and expensively: a solution is algebra, and
+    `2C`, `2T`, `2g`, `2l` are a coefficient times a symbol. Across the archive 383 such pairs
+    are maths italic against 237 genuinely upright, so the old rule was wrong more often than
+    right -- `05/switch-charge`'s capacitors of capacitance `2C` and `3C` became two and three
+    **coulombs**, `04/wedge-between`'s `2g` became two grams, and a rod of length `2l` became
+    two litres.
+
+    A token that appears both ways in one run is left alone. Missing a unit prints `100km`,
+    which is visibly unfinished; inventing one prints a quantity that is simply wrong.
     """
     missing: list[str] = []
 
     def replace(m: re.Match[str]) -> str:
         number, tail = m.group(1), m.group(2)
+        if upright is not None and tail not in upright:
+            return m.group(0)
         unit = tail if tail in UNITS and tail not in AMBIGUOUS else _reciprocal(tail)
         if unit is not None:
             # siunitx parses the number itself and rejects a decimal comma outright -- `Invalid
@@ -270,13 +291,33 @@ def is_punctuation(body: str, before: str) -> bool:
 #: maths run and give `30^{\circ}`, but where the number came from the prose face the run
 #: closes between them and the line reads `30$^{\circ}$`.
 RE_DEGREES_SPLIT = re.compile(r'(\d+)\$\^\{\\circ\}\$')
-RE_DEGREES = re.compile(r'(\d+)\s*\^\{?\\circ\}?')
+#: The caret is optional. The ring is a `cmsy` glyph and is usually raised, but where it
+#: sits on the baseline `_inline_scripts` has nothing to mark it by, and `02/alcohol`'s
+#: boiling point arrived as `100\circC` -- from which the `C` was read as a coulomb.
+#: A `\circ` straight after a number is a degree sign; the composition operator never is.
+RE_DEGREES = re.compile(r'(\d+)\s*\^?\{?\\circ\}?')
+
+
+#: A temperature: the ring with `C` or `K` after it. `\ang` is an *angle*, and `\ang{100}C`
+#: left a `C` loose beside it for the next rule to read as a coulomb -- which is how
+#: `02/alcohol`'s water came to boil at a hundred coulombs. The unit is the whole `°C`.
+#: Two shapes, and the delimiters have to survive: the degree ring and its `C` may sit in
+#: one maths run, or the run may close between them, and a pattern that simply ate the
+#: `$` left the line with an unbalanced one.
+RE_CELSIUS_SPLIT = re.compile(r'\\ang\{([-\d.,]+)\}\$\s*(C|K)\b')
+RE_CELSIUS = re.compile(r'\\ang\{([-\d.,]+)\}\s*(C|K)\b')
 
 
 def degrees(text: str) -> str:
-    r"""`30^{\circ}` and `30$^{\circ}$` both -> `\ang{30}`."""
+    r"""`30^{\circ}` -> `\ang{30}`, and `100^{\circ}C` -> `\qty{100}{\celsius}`."""
     text = RE_DEGREES_SPLIT.sub(r'$\\ang{\1}$', text)
-    return RE_DEGREES.sub(r'\\ang{\1}', text)
+    text = RE_DEGREES.sub(r'\\ang{\1}', text)
+    def temperature(m: re.Match[str], close: str = '') -> str:
+        unit = 'celsius' if m.group(2) == 'C' else 'kelvin'
+        return f'\\qty{{{m.group(1).replace(",", ".")}}}{{\\{unit}}}{close}'
+
+    text = RE_CELSIUS_SPLIT.sub(lambda m: temperature(m, '$'), text)
+    return RE_CELSIUS.sub(temperature, text)
 
 
 #: A radical whose radicand the decode could not find. `\sqrt` is one glyph -- the sign -- and
@@ -292,6 +333,24 @@ RE_BARE_RADICAL = re.compile(r'\\sqrt(?![A-Za-z0-9{])')
 #: `\vec` is in the same position: the arrow is a glyph of its own and the symbol under it may
 #: be on another row, so `02/p26` decoded to a line that is one bare `\vec`.
 RE_BARE_ACCENT = re.compile(r'\\vec(?![A-Za-z{])')
+
+
+#: A degree ring left in a script after `degrees` has run. `degrees` converts every ring that
+#: has a number in front of it, so whatever is left has lost its number to another row -- a
+#: figure label, or a fraction whose numerator is set above. It is not printable either way:
+#: `convertor.py` refuses `^\circ` outright, by the house rule that a degree is `\ang{}`.
+RE_STRANDED_RING = re.compile(r'(?<![A-Za-z0-9}])[\^_]\{(?:\\circ)+\}')
+
+
+def stranded_rings(text: str, marker: str) -> str:
+    r"""
+    A baseless degree ring -> a visible hole.
+
+    Dropping it loses the only clue that a number on the page is a temperature or an angle,
+    and printing it stops the build. The marker is the one a missing file and an unread formula
+    already use, so it reads on the page as what it is: something the decode could not place.
+    """
+    return RE_STRANDED_RING.sub(marker.replace('\\', '\\\\'), text)
 
 
 def radicals(body: str) -> str:
@@ -501,9 +560,9 @@ def prose_words(body: str) -> str:
     return RE_DOUBLE_TEXT.sub(r'\\text{\1}', wrapped)
 
 
-def tidy(body: str) -> tuple[str, list[str]]:
+def tidy(body: str, upright: frozenset[str] | None = None) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
-    body, missing = quantities(percents(unicode_maths(strip_marks(body))))
+    body, missing = quantities(percents(unicode_maths(strip_marks(body))), upright)
     body = radicals(accents(composites(operators(differences(body)))))
     body = prose_words(specials(separate_macros(body)))
     return spacing(scripts_once(body)), missing
@@ -538,7 +597,7 @@ def _key(symbol: str) -> str:
     return f'{name}_' if name in RESERVED else name
 
 
-def assignment(body: str) -> tuple[str, str, str, str] | None:
+def assignment(body: str, upright: frozenset[str] | None = None) -> tuple[str, str, str, str] | None:
     """
     (key, symbol, magnitude, unit) if this run is a given quantity, else None.
 
@@ -548,6 +607,11 @@ def assignment(body: str) -> tuple[str, str, str, str] | None:
     """
     m = RE_ASSIGNMENT.match(body.strip())
     if not m:
+        return None
+    # The same rule `quantities` applies, and for the same reason: `v = 2g` is an acceleration
+    # written in terms of `g`, not a mass of two grams, and hoisting it into `values:` would
+    # put the wrong number where every printing of it comes from.
+    if upright is not None and m.group('unit') not in upright:
         return None
     unit = pint_unit(m.group('unit'))
     if unit is None:

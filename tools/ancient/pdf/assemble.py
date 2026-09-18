@@ -180,6 +180,22 @@ def _is_mark_row(line: Line) -> bool:
     return bool(line.glyphs) and all(g.char in MARKS and not g.maths for g in line.glyphs)
 
 
+#: Two glyphs whose script direction is not open to measurement. A degree ring and a prime are
+#: **always** raised: there is no notation in which either is a subscript. Measuring them like
+#: any other small glyph put 10 rings and 8 primes below the line -- `100$_{\circ}$C` for a
+#: boiling point, which then left a loose `C` to be read as a coulomb, and `v$_{\prime}$` for
+#: `v'`. Where a raised row is attached to a host line the direction also picks the host, so
+#: getting it wrong moved the ring to another line entirely.
+ALWAYS_RAISED = frozenset({'\\circ', '\\prime'})
+
+
+def _script_kind(chars, offset: float) -> str:
+    """`sup` or `sub` for a run, by what it is where that is certain and by where it sits."""
+    if any(c in ALWAYS_RAISED for c in chars):
+        return 'sup'
+    return 'sup' if offset > 0 else 'sub'
+
+
 def _attach_scripts(lines: list[Line]) -> None:
     r"""
     Fold exponents and indices back into the line they belong to.
@@ -218,7 +234,7 @@ def _attach_scripts(lines: list[Line]) -> None:
                     best, best_offset = line, offset
             if best is None:
                 continue
-            kind = 'sup' if best_offset > 0 else 'sub'
+            kind = _script_kind([g.char for g in other.glyphs], best_offset)
             best.glyphs.extend(
                 Glyph(g.char, g.x, best.y, g.adv, g.size, g.role, g.style, g.code,
                       g.sure, kind)
@@ -257,7 +273,7 @@ def _inline_scripts(lines: list[Line]) -> None:
             offset = g.y - baseline
             if abs(offset) < body * 0.05:
                 continue
-            line.glyphs[i] = replace(g, script='sup' if offset > 0 else 'sub')
+            line.glyphs[i] = replace(g, script=_script_kind([g.char], offset))
 
 
 def _lift_marks(lines: list[Line]) -> None:
@@ -441,6 +457,41 @@ def _continues(g: Glyph, prev: Glyph | None) -> bool:
             and g.x - (prev.x + prev.adv) <= prev.size * 0.17)
 
 
+#: A letter run directly after a digit, which is where a unit can be.
+def _upright_units(run: list[Glyph]) -> frozenset[str]:
+    r"""
+    The tokens this run prints in a roman face directly after a number.
+
+    A unit is set upright and a variable is set in maths italic, and the glyph stream keeps
+    that distinction perfectly -- it is the one signal that separates `100 km` from `2C`, and
+    the page shows it to a reader for exactly the same reason. `05/switch-charge` prints
+    *"na kondenzátore 3C"* with an italic `C`, so its capacitor has capacitance `3C` and not a
+    charge of three coulombs.
+
+    A token set both ways inside one run is **left out**: the two readings cannot be told apart
+    once the glyphs are joined into a string, and of the two failures, not marking a unit is
+    the one a reader can see.
+    """
+    seen: dict[str, set[bool]] = {}
+    i = 0
+    while i < len(run):
+        if not run[i].char.isdigit():
+            i += 1
+            continue
+        j = i
+        while j < len(run) and run[j].char.isdigit():
+            j += 1
+        k = j
+        while k < len(run) and len(run[k].char) == 1 and run[k].char.isalpha():
+            k += 1
+        if k > j:
+            token = ''.join(g.char for g in run[j:k])
+            roman = all(g.role != 'math-italic' for g in run[j:k])
+            seen.setdefault(token, set()).add(roman)
+        i = max(k, i + 1)
+    return frozenset(tok for tok, ways in seen.items() if ways == {True})
+
+
 def _text(line: Line, values: list, missing: list[str],
           prose: frozenset[str] = frozenset(PROSE_ROLES)) -> tuple[str, list[str]]:
     """
@@ -467,6 +518,7 @@ def _text(line: Line, values: list, missing: list[str],
         if not run:
             return
         body = ''.join(_script_runs(run))
+        upright = _upright_units(run)
         if all(g.sure for g in run):
             # Every glyph identified, so the formula is transcribed rather than marked.
             #
@@ -474,7 +526,7 @@ def _text(line: Line, values: list, missing: list[str],
             # so it is hoisted into `values:` and printed as `(§ key.eq §)`. That is the house
             # form: the number then lives in one place, and changing it changes everywhere it
             # appears. Anything more elaborate is a formula and stays as maths.
-            if (found := maths.assignment(body)) is not None:
+            if (found := maths.assignment(body, upright)) is not None:
                 key, symbol, magnitude, unit = found
                 values.append(found)
                 # **The hoist travels inside the line, not beside it.** `values:` is a
@@ -488,7 +540,7 @@ def _text(line: Line, values: list, missing: list[str],
                 out.append(HOIST.format(key=key, symbol=symbol,
                                         magnitude=magnitude, unit=unit))
             else:
-                tidied, unknown = maths.tidy(body)
+                tidied, unknown = maths.tidy(body, upright)
                 missing.extend(unknown)
                 joined = maths.is_punctuation(tidied, out[-1] if out else '')
                 out.append(tidied if joined else f'${tidied}$')

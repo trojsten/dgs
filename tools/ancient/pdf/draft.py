@@ -119,6 +119,7 @@ def body(lines: list[str]) -> str:
     `spaced_units`, `thin_comma` and the rest apply unchanged.
     """
     text = maths.degrees('\n'.join(_stranded(ln) for ln in lines).strip())
+    text = maths.stranded_rings(text, assemble.MATH_MARK)
     text = '\n'.join(maths.prose_percents(ln) for ln in text.split('\n'))
     for rule in (rules.spaced_units, rules.thin_comma):
         try:

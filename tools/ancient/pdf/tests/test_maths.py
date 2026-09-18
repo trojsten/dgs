@@ -352,3 +352,65 @@ class TestKnownMacros:
 
     def test_a_word_butted_onto_a_shorter_macro_still_separates(self):
         assert maths.separate_macros(r'\betao') == r'\beta o'
+
+
+class TestUprightUnits:
+    def test_a_unit_set_upright_converts(self):
+        assert maths.quantities('100km', frozenset({'km'}))[0] == r'\qty{100}{\kilo\metre}'
+
+    def test_a_symbol_set_in_maths_italic_does_not(self):
+        # `05/switch-charge` prints *"na kondenzátore 3C"* -- a capacitor of capacitance `3C`,
+        # not a charge of three coulombs. Adjacency to a number was the whole old rule, and
+        # across the archive 383 such pairs are italic against 237 upright.
+        assert maths.quantities('2C', frozenset())[0] == '2C'
+        assert maths.quantities('2g', frozenset())[0] == '2g'
+
+    def test_a_token_ambiguous_within_one_run_is_left_alone(self):
+        # `_upright_units` omits a token it saw set both ways, and omission means no `\qty`.
+        assert maths.quantities('5m', frozenset({'km'}))[0] == '5m'
+
+    def test_with_no_information_it_behaves_as_before(self):
+        # `None` is not the empty set: a caller that cannot say keeps the old behaviour.
+        assert maths.quantities('100km')[0] == r'\qty{100}{\kilo\metre}'
+
+    def test_a_given_quantity_is_only_hoisted_when_its_unit_is_upright(self):
+        assert maths.assignment('s = 100km', frozenset({'km'})) is not None
+        assert maths.assignment('a = 2g', frozenset()) is None
+
+
+class TestTemperatures:
+    def test_a_ring_with_c_after_it_is_celsius_not_an_angle(self):
+        # `\ang{100}C` left a loose `C` for the unit rule to read as a coulomb, which is how
+        # `02/alcohol`'s water came to boil at a hundred coulombs.
+        assert maths.degrees(r'100^{\circ}C') == r'\qty{100}{\celsius}'
+
+    def test_the_ring_needs_no_caret(self):
+        # The ring is a `cmsy` glyph and is not always raised in the stream.
+        assert maths.degrees(r'100\circC') == r'\qty{100}{\celsius}'
+
+    def test_a_plain_angle_stays_an_angle(self):
+        assert maths.degrees(r'30^{\circ}') == r'\ang{30}'
+
+    def test_the_maths_delimiters_survive(self):
+        # A pattern that simply ate the `$` left the line with an unbalanced one.
+        out = maths.degrees(r'nedosiahne $100\circ$C a voda')
+        assert out == r'nedosiahne $\qty{100}{\celsius}$ a voda'
+        assert out.count('$') % 2 == 0
+
+    def test_a_word_beginning_with_c_is_not_a_unit(self):
+        # `2Celková` -- a sentence opening after a formula, three times in the archive.
+        assert maths.degrees(r'\ang{0}Celkova') == r'\ang{0}Celkova'
+
+    def test_composition_is_not_a_degree(self):
+        assert maths.degrees(r'f\circ g') == r'f\circ g'
+
+
+class TestStrandedRings:
+    def test_a_ring_with_no_base_becomes_a_hole(self):
+        assert maths.stranded_rings(r'$^{\circ}$', r'\errorMessage{math}') == \
+            r'$\errorMessage{math}$'
+
+    def test_a_script_that_has_a_base_is_left_alone(self):
+        assert maths.stranded_rings(r'$x^{2}$', r'\errorMessage{math}') == r'$x^{2}$'
+        assert maths.stranded_rings(r'$\frac{h}{s}_{\circ}$', r'\errorMessage{math}') == \
+            r'$\frac{h}{s}_{\circ}$'
