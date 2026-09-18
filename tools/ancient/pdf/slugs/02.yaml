@@ -13,3 +13,41 @@
 p01: speed-halved
 p03: first-cosmic
 p19: rolling-ball
+
+# The other thirty-three, named in one sitting once the volume was decoded. Same rules: the
+# story before the physics, short, unique across the whole archive. `cannon` and `fountain`
+# were both taken, hence `hilltop-gun` and `fountain-pump`; `clock` too, so problem 22's
+# question about the angle between the hands is simply `hands`.
+p02: pulley-drop
+p04: deflection
+p05: symmetric-bounce
+p06: alloy
+p07: redraw
+p08: capacitor-charge
+p09: eight-resistors
+p10: half-amplitude
+p11: cart-friction
+p12: hilltop-gun
+p13: leaning-rod
+p14: late-driver
+p15: two-planes
+p16: loop-swing
+p17: cyril
+p18: focal-square
+p20: cross
+p21: over-the-board
+p22: hands
+p23: two-hoops
+p24: octave-lower
+p25: solar-panel
+p26: resistor-cube
+p27: worms
+p28: two-images
+p29: water-drop
+p30: two-balls
+p31: spray
+p32: resistor-chain
+p33: split-cylinder
+p34: alcohol
+p35: carved-cube
+p36: fountain-pump
