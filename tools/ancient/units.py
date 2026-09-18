@@ -39,7 +39,7 @@ UNITS = {
     # Extensions from the eight recovered booklets, 1999-2006. `mg`, `mA`, `C` and `cm/s`
     # each appear in a statement that gives a quantity, and a unit missing from this table is
     # not hoisted into `values:` at all -- see `maths.pint_unit`.
-    'mg': r'\milli\gram', 'mA': r'\milli\ampere', 'C': r'\coulomb', 'cm/s': r'\centi\metre\per\second',
+    'mg': r'\milli\gram', 'mA': r'\milli\ampere', 'C': r'\coulomb', 'cm/s': r'\centi\metre\per\second', 'N/m': r'\newton\per\metre',
     'K': r'\kelvin', r'^\circ C': r'\celsius', '^{\\circ}C': r'\celsius',
     # 2014's own spellings.
     'km/s': r'\kilo\metre\per\second', 'kg/m': r'\kilo\gram\per\metre',

@@ -56,20 +56,29 @@ def differences(body: str) -> str:
     return RE_FINITE_DIFFERENCE.sub(lambda m: f'\\FDiff{{{m.group(1)}}}', body)
 
 
+#: The negative exponent a compound unit ends on: `^{-1}`, `^{-2}`, `^{-3}`.
+RE_NEGATIVE_EXPONENT = re.compile(r'\^\{?-(\d+)\}?$')
+
+
 def _reciprocal(tail: str) -> str | None:
     r"""
-    `kmh^{-1}` -> `km/h`, if that is a unit the table knows.
+    `kmh^{-1}` -> `km/h` and `ms^{-2}` -> `m/s^2`, if that is a unit the table knows.
 
     These booklets write a compound unit with a negative exponent, as TeX does, while
     `units.py` is keyed on the solidus form. Rather than duplicate every entry, the exponent
     is turned back into a division -- and only accepted if the result is *in* the table, so a
     wrong split fails loudly instead of inventing a unit.
     """
-    if not tail.endswith('^{-1}'):
+    exponent = RE_NEGATIVE_EXPONENT.search(tail)
+    if not exponent:
         return None
-    stem = tail[:-len('^{-1}')]
+    power = int(exponent.group(1))
+    stem = tail[:exponent.start()]
     for cut in range(len(stem) - 1, 0, -1):
-        candidate = f'{stem[:cut]}/{stem[cut:]}'
+        # `ms^{-2}` is metres per second *squared*, and the table is keyed on `m/s^2`. Only the
+        # first power used to convert, which left an acceleration and a density as prose while
+        # a speed beside them became a quantity.
+        candidate = f'{stem[:cut]}/{stem[cut:]}' + ('' if power == 1 else f'^{power}')
         if candidate in UNITS:
             return candidate
     return None
@@ -117,9 +126,15 @@ def quantities(body: str, upright: frozenset[str] | None = None) -> tuple[str, l
 
     def replace(m: re.Match[str]) -> str:
         number, tail = m.group(1), m.group(2)
-        if upright is not None and tail not in upright:
+        # **A reciprocal exponent settles it without the font.** `_reciprocal` only resolves a
+        # tail that splits into a unit the table actually holds, so `15ms^{-1}` is a speed and
+        # `2M^{-1}` is nothing -- which means the upright test, useful as it is for a bare `2C`,
+        # has nothing left to decide here. These authors write a unit in maths as often as in
+        # prose, and thirteen quantities across the archive are italic and units all the same.
+        reciprocal = _reciprocal(tail)
+        if reciprocal is None and upright is not None and tail not in upright:
             return m.group(0)
-        unit = tail if tail in UNITS and tail not in AMBIGUOUS else _reciprocal(tail)
+        unit = tail if tail in UNITS and tail not in AMBIGUOUS else reciprocal
         if unit is not None:
             # siunitx parses the number itself and rejects a decimal comma outright -- `Invalid
             # number '88,10'` stopped volume 08's booklet. The comma is the Slovak separator and

@@ -414,3 +414,33 @@ class TestStrandedRings:
         assert maths.stranded_rings(r'$x^{2}$', r'\errorMessage{math}') == r'$x^{2}$'
         assert maths.stranded_rings(r'$\frac{h}{s}_{\circ}$', r'\errorMessage{math}') == \
             r'$\frac{h}{s}_{\circ}$'
+
+
+class TestReciprocalUnits:
+    r"""`ms^{-1}` is how these booklets write a speed, and the exponent is what identifies it."""
+
+    def test_the_first_power(self):
+        assert maths._reciprocal('kmh^{-1}') == 'km/h'
+
+    def test_higher_powers_too(self):
+        # Only `^{-1}` used to convert, which left an acceleration and a density as prose while
+        # a speed beside them became a quantity.
+        assert maths._reciprocal('ms^{-2}') == 'm/s^2'
+        assert maths._reciprocal('kgm^{-3}') == 'kg/m^3'
+
+    def test_a_split_that_names_no_unit_is_refused(self):
+        # The quiet case: `_reciprocal` only accepts a split the table actually holds, so a
+        # variable with a reciprocal exponent stays algebra.
+        assert maths._reciprocal('M^{-1}') is None
+        assert maths._reciprocal('zz^{-1}') is None
+
+    def test_a_unit_without_an_exponent_is_not_its_business(self):
+        assert maths._reciprocal('km') is None
+
+    def test_the_exponent_settles_it_without_the_font(self):
+        # A unit the author set in maths italic is still a unit: the upright test decides a
+        # bare `2C`, and has nothing left to decide once a reciprocal exponent is present.
+        assert maths.quantities(r'15ms^{-1}', frozenset())[0] == r'\qty{15}{\metre\per\second}'
+
+    def test_an_italic_symbol_is_still_refused(self):
+        assert maths.quantities('2C', frozenset())[0] == '2C'
