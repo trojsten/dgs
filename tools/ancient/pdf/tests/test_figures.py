@@ -55,27 +55,26 @@ class TestFigures:
 
 
 class TestPlaceholders:
-    def test_each_marker_becomes_a_numbered_placeholder(self):
+    def test_every_marker_becomes_a_placeholder(self):
         from tools.ancient.pdf.assemble import FIGURE
         out = pictures(f'Text.\n{FIGURE}\nMore.\n{FIGURE}\n')
-        assert '![](figure-1.svg){height=40mm}' in out
-        assert '![](figure-2.svg){height=40mm}' in out
+        assert out.count('![](){height=40mm}') == 2
 
-    def test_the_path_is_named_because_an_empty_one_breaks_the_build(self):
-        # `\insertPicture` draws `example-image` for a file that is not there, but the convertor
-        # only rewrites `\includegraphics` into it by matching the extension -- so `![]()` stays
-        # a bare `\includegraphics{}` and stops xelatex with ``File `' not found``.
+    def test_the_path_is_empty(self):
+        # `convertor.py` carries a rule for exactly this; its other picture rules match on the
+        # extension, so before that rule an empty path stayed a bare `\includegraphics{}` and
+        # stopped xelatex with ``File `' not found``.
         from tools.ancient.pdf.assemble import FIGURE
-        assert '](figure-1.svg)' in pictures(FIGURE)
+        assert pictures(FIGURE).strip() == '![](){height=40mm}'
 
     def test_prose_that_promises_a_figure_gets_one_anyway(self):
         out = pictures('Na obrázku je zobrazený dej.\n')
-        assert out.count('![](figure-1.svg){height=40mm}') == 1
+        assert out.count('![](){height=40mm}') == 1
 
     def test_prose_that_already_has_one_does_not_get_a_second(self):
         from tools.ancient.pdf.assemble import FIGURE
         out = pictures(f'Na obrázku je dej.\n{FIGURE}\n')
-        assert out.count('figure-') == 1
+        assert out.count('height=40mm') == 1
 
     def test_prose_that_mentions_nothing_gets_nothing(self):
-        assert 'figure-' not in pictures('Teleso padá z výšky.\n')
+        assert 'height=40mm' not in pictures('Teleso padá z výšky.\n')

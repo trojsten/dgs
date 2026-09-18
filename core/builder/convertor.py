@@ -17,6 +17,17 @@ class Convertor:
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(svg|gp|tikz)}",
                              r"\\insertPicture\g<options>{\g<stem>.pdf}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
+            # An empty path is a picture nobody has drawn yet. `\insertPicture` already draws
+            # `example-image` -- a grey panel with a cross through it -- for a file that is not
+            # there, so `![](){height=40mm}` is all a placeholder needs to be, and it renders as
+            # something plainly missing rather than as nothing at all. Without this rule it does
+            # not reach `\insertPicture` at all: the rules around it match on the extension, so
+            # a path with none stays a bare `\includegraphics{}` and stops xelatex with
+            # ``File `\' not found``. Matching only the *empty* path and not every extensionless
+            # one keeps a mistyped `![](figure)` loud, which it should be.
+            RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{}",
+                             r"\\insertPicture\g<options>{}",
+                             purpose=r"An empty picture path still goes through \insertPicture"),
             # Change \includesvg to protected \insertPicture (SVG and GP are converted to PDF).
             # No \begin{figure} wrapper here: pandoc already emits one around captioned images, so
             # adding another produced a float nested inside a float. \insertPicture centres on its

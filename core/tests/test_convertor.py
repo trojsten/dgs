@@ -182,3 +182,37 @@ class TestLongtableRules:
         f.write("text\n\\bottomrule\\noalign{}\n")
         f.seek(0)
         assert Convertor.move_bottom_rules(f).read() == "text\n\\bottomrule\\noalign{}\n"
+
+
+class TestEmptyPicturePath:
+    r"""
+    `![](){height=40mm}` is a picture nobody has drawn yet, and must reach `\insertPicture`.
+
+    That macro draws LaTeX's `example-image` for a file that is not there, which is the whole
+    point -- a grey panel with a cross through it, plainly missing. The other picture rules
+    match on the extension, so without a rule of its own an empty path stays a bare
+    `\includegraphics{}` and stops xelatex with ``File `' not found``.
+    """
+
+    @staticmethod
+    def latex(text):
+        from core.builder.convertor import Convertor
+        for rule in Convertor.post_regexes['latex']:
+            text = rule.pattern.sub(rule.repl, text)
+        return text
+
+    def test_an_empty_path_becomes_a_protected_picture(self):
+        assert self.latex(r'\includegraphics[height=40mm]{}') == r'\insertPicture[height=40mm]{}'
+
+    def test_it_works_without_options_too(self):
+        assert self.latex(r'\includegraphics{}') == r'\insertPicture{}'
+
+    def test_a_real_picture_is_untouched_by_it(self):
+        # The quiet case: the extension rules still own everything that has one.
+        assert self.latex(r'\includegraphics[height=2cm]{crystal.svg}') == \
+            r'\insertPicture[height=2cm]{crystal.pdf}'
+
+    def test_a_path_with_no_extension_is_left_to_fail_loudly(self):
+        # A mistyped `![](figure)` is an authoring error and should stop the build, not quietly
+        # render as a placeholder.
+        assert self.latex(r'\includegraphics{figure}') == r'\includegraphics{figure}'

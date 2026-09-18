@@ -111,6 +111,9 @@ def _stranded(line: str) -> str:
     return f'%# TODO(stranded): a {kind} `{m.group(2)}` whose base the decode could not find.'
 
 
+#: A picture nobody has drawn yet. See `pictures` for why the path is empty.
+PLACEHOLDER = '![](){height=40mm}'
+
 #: The prose naming a drawing: Slovak `obrázok` in any case it declines into.
 RE_MENTIONS_FIGURE = re.compile(r'obr[\u00e1a]z|obrazk', re.I)
 
@@ -134,7 +137,7 @@ def pictures(text: str) -> str:
     def replace(_m):
         nonlocal count
         count += 1
-        return f'![](figure-{count}.svg){{height=40mm}}'
+        return PLACEHOLDER
 
     text = assemble.RE_FIGURE.sub(replace, text)
     # **A promise in the prose outranks the geometry.** Clustering finds 106 of the 120 drawings
@@ -144,7 +147,7 @@ def pictures(text: str) -> str:
     # is a guess, which is worse than the others, and a page that promises a picture and shows
     # none is worse still.
     if not count and RE_MENTIONS_FIGURE.search(text):
-        text = text.rstrip('\n') + '\n\n![](figure-1.svg){height=40mm}'
+        text = text.rstrip('\n') + '\n\n' + PLACEHOLDER
     return text
 
 
