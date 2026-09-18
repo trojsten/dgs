@@ -287,3 +287,27 @@ class TestSpecials:
 
     def test_a_macro_is_untouched(self):
         assert maths.specials(r'\frac{1}{2}') == r'\frac{1}{2}'
+
+
+class TestPercent:
+    r"""A percentage is a quantity, and the repository writes it `\qty{N}{\percent}`."""
+
+    def test_inside_a_formula(self):
+        assert maths.percents('50%') == r'\qty{50}{\percent}'
+
+    def test_the_decimal_comma_is_normalised(self):
+        assert maths.percents('7,5%') == r'\qty{7.5}{\percent}'
+
+    def test_an_escaped_sign_too(self):
+        assert maths.percents(r'50\%') == r'\qty{50}{\percent}'
+
+    def test_left_in_the_prose_it_gets_its_delimiters(self):
+        assert maths.prose_percents('o 10% menšie') == r'o $\qty{10}{\percent}$ menšie'
+
+    def test_maths_spans_are_left_to_the_other_rule(self):
+        # `in_prose` must not reach inside `$...$`, which `tidy` has already handled.
+        assert maths.prose_percents(r'$x = 5\%$ a') == r'$x = 5\%$ a'
+
+    def test_a_bare_sign_with_no_number_is_not_a_quantity(self):
+        # `Koľko % hmotnosti` is prose asking "what percentage", not a value.
+        assert maths.prose_percents('Koľko % hmotnosti') == 'Koľko % hmotnosti'

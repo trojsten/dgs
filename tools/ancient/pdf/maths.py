@@ -428,9 +428,45 @@ def specials(body: str) -> str:
     return RE_SPECIALS.sub(r'\\\1', body)
 
 
+#: A percentage. `50%` is a quantity like any other and the repository writes it
+#: `\qty{50}{\percent}` -- 213 of them -- so the decode spells it that way too rather than
+#: leaving a bare sign for `specials` to escape.
+#:
+#: Two shapes again, for the reason `RE_DEGREES` has two: the sign is set in `cmr` and the
+#: number may or may not share its run, so the line reads `$50%$` or `50%` with the number in
+#: the prose face.
+RE_PERCENT = re.compile(r'(?<![\w\\])(\d+(?:[.,]\d+)?)\s*\\?%')
+
+
+def percents(body: str) -> str:
+    r"""`50%` -> `\qty{50}{\percent}`, with the decimal comma normalised as siunitx wants."""
+    return RE_PERCENT.sub(lambda m: f'\\qty{{{m.group(1).replace(",", ".")}}}{{\\percent}}', body)
+
+
+#: A `$...$` span, so a line-level rule can leave the maths alone and work on the prose.
+RE_MATHS_SPAN = re.compile(r'\$[^$\n]*\$')
+
+
+def in_prose(text: str, rule) -> str:
+    """Apply a rule to the prose of a line, leaving every `$...$` span untouched."""
+    parts = RE_MATHS_SPAN.split(text)
+    spans = RE_MATHS_SPAN.findall(text)
+    out = [rule(parts[0])]
+    for span, part in zip(spans, parts[1:]):
+        out.append(span)
+        out.append(rule(part))
+    return ''.join(out)
+
+
+def prose_percents(text: str) -> str:
+    r"""A percentage the decode left in the prose: `o 10% menšie` -> `o $\qty{10}{\percent}$`."""
+    return in_prose(text, lambda s: RE_PERCENT.sub(
+        lambda m: f'$\\qty{{{m.group(1).replace(",", ".")}}}{{\\percent}}$', s))
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
-    body, missing = quantities(unicode_maths(strip_marks(body)))
+    body, missing = quantities(percents(unicode_maths(strip_marks(body))))
     body = radicals(accents(composites(operators(differences(body)))))
     body = specials(separate_macros(body))
     return spacing(scripts_once(body)), missing
