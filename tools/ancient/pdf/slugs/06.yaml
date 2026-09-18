@@ -1,0 +1,48 @@
+# Náboj 2003 -> volume 06. The key is the provisional id `draft.py` gave each problem, which is
+# its printed number in the `Zadania` chapter; the value is the slug it took in the tree.
+#
+# Named from the *story* rather than the physics, which is the house habit and the reason for
+# it: a corpus named after the physics fills up with `inclined-plane-3`, and twenty-eight years
+# of Náboj have a great many inclined planes. Short, and checked for collisions against every
+# other volume and `pool/` -- a slug has to be unique across the whole archive, because `pool`
+# problems move between years.
+p01: deflected-pair
+p02: gearing
+p03: train-timing
+p04: held-cart
+p05: bitten-cube
+p06: catch
+p07: twice-reflected
+p08: plain-mesh
+p09: self-hoist
+p10: spool
+p11: trams
+p12: tank-track
+p13: long-train
+p14: interface-ball
+p15: ideal-ammeter
+p16: interception
+p17: grenade
+p18: facing-mirrors
+p19: deflected-electron
+p20: weighted-triangle
+p21: cart-pendulum
+p22: recast
+p23: earth-falls
+p24: two-electrons
+p25: middle-weight
+p26: dissociated
+p27: over-panel
+p28: capacitor-loop
+p29: lens-placement
+p30: fibre
+p31: spring-pulley
+p32: two-ammeters
+p33: wedge-pair
+p34: switched
+p35: paper-balloon
+p36: ice-cone
+p37: barometer
+p38: salt
+p39: sliding-ladder
+p40: charge-ratio

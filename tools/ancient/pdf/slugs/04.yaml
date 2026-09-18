@@ -1,0 +1,55 @@
+# Náboj 2001 -> volume 04. The key is the provisional id `draft.py` gave each problem, which is
+# its printed number in the `Zadania` chapter; the value is the slug it took in the tree.
+#
+# Named from the *story* rather than the physics, which is the house habit and the reason for
+# it: a corpus named after the physics fills up with `inclined-plane-3`, and twenty-eight years
+# of Náboj have a great many inclined planes. Short, and checked for collisions against every
+# other volume and `pool/` -- a slug has to be unique across the whole archive, because `pool`
+# problems move between years.
+p01: same-force
+p02: three-rods
+p03: moving-wall
+p04: ballast
+p05: record-run
+p06: two-taps
+p07: square-web
+p08: chain-overhang
+p09: four-terminals
+p10: atwood
+p11: rising-bubble
+p12: uphill-cyclist
+p13: capacitor-scheme
+p14: crate
+p15: swept-resistor
+p16: tarzan
+p17: dam
+p18: broken-capacitor
+p19: energy-ratio
+p20: shortest-shadow
+p21: figure-centroid
+p22: node-voltage
+p23: l-rod
+p24: wedge-between
+p25: banked-curve
+p26: spider
+p27: herbert
+p28: plugged-cone
+p29: tethered-cylinder
+p30: puck-return
+p31: cabin-pendulum
+p32: trapped-air
+p33: sloshing
+p34: refracted-ray
+p35: second-board
+p36: four-bricks
+p37: martinko
+p38: cube-move
+p39: spring-kick
+p40: pulled-ball
+p41: mirko
+p42: gramophone
+p43: meteor-hit
+p44: released-spring
+p45: three-dogs
+p46: two-wedges
+p47: shared-charge

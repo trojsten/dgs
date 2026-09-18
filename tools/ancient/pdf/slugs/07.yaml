@@ -1,0 +1,53 @@
+# Náboj 2004 -> volume 07. The key is the provisional id `draft.py` gave each problem, which is
+# its printed number in the `Zadania` chapter; the value is the slug it took in the tree.
+#
+# Named from the *story* rather than the physics, which is the house habit and the reason for
+# it: a corpus named after the physics fills up with `inclined-plane-3`, and twenty-eight years
+# of Náboj have a great many inclined planes. Short, and checked for collisions against every
+# other volume and `pool/` -- a slug has to be unique across the whole archive, because `pool`
+# problems move between years.
+p01: passing-trains
+p02: petko
+p03: three-corners
+p04: three-pieces
+p05: chain-slip
+p06: two-halves
+p07: rim-point
+p08: sketch-distance
+p09: mach-cone
+p10: thrown-down
+p11: boat-shift
+p12: loose-cylinder
+p13: jano
+p14: charged-spring
+p15: dropped-ruler
+p16: loop-slide
+p17: pingpong
+p18: gabled-house
+p19: fajoslav
+p20: arc-swap
+p21: hinged-rods
+p22: tightened-screw
+p23: bowl-race
+p24: field-throw
+p25: lifted-bob
+p26: spearfishing
+p27: strung-rod
+p28: halley
+p29: wire-square
+p30: uneven-pair
+p31: ball-on-wall
+p32: tray-table
+p33: bobbing-cube
+p34: two-pistons
+p35: a-to-b
+p36: bathtub
+p37: edge-ball
+p38: incline-throw
+p39: sealed-tube
+p40: spinning-sphere
+p41: parabolic-slope
+p42: spring-pair
+p43: prism
+p44: three-vessels
+p45: pendulum-speed
