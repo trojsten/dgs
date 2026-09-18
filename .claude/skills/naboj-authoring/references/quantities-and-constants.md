@@ -78,7 +78,7 @@ Access via dotted attribute (inside `(§ … §)`):
 | `q.to('unit')`  | Convert to another commensurate unit; returns new quantity. |
 | `q.simplify()`  | Convert to base SI units.                                   |
 | `q.only_unit()` | Just the unit as `\unit{…}` (siunitx).                      |
-| `q.widen(v)`    | Return a `QuantityRange` of `[(1−v)q, (1+v)q]`.             |
+| `r.snap(q)`     | Round a range's ends outward onto a grid of `q`.            |
 | `q.alias('x')`  | Copy of the quantity with a different symbol (keeps unit, `si_extra`, `force_f`). |
 | `q.approximate(n)` | Truly round the magnitude to `n` significant digits. Available on any quantity, not just constants — `const.g.approx` is just `approximate(digits)`. |
 
@@ -185,7 +185,7 @@ Details that are easy to get wrong:
 - `|mag` — raw magnitude only (for further arithmetic).
 - `|unit` — just `\unit{...}`.
 - `|sim` — simplify to base units.
-- `|w(0.05)` — construct `QuantityRange` = ±5% band around this value.
+- `|snap(10)` — round a range's ends outward onto a grid of 10.
 
 For a raw Python `float` result of an expression (e.g. `(§ v0**2/D §)`), the same
 filters apply — `PhysicsQuantity` handles the routing.
@@ -196,10 +196,10 @@ Three constructors:
 
 - `q1 % q2` where `q1 <= q2` (units must be commensurate; second is converted to
   first's unit).
-- `q.widen(v)` — returns a symmetric ±v range around `q`.
+- `r.snap(q)` — moves each end of a range to the next multiple of `q`, outward.
 - `QuantityRange(lo, hi)` (short alias `QR`) — same as `lo % hi`, spelled out;
   handy when `lo`/`hi` are compound expressions where `%` would need parens.
-- Given a range `r`, `r.widen(v)` **widens** the range by factor `(1+v)`
+- Given a range `r`, `r.snap(q)` moves each end to the next multiple of `q`
   around its centre. It never narrows; degenerate ranges (min == max) stay
   degenerate.
 
@@ -219,11 +219,23 @@ Format:
 Typical use in `answer-interval.md`:
 
 ```
-$(§ (result % result_exact) | w(0.01) | f2 §)$
+$(§ (result % result_approx) | f2 §)$
 ```
 
-This says: take the range with endpoints `result` and `result_exact`, widen by
-1%, format each endpoint to 2 decimals. The narrowest form of tolerance authoring.
+This says: take the range whose endpoints are the two admissible chains, and format each to
+2 decimals. `__format__` floors the minimum and ceils the maximum at that precision, so the
+printed band always contains the computed one and needs no margin of its own.
+
+Where the band must be coarser than the last place it prints — `.0f` is as coarse as a format
+spec goes — chain `snap`:
+
+```
+$(§ (result_approx % resultEquatorial) | snap(10) | f0 §)$
+```
+
+`08/same-parallel` is the case: an answer good to four figures printed to five, so a solver
+who rounded to 11570 fell outside a band ending at 11569. `snap` moves each end to the next
+multiple and no further, so it is idempotent and never a margin someone chose.
 
 ## Lists (`QuantityList`)
 
@@ -236,7 +248,7 @@ If you have several commensurate values to typeset as a list:
   `ql[0]`.
 - `ql.to('cm')` returns a new list with every element converted.
 - Not commonly used in Náboj; more common in scholar / seminar modules.
-- No `.widen()` — unlike a single value or a range, "widening" a list of
+- No `.snap()` — unlike a range, snapping a list of
   arbitrary points has no single natural meaning, so it's intentionally
   unsupported. Widen each element individually before listing if needed.
 
@@ -250,7 +262,7 @@ sharing one unit:
 - Same unit-coercion, `si_extra`-merge, and sequence behavior (`len()`,
   iteration, indexing) as `QuantityList` — the only difference is the `x`
   separator and command name.
-- No `.widen()`, for the same reason `QuantityList` has none.
+- No `.snap()`, for the same reason `QuantityList` has none.
 
 ## Common pitfalls
 

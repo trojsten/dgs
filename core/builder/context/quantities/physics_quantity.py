@@ -291,28 +291,6 @@ class PhysicsQuantity:
         unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '{1}'
         return rf'\unit{si_extra}{unit}'
 
-    def widen(self, value: float) -> "QuantityRange":
-        """
-        Construct a tolerance range from this quantity:
-        ``[(1 - v) * x, (1 + v) * x]``.
-
-        For positive ``x`` the smaller endpoint is ``(1 - v) * x`` and the
-        larger is ``(1 + v) * x``. For negative ``x`` the order flips so the
-        returned range still has minimum <= maximum.
-
-        ``value`` must be non-negative; pass ``0`` for a degenerate range.
-        Values >= 1 are allowed and produce a range that crosses zero
-        (e.g. ``100.widen(1.5) -> [-50, 250]``).
-        """
-        from .quantity_range import QuantityRange
-        assert value >= 0, f"widen factor must be non-negative, got {value}"
-        low = self * (1 - value)
-        high = self * (1 + value)
-        if self._quantity.magnitude >= 0:
-            return QuantityRange(low, high)
-        else:
-            return QuantityRange(high, low)
-
     def sin(self):
         return PhysicsQuantity(np.sin(self._quantity))
 

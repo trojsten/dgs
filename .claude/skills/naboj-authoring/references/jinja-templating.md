@@ -98,7 +98,7 @@ digits. Apply to `PhysicsQuantity`, `QuantityRange`, `QuantityList`,
 | `|mag`               | Extract raw magnitude (pint magnitude, not a string).     |
 | `|unit`              | Just the unit, formatted as `\unit{…}`.                   |
 | `|sim`               | `.simplify()` — convert to base SI units.                 |
-| `|w(value)`, `|widen(value)` | Construct a tolerance range: `x|w(0.05)` → ±5%.   |
+| `|snap(quantum)` | Round a range's ends outward onto a grid: `r|snap(10)` → 11550–11570. |
 
 Every family exists both bare and suffixed `0`–`9`. Bare means "no precision in
 the format spec", i.e. Python's default for that kind: `f` gives six decimals
@@ -194,7 +194,7 @@ QuantityRange(lo, hi)          # (QR) build a range directly; equivalent to `lo 
 Both the long names and the short aliases are registered, so `QR(a, b)` and
 `QuantityRange(a, b)` are the same global.
 
-`q1 % q2` and `q.widen(v)` remain the idiomatic ways to build a `QuantityRange` (see
+`q1 % q2` is the idiomatic way to build a `QuantityRange` (see
 quantities-and-constants.md); `QR(lo, hi)` is there for when the operands aren't
 bare variables and `%` would need extra parens anyway.
 
@@ -302,7 +302,8 @@ insertion order. Typical causes:
   use `.mag` or `|mag`.
 - **Ranges (`QuantityRange`) via `%`.** `q1 % q2` constructs a range with `q1` as
   minimum and `q2` as maximum. If `q1 > q2`, pint raises. Prefer the
-  `.widen(fraction)` method when you want a symmetric tolerance band.
+  `.snap(quantum)` method when the band must round outward onto a coarser grid than the
+  last place it prints.
 - **Constants inside math.** `const.g.approx` gives a rounded-magnitude
   `PhysicsQuantity`; use it in expressions. `const.g.symbol` (or `const.g.sym`)
   gives the TeX symbol string. `const.g.full` gives the printable full-precision

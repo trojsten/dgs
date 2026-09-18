@@ -93,11 +93,22 @@ names no `const.` value, should print `result_approx` throughout.
 
 Nothing needs padding because `QuantityRange.__format__` floors the minimum and ceils the
 maximum at whatever precision is printed, so the printed band always contains the computed
-one. **`|widen` (`|w`) is not for this.** It was the workaround from when both ends rounded to
-nearest, and it hid the defect rather than fixing it: `29/bouncy-v` spanned `[3.67749, 3.75]`,
-printed `3.7 – 3.8`, and turned away the solver who used the exact `g`. **There is no `|w` or
-`|widen` left anywhere in phys.** The filter is still defined — `widen` is a real operation on a
-range and the tests cover it — but no answer interval should reach for it.
+one. **`widen` is gone — the method, the `|w` and `|widen` filters, and their tests.** It was
+the workaround from when both ends rounded to nearest, and it hid the defect rather than
+fixing it: `29/bouncy-v` spanned `[3.67749, 3.75]`, printed `3.7 – 3.8`, and turned away the
+solver who used the exact `g`. Its last user was `27/electroballoon`, whose `|w(0.02)` stood
+in for three real chains — the air's density from the table or the sheet, and hydrogen's
+density read off a table rather than derived — which are now computed and spanned outright,
+1170 to 1188 EUR against the 1147 to 1195 an arbitrary 2 % gave.
+
+**When the band needs to be coarser than the last place it prints, that is `|snap(q)`.** The
+grid `__format__` rounds outward onto is read off the printed string, so it stops at a whole
+unit: `.0f` is the coarsest a format spec offers. `snap` chooses the grid instead.
+`08/same-parallel` is the example — five printed figures for an answer good to four, so a
+solver taking the 6378 km their school teaches wrote 11570 and the band ended at 11569.
+`|snap(10)` prints 11550 – 11570. It moves each end to the next grid point and **no further**,
+which is what makes it not `widen`: it is idempotent, and a range already on its grid does not
+move.
 
 Name the pair this way round even where it reads oddly. `28/nevera` and `28/avocado` used to
 call the sheet's value `result` and the real one `result_exact`, the inverse of here, and the
