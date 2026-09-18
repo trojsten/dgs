@@ -1,0 +1,20 @@
+source-md5: 351f46d4870a74cb2722552b9430a18d
+# Glyph identifications for `09.pdf` -- of which there are none, and the shift is the point.
+#
+# This booklet is the mixed regime: its prose is TrueType with a real `ToUnicode`, so mupdf
+# resolves it perfectly and `_character` rightly prefers that over any table. Its maths is
+# Type0/Identity-H `cmmi`, `cmr` and `cmsy`, where the unicode is useless and the glyph number
+# is what counts -- and that number is **the character code plus three**, exactly as in every
+# other booklet here.
+#
+# `fit_shift` could not see it. It scores candidate shifts on how much ordinary Slovak the
+# *text* fonts produce, and counts only glyphs whose unicode mupdf failed to resolve; `09` has
+# none of those, so the fit had nothing to measure and returned zero. At zero the maths decoded
+# to a consistent, confident lie: `v` as `y`, `m` as `p`, `g` as `j`, `R` as `U`, `/` as
+# `\partial`, `-` as `\ni`, `\sqrt` as `\smallint`, the decimal comma as `>`. Every solution in
+# the volume read as nonsense while nothing reported an error.
+#
+# Read off a contact sheet of all 55 `cmmi12` glyphs, and every one is code+3 without
+# exception: `a` = 97 is `G100`, `alpha` = 0x0B is `G14`, `/` = 0x3D is `G64`. So there is no
+# table to write, only a shift to state.
+shift: 3

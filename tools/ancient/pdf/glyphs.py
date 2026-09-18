@@ -288,6 +288,8 @@ def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[in
     data = yaml.safe_load(path.read_text()) or {}
     declared = data.pop('source-md5', None)
     data['_trust'] = set(data.pop('trust', []) or [])
+    if 'shift' in data:
+        data['_shift'] = int(data.pop('shift'))
     # A table is only valid for the file it was read from. Each booklet is subset separately,
     # so the same G-number means different characters in different years -- and a table
     # applied to the wrong file does not fail, it silently returns confident wrong letters.
@@ -371,12 +373,18 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
     whole booklet can fit once and reuse -- and so the report can state what was measured.
     """
     raw = trace(pdf, page)
-    if shift is None:
-        shift = fit_shift(raw)
     mb = RE_MEDIABOX.search(raw)
     height = float(mb.group(4)) if mb else 842.0
 
     table = identified(volume, _fingerprint(pdf)) if volume else {}
+    if shift is None:
+        # A booklet may state its own shift, and `09` has to. `fit_shift` scores on text fonts
+        # whose unicode mupdf could not resolve, and `09` has none of those -- its prose is
+        # TrueType that decodes perfectly -- so the fit sees nothing to measure and returns
+        # zero. Its *maths* is a different matter: every `cmmi` glyph there is its character
+        # code plus three, read off a contact sheet, so a fitted zero set `v` as `y`, `m` as
+        # `p` and `/` as `\partial` through the whole volume, confidently.
+        shift = table['_shift'] if '_shift' in table else fit_shift(raw)
     # The second channel. `metrics` reads each subset font's own `/Widths` against the TeX
     # metric it names, which identifies a glyph without anyone looking at it -- see that
     # module for why it is worth having beside the hand-read tables rather than instead of

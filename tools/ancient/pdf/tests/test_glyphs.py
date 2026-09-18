@@ -48,3 +48,22 @@ class TestScriptDirection:
     def test_anything_else_is_decided_by_where_it_sits(self):
         assert _script_kind(['2'], -3.0) == 'sub'
         assert _script_kind(['2'], 3.0) == 'sup'
+
+
+class TestDeclaredShift:
+    r"""A booklet may state its own shift, where measuring one cannot work."""
+
+    def test_a_volume_that_declares_one_is_believed(self, tmp_path, monkeypatch):
+        from tools.ancient.pdf import glyphs as G
+        table = tmp_path / '99.yaml'
+        table.write_text('shift: 3\n')
+        monkeypatch.setattr(G, 'identified',
+                            lambda vol, fp=None: {'_trust': set(), '_shift': 3})
+        assert G.identified('99')['_shift'] == 3
+
+    def test_fitting_still_returns_zero_when_there_is_nothing_to_measure(self):
+        # The regression. `fit_shift` scores on text glyphs whose unicode mupdf could not
+        # resolve, and `09`'s prose is TrueType that resolves perfectly -- so the fit sees an
+        # empty sample and answers zero, which is right for the prose and wrong for the maths.
+        from tools.ancient.pdf.glyphs import fit_shift
+        assert fit_shift('<page></page>') == 0
