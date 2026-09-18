@@ -594,6 +594,88 @@ def _dehyphenate(lines: list[str]) -> list[str]:
 RE_SPACES = re.compile(r'[ \t]+')
 
 
+#: A drawing the decode found but cannot reproduce. Resolved per problem in `draft.py`, the
+#: way a hoisted quantity is: the page does not know which problem it will end up in.
+FIGURE = '⟦figure⟧'
+RE_FIGURE = re.compile('⟦figure⟧')
+
+
+def _lettering(parts: list[Box]) -> bool:
+    """
+    Is this cluster a word rather than a drawing?
+
+    `08`'s chapter heading is set as outlines, so `Kapitola 1` arrives as nine `fill_path`
+    boxes and clusters into a tidy 140x25 rectangle that looks exactly like a small diagram.
+    What gives it away is that letters **sit on a line**: eight of those nine share a bottom
+    edge to within a point. The strokes of a diagram do not, and the few that happen to are
+    never most of it.
+    """
+    if len(parts) < 3:
+        return False
+    # Counted within a tolerance rather than by rounding into buckets: those nine bottoms are
+    # -185.5 and -185.6, which `round` splits four and four across the boundary between -185
+    # and -186, and the baseline they plainly share stops being the mode of anything.
+    bottoms = [b.y0 for b in parts]
+    together = max(sum(1 for other in bottoms if abs(other - one) <= 1.5) for one in bottoms)
+    return together >= max(3, len(parts) * 0.6)
+
+
+def _figures(boxes: list[Box], smallest: float = 24.0, gap: float = 14.0) -> list[float]:
+    r"""
+    Where the drawings are on this page, as the height of each one's middle.
+
+    A figure is not a box, it is a crowd of them: every stroke of a diagram arrives as its own
+    path, and nothing groups them but the fact that they are near each other. So the paths are
+    clustered by proximity and a cluster counts as a drawing only once its bounding box is
+    bigger than a large letter in both directions -- and only if it is not `_lettering`.
+
+    Rules and letter-shaped masks go first, and must: a rule is a header line or a fraction
+    bar, and a mask is volume 02-08's `y`-acute, both of which `_fractions` and `_splice_images`
+    have their own claim on. Left in, the header rule at the top of every page would merge with
+    the first line of prose and report a figure on all of them.
+
+    The answer is a height rather than a box because that is all the caller needs -- the
+    placeholder goes in the text flow where the drawing interrupts it, and the drawing's own
+    width is no use to a picture that does not exist yet.
+    """
+    parts = [b for b in boxes
+             if not b.rule and not (b.kind == 'image' and _letter_shaped(b))
+             and b.width > 1 and b.height > 1]
+    clusters: list[tuple[list[float], list[Box]]] = []
+    for b in sorted(parts, key=lambda b: -b.y1):
+        box = [b.x0, b.y0, b.x1, b.y1]
+        for c, members in clusters:
+            if (box[0] - gap <= c[2] and c[0] - gap <= box[2]
+                    and box[1] - gap <= c[3] and c[1] - gap <= box[3]):
+                c[0], c[1] = min(c[0], box[0]), min(c[1], box[1])
+                c[2], c[3] = max(c[2], box[2]), max(c[3], box[3])
+                members.append(b)
+                break
+        else:
+            clusters.append((box, [b]))
+    # One pass leaves neighbours that only became adjacent through a later box, so merge until
+    # nothing moves. A diagram drawn stroke by stroke needs two or three rounds of this.
+    merged = True
+    while merged:
+        merged = False
+        for i, (a, am) in enumerate(clusters):
+            for entry in clusters[i + 1:]:
+                b, bm = entry
+                if (a[0] - gap <= b[2] and b[0] - gap <= a[2]
+                        and a[1] - gap <= b[3] and b[1] - gap <= a[3]):
+                    b[0], b[1] = min(a[0], b[0]), min(a[1], b[1])
+                    b[2], b[3] = max(a[2], b[2]), max(a[3], b[3])
+                    bm.extend(am)
+                    clusters.remove((a, am))
+                    merged = True
+                    break
+            if merged:
+                break
+    return sorted(((c[1] + c[3]) / 2 for c, members in clusters
+                   if c[2] - c[0] >= smallest and c[3] - c[1] >= smallest
+                   and not _lettering(members)), reverse=True)
+
+
 def page_text(glyphs: list[Glyph], boxes: list[Box],
               prose: frozenset[str] = frozenset(PROSE_ROLES)) -> tuple[list[str], dict]:
     """
@@ -614,14 +696,21 @@ def page_text(glyphs: list[Glyph], boxes: list[Box],
     rendered, dropped = [], []
     values: list[tuple[str, str, str, str]] = []
     missing: list[str] = []
+    drawings = _figures(boxes)
     for ln in lines:
         if not ln.glyphs:
             continue
+        # A drawing sitting above this line interrupts the text here, so its placeholder goes
+        # in before it. `y` is negated upstream, so higher up is a larger number.
+        while drawings and drawings[0] > ln.y:
+            rendered.append(FIGURE)
+            drawings.pop(0)
         text, runs = _text(ln, values, missing, prose)
         text = RE_SPACES.sub(' ', text).strip()
         if text:
             rendered.append(text)
             dropped.extend(runs)
+    rendered.extend([FIGURE] * len(drawings))
     report = {
         'lines': len(rendered),
         'maths-marked': len(dropped),

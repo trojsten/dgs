@@ -111,6 +111,43 @@ def _stranded(line: str) -> str:
     return f'%# TODO(stranded): a {kind} `{m.group(2)}` whose base the decode could not find.'
 
 
+#: The prose naming a drawing: Slovak `obrázok` in any case it declines into.
+RE_MENTIONS_FIGURE = re.compile(r'obr[\u00e1a]z|obrazk', re.I)
+
+
+def pictures(text: str) -> str:
+    r"""
+    Every drawing marker in one file becomes a placeholder that renders.
+
+    `\insertPicture` already draws LaTeX's `example-image` -- a grey panel with a cross through
+    it -- when the file it names is not there, so a placeholder only has to *name* one. An empty
+    `![]()` does not work and is worth saying why: the convertor rewrites `\includegraphics`
+    into `\insertPicture` by matching the extension, so a path with none stays a bare
+    `\includegraphics{}` and stops the build with `File \`\' not found`.
+
+    Numbered per file rather than per problem, so a statement's drawing and its solution's are
+    `figure-1.svg` in each; they sit in different directories and never collide. The name is
+    deliberately neutral -- whoever draws the thing will rename it to what it shows.
+    """
+    count = 0
+
+    def replace(_m):
+        nonlocal count
+        count += 1
+        return f'![](figure-{count}.svg){{height=40mm}}'
+
+    text = assemble.RE_FIGURE.sub(replace, text)
+    # **A promise in the prose outranks the geometry.** Clustering finds 106 of the 120 drawings
+    # the text refers to by name; the other fourteen are diagrams whose strokes fall under the
+    # size it takes to be sure, or whose labels sit on a line and read as lettering. Where a
+    # sentence says *na obrázku* and nothing was found, one goes at the end anyway: the position
+    # is a guess, which is worse than the others, and a page that promises a picture and shows
+    # none is worse still.
+    if not count and RE_MENTIONS_FIGURE.search(text):
+        text = text.rstrip('\n') + '\n\n![](figure-1.svg){height=40mm}'
+    return text
+
+
 def body(lines: list[str]) -> str:
     """
     A problem's lines as Markdown, normalised the way every other converted volume is.
@@ -232,9 +269,9 @@ def write(out: Path, volume: str, pdf: Path, dry_run: bool = False) -> str:
                     for k, (sym, mag, unit) in sorted(used.items()))
             (root / 'meta.yaml').write_text(meta)
             (root / 'answer.md').write_text(ANSWER)
-            (root / 'sk' / 'problem.md').write_text(body(statement) + '\n')
+            (root / 'sk' / 'problem.md').write_text(pictures(body(statement)) + '\n')
             (root / 'sk' / 'solution.md').write_text(
-                body(solution) + '\n' if solution else
+                pictures(body(solution)) + '\n' if solution else
                 '%# TODO(solution): the booklet prints none for this problem.\n')
         (out / volume / 'report.md').write_text('\n'.join(report))
 
