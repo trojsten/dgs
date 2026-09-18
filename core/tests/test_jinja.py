@@ -338,8 +338,12 @@ class TestMathPunctuationShorthands:
 class TestApproxEqualsFilters:
     """
     `ef`/`eg` render `symbol = value`; `af`/`ag` render `symbol \\approx value`.
-    All four exist bare (Python's default formatting for the kind) and suffixed 0-9
-    for an explicit precision.
+    All four exist bare and suffixed 0-9 for an explicit precision.
+
+    **Bare means the number's own precision, not Python's six decimals.** `f` and `e` used to
+    fall through to `.6f` and `.6e`, so `96.7` printed as `96.700000` and `1e-8` as `0.000000`,
+    which loses the value outright. `g` never had the fault, its precision counting significant
+    digits, which is why `.eq` was always right.
     """
 
     @pytest.fixture
@@ -367,23 +371,23 @@ class TestApproxEqualsFilters:
         assert renderer.render('(§ m | af2 §)', context) == r'm_D \approx \qty{96.70}{\kilo\gram}'
 
     def test_ef_bare(self, renderer, context):
-        """No precision means Python's default 'f', i.e. six decimals — same as `| f`."""
-        assert renderer.render('(§ m | ef §)', context) == r'm_D = \qty{96.700000}{\kilo\gram}'
+        """No precision means the number's own, not six decimals of padding."""
+        assert renderer.render('(§ m | ef §)', context) == r'm_D = \qty{96.7}{\kilo\gram}'
 
     def test_eg_bare(self, renderer, context):
         assert renderer.render('(§ m | eg §)', context) == r'm_D = \qty{96.7}{\kilo\gram}'
 
     def test_af_bare(self, renderer, context):
-        assert renderer.render('(§ m | af §)', context) == r'm_D \approx \qty{96.700000}{\kilo\gram}'
+        assert renderer.render('(§ m | af §)', context) == r'm_D \approx \qty{96.7}{\kilo\gram}'
 
     def test_ag_bare(self, renderer, context):
         assert renderer.render('(§ m | ag §)', context) == r'm_D \approx \qty{96.7}{\kilo\gram}'
 
     def test_ee_bare(self, renderer, context):
-        assert renderer.render('(§ m | ee §)', context) == r'm_D = \qty{9.670000e+01}{\kilo\gram}'
+        assert renderer.render('(§ m | ee §)', context) == r'm_D = \qty{9.67e+01}{\kilo\gram}'
 
     def test_ae_bare(self, renderer, context):
-        assert renderer.render('(§ m | ae §)', context) == r'm_D \approx \qty{9.670000e+01}{\kilo\gram}'
+        assert renderer.render('(§ m | ae §)', context) == r'm_D \approx \qty{9.67e+01}{\kilo\gram}'
 
     def test_ee2(self, renderer, context):
         assert renderer.render('(§ m | ee2 §)', context) == r'm_D = \qty{9.67e+01}{\kilo\gram}'
@@ -400,13 +404,19 @@ class TestApproxEqualsFilters:
 
     @pytest.mark.parametrize("bare,suffixed", [
         pytest.param('ag', 'ag6', id='eg'),
-        pytest.param('af', 'af6', id='ef'),
-        pytest.param('ae', 'ae6', id='ee'),
+        pytest.param('af', 'af1', id='ef'),
+        pytest.param('ae', 'ae2', id='ee'),
     ])
-    def test_bare_matches_default_precision(self, renderer, context, bare, suffixed):
-        """Python's default for both 'f' and 'g' is six digits, so these coincide here."""
+    def test_bare_is_the_precision_the_value_carries(self, renderer, context, bare, suffixed):
+        """96.7 needs one decimal fixed and two significant, and bare asks for exactly that."""
         assert renderer.render(f'(§ m | {bare} §)', context) == \
                renderer.render(f'(§ m | {suffixed} §)', context)
+
+    def test_a_small_value_does_not_vanish(self, renderer):
+        """The reason this matters: `.6f` of `1e-8` is `0.000000`, and the number is gone."""
+        from core.builder.context.quantities import PhysicsQuantity
+        tiny = {'x': PhysicsQuantity.construct(1e-8, 'metre', symbol='x')}
+        assert renderer.render('(§ x | ef §)', tiny) == r'x = \qty{0.00000001}{\metre}'
 
 
 class TestQuantityConstructorGlobals:

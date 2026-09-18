@@ -882,12 +882,12 @@ class TestEqualsApprox:
         assert mass_mega.approx_exponential(3).replace(r'\approx', '=') == mass_mega.equals_exponential(3)
 
     def test_precision_is_optional(self, mass_mega):
-        """Omitting precision falls back to the bare 'f'/'g' spec, as in `format_float`."""
-        assert mass_mega.approx_float() == r'm_D \approx \qty{96.700000}{\kilo\gram}'
+        """Omitting precision gives the value's own, not six decimals of padding."""
+        assert mass_mega.approx_float() == r'm_D \approx \qty{96.7}{\kilo\gram}'
         assert mass_mega.approx_general() == r'm_D \approx \qty{96.7}{\kilo\gram}'
-        assert mass_mega.equals_float() == r'm_D = \qty{96.700000}{\kilo\gram}'
+        assert mass_mega.equals_float() == r'm_D = \qty{96.7}{\kilo\gram}'
         assert mass_mega.equals_general() == r'm_D = \qty{96.7}{\kilo\gram}'
-        assert mass_mega.equals_exponential() == r'm_D = \qty{9.670000e+01}{\kilo\gram}'
+        assert mass_mega.equals_exponential() == r'm_D = \qty{9.67e+01}{\kilo\gram}'
 
     def test_explicit_none_precision_matches_omitted(self, mass_mega):
         """`None` is the documented way to say "no precision", not an error."""
@@ -1202,3 +1202,33 @@ class TestBritishSpelling:
         """
         assert PhysicsQuantity.construct(1, 'minute').only_unit() == r'\unit{\minute}'
         assert PhysicsQuantity.construct(1, 't').only_unit() == r'\unit{\tonne}'
+
+
+class TestRangeGridMatchesWhatPrints:
+    """
+    `_outward`'s grid is the last place the endpoint *prints*, so it has to format the endpoint
+    the way `format_struct` does. Reading the grid off `1.234000` while printing `1.234` would
+    put the band's last digit outside the grid meant to contain it.
+    """
+
+    @staticmethod
+    def span(low, high, unit='metre'):
+        return QuantityRange(PhysicsQuantity.construct(low, unit),
+                             PhysicsQuantity.construct(high, unit))
+
+    def test_a_bare_spec_prints_the_values_own_digits(self):
+        assert f'{self.span(1.2345678, 5.6789012):f}' == \
+            r'\qtyrange{1.2345678}{5.6789012}{\metre}'
+
+    def test_the_endpoints_land_on_the_grid_and_not_a_float_beside_it(self):
+        # `ceil(x / 1e-7) * 1e-7` gave 5.678901199999999, which the old six-decimal formatting
+        # hid; scaling an integer through `Decimal` is exact for a power of ten.
+        r = self.span(1.2345678, 5.6789012)
+        assert '99999' not in f'{r:f}'
+
+    def test_whole_numbers_print_whole(self):
+        assert f'{self.span(1.0, 5.0):f}' == r'\qtyrange{1}{5}{\metre}'
+
+    def test_an_explicit_precision_still_rounds_outward(self):
+        # The quiet case: the behaviour the class exists for is unchanged.
+        assert f'{self.span(3.67749, 3.75):.1f}' == r'\qtyrange{3.6}{3.8}{\metre}'

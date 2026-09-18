@@ -9,7 +9,7 @@ import numpy as np
 import pint
 from pint import UnitRegistry as u
 
-from core.filters.hacks import cut_extra_one
+from core.filters.hacks import BareKind, cut_extra_one, natural
 
 
 class MissingSymbolError(Exception):
@@ -354,7 +354,11 @@ class PhysicsQuantity:
         """
         pint_output = f"{self._quantity:Lx}"
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
-        magnitude = cut_extra_one(f'{self._quantity.magnitude:{fmt}}')
+        # A bare `f` or `e` means Python's six decimal places, which is a precision the
+        # caller did not ask for and `1e-8` does not survive. See `natural`.
+        magnitude = cut_extra_one(natural(self._quantity.magnitude, fmt)
+                                  if BareKind.match(fmt or '')
+                                  else f'{self._quantity.magnitude:{fmt}}')
         unit = self._latex_unit(si_fragment.group('unit'))
 
         return {

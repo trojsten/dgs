@@ -5,7 +5,7 @@ import numbers
 
 from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
 
-from .hacks import cut_extra_one
+from .hacks import cut_extra_one, natural, natural
 
 
 def roman(number: int) -> str:
@@ -53,7 +53,8 @@ def format_float(x: float, precision: int | None = None):
         fmt = rf'.{precision}f'
 
     if isinstance(x, numbers.Number):
-        printed = rf"{x:{fmt}}"
+        # A bare `f` is Python's six decimal places, not "fixed" -- see `natural`.
+        printed = natural(x, 'f') if precision is None else rf"{x:{fmt}}"
     elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)):
         printed = x.__format__(fmt)
     else:
@@ -101,7 +102,8 @@ def format_exponential(x: float, precision: int | None = None):
         fmt = rf'.{precision}e'
 
     if isinstance(x, numbers.Number):
-        printed = rf"{x:{fmt}}"
+        # A bare `e` is Python's six decimal places, not "scientific" -- see `natural`.
+        printed = natural(x, 'e') if precision is None else rf"{x:{fmt}}"
     elif isinstance(x, (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)):
         printed = x.__format__(fmt)
     else:

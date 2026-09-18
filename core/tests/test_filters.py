@@ -4,6 +4,8 @@ import datetime
 import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
+from core.filters.hacks import natural
+from core.filters.numbers import format_exponential, format_float
 from core.filters.latex import (
     angle_dms,
     approx_exponential,
@@ -333,8 +335,9 @@ class TestFormatExponential:
         q = PhysicsQuantity.construct(1.00356e-4, 'metre')
         assert format_exponential(q, 3) == r'\qty{1.004e-04}{\metre}'
 
-    def test_no_precision_is_pythons_default(self):
-        assert format_exponential(1.5) == '1.500000e+00'
+    def test_no_precision_is_the_value_s_own(self):
+        # Not `1.500000e+00`: a bare `e` asks for scientific notation, not six decimals.
+        assert format_exponential(1.5) == '1.5e+00'
 
     def test_a_string_is_a_type_error(self):
         with pytest.raises(TypeError):
@@ -400,3 +403,43 @@ class TestAngleDms:
     def test_an_impossible_number_of_places_is_refused(self):
         with pytest.raises(ValueError, match='places'):
             angle_dms(self.deg(1), 4)
+
+
+class TestNaturalPrecision:
+    r"""
+    A bare `f` or `e` means that notation, not six decimal places of it.
+
+    `f'{x:f}'` is `.6f`, which is a precision nobody asked for: `96.7` printed as `96.700000`,
+    and -- the reason this is a bug and not a blemish -- `1e-8` printed as `0.000000`, with the
+    value gone from the page. `g` never had the fault, counting significant digits instead.
+    """
+
+    def test_a_whole_number_keeps_no_decimals(self):
+        assert natural(102.0, 'f') == '102'
+
+    def test_a_value_keeps_exactly_its_own_digits(self):
+        assert natural(9.80665, 'f') == '9.80665'
+        assert natural(0.01, 'f') == '0.01'
+
+    def test_a_small_value_does_not_vanish(self):
+        # The one that matters: `.6f` of this is `0.000000`.
+        assert natural(1e-8, 'f') == '0.00000001'
+
+    def test_a_large_value_stays_fixed(self):
+        assert natural(2450000.0, 'f') == '2450000'
+
+    def test_the_exponential_loses_its_padding_too(self):
+        assert natural(102.0, 'e') == '1.02e+02'
+        assert natural(1.5, 'e') == '1.5e+00'
+
+    def test_a_negative_keeps_its_sign(self):
+        assert natural(-3.25, 'f') == '-3.25'
+
+    def test_zero_is_zero(self):
+        assert natural(0.0, 'f') == '0'
+
+    def test_an_explicit_precision_is_untouched(self):
+        # The quiet case: only the *bare* kind changes, so every `|f2` in the repository
+        # prints exactly what it printed before.
+        assert format_float(102.0, 2) == '102.00'
+        assert format_exponential(1.00356e-4, 3) == '1.004e-04'
