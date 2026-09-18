@@ -1,4 +1,4 @@
-"""
+r"""
 Moving a finished draft into the tree.
 
 `draft.py` writes drafts and refuses to write anywhere near `source/`, which is the right
@@ -141,8 +141,38 @@ def promote(draft: Path, target: Path, slugs: dict[str, str],
     return [f'promoted {len(done)} problems into {target}', *(f'  {d}' for d in done)]
 
 
-#: The `problems:` block and nothing else -- either `[]` or a list of `- item` lines.
-RE_ORDER = re.compile(r'(?m)^problems:[ \t]*(?:\[\s*\]|(?:\n[ \t]*-[ \t].*)*)[ \t]*$')
+#: The `problems:` block and nothing else -- `[]`, or a run of `- item` lines with the comments
+#: that annotate them. The comments have to be inside the match or the block ends at the first
+#: one: `05`'s note about the tram it prints twice sits between two entries, so the sub replaced
+#: the head of the list and left the tail below the comment where it was, quietly giving the
+#: volume 79 problems instead of 50 and running 29 of them twice.
+RE_ORDER = re.compile(r'(?m)^problems:[ \t]*(?:\[\s*\]|(?:\n(?:[ \t]*-[ \t].*|[ \t]*#.*))*)[ \t]*$')
+
+#: One `- item` line, and one comment line, inside that block.
+RE_ENTRY = re.compile(r'^[ \t]*-[ \t]+(\S+)')
+RE_NOTE = re.compile(r'^[ \t]*#')
+
+
+def _annotations(text: str) -> dict[str, list[str]]:
+    """
+    The comment lines standing above each entry in the existing `problems:` list.
+
+    A comment there belongs to the entry under it -- `05`'s says why the volume lists one
+    problem twice -- and rewriting the order must carry it along rather than drop it on the
+    floor. Keyed by slug, because the order is exactly what is about to change.
+    """
+    if not (m := RE_ORDER.search(text)):
+        return {}
+    notes: dict[str, list[str]] = {}
+    pending: list[str] = []
+    for line in m.group(0).split('\n')[1:]:
+        if RE_NOTE.match(line):
+            pending.append(line.rstrip())
+        elif (e := RE_ENTRY.match(line)):
+            if pending:
+                notes[e.group(1)] = pending
+            pending = []
+    return notes
 
 
 def _splice_order(text: str, order: list[str]) -> str:
@@ -155,9 +185,14 @@ def _splice_order(text: str, order: list[str]) -> str:
     is written unquoted because YAML 1.1 reads it as sexagesimal 660. In these volumes the
     comments *are* the provenance, and the provenance is most of the value.
     """
-    block = 'problems:\n' + ''.join(f'  - {slug}\n' for slug in order)
+    notes = _annotations(text)
+    lines = ['problems:']
+    for slug in order:
+        lines += notes.get(slug, [])
+        lines.append(f'  - {slug}')
+    block = '\n'.join(lines) + '\n'
     if RE_ORDER.search(text):
-        return RE_ORDER.sub(block.rstrip('\n'), text, count=1)
+        return RE_ORDER.sub(lambda _m: block.rstrip('\n'), text, count=1)
     return text.rstrip('\n') + '\n\n' + block
 
 

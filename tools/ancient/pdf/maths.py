@@ -19,6 +19,9 @@ rather than guessed at, exactly as `units.py` says.
 from __future__ import annotations
 
 import re
+from pathlib import Path
+
+import yaml
 
 from tools.ancient.units import UNITS
 
@@ -305,8 +308,15 @@ def radicals(body: str) -> str:
 #: Every control word the decode can emit: the encoding tables' own values, plus the ones this
 #: module introduces. Collected rather than listed, so it cannot drift from the tables.
 def _known_macros() -> frozenset[str]:
-    from tools.ancient.pdf import encodings
+    from tools.ancient.pdf import encodings, glyphs
     tables = [encodings.MATH_ITALIC, encodings.MATH_SYMBOL, encodings.OT1, encodings.T1]
+    # The hand-read tables are the other half, and leaving them out is not harmless: they are
+    # where every AMS symbol lives, so `\leqslant` met a `separate_macros` that knew `\leq` and
+    # not the whole word, and 22 relations across `03` came out as the longest known prefix
+    # plus a word of prose -- `$\mu_1 \leq slant F\cos\alpha$`, which compiles.
+    tables += [t for path in sorted((Path(glyphs.__file__).parent / 'glyphs').glob('*.yaml'))
+               for t in (yaml.safe_load(path.read_text()) or {}).values()
+               if isinstance(t, dict)]
     names = {v[1:] for table in tables for v in table.values()
              if isinstance(v, str) and v.startswith('\\') and v[1:].isalpha()}
     names |= {m[1:] for m in UNICODE_MATHS.values() if m.startswith('\\')}
@@ -464,11 +474,38 @@ def prose_percents(text: str) -> str:
         lambda m: f'$\\qty{{{m.group(1).replace(",", ".")}}}{{\\percent}}$', s))
 
 
+#: A run of letters, with the full stop an abbreviation ends on.
+RE_WORD = re.compile(r'[^\W\d_]+\.?')
+
+#: `\text{\text{x}}`, which `prose_words` makes if it meets a word already wrapped.
+RE_DOUBLE_TEXT = re.compile(r'\\text\{\\text\{([^{}]*)\}\}')
+
+
+def prose_words(body: str) -> str:
+    r"""
+    A word with an accent in it is prose, and prose in maths goes in `\text{}`.
+
+    The maths fonts can set `konst.` and cannot set `konšt.`: MinionPro's maths cuts carry no
+    accented letters, so a bare one is a `Missing character` in the log and **nothing at all on
+    the page** -- the same silent loss a `\TwoFifths` would be. `06/earth-falls` writes
+    `$T^2/a^3 = konšt.$` and lost its š six times over while the build stayed green.
+
+    Only a run that actually holds one is touched, so `\alpha`, `mgh` and every ASCII variable
+    are left exactly as they were. That is deliberately narrower than "a word in maths belongs
+    in `\text{}`", which is true but is a judgement about each site; this is the subset where
+    the alternative is ink that does not arrive.
+    """
+    wrapped = RE_WORD.sub(
+        lambda m: f'\\text{{{m.group(0)}}}' if any(ord(c) > 127 for c in m.group(0))
+        else m.group(0), body)
+    return RE_DOUBLE_TEXT.sub(r'\\text{\1}', wrapped)
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
     body, missing = quantities(percents(unicode_maths(strip_marks(body))))
     body = radicals(accents(composites(operators(differences(body)))))
-    body = specials(separate_macros(body))
+    body = prose_words(specials(separate_macros(body)))
     return spacing(scripts_once(body)), missing
 
 

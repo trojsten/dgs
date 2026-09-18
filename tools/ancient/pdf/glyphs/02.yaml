@@ -15,7 +15,7 @@ source-md5: 24c880d539b39be90b004bd680bcf074
 #
 # The scrambled `cmr` agrees with `03.yaml` and `04.yaml` wherever the two overlap, which is
 # the useful part: the scramble is a property of the toolchain these authors ran, not of one
-# booklet. The scrambled `cmmi` is this year's own, and `metrics.py` -- matching each glyph's
+# booklet. The scrambled `cmmi` is shared with `04`, `05` and `06`, and `metrics.py` -- matching each glyph's
 # `/Widths` entry against `cmmi12.tfm` -- agrees with every character read off the contact
 # sheet. Where the width was unique it decided outright; where two characters share a width
 # the sheet chose between them, and the sheet's choice was inside the allowed set every time.
@@ -31,17 +31,21 @@ trust:
 
 # --- the 12/8/6 pt stream, subset as one scrambled merge ----------------------
 cmr120462: &cmr
+  -46: '7'
   4: 'h'
   6: 'A'
   12: '3'
   25: 'C'
   28: ')'
+  32: 'x'
   33: 'k'
   39: '='
   50: '2'
   52: 'm'
+  64: 'a'
   68: '5'
   69: '('
+  72: '8'
   73: '%'
   83: '6'
   85: 'c'
@@ -59,46 +63,73 @@ cmr80308: *cmr
 cmr60231: *cmr
 
 cmmi120462: &cmmi
+  -46: 'E'
+  4: 'u'
   5: 'h'
+  7: 'N'
   8: 'A'
+  9: '<'
   11: '\varrho'
+  14: '\gamma'
   15: 'v'
+  16: 'i'
+  17: 'O'
   18: 'B'
+  23: '.'
+  25: 'w'
   27: 'P'
   28: 'C'
   37: 'x'
+  38: 'k'
   39: 'Q'
   40: 'D'
   41: '\varphi'
   42: '/'
   43: 'y'
+  44: 'l'
   45: 'R'
+  46: 'E'
   47: '\omega'
+  48: '\varepsilon'
   52: '\rho'
+  53: 'z'
   54: 'm'
   55: 'S'
+  56: 'F'
   58: '>'
   62: '\mu'
+  63: 'n'
   64: 'a'
   65: 'T'
+  66: '\delta'
   67: 'G'
+  74: 'o'
   75: 'b'
+  76: 'U'
   77: 'H'
   79: '\vec'
   82: 'p'
   83: 'c'
   84: 'V'
   85: 'I'
+  90: '\pi'
   94: 'q'
   95: 'd'
   98: '\lambda'
+  99: ','
+  101: 'e'
+  102: 'X'
   105: '\vartheta'
   106: '\sigma'
   107: '\alpha'
+  111: 'r'
+  113: '\beta'
   114: 's'
   115: 'f'
   117: 'L'
   124: 't'
+  125: 'g'
+  126: 'Z'
   127: 'M'
   # G99 is a narrow mark the widths place among `.`, `,`, `\lfloor` and `\rfloor` and the
   # sheet cannot split; left out, so its two occurrences are reported rather than guessed.
@@ -107,3 +138,21 @@ cmmi80308: *cmmi
 cmsy80308:
   30: '\prime'
   31: '\circ'
+
+# The three plain cuts are trusted and decode by OT1 without a table -- except for the one
+# glyph the encoding cannot reach. `G46._` is the merge's second copy of `+`, and mupdf's
+# suffix put it outside `G<n>`, so all 89 of them were dropped in silence. A stem key with a
+# single entry is enough: every other glyph still falls through to the trusted decode.
+cmr100385:
+  -46: '+'
+cmr70269:
+  -46: '+'
+
+# **The 258 glyphs this booklet still drops are all figure labels and none is prose.** Its
+# second document's drawings were made in a Windows program and carry their text in Courier,
+# Times, Avant Garde and Symbol as TrueType subsets with no usable `unicode`, so `3\Omega`,
+# `7,5 cm`, `d=2R` and the rest decode to nothing. Page 9 is the one to look at. Every drawing
+# in the volume is being redrawn, so the labels are transcribed off the page with the picture
+# rather than off the text layer, and a table for four proprietary fonts would be read once
+# and then thrown away with them.
+

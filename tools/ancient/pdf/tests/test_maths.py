@@ -311,3 +311,44 @@ class TestPercent:
     def test_a_bare_sign_with_no_number_is_not_a_quantity(self):
         # `Koľko % hmotnosti` is prose asking "what percentage", not a value.
         assert maths.prose_percents('Koľko % hmotnosti') == 'Koľko % hmotnosti'
+
+
+class TestProseWords:
+    def test_an_accented_word_is_prose(self):
+        # `06/earth-falls` sets `$T^2/a^3 = konšt.$`. MinionPro's maths cuts have no `š`, so
+        # the letter left the page while the build stayed green -- six times over.
+        assert maths.prose_words('T^{2}/a^{3} = konšt.') == r'T^{2}/a^{3} = \text{konšt.}'
+
+    def test_the_abbreviating_stop_comes_along(self):
+        assert maths.prose_words('konšt.') == r'\text{konšt.}'
+
+    def test_an_ascii_word_is_left_alone(self):
+        # The narrow rule, deliberately: `mgh` and `sin` are set perfectly well by the maths
+        # font, and deciding whether an ASCII run is a word or a product of variables is a
+        # judgement per site rather than something a sweep may take.
+        assert maths.prose_words('mgh') == 'mgh'
+
+    def test_a_control_word_is_not_a_word(self):
+        assert maths.prose_words(r'\alpha+\beta') == r'\alpha+\beta'
+
+    def test_a_subscript_already_wrapped_is_not_wrapped_twice(self):
+        assert maths.prose_words(r'\text{konšt.}') == r'\text{konšt.}'
+
+    def test_a_greek_letter_spelled_out_in_unicode_is_a_symbol_not_a_word(self):
+        # `unicode_maths` has already turned these into control words by the time `tidy`
+        # reaches here; one that slipped through must not become `\text{α}`, which would set
+        # it upright and in the text font.
+        assert maths.prose_words(r'\alpha') == r'\alpha'
+
+
+class TestKnownMacros:
+    def test_the_hand_read_tables_are_collected_too(self):
+        # `\leqslant` lives only in `glyphs/03.yaml`. Collected from `encodings` alone,
+        # `separate_macros` knew `\leq` and split the word at the longest prefix it did know,
+        # giving `$\mu_1 \leq slant F\cos\alpha$` -- which compiles, and prints `slant`.
+        assert 'leqslant' in maths.KNOWN_MACROS
+        assert 'varkappa' in maths.KNOWN_MACROS
+        assert maths.separate_macros(r'\mu_{1}\leqslant F') == r'\mu_{1}\leqslant F'
+
+    def test_a_word_butted_onto_a_shorter_macro_still_separates(self):
+        assert maths.separate_macros(r'\betao') == r'\beta o'

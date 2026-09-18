@@ -1,5 +1,5 @@
 source-md5: 1a0a7f1e8ea24771f6bc33add6cfa834
-# Glyph identifications for `05.pdf`. `cmmi` is trusted rather than read -- see `03.yaml`.
+# Glyph identifications for `05.pdf`. Both `cmr` and `cmmi` are read here -- see the note on `cmmi` below for why trusting it was wrong.
 #
 # The `cmr` numbering here is the same scramble as `03` and `04`, glyph for glyph, which the
 # sheet *confirms* rather than assumes: 05 was read cold and every number it shares with those
@@ -9,7 +9,6 @@ source-md5: 1a0a7f1e8ea24771f6bc33add6cfa834
 #
 # This volume is imposed two-up, so it carries three sizes of `cmr` (1204, 8030, 6022) and two
 # of `cmsy`. `_family` keys them together, and the sizes agree with one another throughout.
-trust: [cmmi]
 cmr:
   7: '\doteq'
   12: '3'
@@ -53,7 +52,18 @@ cmsy:
   51: '-'
   52: '\infty'
   53: '\in'
+  # **`G53` is `\in` here and `\notin` in `08`, and that is the reason these tables stay
+  # per volume.** The `cmr` numbering agrees across every booklet from `02` to `08` -- 24 to 29
+  # entries shared per pair, not one disagreement -- and `cmmi`'s scramble is shared by `02`,
+  # `04`, `05` and `06`, so it is tempting to merge `cmsy` the same way. Twenty-two of its
+  # twenty-three entries would survive that merge intact and the twenty-third would hand `08`'s
+  # slashed glyph to this booklet's unslashed one, silently, in the single formula that uses it.
+  # `metrics.py` catches it -- the width admits `\in` and refuses `\notin` -- and a crop settles
+  # it, but only because the merge was checked against each volume's own font rather than
+  # against the other volumes' readings.
+  57: '\neq'
   66: '\perp'
+  73: '\sqrt'
   109: '|'
   115: '\sqrt'
   # `G115` (and `G73`, the same character in the 8pt subset) is the **radical sign**, not a
@@ -61,3 +71,102 @@ cmsy:
   # `metrics.py` matches its width to `cmsy`'s `\surd`, and a crop with its formula around it
   # settles it -- `06.pdf` sets $\sqrt{2}$ there, and printed `/2`.
   # `G30` is the **prime**, which every one of these tables had left out as unreadable.
+
+# **`cmmi` is read, not trusted, and that is the correction this table exists for.** It used to
+# carry `trust: [cmmi]`, on the strength of `03`, `07` and `08`, whose `cmmi` really is the
+# character code plus three. This year's is not: matched against `cmmi12.tfm` its glyph numbers
+# agree with code+3 on *nothing* and contradict it outright nine times. Every maths italic in
+# the volume was therefore a different letter -- a speed `v` printed as `\beta`, a radius `R`
+# as `\rightharpoonup`, a height `h` as `\Theta` -- with no marker, because the decode was
+# confident.
+#
+# The numbering is the same scramble `02` carries, glyph for glyph, and the same in all three
+# sizes here, so one family key serves. It was read off a contact sheet and then checked
+# against the widths in `02`, `04`, `05` and `06`: every entry a width can decide is confirmed
+# by the metric, and none is contradicted, in all four.
+#
+# The nine entries beyond `02`'s original reading -- `\gamma`, `.`, `w`, `z`, `\delta`, `o`,
+# `e`, `X`, `Z` -- are the glyphs `02` itself never sets. They were read the same way, off a
+# second sheet, once removing the false trust had turned them from wrong letters into 328
+# marked holes across `04`, `05` and `06`.
+cmmi:
+  4: 'u'
+  5: 'h'
+  7: 'N'
+  8: 'A'
+  9: '<'
+  11: '\varrho'
+  14: '\gamma'
+  15: 'v'
+  16: 'i'
+  17: 'O'
+  18: 'B'
+  23: '.'
+  25: 'w'
+  27: 'P'
+  28: 'C'
+  37: 'x'
+  38: 'k'
+  39: 'Q'
+  40: 'D'
+  41: '\varphi'
+  42: '/'
+  43: 'y'
+  44: 'l'
+  45: 'R'
+  46: 'E'
+  47: '\omega'
+  48: '\varepsilon'
+  52: '\rho'
+  53: 'z'
+  54: 'm'
+  55: 'S'
+  56: 'F'
+  58: '>'
+  62: '\mu'
+  63: 'n'
+  64: 'a'
+  65: 'T'
+  66: '\delta'
+  67: 'G'
+  74: 'o'
+  75: 'b'
+  76: 'U'
+  77: 'H'
+  79: '\vec'
+  82: 'p'
+  83: 'c'
+  84: 'V'
+  85: 'I'
+  90: '\pi'
+  94: 'q'
+  95: 'd'
+  98: '\lambda'
+  99: ','
+  101: 'e'
+  102: 'X'
+  105: '\vartheta'
+  106: '\sigma'
+  107: '\alpha'
+  111: 'r'
+  113: '\beta'
+  114: 's'
+  115: 'f'
+  117: 'L'
+  124: 't'
+  125: 'g'
+  126: 'Z'
+  127: 'M'
+
+# **AMS symbols have no standard table in `encodings.py`, so they live here.** `decode(code,
+# 'ams')` returns nothing for every code, which meant every `msam`/`msbm` glyph in the archive
+# was dropped without a word -- forty placements across six booklets, each one a relation or an
+# angle vanishing out of the middle of a formula. The numbering is the usual code plus three,
+# confirmed five times over against `amssymb.sty`: `G57`/`G65` are its `"36`/`"3E`
+# (`\leqslant`, `\geqslant`) and `G95`/`G96`/`G97` its `"5C`/`"5D`/`"5E` (`\angle`,
+# `\measuredangle`, `\sphericalangle`). `msbm` is not: its `G121` is `"7B`, `\varkappa`, which
+# the width admits and the sheet shows.
+msbm:
+  121: '\varkappa'
+msam:
+  95: '\angle'

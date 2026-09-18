@@ -56,3 +56,15 @@ cmsy:
   # `metrics.py` matches its width to `cmsy`'s `\surd`, and a crop with its formula around it
   # settles it -- `06.pdf` sets $\sqrt{2}$ there, and printed `/2`.
   # `G30` is the **prime**, which every one of these tables had left out as unreadable.
+
+# **AMS symbols have no standard table in `encodings.py`, so they live here.** `decode(code,
+# 'ams')` returns nothing for every code, which meant every `msam`/`msbm` glyph in the archive
+# was dropped without a word -- forty placements across six booklets, each one a relation or an
+# angle vanishing out of the middle of a formula. The numbering is the usual code plus three,
+# confirmed five times over against `amssymb.sty`: `G57`/`G65` are its `"36`/`"3E`
+# (`\leqslant`, `\geqslant`) and `G95`/`G96`/`G97` its `"5C`/`"5D`/`"5E` (`\angle`,
+# `\measuredangle`, `\sphericalangle`). `msbm` is not: its `G121` is `"7B`, `\varkappa`, which
+# the width admits and the sheet shows.
+msam:
+  57: '\leqslant'
+  65: '\geqslant'

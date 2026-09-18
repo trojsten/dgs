@@ -31,7 +31,14 @@ from tools.ancient.pdf import encodings, metrics
 RE_SPAN = re.compile(r'<span font="([^"]*)"[^>]*trm="([^"]*)"')
 RE_TEXTBLOCK = re.compile(r'<fill_text[^>]*transform="([^"]*)"')
 RE_GLYPH = re.compile(r'<g unicode="([^"]*)" glyph="([^"]*)" x="([-\d.]+)" y="([-\d.]+)" adv="([-\d.]+)"')
-RE_GNAME = re.compile(r'^G?(\d+)$')
+#: A subset glyph's name. `G46` is character code 46 -- and `G46._` is a *second* glyph that
+#: the embedded CFF charset also calls `G46`, which mupdf disambiguates with the suffix. Two
+#: of these booklets are two documents merged, so a name can collide, and where it does the
+#: two glyphs are unrelated: in `04.pdf`'s `cmr` the plain `G46` is `\doteq` and the duplicate
+#: is the digit **7**. Left unmatched the duplicate decoded to nothing and was dropped without
+#: a word -- `400/27` printed as `400/2` -- so it is numbered separately, as the negative of
+#: the name it collides with, and a table names it like any other glyph.
+RE_GNAME = re.compile(r'^G?(\d+)(\._)?$')
 
 #: mupdf's trace is XML, so the `unicode` attribute is escaped -- and the five characters it
 #: escapes are all ones these booklets use. Read raw, `R>r` arrived as `R&gt;r`, which reaches
@@ -194,8 +201,16 @@ def _numbers(raw: str) -> list[tuple[str, int | None, str, float, float, float, 
                 # advance in *y*. Mapped here into the one space everything downstream
                 # assumes: a line shares a baseline and advances rightwards.
                 gx, gy = gy, -gx
-            out.append((font, int(n.group(1)) if n else None, uni, gx, gy,
-                        float(adv), gsize))
+            number = None if n is None else int(n.group(1))
+            if n is not None and n.group(2):
+                # Zero is the only code whose negative is itself, and `cmsy`'s `G0` is the
+                # minus sign, so a `G0._` would alias onto it in silence. Nothing in these
+                # eleven booklets has one -- `G46._` is the only duplicate in the corpus --
+                # and if one ever turns up it should say so rather than decode as a minus.
+                if number == 0:
+                    raise ValueError(f'{font}: a duplicate G0 cannot be numbered as -0')
+                number = -number
+            out.append((font, number, uni, gx, gy, float(adv), gsize))
     return out
 
 
