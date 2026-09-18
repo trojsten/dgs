@@ -21,11 +21,11 @@
 \protectedInput{\activeDirectory/(* language.id *)/answer.tex}%
 (@ set prefix = "{}/{}/{}/problems/{}".format(module.id, competition.id, volume.id, problem.id) @)%
 (@ if path_exists("source/{}/{}/answer-extra.md".format(prefix, language.id)) -@)%
-\answerJoin\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}%
-(@- endif -@)%
+\answerJoin\protectedInput{\activeDirectory/(* language.id *)/answer-extra.tex}
+(@- endif -@)
 (@- if path_exists("source/{}/answer-interval.md".format(prefix)) -@)%
 \answerJoin\textit{(* i18n[language.id].answers.interval *)} \protectedInput{\activeDirectory/(* language.id *)/answer-interval.tex}\!.
-(@- endif -@)%
+(@- endif -@)
 (@- if path_exists("source/{}/answer-also.md".format(prefix)) -@)%
 \answerJoin\textit{(* i18n[language.id].answers.also *)} \protectedInput{\activeDirectory/(* language.id *)/answer-also.tex}\!.
 (@- endif -@)
