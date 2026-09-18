@@ -21,10 +21,11 @@ would put a wrong number on an answer sheet, which is the one place nobody re-re
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 from tools.ancient import rules
-from tools.ancient.pdf import assemble, glyphs, pages, segment
+from tools.ancient.pdf import assemble, glyphs, maths, pages, segment
 
 
 #: Until a slug table names them, problems are `p07` and so on -- provisional on purpose, and
@@ -88,6 +89,28 @@ def claim(lines: list[str]) -> tuple[list[str], dict[str, tuple[str, str, str]]]
     return [assemble.RE_HOIST.sub(resolve, ln) for ln in lines], values
 
 
+#: A whole line that is one script and nothing else: a superscript or index whose base the
+#: decode could not find. Four of these in the ten booklets -- two are a lost subscript, one is
+#: the degree ring off a figure label.
+RE_STRANDED = re.compile(r'^\$([_^])\{([^{}]*)\}\$$')
+
+
+def _stranded(line: str) -> str:
+    r"""
+    A baseless script, marked rather than printed or dropped.
+
+    Printing it puts `$^{\circ}$` on a line of its own, which is not only meaningless but a
+    **build error** -- `convertor.py` refuses `^\circ` outright, so one stray ring off a figure
+    label stopped volume 05's booklet. Dropping it silently loses the one clue to what is
+    missing. So the character is named in a `%# TODO`, which the convertor strips from the page
+    and `promote`'s quality gate counts.
+    """
+    if not (m := RE_STRANDED.match(line.strip())):
+        return line
+    kind = 'superscript' if m.group(1) == '^' else 'subscript'
+    return f'%# TODO(stranded): a {kind} `{m.group(2)}` whose base the decode could not find.'
+
+
 def body(lines: list[str]) -> str:
     """
     A problem's lines as Markdown, normalised the way every other converted volume is.
@@ -95,7 +118,7 @@ def body(lines: list[str]) -> str:
     `rules` is reused whole: these are the same authors writing the same notation as 2007, so
     `spaced_units`, `thin_comma` and the rest apply unchanged.
     """
-    text = '\n'.join(lines).strip()
+    text = maths.degrees('\n'.join(_stranded(ln) for ln in lines).strip())
     for rule in (rules.spaced_units, rules.thin_comma):
         try:
             text = rule(text)

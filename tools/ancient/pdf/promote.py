@@ -13,7 +13,8 @@ so when the draft has stopped being a draft.
   `convert.py`'s rule and it is not negotiable.
 - **No `%# TODO` survives.** `tools/ancient/README.md`: the conversion is not finished while
   one remains.
-- **No formula is still a hole.** A `⟨math⟩` marker means the decode could not read it.
+- **No formula is still a hole.** An `\errorMessage{math}` marker means the decode could
+  not read it.
 - **Every problem has a solution.** A stub solution renders as a red `Missing file` box, and
   volume 19 shipped one of those on page 42 for years without anyone noticing.
 - **Nothing is overwritten.** A problem directory that already exists is left alone unless
@@ -26,6 +27,12 @@ they were transcribed by hand years ago and are better than any decode. So the d
 them in its slug table, and reconciling keeps the tree's copy untouched while putting the slug
 in its printed position in `problems:` -- which is the one thing the decode knows and the
 existing volume does not. Nothing is written, and nothing is duplicated either.
+
+**It protects what the slug table names, and only that.** Reconciling on the mere existence of
+a directory protects the drafted ids too, so a second run of an improved decode reported
+thirty-six problems promoted and rewrote none of them -- volume 02 sat a whole generation of
+fixes behind the other eight without saying so. A `pNN` in the tree is a previous draft and is
+meant to be replaced; a slug is a person's work and is not.
 
 A volume that fails any gate is reported in full and nothing is written. Partial promotion is
 worse than none: it leaves a tree that looks converted and is not.
@@ -44,7 +51,7 @@ import yaml
 RE_SLUG = re.compile(r'^[a-z][a-z0-9-]*$')
 
 #: The markers `draft.py` leaves behind when it could not finish something.
-RE_UNFINISHED = re.compile(r'%# TODO|⟨math⟩')
+RE_UNFINISHED = re.compile(r'%# TODO|\\errorMessage')
 
 
 def _problems(draft: Path) -> list[str]:
@@ -111,11 +118,15 @@ def promote(draft: Path, target: Path, slugs: dict[str, str],
         return ['refusing to promote:', *(f'  {c}' for c in complaints)]
 
     problems = _problems(draft)
+    # Which problems the slug table *names* -- the ones a person has renamed, and so the ones
+    # whose copy in the tree is the human one. Captured before the table is filled out with
+    # provisional ids, because after that every problem looks named.
+    named = {pid for pid in problems if slugs.get(pid)}
     slugs = {pid: slugs.get(pid, pid) for pid in problems}
     done = []
     for pid in problems:
         src, dst = draft / 'problems' / pid, target / 'problems' / slugs[pid]
-        if reconcile and not force and dst.exists():
+        if reconcile and not force and pid in named and dst.exists():
             done.append(f'{pid} -> {slugs[pid]} (kept, already in the tree)')
             continue
         if not dry_run:

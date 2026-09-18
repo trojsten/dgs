@@ -155,3 +155,113 @@ class TestPunctuationRuns:
 
     def test_a_formula_is_never_punctuation(self):
         assert not maths.is_punctuation('v = 5', '4')
+
+
+class TestDegrees:
+    r"""
+    `\ang{}` is the house spelling, and `^\circ` is a build error rather than a warning:
+    `convertor.py` carries a `RegexFailure` for it.
+    """
+
+    def test_inside_a_formula(self):
+        assert maths.degrees(r'$\alpha = 30^{\circ}$') == r'$\alpha = \ang{30}$'
+
+    def test_split_across_the_run_boundary(self):
+        # The ring is set in `cmsy` and the number in the prose face, so where the two do not
+        # share a maths run the line arrives as `30$^{\circ}$`.
+        assert maths.degrees('30$^{\\circ}$ a') == r'$\ang{30}$ a'
+
+    def test_a_bare_circ_is_left_alone(self):
+        # `\circ` with no number in front of it is composition, not a degree.
+        assert maths.degrees(r'$f \circ g$') == r'$f \circ g$'
+
+
+class TestQuantities:
+    r"""What may become a `\qty{}`, and in what spelling."""
+
+    def test_a_number_against_a_unit(self):
+        assert maths.quantities('100km')[0] == r'\qty{100}{\kilo\metre}'
+
+    def test_the_decimal_comma_becomes_a_point(self):
+        # siunitx parses the number and refuses a comma -- `Invalid number '88,10'` stopped
+        # volume 08's booklet. It puts the comma back on the page from the locale.
+        assert maths.quantities('88,10kmh^{-1}')[0] == r'\qty{88.10}{\kilo\metre\per\hour}'
+
+    def test_a_bare_ms_is_reported_not_converted(self):
+        # `ms` is a millisecond to `units.py` and a lost `ms^{-1}` in these booklets, so a
+        # boat's speed became a duration. Refused and reported; the prose keeps it as written.
+        body, missing = maths.quantities('0,954ms')
+        assert body == '0,954ms' and missing == ['ms']
+
+    def test_the_reciprocal_form_still_converts(self):
+        assert maths.quantities('5ms^{-1}')[0] == r'\qty{5}{\metre\per\second}'
+
+    def test_a_bare_letter_is_never_a_unit(self):
+        # Adjacency to a number is the whole rule; `s` here is a variable.
+        assert maths.quantities('s = v t')[0] == 's = v t'
+
+
+class TestScriptsOnce:
+    def test_a_repeated_superscript_is_rebased(self):
+        assert maths.scripts_once('a^{1}^{2}') == 'a^{1}{}^{2}'
+
+    def test_across_an_intervening_subscript(self):
+        assert maths.scripts_once(r'a^{A}_{B}^{C}') == r'a^{A}_{B}{}^{C}'
+
+    def test_a_nested_argument_is_walked_not_guessed(self):
+        assert (maths.scripts_once(r'-^{\frac{1}{2}6}_{-1}^{13}')
+                == r'-^{\frac{1}{2}6}_{-1}{}^{13}')
+
+    def test_one_of_each_is_left_alone(self):
+        assert maths.scripts_once('v_{0}^{2}') == 'v_{0}^{2}'
+
+    def test_a_new_base_starts_over(self):
+        assert maths.scripts_once('x^2y^3') == 'x^2y^3'
+
+
+class TestSeparateMacros:
+    r"""
+    TeX reads a control word as the longest run of letters after the backslash, so a Greek
+    letter butted against a variable is one undefined macro. The glyph stream has no spaces in
+    it, so the decode produces these constantly.
+    """
+
+    def test_a_greek_letter_and_a_variable(self):
+        assert maths.separate_macros(r'\betao') == r'\beta o'
+
+    def test_inside_a_fraction(self):
+        assert maths.separate_macros(r'\frac{2\pil}{v}') == r'\frac{2\pi l}{v}'
+
+    def test_a_complete_macro_is_left_alone(self):
+        assert maths.separate_macros(r'\Rightarrow') == r'\Rightarrow'
+
+    def test_the_longest_known_prefix_wins(self):
+        # `\pi` is a macro and so is `\pm`; splitting `\pil` at one letter would give `\p il`.
+        assert maths.separate_macros(r'\pil') == r'\pi l'
+
+    def test_an_unknown_control_word_is_not_cut_at_a_guess(self):
+        assert maths.separate_macros(r'\unknownthing') == r'\unknownthing'
+
+
+class TestBareAccentsAndRoots:
+    def test_a_radical_with_no_radicand(self):
+        assert maths.radicals(r'\sqrt') == r'\sqrt{}'
+
+    def test_an_arrow_with_nothing_under_it(self):
+        assert maths.radicals(r'\vec') == r'\vec{}'
+
+    def test_a_radicand_is_left_alone(self):
+        assert maths.radicals(r'\sqrt{2}') == r'\sqrt{2}'
+
+    def test_an_accented_symbol_is_left_alone(self):
+        assert maths.radicals(r'\vec{v}') == r'\vec{v}'
+
+
+class TestStrayMarks:
+    def test_a_caron_that_reached_a_formula_is_dropped(self):
+        # XeTeX gives some Unicode letters catcode 11, so this was read as part of the control
+        # word before it and stopped volume 09 on an undefined `\wpˇ`.
+        assert maths.strip_marks('MG\\wpˇ') == 'MG\\wp'
+
+    def test_prose_letters_are_untouched(self):
+        assert maths.strip_marks('v_{max}') == 'v_{max}'

@@ -376,9 +376,17 @@ def _splice_images(lines: list[Line], boxes: list[Box], char: str = 'ý') -> int
 #: with an index that is *not* a character code, so its glyphs cannot be read by table.
 PROSE_ROLES = {'t1'}
 
-#: What a formula is replaced by. Deliberately not LaTeX and deliberately ugly: a draft must
+#: What is printed where a formula could not be read -- deliberately unmissable: a draft must
 #: not contain something that could be mistaken for a transcribed formula.
-MATH_MARK = '⟨math⟩'
+#:
+#: It used to be the literal string `<math>` in mathematical angle brackets, U+27E8/U+27E9 --
+#: and MinionPro has no glyph for either, so XeLaTeX logged `Missing character` and set
+#: nothing. The one mark in the whole conversion whose entire job is to be *seen* was the one
+#: thing that vanished off the page, 22 times, with the build green.
+#:
+#: `\errorMessage` is the repository's own answer for a hole a reader must not miss: a red
+#: `\colorbox`, which is what `\protectedInput` prints for a missing file.
+MATH_MARK = r'\errorMessage{math}'
 
 
 def _join_maths(tokens: list[str]) -> str:

@@ -72,6 +72,17 @@ def _reciprocal(tail: str) -> str | None:
     return None
 
 
+#: Units `units.py` knows, whose bare form means something else in *these* booklets.
+#:
+#: `ms` is a millisecond to `units.py`, and that entry was written for 2014, which meant it.
+#: 1999-2008 write a metre per second as `ms^{-1}` and set the exponent on a row of its own, so
+#: wherever the decode failed to reattach it a speed became a duration: `08/p25`'s boat came
+#: out at `\qty{0.954}{\milli\second}`, and the reader has no way to tell. The reciprocal form
+#: still converts -- `_reciprocal` splits it to `m/s` -- and only the bare one is refused, so
+#: it lands in `report.md` as an unknown unit and stays in the prose as written.
+AMBIGUOUS = {'ms'}
+
+
 def quantities(body: str) -> tuple[str, list[str]]:
     """
     `100km` -> `\\qty{100}{\\kilo\\metre}`, and a report of what was not recognised.
@@ -84,9 +95,13 @@ def quantities(body: str) -> tuple[str, list[str]]:
 
     def replace(m: re.Match[str]) -> str:
         number, tail = m.group(1), m.group(2)
-        unit = tail if tail in UNITS else _reciprocal(tail)
+        unit = tail if tail in UNITS and tail not in AMBIGUOUS else _reciprocal(tail)
         if unit is not None:
-            return f'\\qty{{{number}}}{{{UNITS[unit]}}}'
+            # siunitx parses the number itself and rejects a decimal comma outright -- `Invalid
+            # number '88,10'` stopped volume 08's booklet. The comma is the Slovak separator and
+            # is how the booklet prints it; siunitx puts it back on the page from the locale,
+            # so what goes in the source is a point, as it is everywhere else in the repository.
+            return f'\\qty{{{number.replace(",", ".")}}}{{{UNITS[unit]}}}'
         missing.append(tail)
         return m.group(0)
 
@@ -178,6 +193,16 @@ UNICODE_MATHS = {
     '≈': r'\approx', '≡': r'\equiv', '±': r'\pm',
     '→': r'\rightarrow', '⇒': r'\Rightarrow',
     '∞': r'\infty', '∂': r'\partial',
+    # Unicode has more than one code point for several of these, and a font with readable
+    # glyph names hands back whichever the face declares. `\Delta` resolves to U+2206
+    # INCREMENT rather than the Greek capital, and `\Omega` to U+2126 OHM SIGN rather than
+    # U+03A9 -- both of which MinionPro has no glyph for, so XeLaTeX logged `Missing
+    # character` and set *nothing*: 59 deltas and 3 ohms straight off the page, with the
+    # build green. That is the failure `core/latex/math.tex` warns about, found by reading
+    # the log rather than the PDF.
+    '∆': r'\Delta', 'Ω': r'\Omega',
+    '′': r'\prime', '″': r'\prime\prime',
+    '⟨': r'\langle', '⟩': r'\rangle',
     # Greek, which a font with readable glyph names resolves to the letter itself.
     # XeLaTeX would set some of these from the text font and drop the rest with a
     # `Missing character` in the log and nothing on the page -- the failure mode
@@ -233,10 +258,168 @@ def is_punctuation(body: str, before: str) -> bool:
     return bool(RE_PUNCTUATION.match(body)) and before[-1:] not in ('', ' ')
 
 
+#: A degree sign on a number, in the two shapes the decode produces. `convertor.py` refuses
+#: `^\circ` outright -- `RegexFailure(r'\^\\circ|\^{\\circ}')` -- because the house spelling
+#: is siunitx's `\ang{}`, and it is a build error rather than a warning. 143 of these across 62
+#: files, which is what stopped `11`'s booklet the first time it had a target to build at all.
+#:
+#: Two shapes because the ring is set in `cmsy` while the number is not: usually they share a
+#: maths run and give `30^{\circ}`, but where the number came from the prose face the run
+#: closes between them and the line reads `30$^{\circ}$`.
+RE_DEGREES_SPLIT = re.compile(r'(\d+)\$\^\{\\circ\}\$')
+RE_DEGREES = re.compile(r'(\d+)\s*\^\{?\\circ\}?')
+
+
+def degrees(text: str) -> str:
+    r"""`30^{\circ}` and `30$^{\circ}$` both -> `\ang{30}`."""
+    text = RE_DEGREES_SPLIT.sub(r'$\\ang{\1}$', text)
+    return RE_DEGREES.sub(r'\\ang{\1}', text)
+
+
+#: A radical whose radicand the decode could not find. `\sqrt` is one glyph -- the sign -- and
+#: its vinculum is a *rule*, with the content under it on rows of its own, so a radical split
+#: across a display arrives as a bare `\sqrt` and stops the build with `Missing { inserted`.
+#:
+#: Given `{}` it compiles, and it prints an empty radical sign: visibly, unmissably incomplete
+#: on the page, which is what this ought to look like until someone rebuilds it from the
+#: original. Not `\sqrt{x}` guessed from a neighbouring row, and not dropped either.
+RE_BARE_RADICAL = re.compile(r'\\sqrt(?![A-Za-z0-9{])')
+
+
+#: `\vec` is in the same position: the arrow is a glyph of its own and the symbol under it may
+#: be on another row, so `02/p26` decoded to a line that is one bare `\vec`.
+RE_BARE_ACCENT = re.compile(r'\\vec(?![A-Za-z{])')
+
+
+def radicals(body: str) -> str:
+    r"""
+    `\sqrt` and `\vec` with nothing to act on -> `\sqrt{}`, `\vec{}`.
+
+    Both compile that way and both then *show* themselves -- an empty radical sign, an arrow
+    over nothing -- which is what an unreconstructed one should look like until someone
+    rebuilds it from the page. Left bare they are `! Missing { inserted.` and no booklet at all.
+    """
+    return RE_BARE_ACCENT.sub(r'\\vec{}', RE_BARE_RADICAL.sub(r'\\sqrt{}', body))
+
+
+#: Every control word the decode can emit: the encoding tables' own values, plus the ones this
+#: module introduces. Collected rather than listed, so it cannot drift from the tables.
+def _known_macros() -> frozenset[str]:
+    from tools.ancient.pdf import encodings
+    tables = [encodings.MATH_ITALIC, encodings.MATH_SYMBOL, encodings.OT1, encodings.T1]
+    names = {v[1:] for table in tables for v in table.values()
+             if isinstance(v, str) and v.startswith('\\') and v[1:].isalpha()}
+    names |= {m[1:] for m in UNICODE_MATHS.values() if m.startswith('\\')}
+    names |= set(OPERATORS) | {'qty', 'frac', 'sqrt', 'vec', 'ang', 'FDiff', 'Diff',
+                               'PDiff', 'UDiff', 'text', 'mathrm', 'circ'}
+    return frozenset(names)
+
+
+KNOWN_MACROS = _known_macros()
+
+RE_CONTROL_WORD = re.compile(r'\\([A-Za-z]+)')
+
+
+def separate_macros(body: str) -> str:
+    r"""
+    Keep a control word off the letters after it: `\betao` -> `\beta o`.
+
+    TeX reads a control word as the **longest run of letters** after the backslash, so a Greek
+    letter followed by a variable is one undefined macro rather than two symbols -- `\deltax`,
+    `\pil`, `\upsilonj`, `\niY`. The decode produces these constantly, because the glyph stream
+    has no spaces in it and a `cmmi` delta butted against a `cmmi` x is exactly what a
+    derivative looks like.
+
+    The split is made only where the prefix is a macro **this decoder emits**, longest first;
+    anything else is left exactly as it stands rather than cut at a guess.
+    """
+    def split(m: re.Match[str]) -> str:
+        word = m.group(1)
+        if word in KNOWN_MACROS:
+            return m.group(0)
+        for cut in range(len(word) - 1, 0, -1):
+            if word[:cut] in KNOWN_MACROS:
+                return f'\\{word[:cut]} {word[cut:]}'
+        return m.group(0)
+
+    return RE_CONTROL_WORD.sub(split, body)
+
+
+def scripts_once(body: str) -> str:
+    r"""
+    Give a base at most one superscript and one subscript, by re-basing the repeats.
+
+    A booklet's display maths puts each script on a row of its own and several can end up
+    attached to the same symbol, which is how `07/p01` produced
+    `^{\frac{140km}{6kmh}6}_{-1}^{13}` -- two superscripts on one base, and `! Double
+    superscript.` TeX's own idiom for that is an empty group, so `^{A}_{B}{}^{C}` says exactly
+    what the rows say and compiles. Nothing is dropped and nothing is merged: merging would
+    invent a single exponent out of two that the page shows separately.
+    """
+    out: list[str] = []
+    used: set[str] = set()
+    i, n = 0, len(body)
+    while i < n:
+        c = body[i]
+        if c not in '^_':
+            if not c.isspace():
+                used = set()            # a new base atom
+            out.append(c)
+            i += 1
+            continue
+        if c in used:
+            out.append('{}')
+            used = set()
+        used.add(c)
+        out.append(c)
+        i += 1
+        if i >= n:
+            break
+        if body[i] == '{':              # a braced argument, nesting and all
+            depth, start = 0, i
+            while i < n:
+                if body[i] == '{':
+                    depth += 1
+                elif body[i] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        i += 1
+                        break
+                i += 1
+            out.append(body[start:i])
+        elif body[i] == '\\':           # a control word
+            start = i
+            i += 1
+            while i < n and body[i].isalpha():
+                i += 1
+            out.append(body[start:i])
+        else:                           # a single character
+            out.append(body[i])
+            i += 1
+    return ''.join(out)
+
+
+#: A combining mark or spacing modifier that reached a formula. `_apply` places an accent on
+#: its base letter and **leaves it off rather than guess** when the pair is not one Slovak has,
+#: so the odd one falls through -- and inside maths it does more than look wrong. XeTeX gives
+#: some Unicode letters catcode 11, so `09/p26`'s stray caron was read as part of the control
+#: word in front of it and the whole booklet stopped on an undefined `\wpˇ`.
+#:
+#: Two of them in the ten booklets, and a caron carries nothing in a formula anyway.
+RE_STRAY_MARK = re.compile(r'[\u0300-\u036f\u02b0-\u02ff]')
+
+
+def strip_marks(body: str) -> str:
+    """Drop an accent that reached a formula, which is an accent with no letter to sit on."""
+    return RE_STRAY_MARK.sub('', body)
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
-    body, missing = quantities(unicode_maths(body))
-    return spacing(accents(composites(operators(differences(body))))), missing
+    body, missing = quantities(unicode_maths(strip_marks(body)))
+    body = radicals(accents(composites(operators(differences(body)))))
+    body = separate_macros(body)
+    return spacing(scripts_once(body)), missing
 
 
 #: `s = 100 km` and nothing else: a single symbol, a relation, a number, a unit. Anything

@@ -33,6 +33,24 @@ RE_TEXTBLOCK = re.compile(r'<fill_text[^>]*transform="([^"]*)"')
 RE_GLYPH = re.compile(r'<g unicode="([^"]*)" glyph="([^"]*)" x="([-\d.]+)" y="([-\d.]+)" adv="([-\d.]+)"')
 RE_GNAME = re.compile(r'^G?(\d+)$')
 
+#: mupdf's trace is XML, so the `unicode` attribute is escaped -- and the five characters it
+#: escapes are all ones these booklets use. Read raw, `R>r` arrived as `R&gt;r`, which reaches
+#: the TeX as a literal `&` and stops the build with `Misplaced alignment tab character &`;
+#: `"` came through as `&quot;` in the middle of a Slovak sentence. Only the booklets whose
+#: fonts mupdf can resolve are affected, which is 09 and 11.
+#:
+#: The five by name rather than `html.unescape`, which also decodes named entities without
+#: their semicolon and would turn a literal `&amp` in a formula into something else.
+XML_ENTITIES = {'&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&amp;': '&'}
+
+RE_ENTITY = re.compile('|'.join(XML_ENTITIES))
+
+
+def _unescape(text: str) -> str:
+    """`&gt;` -> `>`, in one pass, so an escaped entity is not decoded twice."""
+    return RE_ENTITY.sub(lambda m: XML_ENTITIES[m.group(0)], text)
+
+
 #: mupdf writes this when the font gives it nothing to work with -- which is the normal case
 #: for 02-08, and the signal to decode from the glyph name instead.
 REPLACEMENT = '�'
@@ -161,6 +179,7 @@ def _numbers(raw: str) -> list[tuple[str, int | None, str, float, float, float, 
                 size, rotated = 10.0, False
         for g in RE_GLYPH.finditer(line):
             uni, name, x, y, adv = g.groups()
+            uni = _unescape(uni)
             n = RE_GNAME.match(name)
             a, b, c, d, e, f = ctm
             gx0, gy0 = float(x), float(y)
