@@ -414,11 +414,25 @@ def strip_marks(body: str) -> str:
     return RE_STRAY_MARK.sub('', body)
 
 
+#: TeX characters the decode can emit literally, which mean something else inside maths.
+#:
+#: Pandoc escapes these in prose, and passes a `$...$` body through untouched -- so a percent
+#: sign decoded out of `cmr` reaches the TeX raw, and **starts a comment**. `02/p34` asks about
+#: a 50 % alcohol and printed `Majme 50 alkohol`: the sign gone, the closing `\)` pushed to the
+#: next line, no warning anywhere. `&` and `#` are the same class and fail loudly instead.
+RE_SPECIALS = re.compile(r'(?<!\\)([%&#])')
+
+
+def specials(body: str) -> str:
+    r"""`50%` -> `50\%`, inside maths where pandoc will not do it for you."""
+    return RE_SPECIALS.sub(r'\\\1', body)
+
+
 def tidy(body: str) -> tuple[str, list[str]]:
     """Everything, in the order that matters: quantities, then differences, then spacing."""
     body, missing = quantities(unicode_maths(strip_marks(body)))
     body = radicals(accents(composites(operators(differences(body)))))
-    body = separate_macros(body)
+    body = specials(separate_macros(body))
     return spacing(scripts_once(body)), missing
 
 

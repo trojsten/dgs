@@ -265,3 +265,25 @@ class TestStrayMarks:
 
     def test_prose_letters_are_untouched(self):
         assert maths.strip_marks('v_{max}') == 'v_{max}'
+
+
+class TestSpecials:
+    r"""
+    Pandoc escapes TeX specials in prose and passes a `$...$` body through untouched, so these
+    have to be escaped here or not at all.
+    """
+
+    def test_a_percent_sign_would_otherwise_comment_out_the_rest(self):
+        # `02/p34` asks about a 50 % alcohol and printed `Majme 50 alkohol` -- the sign gone
+        # and the closing delimiter pushed to the next line, with no warning anywhere.
+        assert maths.specials('50%') == r'50\%'
+
+    def test_an_ampersand_and_a_hash(self):
+        assert maths.specials('a&b') == r'a\&b'
+        assert maths.specials('x#1') == r'x\#1'
+
+    def test_an_escape_is_not_doubled(self):
+        assert maths.specials(r'50\%') == r'50\%'
+
+    def test_a_macro_is_untouched(self):
+        assert maths.specials(r'\frac{1}{2}') == r'\frac{1}{2}'
