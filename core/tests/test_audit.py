@@ -291,6 +291,28 @@ class TestSiunitxChecks:
         files = {'en': {'problem.md': 'latitude $\\ang{30;15;0}$\n'}}
         assert 'symbolic-number' not in ids(run(tmp_path, files=files))
 
+    def test_number_unparsed(self, tmp_path):
+        files = {'en': {'solution.md':
+                        'energy $\\qty[parse-numbers=false]{8 \\cdot 10^{-21}}{\\joule}$\n'}}
+        assert 'number-unparsed' in ids(run(tmp_path, files=files))
+
+    def test_a_closed_form_is_quiet(self, tmp_path):
+        # every one of these needs the option: an exact fraction, a surd, a factorial, and `4^2`,
+        # which is a power and not a power of ten -- the statement's 4 m, squared
+        files = {'en': {'solution.md':
+                        '$\\qty[parse-numbers=false]{\\frac{30}{13}}{\\metre}$, '
+                        '$\\qty[parse-numbers=false]{20\\sqrt{3}}{\\metre}$, '
+                        '$\\qty[parse-numbers=false]{10!}{\\second}$, '
+                        '$\\qty[parse-numbers=false]{4^2}{\\metre\\squared}$\n'}}
+        assert 'number-unparsed' not in ids(run(tmp_path, files=files))
+
+    def test_a_half_symbolic_range_is_quiet(self, tmp_path):
+        # the option is per call, so the `0.5` cannot drop it on its own
+        files = {'en': {'solution.md':
+                        'between $\\qtyrange[parse-numbers=false]'
+                        '{0.\\overline{3}}{0.5}{\\metre}$\n'}}
+        assert 'number-unparsed' not in ids(run(tmp_path, files=files))
+
 
 class TestTranslations:
     def test_magnitude_disagreement(self, tmp_path):

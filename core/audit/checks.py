@@ -880,6 +880,69 @@ def symbolic_number(sources):
                                       line_of(text, call.start))
 
 
+#: Hand-spelled scientific notation: `8 \cdot 10^{-21}`, `4\times 10^{7}`, and the bare `10^{5}`.
+RE_HAND_SCI = re.compile(r'^\s*(?:\\num\{([-+0-9.]+)\}|([-+0-9.]+))?\s*'
+                         r'(?:(?:\\cdot|\\times)\s*)?10\^\{?(-?\d+)\}?\s*$')
+#: One factor of a product, `\num{}` or bare.
+RE_NUM_FACTOR = re.compile(r'^\s*(?:\\num\{([-+0-9.]+)\}|([-+0-9.]+))\s*$')
+#: A payload that is already a number, so the option does nothing at all.
+RE_PLAIN_NUMBER = re.compile(r'\s*[-+]?[0-9.]*[0-9][0-9.]*(?:[eE][-+]?\d+)?\s*')
+
+
+def siunitx_spelling(value):
+    r"""
+    The native siunitx spelling of a `parse-numbers=false` payload, or `None` if there is not one.
+
+    Three shapes have one. Hand-spelled scientific notation is `e` notation -- `8 \cdot 10^{-21}`
+    is `8e-21`, and a bare `10^{5}` is `e5`. A payload that is already a number never needed the
+    option in the first place. And a product of numbers is `\qtyproduct`, which places the unit by
+    its own option rather than by nesting `\num` inside `\qty` -- which siunitx cannot parse and
+    which only compiles here because the option switched the parser off.
+
+    Everything else genuinely needs it, and the list is long: an exact fraction, a surd, `\pi`,
+    `10!`, `0.\overline{3}`, a mixed number. So does `4^2`, which is a power and not a power of
+    ten -- `20/rappel` squares the 4 m its own statement gives, and `\qty{16}{\metre\squared}`
+    would lose the 4.
+    """
+    if '§' in value:
+        return None
+    if RE_PLAIN_NUMBER.fullmatch(value):
+        return value.strip()
+    sci = RE_HAND_SCI.match(value)
+    if sci:
+        return f'{sci[1] or sci[2] or ""}e{int(sci[3])}'
+    factors = [RE_NUM_FACTOR.match(f) for f in value.split(r'\times')]
+    if len(factors) > 1 and all(factors):
+        return r'\qtyproduct{' + ' x '.join(f[1] or f[2] for f in factors) + '}'
+    return None
+
+
+@check('number-unparsed', 'error', 'parse-numbers=false on a value siunitx can parse')
+def number_unparsed(sources):
+    r"""
+    The inverse of `symbolic-number`, and the commoner mistake of the two, because switching the
+    parser off always compiles. `\qty[parse-numbers=false]{8 \cdot 10^{-21}}{\joule}` typesets
+    perfectly and is still wrong: siunitx never sees a number, so the decimal marker, the digit
+    grouping and the exponent product are all the author's to get right by hand, per language.
+    """
+    for unit in sources.unit_list:
+        for lang, name, text in unit.files():
+            for call in si_calls(text):
+                if 'parse-numbers=false' not in call.opts:
+                    continue
+                # the option is per call, so a range with one symbolic endpoint keeps it for both:
+                # `\qtyrange[parse-numbers=false]{0.\overline{3}}{0.5}{\metre}` is right as it is
+                spellings = [siunitx_spelling(value) for value in call.values]
+                if not all(spellings):
+                    continue
+                for value, spelling in zip(call.values, spellings):
+                    yield Finding('number-unparsed', 'error',
+                                  f'`{value}` is a number siunitx parses; write `{spelling}` and '
+                                  f'drop `parse-numbers=false`',
+                                  unit.path, unit.label(lang, name),
+                                  line_of(text, call.start))
+
+
 # --- files ------------------------------------------------------------------
 
 @check('insert-picture', 'error', r'\insertPicture written by hand')
