@@ -297,6 +297,11 @@ class TestSiunitxChecks:
         files = {'en': {'problem.md': 'half-life $\\qty{5730 \\pm 40}{\\year}$\n'}}
         assert 'symbolic-number' not in ids(run(tmp_path, files=files))
 
+    def test_an_uncertainty_with_an_exponent_is_quiet(self, tmp_path):
+        files = {'en': {'problem.md':
+                        'stiffness $\\qty{136.7 \\pm 8.5e3}{\\newton\\per\\metre}$\n'}}
+        assert 'symbolic-number' not in ids(run(tmp_path, files=files))
+
     def test_bare_exponent_is_quiet(self, tmp_path):
         # `\qty{e13}{...}` means 10^13; valid siunitx, and the spelling this repo prefers
         files = {'en': {'problem.md': 'about $\\qty{e13}{\\metre}$\n'}}

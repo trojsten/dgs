@@ -884,7 +884,8 @@ def symbolic_number(sources):
                             continue
                         # `\qty{5730 \pm 40}{...}` is an uncertainty, which `separate-uncertainty`
                         # handles, and `\ang{30;15;0}` is degrees-minutes-seconds
-                        if re.fullmatch(r'[-+0-9.\s]*\\pm[-+0-9.\s]*', item):
+                        # `\qty{136.7 \pm 8.5e3}{...}`: either half may carry an exponent
+                        if re.fullmatch(r'[-+0-9.eE\s]*\\pm[-+0-9.eE\s]*', item):
                             continue
                         yield Finding('symbolic-number', 'error',
                                       f"`{item}` is not a number; siunitx refuses without "
