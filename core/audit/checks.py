@@ -485,6 +485,40 @@ def word_missing(sources):
 
 # --- maths ------------------------------------------------------------------
 
+#: What a flattened booklet leaves behind. The decode of `NN.pdf` recovers characters but loses
+#: two-dimensional structure, so a radical's vinculum, a vector's arrow and an implication arrow
+#: each arrive as their own token with nothing under them. Every one of these still typesets --
+#: `\sqrt{}` sets a lone radical sign and `\vec{}` an accent over nothing -- so the build stays
+#: green and the page is quietly wrong, which is exactly the failure this repository fears.
+RE_DECODE_DAMAGE = re.compile(
+    r'\\(?:sqrt|vec|overrightarrow|dfrac|frac)\{\}'      # a group the radicand fell out of
+    r'|(?<!\w)-\\rightarrow(?!\w)'                     # the arrow of a vector, on its own
+    r'|\\errorMessage'                                  # the drafter's own unread-formula marker
+)
+
+
+@check('decode-damage', 'error', 'A fragment the booklet decode left behind')
+def decode_damage(sources):
+    """
+    Every one of these typesets, which is the point of checking for them: an empty `\\sqrt{}` is a
+    radical sign over nothing and `-\\rightarrow` is a minus followed by an arrow, so `make` stays
+    green and no overfull box is reported. They are found by reading the page, and once found they
+    should never come back.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)
+            if (place, name) in seen:
+                continue
+            seen.add((place, name))
+            for m in RE_DECODE_DAMAGE.finditer(text):
+                yield Finding('decode-damage', 'error',
+                              f'`{m.group(0)}` is a fragment of the line above or below it; read '
+                              f'the booklet page and put it back where it belongs',
+                              unit.path, place, line_of(text, m.start()))
+
+
 @check('delimiter-indented', 'error', 'A display delimiter is indented')
 def delimiter_indented(sources):
     for unit in sources.unit_list:

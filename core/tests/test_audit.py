@@ -213,6 +213,20 @@ class TestMaths:
         files = {'sk': {'solution.md': '$${\n    a &= b \\\\\n    c &= d\n}$$\n'}}
         assert 'double-backslash-macro' not in ids(run(tmp_path, files=files))
 
+    def test_decode_damage(self, tmp_path):
+        files = {'sk': {'solution.md': 'trvá $\\sqrt{}\\frac{1}{1 - v^2/c^2}$-krát dlhšie\n'}}
+        assert 'decode-damage' in ids(run(tmp_path, files=files))
+
+    def test_a_radical_with_a_radicand_is_quiet(self, tmp_path):
+        """
+        The check is for an *empty* group, which is what a vinculum floating off its own line
+        leaves behind. Every real root, vector and arrow in the archive looks like this line, and
+        a checker that matched `\\sqrt` or `\\rightarrow` at all would fire on all of them.
+        """
+        files = {'sk': {'solution.md':
+                        'rýchlosť $\\sqrt{2gh}$, pole $\\vec{B}$, teda $a \\rightarrow b$\n'}}
+        assert 'decode-damage' not in ids(run(tmp_path, files=files))
+
 
 class TestLabels:
     def test_label_schema(self, tmp_path):
