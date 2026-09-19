@@ -158,6 +158,24 @@ and `29/order-mass` read "approximately $c_s \approx 343$", and the word is now 
 `(§ x.apx §)` says `\approx` outright and at `digits:` figures rather than `%g`'s six; `|af`,
 `|ag`, `|ae` take an explicit precision and, like `|ef`, consult nothing.
 
+## When the booklet is wrong: `%# HISTORICAL:`
+
+The ancient volumes survive only as their own PDFs, so the booklet is the source -- and
+sometimes the booklet is wrong. Where its printed answer does not follow from its own
+equations, the source carries a `%# HISTORICAL:` comment on the line it is on, saying what the
+booklet prints and what the physics gives. `%` at the start of a line is deleted before the
+page, so the note is for whoever reads the source, and `errors/NN.md` repeats it per volume.
+
+Keep the two apart. A **decode loss** -- a square root floated off its line, a minus sign
+gone, a fraction flattened into three rows -- is the extraction's fault and is simply repaired.
+A **historical error** is the booklet's own, and is marked rather than silently corrected,
+because the archive is a record of what was set in 2005 as much as it is a problem set.
+
+Ten are marked so far. Two are still open, both because settling them needs a drawing nobody
+has redrawn: `02/hilltop-gun`, whose statement says the gun fires horizontally while its
+trajectory is a launch at alpha, and `09/two-weights`, whose own two equations give
+l = (V_1 - V_2) rho g/(2k) against the /k it prints.
+
 ## Code layout
 
 Two things `ls` will not tell you: the pint registry, including the `eur`/`€`
