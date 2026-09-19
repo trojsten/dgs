@@ -102,13 +102,21 @@ class PhysicsQuantity:
     #: are; a constant overrides it from `constants.yaml`.
     DEFAULT_DIGITS = 3
 
+    #: How far the printed figures may sit from the stored magnitude and still count as the
+    #: whole truth. Nine orders of magnitude separate the two populations across the sources --
+    #: a value that prints exactly lands within a handful of ulps (`29/coil-kirchhoff` solves a
+    #: 3x3 system and comes out 6 from an exact 0.1 A), while one that is genuinely rounded is
+    #: out by 10^9 -- so anything in the wide middle works and this is not a tuned number.
+    ULP_TOLERANCE = 1000
+
     def __init__(self,
                  quantity: pint.Quantity | float,
                  *,
                  symbol: str | None = None,
                  si_extra: dict[str, str] | None = None,
                  force_f: bool = False,
-                 digits: int = DEFAULT_DIGITS):
+                 digits: int = DEFAULT_DIGITS,
+                 exact: bool = True):
         if isinstance(quantity, pint.Quantity):
             self._quantity = quantity
         elif isinstance(quantity, numbers.Number):
@@ -124,6 +132,13 @@ class PhysicsQuantity:
 
         self.force_f = force_f
         self.digits = digits
+        #: Whether the stored magnitude is the true value, as against a measured or rounded
+        #: stand-in for it. A number a statement *gives* is exact -- `s = 100 km` is not
+        #: approximately anything -- so that is the default, and `ConstantsContext` overrides it
+        #: for `constants.yaml`, where a value is measured unless it declares `exact: true`.
+        #:
+        #: It spreads as contamination only, never as a guarantee: see `_binop`.
+        self.exact = exact
 
     @staticmethod
     def construct(magnitude, unit, **kwargs):
@@ -133,10 +148,28 @@ class PhysicsQuantity:
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
     def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
+        """
+        Arithmetic on the magnitudes, dropping the symbol -- a product of two quantities is not
+        either of them -- and carrying `exact` forward as contamination.
+
+        **Contamination only.** A result of two exact operands is *not* thereby exact: dividing
+        an exact 100 km by an exact 3 h gives 33.333..., which no decimal string holds. What
+        saves that case is the other half of the test, in `prints_exactly`, which asks whether
+        the figures actually printed come back to the stored magnitude. So `exact` answers "is
+        this value the true one" and the round-trip answers "are these figures all of it",
+        and `equals` needs both.
+
+        That division is why the flag cannot propagate the other way round, and `numpy` is why
+        it must not try: `np.sin` builds its result straight from the constructor without ever
+        reaching here, so a rule that inferred exactness from its operands would quietly call
+        `sin(20 deg)` exact. Under contamination it defaults to exact and the round-trip catches
+        it -- 2.6 billion ulps out -- while `sin(30 deg)` is exactly 0.5 and prints as `=`.
+        """
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(op(self._quantity, other._quantity))
+            return PhysicsQuantity(op(self._quantity, other._quantity),
+                                   exact=self.exact and other.exact)
         elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
-            return PhysicsQuantity(op(self._quantity, other))
+            return PhysicsQuantity(op(self._quantity, other), exact=self.exact)
         else:
             raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
 
@@ -159,7 +192,7 @@ class PhysicsQuantity:
         return self * other
 
     def __pow__(self, exponent):
-        return PhysicsQuantity(self._quantity ** exponent)
+        return PhysicsQuantity(self._quantity ** exponent, exact=self.exact)
 
     def __truediv__(self, other):
         return self._binop(other, operator.truediv)
@@ -284,16 +317,16 @@ class PhysicsQuantity:
     def alias(self, symbol: str | None) -> "PhysicsQuantity":
         """ Return an aliased quantity with a symbol """
         return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra,
-                               force_f=self.force_f, digits=self.digits)
+                               force_f=self.force_f, digits=self.digits, exact=self.exact)
 
     def to(self, what):
         """ Convert a physics quantity unit to another compatible unit. """
         return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra,
-                               digits=self.digits)
+                               digits=self.digits, exact=self.exact)
 
     def simplify(self):
         return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol,
-                               si_extra=self.si_extra, digits=self.digits)
+                               si_extra=self.si_extra, digits=self.digits, exact=self.exact)
 
     def only_unit(self):
         r""" Return a nicely formatted unit (\unit{...} in siunitx format) """
@@ -357,8 +390,10 @@ class PhysicsQuantity:
 
         precision = digits - logarithm - 1
         magnitude = round(self._quantity.magnitude, precision)
+        # Never exact: rounding is the whole point of this method, so `const.g.approx` is 10
+        # and says so. A `result_approx` computed from it inherits that, which is correct.
         return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol,
-                               si_extra=self.si_extra, digits=self.digits)
+                               si_extra=self.si_extra, digits=self.digits, exact=False)
 
     def format_struct(self, fmt: str = 'g'):
         """
@@ -433,13 +468,56 @@ class PhysicsQuantity:
             raise MissingSymbolError(self, method)
         return self._symbol
 
+    def _round_trips(self, fmt: str) -> bool:
+        """
+        Do the figures this format prints come back to the stored magnitude?
+
+        Within `ULP_TOLERANCE`, because the comparison is against a binary float that has been
+        through arithmetic: `29/coil-kirchhoff` solves a 3x3 system for a current that is
+        exactly 0.1 A and stores 0.10000000000000009, six ulps out. An exact equality test
+        calls that rounded, which is what makes the naive version of this check unusable.
+
+        Anything that is not a real number -- an array, a `Decimal`, whatever pint was handed --
+        is left alone: this decides between `=` and `\approx`, and for those it declines to.
+        """
+        magnitude = self._quantity.magnitude
+        if isinstance(magnitude, bool) or not isinstance(magnitude, numbers.Real):
+            return True
+        try:
+            stored = float(magnitude)
+            shown = float(f'{stored:{fmt}}')
+        except (ValueError, TypeError, OverflowError):
+            return True
+        if shown == stored:
+            return True
+        if stored == 0 or math.isnan(stored) or math.isinf(stored):
+            return False
+        return abs(shown - stored) <= self.ULP_TOLERANCE * math.ulp(stored)
+
+    @property
+    def prints_exactly(self) -> bool:
+        r"""
+        Whether `equals` may write `=`: the value has to be the true one *and* the figures it
+        prints have to be all of it.
+
+        Two independent failures, and each catches what the other cannot. `const.speed_sound` is
+        343 m/s, which prints back exactly and is still not the speed of sound -- only the
+        declaration knows that. `sqrt(2)` is exact by every declaration on its way here and
+        prints as 1.41421 -- only the round-trip knows that.
+        """
+        return self.exact and self._round_trips('g')
+
     @property
     def equals(self) -> str:
+        r"""
+        Full form with symbol and the relation the value has earned:
+        `<symbol> = <full>` where the printed figures are the whole truth,
+        `<symbol> \approx <full>` where they are not.
+
+        `approximately` is the same thing said outright, and at `digits` rather than `%g`.
         """
-        Full form with symbol and equal sign,
-        `<symbol> = <full>`
-        """
-        return rf"{self._require_symbol('equals')} = {self.full}"
+        relation = '=' if self.prints_exactly else r'\approx'
+        return rf"{self._require_symbol('equals')} {relation} {self.full}"
 
     @property
     def eq(self) -> str:
@@ -454,17 +532,9 @@ class PhysicsQuantity:
         Full form with symbol and an approximation sign, at `digits` significant figures:
         `<symbol> \approx <value>`.
 
-        The companion to `equals`, and deliberately not an automatic variant of it. Whether a
-        printed number is the whole truth is the author's claim, not something the object can
-        work out: `29/coil-kirchhoff` computes a current of 0.10000000000000009 A, which is
-        exactly 0.1 A and reads as 0.1 A, so a rule that compared the printed string against the
-        stored magnitude would decide it was approximate. Binary floating point makes that test
-        wrong far more often than it is right, and 196 of the 217 `eq` sites in the sources name
-        a quantity the statement *gives*, where `=` is simply correct.
-
-        `digits` rather than `equals`' `%g`, because the two say different things. `equals`
-        prints every figure it has (six, `%g`'s default), since it is asserting them all;
-        `approximately` says "to this many figures" and three is what a constants sheet prints.
+        `equals` reaches for `\approx` on its own where the value has earned it, so this is for
+        saying so outright -- and for the precision, which is `digits` rather than `%g`'s six.
+        `equals` prints what it has; `approximately` says "to this many figures".
 
         The value is *rounded* and then printed, not printed to a precision: `.1g` of 9.80665 is
         `1e+01`, which `cut_extra_one` turns into `\qty{e+01}{}` so siunitx sets it as a bare

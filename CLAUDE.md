@@ -127,6 +127,37 @@ Two things to check when writing one:
   — `refraction_water` is `1.3330` to four digits, so `29/speedy-reflection` spans on `g` alone.
   If *none* moves, the pair is a single point and the sheet prints `x – x`.
 
+## `=` or `\approx` is the quantity's to decide
+
+`(§ x.eq §)` writes `=` only where the value is the true one **and** the figures it prints are
+all of it. Otherwise it writes `\approx`. Two independent tests, because each catches what the
+other cannot: `const.speed_sound` is 343 m/s, which prints back perfectly and is still not the
+speed of sound, and only the declaration knows that; `sqrt(2)` is exact by every declaration on
+its way there and prints as 1.41421, and only the arithmetic knows that.
+
+`exact` defaults to **true**, because a number a statement *gives* is exact -- `s = 100 km` is
+not approximately anything, and that is 196 of the sources' 217 `eq` sites. `constants.yaml` is
+the exception: a value there is measured unless it says `exact: true`, which ten of the
+sixty-five do. A `values:` entry may say `exact: false` for a given that is itself an
+approximation.
+
+It spreads through arithmetic as **contamination only** -- `a * b` is exact only if both are --
+and never as a guarantee. An exact 100 km over an exact 3 h is 33.333..., which no decimal
+string holds; `np.sin` builds its result without touching the operators at all. The round-trip
+catches both, which is why the flag can afford to be optimistic about what it has not seen.
+
+The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system for a current
+that is exactly 0.1 A and stores it six ulps out, so an equality test would call it rounded; the
+two populations are nine orders of magnitude apart, so the threshold is not a tuned number.
+
+Turning this on moved 25 sites in the whole repository, every one of them a measured constant --
+`R_⊕`, `c_s`, water's heat capacity and latent heat, the Moon's radius. No `values:` entry
+moved. Where the prose already says *približne*, the sentence now says it twice: `28/cave-explorers`
+and `29/order-mass` read "approximately $c_s \approx 343$", and the word is now the redundant half.
+
+`(§ x.apx §)` says `\approx` outright and at `digits:` figures rather than `%g`'s six; `|af`,
+`|ag`, `|ae` take an explicit precision and, like `|ef`, consult nothing.
+
 ## Code layout
 
 Two things `ls` will not tell you: the pint registry, including the `eur`/`€`

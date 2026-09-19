@@ -1236,8 +1236,8 @@ class TestRangeGridMatchesWhatPrints:
 
 class TestApproximately:
     r"""
-    `apx` prints `<symbol> \approx <value>` at `digits` significant figures, as the companion
-    to `eq`'s `<symbol> = <value>`.
+    `apx` prints `<symbol> \approx <value>` at `digits` significant figures, saying outright
+    what `eq` decides for itself.
     """
 
     @pytest.fixture
@@ -1251,7 +1251,7 @@ class TestApproximately:
         assert mass.apx == mass.approximately
 
     def test_eq_keeps_every_figure(self, mass):
-        """`eq` asserts the figures it prints; only `apx` rounds."""
+        """`eq` prints what it has, at `%g`'s six figures; only `apx` rounds to `digits`."""
         assert mass.eq == r'm_D = \qty{96.7431}{\kilo\gram}'
 
     def test_digits_chooses_the_precision(self):
@@ -1281,16 +1281,11 @@ class TestApproximately:
         """A quantity that declares none is rendered to three figures, the sheet's usual."""
         assert PhysicsQuantity.construct(1, 'kg').digits == PhysicsQuantity.DEFAULT_DIGITS == 3
 
-    def test_not_derived_from_the_printed_string(self):
-        """
-        The quiet case: `apx` is the author's claim, never inferred. `29/coil-kirchhoff` holds a
-        current of 0.10000000000000009 A that is exactly 0.1 A and prints as 0.1 A, so a rule
-        comparing the printed string against the stored magnitude would call it approximate.
-        `eq` must keep saying `=` for it.
-        """
-        current = PhysicsQuantity.construct(0.10000000000000009, 'A', symbol='I_3')
-        assert current.eq == r'I_3 = \qty{0.1}{\ampere}'
-        assert current.apx == r'I_3 \approx \qty{0.1}{\ampere}'
+    def test_apx_says_it_whatever_eq_decides(self):
+        """`apx` is unconditional: it is the author saying so, not the value earning it."""
+        given = PhysicsQuantity.construct(100, 'km', symbol='s')
+        assert given.eq == r's = \qty{100}{\kilo\metre}'
+        assert given.apx == r's \approx \qty{100}{\kilo\metre}'
 
 
 class TestDigitsTravelWithTheQuantity:
@@ -1312,4 +1307,72 @@ class TestDigitsTravelWithTheQuantity:
         result = labelled + labelled
         assert result.symbol is None
         assert result.digits == PhysicsQuantity.DEFAULT_DIGITS
+
+
+class TestEqualsChoosesItsRelation:
+    r"""
+    `eq` writes `=` only where the value is the true one *and* the figures it prints are all of
+    it. Two independent failures, and each catches what the other cannot.
+    """
+
+    def test_a_given_value_is_exact(self):
+        given = PhysicsQuantity.construct(100, 'km', symbol='s')
+        assert given.exact is True
+        assert given.eq == r's = \qty{100}{\kilo\metre}'
+
+    def test_a_measured_value_is_approximate_even_when_it_prints_back(self):
+        """343 m/s round-trips perfectly and is still not the speed of sound."""
+        sound = PhysicsQuantity.construct(343, 'm/s', symbol='c_s', exact=False)
+        assert sound._round_trips('g') is True
+        assert sound.eq == r'c_s \approx \qty{343}{\metre\per\second}'
+
+    def test_exact_operands_do_not_make_an_exact_quotient(self):
+        """
+        The reason the flag cannot propagate as a guarantee: 100/3 is exact in arithmetic and
+        has no decimal string, so only the round-trip catches it.
+        """
+        quotient = (PhysicsQuantity.construct(100, 'km')
+                    / PhysicsQuantity.construct(3, 'h')).alias('v')
+        assert quotient.exact is True
+        assert quotient.eq == r'v \approx \qty{33.3333}{\kilo\metre\per\hour}'
+
+    def test_float_noise_is_not_rounding(self):
+        """
+        And the reason the round-trip cannot be an equality test: `29/coil-kirchhoff` solves a
+        3x3 system for a current that is exactly 0.1 A and stores it six ulps out.
+        """
+        current = PhysicsQuantity.construct(0.10000000000000009, 'A', symbol='I_3')
+        assert current.eq == r'I_3 = \qty{0.1}{\ampere}'
+
+    def test_taint_spreads_through_arithmetic(self):
+        measured = PhysicsQuantity.construct(1.2, 'kg/m^3', symbol='rho', exact=False)
+        volume = PhysicsQuantity.construct(2, 'm^3', symbol='V')
+        assert volume.exact is True
+        assert (measured * volume).exact is False
+        assert (volume * measured).exact is False
+
+    def test_taint_survives_the_operations_that_keep_the_symbol(self):
+        measured = PhysicsQuantity.construct(1.2, 'kg/m^3', symbol='rho', exact=False)
+        for operation in (lambda q: q.to('g/cm^3'), lambda q: q.simplify(),
+                          lambda q: q.alias('x'), lambda q: q ** 2):
+            assert operation(measured).exact is False
+
+    def test_approximate_is_never_exact(self):
+        """Rounding is what the method is for, so `const.g.approx` says `\\approx`."""
+        gravity = PhysicsQuantity.construct(9.80665, 'm/s^2', symbol='g')
+        assert gravity.exact is True
+        assert gravity.approximate(1).exact is False
+
+    def test_a_number_is_exact(self):
+        """Multiplying by a bare 2 cannot make a value less true than it was."""
+        measured = PhysicsQuantity.construct(1.2, 'kg', symbol='m', exact=False)
+        given = PhysicsQuantity.construct(4, 'kg', symbol='n')
+        assert (given * 2).exact is True
+        assert (measured * 2).exact is False
+
+    def test_non_real_magnitudes_decline_to_judge(self):
+        """The round-trip is about printed figures; anything it cannot parse is left alone."""
+        import numpy as np
+        array = PhysicsQuantity.construct(np.array([1.0, 2.0]), 'm')
+        assert array._round_trips('g') is True
 

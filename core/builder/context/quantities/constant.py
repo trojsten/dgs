@@ -13,7 +13,6 @@ class PhysicsConstant(PhysicsQuantity):
                  **kwargs):
         self.name = name
         self.aliases = kwargs.pop('aliases', [])
-        self.exact = kwargs.pop('exact', False)
         super().__init__(quantity, **kwargs)
 
     @staticmethod

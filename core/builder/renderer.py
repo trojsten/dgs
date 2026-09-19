@@ -240,7 +240,11 @@ class ConstantsContext(FileContext):
     def __init__(self, new_id: str, path: Path, **defaults):
         super().__init__(new_id, path, **defaults)
         self.add(**{
-            alias: PhysicsConstant.construct(name, **data)
+            # Measured unless it says otherwise: constants.yaml holds the physical world's
+            # numbers, and ten of its sixty-five are exact by definition. A statement's own
+            # `values:` go through the same constructor and keep the class default, because a
+            # number a problem *gives* is exact.
+            alias: PhysicsConstant.construct(name, **{'exact': False, **data})
             for name, data in self.data.items()             # Create and add all defined constants
             for alias in [name] + data.get('aliases', [])   # Also include under all available aliases for them
         })

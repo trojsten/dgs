@@ -84,26 +84,45 @@ Access via dotted attribute (inside `(§ … §)`):
 | `q.alias('x')`  | Copy of the quantity with a different symbol (keeps unit, `si_extra`, `force_f`). |
 | `q.approximate(n)` | Truly round the magnitude to `n` significant digits. Available on any quantity, not just constants — `const.g.approx` is just `approximate(digits)`. |
 
-### `eq` or `apx`?
+### `eq` chooses its own relation
 
-`eq` asserts the figures it prints; `apx` says "to this many figures". A quantity the
-statement **gives** takes `eq` -- 196 of the 217 `eq` sites in the sources are exactly that,
-and `s = \qty{100}{\kilo\metre}` is not approximately anything. A quantity that has been
-**rounded** takes `apx`: a constant printed at its sheet precision (`const.g.apx` is
-`g \approx \qty{10}{\metre\per\second\squared}`), or a computed result shown to three figures.
+`eq` writes `=` only where the value is the true one **and** the figures it prints are all of
+it. Otherwise it writes `\approx`. Two independent tests, because each catches what the other
+cannot:
 
-**It is your claim, not the object's.** A rule that decided by comparing the printed string
-against the stored magnitude would be wrong more often than right, because binary floating
-point says so: `29/coil-kirchhoff` computes a current of 0.10000000000000009 A, which is
-exactly 0.1 A and prints as 0.1 A, and that rule would call it approximate. `eq` keeps saying
-`=` for it, correctly.
+- **`exact`** -- is this the true value, or a measured stand-in? `const.speed_sound` is
+  343 m/s, which prints back perfectly and is still not the speed of sound. Only the
+  declaration knows that.
+- **the round-trip** -- do the printed figures come back to the stored magnitude? `sqrt(2)` is
+  exact by every declaration on its way there and prints as 1.41421. Only the arithmetic knows
+  that.
 
-`apx` rounds the value and then prints it, rather than printing to a precision. `.1g` of
-9.80665 is `1e+01`, which `cut_extra_one` turns into `\qty{e+01}{}` so siunitx sets a bare
-power of ten -- correct, and not what anyone wants to read.
+`exact` defaults to true, because a number a statement **gives** is exact -- `s = 100 km` is
+not approximately anything. `constants.yaml` is the exception: a value there is measured unless
+it declares `exact: true`, which ten of the sixty-five do. A `values:` entry may declare
+`exact: false` for a given that is itself an approximation.
 
-For a precision other than `digits:`, the `|af`, `|ag` and `|ae` filters take one explicitly
-(`|af2`), exactly as `|ef`, `|eg` and `|ee` do for `eq`.
+It spreads through arithmetic as **contamination only**: `a * b` is exact only if both are, and
+a bare number is always exact. Never as a guarantee -- an exact 100 km over an exact 3 h is
+33.333..., which no decimal string holds, and `np.sin` builds its result without touching the
+operators at all. Both of those are caught by the round-trip instead, which is why the flag can
+afford to be optimistic.
+
+The round-trip allows a thousand ulps, because the comparison is against a float that has been
+through arithmetic: `29/coil-kirchhoff` solves a 3x3 system for a current that is exactly 0.1 A
+and stores it six ulps out. The two populations are nine orders of magnitude apart, so the
+threshold is not a tuned number.
+
+`.approximate(n)` -- and so `const.g.approx` -- is never exact, since rounding is what it is
+for.
+
+### `apx`
+
+`apx` says `\approx` outright, and at `digits:` figures rather than `%g`'s six. Reach for it
+when you want the shorter form (`R_E \approx 6.37e+06` rather than `6.37101e+06`), or to be
+explicit. For a precision other than `digits:`, the `|af`, `|ag` and `|ae` filters take one
+(`|af2`), exactly as `|ef`, `|eg` and `|ee` do -- those are the author's word and do not
+consult anything.
 
 Arithmetic operators all work: `+ - * / ** neg`. Mixed with raw numbers you get
 the expected pint behaviour. `q1 % q2` is overloaded: it constructs a
