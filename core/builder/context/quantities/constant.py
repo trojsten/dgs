@@ -12,7 +12,6 @@ class PhysicsConstant(PhysicsQuantity):
                  quantity: u.Quantity,
                  **kwargs):
         self.name = name
-        self.digits = kwargs.pop('digits', 3)
         self.aliases = kwargs.pop('aliases', [])
         self.exact = kwargs.pop('exact', False)
         super().__init__(quantity, **kwargs)

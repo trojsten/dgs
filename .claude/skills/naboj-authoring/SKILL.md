@@ -29,7 +29,7 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
   `answer*.md`) → read `references/layout.md`, then `references/markdown-extensions.md`.
 - Using `(§ … §)` templating, `@J set …`, math filters, `PQ(…)`, `const.g`, etc. →
   `references/jinja-templating.md`.
-- Defining `values:` in meta.yaml, using `PhysicsQuantity`, `.eq`, `.approx`, `.snap`, ranges,
+- Defining `values:` in meta.yaml, using `PhysicsQuantity`, `.eq`, `.apx`, `.approx`, `.snap`, ranges,
   formatting filters (`|f2`, `|g3`, `|ef2`, `|af2`, `|snap(10)`) →
   `references/quantities-and-constants.md`.
 - Using / adding custom LaTeX macros (`\Int`, `\Sum`, `\Ceil`, `\Nuclide`, `\Implies`, …) →

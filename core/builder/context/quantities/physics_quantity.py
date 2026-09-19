@@ -96,12 +96,19 @@ class PhysicsQuantity:
     #: would also rewrite the head of a longer name that merely starts the same way.
     _MACRO = re.compile(r'\\[A-Za-z]+')
 
+    #: Significant figures for the rounded renderings -- `apx`, and `PhysicsConstant`'s own
+    #: `approx`, `format` and `full*`. Three is the constants sheet's usual precision and so
+    #: the sensible default for a computed value, which is what most quantities carrying this
+    #: are; a constant overrides it from `constants.yaml`.
+    DEFAULT_DIGITS = 3
+
     def __init__(self,
                  quantity: pint.Quantity | float,
                  *,
                  symbol: str | None = None,
                  si_extra: dict[str, str] | None = None,
-                 force_f: bool = False):
+                 force_f: bool = False,
+                 digits: int = DEFAULT_DIGITS):
         if isinstance(quantity, pint.Quantity):
             self._quantity = quantity
         elif isinstance(quantity, numbers.Number):
@@ -116,6 +123,7 @@ class PhysicsQuantity:
             f"si_extra must be a dict[str, str], got {type(self.si_extra)} instead"
 
         self.force_f = force_f
+        self.digits = digits
 
     @staticmethod
     def construct(magnitude, unit, **kwargs):
@@ -275,14 +283,17 @@ class PhysicsQuantity:
 
     def alias(self, symbol: str | None) -> "PhysicsQuantity":
         """ Return an aliased quantity with a symbol """
-        return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra, force_f=self.force_f)
+        return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra,
+                               force_f=self.force_f, digits=self.digits)
 
     def to(self, what):
         """ Convert a physics quantity unit to another compatible unit. """
-        return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra)
+        return PhysicsQuantity(self._quantity.to(what), symbol=self._symbol, si_extra=self.si_extra,
+                               digits=self.digits)
 
     def simplify(self):
-        return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol, si_extra=self.si_extra)
+        return PhysicsQuantity(self._quantity.to_base_units(), symbol=self._symbol,
+                               si_extra=self.si_extra, digits=self.digits)
 
     def only_unit(self):
         r""" Return a nicely formatted unit (\unit{...} in siunitx format) """
@@ -346,7 +357,8 @@ class PhysicsQuantity:
 
         precision = digits - logarithm - 1
         magnitude = round(self._quantity.magnitude, precision)
-        return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol, si_extra=self.si_extra)
+        return PhysicsQuantity(u.Quantity(magnitude, self._quantity.units), symbol=self._symbol,
+                               si_extra=self.si_extra, digits=self.digits)
 
     def format_struct(self, fmt: str = 'g'):
         """
@@ -435,6 +447,38 @@ class PhysicsQuantity:
         Shorthand for `equals`
         """
         return self.equals
+
+    @property
+    def approximately(self) -> str:
+        r"""
+        Full form with symbol and an approximation sign, at `digits` significant figures:
+        `<symbol> \approx <value>`.
+
+        The companion to `equals`, and deliberately not an automatic variant of it. Whether a
+        printed number is the whole truth is the author's claim, not something the object can
+        work out: `29/coil-kirchhoff` computes a current of 0.10000000000000009 A, which is
+        exactly 0.1 A and reads as 0.1 A, so a rule that compared the printed string against the
+        stored magnitude would decide it was approximate. Binary floating point makes that test
+        wrong far more often than it is right, and 196 of the 217 `eq` sites in the sources name
+        a quantity the statement *gives*, where `=` is simply correct.
+
+        `digits` rather than `equals`' `%g`, because the two say different things. `equals`
+        prints every figure it has (six, `%g`'s default), since it is asserting them all;
+        `approximately` says "to this many figures" and three is what a constants sheet prints.
+
+        The value is *rounded* and then printed, not printed to a precision: `.1g` of 9.80665 is
+        `1e+01`, which `cut_extra_one` turns into `\qty{e+01}{}` so siunitx sets it as a bare
+        power of ten. Correct, and not what anyone wants to read for `g \approx 10`. Rounding
+        first is what `PhysicsConstant.full_approx` already does for the same reason.
+        """
+        return rf"{self._require_symbol('approximately')} \approx {self.approximate(self.digits):g}"
+
+    @property
+    def apx(self) -> str:
+        """
+        Shorthand for `approximately`
+        """
+        return self.approximately
 
     @staticmethod
     def _format_spec(kind: str, precision: int | None) -> str:

@@ -917,7 +917,7 @@ class TestEqualsApproxWithoutSymbol:
         with pytest.raises(MissingSymbolError):
             getattr(anonymous, method)()
 
-    @pytest.mark.parametrize('prop', ['equals', 'eq'])
+    @pytest.mark.parametrize('prop', ['equals', 'eq', 'approximately', 'apx'])
     def test_equals_property_raises_without_symbol(self, anonymous, prop):
         with pytest.raises(MissingSymbolError):
             getattr(anonymous, prop)
@@ -1232,3 +1232,84 @@ class TestRangeGridMatchesWhatPrints:
     def test_an_explicit_precision_still_rounds_outward(self):
         # The quiet case: the behaviour the class exists for is unchanged.
         assert f'{self.span(3.67749, 3.75):.1f}' == r'\qtyrange{3.6}{3.8}{\metre}'
+
+
+class TestApproximately:
+    r"""
+    `apx` prints `<symbol> \approx <value>` at `digits` significant figures, as the companion
+    to `eq`'s `<symbol> = <value>`.
+    """
+
+    @pytest.fixture
+    def mass(self):
+        return PhysicsQuantity.construct(96.7431, 'kg', symbol='m_D')
+
+    def test_approximately(self, mass):
+        assert mass.approximately == r'm_D \approx \qty{96.7}{\kilo\gram}'
+
+    def test_apx_is_the_shorthand(self, mass):
+        assert mass.apx == mass.approximately
+
+    def test_eq_keeps_every_figure(self, mass):
+        """`eq` asserts the figures it prints; only `apx` rounds."""
+        assert mass.eq == r'm_D = \qty{96.7431}{\kilo\gram}'
+
+    def test_digits_chooses_the_precision(self):
+        quantity = PhysicsQuantity.construct(96.7431, 'kg', symbol='m', digits=5)
+        assert quantity.apx == r'm \approx \qty{96.743}{\kilo\gram}'
+
+    @staticmethod
+    def constant(**kwargs):
+        from core.builder.context.quantities.constant import PhysicsConstant
+        return PhysicsConstant.construct(**kwargs)
+
+    def test_rounds_before_printing(self):
+        r"""
+        Not `f'{self:.1g}'`: that is `1e+01`, which `cut_extra_one` turns into `\qty{e+01}{}`
+        for siunitx to set as a bare power of ten. `g \approx 10` is what a reader wants.
+        """
+        gravity = self.constant(name='gravity', magnitude=9.80665,
+                                unit='metre / second ** 2', symbol='g', digits=1)
+        assert gravity.apx == r'g \approx \qty{10}{\metre\per\second\squared}'
+
+    def test_constant_takes_digits_from_its_declaration(self):
+        radius = self.constant(name='radius', magnitude=6371008.7714,
+                               unit='metre', symbol='R_E', digits=3)
+        assert radius.apx == r'R_E \approx \qty{6.37e+06}{\metre}'
+
+    def test_default_digits(self):
+        """A quantity that declares none is rendered to three figures, the sheet's usual."""
+        assert PhysicsQuantity.construct(1, 'kg').digits == PhysicsQuantity.DEFAULT_DIGITS == 3
+
+    def test_not_derived_from_the_printed_string(self):
+        """
+        The quiet case: `apx` is the author's claim, never inferred. `29/coil-kirchhoff` holds a
+        current of 0.10000000000000009 A that is exactly 0.1 A and prints as 0.1 A, so a rule
+        comparing the printed string against the stored magnitude would call it approximate.
+        `eq` must keep saying `=` for it.
+        """
+        current = PhysicsQuantity.construct(0.10000000000000009, 'A', symbol='I_3')
+        assert current.eq == r'I_3 = \qty{0.1}{\ampere}'
+        assert current.apx == r'I_3 \approx \qty{0.1}{\ampere}'
+
+
+class TestDigitsTravelWithTheQuantity:
+    """`digits` follows `symbol`: the same quantity elsewhere is still wanted to the same precision."""
+
+    @pytest.fixture
+    def labelled(self):
+        return PhysicsQuantity.construct(5000, 'gram', symbol='m', digits=5)
+
+    @pytest.mark.parametrize('operation', [lambda q: q.to('kg'),
+                                           lambda q: q.simplify(),
+                                           lambda q: q.alias('n'),
+                                           lambda q: q.approximate(2)])
+    def test_preserved(self, labelled, operation):
+        assert operation(labelled).digits == 5
+
+    def test_dropped_by_arithmetic(self, labelled):
+        """A new quantity is a new claim, so it takes the default -- as it does for `symbol`."""
+        result = labelled + labelled
+        assert result.symbol is None
+        assert result.digits == PhysicsQuantity.DEFAULT_DIGITS
+

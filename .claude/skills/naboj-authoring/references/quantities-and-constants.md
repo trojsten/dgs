@@ -74,6 +74,8 @@ Access via dotted attribute (inside `(§ … §)`):
 | `q.unit`        | Pint unit object.                                           |
 | `q.symbol`, `q.sym` | The TeX symbol (string). `None` if not set.            |
 | `q.eq`, `q.equals` | `"<symbol> = <full>"`. Example: `"v_0 = \qty{50}{...}".` |
+| `q.apx`, `q.approximately` | `"<symbol> \approx <rounded>"` at `digits:` figures. Example: `"g \approx \qty{10}{...}"`. |
+| `q.digits`      | Significant figures `apx` rounds to. 3 unless declared; a constant takes it from `constants.yaml`. Travels through `.to()`, `.simplify()`, `.alias()` and `.approximate()`; arithmetic resets it, as it does the symbol. |
 | `q.full`        | Default-format string (like `|g`).                          |
 | `q.to('unit')`  | Convert to another commensurate unit; returns new quantity. |
 | `q.simplify()`  | Convert to base SI units.                                   |
@@ -81,6 +83,27 @@ Access via dotted attribute (inside `(§ … §)`):
 | `r.snap(q)`     | Round a range's ends outward onto a grid of `q`.            |
 | `q.alias('x')`  | Copy of the quantity with a different symbol (keeps unit, `si_extra`, `force_f`). |
 | `q.approximate(n)` | Truly round the magnitude to `n` significant digits. Available on any quantity, not just constants — `const.g.approx` is just `approximate(digits)`. |
+
+### `eq` or `apx`?
+
+`eq` asserts the figures it prints; `apx` says "to this many figures". A quantity the
+statement **gives** takes `eq` -- 196 of the 217 `eq` sites in the sources are exactly that,
+and `s = \qty{100}{\kilo\metre}` is not approximately anything. A quantity that has been
+**rounded** takes `apx`: a constant printed at its sheet precision (`const.g.apx` is
+`g \approx \qty{10}{\metre\per\second\squared}`), or a computed result shown to three figures.
+
+**It is your claim, not the object's.** A rule that decided by comparing the printed string
+against the stored magnitude would be wrong more often than right, because binary floating
+point says so: `29/coil-kirchhoff` computes a current of 0.10000000000000009 A, which is
+exactly 0.1 A and prints as 0.1 A, and that rule would call it approximate. `eq` keeps saying
+`=` for it, correctly.
+
+`apx` rounds the value and then prints it, rather than printing to a precision. `.1g` of
+9.80665 is `1e+01`, which `cut_extra_one` turns into `\qty{e+01}{}` so siunitx sets a bare
+power of ten -- correct, and not what anyone wants to read.
+
+For a precision other than `digits:`, the `|af`, `|ag` and `|ae` filters take one explicitly
+(`|af2`), exactly as `|ef`, `|eg` and `|ee` do for `eq`.
 
 Arithmetic operators all work: `+ - * / ** neg`. Mixed with raw numbers you get
 the expected pint behaviour. `q1 % q2` is overloaded: it constructs a
