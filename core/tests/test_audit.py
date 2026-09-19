@@ -265,6 +265,25 @@ class TestSiunitxChecks:
                         'a rod $\\qty[forbid-literal-units=false]{1}{grrrr}$ long\n'}}
         assert 'literal-unit' not in ids(run(tmp_path, files=files))
 
+    def test_a_v2_spelling_is_seen(self, tmp_path):
+        # `seminar/FKS` is written in `\SI`/`\si` almost throughout, and leaving them out of the
+        # macro table made every siunitx check blind to that module
+        files = {'en': {'problem.md': 'at $\\SI{1}{au}$, $\\si{ly}$ and '
+                                      '$\\SIrange{1}{2}{km}$\n'}}
+        found = [f.message for f in run(tmp_path, files=files).findings
+                 if f.check == 'literal-unit']
+        assert len(found) == 3, found
+
+    def test_a_v2_call_with_real_units_is_quiet(self, tmp_path):
+        files = {'en': {'problem.md': 'at $\\SI{1}{\\au}$ and $\\si{\\lightyear}$\n'}}
+        assert 'literal-unit' not in ids(run(tmp_path, files=files))
+
+    def test_a_product_separates_its_factors_with_x(self, tmp_path):
+        # `x` is the separator, not a symbol, so neither factor is a symbolic number
+        files = {'en': {'problem.md':
+                        'a brick $\\qtyproduct{2.5 x 1.5 x 0.5}{\\centi\\metre}$\n'}}
+        assert 'symbolic-number' not in ids(run(tmp_path, files=files))
+
     def test_range_second_number_is_not_a_unit(self, tmp_path):
         # reading `\qtyrange{0}{30}{\celsius}` as `\qty` makes `30` look like a literal unit
         files = {'en': {'problem.md': 'between $\\qtyrange{0}{30}{\\celsius}$\n'}}

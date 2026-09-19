@@ -45,12 +45,21 @@ RE_TAG = re.compile(r'\(§.*?§\)')
 SI_ARITY = {
     'num': (1, None), 'ang': (1, None), 'numlist': (1, None), 'numrange': (2, None),
     'qty': (2, 1), 'qtylist': (2, 1), 'qtyrange': (3, 2),
+    'qtyproduct': (2, 1), 'numproduct': (1, None),
+    # a unit on its own has no value at all, so `values` is empty and only `literal-unit` looks
+    'unit': (1, 0), 'si': (1, 0),
+    # siunitx v2 spellings. `seminar/FKS` is written in them almost throughout -- 2912 `\SI` and
+    # 198 `\si` against 4167 `\qty` in the whole tree -- so leaving them out made every siunitx
+    # check blind to that module, which is how `38/2/2/07`'s `\SI{1}{au}` stopped its round
+    # compiling without the audit saying a word.
+    'SI': (2, 1), 'SIlist': (2, 1), 'SIrange': (3, 2),
 }
 
 #: The option group is not optional to allow: the first version of this omitted it, so every
 #: `\qty[per-mode=symbol]{200}{...}` was invisible and the cross-language comparison reported
 #: disagreements that were not disagreements.
-RE_SI_HEAD = re.compile(r'\\(?P<macro>qtyrange|qtylist|numrange|numlist|qty|num|ang)'
+RE_SI_HEAD = re.compile(r'\\(?P<macro>qtyproduct|qtyrange|qtylist|numproduct|numrange|numlist'
+                        r'|qty|num|ang|unit|SIrange|SIlist|SI|si)'
                         r'(?P<opts>\[[^\]]*\])?(?=\{)')
 RE_NUMBER = re.compile(r'-?\d+(?:\.\d+)?(?:e[-+]?\d+)?')
 
@@ -863,9 +872,13 @@ def symbolic_number(sources):
                 for value in call.values:
                     # a list argument is semicolon-separated, and every item must be a number
                     # a list is semicolon-separated, and so is `\ang`'s degrees-minutes-seconds form
-                    items = (value.split(';')
-                             if call.macro.endswith('list') or call.macro == 'ang'
-                             else [value])
+                    if call.macro.endswith('list') or call.macro == 'ang':
+                        items = value.split(';')
+                    elif call.macro.endswith('product'):
+                        # `\qtyproduct{2.5 x 1.5 x 0.5}{...}` separates its factors with `x`
+                        items = value.split('x')
+                    else:
+                        items = [value]
                     for item in items:
                         if '§' in item or numeric.match(item):
                             continue
