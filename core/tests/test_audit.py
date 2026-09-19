@@ -330,6 +330,17 @@ class TestSiunitxChecks:
                         '$\\qty[parse-numbers=false]{4^2}{\\metre\\squared}$\n'}}
         assert 'number-unparsed' not in ids(run(tmp_path, files=files))
 
+    def test_angle_as_qty(self, tmp_path):
+        files = {'en': {'problem.md': 'turned by $\\qty{60}{\\degree}$\n'}}
+        assert 'angle-as-qty' in ids(run(tmp_path, files=files))
+
+    def test_a_rate_and_a_collection_of_angles_are_quiet(self, tmp_path):
+        # a rate is not an angle, and siunitx has no `\anglist` or `\angrange` for the other two
+        files = {'en': {'problem.md':
+                        '$\\qty{30}{\\degree\\per\\second}$, $\\qtyrange{30}{60}{\\degree}$ '
+                        'and $\\qtylist{30;60}{\\degree}$\n'}}
+        assert 'angle-as-qty' not in ids(run(tmp_path, files=files))
+
     def test_a_half_symbolic_range_is_quiet(self, tmp_path):
         # the option is per call, so the `0.5` cannot drop it on its own
         files = {'en': {'solution.md':

@@ -957,6 +957,27 @@ def number_unparsed(sources):
                                   line_of(text, call.start))
 
 
+@check('angle-as-qty', 'warning', r'An angle written \qty{x}{\degree} rather than \ang{x}')
+def angle_as_qty(sources):
+    r"""
+    `\ang` is siunitx's own command for an angle and is what the sources write by hand, so a
+    computed one now prints that way too. This catches the literal that did not.
+
+    Only a bare degree and only `\qty`: `\qty{30}{\degree\per\second}` is a rate rather than an
+    angle, and siunitx has no `\anglist` or `\angrange`, so a collection keeps `\degree` as its
+    unit and is right as it is.
+    """
+    for unit in sources.unit_list:
+        for lang, name, text in unit.files():
+            for call in si_calls(text):
+                if call.macro != 'qty' or call.unit != r'\degree':
+                    continue
+                yield Finding('angle-as-qty', 'warning',
+                              f'`\\qty{{{call.values[0]}}}{{\\degree}}` is an angle; write '
+                              f'`\\ang{{{call.values[0]}}}`',
+                              unit.path, unit.label(lang, name), line_of(text, call.start))
+
+
 # --- files ------------------------------------------------------------------
 
 @check('insert-picture', 'error', r'\insertPicture written by hand')

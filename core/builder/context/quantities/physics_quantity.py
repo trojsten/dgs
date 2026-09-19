@@ -142,9 +142,33 @@ class PhysicsQuantity:
 
     @staticmethod
     def construct(magnitude, unit, **kwargs):
+        r"""
+        Construct from a magnitude and a unit.
+
+        **Idempotent in the magnitude.** `PQ` of something that is already a quantity
+        re-expresses it in `unit` instead of wrapping it a second time. The second wrap used to
+        be invisible until it reached the page -- `PQ(PQ(0.4, ''), '')` printed
+        `\num{\num{0.4}}`, which siunitx cannot parse, and the natural spelling of an angle,
+        `PQ(acos(x), 'radian').to('degree')`, printed `\qty{\qty{32.53}{\radian}}{\degree}`.
+        Both get as far as the TeX and fail there, a long way from the `derived:` line that
+        wrote them, and the workaround was to remember `.mag` at every call site.
+
+        The conversion is pint's, so an incompatible unit raises exactly as it always did:
+        `PQ(length, 'second')` is a mistake however it is spelled. Radians are dimensionless to
+        pint, which is what lets `PQ(acos(x), 'radian')` take either a float or a bare number
+        and mean the same thing.
+
+        What the quantity already carries -- its symbol, digits, `si_extra` and `exact` -- comes
+        with it, and an explicit keyword here overrides that, so `PQ(q, 'degree', symbol=r'\beta')`
+        renames it.
         """
-        Construct from magnitude and unit.
-        """
+        if isinstance(magnitude, PhysicsQuantity):
+            carried = {'symbol': magnitude._symbol, 'si_extra': magnitude.si_extra,
+                       'force_f': magnitude.force_f, 'digits': magnitude.digits,
+                       'exact': magnitude.exact}
+            return PhysicsQuantity(magnitude._quantity.to(unit), **(carried | kwargs))
+        if isinstance(magnitude, pint.Quantity):
+            return PhysicsQuantity(magnitude.to(unit), **kwargs)
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
     def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
@@ -192,6 +216,21 @@ class PhysicsQuantity:
         return self * other
 
     def __pow__(self, exponent):
+        r"""
+        Raise to a power, which may itself be a dimensionless quantity.
+
+        An exponent has to be a pure number -- pint says so and it is right, since `x` to the
+        power of 3 kg means nothing. But a `values:` entry with `unit: ~` *is* a pure number and
+        arrives here wrapped, so `ratio**((kappa - 1) / kappa)` with kappa declared at 1.4 used
+        to fail with `Cannot power UnitsContainer by PhysicsQuantity` -- a message naming neither
+        the quantity nor the `derived:` line, and fixed only by remembering `.mag` on every
+        appearance of kappa. Unwrapping a dimensionless exponent here says the same thing the
+        author meant. Anything with a dimension still raises, from pint, as before.
+        """
+        if isinstance(exponent, PhysicsQuantity):
+            exponent = exponent._quantity
+        if isinstance(exponent, pint.Quantity):
+            exponent = exponent.to('').magnitude
         return PhysicsQuantity(self._quantity ** exponent, exact=self.exact)
 
     def __truediv__(self, other):
@@ -227,6 +266,12 @@ class PhysicsQuantity:
         si_extra = self.format_si_extra(self.si_extra)
         magnitude = f"{{{fragments['magnitude']}}}"
         unit = f"{{{fragments['unit']}}}" if fragments['unit'] else ''
+        # An angle on its own is `\ang`, siunitx's own command for one, and what the sources
+        # write by hand throughout. Only here: there is no `\anglist` or `\angrange`, so a list
+        # or a range of angles stays `\qtylist` / `\qtyrange` and keeps `\degree` as its unit.
+        # Only a bare degree, too -- `\qty{30}{\degree\per\second}` is a rate, not an angle.
+        if fragments['unit'] == r'\degree':
+            return rf'\ang{si_extra}{magnitude}'
         return rf'\{cmd}{si_extra}{magnitude}{unit}'
 
     def __repr__(self):

@@ -65,6 +65,76 @@ class TestAngles:
         expected = PhysicsQuantity.construct(135, 'deg', symbol=r'\omega')
         assert expected == computed
 
+    def test_a_bare_angle_is_ang(self):
+        r"""`\ang` is siunitx's own command for an angle, and what the sources write by hand."""
+        assert f"{PhysicsQuantity.construct(60, 'degree')}" == r'\ang{60}'
+
+    def test_an_angular_rate_is_not_an_angle(self):
+        r"""`\qty{30}{\degree\per\second}` is a rate; only a bare degree is `\ang`."""
+        assert f"{PhysicsQuantity.construct(30, 'degree/second')}" == \
+            r'\qty{30}{\degree\per\second}'
+
+    def test_a_radian_is_not_spelled_as_an_angle(self):
+        assert f"{PhysicsQuantity.construct(1, 'radian')}" == r'\qty{1}{\radian}'
+
+    def test_a_list_of_angles_keeps_its_unit(self):
+        """There is no `\\anglist`, so a collection stays `\\qtylist` and carries `\\degree`."""
+        angles = QuantityList(*[PhysicsQuantity.construct(x, 'degree') for x in (30, 60)])
+        assert f'{angles}' == r'\qtylist{30;60}{\degree}'
+
+    def test_a_range_of_angles_keeps_its_unit(self):
+        """Likewise `\\angrange`, which siunitx does not have either."""
+        span = QuantityRange(PhysicsQuantity.construct(30, 'degree'),
+                             PhysicsQuantity.construct(60, 'degree'))
+        assert f'{span}' == r'\qtyrange{30}{60}{\degree}'
+
+
+class TestConstructIsIdempotent:
+    r"""
+    `PQ` of a quantity re-expresses it rather than wrapping it again. The second wrap only
+    showed up on the page -- `\num{\num{0.4}}` is not input siunitx can parse -- so every call
+    site had to remember `.mag`.
+    """
+
+    def test_a_dimensionless_quantity_is_not_wrapped_twice(self):
+        once = PhysicsQuantity.construct(0.4, '')
+        assert f"{PhysicsQuantity.construct(once, '')}" == f'{once}' == r'\num{0.4}'
+
+    def test_a_unit_is_converted_not_nested(self):
+        radians = PhysicsQuantity.construct(math.pi / 4, 'radian')
+        assert f"{PhysicsQuantity.construct(radians, 'degree'):.2f}" == r'\ang{45.00}'
+
+    def test_an_incompatible_unit_still_raises(self):
+        """Idempotence is not permission: a length is not a time whichever way it is spelled."""
+        length = PhysicsQuantity.construct(1, 'metre')
+        with pytest.raises(pint.DimensionalityError):
+            PhysicsQuantity.construct(length, 'second')
+
+    def test_the_symbol_survives_the_second_call(self):
+        first = PhysicsQuantity.construct(math.pi, 'radian', symbol=r'\beta')
+        assert PhysicsQuantity.construct(first, 'degree').symbol == r'\beta'
+
+    def test_an_explicit_keyword_overrides_what_is_carried(self):
+        first = PhysicsQuantity.construct(math.pi, 'radian', symbol=r'\beta')
+        assert PhysicsQuantity.construct(first, 'degree', symbol=r'\gamma').symbol == r'\gamma'
+
+    def test_a_dimensionless_quantity_may_be_an_exponent(self):
+        r"""`unit: ~` in `values:` is a pure number, and arrives here wrapped."""
+        base = PhysicsQuantity.construct(4, '')
+        kappa = PhysicsQuantity.construct(1.4, '')
+        assert f'{base ** ((kappa - 1) / kappa):.5f}' == r'\num{1.48599}'
+
+    def test_a_dimensioned_exponent_still_raises(self):
+        """`x` to the power of 3 kg means nothing, and pint keeps saying so."""
+        with pytest.raises(pint.DimensionalityError):
+            PhysicsQuantity.construct(4, '') ** PhysicsQuantity.construct(3, 'kilogram')
+
+    def test_a_bare_pint_quantity_is_converted_too(self):
+        # `1.0` and not `1`, because a pint conversion divides: that is the conversion working,
+        # not the wrapping this class is about
+        bare = PhysicsQuantity.construct(1000, 'metre').quantity
+        assert f"{PhysicsQuantity.construct(bare, 'kilometre')}" == r'\qty{1.0}{\kilo\metre}'
+
 
 class TestRange:
     def test_masses(self, mass1, mass2):
