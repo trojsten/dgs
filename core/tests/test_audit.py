@@ -274,6 +274,17 @@ class TestSiunitxChecks:
                  if f.check == 'literal-unit']
         assert len(found) == 3, found
 
+    def test_a_symbolic_magnitude_is_not_a_number(self, tmp_path):
+        """`parse-numbers=false` says so outright, and `n_0` is not the number zero."""
+        files = {'en': {'problem.md': 'we placed $\\qty[parse-numbers=false]{n_0}{\\mole}$ in\n'},
+                 'sk': {'problem.md': 'do nádoby sme vložili $n_0$ mólov\n'}}
+        assert 'magnitude-disagreement' not in ids(run(tmp_path, files=files))
+
+    def test_a_real_disagreement_is_still_seen(self, tmp_path):
+        files = {'en': {'problem.md': 'a rope $\\qty{30}{\\metre}$ long\n'},
+                 'sk': {'problem.md': 'lano dlhé $\\qty{75}{\\metre}$\n'}}
+        assert 'magnitude-disagreement' in ids(run(tmp_path, files=files))
+
     def test_a_v2_call_with_real_units_is_quiet(self, tmp_path):
         files = {'en': {'problem.md': 'at $\\SI{1}{\\au}$ and $\\si{\\lightyear}$\n'}}
         assert 'literal-unit' not in ids(run(tmp_path, files=files))

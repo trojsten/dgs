@@ -101,6 +101,21 @@ in for three real chains — the air's density from the table or the sheet, and 
 density read off a table rather than derived — which are now computed and spanned outright,
 1170 to 1188 EUR against the 1147 to 1195 an arbitrary 2 % gave.
 
+> **A band whose two ends round to the same string should print that string once, and does not
+> yet.** Outward rounding is right when the ends differ, and turns into noise when they do not:
+> `06/earth-falls` has `result` 64.5663 and `result_approx` 64.5665 days, both of which *round*
+> to 65 at `f0`, but the floor and the ceil pull them apart into `64 – 65` — a whole day claimed
+> for two values agreeing to seven figures. The rule wanted is: **round each end to the requested
+> precision first, and if the two strings are equal, emit the single value rather than a range.**
+> That is not the same as `lower == upper` before formatting, which is the already-handled case of
+> a constant that does not move at all, and it is the opposite direction from `|snap(q)`.
+>
+> Nothing is implemented. The workaround in the sources today is that such a problem simply has
+> **no `answer-interval.md`** — 27 of them, spread across volumes 02 to 29, where the pair is
+> computed in the meta and the band was left unwritten because it would have been a grid artefact.
+> Once this lands, those files can be written and will print one value each, and the check that
+> finds them is "does the interval's `|fN` render both ends to the same string".
+
 **When the band needs to be coarser than the last place it prints, that is `|snap(q)`.** The
 grid `__format__` rounds outward onto is read off the printed string, so it stops at a whole
 unit: `.0f` is the coarsest a format spec offers. `snap` chooses the grid instead.

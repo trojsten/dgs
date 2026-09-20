@@ -677,6 +677,14 @@ def magnitudes(text):
     for call in si_calls(RE_TAG.sub('', text)):
         if defines_a_unit(call):
             continue
+        # `parse-numbers=false` says the argument is not a number, and the extractor should take
+        # it at its word: `20/gases` writes the amount of gas as
+        # `\qty[parse-numbers=false]{n_0}{\mole}`, and reading the subscript off it made the two
+        # languages that spell the same symbol as bare maths look as though they had lost a zero.
+        # Spaces allowed around the `=`: keyval ignores them and 50 sites in the tree write it
+        # that way.
+        if re.search(r'parse-numbers\s*=\s*false', call.opts):
+            continue
         counter.update(call.magnitudes)
     return counter
 
