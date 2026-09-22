@@ -4,6 +4,11 @@ locale: 'cs-CZ'
 quotes:
   open: '„'
   close: '“'
+# See `core/filters/spacing.lua`. One-letter words must not end a line (ČSN 01 6910).
+typography:
+  singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
+  nbsp_pairs: ['t. j.']
+
 cref:
   figure:
     singular: 'obrázek'

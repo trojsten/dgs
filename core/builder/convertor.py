@@ -170,6 +170,19 @@ class Convertor:
             # Currently nothing
         ]
 
+        # Spacing rules for `core/filters/spacing.lua`, flattened to strings: the filter has no
+        # YAML reader, and three `-M` flags are both enough and visible in the argv when a build
+        # is being debugged. Both cases of a single-letter word are derived here rather than in
+        # Lua, whose `string.lower` is byte-oriented and wrong for Cyrillic.
+        typography = self.locale.data.get('typography', {})
+        self.nbsp_singles = sorted({
+            case
+            for word in typography.get('singles', [])
+            for case in (word, word.upper())
+        })
+        self.nbsp_pairs = typography.get('nbsp_pairs', [])
+        self.thin_pairs = typography.get('thin_pairs', [])
+
         self.pre_checks = self._filter_regexes(self.pre_checks)
         self.pre_regexes = self._filter_regexes(self.pre_regexes)
         self.post_checks = self._filter_regexes(self.post_checks)
@@ -287,6 +300,10 @@ class Convertor:
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             "--lua-filter", "./core/filters/quotes.lua",
+            "--lua-filter", "./core/filters/spacing.lua",
+            "-M", "nbsp-singles=" + ' '.join(self.nbsp_singles),
+            "-M", "nbsp-pairs=" + ';'.join(self.nbsp_pairs),
+            "-M", "thin-pairs=" + ';'.join(self.thin_pairs),
         ]
         if self.output_format == 'html':
             args += [

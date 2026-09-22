@@ -104,7 +104,9 @@ Aj s newlinami.](file.png){#fig:long height=53mm}
         output = output.replace('\n', ' ')
         assert re.match(r'<figure.*>.*</figure>', output) is not None
         assert re.match(r'.*<img.* src=".*file\.png".* />', output) is not None
-        assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s newlinami\.', output) is not None
+        # `s\u00a0newlinami`: the caption is prose, so `core/filters/spacing.lua` glues the
+        # Slovak preposition in it like anywhere else.
+        assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s\u00a0newlinami\.', output) is not None
 
 
 class TestTags:
@@ -184,7 +186,6 @@ class TestLongtableRules:
         assert Convertor.move_bottom_rules(f).read() == "text\n\\bottomrule\\noalign{}\n"
 
 
-class TestEmptyPicturePath:
     r"""
     `![](){height=40mm}` is a picture nobody has drawn yet, and must reach `\insertPicture`.
 
@@ -216,3 +217,111 @@ class TestEmptyPicturePath:
         # A mistyped `![](figure)` is an authoring error and should stop the build, not quietly
         # render as a placeholder.
         assert self.latex(r'\includegraphics{figure}') == r'\includegraphics{figure}'
+
+
+class TestSpacing:
+    r"""
+    `core/filters/spacing.lua` inserts the non-breaking spaces the language wants.
+
+    Half of these tests are cases that must stay quiet. They are the ones that matter: a pass
+    that glues text is only safe because the pandoc AST has already separated prose from maths,
+    code, image targets and raw TeX, and the way to keep that true is to pin it.
+    """
+
+    def test_preposition_is_glued(self, convert):
+        assert convert('latex', 'sk', 'Teleso v tiaži') == 'Teleso v~tiaži'
+
+    def test_every_one_letter_word_is_glued(self, convert):
+        assert convert('latex', 'sk', 'V zime a v lete') == 'V~zime a~v~lete'
+
+    def test_glues_to_maths(self, convert):
+        assert convert('latex', 'sk', 'hmotnosť v $x$') == r'hmotnosť v~\(x\)'
+
+    def test_glues_to_raw_tex(self, convert):
+        assert convert('latex', 'sk', r'v \qty{5}{\kilo\gram}') == r'v~\qty{5}{\kilo\gram}'
+
+    def test_glues_across_a_source_line_break(self, convert):
+        """`--wrap=preserve` keeps the newline, and TeX reads a newline as a breakable space."""
+        assert convert('latex', 'sk', 'teleso a\ntabuľku') == 'teleso a~tabuľku'
+
+    def test_opening_bracket_does_not_hide_the_preposition(self, convert):
+        assert convert('latex', 'sk', '(v tiaži)') == '(v~tiaži)'
+
+    def test_html_gets_the_character_itself(self, convert):
+        assert convert('html', 'sk', 'v tiaži') == '<p>v tiaži</p>'
+
+    def test_german_abbreviation_is_narrowed(self, convert):
+        """`smart` glues `d. h.` on its own, with a full-width space. Narrow it."""
+        assert convert('latex', 'de', 'Wir drehen es, d. h. um $45$ Grad.') == \
+            r'Wir drehen es, d.\,h. um \(45\) Grad.'
+
+    def test_german_abbreviation_smart_missed(self, convert):
+        """`z. B.` is not on pandoc's list, so it arrives as two words and a `Space`."""
+        assert convert('latex', 'de', 'Wir nehmen z. B. Wasser.') == r'Wir nehmen z.\,B. Wasser.'
+
+    def test_slovak_abbreviation_takes_a_full_width_space(self, convert):
+        assert convert('latex', 'sk', 'Je to t. j. asi toľko.') == 'Je to t.~j. asi toľko.'
+
+    # ------------------------------------------------------------------ must stay quiet
+
+    def test_english_is_left_alone(self, convert):
+        """English declares no `typography:`, and must not inherit anyone else's."""
+        assert convert('latex', 'en', 'a cat in a hat') == 'a cat in a hat'
+
+    def test_german_gets_no_prepositions(self, convert):
+        assert convert('latex', 'de', 'Ich v z k o') == 'Ich v z k o'
+
+    def test_a_hand_written_space_is_not_doubled(self, convert):
+        """The author's `\\ ` is already U+00A0 inside the `Str`: there is no `Space` left."""
+        assert convert('latex', 'sk', r'v\ tiaži') == 'v~tiaži'
+        assert convert('latex', 'sk', r'v\ tiaži').count('~') == 1
+
+    def test_maths_is_untouched(self, convert):
+        assert convert('latex', 'sk', '$v = a$') == r'\(v = a\)'
+
+    def test_code_is_untouched(self, convert):
+        assert convert('latex', 'sk', '`v tiaži`') == r'\texttt{v\ tiaži}'
+
+    def test_an_image_path_is_untouched(self, convert):
+        assert 'v a.png' in convert('latex', 'sk', '![x](v a.png){height=10mm}')
+
+    def test_an_abbreviation_is_not_a_preposition(self, convert):
+        """`z.` ends in a period, so Slovak's `z` rule must not fire on it."""
+        assert convert('latex', 'sk', 'Je to z. B. asi toľko.') == 'Je to z. B. asi toľko.'
+
+    def test_thinspace_written_by_hand_still_works(self, convert):
+        """The escape hatch for a pair the table does not know."""
+        assert convert('latex', 'de', r'Wir nehmen d.\thinspace h. Wasser.') == \
+            r'Wir nehmen d.\thinspace h. Wasser.'
+
+    # ------------------------------------------------------------------ the rule table
+
+    @staticmethod
+    def _convertor(language):
+        infile = tempfile.NamedTemporaryFile(mode='w+')
+        outfile = tempfile.NamedTemporaryFile(mode='w+')
+        return Convertor('latex', language, infile, outfile)
+
+    def test_both_cases_are_derived(self):
+        """A single is listed once in the YAML; the capital comes from here, not from Lua."""
+        assert set('vVzZ') <= set(self._convertor('sk').nbsp_singles)
+
+    def test_cyrillic_case_is_derived_too(self):
+        """Lua's `string.lower` is byte-oriented, so the casing has to happen in Python."""
+        assert {'в', 'В'} <= set(self._convertor('ru').nbsp_singles)
+
+    def test_a_language_without_rules_gets_none(self):
+        english = self._convertor('en')
+        assert english.nbsp_singles == []
+        assert english.nbsp_pairs == []
+        assert english.thin_pairs == []
+
+    def test_default_yaml_carries_no_typography(self):
+        """
+        Same reason `default.yaml` carries no `words:`: `merge()` would make whatever it held the
+        fallback for every language, and English inheriting Slovak's prepositions is the failure
+        this exists to end.
+        """
+        import yaml
+        with open('core/i18n/default.yaml') as f:
+            assert 'typography' not in yaml.safe_load(f)

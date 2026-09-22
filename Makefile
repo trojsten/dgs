@@ -143,7 +143,8 @@ endef
 #
 # A stamp rather than the list itself. The list is some eighty files and make would compare every
 # one of them against each of several thousand render targets; the stamp collapses that to one.
-PIPELINE_SOURCES := $(shell find core/builder core/filters core/utilities modules -name '*.py' \
+PIPELINE_SOURCES := $(shell find core/builder core/filters core/utilities modules \
+                                 \( -name '*.py' -o -name '*.lua' \) \
                                  -not -path '*/__pycache__/*' 2>/dev/null) \
 	pandoc.py \
 	core/data/constants.yaml \

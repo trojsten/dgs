@@ -4,6 +4,11 @@ locale: 'pl-PL'
 quotes:
   open: '„'
   close: '“'
+# See `core/filters/spacing.lua`. One-letter words must not end a line.
+typography:
+  singles: ['a', 'i', 'o', 'u', 'w', 'z']
+  nbsp_pairs: ['m. in.']
+
 cref:
   figure:
     singular: 'figura'

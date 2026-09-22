@@ -4,6 +4,13 @@ locale: 'sk-SK'
 quotes:
   open: '„'
   close: '“'
+# Spacing the build inserts for this language: `singles` are the one-letter words that must not
+# end a line (STN 01 6910), `nbsp_pairs` and `thin_pairs` the abbreviations whose halves belong
+# together. Both cases of a single are derived, so list it once. See `core/filters/spacing.lua`.
+typography:
+  singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
+  nbsp_pairs: ['t. j.', 't. z.']
+
 cref:
   figure:
     singular: 'obrázok'

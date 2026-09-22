@@ -105,11 +105,21 @@ Custom units declared in `core/latex/siunitx.tex`: `\gforce`, `\year`, `\inch`,
 `\chemfig{...}` — structural formulas.
 `\Nuclide[A][Z]{sym}` — isotopes, e.g. `\Nuclide[99m]{Tc}`.
 
-## Non-breaking spaces
+## Non-breaking spaces — the build inserts them
 
-DGS's convention for non-breaking space is `word\ text` — literal backslash-space.
-This prevents ugly line breaks between short words and units / following text. Use
-liberally after prepositions in Slavic languages (`v\ zime`, `s\ hmotnosťou`).
+Do not type them. `core/filters/spacing.lua` runs inside pandoc and inserts the space
+the *build language* wants: after a one-letter word in sk/cs/pl/ru/uk, and between the
+halves of a German abbreviation (`d. h.`, `z. B.`) as a thin one. Write `v zime` and
+`d. h.` plainly. The word lists are `typography:` in `core/i18n/<lang>.yaml`; a language
+that declares nothing — English among them — gets nothing.
+
+`word\ text`, literal backslash-space, still works and is the override for a case the
+language rules miss. It cannot be doubled: pandoc reads it as U+00A0 inside the word, so
+there is no space left for the filter to touch. Never use U+202F or U+00A0 directly —
+both are invisible in a diff and a whitespace pass will flatten them.
+
+`.jtex` templates do not go through pandoc, so nothing inserts spaces there. Write `~`
+in those — not `\ `, which in TeX is an ordinary *breakable* space.
 
 ## Footnotes
 
@@ -169,7 +179,8 @@ TeX-macro discouraged:
 - `lip` — no `\insertPicture` (use `![](…)` instead).
 
 Typography:
-- `tgc`, `thc` — no `\,` `\;` `\.` `\thinspace` (typographic corrections).
+- `tgc` — no `\,` `\;` `\.` (they are Markdown escapes, not thin spaces). A thin space
+  is the build's job; `\thinspace` is the escape hatch for a pair the YAML lacks.
 - `pun` — no punctuation inside `\text{}`.
 - `tjs` — Slovak abbreviation spacing: write `t. j.` with a space, not `t.j.`.
 

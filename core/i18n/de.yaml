@@ -4,6 +4,11 @@ locale: 'de-AT'
 quotes:
   open: '„'
   close: '“'
+# See `core/filters/spacing.lua`. German has no one-letter-word rule; what it has is the thin
+# space between the halves of an abbreviation, which authors used to type as `\thinspace`.
+typography:
+  thin_pairs: ['d. h.', 'z. B.', 'u. a.', 'u. U.', 'v. a.', 'z. T.']
+
 cref:
   figure:
     singular: 'Abbildung'
