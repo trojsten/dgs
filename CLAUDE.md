@@ -258,30 +258,67 @@ solved sudoku's rows all sum to 45, and `28/balance-me` answers which two of nin
 are left over. None is the output of a calculation; all three carry
 `audit: {ignore: ['answer-literal']}` with the reason, and `value_status` honours that.
 
-## Thin spaces, and why `\,` is banned
+## The build inserts the non-breaking spaces, not you
 
-German abbreviations take a thin, non-breaking space between their parts -- `d. h.`
-for *das heißt*, likewise `z. B.` and `u. a.` A full word space is too wide and a
-line break between the halves is wrong. Write it as **`\thinspace`**:
+A one-letter word must not end a line in Slovak, Czech, Polish, Russian or Ukrainian, and a
+German abbreviation wants a thin space between its halves. Both used to be typed by hand --
+`v\ zime`, `d.\thinspace h.` -- which is how the rule came to live only in authors' heads: it
+was applied to some prepositions and not others, applied in English where the language does not
+want it (`the\ velocities of\ both sound`, `18/submarine/en`), carried into `pl/` and `ru/` by
+translators copying a Slovak file, and honoured in exactly two of the German solutions.
 
-    d.\thinspace h. um $\ang{45}$ gegenüber ...
+The rule belongs to the language being built, so **`core/filters/spacing.lua` does it**, and
+authoring prose needs nothing. It is a pandoc Lua filter, listed after `quotes.lua` in
+`Convertor.call_pandoc`, and the word lists live in `core/i18n/<lang>.yaml` under `typography:`:
 
-`\,` looks like the obvious spelling and **does not work**. A backslash before
-punctuation is a Markdown escape, so `d.\,h.` reaches the TeX as `d.,h.` -- a
-literal comma inside the word, silently. The `tgc` rule flags `\,`, `\;` and `\.`
-for exactly this reason and says what to use instead. `\thinspace` survives pandoc
-verbatim because it is a control word, and LaTeX defines it as `\,` outright
-(`latex.ltx`: `\let\thinspace\,`), so the typeset result is identical.
+    typography:
+      singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
+      nbsp_pairs: ['t. j.', 't. z.']
+      thin_pairs: []                  # German's `d. h.`, `z. B.`, `u. a.`
 
-U+202F NARROW NO-BREAK SPACE also works -- pandoc turns it into `\,` -- and two
-German solutions used it before `\thinspace` was allowed. Avoid it: it is
-invisible in a diff, and Python's `str.isspace()` is true for it, so a whitespace
-pass will flatten it to a plain space and quietly widen the gap. That happened
-once already.
+`default.yaml` holds none of it, for the reason it holds no `words:` -- `merge()` would make one
+language's list the fallback for every language, and English inheriting Slovak's prepositions is
+the failure this is meant to end. Both cases of a single are derived in Python, so list a letter
+once. A language that declares nothing gets nothing.
 
-Do not use U+202F for a preposition either. That is `\ `, a normal non-breaking
-space -- `v\ istej`, not a thin one. Nine chemistry problems had 57 of these from
-a word processor; they are gone.
+**It is in the AST, and that is the whole argument.** Pandoc has already decided what is prose:
+`Math`, `Code`, `RawInline`, `RawBlock`, image and link targets and every attribute are separate
+node types, so a rule written over `Str` and `Space` cannot reach them. Nothing has to be
+re-detected, and nothing can be re-detected wrongly -- which a regex bank in `preprocess` would
+have to do for `$…$`, `\qty{}`, fenced code, pipe tables, URLs and `![](path)`, one line at a
+time. It also matches `SoftBreak`, not only `Space`: with `--wrap=preserve` the authored line
+break survives into the TeX, where a newline is an ordinary breakable space, so a preposition
+at the end of an authored line would otherwise still end a typeset line.
+
+What it emits is Unicode -- U+00A0 and U+202F -- which pandoc's writers turn into `~` and `\,`
+for LaTeX and into the characters themselves for HTML. One filter, both formats.
+
+**Writing `\ ` by hand is still allowed and still correct**; it is now the override for a case
+the language rules miss, not the routine. Pandoc reads it as U+00A0 inside the `Str`, so there
+is no `Space` left for the filter to touch and it cannot be doubled. The 9 960 already in the
+sources are simply redundant.
+
+### `\,` is still banned in the source
+
+`\,` looks like the obvious spelling of a thin space and **does not work**. A backslash before
+punctuation is a Markdown escape, so `d.\,h.` reaches the TeX as `d.,h.` -- a literal comma
+inside the word, silently. The `tgc` rule flags `\,`, `\;` and `\.` for exactly this reason.
+`\thinspace` is the escape hatch for a pair `thin_pairs:` does not know: it survives pandoc
+verbatim because it is a control word, and LaTeX defines it as `\,` outright (`latex.ltx`:
+`\let\thinspace\,`), so the typeset result is identical. Prefer adding the pair to the YAML.
+
+U+202F NARROW NO-BREAK SPACE also works -- pandoc turns it into `\,` -- but never write one:
+it is invisible in a diff, and Python's `str.isspace()` is true for it, so a whitespace pass
+will flatten it to a plain space and quietly widen the gap. That happened once already. The
+same goes for using one as a preposition's space; that was never thin in the first place. Nine
+chemistry problems had 57 of these from a word processor; they are gone.
+
+### What the filter does not reach
+
+215 `.jtex` templates never pass through pandoc, and 29 of them contain a hand-written `\ `.
+In TeX `\ ` is plain control space and **breakable** -- `~` is `\nobreakspace`
+(`latex.ltx:6908-6911`) -- so `s\ úlohou` in `29/languages/sk/instructions-inner.jtex` does not
+prevent the break it was written to prevent. Those want `~`, and nothing inserts it for them.
 
 ## Trailing whitespace — two kinds of it mean something
 

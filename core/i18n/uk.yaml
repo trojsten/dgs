@@ -4,6 +4,11 @@ locale: 'uk-UA'
 quotes:
   open: '«'
   close: '»'
+# See `core/filters/spacing.lua`. One-letter words must not end a line.
+typography:
+  singles: ['а', 'в', 'з', 'і', 'у', 'я']
+  nbsp_pairs: ['т. д.', 'т. п.']
+
 cref:
   figure:
     singular: 'Рис.'

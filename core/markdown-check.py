@@ -57,8 +57,15 @@ class StyleEnforcer:
             # so `d.\,h.` reaches the TeX as `d.,h.` -- a literal comma in the middle of a word.
             # The rule stays, then, but now says what to write instead. `\;` and `\.` are the
             # same trap.
+            #
+            # A thin space is no longer something to write at all: `core/filters/spacing.lua`
+            # inserts it from `typography.thin_pairs` in the language's i18n file. `\thinspace`
+            # is the escape hatch for a pair that list has not got.
             'tgc': check.FailIfFound(r'\\[,;.]', "Escapes to a literal character in Markdown; "
-                                              "use \\thinspace for a thin space"),
+                                              "a thin space is the build's job, and \\thinspace "
+                                              "is the escape hatch"),
+            # Not only a typographic nicety: `typography.nbsp_pairs` matches `t. j.` written with
+            # a space, so `t.j.` is a pair the spacing filter cannot see.
             'tjs': check.FailIfFound(r't\.j\.', "\"t.j.\" needs spaces (\"t. j.\")"),
             'pun': check.FailIfFound(r'\\text(rm)?\{[.,; ]+\}', "No need to enclose punctuation in \\text"),
             'sum': check.FailIfFound(r'\\sum\b', "Use \\Sum[]{} instead"),

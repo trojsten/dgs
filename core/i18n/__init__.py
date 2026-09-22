@@ -58,6 +58,19 @@ class Locale:
         # language has not got is boxed in red instead, and collected for one report at the end of
         # the render; `core/audit`'s `word-missing` is what catches it from the sources.
         Optional('words'): dict[str, str],
+        # Spacing that the build inserts for this language, read by `core/filters/spacing.lua`:
+        # the one-letter words that must not end a line, and the abbreviations whose halves want
+        # a non-breaking or a thin space between them.
+        #
+        # `default.yaml` carries none of this, for the reason it carries no `words:` -- `merge()`
+        # would make one language's list the fallback for every language, and English inheriting
+        # Slovak's prepositions is the failure this is meant to end. A language that declares
+        # nothing gets nothing, which for English is the right answer.
+        Optional('typography'): {
+            Optional('singles'): list[str],
+            Optional('nbsp_pairs'): list[str],
+            Optional('thin_pairs'): list[str],
+        },
         Optional('rtl', default=False): bool,
         'siunitx': {
             'list_pair_separator': str,
