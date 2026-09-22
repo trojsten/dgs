@@ -448,10 +448,62 @@ at the end of an authored line would otherwise still end a typeset line.
 What it emits is Unicode -- U+00A0 and U+202F -- which pandoc's writers turn into `~` and `\,`
 for LaTeX and into the characters themselves for HTML. One filter, both formats.
 
-**Writing `\ ` by hand is still allowed and still correct**; it is now the override for a case
-the language rules miss, not the routine. Pandoc reads it as U+00A0 inside the `Str`, so there
-is no `Space` left for the filter to touch and it cannot be doubled. The 9 960 already in the
-sources are simply redundant.
+**Writing `\ ` by hand is still allowed and still correct**; it is the override for a case the
+language rules miss, not the routine. Pandoc reads it as U+00A0 inside the `Str`, so there is no
+`Space` left for the filter to touch and it cannot be doubled.
+
+### What the sweep left behind, and why
+
+`phys` has been swept: 3 115 of its 3 929 hand-written `\ ` are gone, decided one at a time by
+the build itself -- remove the escape, convert both versions, keep the removal only when the TeX
+is byte-identical. **814 stay, and they are not leftovers.** Almost all of them glue a word to
+something the filter does not look at, because the filter's rule is about the token on the *left*
+being a one-letter word:
+
+- **497 `word\ $maths$`** -- `rýchlosťou\ $v$`, `pri dĺžke\ $L$`. A noun and the symbol it names.
+- **33 the other way round** -- `aspoň $k$\ metrov`, `body $A$\ a\ $B$`.
+- **23 `word\ \macro`** and **12 `\macro\ word`** -- `$R_x = 0\ \Omega$`, `\frac{c}{c-v}\ f`.
+- **25 around numbers** -- `v bode\ 3`, `5\ dvojíc`, `medzi stavmi 1\ a\ 4`.
+- **11 before a Jinja tag** -- `kolečko se\ (§ big §) zuby`.
+- **183 word to word**, which is where the languages differ: `ve`×18 and `ze`×6 in Czech,
+  `a`×24 and `the`×8 in English, `egy`×7 in Hungarian, `so`/`do`/`na` in Slovak.
+
+Leave them. A rule for "a noun and its symbol" would need to know which noun, which is a job for
+an author and not for a filter.
+
+`errors/` holds 13 more, in prose *about* the sources, and those stay too.
+
+The metas held 343, but **340 of them were never markup**: PyYAML wraps a long double-quoted
+scalar by ending the line with `\` and opening the next with `\ `, the `\ ` restoring the space
+the fold would otherwise eat. In a venue's team list that `\ ` *is* the space between two names,
+so stripping it merges them, silently. Those scalars are now unwrapped onto single lines -- 631
+lines joined across 31 files -- and the escapes are gone with them. Two shapes had to be undone
+and in this order: a break at a space (`…Galuska-Tomsits\` + `\ Ádin`) rejoins with a space, a
+break inside a word (`…ker\xFC\` + `let"`) with nothing. Every file was re-parsed and asserted
+equal to what it parsed to before; that assert is the only reason to trust the transform.
+
+Line length does not matter in these files -- they are a registration export, not prose.
+
+What is left in the metas is 3 real `\ `, each a `number\ unit` inside an `eq:`.
+
+### Where the per-language lists come from
+
+Each `typography:` block cites its source, because the lists are transcribed, not invented.
+
+- **Czech** -- ČSN 01 6910 by way of the Institute of the Czech Language: `k, s, v, z`, `o, u`,
+  `a, i`. The vocalised `ve, ze, ke, se` are **not** in the norm, however often they are typed.
+- **Russian** -- Milchin §1.4.17.3 enumerates exactly `а, в, и, к, о, с, у`.
+- **Ukrainian** -- the rule is stated ("особливо одно- та двобуквеними"), so unlike the two above
+  it reaches two-letter prepositions. No source enumerates the words, so the two-letter half is
+  the prepositions the sources actually write (`на до за із зі по об`); the conjunction `та` is
+  left out on purpose, since gluing it would take a sixth of the Ukrainian text and nothing asks
+  for it. This is also why `convertor.py` derives three cases and not two: a sentence opens with
+  `Із`, not `ІЗ`, and for a one-letter word the two forms coincide, so the gap went unnoticed.
+- **Hungarian has no such rule and declares no `singles:`.** The standard reference on Hungarian
+  technical typography is explicit that it used to: *"Ma már eltörhető a sor az egybetűs szavak
+  után (a, e, ó, ő, s) … A jóval korábban készült [forrás] nem engedi meg a sorvégi egybetűs
+  szavakat."* The seven `egy\ ` in the Hungarian sources are an author's preference.
+- `я` was in the Russian and Ukrainian lists and is a pronoun; no rule covers it, so it is gone.
 
 ### `\,` is still banned in the source
 

@@ -310,6 +310,19 @@ class TestSpacing:
         """Lua's `string.lower` is byte-oriented, so the casing has to happen in Python."""
         assert {'в', 'В'} <= set(self._convertor('ru').nbsp_singles)
 
+    def test_two_letter_words_get_their_title_case(self):
+        """
+        Ukrainian's list holds two-letter prepositions, and a sentence opens with `Із`, not `ІЗ`.
+
+        For a one-letter word `upper()` and `capitalize()` agree, which is why deriving only the
+        upper form went unnoticed until the two-letter forms were added.
+        """
+        singles = set(self._convertor('uk').nbsp_singles)
+        assert {'із', 'ІЗ', 'Із'} <= singles
+
+    def test_a_two_letter_preposition_is_glued(self, convert):
+        assert convert('latex', 'uk', 'Із цього та з того') == 'Із~цього та з~того'
+
     def test_a_language_without_rules_gets_none(self):
         english = self._convertor('en')
         assert english.nbsp_singles == []

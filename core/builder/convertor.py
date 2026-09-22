@@ -172,13 +172,17 @@ class Convertor:
 
         # Spacing rules for `core/filters/spacing.lua`, flattened to strings: the filter has no
         # YAML reader, and three `-M` flags are both enough and visible in the argv when a build
-        # is being debugged. Both cases of a single-letter word are derived here rather than in
-        # Lua, whose `string.lower` is byte-oriented and wrong for Cyrillic.
+        # is being debugged. The cases are derived here rather than in Lua, whose `string.lower`
+        # is byte-oriented and wrong for Cyrillic.
+        #
+        # Three forms, not two. For a one-letter word `upper()` and `capitalize()` agree, but
+        # Ukrainian's list holds two-letter prepositions as well, and a sentence opens with `Із`,
+        # not `ІЗ` -- deriving only the upper form left every sentence-initial one unglued.
         typography = self.locale.data.get('typography', {})
         self.nbsp_singles = sorted({
             case
             for word in typography.get('singles', [])
-            for case in (word, word.upper())
+            for case in (word, word.upper(), word.capitalize())
         })
         self.nbsp_pairs = typography.get('nbsp_pairs', [])
         self.thin_pairs = typography.get('thin_pairs', [])

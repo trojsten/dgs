@@ -4,9 +4,14 @@ locale: 'ru-RU'
 quotes:
   open: '«'
   close: '»'
-# See `core/filters/spacing.lua`. One-letter words must not end a line.
+# See `core/filters/spacing.lua`. Milchin's Справочник издателя и автора, §1.4.17.3 «Предлоги и
+# союзы в конце строки»: "однобуквенные предлоги и союзы (а, в, и, к, о, с, у), встречающиеся
+# в середине фразы, не отрываются от следующего слова."
+#
+# Seven letters, and the rule is about prepositions and conjunctions -- `я` was in this list too,
+# but it is a pronoun and no rule covers it, so it is gone.
 typography:
-  singles: ['а', 'в', 'и', 'к', 'о', 'с', 'у', 'я']
+  singles: ['а', 'в', 'и', 'к', 'о', 'с', 'у']
   nbsp_pairs: ['т. е.', 'т. к.', 'т. д.', 'т. п.']
 
 cref:

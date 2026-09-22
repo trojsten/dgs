@@ -4,9 +4,18 @@ locale: 'uk-UA'
 quotes:
   open: '«'
   close: '»'
-# See `core/filters/spacing.lua`. One-letter words must not end a line.
+# See `core/filters/spacing.lua`. Ukrainian practice puts a non-breaking space after a preposition
+# or conjunction, "особливо одно- та двобуквеними" -- so unlike Czech and Russian, whose norms stop
+# at one letter, this list holds two-letter prepositions as well. `я` was here and is a pronoun,
+# which no rule covers; it is gone.
+#
+# No source I could find enumerates the Ukrainian words, so the two-letter half is the prepositions
+# the sources actually write: `на` 187 times, `до` 115, `за` 51, `із` 32, `зі` 20, `по` 16, `об` 2.
+# The conjunctions `та` (61), `бо` and `чи` are deliberately *not* here -- the rule names
+# prepositions and conjunctions together, but adding `та` would glue a sixth of all the Ukrainian
+# text, and nothing normative asks for it. Add them if a normative list turns up.
 typography:
-  singles: ['а', 'в', 'з', 'і', 'у', 'я']
+  singles: ['а', 'в', 'з', 'і', 'у', 'до', 'за', 'із', 'зі', 'на', 'об', 'по']
   nbsp_pairs: ['т. д.', 'т. п.']
 
 cref:

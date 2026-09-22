@@ -316,9 +316,11 @@
 % Rotation (vectorize, text)
 \NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
 
-% `\laplacian` is `physics` too. `\nabla^{2}` rather than `\Delta`, which is already `\fdiff@`,
-% or `\del`, which carries the vector arrow that a Laplacian does not want.
-\DeclareMathOperator{\Laplacian}{\mathop{}\!\nabla^{2}\!}
+% `\laplacian` is `physics` too, which `dgs.cls` does not load. `\bigtriangleup` rather than
+% `\Delta`, which is the same glyph but is already `\fdiff@`'s symbol -- a finite difference and a
+% Laplacian should not be the same control sequence -- and rather than `\del`, which carries the
+% vector arrow that a Laplacian does not want.
+\DeclareMathOperator{\Laplacian}{\mathop{}\!\bigtriangleup\!}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Vectors %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

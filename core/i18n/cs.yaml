@@ -4,7 +4,13 @@ locale: 'cs-CZ'
 quotes:
   open: '„'
   close: '“'
-# See `core/filters/spacing.lua`. One-letter words must not end a line (ČSN 01 6910).
+# See `core/filters/spacing.lua`. ČSN 01 6910, as the Institute of the Czech Language states it
+# (https://prirucka.ujc.cas.cz/?id=880): a line may not break "ve spojení neslabičných předložek
+# k, s, v, z s následujícím slovem" nor "ve spojení slabičných předložek o, u a spojek a, i".
+#
+# That is the whole list -- **the vocalised forms `ve`, `ze`, `ke`, `se` are not covered**, and
+# neither are the other two-letter prepositions `na`, `do`, `po`, `za`. The sources write 18 `ve\ `
+# and 6 `ze\ ` by hand; those are an author's preference, not the norm, so they stay by hand.
 typography:
   singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
   nbsp_pairs: ['t. j.']
