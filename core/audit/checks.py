@@ -24,7 +24,7 @@ from core.audit.model import Finding, check
 #: Anchored at the line start, which is why `delimiter-indented` has to run first -- see below.
 RE_BLOCK = re.compile(
     r'^\$\$(?P<open>\{?)[ \t]*\n(?P<body>.*?)^(?P<close>\}?)\$\$[ \t]*(?P<tail>[^\n]*)',
-    re.S | re.M)
+    re.DOTALL | re.MULTILINE)
 
 #: `\left` and `\right` only when a delimiter follows. Two traps in one line: `\rightarrow`
 #: contains `\right`, and `\right` is a control word, so TeX skips whitespace -- including a
@@ -66,7 +66,7 @@ RE_NUMBER = re.compile(r'-?\d+(?:\.\d+)?(?:e[-+]?\d+)?')
 
 class SICall:
     """One siunitx call, with its arguments separated by arity rather than by position."""
-    __slots__ = ('macro', 'opts', 'args', 'start', 'text')
+    __slots__ = ('args', 'macro', 'opts', 'start', 'text')
 
     def __init__(self, macro, opts, args, start, text):
         self.macro, self.opts, self.args, self.start, self.text = macro, opts, args, start, text
@@ -210,7 +210,7 @@ def blocks_of(text):
 #: prose between them as maths. Found in `21/split-capacitor/hu` and `27/pendula/hu`, where it had
 #: silently kept the latter unhoistable; a first attempt at re-indenting turned two Hungarian
 #: paragraphs into a verbatim block because of it.
-RE_DELIMITER_INDENTED = re.compile(r'^[ ]{1,3}\}?\$\$', re.M)
+RE_DELIMITER_INDENTED = re.compile(r'^[ ]{1,3}\}?\$\$', re.MULTILINE)
 
 
 def line_of(text, offset):
@@ -333,7 +333,7 @@ RE_DISPLAY_REF = re.compile(
     r"(?:disp|align)(?:\((?P<arg>[^)]*)\)|(?P<suf>[dcsqe]))?"
     #: `arr` always takes a column spec, so its punctuation is the *second* argument, if any.
     r"|arr(?P<asuf>[dcsqe])?\((?P<aarg>[^)]*)\)"
-    r")\s*§\)[ \t]*$", re.M)
+    r")\s*§\)[ \t]*$", re.MULTILINE)
 
 #: `|dispd` and friends bind their punctuation in the name.
 _PUNCT_SUFFIX = {'d': '.', 'c': ',', 's': ';', 'q': '?', 'e': '!'}
@@ -1149,7 +1149,7 @@ def encoding(sources):
 RE_WORD_SUBSCRIPT = re.compile(r'_\{([a-z\u00e0-\u024f]{2,})\}')
 
 #: A template tag holds Python identifiers, so `(§ t_up - t_down §)` is not a subscript at all.
-RE_TEMPLATE_TAG = re.compile(r'\(§.*?§\)', re.S)
+RE_TEMPLATE_TAG = re.compile(r'\(§.*?§\)', re.DOTALL)
 
 
 @check('subscript-unwrapped', 'warning', 'A word subscript that is not upright')
@@ -1367,7 +1367,7 @@ def file_empty(sources):
 
 #: A Jinja tag's insides, and a quoted string literal within them. Jinja decodes a string literal
 #: with `unicode-escape`, so these are the characters that make a backslash disappear.
-RE_JINJA_BODY = re.compile(r'\(§(.*?)§\)', re.S)
+RE_JINJA_BODY = re.compile(r'\(§(.*?)§\)', re.DOTALL)
 RE_STRING_LITERAL = re.compile(r"'([^'\n]*)'|\"([^\"\n]*)\"")
 RE_PYTHON_ESCAPE = re.compile(r'(?<!\\)(?:\\\\)*\\([abfnrtv01234567xNuU])')
 

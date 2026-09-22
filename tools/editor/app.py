@@ -7,12 +7,18 @@ import sys
 import threading
 from pathlib import Path
 
-from flask import Flask, jsonify, request, render_template, send_file
-
 # `descriptors`, not `modules`: the repo root holds a `modules/` namespace package, and whichever
 # came first on sys.path would win.
-from descriptors import (AUX_EXTENSIONS, RENDERABLE_AUX_EXTENSIONS, audited_modules,
-                         discover_scopes, discover_units, load_modules, scope_depth)
+from descriptors import (
+    AUX_EXTENSIONS,
+    RENDERABLE_AUX_EXTENSIONS,
+    audited_modules,
+    discover_scopes,
+    discover_units,
+    load_modules,
+    scope_depth,
+)
+from flask import Flask, jsonify, render_template, request, send_file
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,13 +29,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # this app already launches with `cwd=REPO_ROOT`.
 sys.path.insert(0, str(REPO_ROOT))
 os.chdir(REPO_ROOT)
-from core.audit import audit as run_audit                                      # noqa: E402
-from core.audit import build as audit_build                                    # noqa: E402
-from core.audit.model import REGISTRY, SEVERITIES                              # noqa: E402
-from core.audit.status import (STATES, TRANSLATED,                              # noqa: E402
-                               TRANSLATION_STATES,                              # noqa: E402
-                               shared_file_states)                              # noqa: E402
-from core.i18n import languages as LOCALES                                     # noqa: E402
+from core.audit import audit as run_audit
+from core.audit import build as audit_build
+from core.audit.model import REGISTRY, SEVERITIES
+from core.audit.status import (
+    STATES,
+    TRANSLATED,
+    TRANSLATION_STATES,
+    shared_file_states,
+)
+from core.i18n import languages as LOCALES
 
 
 def language_name(code):

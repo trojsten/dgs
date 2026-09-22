@@ -45,7 +45,7 @@ class QuantityProduct:
         else:
             return NotImplemented
 
-    def to(self, unit) -> "QuantityProduct":
+    def to(self, unit) -> QuantityProduct:
         """ Convert all entries to another commensurate unit. """
         return QuantityProduct(*[q.to(unit) for q in self.qs])
 

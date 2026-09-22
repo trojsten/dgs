@@ -359,7 +359,7 @@ class PhysicsQuantity:
     def s(self, value: str | None):
         self._symbol = value
 
-    def alias(self, symbol: str | None) -> "PhysicsQuantity":
+    def alias(self, symbol: str | None) -> PhysicsQuantity:
         """ Return an aliased quantity with a symbol """
         return PhysicsQuantity(self._quantity, symbol=symbol, si_extra=self.si_extra,
                                force_f=self.force_f, digits=self.digits, exact=self.exact)

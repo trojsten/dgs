@@ -54,6 +54,7 @@ class TestTranslatedWords:
     @staticmethod
     def render(tmp_path, locale, meta, source):
         import sys
+
         from modules.naboj.builder.renderer import CLIInterface
         (tmp_path / 'meta.yaml').write_text(meta)
         src = tmp_path / 'solution.md'
@@ -71,6 +72,7 @@ class TestTranslatedWords:
     def render_collecting(tmp_path, locale, meta, source):
         """As `render`, but hands back the interface so a test can read what it collected."""
         import sys
+
         from modules.naboj.builder.renderer import CLIInterface
         (tmp_path / 'meta.yaml').write_text(meta)
         src = tmp_path / 'solution.md'

@@ -14,8 +14,7 @@ import yaml
 
 from core.audit import audit
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
-from core.audit.sources import (SHARED_FILES, TRANSLATED_FILES,
-                               read_scope)
+from core.audit.sources import SHARED_FILES, TRANSLATED_FILES, read_scope
 from core.audit.status import translation_status
 
 
@@ -707,7 +706,7 @@ class TestUnitDefinitionsAreNotParameters:
         assert status.detail['literal'] == []
 
     def test_a_real_one_is_still_counted(self, tmp_path):
-        """The narrowness is the point: `\qty{1}{\metre}` is a number the problem gives."""
+        r"""The narrowness is the point: `\qty{1}{\metre}` is a number the problem gives."""
         files = {l: {'problem.md': 'a pole $\\qty{1}{\\metre}$ long\n'} for l in ('sk', 'en')}
         status = statuses_of(tmp_path, files=files)['values']
         assert status.state == 'missing'

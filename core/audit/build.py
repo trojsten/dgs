@@ -7,7 +7,6 @@ layer can afford to recompute on every request and this cannot.
 """
 import json
 import re
-import subprocess
 import time
 from pathlib import Path
 
@@ -15,7 +14,7 @@ from pathlib import Path
 #: a line. The size matters: a 0.14pt overfull is 0.05 mm and not worth anybody's afternoon.
 RE_OVERFULL = re.compile(r'Overfull \\+(?P<box>[hv])box \((?P<size>[0-9.]+)pt too (?:wide|high)\)')
 RE_ANSI = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b[()][A-Za-z0-9]')
-RE_TEX_ERROR = re.compile(r'^(?P<file>\./[^:]+):(?P<line>\d+): (?P<message>.+)$', re.M)
+RE_TEX_ERROR = re.compile(r'^(?P<file>\./[^:]+):(?P<line>\d+): (?P<message>.+)$', re.MULTILINE)
 
 #: What a naboj volume builds. Every module's targets differ, so this is a naboj fact; a module
 #: that wants build checks says so by appearing here.

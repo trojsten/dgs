@@ -19,8 +19,17 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from core.audit.checks import (ANSWER_FILES, RE_EQ_KEY, RE_FIGURE, RE_LABEL, blocks_of, ignored,
-                               magnitudes, strip_maths_whitespace, RE_TAG)
+from core.audit.checks import (
+    ANSWER_FILES,
+    RE_EQ_KEY,
+    RE_FIGURE,
+    RE_LABEL,
+    RE_TAG,
+    blocks_of,
+    ignored,
+    magnitudes,
+    strip_maths_whitespace,
+)
 from core.audit.sources import link_language
 
 #: Worst first. A scope's column is as bad as its worst problem, so the order is the ranking.

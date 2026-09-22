@@ -5,7 +5,7 @@ The editor knows three things about a module -- where its units live, what files
 which document previews one -- and it learns all three from that file. Nothing here mentions
 Náboj, seminar or scholar by name, so a fourth module needs a descriptor and no code.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml

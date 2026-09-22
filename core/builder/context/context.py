@@ -145,7 +145,7 @@ class Context(abc.ABC):
         self._data |= kwargs
         return self
 
-    def adopt(self, **ctxs: 'Context') -> Self:
+    def adopt(self, **ctxs: Context) -> Self:
         """
         Adopt new child contexts `ctxs` from a dictionary of child contexts.
         """

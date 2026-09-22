@@ -7,8 +7,8 @@ from abc import ABC
 from io import TextIOWrapper
 from pathlib import Path
 
-from enschema import Or, Schema
 from enschema import Optional as Opt
+from enschema import Or, Schema
 
 from core import cli, i18n
 from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifier
@@ -202,7 +202,7 @@ class LocalisedI18n(dict):
     raises `MissingWordError` naming the term, the language and the file to add it to -- rather
     than resolving to Jinja's `Undefined`, which reports the *tag* and not the word.
     """
-    def __init__(self, data: dict, words: 'LocalisedWords'):
+    def __init__(self, data: dict, words: LocalisedWords):
         super().__init__(data)
         collisions = sorted(set(words.keys()) & set(data.keys()))
         if collisions:

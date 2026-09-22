@@ -45,7 +45,7 @@ class QuantityList:
         else:
             return NotImplemented
 
-    def to(self, unit) -> "QuantityList":
+    def to(self, unit) -> QuantityList:
         """ Convert all entries to another commensurate unit. """
         return QuantityList(*[q.to(unit) for q in self.qs])
 

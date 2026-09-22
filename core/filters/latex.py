@@ -4,8 +4,12 @@ from typing import Any
 
 from enschema import Or, Schema
 
-from core.builder.context.quantities import (PhysicsQuantity, QuantityList, QuantityProduct,
-                                             QuantityRange)
+from core.builder.context.quantities import (
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+)
 
 from ..builder.context.quantities.math import MathObject
 from .numbers import _nth, format_exponential, format_float, format_general

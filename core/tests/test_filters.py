@@ -1,11 +1,10 @@
-import math
 import datetime
+import math
 
 import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.hacks import natural
-from core.filters.numbers import format_exponential, format_float
 from core.filters.latex import (
     angle_dms,
     approx_exponential,
@@ -25,7 +24,14 @@ from core.filters.latex import (
     textbf,
     textit,
 )
-from core.filters.numbers import format_exponential, format_general, nth, plural, roman
+from core.filters.numbers import (
+    format_exponential,
+    format_float,
+    format_general,
+    nth,
+    plural,
+    roman,
+)
 
 
 class TestRender:

@@ -53,7 +53,7 @@ CASES = [
 def indent_edit():
     """`indentEdit`, lifted out of app.js and callable from Python."""
     source = APP_JS.read_text()
-    match = re.search(r'function indentEdit\(.*?\n\}\n', source, re.S)
+    match = re.search(r'function indentEdit\(.*?\n\}\n', source, re.DOTALL)
     assert match, "indentEdit is no longer a top-level function in app.js"
     context = quickjs.Context()
     context.eval(match.group(0))

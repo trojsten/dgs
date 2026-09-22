@@ -12,7 +12,7 @@ cached or made incremental. `core.audit.build` is the other one, and it shells o
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from core.audit import checks                      # noqa: F401  -- populates the registry
+from core.audit import checks
 from core.audit.model import REGISTRY, SEVERITIES, Check, Finding, applicable
 from core.audit.sources import Sources, read_scope
 from core.audit.stats import Stats, collect

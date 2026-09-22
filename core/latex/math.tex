@@ -222,7 +222,7 @@
 % Basic integral from #1 to #2 of #3 with respect to #4
 % Usage \Int[0][1]{x^2}{x}
 \NewDocumentCommand{\Int}{O{} O{} m m}{\dgsint[#1][#2][#3]{#4}[]}
-\NewDocumentCommand{\IntP}{O{} O{} m m}{\dgsint[#1][#2][\left(#3\right)]{#4}[]}
+\NewDocumentCommand{\IntP}{O{} O{} m m}{\dgsint[#1][#2][\Paren{#3}]{#4}[]}
 % Empty integral for operations on expressions
 \NewDocumentCommand{\IntX}{O{} O{} m}{\int\limits_{#1}^{#2}{#3}}
 \NewDocumentCommand{\IntE}{O{} O{} m}{\dgsint[#1][#2][]{#3}[]}
@@ -251,10 +251,13 @@
 % Generic 2D integral
 % [lower bound][upper bound]{integrand}{differential 1}{differential 2}
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff@#4\diff@#5}
-\NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\left(#3\right)\diff@#4\diff@#5}
+\NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\Paren{#3}\diff@#4\diff@#5}
 % Surface integral over single differential
 \NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
-\NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}{#4}}
+% `{#4}` rather than `[#4]` handed the *power* to `\IIntI@`'s differential slot and dropped the
+% differential itself, so `\IIntI[S]{B}{S}` set `\iint_S B \diff^{}` -- the `S` never printed.
+% Silently, as a missing differential always is.
+\NewDocumentCommand{\IIntI}{O{} O{} m O{} m}{\IIntI@[#1][#2]{#3}[#4]{#5}}
 % Surface integral of dot product over single differential
 \NewDocumentCommand{\IIntD}{O{} O{} m m}{\IIntI@[#1][#2]{#3}{#4}[\cdot]}
 \NewDocumentCommand{\IIntDV}{O{} O{} m m}{\IIntD[#1][#2]{\vec{#3}}{\vec{#4}}}
@@ -281,9 +284,11 @@
 % Volume integral over single differential
 % [lower limit][upper limit]{integrand}[differential power]{differential}
 \NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
-\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}{#5}[][#4]}
+% Same slip as `\IIntI` above, plus a stray `[#4]` past the last optional argument, which
+% typeset a literal `[]` after the integral.
+\NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}[#4]{#5}}
 \NewDocumentCommand{\IIIntV}{O{} O{} m m}{\IIIntI@[#1][#2]{#3}[3]{#4}[]}
-\NewDocumentCommand{\IIIntPV}{O{} O{} m m}{\IIIntI@[#1][#2]{\left(#3\right)}[3]{#4}[]}
+\NewDocumentCommand{\IIIntPV}{O{} O{} m m}{\IIIntI@[#1][#2]{\Paren{#3}}[3]{#4}[]}
 
 \DeclareMathOperator{\del}{\raisebox{0.06em}{\ensuremath{\vec{\nabla}}}}
 
@@ -363,9 +368,9 @@
 
 % Statistics
 \NewDocumentCommand{\Mean}{m}{\overline{#1}}
-\NewDocumentCommand{\Var}{m}{\mathrm{Var}\left(#1\right)}
-\NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\left({#1}\right)}
-\NewDocumentCommand{\Bias}{m}{\mathrm{Bias}\left({#1}\right)}
+\NewDocumentCommand{\Var}{m}{\mathrm{Var}\Paren{#1}}
+\NewDocumentCommand{\MSE}{m}{\mathrm{MSE}\Paren{{#1}}}
+\NewDocumentCommand{\Bias}{m}{\mathrm{Bias}\Paren{{#1}}}
 \NewDocumentCommand{\Binomial}{m m}{\binom{#1}{#2}}
 \NewDocumentCommand{\Dimen}{m}{\left[#1\right]}
 
@@ -409,7 +414,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Big aggregate functions, and parenthesizing versions
 \NewDocumentCommand{\Aggregate}{m O{} O{} m}{#1\limits_{#2}^{#3} #4}
-\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\left(#4\right)}}
+\NewDocumentCommand{\AggregateP}{m O{} O{} m}{\Aggregate{#1}[#2][#3]{\Paren{#4}}}
 
 % sum (big sigma)
 % \Sum[lower limit][upper limit]{element}

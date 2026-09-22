@@ -3,9 +3,14 @@ Filters for work with numbers. Feel free to extend.
 """
 import numbers
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
+from core.builder.context.quantities import (
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+)
 
-from .hacks import cut_extra_one, natural, natural
+from .hacks import cut_extra_one, natural
 
 
 def roman(number: int) -> str:

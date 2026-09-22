@@ -88,7 +88,7 @@ class Locale:
             raise
 
     @staticmethod
-    def load_yaml(defaults: dict[str, Any], file: TextIO) -> Opt['Locale']:
+    def load_yaml(defaults: dict[str, Any], file: TextIO) -> Locale | None:
         lang = yaml.safe_load(file)
         data = merge(defaults, lang)
         match = re.search(r'core/i18n/(?P<lang>[a-z]{2})\.yaml$', file.name)

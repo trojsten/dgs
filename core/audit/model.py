@@ -1,6 +1,5 @@
 """What an audit is made of: a scope to look at, and the findings that come back."""
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 #: Severities, most serious first. `error` means the build breaks or the page comes out wrong;
 #: `warning` means something is inconsistent and a person has to decide; `info` records a thing

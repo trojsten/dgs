@@ -10,7 +10,12 @@ import jinja2
 import numpy as np
 import pint
 
-from core.builder.context.quantities import PhysicsQuantity, QuantityList, QuantityProduct, QuantityRange
+from core.builder.context.quantities import (
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+)
 from core.filters import latex, numbers
 from core.utilities import colour as c
 from core.utilities import logger

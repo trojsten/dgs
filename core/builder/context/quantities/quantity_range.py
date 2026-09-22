@@ -71,6 +71,7 @@ class QuantityRange:
         """
         import math
         from decimal import Decimal
+
         from core.filters.hacks import BareKind, natural
         # The grid has to be the last place the endpoint *actually prints*, so this must format
         # it the way `format_struct` does. A bare `f` or `e` no longer means six decimals, and

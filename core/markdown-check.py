@@ -6,8 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-import regex as re
 import i18n
+import regex as re
 from mdcheck import check, exceptions
 from utilities import colour as c
 
