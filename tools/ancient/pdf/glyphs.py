@@ -301,7 +301,7 @@ def identified(volume: str, fingerprint: str | None = None) -> dict[str, dict[in
     return data
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def prose_roles(pdf: Path) -> frozenset[str]:
     """
     Which font roles carry this booklet's *prose*, as opposed to its formulas.
@@ -325,7 +325,7 @@ def prose_roles(pdf: Path) -> frozenset[str]:
     return frozenset({'t1'}) if 't1' in roles else frozenset({'t1', 'ot1'})
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _widths(pdf: Path) -> dict[str, dict[int, list[int]]]:
     """`metrics.candidates`, once per booklet rather than once per page."""
     try:
@@ -336,7 +336,7 @@ def _widths(pdf: Path) -> dict[str, dict[int, list[int]]]:
         return {}
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def _fingerprint(pdf: Path) -> str:
     """The booklet's md5, which is what a glyph table is valid for."""
     return hashlib.md5(Path(pdf).read_bytes()).hexdigest()

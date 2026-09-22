@@ -199,15 +199,17 @@
 
 % \DerivativeEvaluate[order]{what}{by-what}{where}
 % \DerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
-\NewDocumentCommand{\DerivativeEval}{O{} m m m}{%
-    \Eval{\Derivative[#1]{#2}{#3}}{#3 = #4}%
+% `O{}` never yields `-NoValue-`, so `[#1]` always reached `\Derivative`'s with-order branch and
+% every one of the thirty call sites set `\diff^{}` -- an empty superscript on the differential.
+\NewDocumentCommand{\DerivativeEval}{o m m m}{%
+    \Eval{\IfValueTF{#1}{\Derivative[#1]{#2}{#3}}{\Derivative{#2}{#3}}}{#3 = #4}%
 }%
 \newcommand*\DrvEval{\DerivativeEval}
 
 % \PartialDerivativeEvaluate[order]{what}{by-what}{where}
 % \PDerivativeEval[2]{f(x)}{x}{0} is second derivative of f(x) at x = 0
-\NewDocumentCommand{\PDerivativeEval}{O{} m m m}{%
-    \Eval{\PDerivative[#1]{#2}{#3}}{#3 = #4}%
+\NewDocumentCommand{\PDerivativeEval}{o m m m}{%
+    \Eval{\IfValueTF{#1}{\PDerivative[#1]{#2}{#3}}{\PDerivative{#2}{#3}}}{#3 = #4}%
 }%
 
 
@@ -245,7 +247,9 @@
 \NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}<\cdot>}
 \NewDocumentCommand{\OIntDV}{O{} m m}{\OIntD[#1]{\vec{#2}}{\vec{#3}}}
 % Loop integral over #1 of cross product of #2 and d#3 (for instance magnetic B dl)
-\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}<\cross>}
+% `\cross` belongs to the `physics` package, which `dgs.cls` does not load -- only the dead
+% `core/latex/wrt.tex` does. Every other cross-product integral in this file uses `\times`.
+\NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}<\times>}
 \NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
 
 % Generic 2D integral
@@ -312,7 +316,9 @@
 % Rotation (vectorize, text)
 \NewDocumentCommand{\RotTV}{m}{\RotT{\vec{#1}}}
 
-\DeclareMathOperator{\Laplacian}{\mathop{}\!\laplacian\!}
+% `\laplacian` is `physics` too. `\nabla^{2}` rather than `\Delta`, which is already `\fdiff@`,
+% or `\del`, which carries the vector arrow that a Laplacian does not want.
+\DeclareMathOperator{\Laplacian}{\mathop{}\!\nabla^{2}\!}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Vectors %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -321,7 +327,9 @@
 \NewDocumentCommand{\BoldVector}{m}{\boldsymbol{#1}}
 \NewDocumentCommand{\UnitVector}{m}{\hat{\vec{#1}}}
 \NewDocumentCommand{\UnitBoldVector}{m}{\hat{\BoldVector{#1}}}
-\NewDocumentCommand{\UnitArrowVector}{m}{\hat{#1}}
+% Was `\hat{#1}`, which is plain `\hat` -- the arrow never appeared, unlike in the two siblings
+% above, which both wrap their argument before hatting it.
+\NewDocumentCommand{\UnitArrowVector}{m}{\hat{\ArrowVector{#1}}}
 
 % Matrix command
 \NewDocumentCommand{\Mat}{m}{\boldsymbol{#1}}
@@ -336,11 +344,17 @@
 \DeclareMathOperator{\arccot}{arccot}
 \DeclareMathOperator{\arccsc}{arccsc}
 
-% Logical operators
-\DeclareMathOperator{\LXor}{\quad\lxor\quad}
-\DeclareMathOperator{\LOr}{\quad\lor\quad}
-\DeclareMathOperator{\LAnd}{\quad\land\quad}
-\DeclareMathOperator{\LNand}{\quad\lnand\quad}
+% Logical operators. `\Implies` and its two siblings below are the model: a spaced connective is
+% a `\NewDocumentCommand`. `\DeclareMathOperator`'s job is to set an operator *name* upright and
+% give it operator spacing, which is wrong on both counts for a binary relation.
+%
+% `\lxor` and `\lnand` were defined by nothing -- not amssymb, not MnSymbol, not any package in
+% the tree. Either one would have stopped the build the first time it was written, and in the
+% whole repository neither ever was.
+\NewDocumentCommand{\LXor}{}{\quad\veebar\quad}
+\NewDocumentCommand{\LOr}{}{\quad\lor\quad}
+\NewDocumentCommand{\LAnd}{}{\quad\land\quad}
+\NewDocumentCommand{\LNand}{}{\quad\barwedge\quad}
 
 \DeclareMathOperator{\union}{\cup}
 \DeclareMathOperator{\intersection}{\cap}
@@ -385,7 +399,7 @@
 
 \NewDocumentCommand{\Lim}{m m}{\lim\limits_{#1 \rightarrow #2}} % Limits
 \NewDocumentCommand{\Exp}{m}{e^{#1}}                            % Nicer exponential
-\NewDocumentCommand{\Log}{O{} m}{\log_{#1}{#2}}
+\NewDocumentCommand{\Log}{o m}{\log\IfValueT{#1}{_{#1}}{#2}}   % `O{}` gave every \Log{x} a \log_{}
 \NewDocumentCommand{\Must}{m}{\stackrel{!}{#1}}                 % Stacked "!"
 \NewDocumentCommand{\MustEq}{}{\Must{=}}                        % Must equal
 \NewDocumentCommand{\MustEqual}{}{\Must{=}}                     % Must equal
@@ -429,7 +443,9 @@
 % cartesian product (big cross)
 % \CartesianProduct[lower limit][upper limit]{element}
 \NewDocumentCommand{\CartesianProduct}{O{} O{} m}{\Aggregate{\bigtimes}[#1][#2]{#3}}
-\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}#1][#2]{#3}}
+% The opening `[` of the first optional was missing, so the argument scan derailed and the rest
+% of the body was typeset as text.
+\NewDocumentCommand{\CartesianProductP}{O{} O{} m}{\AggregateP{\bigtimes}[#1][#2]{#3}}
 
 % logical union (big cup) as aggregate
 % \Union[lower limit][upper limit]{element}
@@ -451,13 +467,19 @@
 
 \NewDocumentCommand{\Angle}{}{\sphericalangle}
 
-% Asymptotic notations
-\NewDocumentCommand{\SmallO}{m}{\mathcal{o}\left(#1\right)}
+% Asymptotic notations. The calligraphic alphabet has no lowercase, so `\mathcal{o}` set nothing
+% at all -- xelatex writes `Missing character:` to the log and carries on, which is the one
+% failure mode worth ruling out. `\mathcal` applied to `\Theta` was a no-op: a math alphabet
+% switches letters, not symbol commands. Only `\BigO` was ever right.
+\NewDocumentCommand{\SmallO}{m}{o\left(#1\right)}
 \NewDocumentCommand{\BigO}{m}{\mathcal{O}\left(#1\right)}
-\NewDocumentCommand{\BigTheta}{m}{\mathcal{\Theta}\left(#1\right)}
+\NewDocumentCommand{\BigTheta}{m}{\Theta\left(#1\right)}
 
 % Number set
-\NewDocumentCommand{\Set}{m O{} O{}}{%
+% `O{}` is never `-NoValue-`, so both tests were dead and every `\Set{x}` emitted `_{}^{}`.
+% `o` is the argument type `\IfNoValueTF` is for; `\Seq` below reached the same place by testing
+% with `\ifblank` instead.
+\NewDocumentCommand{\Set}{m o o}{%
     \left\{#1\right\}%
     \IfNoValueTF{#2}{}{_{#2}}%
     \IfNoValueTF{#3}{}{^{#3}}%

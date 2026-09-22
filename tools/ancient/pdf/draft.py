@@ -115,7 +115,7 @@ def _stranded(line: str) -> str:
 PLACEHOLDER = '![](){height=40mm}'
 
 #: The prose naming a drawing: Slovak `obrázok` in any case it declines into.
-RE_MENTIONS_FIGURE = re.compile(r'obr[\u00e1a]z|obrazk', re.I)
+RE_MENTIONS_FIGURE = re.compile(r'obr[\u00e1a]z|obrazk', re.IGNORECASE)
 
 
 def pictures(text: str) -> str:

@@ -18,7 +18,7 @@ import argparse
 import re
 from pathlib import Path
 
-RE_ROOT = re.compile(r'<svg\b[^>]*>', re.S)
+RE_ROOT = re.compile(r'<svg\b[^>]*>', re.DOTALL)
 RE_DIMENSION = re.compile(r'\b(width|height)="([\d.]+)(?:px)?"')
 #: An `xmlns:foo="..."` on a child's root. These have to be hoisted onto the wrapper: the
 #: drawings are full of `inkscape:` and `sodipodi:` attributes, and a nested `<svg>` inherits

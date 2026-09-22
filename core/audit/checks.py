@@ -1416,3 +1416,54 @@ def jinja_string_escape(sources):
                     yield Finding('jinja-string-escape', 'error',
                                   rf'a lone `\{char}` in a Jinja string; double it',
                                   unit.path, where)
+
+
+# --- macros nothing defines -------------------------------------------------
+
+@check('macro-undefined', 'error', 'A macro the sources call and nothing defines')
+def macro_undefined(sources):
+    r"""
+    A control word this file cannot decide about on its own, so it asks somebody who can.
+
+    Whether `\Diff` exists is not a question about the sources. `core/latex/math.tex` names 191
+    macros, `dgs.cls` loads 146 packages that shadow and complete each other, and the answers are
+    surprising in both directions -- `\Chi` is defined (mathspec) while `\diff` is not, though
+    `\diff@` is. So `core.audit.macros` puts the question to TeX in one `\ifcsname` pass over the
+    whole tree and caches the answer; this reads that set and places the findings in the scope at
+    hand.
+
+    **No sweep, no findings.** `undefined_names()` returns nothing when the cache is absent, and
+    nothing here guesses: an audit that has not asked must not answer. That is the quiet case this
+    check is tested against, alongside the real one.
+
+    One finding per file and macro rather than per occurrence. `TA1/2018/handouts/02` called
+    `\diff` thirty-seven times in one file; thirty-seven rows say nothing the first one does not,
+    and the count belongs in the message.
+    """
+    from core.audit import macros
+
+    unknown = macros.undefined_names()
+    if not unknown:
+        return
+
+    for unit in sources.unit_list:
+        texts = [('meta.yaml', unit.meta_raw or '')]
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)          # a mirrored translation is one file
+            if place in seen:
+                continue
+            seen.add(place)
+            texts.append((unit.label(lang, name), text))
+        for where, text in texts:
+            found = {}
+            for number, line in enumerate(text.splitlines(), 1):
+                for name in macros.RE_CONTROL_WORD.findall(line):
+                    if name in unknown and name not in found:
+                        found[name] = number
+            for name, number in sorted(found.items(), key=lambda kv: kv[1]):
+                times = sum(1 for m in macros.RE_CONTROL_WORD.findall(text) if m == name)
+                often = f', {times} times' if times > 1 else ''
+                yield Finding('macro-undefined', 'error',
+                              rf'`\{name}` is not defined by anything the build loads{often}',
+                              unit.path, where, number)

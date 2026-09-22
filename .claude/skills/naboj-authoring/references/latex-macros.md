@@ -33,12 +33,40 @@ Sized delimiters:
 - `\Floor{expr}`     → `\lfloor…\rfloor`
 - `\Ceil{expr}`      → `\lceil…\rceil` (also enforced in answer files — see
                        `Adam_ISIC` result `\Ceil{t}`)
-- `\ExpectedChevrons{X}[condition]` → `\langle X \mid condition \rangle`
+- `\ExpectedChevrons{X}[sub]` → `\langle X \rangle_{sub}` — the optional is a **subscript**,
+                                not a `\mid` clause. `\ExpectedE{X}[sub]` is `\mathrm{E}[X]_{sub}`,
+                                and `\Expected` forwards to `\ExpectedE`. Every module
+                                repoints `\Expected` in its `.static/format-override.tex`.
 
-Tuples and coordinates (with a configurable inner delimiter, default `;`):
+- `\Eval{f}{a}[b]`  → `\left.f\right|_a^b`; `\EvalP` and `\EvalB` are the `(…)` and `[…]`
+                       versions.
+- `\Dimen{X}`       → `[X]` (dimension brackets).
+
+Tuples and coordinates:
 
 - `\Tuple{a;b;c}`    → `(a; b; c)`  — round brackets
 - `\Coord{x;y;z}`    → `[x; y; z]`  — square brackets
+
+The optional argument is the **output** separator, not the input one: the input is always split
+on `;`, so `\Coord[,]{x;y}` sets `[x, y]`.
+
+### When to reach for `\Paren`
+
+`\Paren` is the default. It is `\dgsparen@*`, and mathtools' star is the auto-scaling variant —
+`\mathopen{}\mathclose\bgroup\left( … \right)`, whose wrapper makes the group `\mathopen`/
+`\mathclose` instead of the `\mathinner` a bare `\left(…\right)` would be. Exposing only the
+star means no call site ever picks a size.
+
+Writing `\left(…\right)` by hand is **not wrong** here: `math.tex` maps `\left` and `\right` to
+mleftright's `\mleft`/`\mright`, which apply the same wrapper. `\Paren` is that, spelled shorter
+and in one place.
+
+Plain `()` stays correct for anything single-height that will remain so — an argument list,
+`I(t)`, `\sin(2\pi f t)`, `2\pi (Y + a)`. Its spacing is right by construction (`(` is an opening
+atom). What it cannot do is grow, silently: the day the content becomes a `\frac` or a `\sqrt`,
+the parentheses stay text-height and nothing complains. Three other exceptions: a pair split
+across `\\` or `&` needs `\left( … \right.` by hand; auto-scaling that overshoots wants
+`\bigl(…\bigr)`; and `\IntP`, `\IIntP`, `\SumP`, `\DrvP` already parenthesise their argument.
 
 ## Differentials and derivatives
 
@@ -48,7 +76,18 @@ Base differentials (each includes the standard math-space adjustment):
 - `\PDiff x`  → `\partial\, x`
 - `\FDiff x`  → `\Delta\, x`
 - `\UDiff x`  → `\delta\, x`
-- With power: `\Diff[2] x` → `\mathrm{d}^{2}\, x`
+
+A power and a subscript are written **where the maths writes them**, as embellishments, in
+either order and either one alone:
+
+- `\Diff^2{x}`                  → `\mathrm{d}^{2} x`
+- `\FDiff_{\mathrm{vap}}{H}`    → `\Delta_\mathrm{vap} H` — an enthalpy of vaporisation
+- `\FDiff^2_{\mathrm{vap}}{H}`  → both
+
+**`\Diff[2]{x}` is retired and now stops the build** with `does not take a bracketed argument`.
+The old optional scanned forward for `[`, so `\FDiff [A]` — a concentration, an interval, a
+bracketed unit — was swallowed as a superscript and set as `\Delta^A`. The guard is deliberate:
+without it that mistake is silent.
 
 Derivatives (fraction style controlled by an optional `<d|t|s|n|f>`):
 
@@ -58,7 +97,10 @@ Derivatives (fraction style controlled by an optional `<d|t|s|n|f>`):
 - `\Derivative<d>[2]{f}{x}`          — with display-style fraction
 - `\DerivativeParen[order]{f}{x}`    — d/dx (f) form (`\DrvP`, `\PDrvP`, ...)
 - `\DerivativeEmpty[order]{x}`       — d/dx alone (`\DrvE`, `\PDrvE`, ...)
-- `\DerivativeEval[order]{f}{x}{a}`  — evaluated at x=a via `\Eval{…}{…}`
+- `\DerivativeEval[order]{f}{x}{a}`  — evaluated at x=a via `\Eval{…}{…}` (`\DrvEval`),
+                                       and `\PDerivativeEval` for the partial
+- `\Drv{f}{x,y}` — a **comma list** in the denominator: `\frac{\diff f}{\diff x \diff y}`.
+  The separator is `\cdiff`'s optional argument, so `\Drv{f}{x;y}` needs `\cdiff[;]`.
 
 ## Integrals
 
@@ -66,7 +108,9 @@ The naming scheme: `\Int` is the base 1-D form; the modifiers are
 - `I`  = integrand takes a differential-of-power operand
 - `D`  = dot product with `d…`
 - `C`  = cross product with `d…`
-- `V`  = auto-vectorise inputs (`\vec{}`)
+- `V`  = auto-vectorise inputs (`\vec{}`) — **except** in `\IIIntV` and `\IIIntPV`,
+         where it means *volume*, i.e. a `\diff^{3}` differential. The letter carries
+         two meanings; the 3-D family is the odd one out.
 - `O`  = closed loop (single-integral) — `\oint`
 - `II` = double integral — `\iint`
 - `III`= triple integral — `\iiint`
@@ -109,9 +153,16 @@ Volume (triple):
 - `\LongVector{X}`                     — long arrow (`\overrightarrow`).
 - `\BoldVector{X}`                     — bold.
 - `\UnitVector{X}`                     — `\hat{\vec{X}}`.
-- `\UnitBoldVector`, `\UnitArrowVector`.
+- `\UnitBoldVector{X}`                — `\hat{\BoldVector{X}}`.
+- `\UnitArrowVector{X}`               — `\hat{\ArrowVector{X}}`.
 
-`\vec{…}` is the default in DGS; the alternatives are for specific styles.
+`\vec{…}` is the default in DGS; the alternatives are for specific styles. **What `\vec`
+means is set per module** in `.static/format-override.tex`: `naboj/phys`, `naboj/chem` and
+`naboj/test` map it to `\ArrowVector`, `seminar/FKS` to `\BoldVector`, and `scholar/TA1`,
+`scholar/STA` and `naboj/fks-naboj` set nothing, so there it is LaTeX's own accent.
+
+Matrices and their operations: `\Mat{A}` (bold, same output as `\BoldVector`), `\Inv{A}`
+→ `A^{-1}`, `\Transpose{A}` → `A^{\top}`.
 
 ## Aggregates (Σ, Π, ⋃, ⋂)
 
@@ -168,6 +219,28 @@ Do **not** wrap punctuation in `\text{}` (linter rule `pun`).
 - `\DefEqual`  → `\stackrel{\mathrm{def}}{=}`.
 - `\Assign`    → `\coloneqq`.
 - `\Must{X}`   — generic must-something (over-stacked `!`).
+- `\MustEqual` is `\MustEq` under a longer name; the sources use it seven times as often.
+- `\LAnd`, `\LOr`, `\LXor`, `\LNand` → `\quad\land\quad` and friends.
+- `\Uni`, `\Intersect` (and `\union`, `\intersection`, the same two symbols again).
+
+## Functions and miscellany
+
+- `\Lim{x}{0}`   → `\lim\limits_{x \rightarrow 0}`.
+- `\Exp{x}`      → `e^{x}`.
+- `\Log{x}`, `\Log[2]{x}` → `\log x`, `\log_2 x`.
+- `\Domain{f}`   → `\mathrm{dom}(f)`.
+- `\Angle`       → `\sphericalangle` (∢, not `\angle`).
+- `\kth{4}`      → `4^{\text{th}}` — English only, so not for translated prose.
+- `\sinc`, `\hav`, `\erf`, `\arccot`, `\arccsc`, `\atantwo` — operators amsmath lacks.
+  There is no `\arcsec`.
+- `\omicron`     — the letter LaTeX omits (mathspec supplies the capitals, `\Chi` among them).
+
+## Display-style array columns
+
+`array` sets its cells in text style, so a `\frac` inside one comes out at script size.
+`\begin{array}{LCR}` is `\begin{array}{>{\displaystyle}r…}` — upper case because `l`, `c` and `r`
+are taken and mean text style. The `arr` filter writes the prefixes itself for an equation
+hoisted into `eq:`; these are for a solution that writes `\begin{array}` by hand.
 
 ## Statistics
 
@@ -195,9 +268,12 @@ Planets and celestial bodies (see `symbols.tex`):
 - `\Sun`, `\Mercury`, `\Venus`, `\Earth`, `\Moon`, `\Mars`, `\Jupiter`, `\Saturn`,
   `\Uranus`, `\Neptune`, `\Pluto`.
 
-Nuclides (via mhchem):
+Nuclides (via mhchem, defined in `math.tex`, not `symbols.tex`):
 
 - `\Nuclide[A][Z]{sym}` — e.g. `\Nuclide[99m]{Tc}`, `\Nuclide[235][92]{U}`.
+- `\Concentration{X}` → `[X]`. Write this rather than a literal bracket: a display row may not
+  *begin* with `[`, because `\\` takes an optional length and `\\[B]` dies on `Missing number`
+  inside an `array`.
 
 ## Chemistry (chem module)
 

@@ -1,0 +1,7 @@
+% The retired `\Diff[power]` form has to stop the build rather than set `\Delta[2]x` quietly --
+% see the comment above `\DiffBracket@` in `core/latex/math.tex`. `test_latex.py` compiles this
+% and expects it to fail.
+\documentclass[12pt]{dgs}
+\begin{document}
+$\Diff[2]{x}$
+\end{document}

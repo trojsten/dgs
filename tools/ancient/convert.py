@@ -46,7 +46,7 @@ def order(ancient: Path, monolith: str | None = None,
                 for i, _ in enumerate(re.finditer(r'(?m)^\\zadanie(?![a-zA-Z])', text), 1)]
     text = _text(ancient / 'priklady.tex', encoding)
     return [m.group(1).strip()
-            for m in re.finditer(r'^[^%\n]*\\priklad\{\s*(.*?)\s*\}', text, re.M)]
+            for m in re.finditer(r'^[^%\n]*\\priklad\{\s*(.*?)\s*\}', text, re.MULTILINE)]
 
 
 def _text(path: Path, encoding: str) -> str:

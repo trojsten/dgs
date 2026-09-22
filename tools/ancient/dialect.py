@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 #: `\def\name#1#2…{body}` -- TeX's own definition syntax, which is all these files use.
-RE_DEF = re.compile(r'\\def\\([a-zA-Z@]+)((?:#\d)*)\s*\{', re.M)
+RE_DEF = re.compile(r'\\def\\([a-zA-Z@]+)((?:#\d)*)\s*\{', re.MULTILINE)
 
 #: Which argument a figure macro's body hands to `\includegraphics` or `\pict`, and which to
 #: `\caption` and `\label`. `\pict{#1}{#2}` scales with the first and draws the second.
@@ -90,7 +90,7 @@ class Dialect:
     MACROS = {2007: '07naboj.tex'}
 
     @classmethod
-    def read(cls, root: Path, year: int) -> 'Dialect':
+    def read(cls, root: Path, year: int) -> Dialect:
         include = root / cls.MACROS.get(year, 'include.tex')
         if not include.is_file():
             raise SystemExit(f'{include} does not exist; is {root} really a year of problems?')

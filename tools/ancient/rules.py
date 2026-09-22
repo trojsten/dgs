@@ -97,7 +97,7 @@ RE_LAYOUT = [
 
 
 #: `itemize` and `enumerate`, body and all. Non-greedy, so a pair nests outwards correctly.
-RE_LIST = re.compile(r'\\begin\{(itemize|enumerate)\}(?P<body>.*?)\\end\{\1\}', re.S)
+RE_LIST = re.compile(r'\\begin\{(itemize|enumerate)\}(?P<body>.*?)\\end\{\1\}', re.DOTALL)
 
 
 def break_displays(text: str, width: int = 100, limit: int = 120) -> str:
@@ -260,7 +260,7 @@ def lone_dollars(text: str) -> str:
 #: closes with `$.` -- converting the two lines independently would have turned the opener into
 #: `$$` and left the closer alone, and every paragraph after it was swallowed into the display.
 RE_LONE_DISPLAY = re.compile(r'(?m)^[ \t]*\$[ \t]*\n(?P<body>.*?)\n[ \t]*\$(?P<punct>[.,;]?)[ \t]*$',
-                             re.S)
+                             re.DOTALL)
 
 def inline_math(text: str) -> str:
     r"""
@@ -767,7 +767,7 @@ RE_DISPLAY = re.compile(r'\$\$(.*?)\$\$'
                         r'\\end\{(?:align\*|flalign\*|gather\*)\}'
                         r'|\\begin\{(equation\*?)\}(.*?)\\end\{equation\*?\}'
                         r'|\\begin\{(eqnarray\*?)\}(?P<eqnarray>.*?)\\end\{eqnarray\*?\}'
-                        r'|\\\[(?P<bracket>.*?)\\\]', re.S)
+                        r'|\\\[(?P<bracket>.*?)\\\]', re.DOTALL)
 #: `eqnarray`'s middle column, which `aligned` does not have and does not want. `A &=& B` in an
 #: `aligned` makes `B` the *right* half of an `rl` pair, so it is pushed to the right edge of its
 #: column and a gap opens after the `=` as wide as the longest row needs -- exactly the failure
@@ -901,7 +901,7 @@ def displays(text: str, label_prefix: str | None = None) -> tuple[str, list[str]
 #: `CdotSpaces`). The archive writes `mh+MH` and `={H(2m+3M)\over…}` freely.
 #: A display, or an inline formula. Inline maths may run over a line break -- 15 of 2009's do --
 #: but never over a blank line, which would mean an unmatched `$` had swallowed a paragraph.
-RE_MATH = re.compile(r'\$\$.*?\$\$|\$(?:[^$\n]|\n(?!\n))*\$', re.S)
+RE_MATH = re.compile(r'\$\$.*?\$\$|\$(?:[^$\n]|\n(?!\n))*\$', re.DOTALL)
 RE_RELATION = re.compile(r'\s*(\\approx|\\doteq|\\geq|\\leq|\\gg|\\ll|[=<>])\s*')
 #: A `+` or `-` with something either side of it, and not the unary one that opens a group or
 #: follows another operator, nor one inside a superscript like `10^{+3}` or `x^{-1}`. The

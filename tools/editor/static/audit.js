@@ -319,6 +319,7 @@ function renderDetail() {
   const d = state.detail;
 
   renderBuildState(d.build);
+  renderMacroState(d.macros);
   body.appendChild(statsPanels(d.stats));
   body.appendChild(problemTable(d));
   body.appendChild(findingList());
@@ -332,6 +333,16 @@ function renderBuildState(build) {
   span.textContent = `${build.ok}/${build.total} targets ${ok ? "built" : "built"}`
     + ` · ${ago(build.ran_at)}`
     + (build.stale ? " · sources have changed since" : "");
+}
+
+function renderMacroState(macros) {
+  const span = el("macro-state");
+  if (!macros) { span.textContent = "macros not swept"; span.className = "hint"; return; }
+  const n = macros.undefined.length;
+  span.className = macros.stale || n ? "hint warn" : "hint";
+  span.textContent = `${n} undefined ${n === 1 ? "macro" : "macros"}`
+    + ` · ${ago(macros.ran_at)}`
+    + (macros.stale ? " · sources have changed since" : "");
 }
 
 /** The four statistics panels: authors, tags, languages, templating. */
@@ -702,6 +713,30 @@ async function runBuildChecks() {
   }
 }
 
+/**
+ * The macro sweep: one xelatex run over every control word in the tree.
+ *
+ * Repository-wide, so it needs no scope and the button is live before a volume is picked. The
+ * findings land in the ordinary list once the page reloads, because `macro-undefined` is a normal
+ * source-only check that happens to read this cache.
+ */
+async function runMacroSweep() {
+  el("macro-btn").disabled = true;
+  setStatus("asking TeX about every macro in the tree", "busy");
+  try {
+    const macros = await fetchJSON("/api/audit/macros", { method: "POST" });
+    if (state.detail) state.detail.macros = macros;
+    renderMacroState({ ...macros, stale: false });
+    if (state.scope) await openScope(state.scope.module, state.scope.scope);
+    const n = macros.undefined.length;
+    setStatus(`${macros.asked} macros asked, ${n} undefined`, n ? "error" : "ok");
+  } catch (e) {
+    setStatus(e.message, "error");
+  } finally {
+    el("macro-btn").disabled = false;
+  }
+}
+
 // --- layout -----------------------------------------------------------------
 
 const OVERVIEW_HEIGHT_KEY = "dgs-audit-overview-height";
@@ -770,6 +805,7 @@ async function boot() {
   wireResizer();
   el("refresh-btn").addEventListener("click", () => refresh());
   el("build-btn").addEventListener("click", runBuildChecks);
+  el("macro-btn").addEventListener("click", runMacroSweep);
   el("hide-info").addEventListener("change", (e) => {
     state.hideInfo = e.target.checked;
     renderOverview();

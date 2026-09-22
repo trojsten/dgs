@@ -69,7 +69,7 @@ THRESHOLD = 0.8
 TOLERANCE = 4
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def tfm(name: str) -> dict[int, int]:
     """Every character of a TeX font metric, as code -> width in thousandths of an em."""
     path = subprocess.run(['kpsewhich', f'{name}.tfm'],

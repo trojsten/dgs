@@ -1398,3 +1398,73 @@ class TestJinjaStringEscape:
         report = run(tmp_path, meta=meta,
                      files={'sk': {'solution.md': "$t'_1 = 0$ and $\\nu_{\\text{a}}$\n"}})
         assert 'jinja-string-escape' not in ids(report)
+
+
+class TestMacroUndefined:
+    r"""
+    The check itself is three lines of placement; the oracle is what costs a xelatex run.
+
+    So the oracle is injected here. What is being tested is that a name in it is reported once per
+    file with its count, that the correctly spelled sibling one letter away is not, and -- the case
+    that matters -- that an audit which has never run the sweep reports nothing rather than
+    guessing.
+    """
+
+    ORACLE = frozenset({'diff'})
+
+    @pytest.fixture
+    def oracle(self, monkeypatch):
+        def set_to(names):
+            from core.audit import macros
+            monkeypatch.setattr(macros, 'undefined_names', lambda *a, **k: frozenset(names))
+        return set_to
+
+    def test_reports_a_macro_nothing_defines(self, tmp_path, oracle):
+        oracle(self.ORACLE)
+        report = run(tmp_path, files={'sk': {'solution.md': 'Teleso\n$\\frac{\\diff x}{\\diff t}$\n'}})
+        found = [f for f in report.findings if f.check == 'macro-undefined']
+        assert len(found) == 1, found
+        assert '\\diff' in found[0].message
+        assert '2 times' in found[0].message          # one finding per file, the count in the text
+        assert found[0].line == 2
+
+    def test_quiet_on_the_macro_that_does_exist(self, tmp_path, oracle):
+        r"""`\Diff` is one letter from `\diff` and is the right one. Case is the whole difference."""
+        oracle(self.ORACLE)
+        report = run(tmp_path, files={'sk': {'solution.md': '$\\frac{\\Diff x}{\\Diff t}$\n'}})
+        assert 'macro-undefined' not in ids(report)
+
+    def test_quiet_when_the_sweep_has_never_run(self, tmp_path, oracle):
+        """An audit that has not asked TeX must not answer for it."""
+        oracle(frozenset())
+        report = run(tmp_path, files={'sk': {'solution.md': '$\\diff x$\n'}})
+        assert 'macro-undefined' not in ids(report)
+
+
+class TestMacroCollection:
+    r"""
+    What the sweep is allowed to ask about.
+
+    Reading a meta raw offers TeX the escapes of a double-quoted YAML scalar -- `\t`, `\u0144`,
+    `\x41` -- as though they were control words. The first version of this sweep did exactly that
+    and reported `\tStefa` out of `"Agata\tStefa\u0144ska"` in a venue meta, along with sixty-odd
+    `\xED…` fragments from author names. Parsing first spends the escapes, so only what reaches
+    the renderer is asked about.
+    """
+
+    def test_yaml_escapes_are_not_control_words(self, tmp_path):
+        from core.audit import macros
+        (tmp_path / 'meta.yaml').write_text(
+            'organisers:\n  - "Agata\\tStefa\\u0144ska"\n'
+            'derived:\n  result: "(a / b).to(\'m\')"\n'
+            'eq:\n  x: \'\\Diff t\'\n'
+        )
+        found = macros.collect(tmp_path)
+        assert 'tStefa' not in found
+        assert 'Diff' in found                        # the real LaTeX in the meta is still asked
+
+    def test_markdown_is_read_verbatim(self, tmp_path):
+        """Markdown has no escape layer of its own, so what is written is what TeX will see."""
+        from core.audit import macros
+        (tmp_path / 'solution.md').write_text('$\\diff x$ and \\Paren{y}\n')
+        assert {'diff', 'Paren'} <= macros.collect(tmp_path)

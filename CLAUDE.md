@@ -46,8 +46,30 @@ the page, which is the intended behaviour — a hole in a booklet should be loud
 stale entry is still worth catching in the sources rather than in a PDF. Both directions
 are checked (`unit-unlisted`, `listed-missing`). The page can sort alphabetically instead,
 and keeps showing the competition number when it does. A pass over the whole repository is a fifth of a second, so
-nothing is cached — except the build checks, which shell out to make and land in
-`build/.audit/` with a fingerprint of the sources.
+nothing is cached — except the two checks that cannot be answered by reading files, which land in
+`build/.audit/` with a fingerprint of the sources: the build checks, which shell out to make, and
+the macro sweep.
+
+`macro-undefined` is the odd one out and worth knowing about. Whether `\Diff` exists is not a
+question about the sources: `math.tex` names 191 macros, `dgs.cls` loads 146 packages that shadow
+and complete each other, and the answers surprise in both directions — `\Chi` comes from mathspec,
+`\diff` is defined by nothing although `\diff@` is. So `core/audit/macros.py` asks TeX, once, with
+a probe that runs `\ifcsname` over every control word in the tree; `checks.macro_undefined` reads
+the cached answer and places the findings. Run it from the `/audit` page's *Run macro sweep*
+button or with `python -m core.audit.macros`; `--check` reads the cache instead and exits nonzero
+if it is stale or was never run, which is the CI shape.
+
+**No sweep, no findings** — the check reports nothing when the cache is absent, rather than
+guessing. Two things it deliberately does not ask about: a meta is read *parsed*, because a
+double-quoted YAML scalar has escapes of its own and `"Agata\tStefa\u0144ska"` otherwise offers
+`\tStefa` as a control word; and chemfig's `\arrow` and `\schemestop` are named in `IGNORED`,
+because chemfig defines them only inside a `\schemestart` group, which is the only place anyone
+writes them.
+
+It was worth having. `scholar/TA1` called `\diff` 222 times and `\OIInt` 22, `fks-naboj` called
+`\EvalAt` and `\integrate`, `\fdiff`, `\pdiff`, `\Intx`, `\LogTen` and `\mustequal` were all
+being written for macros that exist under another name — and none of it was visible, because
+nothing builds those two modules.
 
 Adding a check means one function and two tests: one that it fires, one that it stays
 quiet on a case that looks like it and is not. That second half is not optional. Every

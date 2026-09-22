@@ -23,7 +23,6 @@ same thing either way -- but it is the gap that hides the errors, because a quan
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 #: A run of digits, with a decimal separator kept inside it: `88,10` is one number and not two.
 RE_DIGITS = re.compile(r'\d+(?:[.,]\d+)*')
@@ -47,7 +46,7 @@ NOT_UNITS = {
 #: Anything whose digits are not the booklet's. An image path is the converter's own invention
 #: -- `figure-1.svg` against an empty one -- and a `%#` note is a message to whoever reads the
 #: source, neither of which the printed page ever had.
-RE_NOT_THE_BOOKLETS = re.compile(r'!\[[^\]]*\]\([^)]*\)(\{[^}]*\})?|^%#.*$', re.M)
+RE_NOT_THE_BOOKLETS = re.compile(r'!\[[^\]]*\]\([^)]*\)(\{[^}]*\})?|^%#.*$', re.MULTILINE)
 
 #: A superscript exponent, dropped from both sides. `ms^{-1}` and `\metre\per\second` are the
 #: same unit and only one of them spells the 1, so a reciprocal unit converted correctly would

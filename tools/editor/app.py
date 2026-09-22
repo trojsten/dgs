@@ -31,6 +31,7 @@ sys.path.insert(0, str(REPO_ROOT))
 os.chdir(REPO_ROOT)
 from core.audit import audit as run_audit
 from core.audit import build as audit_build
+from core.audit import macros as audit_macros
 from core.audit.model import REGISTRY, SEVERITIES
 from core.audit.status import (
     STATES,
@@ -661,6 +662,7 @@ def api_audit_scope(module, scope):
         "findings": [finding_json(f) for f in report.findings],
         "stats": stats_json(report.stats),
         "build": read_build_cache(module, scope),
+        "macros": read_macro_cache(),
     })
 
 
@@ -674,6 +676,21 @@ def read_build_cache(module, scope):
         units = discover_scopes(resolved).get(scope) or []
         current = run_scope_audit(resolved, scope, units).sources.fingerprint()
         payload["stale"] = current != payload.get("fingerprint")
+    return payload
+
+
+def read_macro_cache():
+    """
+    The last macro sweep, with whether anything has moved since.
+
+    Repository-wide rather than per scope: the question is which names TeX knows, and that does
+    not vary by volume. The findings it produces are placed per scope by
+    `core.audit.checks.macro_undefined`, which reads this same cache.
+    """
+    payload = audit_macros.read_cache(REPO_ROOT)
+    if payload is None:
+        return None
+    payload["stale"] = bool(audit_macros.is_stale(REPO_ROOT))
     return payload
 
 
@@ -705,6 +722,18 @@ def api_audit_build(module, scope):
                                       fingerprint=sources.fingerprint(), run=run)
     payload["stale"] = False
     return jsonify(payload)
+
+
+@app.post("/api/audit/macros")
+def api_audit_macros():
+    """
+    Ask TeX which control words in the whole tree nothing defines. One xelatex run, a second or two.
+
+    Not per scope, and not part of the source-only pass: `\\Diff` either exists or it does not, and
+    only TeX can say. `core.audit.checks.macro_undefined` turns the answer into findings.
+    """
+    with BUILD_LOCK:
+        return jsonify(audit_macros.sweep(REPO_ROOT))
 
 
 def main():

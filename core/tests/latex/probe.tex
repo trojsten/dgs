@@ -1,0 +1,114 @@
+% Every public macro `core/latex/math.tex` defines, used once.
+%
+% `core/tests/test_latex.py` compiles this and then checks the log for `Missing character` and
+% `Undefined control sequence` as well as the exit status -- a macro can be broken without
+% failing the compile, which is how `\SmallO`'s `\mathcal{o}` set nothing at all for years.
+%
+% A second test asserts that every public name in math.tex appears here, so a macro added
+% without a line in this file is a deliberate omission rather than an oversight.
+
+\documentclass[12pt]{dgs}
+
+\begin{document}
+
+\section*{Delimiters}
+$\Paren{x} \Abs{x} \Dist{AB} \Floor{x} \Ceil{x}$
+$\ExpectedChevrons{X}[c] \ExpectedE{X}[c] \Expected{X}[c] \Expected{X}$
+$\cdiff{x,y}{\mathrm{d}}$
+$\Tuple{a;b;c} \Tuple[,]{a;b} \Coord{x;y;z}$
+
+\section*{Differentials}
+$\Diff{x} \quad \Diff^{2}{x} \quad \PDiff{x} \quad \FDiff{x} \quad
+ \FDiff_{\mathrm{vap}}{H} \quad \FDiff^{2}_{\mathrm{vap}}{H} \quad \UDiff{Q}$
+
+\section*{Derivatives}
+$\Derivative{f}{x} \quad \Derivative<d>[2]{f}{x} \quad \PDerivative{f}{x} \quad
+ \FDerivative{f}{x} \quad \UDerivative{f}{x}$
+$\Drv{f}{x} \quad \PDrv{f}{x} \quad \FDrv{f}{x} \quad \UDrv{f}{x} \quad \Drv{f}{x,y}$
+$\DerivativeEmpty{x} \quad \PDerivativeEmpty{x} \quad \FDerivativeEmpty{x} \quad
+ \UDerivativeEmpty{x}$
+$\DrvE{x} \quad \PDrvE{x} \quad \FDrvE{x} \quad \UDrvE{x}$
+$\DerivativeParen{f}{x} \quad \PDerivativeParen{f}{x} \quad \FDerivativeParen{f}{x} \quad
+ \UDerivativeParen{f}{x}$
+$\DrvP{f}{x} \quad \PDrvP{f}{x} \quad \FDrvP{f}{x} \quad \UDrvP{f}{x}$
+$\DerivativeEval{f}{x}{0} \quad \DerivativeEval[2]{f}{x}{0} \quad \DrvEval{f}{x}{0} \quad
+ \PDerivativeEval{f}{x}{0}$
+
+\section*{Integrals}
+$\dgsint[0][1][x^2]{x}[]$
+$\Int[0][1]{x^2}{x} \quad \IntP[0][1]{x + 1}{x} \quad \IntX[0][1]{x} \quad \IntE[0][1]{x}$
+$\IntD[0][1]{\vec{E}}{\vec{r}} \quad \IntDV[0][1]{E}{r} \quad
+ \IntC[0][1]{\vec{E}}{\vec{r}} \quad \IntCV[0][1]{E}{r}$
+$\OInt[C]{f}{x} \quad \OIntD[C]{\vec{E}}{\vec{r}} \quad \OIntDV[C]{E}{r} \quad
+ \OIntC[C]{\vec{E}}{\vec{r}} \quad \OIntCV[C]{E}{r}$
+$\IInt[S]{f}{x}{y} \quad \IIntP[S]{f + 1}{x}{y} \quad \IIntI[S]{f}{S} \quad \IIntI[S]{f}[2]{r}$
+$\IIntD[S]{\vec{B}}{\vec{S}} \quad \IIntDV[S]{B}{S} \quad \IIntC[S]{\vec{B}}{\vec{S}} \quad
+ \IIntCV[S]{B}{S}$
+$\OIIntI[S]{f}{S} \quad \OIIntD[S]{\vec{B}}{\vec{S}} \quad \OIIntDV[S]{B}{S} \quad
+ \OIIntC[S]{\vec{B}}{\vec{S}} \quad \OIIntCV[S]{B}{S}$
+$\IIInt[V]{f}{x}{y}{z} \quad \IIIntI[V]{f}[3]{r} \quad \IIIntV[V]{f}{r} \quad
+ \IIIntPV[V]{f + 1}{r}$
+
+\section*{Vector calculus}
+$\del \quad \Grad \phi \quad \GradT \phi \quad \GradV{E} \quad \GradTV{E}$
+$\Div \vec{E} \quad \DivT \vec{E} \quad \DivV{E} \quad \DivTV{E}$
+$\Rot \vec{E} \quad \RotT \vec{E} \quad \RotV{E} \quad \RotTV{E} \quad \Laplacian \phi$
+
+\section*{Vectors and matrices}
+$\ArrowVector{v} \quad \LongVector{AB} \quad \BoldVector{v} \quad \UnitVector{n} \quad
+ \UnitBoldVector{n} \quad \UnitArrowVector{n}$
+$\Mat{A} \quad \Inv{A} \quad \Transpose{A}$
+
+\section*{Operators and symbols}
+$\omicron \quad \atantwo(y, x) \quad \arccot x \quad \arccsc x \quad \sinc x \quad \hav x \quad
+ \erf x$
+$p \LXor q \quad p \LOr q \quad p \LAnd q \quad p \LNand q$
+$A \union B \quad A \intersection B \quad A \Uni B \quad A \Intersect B$
+$a \Implies b \quad a \Iff b \quad a \ImpliedBy b$
+$\Eval{f}{0} \quad \Eval{f}{0}[1] \quad \EvalP{f}{0} \quad \EvalB{f}{0}$
+$\Angle \quad \maxop \quad \minop \quad \Max[x]{f} \quad \Min[x]{f}$
+
+\section*{Statistics}
+$\Distribution{N}[x]{\mu, \sigma} \quad \Distribution{N}{\mu, \sigma} \quad \Mean{X} \quad
+ \Var{X} \quad \MSE{X} \quad \Bias{X} \quad \Binomial{n}{k} \quad \Dimen{X}$
+
+\section*{Text and relations}
+$a \Text{a} b \quad a \QText{a} b \quad a \QQText{a} b$
+$\Lim{x}{0} f \quad \Exp{x} \quad \Log{x} \quad \Log[2]{x}$
+$a \Must{\sim} b \quad a \MustEq b \quad a \MustEqual b \quad a \MustL b \quad a \MustLL b \quad
+ a \MustG b \quad a \MustGG b \quad a \MustLeq b \quad a \MustGeq b$
+$a \DefEqual b \quad a \Assign b$
+$\Concentration{A} \quad \Nuclide[235][92]{U}$
+
+\section*{Aggregates}
+$\Aggregate{\sum}[i][n]{a_i} \quad \AggregateP{\sum}[i][n]{a_i + 1}$
+$\Sum[i][n]{a_i} \quad \SumP[i][n]{a_i + 1} \quad \Product[i][n]{a_i} \quad
+ \ProductP[i][n]{a_i + 1}$
+$\CartesianProduct[i][n]{A_i} \quad \CartesianProductP[i][n]{A_i} \quad \Union[i][n]{A_i} \quad
+ \UnionP[i][n]{A_i} \quad \Intersection[i][n]{A_i} \quad \IntersectionP[i][n]{A_i}$
+
+\section*{Asymptotics, sets and intervals}
+$\SmallO{n} \quad \BigO{n^2} \quad \BigTheta{n}$
+$\Set{a, b} \quad \Set{a, b}[c][d] \quad \Seq{a, b} \quad \Seq{a, b}[c][d]$
+$\Natural \, \NaturalZero \, \Integer \, \Rational \, \Real \, \RealPos \, \RealNeg \,
+ \RealNonneg \, \RealNonpos \, \Complex \, \Quaternions \, \Domain{f}$
+$\IntervalCC{0}{1} \, \IntervalCO{0}{1} \, \IntervalOC{0}{1} \, \IntervalOO{0}{1}$
+
+\section*{Alignment-only, and number literals}
+$$
+\begin{aligned}
+    a &= b \Operation{\cdot 2} \\
+    2a &= 2b
+\end{aligned}
+$$
+\kth{4} --- 33\OneThird{} 666\TwoThirds{} \OneHalf{} \OneQuarter{} \ThreeQuarters{}
+\OneEighth{} \ThreeEighths{} \FiveEighths{} \SevenEighths{}
+
+% The display-style column types belong to `array`, which is math mode -- that is the whole point.
+$$
+\begin{array}{LCR}
+    \frac{1}{2} & \frac{1}{2} & \frac{1}{2}
+\end{array}
+$$
+
+\end{document}

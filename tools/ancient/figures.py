@@ -84,7 +84,7 @@ def _declared_slant(chunk: str) -> str:
     return 'italic' if found in ('italic', 'oblique') else 'normal'
 
 #: LibreOffice's export writes one `TextPosition` span per laid-out *line*, all at the same `x`.
-RE_PARAGRAPH = re.compile(r'<tspan class="TextParagraph">(.*?)</tspan></text>', re.S)
+RE_PARAGRAPH = re.compile(r'<tspan class="TextParagraph">(.*?)</tspan></text>', re.DOTALL)
 #: One laid-out line: the positioned span, the styled leaf it wraps, and the characters. These
 #: exports always nest exactly this far, so the shape is spelled out rather than matched loosely
 #: — a non-greedy body stops at the *inner* `</tspan>` and hands back an unclosed tag.
@@ -100,7 +100,7 @@ RE_ATTR_FAMILY = re.compile(r'font-family="([^"]*)"')
 RE_FAMILY = re.compile(r"font-family:\s*'([^']*)'"
                        r"|font-family:\s*([^;,\"]+?)\s*(?=[;,\"]|$)")
 #: One whole `<text>` element. These never nest.
-RE_TEXT = re.compile(r'<text\b.*?</text>', re.S)
+RE_TEXT = re.compile(r'<text\b.*?</text>', re.DOTALL)
 #: Any family declaration, in either spelling.
 RE_ANY_FAMILY = re.compile(r"""font-family:\s*'([^']*)'"""
                            r"""|font-family:\s*([^;,"]+?)\s*(?=[;,"])"""
