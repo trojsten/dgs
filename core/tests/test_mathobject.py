@@ -66,13 +66,13 @@ class TestMathObjectAlign:
 
     def test_structure(self, multiline):
         result = f'{multiline:align}'
-        assert result.startswith('$${\n')
-        assert '\n}$$' in result
+        assert result.startswith('$$\n    \\begin{aligned}\n')
+        assert '\n    \\end{aligned}\n$$ ' in result
         assert result.endswith('{#eq:e2}')
 
     def test_indents_each_line(self, multiline):
         result = f'{multiline:align}'
-        assert '    a &= b + c' in result
+        assert '        a &= b + c' in result
         assert '    b &= 2c' in result
 
 
@@ -105,8 +105,8 @@ class TestMathObjectInterpunction:
     @pytest.mark.parametrize("punct", list('.,;?!'))
     def test_align_with_punctuation(self, multiline, punct):
         result = f'{multiline:align{punct}}'
-        # Punctuation lands after the last content line, before `\n}$$`.
-        assert f'b &= 2c{punct}\n}}$$' in result
+        # Punctuation lands on the last row, inside the environment.
+        assert f'b &= 2c{punct}\n    \\end{{aligned}}' in result
 
     def test_invalid_punctuation_after_valid_base(self, inline):
         """

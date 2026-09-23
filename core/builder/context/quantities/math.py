@@ -151,7 +151,16 @@ class MathObject:
                 content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
                 return f"$$\n{content}{interpunction}\n$$ {{#eq:{self.id}}}"
             case 'align':
-                content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
-                return f"$${{\n{content}{interpunction}\n}}$$ {{#eq:{self.id}}}"
+                # The same shape as `arr` above, and for the same reason: `\begin{aligned}` sits
+                # where `disp`'s content would and the rows sit inside it, eight spaces deep.
+                #
+                # This used to emit the `$${ … }$$` shorthand and leave `Convertor.pre_regexes` to
+                # rewrite it into exactly this on the way to pandoc. Two per-line regexes for a
+                # form nothing else wanted; the filter knows what it means, so it says it. The
+                # regexes stay for the 351 `$${` that authors write by hand.
+                content = re.sub(r'^(?!\Z)', '        ', self.content, flags=re.MULTILINE)
+                return (f"$$\n    \\begin{{aligned}}\n"
+                        f"{content}{interpunction}\n"
+                        f"    \\end{{aligned}}\n$$ {{#eq:{self.id}}}")
             case _:
                 raise NotImplementedError(f"Unknown format spec {spec!r} for MathObject")

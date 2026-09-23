@@ -121,7 +121,7 @@ For a `MathObject`:
 | `|inl`        | Renders `$…$`. Write sentence punctuation **outside** the tag.  |
 | `|disp`       | Renders `$$\n    …\n$$ {#eq:<id>}`.                              |
 | `|disp('.')`  | Same with trailing punctuation inside the math.                  |
-| `|align`      | `$${\n    …\n}$$ {#eq:<id>}` (aligned environment).              |
+| `|align`      | `$$\n    \begin{aligned}\n        …\n    \end{aligned}\n$$ {#eq:<id>}`. |
 | `|align(',')` | Same with punctuation.                                           |
 | `|dispd`, `|dispc`, `|disps`, `|dispq`, `|dispe` | Shorthands for `|disp` with `.` `,` `;` `?` `!`. |
 | `|alignd`, `|alignc`, `|aligns`, `|alignq`, `|aligne` | Ditto for `|align`.     |

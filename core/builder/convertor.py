@@ -102,6 +102,17 @@ class Convertor:
             RegexFailure(r'\\pandocbounded',
                          error=r"Caught a \pandocbounded: an image has no attributes. "
                                r"Give it a size, e.g. ![caption](picture.svg){height=40mm}"),
+            # A crossref label that reached the TeX as literal text, escaped brace and all, so
+            # pandoc never read it as an attribute and the thing it names has no label and no
+            # number. The cause is always something following the label on its line: pandoc
+            # accepts `{#eq:…}` only when whitespace or the end of the block comes next, and
+            # `22/hop/hu` printed `{#eq:hop:vxvvxgd}` into the Hungarian booklet for exactly that
+            # reason. `settle_display_tags` stops the renderer from creating one; this catches a
+            # hand-written one, which no check upstream can see, and refuses the page instead of
+            # printing the label.
+            RegexFailure(r'\\\{\\#(eq|fig|tbl|sec|lst):',
+                         error="A crossref label was typeset as text, so whatever it names has "
+                               "no number: nothing may follow `{#eq:...}` on its line"),
         ],
     }
 

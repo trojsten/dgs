@@ -413,6 +413,24 @@ solved sudoku's rows all sum to 45, and `28/balance-me` answers which two of nin
 are left over. None is the output of a calculation; all three carry
 `audit: {ignore: ['answer-literal']}` with the reason, and `value_status` honours that.
 
+## `$${ … }$$` is on its way out
+
+It was DGS's own shorthand for an aligned display, and it works only because
+`Convertor.pre_regexes` rewrites its two delimiters into `\begin{aligned}` and `\end{aligned}`
+with a pair of per-line regexes. A custom extension no Markdown reader knows, for a form standard
+LaTeX already has, rewritten by a line-oriented pass and therefore fragile in all the ways a
+line-oriented pass is. The fewer of those the better.
+
+`|align` no longer emits it: `MathObject` writes the longhand directly now, the same shape as
+`arr` -- `\begin{aligned}` four spaces in, where `disp` puts its content, and the rows eight.
+
+The 351 hand-written ones in 193 files stay for now and still build, because the rewrite regexes
+stay until they are gone. What changed is that the tooling stopped recommending the shorthand:
+the audit's `aligned-shorthand` reports it, and `mdcheck` no longer whitelists it. Both used to
+say the opposite -- `aligned-longhand` reported `\begin{aligned}` and asked for `$${`, because
+`MathObject` had a format spec for each and the same equation in two spellings read as two
+equations. There is one spelling now. Convert a file when you touch it.
+
 ## The build inserts the non-breaking spaces, not you
 
 A one-letter word must not end a line in Slovak, Czech, Polish, Russian or Ukrainian, and a
@@ -724,8 +742,8 @@ and after. Reading through a symlink is safe; writing is not.
   gets none of that automatically. Use the `L`, `C` and `R` column types from `core/latex/math.tex`
   for display style and write `\\[\jot]` on the separators yourself: `chem/03/veronikin-roztok`
   and `FKS/34/2/3/06` are the examples. Note that pandoc wraps display maths containing `\\` in an
-  `aligned` of its own -- which is what the `$${ … }$$` idiom relies on -- but leaves a block
-  alone once it opens with an explicit environment.
+  `aligned` of its own -- which is what the deprecated `$${ … }$$` idiom relied on -- but leaves
+  a block alone once it opens with an explicit environment.
 - **A block scalar takes its indentation from its first line.** If that line is deeper than the
   rows below it -- which is what lining up empty leading columns does -- YAML ends the block at the
   first shallower row and reports `expected <block end>` several lines later. Write `|2` rather

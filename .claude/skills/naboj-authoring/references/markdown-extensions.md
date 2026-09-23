@@ -30,14 +30,29 @@ $$ {#eq:falling-egg:v0}
 Aligned block:
 
 ```
-$${
-    v_x &= v\cos\alpha, \\
-    v_y &= v\sin\alpha.
-}$$ {#eq:archery:vxvy}
+$$
+    \begin{aligned}
+        v_x &= v\cos\alpha, \\
+        v_y &= v\sin\alpha.
+    \end{aligned}
+$$ {#eq:archery:vxvy}
 ```
 
-Note the `${ … }$` variant is DGS's convention — the `{ … }` inside `$$` becomes an
-`aligned` environment.
+This is what `(§ eq.x|align §)` emits, and what you should write by hand.
+
+**`$${ … }$$` is deprecated.** It was DGS's own shorthand for the same thing — the `{ … }`
+inside `$$` became an `aligned` environment — and it works only because
+`Convertor.pre_regexes` rewrites the two delimiters with a pair of per-line regexes on the way to
+pandoc. A custom extension no Markdown reader knows, for a form standard LaTeX already has. It
+still builds, so nothing written this way is broken, but the audit reports it
+(`aligned-shorthand`) and so does `mdcheck`; convert one when you touch the file. 351 remain.
+
+**A display tag is put on its own line for you.** `(§ eq.x|disp §)` splices a whole `$$` block in
+where the tag stood, so a tag sharing its line would hand the delimiters to prose — and pandoc
+accepts the `{#eq:…}` attribute only when whitespace or the end of the block follows it, so a
+tag glued to the next word loses its label and prints it as text. The renderer breaks the line
+for you, before and after, and only where it is not broken already; a tag already alone, or
+indented inside a list item, is left exactly where it is.
 
 **Never** put `\begin{aligned}` / `\end{aligned}` on the same line as `$$`
 (`mdcheck` DoubleDollars rule).

@@ -308,3 +308,93 @@ class TestVerbatimBlocks:
                 "blocks:\n  g: 'a block'\n")
         out = self.render(tmp_path, 'sk', meta, '(§ g §) then (§ blocks.g §)\n')
         assert '42 then a block' in out
+
+
+class TestDisplayTagsOwnTheirLine:
+    r"""
+    A display tag is put on a line of its own before rendering, and only where it is not already.
+
+    `(§ eq.x|disp §)` splices `$$\n    …\n$$ {#eq:x}` in exactly where the tag stood, so a tag that
+    shares its line hands the delimiters to prose. Seven of the eight places in the repository that
+    do this survive -- pandoc recovers and the TeX is unchanged -- but `22/hop/hu` writes
+    `(§ eq.vxvvxgd|disp(',') §)amelynek`, and pandoc accepts a display attribute only when
+    whitespace or the end of the block follows its closing brace. A letter follows, so the
+    `{#eq:hop:vxvvxgd}` was set as literal text and the equation lost its number and its label.
+
+    Half of these tests are the quiet cases, and they are the half that matters: the rule has to
+    leave alone a tag that already begins its line, which is every `indent(4)` tag in
+    `28/tetristor` and every display in the repository written the ordinary way.
+    """
+
+    render = staticmethod(TestTranslatedWords.render)
+
+    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+            "tags: ['kinematics']\n"
+            "eq:\n"
+            "  one: 'a = b'\n"
+            "  two: 'c = d'\n"
+            "  multi: |\n    x &= y \\\\\n    z &= w\n")
+
+    def out(self, tmp_path, source):
+        return self.render(tmp_path, 'sk', self.META, source)
+
+    # ------------------------------------------------------------------ it fires
+
+    def test_prose_after_a_tag_moves_to_its_own_line(self, tmp_path):
+        out = self.out(tmp_path, "(§ eq.one|disp(',') §)amelynek.\n")
+        assert ':one}\namelynek.' in out, out
+
+    def test_the_label_stays_with_its_delimiter(self, tmp_path):
+        """A break between `$$` and `{#eq:…}` would cost the label, which is the whole point."""
+        out = self.out(tmp_path, "(§ eq.one|disp(',') §)amelynek.\n")
+        assert '\n$$ {#eq:' in out and ':one}\n' in out, out
+
+    def test_two_tags_and_prose_become_four_lines(self, tmp_path):
+        out = self.out(tmp_path, '(§ eq.one|disp §) a potom (§ eq.two|dispd §)\n')
+        assert ':one}\na potom\n$$\n' in out, out
+
+    def test_a_tag_closing_a_footnote_splits(self, tmp_path):
+        """`28/a12-speed` puts a display inside `^[…]`; the bracket must survive the break."""
+        out = self.out(tmp_path, "ako^[lebo\n(§ eq.one|disp('.') §)] teda\n")
+        assert ':one}\n] teda' in out, out
+
+    def test_a_list_item_keeps_its_indentation(self, tmp_path):
+        """Split to column 0 and the block leaves the item, so the marker counts as indentation."""
+        out = self.out(tmp_path, '-   prva (§ eq.one|dispd §) dalej\n')
+        assert '-   prva\n    $$\n' in out, out
+        assert ':one}\n    dalej' in out, out
+
+    # ------------------------------------------------------------------ it stays quiet
+
+    def test_a_tag_already_alone_does_not_move(self, tmp_path):
+        out = self.out(tmp_path, 'pred\n(§ eq.one|dispd §)\npo\n')
+        assert 'pred\n$$\n' in out, out
+        assert ':one}\npo' in out, out
+        assert '\n\n$$' not in out, "a blank line would end a paragraph that should continue"
+
+    def test_an_indented_tag_in_a_list_does_not_move(self, tmp_path):
+        """
+        `28/tetristor`, eighteen times across five languages.
+
+        The character before the tag is a space, so a rule phrased as "unless preceded by a
+        newline" fires here, leaves a whitespace-only line behind and drops the block to column 0,
+        out of the list -- the failure `indent(4)` exists to prevent.
+        """
+        source = '-   prva veta\n    (§ eq.one|disp(".")|indent(4) §)\n-   druha\n'
+        out = self.out(tmp_path, source)
+        assert '-   prva veta\n    $$\n        a = b.\n    $$ {#eq:' in out, out
+        assert ':one}\n-   druha' in out, out
+
+    def test_inline_maths_is_not_a_display(self, tmp_path):
+        out = self.out(tmp_path, 'text (§ eq.one|inl §) more\n')
+        assert 'text $a = b$ more' in out, out
+
+    def test_a_hand_written_block_is_left_alone(self, tmp_path):
+        """The pass reads tags, not `$$` -- so the 570 one-line displays in the tree do not move."""
+        out = self.out(tmp_path, 'lead $$ x = 1. $$ trail\n')
+        assert 'lead $$ x = 1. $$ trail' in out, out
+
+    def test_a_commented_delimiter_is_left_alone(self, tmp_path):
+        """`Convertor.pre_regexes` deletes a `%` line whole; splitting one strands a live `$$`."""
+        out = self.out(tmp_path, '%$$ x = 1. $$\n')
+        assert '%$$ x = 1. $$' in out, out

@@ -338,3 +338,31 @@ class TestSpacing:
         import yaml
         with open('core/i18n/default.yaml') as f:
             assert 'typography' not in yaml.safe_load(f)
+
+
+class TestCrossrefLabelSurvives:
+    r"""
+    A label that pandoc did not read as an attribute is typeset as text, and refused here.
+
+    Pandoc accepts `{#eq:…}` only when whitespace or the end of the block follows it. Glue a word
+    to it and the attribute degrades to literal `\{\#eq:…\}`: the equation loses its number, its
+    `\label`, and every `[-@eq:…]` that points at it. `22/hop/hu` printed `{#eq:hop:vxvvxgd}` into
+    the Hungarian booklet that way.
+
+    `settle_display_tags` stops the renderer from producing one. This is the net under a block
+    somebody wrote by hand, which no check upstream can see, and it refuses the page rather than
+    printing the label.
+    """
+
+    BLOCK = 'lead\n$$\n    a = b.\n$$ {#eq:x:y}'
+
+    def test_a_good_label_passes(self, convert):
+        assert '\\label{eq:x:y}' in convert('latex', 'sk', self.BLOCK + '\n')
+
+    def test_a_label_with_a_word_glued_to_it_is_refused(self, convert):
+        with pytest.raises(Exception, match='typeset as text'):
+            convert('latex', 'sk', self.BLOCK + 'trail\n')
+
+    def test_a_label_followed_by_a_space_is_fine(self, convert):
+        """The space is the whole difference -- do not refuse the form that works."""
+        assert '\\label{eq:x:y}' in convert('latex', 'sk', self.BLOCK + ' trail\n')

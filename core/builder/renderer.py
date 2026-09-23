@@ -3,6 +3,7 @@ import argparse
 import logging
 import numbers
 import pprint
+import re
 from abc import ABC
 from io import TextIOWrapper
 from pathlib import Path
@@ -19,6 +20,71 @@ from core.builder.jinja import MarkdownJinjaRenderer
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
+
+
+#: The filters whose output is a display block: `disp`, `align`, `arr` and the shorthands that
+#: only add a punctuation mark. `inl` is deliberately absent -- inline maths belongs in its
+#: sentence.
+DISPLAY_FILTERS = ('disp', 'align', 'arr')
+
+#: A Markdown list marker, whose width a continuation line has to match.
+RE_LIST_MARKER = re.compile(r'[ \t]*(?:[-*+]|\d+[.)])[ \t]+')
+
+#: A Jinja tag whose filter chain reaches one of those. The `|` is required, so an argument that
+#: merely contains the word -- `default('disp')` -- is not mistaken for a filter.
+RE_DISPLAY_TAG = re.compile(
+    r'\(§(?:(?!§\)).)*\|[ \t]*(?:' + '|'.join(DISPLAY_FILTERS) + r')[a-z]*\b(?:(?!§\)).)*§\)',
+    re.DOTALL)
+
+
+def settle_display_tags(template: str) -> str:
+    r"""
+    Put every display tag on a line of its own, and only where it is not on one already.
+
+    `(§ eq.x|disp §)` splices `$$\n    …\n$$ {#eq:x}` in exactly where the tag stood, so a tag
+    that shares its line hands the delimiters to prose. Seven of the eight places that do this
+    survive -- pandoc recovers and the TeX is unchanged -- but `22/hop/hu` writes
+    `(§ eq.vxvvxgd|disp(',') §)amelynek`, and pandoc accepts a display attribute only when
+    whitespace or the end of the block follows its closing brace. A letter follows, so the
+    `{#eq:hop:vxvvxgd}` is set as literal text and the equation loses its number and its label.
+    The Hungarian booklet has been printing it.
+
+    On the template rather than on the render, because here a display block is a *tag* and
+    unambiguous. Afterwards it is a `$$`, and telling one apart from the 570 one-line displays
+    authors write by hand, from the eight commented-out `%$$`, and from two abutting inline spans
+    is a parsing problem nobody needs.
+
+    **Begins its line, not preceded by a newline.** `28/tetristor` writes
+    `(§ eq.r1|disp('.')|indent(4) §)` four spaces into a bullet: the character before the tag is a
+    space, so the naive test fires, leaves a whitespace-only line behind and drops the block to
+    column 0 -- out of the list, which is the failure `indent(4)` exists to prevent. A break also
+    carries the line's own indentation, so a block split inside a list item stays in it.
+    """
+    def settle(line: str) -> str:
+        matches = list(RE_DISPLAY_TAG.finditer(line))
+        if not matches:
+            return line
+        # What a continuation line has to start with to stay where it is. A list item's marker
+        # counts as indentation: split `-   text (§ eq|disp §)` to column 0 and the block leaves
+        # the item.
+        marker = RE_LIST_MARKER.match(line)
+        indent = ' ' * len(marker.group()) if marker else line[:len(line) - len(line.lstrip(' \t'))]
+        out, last = [], 0
+        for match in matches:
+            between = line[last:match.start()]
+            if last == 0:
+                out.append(between.rstrip() + '\n' + indent if between.strip() else between)
+            elif between.strip():
+                out.append('\n' + indent + between.strip() + '\n' + indent)
+            else:
+                out.append('\n' + indent)
+            out.append(match.group())
+            last = match.end()
+        rest = line[last:]
+        out.append('\n' + indent + rest.strip() if rest.strip() else rest)
+        return ''.join(out)
+
+    return '\n'.join(settle(line) for line in template.split('\n'))
 
 
 class JinjaConvertor:
@@ -57,10 +123,12 @@ class JinjaConvertor:
         self.renderer = MarkdownJinjaRenderer(root=self.root)
 
     def run(self):
+        # Before each pass, not only the first: a `blocks:` or `eq:` value the first pass expands
+        # can itself hold a display tag, and it arrives in the intermediate.
         # First pass: expand all equations and values
-        intermediate = self.renderer.render(self.template, self.context.data)
+        intermediate = self.renderer.render(settle_display_tags(self.template), self.context.data)
         # Second pass: expand all tags within equations
-        return self.renderer.render(intermediate, self.context.data)
+        return self.renderer.render(settle_display_tags(intermediate), self.context.data)
 
 
 class NameCollisionError(Exception):

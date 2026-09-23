@@ -129,11 +129,17 @@ class DoubleDollars:
         if search := self.re_dollars_ref_missing_space.search(line):
             raise exceptions.SingleLineError('Reference missing a space', line, search.start() + 4)
 
+        # `$${` and `}$$` are no longer whitelisted: the shorthand is deprecated, and saying so
+        # here is the point. They are still *rewritten* by `Convertor.pre_regexes`, so a file that
+        # uses one still builds -- this reports it, it does not break it.
+        if search := self.re_dollars_curly_open.match(line) or self.re_dollars_curly_close.match(line):
+            raise exceptions.SingleLineError(
+                'The `$${ … }$$` shorthand is deprecated; write \\begin{aligned} inside a plain '
+                '$$ block', line, search.start())
+
         if self.re_only_dollars.match(line) \
             or self.re_dollars_ref.match(line) \
-            or self.re_dollars_footnote.match(line) \
-            or self.re_dollars_curly_open.match(line) \
-            or self.re_dollars_curly_close.match(line):
+            or self.re_dollars_footnote.match(line):
             return
 
         if search := self.re_aligned_begin.search(line):

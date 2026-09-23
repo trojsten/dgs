@@ -63,7 +63,7 @@
                             (@ if transport.arrival is defined @)((* transport.arrival *))(@ endif @)
                             (* transport.place.nominative *)
                             (@ if transport.departure is defined @)((* transport.departure *))(@ endif @)%
-                        (@ if 'vehicle' in transport @) $\quad\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\ (* transport.vehicle *)\ }}}\quad$ (@ endif @)
+                        (@ if 'vehicle' in transport @) $\quad\xrightarrow{\raisebox{-4mm}{\footnotesize\text{~(* transport.vehicle *)~}}}\quad$ (@ endif @)
                     (@ endfor @)%
                     (@ if not loop.last @)\\(@ endif @)%
                 (@ endfor @)
@@ -73,7 +73,7 @@
                         (@ if transport.arrival is defined @)((* transport.arrival *))(@ endif @)
                         (* transport.place.nominative *)
                         (@ if transport.departure is defined @)((* transport.departure *))(@ endif @)%
-                        (@ if 'vehicle' in transport @) $\quad\xrightarrow{\raisebox{-4mm}{\footnotesize\text{\ (* transport.vehicle *)\ }}}\quad$ (@ endif @)
+                        (@ if 'vehicle' in transport @) $\quad\xrightarrow{\raisebox{-4mm}{\footnotesize\text{~(* transport.vehicle *)~}}}\quad$ (@ endif @)
                     (@ endfor @)%
                     (@ if not loop.last @)\\(@ endif @)%
                 (@ endfor @)

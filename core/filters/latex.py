@@ -262,9 +262,14 @@ def math_aligned(math: MathObject, punct: str = '') -> str:
     Display inside an \aligned{} environment with a label, optionally with
     trailing punctuation.
 
+    The same shape as `arr`: `\begin{aligned}` four spaces in, where `disp` puts its content,
+    and the rows eight. It used to emit the `$${ … }$$` shorthand and leave the convertor's
+    per-line regexes to rewrite it; that shorthand is for authors, not for a filter that already
+    knows what it means.
+
     Usage in templates:
-        (* eq | align *)         →  $${\n    a &= b\n}$$ {#eq:id}
-        (* eq | align('.') *)    →  $${\n    a &= b.\n}$$ {#eq:id}
+        (* eq | align *)         →  $$\n    \begin{aligned}\n        a &= b\n    \end{aligned}\n$$ {#eq:id}
+        (* eq | align('.') *)    →  … with the stop on the last row, inside the environment
     """
     return f"{math:align{punct}}"
 

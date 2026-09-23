@@ -237,11 +237,11 @@ class TestMathFilters:
 
     def test_align_no_arg(self, renderer, context):
         result = renderer.render('(§ multi | align §)', context)
-        assert '    b &= 2c\n}$$' in result
+        assert '        b &= 2c\n    \\end{aligned}' in result
 
     def test_align_with_period(self, renderer, context):
         result = renderer.render('(§ multi | align(".") §)', context)
-        assert '    b &= 2c.\n}$$' in result
+        assert '        b &= 2c.\n    \\end{aligned}' in result
 
     def test_invalid_punctuation_rejected(self, renderer, context):
         """An unsupported punctuation char is reported with a friendly message."""
@@ -293,8 +293,10 @@ class TestMathPunctuationShorthands:
 
     @pytest.mark.parametrize("shorthand,punct", ALIGN_SHORTHANDS)
     def test_align_shorthand(self, renderer, context, shorthand, punct):
-        assert renderer.render(f'(§ multi | {shorthand} §)', context) == \
-               f'$${{\n    a &= b + c \\\\\n    b &= 2c{punct}\n}}$$ {{#eq:e2}}'
+        assert renderer.render(f'(§ multi | {shorthand} §)', context) == (
+            '$$\n    \\begin{aligned}\n'
+            f'        a &= b + c \\\\\n        b &= 2c{punct}\n'
+            '    \\end{aligned}\n$$ {#eq:e2}')
 
     @pytest.mark.parametrize("shorthand,punct", DISP_SHORTHANDS)
     def test_disp_shorthand_matches_explicit(self, renderer, context, shorthand, punct):
@@ -325,8 +327,25 @@ class TestMathPunctuationShorthands:
 
     def test_disp_shorthand_is_not_align(self, renderer, context):
         """`disp*` must not be wired to math_aligned (or vice versa)."""
-        assert renderer.render('(§ eq | dispd §)', context).startswith('$$\n')
-        assert renderer.render('(§ multi | alignd §)', context).startswith('$${\n')
+        assert '\\begin{aligned}' not in renderer.render('(§ eq | dispd §)', context)
+        assert '\\begin{aligned}' in renderer.render('(§ multi | alignd §)', context)
+
+    def test_align_and_array_agree_on_their_shape(self, renderer, context):
+        """
+        `align` and `arr` are the same idea with a different environment, so they indent alike:
+        the `\\begin` four spaces in, where `disp` puts its content, and the rows eight.
+
+        `align` used to emit the `$${ … }$$` shorthand and leave `Convertor.pre_regexes` to
+        rewrite it per line on the way to pandoc. It says what it means now.
+        """
+        aligned = renderer.render('(§ multi | align §)', context).splitlines()
+        array = renderer.render("(§ multi | arr('rcl') §)", context).splitlines()
+        assert aligned[0] == array[0] == '$$'
+        assert aligned[1].startswith('    \\begin{aligned}')
+        assert array[1].startswith('    \\begin{array}')
+        assert aligned[-2] == '    \\end{aligned}'
+        assert array[-2] == '    \\end{array}'
+        assert aligned[2].startswith('        ') and array[2].startswith('        ')
 
     @pytest.mark.parametrize("shorthand", [p.values[0] for p in DISP_SHORTHANDS + ALIGN_SHORTHANDS])
     def test_shorthand_takes_no_argument(self, renderer, context, shorthand):

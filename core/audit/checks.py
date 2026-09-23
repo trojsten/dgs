@@ -583,17 +583,32 @@ def block_indent(sources):
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
-@check('aligned-longhand', 'warning', r'\begin{aligned} where $${ … }$$ is meant')
-def aligned_longhand(sources):
+@check('aligned-shorthand', 'warning', r'$${ … }$$ where \begin{aligned} is meant')
+def aligned_shorthand(sources):
+    r"""
+    The `$${ … }$$` shorthand, which is on its way out.
+
+    It is a custom extension: no Markdown reader knows it, and it only works because
+    `Convertor.pre_regexes` rewrites the two delimiters into `\begin{aligned}` and `\end{aligned}`
+    with a pair of per-line regexes on the way to pandoc. Two more lines of local dialect for a
+    form that `\begin{aligned}` says in standard LaTeX, and the rewrite is line-oriented, so it is
+    fragile in exactly the ways a line-oriented rewrite always is.
+
+    `|align` stopped emitting it -- `MathObject` writes the longhand directly now, the same shape
+    as `arr`. This reports the 351 places that still write it by hand. The rewrite regexes stay
+    until those are gone, so nothing is broken meanwhile; a finding here is a file to convert, not
+    a file that fails.
+
+    This check used to say the opposite -- it reported `\begin{aligned}` and asked for `$${`.
+    """
     for unit in sources.unit_list:
         for lang, name, text in unit.files():
             for m in blocks_of(text):
-                if not m['open'] and r'\begin{aligned}' in m['body']:
-                    yield Finding('aligned-longhand', 'warning',
-                                  '`convertor.py` rewrites `$${` into `$$\\n\\begin{aligned}`, so '
-                                  'the two give identical TeX -- but `MathObject` has a separate '
-                                  'format spec for each, so the same equation in two spellings '
-                                  'reads as two equations',
+                if m['open']:
+                    yield Finding('aligned-shorthand', 'warning',
+                                  'the `$${ … }$$` shorthand is deprecated: write '
+                                  '`\\begin{aligned}` and `\\end{aligned}` inside a plain `$$` '
+                                  'block, which is what the convertor rewrites it into anyway',
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 

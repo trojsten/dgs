@@ -180,14 +180,22 @@ class TestMaths:
         files = {'sk': {'solution.md': '$${\n    a &= b \\\\\n        &= c\n}$$\n'}}
         assert 'block-indent' not in ids(run(tmp_path, files=files))
 
-    def test_aligned_longhand(self, tmp_path):
-        files = {'sk': {'solution.md':
-                        '$$\n\\begin{aligned}\n    a &= b\n\\end{aligned}\n$$\n'}}
-        assert 'aligned-longhand' in ids(run(tmp_path, files=files))
+    def test_aligned_shorthand(self, tmp_path):
+        """
+        `$${ … }$$` is a custom extension on its way out; `|align` no longer emits it.
 
-    def test_short_form_is_quiet(self, tmp_path):
+        This check said the opposite until the filter changed -- it reported the longhand and
+        asked for the shorthand, because `MathObject` had a format spec for each and the same
+        equation in two spellings read as two equations. There is one spelling now.
+        """
         files = {'sk': {'solution.md': '$${\n    a &= b\n}$$\n'}}
-        assert 'aligned-longhand' not in ids(run(tmp_path, files=files))
+        assert 'aligned-shorthand' in ids(run(tmp_path, files=files))
+
+    def test_the_longhand_is_quiet(self, tmp_path):
+        """What `|align` writes, and what the shorthand is rewritten into anyway."""
+        files = {'sk': {'solution.md':
+                        '$$\n    \\begin{aligned}\n        a &= b\n    \\end{aligned}\n$$\n'}}
+        assert 'aligned-shorthand' not in ids(run(tmp_path, files=files))
 
     def test_delimiter_indented(self, tmp_path):
         files = {'hu': {'solution.md': ' $$\n    a = b\n$$\n'}}
