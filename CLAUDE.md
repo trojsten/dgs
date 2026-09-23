@@ -413,6 +413,58 @@ solved sudoku's rows all sum to 45, and `28/balance-me` answers which two of nin
 are left over. None is the output of a calculation; all three carry
 `audit: {ignore: ['answer-literal']}` with the reason, and `value_status` honours that.
 
+### Inline maths drifts too
+
+Everything above is about display blocks, and inline spans have the same problem — worse, if
+anything, because a span buried in a sentence is where nobody looks. **An inline span worth
+hoisting is one that states a relation.** Concretely, `hoistable-inline` reports a span that,
+after `strip_maths_whitespace`, is written out in two or more of a problem's real files and
+
+- **carries a relation symbol** — `=`, `\doteq`, `\approx`, `\equiv`, `\propto`, or an
+  inequality `<`, `>`, `\leq`, `\geq`, `\neq`, `\simeq`, `\cong`, `\sim`, `\ll`, `\gg`. An
+  inequality is as much a statement as an equality: `$T_1 < T_H < T_2$` is a claim about the
+  problem, `$\frac{r}{2}$` is a noun. Arrows are deliberately *not* in the set — `\to` is a limit
+  (`\lim_{x \to 0}`) as often as it is a statement, and no regex tells the two apart;
+- **and is at least 15 characters.** `$a = b$` reads better where it stands. The median span in
+  the repository is 7 characters and 38 % are one to three, so the threshold is what separates a
+  statement from a symbol, not a long span from a short one. `inline-long` at 90 is a different
+  question — source readability of one span — and the two barely overlap.
+
+Three things are excluded because each has its own home, and hoisting them would put the value in
+the wrong one:
+
+| excluded | belongs in | spelled |
+|---|---|---|
+| a bare `\qty{3.0}{\metre}` | `values:` | `(§ x §)`, `(§ x\|f2 §)` |
+| `\alpha = \ang{45}` | `values:` | `(§ x.eq §)`, which picks `=` or `\approx` by `prints_exactly` |
+| `F_{\text{miska}} = Mg` | `words:` | `(§ words.bowl §)` |
+
+**`=` inside `[…]` is not a relation.** siunitx options are key–value — `\qty[per-mode = symbol]{…}`,
+`\qty[parse-numbers = false]{…}` — and counting those would have added 22 false positives across
+phys. The presence of such an option still means the span is doing something unusual and is worth
+a glance; it is just not a statement.
+
+**Spacing is the other half of the case.** `$a = b$` and `$a=b$` typeset identically, so nothing
+ever forced the two to agree, and across phys 40 of 355 candidates are already written both ways —
+`20/race` has `\frac{v_1}{v_2} = \frac{100}{80} = \frac{5}{4}` and the unspaced form of the same
+line. One `eq:` entry settles the spelling once, which is a reason to hoist over and above keeping
+the languages in step, and the check says so when it finds more than one spelling.
+
+The hoist itself is mechanical: the fragment moves into `eq:` under a key, every copy becomes
+`(§ eq.<key>|inl §)`, and **every language goes together**. Hoisting `sk` alone would leave `en`
+holding a literal copy of something that now also lives in the meta — three spellings instead of
+two, one of them indirect, which is worse than leaving it.
+
+Volume 29 is the worked set: 53 fragments across 19 problems, `sk` and `en` together, and every
+one of its files renders byte-identically before and after. That is the proof a
+hoist wants — `|inl` emits exactly `$…$` around the fragment, so anything that moves the output is
+a mistake. The one left alone is `29/order-mass`, whose `3 \cdot 16 = 48` is arithmetic done in a
+sentence rather than a named relation; it carries `audit: {ignore: ['hoistable-inline']}` saying
+so, the same way the `answer-literal` exemptions do.
+
+The check is silent outside the multilingual trees. `chem`, `seminar/FKS`, `scholar/TA1` and
+`fks-naboj` have one language and nothing to drift apart from.
+
 ## `$${ … }$$` is on its way out
 
 It was DGS's own shorthand for an aligned display, and it works only because

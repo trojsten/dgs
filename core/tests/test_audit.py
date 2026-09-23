@@ -1038,6 +1038,86 @@ class TestLabellingRule:
         assert len([f for f in report.findings if f.check == 'solution-unlabelled']) == 1
 
 
+class TestHoistableInline:
+    r"""
+    Inline maths written out in two languages of one problem.
+
+    `hoistable-equation` does this for display blocks but cannot reach inline maths: it groups by
+    the `{#eq:…}` label and inline maths has none, so the key here is the normalised body.
+
+    Half of these are the quiet cases, and they carry the rule. Most repeated inline maths is `$v$`
+    and `$m$` -- 70 % of distinct fragments in phys already appear in two or more languages -- so
+    what the check must get right is everything it declines to report.
+    """
+
+    def two(self, tmp_path, sk, en):
+        return ids(run(tmp_path, files={'sk': {'solution.md': sk}, 'en': {'solution.md': en}}))
+
+    # ------------------------------------------------------------------ it fires
+
+    def test_the_same_statement_in_two_languages(self, tmp_path):
+        span = 'teda $F_g = mg \\sin \\alpha$ a potom\n'
+        assert 'hoistable-inline' in self.two(tmp_path, span, span)
+
+    def test_an_inequality_is_a_statement_too(self, tmp_path):
+        span = 'teda $T_1 < T_H < T_2$ a potom\n'
+        assert 'hoistable-inline' in self.two(tmp_path, span, span)
+
+    def test_two_spellings_are_one_fragment_and_say_so(self, tmp_path):
+        """
+        `$a = b$` and `$a=b$` are the same maths, and that they are written both ways is the
+        argument for hoisting rather than an obstacle to it.
+        """
+        report = run(tmp_path, files={
+            'sk': {'solution.md': 'teda $F_g = mg \\sin \\alpha$ tu\n'},
+            'en': {'solution.md': 'so $F_g=mg\\sin\\alpha$ here\n'}})
+        found = [f for f in report.findings if f.check == 'hoistable-inline']
+        assert len(found) == 1, found
+        assert '2 spellings' in found[0].message
+
+    # ------------------------------------------------------------------ it stays quiet
+
+    def test_one_copy_is_not_hoistable(self, tmp_path):
+        assert 'hoistable-inline' not in self.two(
+            tmp_path, 'teda $F_g = mg \\sin \\alpha$ tu\n', 'nothing here\n')
+
+    def test_a_short_span_is_quiet(self, tmp_path):
+        """`$a = b$` is seven characters and `(§ eq.ab|inl §)` is fifteen."""
+        assert 'hoistable-inline' not in self.two(tmp_path, 'so $a = b$ x\n', 'so $a = b$ x\n')
+
+    def test_an_siunitx_option_is_not_a_relation(self, tmp_path):
+        r"""`\qty[per-mode = symbol]{…}` is a key and a value, not a statement."""
+        span = 'so $\\qty[per-mode = symbol]{2.2e-11}{\\metre\\per\\second}$ x\n'
+        assert 'hoistable-inline' not in self.two(tmp_path, span, span)
+
+    def test_a_literal_quantity_belongs_in_values(self, tmp_path):
+        """`(§ x.eq §)` prints `symbol = value` and picks the relation by `prints_exactly`."""
+        span = 'so $\\alpha = \\ang{45.000}$ x\n'
+        assert 'hoistable-inline' not in self.two(tmp_path, span, span)
+
+    def test_a_translated_subscript_belongs_in_words(self, tmp_path):
+        """
+        The judgement `hoistable-equation` already makes: an undeclared subscript abbreviating a
+        prose word is *meant* to follow the language, so hoisting it would be wrong.
+        """
+        assert 'hoistable-inline' not in self.two(
+            tmp_path, 'teda $F_{\\text{miska}} = Mg$ tu\n', 'so $F_{\\text{bowl}} = Mg$ here\n')
+
+    def test_a_mirrored_translation_is_not_a_second_copy(self, tmp_path):
+        span = 'teda $F_g = mg \\sin \\alpha$ tu\n'
+        make_problem(tmp_path, name='widget',
+                     files={'sk': {'problem.md': 'a', 'solution.md': span},
+                            'cs': {'problem.md': 'a'}})
+        root = tmp_path / 'phys' / '99' / 'problems' / 'widget'
+        (root / 'cs' / 'solution.md').symlink_to('../sk/solution.md')
+        report = audit(tmp_path, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'hoistable-inline' not in ids(report)
+
+    def test_a_display_block_is_not_read_as_inline(self, tmp_path):
+        block = '$$\n    F_g = mg \\sin \\alpha\n$$ {#eq:widget:g}\n'
+        assert 'hoistable-inline' not in self.two(tmp_path, block, block)
+
+
 class TestInlineLength:
     """Long inline maths is worth hoisting; ordinary inline maths is not, and there is a lot of it."""
 

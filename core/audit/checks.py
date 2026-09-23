@@ -1206,6 +1206,45 @@ RE_INLINE = re.compile(r'(?<!\$)\$(?!\$)((?:[^$\n]|\\\$)+)\$(?!\$)')
 INLINE_LONG = 90
 
 
+#: A binary relation: what makes a fragment a *statement* rather than an expression, and so the
+#: thing that can be right in one language and wrong in another. Inequalities count -- `T_1 < T_H`
+#: asserts as much as `a = b` does.
+#:
+#: Arrows are deliberately absent. `\to` is a limit in `\lim_{x \to 0}` as often as it is a
+#: relation, and telling those apart needs more than a regex.
+RE_RELATION = re.compile(
+    r'(?<!\\)[=<>]'
+    r'|\\(?:doteq|approx|equiv|propto|leq|geq|neq|simeq|cong|ll|gg)\b'
+    r'|\\sim(?![a-z])'
+)
+
+#: siunitx options are key-value, so the `=` in `\qty[per-mode = symbol]{…}` is not a relation.
+#: 22 fragments in phys are nothing but that. A fragment carrying options is unusual in its own
+#: right, but it is unusual in a way this check has no opinion about.
+RE_SI_OPTIONS = re.compile(r'\[[^\]]*\]')
+
+#: A fragment that *is* a quantity, or has a literal one on the right of the relation. Both belong
+#: in `values:`, not `eq:`: `(§ x §)` prints the value and `(§ x.eq §)` the `symbol = value` form,
+#: choosing `=` or `\approx` by whether the printed figures are the whole truth.
+RE_BARE_QUANTITY = re.compile(r'^\s*\\(?:qty|num|ang|qtyrange|numrange|numlist|qtylist)\b')
+RE_QUANTITY_RHS = re.compile(r'=\s*\\(?:qty|num|ang)\b')
+
+#: Shorter than this and the tag costs more than it saves: `$a = b$` is seven characters and
+#: `(§ eq.ab|inl §)` is fifteen. Measured on the population -- at 12 the marginal cases are still
+#: in (`b = -\frac{1}{2}`), at 15 they are not, and it makes the difference between 381 and 345
+#: candidates in phys.
+INLINE_HOISTABLE = 15
+
+
+def hoistable_fragment(body: str) -> bool:
+    """Whether an inline span is the kind of thing an `eq:` entry should hold."""
+    return (len(body.strip()) >= INLINE_HOISTABLE
+            and bool(RE_RELATION.search(RE_SI_OPTIONS.sub('', body)))
+            and not RE_BARE_QUANTITY.match(body)
+            and not RE_QUANTITY_RHS.search(body)
+            and not MATH_MACROS_WITH_TEXT.search(body))
+
+
 def without_blocks(text):
     """The text with every display block blanked, so inline maths can be found in what is left."""
     out, last = [], 0
@@ -1344,6 +1383,63 @@ def hoistable_equation(sources):
                               f"`{key}` appears in {len(places)} files in {len(variants)} "
                               f"variants, so it cannot be hoisted as it stands",
                               unit.path, ' '.join(places))
+
+
+@check('hoistable-inline', 'info', 'Inline maths written out in more than one language')
+def hoistable_inline(sources):
+    r"""
+    The same inline statement in two languages of one problem is two copies, and copies drift.
+
+    `hoistable-equation` next door does this for display blocks, but it cannot be extended to
+    reach inline maths: it groups by the `{#eq:…}` label, and inline maths has none. The grouping
+    key here is the normalised body instead, which is what `strip_maths_whitespace` is for --
+    `$a = b$` and `$a=b$` are one fragment, and the `\text{}` carve-out means a translated
+    subscript still registers as a difference rather than being normalised away.
+
+    **Where the line falls.** A relation and at least fifteen characters, which is the point at
+    which a tag is shorter than what it replaces. Not every repeated span: 70 % of distinct
+    fragments in phys already appear in two or more languages, because most of them are `$v$` and
+    `$m$`. Not length alone either -- `inline-long` covers that at 90 characters, and it is asking
+    a different question, about one span's readability rather than about duplication.
+
+    Three kinds are left out because they have a better home than `eq:`: a bare `\qty` and a
+    `symbol = \qty` are `values:` entries, and a fragment carrying a `\text{}` word is a `words:`
+    one. The last is the same judgement `hoistable-equation` makes and for the same reason -- an
+    undeclared subscript abbreviating a prose word is *meant* to follow the language.
+
+    Informational, like both neighbours: CLAUDE.md is explicit that hoisting "is not worth any
+    cost", and whether a span reads better inline is the author's call. The check says where to
+    look, and says it loudest where the copies have already diverged in spelling -- 40 of the 355
+    candidates in phys are written one way in one language and another in the next, which is the
+    drift this is meant to catch before it reaches the physics.
+    """
+    for unit in sources.unit_list:
+        spans = defaultdict(lambda: {'places': [], 'spellings': set()})
+        for lang, name, text in unit.files():
+            # by real file: a mirrored translation is one file reached by two names
+            place = unit.real_label(lang, name)
+            for m in RE_INLINE.finditer(without_blocks(text)):
+                body = m.group(1)
+                if not hoistable_fragment(body):
+                    continue
+                found = spans[strip_maths_whitespace(body)]
+                found['spellings'].add(body.strip())
+                if place not in found['places']:
+                    found['places'].append(place)
+        for body, found in sorted(spans.items()):
+            places, spellings = found['places'], found['spellings']
+            if len(places) < 2:
+                continue
+            shown = sorted(spellings)[0]
+            shown = shown if len(shown) <= 60 else shown[:57] + '…'
+            if len(spellings) > 1:
+                message = (f"`{shown}` is written out in {len(places)} files in "
+                           f"{len(spellings)} spellings; one `eq:` entry with `|inl` would "
+                           f"settle it")
+            else:
+                message = (f"`{shown}` is written out in {len(places)} files; it could be one "
+                           f"`eq:` entry referenced with `|inl`")
+            yield Finding('hoistable-inline', 'info', message, unit.path, ' '.join(places))
 
 
 @check('file-empty', 'error', 'A source file exists but has no content')
