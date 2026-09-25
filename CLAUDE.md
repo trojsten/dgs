@@ -670,6 +670,41 @@ and after. Reading through a symlink is safe; writing is not.
   documented way to pass LaTeX through verbatim — so the first sign of trouble is `derived:`
   reporting `unsupported operand type(s) for /: 'str' and 'float'`, a long way from the cause.
   `27/kamiokande`'s neutrino flux is the worked example.
+- **Spell a unit the way pint spells it**, because `values:` and `derived:` render through pint
+  and anything else blocks a hoist. Three pairs, all of them identical on the page -- a probe
+  compiled against `dgs.cls` prints `150 kg` and `1000 kg/m3 5 m2` from either side -- so this is
+  a source convention, not a typographic one:
+
+  | write | not |
+  |---|---|
+  | `\kilo\gram` | `\kilogram`, and likewise any unit siunitx also offers as one macro |
+  | `\metre\cubed`, `\metre\squared` | `\cubic\metre`, `\square\metre` |
+  | `\metre` | `\meter` |
+
+  The cost of getting it wrong is invisible until you try to hoist: a solution writing
+  `\qty{1000}{\kilo\gram\per\cubic\metre}` cannot be pointed at the value holding that same
+  number, because the rendered output moves and the byte-identity gate refuses it. `21/moonshine`
+  is the worked example -- once respelled, its four languages' literal water density became
+  `(§ const.density_water.approx §)`. `20/see-the-sun` had `\metre` in `sk` and `\meter` in `en`
+  and `hu`, which is the same defect wearing a different hat.
+
+  phys and chem are clean. The 35 in `seminar` and 32 in `fks-naboj` are not ours to touch.
+
+> **Which way round a compound unit's denominators go is unresolved, and deliberately parked.**
+> pint normalises `kJ/(kg·K)` to `kJ·K⁻¹·kg⁻¹`, so it prints **`kJ/(K kg)`** where an author
+> writing the unit by hand prints `kJ/(kg K)`. Unlike `\kilogram` above this is *not* cosmetic:
+> `per-mode` is set to a fraction, so the symbols genuinely swap places on the page.
+>
+> The cost today is two literals, and they are the same literal. `11/pudding` and
+> `18/shower-heater` both write `\qty{4.2}{...}` and `\qty{4180}{...}` for water's heat capacity
+> while `values.c` holds the same number, and in each it is the only number in the problem still
+> written out twice -- everything else in both is hoisted. Any problem whose `values:` carries a
+> compound unit with two denominators will hit the same wall.
+>
+> Settling it means choosing whether the booklet prints pint's order or the author's, and if the
+> author's, giving the quantity a way to say so. Not urgent; do not silently reorder a printed
+> unit to make a hoist go through.
+
 - **How to spell a fraction — four tiers, in order.**
   1. **A Unicode vulgar glyph**, wherever the fraction is a standalone value, and
      above all in a mixed number: `33\OneThird`, `666\TwoThirds`. `core/latex/math.tex`
