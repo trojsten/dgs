@@ -1,4 +1,5 @@
 import datetime
+import getpass
 import os
 from pathlib import Path
 
@@ -32,6 +33,23 @@ def valid_tag(tag: str):
         'blackbody',      # blackbody radiation
         'nuclear',        # nuclear physics
     ]
+
+
+def building_user():
+    """
+    Who built this, for the impressum -- and never None.
+
+    `USERNAME` alone was wrong: it is a Windows convention, and on Linux it is set by zsh but not
+    by bash, so the build worked or failed depending on the builder's shell. In a container
+    neither variable exists and the schema (`'user': And(str, len)`) then rejected None, which is
+    how this was found. `getpass.getuser()` consults LOGNAME, USER, LNAME and USERNAME in turn
+    and falls back to the password database; it can still raise where there is no entry for the
+    uid, which a container run with `--user` is exactly the case for.
+    """
+    try:
+        return getpass.getuser()
+    except (KeyError, OSError):
+        return os.environ.get('USER') or 'unknown'
 
 
 class ContextNaboj(FileSystemTreeContext):
@@ -89,7 +107,7 @@ class ContextNaboj(FileSystemTreeContext):
         """
         self.add(
             build={
-                'user': os.environ.get('USERNAME'),
+                'user': building_user(),
                 'dgs': {
                     'hash': get_last_commit_hash(),
                     'branch': get_branch(),

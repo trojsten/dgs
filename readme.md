@@ -19,3 +19,17 @@ The authors would like to express gratitude to
 - Christian Tellechea for `chemfig`, which allowed Náboj Chemistry to escape the Microsoft hell;
 - Sebastian Schubert for `FontPro`, which did the same for the seventh circle of Computer Modern.
 - Hernan Grecco for `pint`, which finally solved the long-standing problems of physics templating.
+
+## Installing
+
+There is a container, which is the short way: `sudo apt install podman`, then
+`./dgs-container build && ./dgs-container editor`. Otherwise see [install.md](install.md). The toolchain comes in three tiers and you probably do not need all
+of them: editing, rendering Markdown and the `/audit` page cost a `pip install`, while TeX needs
+pandoc and only the PDF needs TeX Live and the MinionPro build. The editor greys out whatever this
+machine cannot do and says what would fix it; `uv run python tools/editor/capabilities.py` reports
+the same thing from the command line.
+
+Note that a fresh clone has an **empty `source/`**: the content lives in separate repositories
+that are not submodules of this one, so there is no `git submodule` step. install.md lists them,
+and so does the editor when it finds nothing to edit.
+

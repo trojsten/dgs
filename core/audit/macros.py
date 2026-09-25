@@ -108,11 +108,19 @@ def collect(source_root: Path) -> set:
     return found
 
 
+#: Written by the probe as its last act; see `probe_source`.
+SENTINEL = 'DGSPROBE: complete'
+
+
 def probe_source(names) -> str:
     r"""A document that asks `\ifcsname` about each name and says nothing about the ones that are."""
     body = '\n'.join(rf'\ifcsname {name}\endcsname\else\typeout{{DGSUNDEF: {name}}}\fi'
                      for name in sorted(names))
-    return f"\\documentclass[12pt]{{dgs}}\n\\begin{{document}}\n{body}\nx\n\\end{{document}}\n"
+    return (f"\\documentclass[12pt]{{dgs}}\n\\begin{{document}}\n{body}\nx\n"
+            # Printed last, so its absence from the log means the run never got here -- no
+            # xelatex, no dgs.cls, no MinionPro.sty. Without it a failed compile produces a log
+            # with no DGSUNDEF lines, which is indistinguishable from a clean sweep.
+            f"\\typeout{{{SENTINEL}}}\n\\end{{document}}\n")
 
 
 def run_xelatex(repo_root: Path, path: Path) -> str:
@@ -122,10 +130,13 @@ def run_xelatex(repo_root: Path, path: Path) -> str:
     From the repository root, because `dgs.cls` reaches its pieces by relative path and
     `~/texmf/tex/latex/dgs.cls` is a symlink into the tree, so the class asked is this working copy.
     """
-    subprocess.run(
-        ['xelatex', '-interaction=nonstopmode', f'-output-directory={path.parent}', str(path)],
-        cwd=repo_root, capture_output=True, text=True, check=False,
-    )
+    try:
+        subprocess.run(
+            ['xelatex', '-interaction=nonstopmode', f'-output-directory={path.parent}', str(path)],
+            cwd=repo_root, capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        return ''          # no xelatex: `sweep` sees no sentinel and refuses to cache
     log = path.with_suffix('.log')
     return log.read_text(errors='replace') if log.is_file() else ''
 
@@ -156,8 +167,20 @@ def sweep(repo_root: Path = REPO_ROOT, *, source_root: Path = None, run=run_xela
     probe.parent.mkdir(parents=True, exist_ok=True)
     probe.write_text(probe_source(names))
     log = run(repo_root, probe)
+    if SENTINEL not in log:
+        # Do not write a cache. `undefined_names` returns nothing when there is none, and
+        # "no sweep, no findings" is honest; caching an empty `undefined` here would instead
+        # report a clean tree on a machine that cannot compile at all.
+        return {
+            'ran': False,
+            'reason': ('xelatex did not complete the probe -- it may be missing, or `dgs.cls` '
+                       'or `MinionPro.sty` may not be installed'),
+            'asked': len(names),
+            'log_tail': '\n'.join(log.splitlines()[-15:]),
+        }
     reported = {name for name in RE_REPORTED.findall(log)} - set(IGNORED)
     payload = {
+        'ran': True,
         'ran_at': started,
         'duration': round(time.time() - started, 1),
         'fingerprint': fingerprint(repo_root, names),

@@ -18,6 +18,7 @@ const state = {
   overview: [],
   scope: null,         // {module, scope} currently open
   detail: null,        // the last /api/audit/scope response
+  caps: null,          // what this machine can do, from /api/capabilities
   hideInfo: true,
   //: 'meta' follows the volume meta's `problems:` list -- the running order, easiest first, and
   //: what the builder iterates. 'alpha' is for finding one problem by name.
@@ -292,7 +293,7 @@ async function openScope(module, scope) {
   const hash = `#${module}/${scope}`;
   if (location.hash !== hash) history.replaceState(null, "", hash);
   el("detail-title").textContent = `${module} / ${scope}`;
-  el("build-btn").disabled = false;
+  el("build-btn").disabled = el("build-btn").dataset.unavailable === "1";
   el("detail-body").innerHTML = "";
   el("detail-body").appendChild(node("p", "placeholder", "Reading…"));
   renderOverview();
@@ -700,6 +701,10 @@ async function runBuildChecks() {
   setStatus("building — this takes minutes", "busy");
   try {
     const build = await fetchJSON(`/api/audit/build/${module}/${scope}`, { method: "POST" });
+    if (build.ran === false) {
+      setStatus(build.reason, "error");
+      return;
+    }
     state.detail.build = build;
     renderBuildState(build);
     renderDetail();
@@ -709,7 +714,7 @@ async function runBuildChecks() {
   } catch (e) {
     setStatus(e.message, "error");
   } finally {
-    el("build-btn").disabled = false;
+    el("build-btn").disabled = el("build-btn").dataset.unavailable === "1";
   }
 }
 
@@ -725,6 +730,12 @@ async function runMacroSweep() {
   setStatus("asking TeX about every macro in the tree", "busy");
   try {
     const macros = await fetchJSON("/api/audit/macros", { method: "POST" });
+    if (macros.ran === false) {
+      // The sweep needs xelatex, dgs.cls and MinionPro.sty. It deliberately writes no cache when
+      // it cannot run, so there is nothing to render -- say why instead.
+      setStatus(macros.reason, "error");
+      return;
+    }
     if (state.detail) state.detail.macros = macros;
     renderMacroState({ ...macros, stale: false });
     if (state.scope) await openScope(state.scope.module, state.scope.scope);
@@ -733,7 +744,7 @@ async function runMacroSweep() {
   } catch (e) {
     setStatus(e.message, "error");
   } finally {
-    el("macro-btn").disabled = false;
+    el("macro-btn").disabled = el("macro-btn").dataset.unavailable === "1";
   }
 }
 
@@ -800,10 +811,36 @@ function wireErrorReporting() {
   });
 }
 
+/**
+ * Both buttons here shell out: the build checks run make all the way to a PDF, and the macro
+ * sweep needs xelatex. The source-only checks -- which is every other thing on this page -- need
+ * no toolchain at all, so the page stays fully useful on a machine that can do neither.
+ */
+async function applyCapabilities() {
+  let caps = null;
+  try {
+    caps = await fetchJSON("/api/capabilities");
+  } catch {
+    return;                      // a probe failure must not stop the audit page loading
+  }
+  state.caps = caps;
+  const pdf = (caps.tiers ?? []).find((tier) => tier.id === "pdf");
+  if (pdf && !pdf.ok) {
+    for (const id of ["build-btn", "macro-btn"]) {
+      const button = el(id);
+      if (!button) continue;
+      button.disabled = true;
+      button.title = `${pdf.reason}. See install.md.`;
+      button.dataset.unavailable = "1";
+    }
+  }
+}
+
 async function boot() {
   wireErrorReporting();
   wireResizer();
   el("refresh-btn").addEventListener("click", () => refresh());
+  await applyCapabilities();
   el("build-btn").addEventListener("click", runBuildChecks);
   el("macro-btn").addEventListener("click", runMacroSweep);
   el("hide-info").addEventListener("change", (e) => {

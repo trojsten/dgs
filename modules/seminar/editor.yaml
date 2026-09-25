@@ -12,3 +12,14 @@ units:
     targets: [problem, solution]
     render: 'render/seminar/{unit}/{target}.md'
     preview: 'output/seminar/{unit}/standalone.pdf'
+
+# Where this module's content comes from. `source/` is gitignored and holds no gitlinks -- these
+# are independent repositories, cloned in by hand -- so this list is the only record of what to
+# clone, and the editor shows it when it finds nothing to edit.
+sources:
+  - path: source/seminar/FKS
+    url: git@github.com:TrojstenSK/fks
+  - path: source/seminar/FX
+    url: git@github.com:TrojstenSK/FX-problems
+  - path: source/seminar/test
+    url: git@github.com:TrojstenSK/dgs-seminar-testing

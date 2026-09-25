@@ -9,6 +9,7 @@ render/scholar/%/$(1).md: \
 
 build/scholar/%/$(1).tex: \
 	render/scholar/$$*/$(1).md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 endef
@@ -88,16 +89,19 @@ build/scholar/%/build-lecture: \
 
 build/scholar/%/problem.tex: \
 	render/scholar/$$*/problem.md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
 build/scholar/%/solution.tex: \
 	render/scholar/$$*/solution.md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
 build/scholar/%/text.tex: \
 	render/scholar/$$*/text.md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 

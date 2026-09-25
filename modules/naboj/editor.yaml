@@ -34,3 +34,14 @@ units:
     translated: [problem, problem-extra, solution, answer-extra]
     render: 'render/naboj/{unit}/{language}/{target}.md'
     preview: 'output/naboj/{unit}/{language}/standalone.pdf'
+
+# Where this module's content comes from. `source/` is gitignored and holds no gitlinks -- these
+# are independent repositories, cloned in by hand -- so this list is the only record of what to
+# clone, and the editor shows it when it finds nothing to edit.
+sources:
+  - path: source/naboj/chem
+    url: git@github.com:TrojstenSK/naboj-chemistry
+  - path: source/naboj/phys
+    url: git@github.com:TrojstenSK/naboj-physics
+  - path: source/naboj/test
+    url: git@github.com:TrojstenSK/dgs-naboj-testing

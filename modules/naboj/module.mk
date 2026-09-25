@@ -25,6 +25,7 @@ render/naboj/%/$(1).md: \
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
@@ -41,6 +42,7 @@ render/naboj/%/$(1).md: \
 
 build/naboj/%/$(1).tex: \
 	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
@@ -57,6 +59,7 @@ render/naboj/%.gp:\
 
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@)))) \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(eval language := $(word 5,$(subst /, ,$*)))
 	$(call pandoctex,$(language))

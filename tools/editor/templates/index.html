@@ -44,9 +44,13 @@
 
     <section id="pane-output" class="pane">
       <div class="tabbar">
-        <button class="tab active" data-output="pdf">PDF</button>
-        <button class="tab" data-output="rendered">Rendered Markdown</button>
-        <button class="tab" data-output="lint">Lint (advisory)</button>
+        <!-- In pipeline order: Markdown is what Jinja produced, TeX what pandoc made of it,
+             PDF what xelatex made of that. PDF stays the tab that opens, being the finished
+             thing, but it now sits at the end of the chain it comes from. -->
+        <button class="tab" data-output="rendered" data-tier="markdown">Rendered Markdown</button>
+        <button class="tab" data-output="tex" data-tier="tex">TeX</button>
+        <button class="tab active" data-output="pdf" data-tier="pdf">PDF</button>
+        <button class="tab" data-output="lint" data-tier="markdown">Lint (advisory)</button>
         <button class="tab" data-output="log">Log</button>
         <a id="pdf-newtab" class="tab-link" href="#" target="_blank" rel="noopener">open in tab &#8599;</a>
       </div>
@@ -55,9 +59,16 @@
         <div id="pdf-placeholder" class="placeholder">Nothing compiled yet &mdash; press Ctrl/Cmd+Enter.</div>
       </div>
       <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
+      <pre id="output-tex" class="output" hidden><code id="output-tex-code"></code></pre>
+      <!-- Shown in place of a pane whose tier this machine cannot do. The tab stays clickable
+           on purpose: a `disabled` button swallows the click, which leaves a tooltip as the only
+           place to put three lines of install instructions. -->
+      <div id="output-unavailable" class="output unavailable-panel" hidden></div>
       <div id="output-lint" class="output" hidden></div>
       <pre id="output-log" class="output" hidden><code id="output-log-code"></code></pre>
     </section>
+    <!-- Shown instead of the grid when no module has a populated source/ tree. -->
+    <div id="empty-source" class="empty-source" hidden></div>
   </main>
 
   <script src="/static/highlight.js"></script>

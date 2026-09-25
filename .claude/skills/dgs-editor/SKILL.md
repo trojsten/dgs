@@ -19,6 +19,14 @@ uv run python tools/editor/app.py [--port 5001]
   leaderboard, tag distribution, files by language, and a verdict per problem for
   translations, equation de-duplication, pictures and `values:` extraction.
 
+**It degrades rather than failing.** The three output tabs are the pipeline's three stages --
+Rendered Markdown is Jinja and needs only make, TeX adds pandoc, the PDF adds all of TeX Live and
+the fonts -- and `tools/editor/capabilities.py` probes for each at startup. A stage this machine
+cannot do is greyed, and the pane behind it says what is missing and the command that fixes it, so
+a translator with no TeX Live can still check their own rendering. `install.md` has the tiers;
+`uv run python tools/editor/capabilities.py` prints the same report. `uv` is not required --
+without it the app calls `make` directly with its own interpreter's directory on `PATH`.
+
 It must run from the root, and it `chdir`s there itself: several `core` modules open
 their data by a repository-relative path, so `core/i18n` fails to import from anywhere
 else. Port 5000 is the default but is often taken.

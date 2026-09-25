@@ -27,6 +27,25 @@ class UnitKind:
     translated: tuple = ()       # the subset living inside <language>/ rather than beside it
     render: str = ""
     preview: str = ""
+    #: Only for a module whose `.tex` rule is not the usual one; normally empty and derived.
+    tex_override: str = ""
+
+    @property
+    def tex(self):
+        """
+        The make target that converts this file to TeX.
+
+        Derived from `render` rather than written out per module, because the relation is the
+        build system's own: every `.tex` rule in every `module.mk` reads
+        `build/<module>/%/<name>.tex: render/<module>/%/<name>.md`. Deriving it cannot drift,
+        whereas six hand-written keys across three descriptors -- scholar alone has four unit
+        kinds -- can. `tex_override` exists for a module that ever stops following the rule.
+        """
+        if self.tex_override:
+            return self.tex_override
+        if not self.render.startswith("render/") or not self.render.endswith(".md"):
+            return ""
+        return "build/" + self.render[len("render/"):-len(".md")] + ".tex"
 
     @property
     def fixed_levels(self):
@@ -88,6 +107,7 @@ def load_modules(repo_root: Path):
                     translated=tuple(entry.get("translated") or ()),
                     render=entry.get("render", ""),
                     preview=entry.get("preview", ""),
+                    tex_override=entry.get("tex", ""),
                 )
                 for entry in spec.get("units") or []
             ),
@@ -171,3 +191,62 @@ def discover_scopes(module: Module):
             continue
         scopes.setdefault("/".join(segments[:depth]), []).append(unit)
     return scopes
+
+
+def declared_sources(repo_root: Path):
+    """
+    Which repositories a module's content lives in, from its own descriptor.
+
+    This used to read `.gitmodules`. It no longer can, and should not have: nothing under
+    `source/` was ever a submodule of this repository -- `source/` is gitignored and the index
+    holds no gitlinks for it -- so those entries were a fiction that made `git submodule` look
+    like the way to populate the tree. The descriptor is the honest home: it is already where a
+    module says what it contains, and this is where its content comes from.
+    """
+    declared = {}
+    for descriptor in sorted(repo_root.glob(f"modules/*/{DESCRIPTOR}")):
+        spec = yaml.safe_load(descriptor.read_text()) or {}
+        entries = [
+            {"path": entry.get("path", ""), "url": entry.get("url", "")}
+            for entry in spec.get("sources") or []
+            if entry.get("path")
+        ]
+        if entries:
+            declared[descriptor.parent.name] = entries
+    return declared
+
+
+def describe_source(repo_root: Path):
+    """
+    Why the picker is empty, in enough detail to act on.
+
+    `load_modules` skips a module whose `source/<name>/` is absent, which is right -- but on a
+    fresh clone that silently means *every* module, and the editor opens showing nothing at all.
+    This is what the page says instead.
+    """
+    declared = declared_sources(repo_root)
+    loaded = load_modules(repo_root)
+    modules = []
+    for descriptor in sorted(repo_root.glob(f"modules/*/{DESCRIPTOR}")):
+        name = descriptor.parent.name
+        spec = yaml.safe_load(descriptor.read_text()) or {}
+        root = repo_root / "source" / name
+        present = root.is_dir()
+        module = loaded.get(name)
+        units = len(discover_units(module)) if module else 0
+        modules.append({
+            "name": name,
+            "label": spec.get("label", name),
+            "present": present,
+            "units": units,
+            "expected": declared.get(name, []),
+        })
+    return {
+        "empty": not any(m["units"] for m in modules),
+        "modules": modules,
+        # Said once, here, because it is the thing that costs a newcomer an hour.
+        # Deliberately not a git command: nothing under `source/` is a submodule of this
+        # repository, so there is nothing for `git submodule` to do. Clone them in.
+        "note": ("`source/` is gitignored and holds independent repositories, not submodules. "
+                 "Clone the ones you need into the paths above; one module is enough to work."),
+    }

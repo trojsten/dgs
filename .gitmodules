@@ -1,32 +1,13 @@
-[submodule "source/naboj/chem"]
-	path = source/naboj/chem
-	url = git@github.com:TrojstenSK/naboj-chemistry
-	branch = master
-[submodule "source/naboj/phys"]
-	path = source/naboj/phys
-	url = git@github.com:TrojstenSK/naboj-physics
-	branch = master
-[submodule "source/naboj/test"]
-	path = source/naboj/test
-	url = git@github.com:TrojstenSK/dgs-naboj-testing
-	branch = master
-[submodule "source/seminar/FKS"]
-	path = source/seminar/FKS
-	url = git@github.com:TrojstenSK/fks
-	branch = master
-[submodule "source/seminar/FX"]
-	path = source/seminar/FX
-	url = git@github.com:TrojstenSK/FX-problems
-[submodule "source/seminar/test"]
-	path = source/seminar/test
-	url = git@github.com:TrojstenSK/dgs-seminar-testing
-	branch = main
-[submodule "source/scholar/TA1"]
-	path = source/scholar/TA1
-	url = git@github.com:sesquideus/TA1
-[submodule "source/scholar/TA2"]
-	path = source/scholar/TA2
-	url = git@github.com:sesquideus/TA2
-[submodule "source/scholar/STA"]
-	path = source/scholar/STA
-	url = git@github.com:sesquideus/teaching-STA
+# The only real submodule here, and the only one that ever was.
+#
+# Nothing under `source/` belongs in this file: that content lives in independent repositories,
+# `source/` is gitignored, and the index holds no gitlinks for it. Each module declares its own
+# repositories in `modules/<module>/editor.yaml` under `sources:`, which is what the editor reads.
+#
+# FontPro is different: it is a third-party build tool pinned at a commit, which is exactly what a
+# submodule is for. `install.sh` uses it to turn the MinionPro OTFs into the `MinionPro.sty` that
+# `dgs.cls` requires. HTTPS rather than SSH because the repository is public, so building the
+# fonts does not need a GitHub key.
+[submodule "assets/fonts/FontPro"]
+	path = assets/fonts/FontPro
+	url = https://github.com/sebschub/FontPro.git

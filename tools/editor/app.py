@@ -9,8 +9,10 @@ from pathlib import Path
 
 # `descriptors`, not `modules`: the repo root holds a `modules/` namespace package, and whichever
 # came first on sys.path would win.
+import capabilities
 from descriptors import (
     AUX_EXTENSIONS,
+    describe_source,
     RENDERABLE_AUX_EXTENSIONS,
     audited_modules,
     discover_scopes,
@@ -196,6 +198,22 @@ class Unit:
     def render_path(self, target):
         return REPO_ROOT / self.render_target(target)
 
+    def tex_target(self, target):
+        """
+        The make target that converts this file to TeX, or None when there is not one.
+
+        An auxiliary file has none on purpose: a `.gp` becomes a figure through gnuplot, never a
+        `.tex`, and asking for `build/.../time.gp.tex` would hit the Makefile's fall-through rule
+        and print `Incorrect fall-through rule called`.
+        """
+        if self.is_aux(target) or not self.kind.tex:
+            return None
+        return self._format(self.kind.tex).format(target=target)
+
+    def tex_path(self, target):
+        target = self.tex_target(target)
+        return REPO_ROOT / target if target else None
+
     def preview_target(self):
         if not self.kind.preview:
             return None
@@ -240,6 +258,19 @@ def hidden_levels(module):
                   if len(values) == 1 and None not in values)
 
 
+@app.get("/api/capabilities")
+def api_capabilities():
+    """
+    What this machine can do, and why the picker may be empty.
+
+    One route for both pages: `/audit` needs the same answer, and "what is missing and how do I
+    fix it" is one question whether the missing thing is xelatex or `source/naboj/phys`.
+    """
+    payload = capabilities.capabilities(REPO_ROOT, refresh=request.args.get("refresh") == "1")
+    payload = dict(payload, source=describe_source(REPO_ROOT))
+    return jsonify(payload)
+
+
 @app.get("/api/modules")
 def api_modules():
     """
@@ -278,6 +309,9 @@ def api_unit(module, unit):
         # empty placeholder: the PDF outlives the browser session, it is in the cache.
         "has_pdf": resolved.cached_pdf().is_file(),
         "has_preview": resolved.preview_target() is not None,
+        # Whether the module has a TeX rule at all; whether *this* target does is a
+        # per-file question the front end answers with `isAux`.
+        "has_tex": bool(resolved.kind.tex),
         "meta_yaml": read_if_exists(resolved.meta_path),
         "files": {t: read_if_exists(resolved.source_path(t)) for t in targets},
     })
@@ -285,14 +319,46 @@ def api_unit(module, unit):
 
 # --- running make -----------------------------------------------------------
 
+def make_env():
+    """
+    How to invoke make, and in what environment.
+
+    `uv run` is here only to put the project's interpreter on PATH, because the Makefile's
+    recipes call a bare `python`. When uv is absent we call make directly and prepend the
+    directory of the interpreter running this app -- in a venv that is exactly where `python`
+    lives -- so an editor started from an activated venv works with no uv installed at all.
+    """
+    launcher = capabilities.capabilities(REPO_ROOT)["launcher"]
+    env = None
+    if launcher["path_prefix"]:
+        env = dict(os.environ)
+        env["PATH"] = launcher["path_prefix"] + os.pathsep + env.get("PATH", "")
+    return launcher["argv"], env
+
+
 def run_make(target, *, timeout=60):
-    return subprocess.run(
-        ["uv", "run", "make", target],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+    """
+    Run make and return the same dict `make_result` does -- or say why we could not.
+
+    Without the guards, a machine with no make and no uv raises `FileNotFoundError` out of the
+    route, Flask answers 500 with an HTML body, and the front end's `fetchJSON` reports a bare
+    "HTTP 500", which tells nobody what to install.
+    """
+    argv, env = make_env()
+    try:
+        result = subprocess.run(
+            [*argv, target], cwd=REPO_ROOT, capture_output=True, text=True,
+            timeout=timeout, env=env,
+        )
+    except FileNotFoundError:
+        return refusal(
+            target, f"{argv[0]} is not installed",
+            f"The editor builds through `{' '.join(argv)}`, and `{argv[0]}` is not on PATH.\n\n"
+            f"See install.md, or run\n\n    uv run python tools/editor/capabilities.py\n")
+    except subprocess.TimeoutExpired:
+        return refusal(target, f"timed out after {timeout} s",
+                       f"`make {target}` did not finish within {timeout} seconds.\n")
+    return make_result(target, result)
 
 
 # XeLaTeX runs with `-file-line-error`, so its errors arrive as `file.tex:12: message`.
@@ -347,6 +413,20 @@ def refusal(target, summary, explanation):
             "summary": summary, "stdout": explanation, "stderr": ""}
 
 
+def tier_refusal(tier_id, target):
+    """
+    This machine cannot do that stage -- which is the same shape of answer as `refusal`, so the
+    front end's "Cannot compile" path (`returncode === null`) renders it with no change.
+    """
+    tier = capabilities.tier(REPO_ROOT, tier_id)
+    commands = "\n".join(f"    {line}" for line in tier.install)
+    return refusal(
+        target, f"{tier.label} is not available here",
+        f"{tier.reason}.\n\n"
+        + (f"To enable it:\n\n{commands}\n\n" if commands else "")
+        + "See install.md, or run\n\n    uv run python tools/editor/capabilities.py\n")
+
+
 def missing_meta_result(target, unit):
     """
     Every render rule takes the unit's `meta.yaml` as a prerequisite, so without one make cannot
@@ -365,7 +445,7 @@ def missing_meta_result(target, unit):
 def build(unit, make_target, *, timeout=60):
     if not unit.meta_path.is_file():
         return missing_meta_result(make_target, unit)
-    return make_result(make_target, run_make(make_target, timeout=timeout))
+    return run_make(make_target, timeout=timeout)
 
 
 # --- writing ----------------------------------------------------------------
@@ -414,6 +494,38 @@ def api_render():
     return jsonify(response)
 
 
+@app.post("/api/tex")
+def api_tex():
+    """
+    The TeX pandoc produces for one file.
+
+    Its make target takes the rendered Markdown as its prerequisite, so asking for TeX exercises
+    the Markdown stage in the same call -- and `build()` keeps the `missing_meta_result` answer
+    for a unit that has no meta.yaml yet.
+    """
+    body = request.get_json(force=True)
+    unit = unit_from_body(body)
+    target = body.get("target")
+    unit.source_path(target)        # validates
+    make_target = unit.tex_target(target)
+
+    with BUILD_LOCK:
+        write_files(unit, body.get("files") or {})
+        if make_target is None:
+            response = refusal(
+                "(none)", "no TeX for this file",
+                f"{target} is not converted to TeX -- an auxiliary file becomes a figure, "
+                f"and {unit.module.label} may declare no TeX rule.\n")
+        elif not capabilities.tier(REPO_ROOT, "tex").ok:
+            response = tier_refusal("tex", make_target)
+        else:
+            response = build(unit, make_target)
+        response["tex"] = (
+            read_if_exists(unit.tex_path(target)) if response["ok"] else None
+        )
+    return jsonify(response)
+
+
 @app.post("/api/compile")
 def api_compile():
     """Write every buffer, then build whichever document previews this unit."""
@@ -424,7 +536,9 @@ def api_compile():
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
 
-        if make_target is None:
+        if make_target is not None and not capabilities.tier(REPO_ROOT, "pdf").ok:
+            response = tier_refusal("pdf", make_target)
+        elif make_target is None:
             response = refusal(
                 "(none)", "no preview for this module",
                 f"{unit.module.label} declares no preview document in "
@@ -709,14 +823,17 @@ def api_audit_build(module, scope):
     Run the build checks for one scope. Minutes, not milliseconds -- 28 targets for volume 24 --
     so the page asks for this explicitly and the answer is cached.
     """
+    pdf = capabilities.tier(REPO_ROOT, "pdf")
+    if not pdf.ok:
+        return jsonify({"ran": False, "reason": pdf.reason, "install": list(pdf.install)})
     resolved, units = scope_units(module, scope)
     sources = run_scope_audit(resolved, scope, units).sources
 
     def run(make_target, timeout):
         with BUILD_LOCK:
             result = run_make(make_target, timeout=timeout)
-        return {"returncode": result.returncode,
-                "log": (result.stdout or "") + (result.stderr or "")}
+        return {"returncode": result["returncode"],
+                "log": (result["stdout"] or "") + (result["stderr"] or "")}
 
     payload = audit_build.audit_build(REPO_ROOT, resolved.root, module, scope,
                                       fingerprint=sources.fingerprint(), run=run)
@@ -732,6 +849,13 @@ def api_audit_macros():
     Not per scope, and not part of the source-only pass: `\\Diff` either exists or it does not, and
     only TeX can say. `core.audit.checks.macro_undefined` turns the answer into findings.
     """
+    # The `latex` tier, not `pdf`: the sweep writes its own probe document and hands it straight
+    # to xelatex, so pandoc is irrelevant to it.
+    latex = capabilities.tier(REPO_ROOT, "latex")
+    if not latex.ok:
+        # 200, not 4xx: audit.js reads this through `fetchJSON`, which turns any non-2xx into an
+        # opaque "HTTP 500" and throws away the reason -- which is the only useful part.
+        return jsonify({"ran": False, "reason": latex.reason, "install": list(latex.install)})
     with BUILD_LOCK:
         return jsonify(audit_macros.sweep(REPO_ROOT))
 

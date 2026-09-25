@@ -12,6 +12,9 @@ const state = {
   activeOutput: "pdf",
   pdfUrl: null,       // currently displayed PDF, or null when nothing is compiled
   log: "",
+  caps: null,         // what this machine can do, from /api/capabilities
+  hasPreview: false,
+  hasTex: false,
 };
 
 const el = (id) => document.getElementById(id);
@@ -177,11 +180,103 @@ function sourceMode() {
   return isAux(state.activeTarget) ? "dgs-gnuplot" : "dgs-md";
 }
 
+/**
+ * What this machine can do, fetched once at startup.
+ *
+ * Kept beside the per-unit facts (`hasPreview`, `hasTex`) because a tab is unavailable for
+ * either reason and the user should not have to care which: `tierState` folds the two together
+ * so every tab greys for the same reasons in the same way.
+ */
+async function loadCapabilities({ refresh = false } = {}) {
+  try {
+    state.caps = await fetchJSON(`/api/capabilities${refresh ? "?refresh=1" : ""}`);
+  } catch {
+    state.caps = null;            // never let a probe failure stop the editor from opening
+  }
+}
+
+function tierFor(id) {
+  return (state.caps?.tiers ?? []).find((t) => t.id === id) ?? null;
+}
+
+/** Why this output tab cannot be used, or null when it can. */
+function tierState(output) {
+  const tab = document.querySelector(`#pane-output .tab[data-output="${output}"]`);
+  const tier = tierFor(tab?.dataset.tier);
+  if (tier && !tier.ok) {
+    return { reason: tier.reason, install: tier.install ?? [], label: tier.label };
+  }
+  if (output === "pdf" && state.unit && !state.hasPreview) {
+    return { reason: `${state.module?.label ?? "This module"} declares no preview document`,
+             install: [], label: "PDF" };
+  }
+  if (output === "tex" && state.unit && !state.hasTex) {
+    return { reason: "this module declares no TeX rule", install: [], label: "TeX" };
+  }
+  if ((output === "tex" || output === "lint") && isAux(state.activeTarget)) {
+    return { reason: `${state.activeTarget} is a figure, not prose`, install: [], label: "TeX" };
+  }
+  return null;
+}
+
+function showUnavailable(output, blocked) {
+  const panel = el("output-unavailable");
+  panel.innerHTML = "";
+  const title = document.createElement("p");
+  title.className = "unavailable-title";
+  title.textContent = `${blocked.label} is not available here.`;
+  panel.appendChild(title);
+
+  const why = document.createElement("p");
+  why.textContent = blocked.reason;
+  panel.appendChild(why);
+
+  if (blocked.install.length) {
+    const how = document.createElement("pre");
+    how.textContent = blocked.install.join("\n");
+    panel.appendChild(how);
+    const doc = document.createElement("p");
+    doc.className = "muted";
+    doc.textContent = "See install.md, or run: uv run python tools/editor/capabilities.py";
+    panel.appendChild(doc);
+
+    const again = document.createElement("button");
+    again.textContent = "Re-check";
+    again.addEventListener("click", async () => {
+      again.disabled = true;
+      await loadCapabilities({ refresh: true });
+      applyCapabilities();
+      switchOutputTab(output);
+    });
+    panel.appendChild(again);
+  }
+}
+
+/** Grey every tab whose tier is unavailable, and the actions that depend on one. */
+function applyCapabilities() {
+  document.querySelectorAll("#pane-output .tab[data-output]").forEach((tab) => {
+    const blocked = tierState(tab.dataset.output);
+    tab.classList.toggle("unavailable", Boolean(blocked));
+    if (blocked) {
+      tab.setAttribute("aria-disabled", "true");
+      tab.title = blocked.reason;
+    } else {
+      tab.removeAttribute("aria-disabled");
+      tab.title = "";
+    }
+  });
+  const pdf = tierState("pdf");
+  el("compile-btn").disabled = Boolean(pdf);
+  el("compile-btn").title = pdf ? pdf.reason : "";
+  el("autocompile").disabled = Boolean(pdf);
+}
+
 function syncActionsForTarget() {
-  el("compile-btn").disabled = !state.hasPreview;
   const aux = isAux(state.activeTarget);
   el("render-btn").disabled = aux && !state.activeTarget.endsWith(".gp");
-  document.querySelector('[data-output="lint"]').disabled = aux;
+  // The Lint and TeX tabs used to be `disabled` here. They are greyed by applyCapabilities
+  // instead, so the pane behind them can say *why* -- a disabled button has nowhere to.
+  applyCapabilities();
 }
 
 function renderSourceTabs() {
@@ -390,12 +485,59 @@ async function onModuleChange(name) {
 
 async function onLangChange(lang) {
   if (!confirmDiscard()) { el("lang-select").value = state.lang; return; }
-  await openUnit(state.module.name, state.unit, lang);
+  // Stay on the same file. Comparing a translation means flipping between languages on *one*
+  // of them, and being thrown back to `problem` every time made that unusable. `openUnit`
+  // falls back to the first target when the new language does not have this one.
+  await openUnit(state.module.name, state.unit, lang, state.activeTarget);
+}
+
+/**
+ * Why there is nothing to edit.
+ *
+ * `load_modules` skips a module whose `source/<name>/` is missing, which on a fresh clone means
+ * every one of them -- and the editor would otherwise open showing an empty picker and no hint.
+ * `source/` cannot be populated by `git submodule update --init` here, so the panel names the
+ * repositories and the paths they belong at.
+ */
+function renderEmptySource() {
+  const source = state.caps?.source;
+  const host = el("empty-source");
+  if (!host) return;
+  host.hidden = false;
+  host.innerHTML = "";
+
+  const title = document.createElement("h2");
+  title.textContent = "No sources checked out";
+  host.appendChild(title);
+
+  const lead = document.createElement("p");
+  lead.textContent = "The editor found no module with a populated source/ directory.";
+  host.appendChild(lead);
+
+  for (const module of source?.modules ?? []) {
+    if (module.units) continue;
+    const head = document.createElement("p");
+    head.innerHTML = `<strong>${module.label}</strong> &mdash; ` +
+      (module.present ? "source/ directory exists but holds no units" : "not checked out");
+    host.appendChild(head);
+    if (module.expected?.length) {
+      const how = document.createElement("pre");
+      how.textContent = module.expected
+        .map((e) => `git clone ${e.url} ${e.path}`).join("\n");
+      host.appendChild(how);
+    }
+  }
+  if (source?.note) {
+    const note = document.createElement("p");
+    note.className = "muted";
+    note.textContent = source.note;
+    host.appendChild(note);
+  }
 }
 
 async function loadModules() {
   state.modules = await fetchJSON("/api/modules");
-  if (!state.modules.length) return;
+  if (!state.modules.length) { renderEmptySource(); return; }
   fillSelect(el("module-select"), state.modules.map((m) => m.name),
              (n) => state.modules.find((m) => m.name === n).label);
 
@@ -421,6 +563,7 @@ async function openUnit(moduleName, unit, lang, target) {
   state.lang = data.lang;
   state.targets = data.targets;
   state.hasPreview = data.has_preview;
+  state.hasTex = data.has_tex;
   state.activeTarget = null;
 
   state.meta = data.meta_yaml ?? "";
@@ -575,10 +718,17 @@ function switchOutputTab(name) {
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
     t.classList.toggle("active", t.dataset.output === name);
   });
-  el("output-pdf").hidden = name !== "pdf";
-  el("output-rendered").hidden = name !== "rendered";
-  el("output-lint").hidden = name !== "lint";
+  const blocked = tierState(name);
+  el("output-pdf").hidden = name !== "pdf" || Boolean(blocked);
+  el("output-rendered").hidden = name !== "rendered" || Boolean(blocked);
+  el("output-tex").hidden = name !== "tex" || Boolean(blocked);
+  el("output-lint").hidden = name !== "lint" || Boolean(blocked);
   el("output-log").hidden = name !== "log";
+  el("output-unavailable").hidden = !blocked || name === "log";
+  if (blocked) {
+    showUnavailable(name, blocked);
+    return;                       // no point asking the server for something it cannot do
+  }
   if (name === "lint") doLint();
 }
 
@@ -610,6 +760,32 @@ async function doCompile() {
       if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(), { stale: true });
       switchOutputTab("log");
       setStatus(failureStatus(body, "compile"), "error");
+    }
+  } catch (e) {
+    setStatus(e.message, "error");
+  }
+}
+
+async function doTex() {
+  if (!state.unit || !state.activeTarget) return;
+  if (tierState("tex")) { switchOutputTab("tex"); return; }
+  setStatus("Converting…", "dirty");
+  try {
+    const body = await post("/api/tex", { target: state.activeTarget });
+    setLog(logOf(body));
+    markSaved();
+
+    const out = el("output-tex");
+    const code = el("output-tex-code");
+    switchOutputTab("tex");
+    if (body.ok) {
+      code.innerHTML = highlight(body.tex ?? "", "dgs-tex");
+      out.classList.remove("error");
+      setStatus("TeX OK", "ok");
+    } else {
+      code.textContent = logOf(body);
+      out.classList.add("error");
+      setStatus(failureStatus(body, "convert"), "error");
     }
   } catch (e) {
     setStatus(e.message, "error");
@@ -761,7 +937,11 @@ function init() {
   });
 
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
-    t.addEventListener("click", () => switchOutputTab(t.dataset.output));
+    t.addEventListener("click", () => {
+      // TeX is built on demand like the PDF, not fetched like a file already on disk.
+      if (t.dataset.output === "tex" && !tierState("tex")) doTex();
+      else switchOutputTab(t.dataset.output);
+    });
   });
 
   // Keep the scroll offset current so a reload lands where you were reading, not at the top.
@@ -805,7 +985,10 @@ function init() {
       doSave();
     }
   });
-  loadModules();
+  loadCapabilities().then(() => {
+    applyCapabilities();
+    loadModules();
+  });
 }
 
 init();

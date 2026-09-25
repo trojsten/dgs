@@ -1,0 +1,87 @@
+# Build the two container images, prove each one is what it claims, and only then push.
+#
+# The workflow this replaces built and pushed in a single `build-push-action` step, so there was
+# no point at which anything could have refused -- and the Dockerfile it built put `|| true` on
+# every FontPro step. Every tag therefore pushed an image with no MinionPro in it that reported a
+# clean build. The gate between `Build` and `Push` is the whole point of this file.
+name: Container images
+
+on:
+  push:
+    tags: ["*"]
+  pull_request:
+    paths:
+      - Containerfile
+      - .containerignore
+      - install-pandoc.sh
+      - pyproject.toml
+      - uv.lock
+      - tools/editor/capabilities.py
+      - tools/editor/expect-tiers.py
+  workflow_dispatch:
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: light
+            tiers: markdown tex
+            # test_latex.py needs xelatex, which `light` deliberately does not have. Skipping it
+            # here is not a fudge: it is the assertion that `light` has no TeX, stated again.
+            pytest: -q --ignore=core/tests/test_latex.py
+          - target: full
+            tiers: markdown tex latex pdf
+            pytest: -q
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # texlive is ~2.4 GB and the layers roughly double it; a hosted runner has about 14 GB
+      # free, and these three trees are the cheapest 20 GB available.
+      - name: Reclaim disk
+        if: matrix.target == 'full'
+        run: sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet
+
+      - name: Build
+        run: |
+          podman build --target ${{ matrix.target }} \
+            --build-arg FONTPRO_COMMIT="$(git rev-parse HEAD:assets/fonts/FontPro)" \
+            -t "dgs:${{ matrix.target }}" .
+
+      # Everything below runs with no mounts: none of it needs source/.
+      - name: Exactly the tiers this image promises
+        run: |
+          podman run --rm "dgs:${{ matrix.target }}" \
+            python tools/editor/expect-tiers.py ${{ matrix.tiers }}
+
+      - name: Tests
+        run: |
+          podman run --rm "dgs:${{ matrix.target }}" python -m pytest ${{ matrix.pytest }}
+
+      # The check the old pipeline had no equivalent of. test_latex.py compiles a probe against
+      # dgs.cls and fails on `Missing character` or `Undefined control sequence`, so it proves in
+      # one shot that xelatex, dgs.cls, MinionPro.sty, updmap-sys and every glyph are real.
+      # fc-match is the separate half: kpathsea-visible Minion Pro does not imply
+      # fontconfig-visible Minion Pro, and gnuplot needs the latter.
+      - name: The fonts really are there
+        if: matrix.target == 'full'
+        run: |
+          podman run --rm dgs:full python -m pytest core/tests/test_latex.py -q
+          podman run --rm dgs:full fc-match 'Minion Pro' file | grep -i minionpro
+
+      - name: Push
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # ghcr rejects uppercase and ${{ github.repository }} is TrojstenSK/dgs.
+          # docker/metadata-action used to lowercase this silently; raw podman does not.
+          ref="ghcr.io/${GITHUB_REPOSITORY,,}"
+          podman login ghcr.io -u '${{ github.actor }}' -p '${{ secrets.GITHUB_TOKEN }}'
+          podman push "dgs:${{ matrix.target }}" "$ref:${{ matrix.target }}"
+          podman push "dgs:${{ matrix.target }}" "$ref:${GITHUB_REF_NAME}-${{ matrix.target }}"

@@ -1,0 +1,109 @@
+#!/bin/bash
+# Build and run the DGS container images. Plain podman underneath; install.md has the expanded
+# lines if you would rather type them.
+#
+# This exists for two reasons, and brevity is not one of them:
+#
+#  - forgetting `-v "$PWD/output:/dgs/output"` is *silent*. make builds the booklet into the
+#    container's ephemeral layer, prints every success line, and the PDF is gone.
+#  - `build` reads the FontPro commit out of git, because `.git/` is not in the build context
+#    and the Containerfile's ARG default can only ever be a second copy of it.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+image=${DGS_IMAGE:-localhost/dgs}
+target=${DGS_TARGET:-full}
+port=${DGS_PORT:-5001}
+
+# The working copy *is* /dgs. One mount, and it works only because the venv lives at /opt/venv
+# and dgs.cls is a symlink to /dgs/core/latex/dgs.cls -- both resolve through the mount.
+#
+# No --userns=keep-id: under rootless podman the container's uid 0 is already your host user, so
+# files land owned by you. keep-id would do the opposite, putting them on a subuid you cannot
+# chown without `podman unshare`.
+mount=(-v "$PWD:/dgs")
+
+usage() {
+    sed -n '2,9p' "$0"
+    echo
+    echo "usage: $0 {build|editor|make|test|check|shell} [args...]"
+    echo "  DGS_TARGET=light|full (default full)   DGS_PORT (default 5001)"
+}
+
+case "${1:-help}" in
+build)
+    shift
+    args=()
+    if commit=$(git rev-parse HEAD:assets/fonts/FontPro 2>/dev/null); then
+        args+=(--build-arg "FONTPRO_COMMIT=$commit")
+    else
+        echo "dgs-container: not a checkout; using the Containerfile's own pin" >&2
+    fi
+    for t in ${DGS_TARGETS:-light full}; do
+        echo "=== building $image:$t"
+        podman build --target "$t" -t "$image:$t" "${args[@]}" "$@" .
+    done
+    ;;
+
+editor)
+    shift
+    mkdir -p build render output
+    # BUILD_LOCK is an in-process thread lock, so two editors over one build/ would corrupt each
+    # other's intermediates. --name is the interlock; say so in words rather than letting podman
+    # answer with "that name is already in use".
+    if podman container exists dgs-editor 2>/dev/null; then
+        echo "dgs-container: an editor is already running." >&2
+        podman ps --filter name=dgs-editor --format '  {{.Names}}  {{.Status}}  {{.Ports}}' >&2
+        echo "  stop it with: podman stop dgs-editor" >&2
+        exit 1
+    fi
+    # Flask will announce http://127.0.0.1:5000 -- that is the *container's* loopback and the
+    # port inside it. Say where it actually is before that message can mislead anyone.
+    echo "==> editor at http://127.0.0.1:${port}/     (Ctrl-C to stop)"
+    echo "    ignore the address Flask prints below: it is the container's own, not yours."
+    # 127.0.0.1 explicitly: `-p ${port}:5000` alone binds 0.0.0.0 and puts the editor on the network.
+    exec podman run --rm -it --name dgs-editor "${mount[@]}" \
+        -p "127.0.0.1:${port}:5000" "$image:$target" \
+        python tools/editor/app.py --host 0.0.0.0 --port 5000 "$@"
+    ;;
+
+make)
+    shift
+    mkdir -p build render output
+    # --network=none: nothing in a build needs the network, UV_OFFLINE is already set, and
+    # -shell-escape is unconditional, so this costs nothing and closes the one real hole.
+    exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" make "$@"
+    ;;
+
+test)
+    shift
+    # `python -m pytest`, not `uv run` -- PATH already starts with /opt/venv/bin.
+    exec podman run --rm "${mount[@]}" "$image:$target" python -m pytest "$@"
+    ;;
+
+check)
+    # Everything below runs with no mounts at all: none of it needs source/.
+    echo "=== light: exactly the Markdown and TeX tiers"
+    podman run --rm "$image:light" python tools/editor/expect-tiers.py markdown tex
+    echo "=== light: and genuinely no xelatex"
+    podman run --rm "$image:light" sh -c '! command -v xelatex' \
+        && echo "    absent, as intended"
+    echo "=== full: all four tiers"
+    podman run --rm "$image:full" python tools/editor/expect-tiers.py markdown tex latex pdf
+    echo "=== full: the fonts really work (compiles a probe against dgs.cls)"
+    podman run --rm "$image:full" python -m pytest core/tests/test_latex.py -q
+    echo "=== full: and Minion Pro is visible to fontconfig, which gnuplot needs"
+    podman run --rm "$image:full" fc-match 'Minion Pro' file | grep -i minionpro
+    echo "=== all checks passed"
+    ;;
+
+shell)
+    shift
+    exec podman run --rm -it "${mount[@]}" "$image:$target" bash "$@"
+    ;;
+
+*)
+    usage
+    exit 1
+    ;;
+esac

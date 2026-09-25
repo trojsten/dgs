@@ -17,6 +17,7 @@ render/seminar/%/$(1).md: \
 
 build/seminar/%/$(1).tex: \
 	render/seminar/$$*/$(1).md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 endef
@@ -102,6 +103,7 @@ endif
 
 build/seminar/%.tex: \
 	render/seminar/%.md \
+	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,sk)
 

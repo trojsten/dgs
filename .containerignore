@@ -1,0 +1,59 @@
+# What does NOT go into the image.
+#
+# Podman reads this in preference to .dockerignore. Without it the build context is 1.1 GB;
+# with it, about 40 MB.
+
+# Private, bind-mounted at run time, and 657 MB of it. Never baked: the repositories are
+# separate and SSH-only, and `modules/<module>/editor.yaml` lists them under `sources:`.
+source/
+
+# Build products. `output/` is also a TeX *working* directory -- Makefile:92-99 passes
+# -jobname with no -output-directory -- so it collects .aux/.log/.synctex.gz too.
+build/
+render/
+output/
+input/
+_minted/
+svg-inkscape/
+.convert-temp/
+
+# 120 MB of the host's venv, built against an interpreter that is not in the image, and whose
+# bin/python is a symlink to a path that does not exist there. It would also shadow /opt/venv
+# for anyone bind-mounting their working copy over /dgs.
+.venv/
+
+# 253 MB, of which 247 MB is generated (tfm/ alone is 141 MB); the tracked checkout is under
+# 6 MB. FontPro is fetched inside the build at FONTPRO_COMMIT, so shipping the working copy
+# would be both wasteful and dangerous -- a dirty or differently pinned one would silently
+# change the fonts. Excluded wholesale rather than picked over, because its `fontinst/` is
+# both tracked and partly generated.
+assets/fonts/FontPro/
+
+# 52 MB, and nothing in the build reads it. The consequence is deliberate and documented in
+# the Containerfile: no `git submodule update` can run inside a build, which is why
+# FONTPRO_COMMIT exists.
+.git/
+.github/
+
+# Tool and editor state
+.idea/
+.vscode/
+.claude/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.dblite
+
+# TeX droppings that escape into the tree
+*.aux
+*.log
+*.out
+*.synctex
+*.synctex.gz
+*.tps
+*.tcp
+
+*~
+*.swp
+*.swo

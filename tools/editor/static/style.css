@@ -360,9 +360,57 @@ abbr[title] {
 }
 
 #topbar button:disabled,
-.tab:disabled {
+.tab:disabled,
+/* A tier this machine cannot do. Greyed like a disabled control, but still clickable: the pane
+   it opens is where the explanation and the install commands live. */
+.tab.unavailable {
   opacity: 0.4;
   cursor: default;
+}
+
+.unavailable-panel {
+  padding: 1rem 1.2rem;
+  overflow: auto;
+}
+
+.unavailable-panel .unavailable-title {
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+.unavailable-panel pre {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.unavailable-panel .muted,
+.empty-source .muted {
+  color: #777;
+}
+
+.unavailable-panel button {
+  margin-top: 0.8rem;
+}
+
+.empty-source {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.empty-source h2 {
+  margin-top: 0;
+}
+
+.empty-source pre {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
 }
 
 #topbar select[hidden] { display: none; }

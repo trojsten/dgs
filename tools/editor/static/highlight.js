@@ -21,6 +21,21 @@ const RULES = {
     { re: /'[^'\n]*'|"[^"\n]*"/g, cls: "tok-string" },
     { re: /(?<![\w.])-?\d+(\.\d+)?\b/g, cls: "tok-number" },
   ],
+  // The TeX pandoc produces, which is what the TeX tab shows. Note it emits `\(…\)` and
+  // `\[…\]` rather than `$…$`, so those come first; `$…$` is here for hand-written TeX.
+  //
+  // Commands outrank maths deliberately, the opposite way round from `dgs-md`. Generated TeX is
+  // mostly `\qty{…}{…}` *inside* maths, and a maths span that swallowed every command in it
+  // would be one flat colour -- so the commands are claimed first and the delimiters keep what
+  // is left.
+  "dgs-tex": [
+    { re: /(?<!\\)%.*/g, cls: "tok-comment" },
+    { re: /\\(?:begin|end)\{[^}\n]*\}/g, cls: "tok-heading" },
+    { re: /\\[A-Za-z@]+\*?/g, cls: "tok-cmd" },
+    { re: /\\[(\[][\s\S]*?\\[)\]]/g, cls: "tok-math" },
+    { re: /\$\$[\s\S]*?\$\$|\$[^$\n]+?\$/g, cls: "tok-math" },
+    { re: /(?<![\w.])-?\d+(\.\d+)?\b/g, cls: "tok-number" },
+  ],
   "dgs-yaml": [
     { re: /#.*/g, cls: "tok-comment" },
     { re: /'[^'\n]*'|"[^"\n]*"/g, cls: "tok-string" },
