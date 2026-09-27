@@ -135,12 +135,17 @@ class PhysicsQuantity:
             f"si_extra must be a dict[str, str], got {type(self.si_extra)} instead"
 
         self.force_f = force_f
-        #: How many significant figures this value is *known* to, or `None` where nobody has
-        #: said. Presentation only -- nothing branches on it the way `prints_exactly` branches on
-        #: `exact`, and the two are independent: `speed_light` is exact by definition of the metre
-        #: *and* carries `digits: 1`, because that is what the constants sheet prints.
+        #: How many significant figures to *print*, or `None` where nobody has said.
         #:
-        #: It propagates as a relative precision; see `_digits_from_relative`.
+        #: Presentation, not uncertainty, and that distinction is load-bearing. On a constant it
+        #: is what the sheet shows: `gforce` is `digits: 1` because the table prints `10`, not
+        #: because g is known to one figure. So it does not travel through arithmetic -- a result
+        #: is a new value and how to present it is a new decision -- and it does not imply
+        #: anything about `exact`, which is independent: `speed_light` is exact by definition of
+        #: the metre *and* carries `digits: 1`.
+        #:
+        #: Only `\approx` follows from it: a value shown rounded is not shown in full, which is
+        #: what `approximate` marks by clearing `exact`.
         self.digits = digits
         #: Whether the stored magnitude is the true value, as against a measured or rounded
         #: stand-in for it. A number a statement *gives* is exact -- `s = 100 km` is not
@@ -186,65 +191,6 @@ class PhysicsQuantity:
             return PhysicsQuantity(magnitude.to(unit), **kwargs)
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
-    @staticmethod
-    def _relative_from_digits(digits: int | None) -> float | None:
-        """
-        Half a unit in the last significant place, as a fraction of the magnitude.
-
-        `None` in, `None` out: a value nobody has pinned down constrains nothing, and must not be
-        mistaken for one known to zero figures.
-        """
-        return None if digits is None else 0.5 * 10 ** (1 - digits)
-
-    @staticmethod
-    def _digits_from_relative(relative: float | None) -> int | None:
-        """
-        The inverse, floored: how many figures a relative precision entitles you to.
-
-        Exact on the way back -- three figures give 0.005 and 0.005 gives three -- so the pair
-        can be composed through a chain of operations without drifting. Clamped at one, since
-        cancellation can leave a result with no significant figures at all and printing none of
-        them is not an option.
-        """
-        if relative is None or relative <= 0:
-            return None
-        return max(1, math.floor(1 - math.log10(2 * relative)))
-
-    def _digits_with(self, other: Self, op, result: u.Quantity) -> int | None:
-        r"""
-        The significant figures of `op(self, other)`.
-
-        **Products and quotients take the smaller count.** Relative uncertainties add, and the
-        textbook rounds that to "no more figures than the weakest operand" -- which is the rule a
-        competitor was taught, so it is the one a booklet should follow.
-
-        **Sums and differences cannot.** There the *absolute* uncertainties add, and the result's
-        own magnitude decides what that is worth: subtracting 1.0000 from 1.0005, both good to
-        five figures, leaves 0.0005, which is good to one. `min` would claim five and be wrong by
-        four, and it is wrong in the dangerous direction -- a printed figure nobody has earned.
-        So the operands are converted to absolute uncertainties in the result's own unit, added,
-        and read back.
-
-        A quantity declaring no digits contributes no uncertainty, so it never drags a result
-        down; if neither operand declares any, neither does the result.
-        """
-        mine, theirs = self.digits, other.digits
-        if mine is None and theirs is None:
-            return None
-        if op in (operator.mul, operator.truediv):
-            return min(d for d in (mine, theirs) if d is not None)
-
-        magnitude = abs(result.magnitude)
-        if magnitude == 0:
-            return None
-        absolute = 0.0
-        for quantity, digits in ((self._quantity, mine), (other._quantity, theirs)):
-            relative = self._relative_from_digits(digits)
-            if relative is None:
-                continue
-            absolute += abs(quantity.to(result.units).magnitude) * relative
-        return self._digits_from_relative(absolute / magnitude)
-
     def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
         """
         Arithmetic on the magnitudes, dropping the symbol -- a product of two quantities is not
@@ -262,23 +208,19 @@ class PhysicsQuantity:
         reaching here, so a rule that inferred exactness from its operands would quietly call
         `sin(20 deg)` exact. Under contamination it defaults to exact and the round-trip catches
         it -- 2.6 billion ulps out -- while `sin(30 deg)` is exactly 0.5 and prints as `=`.
+
+        **`digits` is not carried, because it is not an uncertainty.** It says how many figures to
+        print, and on a constant it says what the *sheet* prints -- `gforce` is `digits: 1` because
+        the table shows `10`, not because g is known to one figure. Propagating that as a relative
+        error was tried and is wrong in exactly the way that sounds: `22/tea` computes 24.6 mm
+        through `const.g.approx`, and inheriting the sheet's one figure rounded the booklet's
+        `25 mm` answer to `20`. A result is a new value, and how to present it is a new decision.
         """
         if isinstance(other, PhysicsQuantity):
-            result = op(self._quantity, other._quantity)
-            return PhysicsQuantity(result,
-                                   exact=self.exact and other.exact,
-                                   digits=self._digits_with(other, op, result))
+            return PhysicsQuantity(op(self._quantity, other._quantity),
+                                   exact=self.exact and other.exact)
         elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
-            # A bare number is a pure one -- `2 * r` is twice the radius, not a measurement of it
-            # -- so it declares no digits and constrains nothing. It still goes through the same
-            # arithmetic rather than having this quantity's precision copied over, because for a
-            # sum it is the *result's* magnitude that decides: 0.0005 known to one figure, plus an
-            # exact 1, is 1.0005 known to five.
-            result = op(self._quantity, other)
-            pure = PhysicsQuantity(other if isinstance(other, pint.Quantity)
-                                   else u.Quantity(other, '1'))
-            return PhysicsQuantity(result, exact=self.exact,
-                                   digits=self._digits_with(pure, op, result))
+            return PhysicsQuantity(op(self._quantity, other), exact=self.exact)
         else:
             raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
 
@@ -316,23 +258,21 @@ class PhysicsQuantity:
             exponent = exponent._quantity
         if isinstance(exponent, pint.Quantity):
             exponent = exponent.to('').magnitude
-        # A power scales the relative uncertainty by the exponent, so squaring costs about a third
-        # of a figure and a square root gives one back.
-        relative = self._relative_from_digits(self.digits)
-        digits = (None if relative is None
-                  else self._digits_from_relative(abs(exponent) * relative))
-        return PhysicsQuantity(self._quantity ** exponent, exact=self.exact, digits=digits)
+        return PhysicsQuantity(self._quantity ** exponent, exact=self.exact)
 
     def __truediv__(self, other):
         return self._binop(other, operator.truediv)
 
     def __rtruediv__(self, other):
-        return PhysicsQuantity(other / self._quantity, exact=self.exact, digits=self.digits)
+        # arithmetic, so `digits` does not come along -- see `_binop`
+        return PhysicsQuantity(other / self._quantity, exact=self.exact)
 
     def __mod__(self, other):
         from .quantity_range import QuantityRange
         return QuantityRange(self, other)
 
+    # `digits` does come along here, as it does through `to` and `alias`: a sign is not a new
+    # quantity, so however many figures it was to be shown to, it still is.
     def __neg__(self):
         return PhysicsQuantity(-self._quantity, exact=self.exact, digits=self.digits)
 
@@ -480,12 +420,11 @@ class PhysicsQuantity:
         measured constant with it. Contamination has to reach here too, or it is not
         contamination.
 
-        `digits` rides along unchanged. Strictly a function scales the relative uncertainty by
-        `|x f'(x) / f(x)|`, which for a sine near zero is 1 and near a right angle is unbounded;
-        carrying the count is the conservative reading and does not pretend to a precision the
-        operand never had. Worth revisiting per function, and not worth blocking on.
+        `digits` is *not* carried, for the reason `_binop` gives: it is a presentation choice, not
+        an uncertainty, so the sine of a quantity shown to three figures has not thereby earned
+        three of its own.
         """
-        return PhysicsQuantity(func(self._quantity), exact=self.exact, digits=self.digits)
+        return PhysicsQuantity(func(self._quantity), exact=self.exact)
 
     def sin(self):
         return self._unop(np.sin)

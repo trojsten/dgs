@@ -1380,82 +1380,71 @@ class TestDigitsTravelWithTheQuantity:
     def test_preserved(self, labelled, operation):
         assert operation(labelled).digits == 5
 
-    def test_the_symbol_is_dropped_but_the_precision_is_not(self, labelled):
+    def test_arithmetic_drops_both(self, labelled):
         """
-        A product of two quantities is not either of them, so the *symbol* goes -- but the
-        precision is a property of what is known, and that survives the arithmetic.
+        A sum of two quantities is not either of them, so the symbol goes -- and so does the
+        precision, which is a decision about how to present *this* value rather than something
+        inherited. See `TestDigitsIsPresentationOnly` for why that had to be so.
         """
         result = labelled + labelled
         assert result.symbol is None
-        assert result.digits == 5
+        assert result.digits is None
 
 
-class TestDigitsPropagate:
-    """
-    `digits` is a relative precision, so it travels through arithmetic the way one does.
+class TestDigitsIsPresentationOnly:
+    r"""
+    `digits` says how many figures to *print*. It is not an uncertainty, and it does not travel.
 
-    Nothing in the sources could see this before: `_binop` dropped it, so every computed value
-    reset to three figures whatever it was computed from.
+    It was made to travel once, as a relative error -- `min` for products, absolute uncertainties
+    added for sums. The arithmetic was right and the premise was not: on a constant `digits` is
+    what the *sheet* shows, so propagating it claims a precision nobody measured.
     """
 
     @staticmethod
     def q(magnitude, unit='m', **kwargs):
         return PhysicsQuantity.construct(magnitude, unit, **kwargs)
 
-    def test_a_product_takes_the_weaker_operand(self):
-        """The textbook rule, and the one a competitor was taught."""
-        assert (self.q(2.0, digits=3) * self.q(3.0, 's', digits=5)).digits == 3
-        assert (self.q(2.0, digits=5) / self.q(3.0, 's', digits=4)).digits == 4
+    @pytest.mark.parametrize('operation', [
+        lambda a, b: a * b,
+        lambda a, b: a / b,
+        lambda a, b: a + b,
+        lambda a, b: a - b,
+    ], ids=['mul', 'div', 'add', 'sub'])
+    def test_arithmetic_does_not_carry_it(self, operation):
+        """A result is a new value, and how to present it is a new decision."""
+        assert operation(self.q(2.0, digits=5), self.q(3.0, digits=4)).digits is None
 
-    def test_an_undeclared_operand_constrains_nothing(self):
-        """`None` is "nobody said", not "known to no figures"."""
-        assert (self.q(2.0, digits=4) * self.q(3.0, 's')).digits == 4
-        assert (self.q(2.0) * self.q(3.0, 's')).digits is None
+    @pytest.mark.parametrize('operation', [
+        lambda q: q ** 2,
+        lambda q: 1 / q,
+        lambda q: q.sin(),
+        lambda q: q.log(),
+    ], ids=['pow', 'rtruediv', 'sin', 'log'])
+    def test_nor_does_a_function_of_one(self, operation):
+        assert operation(self.q(2.0, '', digits=5)).digits is None
 
-    def test_a_bare_number_constrains_nothing(self):
-        """`2 * r` is twice the radius, not a second measurement of it."""
-        assert (self.q(2.0, digits=4) * 2).digits == 4
+    @pytest.mark.parametrize('operation', [lambda q: q.to('km'),
+                                           lambda q: q.simplify(),
+                                           lambda q: q.alias('n'),
+                                           lambda q: -q,
+                                           lambda q: abs(q)],
+                             ids=['to', 'simplify', 'alias', 'neg', 'abs'])
+    def test_but_the_same_quantity_keeps_it(self, operation):
+        """A unit, a name or a sign is not a new quantity, so the presentation still stands."""
+        assert operation(self.q(2000.0, digits=5)).digits == 5
 
-    def test_a_difference_loses_what_it_cancels(self):
+    def test_the_sheets_precision_must_not_reach_the_answer(self):
         """
-        The case `min` gets wrong, and gets wrong in the dangerous direction. Two lengths good
-        to five figures, agreeing in the first four, differ by a number good to one -- `min`
-        would print five and four of them would be invented.
+        `22/tea` is why. It computes a tea level through `const.g.approx`, and `gforce` carries
+        `digits: 1` because the constants sheet prints `10` -- not because g is known to one
+        figure. When that travelled, the booklet's `25 mm` came out as `20`.
         """
-        difference = self.q(1.0005, digits=5) - self.q(1.0000, digits=5)
-        assert round(difference.mag, 10) == 0.0005
-        assert difference.digits == 1
-
-    def test_a_sum_of_like_magnitudes_keeps_its_figures(self):
-        """The quiet case beside it: adding does not cancel, so nothing is lost."""
-        assert (self.q(1.0005, digits=5) + self.q(1.0000, digits=5)).digits == 5
-
-    def test_an_exact_addend_can_buy_figures(self):
-        """
-        Precision is absolute under addition, so an exact offset leaves the uncertainty where it
-        was while making the magnitude larger -- and the ratio of the two is what `digits` is.
-
-        One figure of 0.0005 is +/- 0.00025; offset by an exact 1 that is 1.0005 +/- 0.00025,
-        which is `1.000` and no further. Four, not the five the printed string suggests.
-        """
-        assert (self.q(0.0005, '', digits=1) + 1).digits == 4
-
-    def test_a_power_scales_the_relative_uncertainty(self):
-        """Squaring costs about a third of a figure; a square root gives one back."""
-        assert (self.q(2.0, digits=4) ** 2).digits == 3
-        assert (self.q(2.0, digits=4) ** 0.5).digits == 4
-
-    def test_never_below_one_figure(self):
-        """Cancellation can leave nothing; printing no figures at all is not an option."""
-        assert (self.q(1.00000001, digits=3) - self.q(1.0, digits=3)).digits == 1
-
-    def test_round_trips_through_the_relative_form(self):
-        for digits in range(1, 10):
-            relative = PhysicsQuantity._relative_from_digits(digits)
-            assert PhysicsQuantity._digits_from_relative(relative) == digits
-
-    def test_carried_through_a_numpy_wrapper(self):
-        assert self.q(0.3, 'radian', digits=4).sin().digits == 4
+        from core.builder.context.quantities.constant import PhysicsConstant
+        g = PhysicsConstant.construct('gforce', magnitude=9.80665,
+                                      unit='metre / second ** 2', symbol='g', digits=1)
+        assert g.approx.digits == 1
+        height = (self.q(1.0) / (2 * g.approx) * self.q(1.0, 'm/s**2')).to('mm')
+        assert height.digits is None
 
     def test_printing_falls_back_when_nothing_was_declared(self):
         computed = self.q(96.7431, 'kg') * self.q(1.0, '')
