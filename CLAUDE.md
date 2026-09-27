@@ -183,6 +183,57 @@ and never as a guarantee. An exact 100 km over an exact 3 h is 33.333..., which 
 string holds; `np.sin` builds its result without touching the operators at all. The round-trip
 catches both, which is why the flag can afford to be optimistic about what it has not seen.
 
+**Contamination reaches every operation, not just `_binop`.** It used not to: `__neg__`,
+`__abs__`, `__rtruediv__` and the eleven numpy wrappers each built their result straight from
+the constructor with no `exact=`, so it fell back to the default and the value came out exact
+again -- negating a measured constant laundered it, and so did taking its cosine. They go
+through `_unop` now. Nothing in 29 volumes moved when that was fixed, because the round-trip was
+already overruling the laundered flag; it bites only where a result *does* print back exactly and
+an operand was inexact, which is `cos(60°)` and which nothing happens to write.
+
+### `digits` is presentation, and does not propagate
+
+`digits` says how many figures to **print**. It is not an uncertainty, it is independent of
+`exact`, and it does not travel through arithmetic. `speed_light` is exact by definition of the
+metre *and* carries `digits: 1`, and both are right: the first is about the value, the second
+about what the constants sheet shows.
+
+It was made to propagate once, as a relative error -- `min` for products, absolute uncertainties
+added for sums so that cancellation cost what it should. The arithmetic was right and the premise
+was not. `gforce` is `digits: 1` because the table prints `10 m/s²`, so inheriting it claims a
+precision nobody measured: `22/tea` computes 24.6 mm through `const.g.approx` and the booklet's
+`25 mm` came out as `20`. A test pins that case.
+
+So `digits` travels only where the quantity does -- `to`, `alias`, `simplify`, `approximate`, and
+a sign -- and a result takes `None`, which `printed_digits` renders at `DEFAULT_DIGITS`. The one
+thing rounding drives is **`\approx` instead of `=`**, which `approximate` expresses by clearing
+`exact`. `alias()` takes no precision: digits are declared or they are absent.
+
+### A symbol is declared on the quantity, not written beside it
+
+`$\rho = (§ rho §)$` states that this symbol names that quantity, which is a fact about the
+quantity. Put it there -- `symbol:` on a `values:` entry, `.alias('\\rho')` on a `derived:` one
+(four backslashes in a double-quoted YAML scalar; `constants.yaml` already carries one for every
+constant) -- and write one tag:
+
+    $(§ rho.eq §)$              a value printed in full; `eq` picks `=` or `\approx`
+    $(§ result|af(3) §)$        a value printed rounded: same figures, and `\approx` for it
+
+**Which one is a question about the value, not about the source.** A given declared as exactly
+2 g prints `2` at `|f0` and `2` in full, so nothing was rounded and `=` stands; `|af` there would
+assert an approximation nobody made. Render both and compare.
+
+`\doteq` is hand-written only, for an explicit rounding. No filter emits it, and the 24 sites
+that used it in this shape now say `\approx`.
+
+Five shapes look like this family and are not. The entry is **also a display** (`29/bolognese`
+writes the same `eq:` key inline and through `|disp`, and removing it would take the display and
+its `{#eq:}` label); the left-hand side is a **derivation** rather than a symbol
+(`29/hot-shower`'s `\frac{(§ C2 §) - (§ C1 §)}{(§ T2 §) - (§ T1 §)}`, `28/egging`'s `H - h`); the
+tag is **not a quantity** (`27/highway`'s `(§ peterInC.mag §)`, and `.mag` is a float); the
+expression has **no name** to hang a symbol on (`(§ (h / 2)|f0 §)`); or the `derived:` expression
+**spans several lines**, which cannot take an alias by line substitution.
+
 The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system for a current
 that is exactly 0.1 A and stores it six ulps out, so an equality test would call it rounded; the
 two populations are nine orders of magnitude apart, so the threshold is not a tuned number.
