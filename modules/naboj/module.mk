@@ -187,8 +187,14 @@ build/naboj/%/intro.tex: \
 
 # Constants sheet
 # % <competition>/<volume>/languages/<language>
+#
+# `core/data/constants.yaml` is a prerequisite because the sheet is built *from* it: without it
+# make has no reason to notice that a symbol, a magnitude or a `digits:` has changed, and quietly
+# reuses whatever it built last. That is not hypothetical -- a solar constant renamed here was
+# rebuilt into a booklet still carrying the old symbol, and the build was green.
 build/naboj/%/constants.tex: \
 	modules/naboj/templates/constants.jtex \
+	core/data/constants.yaml \
 	build/naboj/$$*/build-language ;
 
 # Instructions to be put on the table before the competition (content)

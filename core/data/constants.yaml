@@ -105,20 +105,20 @@ gforce:
 # two -- `18/ballooner`, which circles the equator, is the one problem that genuinely wants
 # `radius_earth_equatorial`.
 radius_earth:
-    symbol:     'R_{\oplus}'
+    symbol:     'R_{\Earth}'
     aliases:    ['r_E']
     magnitude:  6371008.7714
     unit:       'metre'
     digits:     4
 
 radius_earth_equatorial:
-    symbol:     'R_{\oplus,\mathrm{e}}'
+    symbol:     'R_{\Earth,\mathrm{e}}'
     magnitude:  6378137
     unit:       'metre'
     digits:     4
 
 mass_earth:
-    symbol:     'M_{\oplus}'
+    symbol:     'M_{\Earth}'
     aliases:    ['m_E']
     magnitude:  5.972168e+24
     unit:       'kilogram'
@@ -138,19 +138,19 @@ obliquity_earth:
     digits:     3
 
 radius_sun:
-    symbol:     'R_{\odot}'
+    symbol:     'R_{\Sun}'
     magnitude:  6.957e+8
     unit:       'metre'
     digits:     2
 
 mass_sun:
-    symbol:     'M_{\odot}'
+    symbol:     'M_{\Sun}'
     magnitude:  1.988475e+30
     unit:       'kilogram'
     digits:     2
 
 temperature_sun:
-    symbol:     'T_{\odot}'
+    symbol:     'T_{\Sun}'
     magnitude:  5777
     unit:       'kelvin'
     digits:     4
@@ -209,7 +209,7 @@ parsec:
 # problems already used 1361 or 1370 and `23/yankees` said outright that it was quoting the
 # table and then printed 1361.
 solar_flux:
-    symbol:     'F_{\odot}'
+    symbol:     'F_{\Sun}'
     magnitude:  1361
     unit:       'watt per metre squared'
     digits:     4
@@ -249,11 +249,14 @@ valovcan:
     unit:       ~
     exact:      true
 
+# Exact by definition: the standard atmosphere *is* 101325 Pa, the way an inch is 25.4 mm,
+# so `eq` may write `=` for it. `digits` is still 2, that being what the sheet prints.
 pressure_standard:
     symbol:     'p_0'
     magnitude:  101325
     unit:       'pascal'
     digits:     2
+    exact:      true
 
 temperature_standard:
     symbol:     'T_0'
