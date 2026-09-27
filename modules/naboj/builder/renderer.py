@@ -38,6 +38,12 @@ VALID_TAGS: dict[str, str] = {
     'springs': 'springs and elasticity',
     'friction': 'friction between surfaces',
     'gforce': 'apparent weight, centrifugal and centripetal effects',
+    # `oscillation` is the umbrella -- anything periodic about an equilibrium -- and `pendulum`
+    # is the narrower one, the same way `circuit` sits under `electricity`. Before this existed
+    # `pendulum` was doing both jobs, which is why a floating cube bobbing (`15/bobbing`), a mass
+    # on a spring (`16/cut-spring`) and a disc rocking in a pit (`14/disc-in-pit`) were all
+    # pendulums; they are not, and they are not pendulums now.
+    'oscillation': 'periodic motion about an equilibrium',
     'pendulum': 'pendulums',
     'pulleys': 'pulleys',
     'drag': 'resistance of a medium to motion through it',
@@ -50,6 +56,10 @@ VALID_TAGS: dict[str, str] = {
     'buoyancy': 'buoyancy',
     'hydrostatics': 'liquids at rest',
     'hydrodynamics': 'liquids in motion',
+    # Its absence had three different stand-ins doing the same job and disagreeing: a soap film
+    # was `springs` because it pulls like one, a bubble was `gases` because of what is inside it,
+    # and a charged bubble was `electrostatics`. It is none of those; it is the surface.
+    'surface-tension': 'surface energy, capillarity, and the pressure across a curved film',
 
     # -- thermal ---------------------------------------------------------------------------------
     'thermodynamics': 'thermodynamics',
