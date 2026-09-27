@@ -1348,8 +1348,16 @@ class TestApproximately:
         assert radius.apx == r'R_E \approx \qty{6.37e+06}{\metre}'
 
     def test_default_digits(self):
-        """A quantity that declares none is rendered to three figures, the sheet's usual."""
-        assert PhysicsQuantity.construct(1, 'kg').digits == PhysicsQuantity.DEFAULT_DIGITS == 3
+        """
+        A quantity that declares none says so, and is *printed* at three figures.
+
+        The two halves matter separately: `digits is None` is what lets precision propagate
+        through arithmetic instead of every value resetting to three, and `printed_digits` is
+        the fallback for the one place that has to name a number.
+        """
+        unstated = PhysicsQuantity.construct(1, 'kg')
+        assert unstated.digits is None
+        assert unstated.printed_digits == PhysicsQuantity.DEFAULT_DIGITS == 3
 
     def test_apx_says_it_whatever_eq_decides(self):
         """`apx` is unconditional: it is the author saying so, not the value earning it."""
@@ -1372,11 +1380,87 @@ class TestDigitsTravelWithTheQuantity:
     def test_preserved(self, labelled, operation):
         assert operation(labelled).digits == 5
 
-    def test_dropped_by_arithmetic(self, labelled):
-        """A new quantity is a new claim, so it takes the default -- as it does for `symbol`."""
+    def test_the_symbol_is_dropped_but_the_precision_is_not(self, labelled):
+        """
+        A product of two quantities is not either of them, so the *symbol* goes -- but the
+        precision is a property of what is known, and that survives the arithmetic.
+        """
         result = labelled + labelled
         assert result.symbol is None
-        assert result.digits == PhysicsQuantity.DEFAULT_DIGITS
+        assert result.digits == 5
+
+
+class TestDigitsPropagate:
+    """
+    `digits` is a relative precision, so it travels through arithmetic the way one does.
+
+    Nothing in the sources could see this before: `_binop` dropped it, so every computed value
+    reset to three figures whatever it was computed from.
+    """
+
+    @staticmethod
+    def q(magnitude, unit='m', **kwargs):
+        return PhysicsQuantity.construct(magnitude, unit, **kwargs)
+
+    def test_a_product_takes_the_weaker_operand(self):
+        """The textbook rule, and the one a competitor was taught."""
+        assert (self.q(2.0, digits=3) * self.q(3.0, 's', digits=5)).digits == 3
+        assert (self.q(2.0, digits=5) / self.q(3.0, 's', digits=4)).digits == 4
+
+    def test_an_undeclared_operand_constrains_nothing(self):
+        """`None` is "nobody said", not "known to no figures"."""
+        assert (self.q(2.0, digits=4) * self.q(3.0, 's')).digits == 4
+        assert (self.q(2.0) * self.q(3.0, 's')).digits is None
+
+    def test_a_bare_number_constrains_nothing(self):
+        """`2 * r` is twice the radius, not a second measurement of it."""
+        assert (self.q(2.0, digits=4) * 2).digits == 4
+
+    def test_a_difference_loses_what_it_cancels(self):
+        """
+        The case `min` gets wrong, and gets wrong in the dangerous direction. Two lengths good
+        to five figures, agreeing in the first four, differ by a number good to one -- `min`
+        would print five and four of them would be invented.
+        """
+        difference = self.q(1.0005, digits=5) - self.q(1.0000, digits=5)
+        assert round(difference.mag, 10) == 0.0005
+        assert difference.digits == 1
+
+    def test_a_sum_of_like_magnitudes_keeps_its_figures(self):
+        """The quiet case beside it: adding does not cancel, so nothing is lost."""
+        assert (self.q(1.0005, digits=5) + self.q(1.0000, digits=5)).digits == 5
+
+    def test_an_exact_addend_can_buy_figures(self):
+        """
+        Precision is absolute under addition, so an exact offset leaves the uncertainty where it
+        was while making the magnitude larger -- and the ratio of the two is what `digits` is.
+
+        One figure of 0.0005 is +/- 0.00025; offset by an exact 1 that is 1.0005 +/- 0.00025,
+        which is `1.000` and no further. Four, not the five the printed string suggests.
+        """
+        assert (self.q(0.0005, '', digits=1) + 1).digits == 4
+
+    def test_a_power_scales_the_relative_uncertainty(self):
+        """Squaring costs about a third of a figure; a square root gives one back."""
+        assert (self.q(2.0, digits=4) ** 2).digits == 3
+        assert (self.q(2.0, digits=4) ** 0.5).digits == 4
+
+    def test_never_below_one_figure(self):
+        """Cancellation can leave nothing; printing no figures at all is not an option."""
+        assert (self.q(1.00000001, digits=3) - self.q(1.0, digits=3)).digits == 1
+
+    def test_round_trips_through_the_relative_form(self):
+        for digits in range(1, 10):
+            relative = PhysicsQuantity._relative_from_digits(digits)
+            assert PhysicsQuantity._digits_from_relative(relative) == digits
+
+    def test_carried_through_a_numpy_wrapper(self):
+        assert self.q(0.3, 'radian', digits=4).sin().digits == 4
+
+    def test_printing_falls_back_when_nothing_was_declared(self):
+        computed = self.q(96.7431, 'kg') * self.q(1.0, '')
+        assert computed.digits is None
+        assert computed.alias('m').apx == r'm \approx \qty{96.7}{\kilo\gram}'
 
 
 class TestEqualsChoosesItsRelation:
@@ -1439,6 +1523,63 @@ class TestEqualsChoosesItsRelation:
         given = PhysicsQuantity.construct(4, 'kg', symbol='n')
         assert (given * 2).exact is True
         assert (measured * 2).exact is False
+
+
+class TestTaintReachesEveryOperation:
+    r"""
+    Contamination has to reach *every* operation, or it is not contamination.
+
+    `_binop` had it right and nothing else did: `__neg__`, `__abs__`, `__rtruediv__` and the
+    eleven numpy wrappers each built their result straight from the constructor with no `exact=`,
+    so it fell back to the default and the value came out exact again. Negating a measured
+    constant laundered it.
+    """
+
+    @pytest.fixture
+    def measured(self):
+        return PhysicsQuantity.construct(1.2, 'kg', symbol='m', exact=False)
+
+    @pytest.mark.parametrize('operation', [
+        lambda q: -q,
+        lambda q: abs(q),
+        lambda q: 1 / q,
+        lambda q: q.ceil(),
+        lambda q: q.floor(),
+        lambda q: q.round(),
+    ], ids=['neg', 'abs', 'rtruediv', 'ceil', 'floor', 'round'])
+    def test_survives(self, measured, operation):
+        assert operation(measured).exact is False
+
+    @pytest.mark.parametrize('function', ['sin', 'cos', 'tan', 'arcsin', 'arctan', 'arccos'])
+    def test_survives_a_numpy_wrapper(self, function):
+        angle = PhysicsQuantity.construct(0.3, 'radian', symbol=r'\alpha', exact=False)
+        assert getattr(angle, function)().exact is False
+
+    def test_log_and_degrees_too(self):
+        measured = PhysicsQuantity.construct(1.2, '', exact=False)
+        assert measured.log().exact is False
+        assert PhysicsQuantity.construct(0.5, 'radian', exact=False).degrees().exact is False
+
+    def test_an_exact_operand_stays_exact(self):
+        r"""
+        The case that must *not* move. `sin(30 deg)` of an exact given is exactly 0.5, and
+        `eq` has always printed `=` for it -- tightening contamination must not cost that.
+        """
+        angle = PhysicsQuantity.construct(30, 'degree', symbol=r'\alpha')
+        assert angle.exact is True
+        sine = angle.sin().alias('s')
+        assert sine.exact is True
+        assert sine.eq == r's = \num{0.5}'
+
+    def test_a_measured_angle_whose_cosine_lands_on_a_round_number(self):
+        r"""
+        Why the round-trip alone was not enough. `cos(60 deg)` is 0.5 on the nose, so it prints
+        back perfectly; only the operand's own inexactness says it is not the true value.
+        """
+        angle = PhysicsQuantity.construct(60, 'degree', symbol=r'\alpha', exact=False)
+        cosine = angle.cos().alias('c')
+        assert cosine.exact is False
+        assert cosine.eq == r'c \approx \num{0.5}'
 
     def test_non_real_magnitudes_decline_to_judge(self):
         """The round-trip is about printed figures; anything it cannot parse is left alone."""

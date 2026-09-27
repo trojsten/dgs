@@ -23,9 +23,9 @@ class PhysicsConstant(PhysicsQuantity):
 
     def format(self, fmt: str | None = None):
         if self.force_f:
-            fmt = f'.{self.digits}f'
+            fmt = f'.{self.printed_digits}f'
         elif fmt is None:
-            fmt = f'.{self.digits}g'
+            fmt = f'.{self.printed_digits}g'
 
         return format(self, fmt)
 
@@ -35,11 +35,11 @@ class PhysicsConstant(PhysicsQuantity):
         Property for approximated values.
         Use as (* const.name.approx *)
         """
-        return self.approximate(self.digits)
+        return self.approximate(self.printed_digits)
 
     def _full(self, kind: str, precision: int | None = None) -> str:
         if precision is None:
-            precision = self.digits
+            precision = self.printed_digits
         return f'{self:.{precision}{kind}}'
 
     def fullf(self, precision: int | None = None) -> str:
@@ -56,7 +56,7 @@ class PhysicsConstant(PhysicsQuantity):
 
     @property
     def full_approx(self):
-        return f'{self.approximate(self.digits):{self.digits}g}'
+        return f'{self.approximate(self.printed_digits):{self.printed_digits}g}'
 
     def __str__(self):
         return self.full

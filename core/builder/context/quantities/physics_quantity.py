@@ -97,9 +97,13 @@ class PhysicsQuantity:
     _MACRO = re.compile(r'\\[A-Za-z]+')
 
     #: Significant figures for the rounded renderings -- `apx`, and `PhysicsConstant`'s own
-    #: `approx`, `format` and `full*`. Three is the constants sheet's usual precision and so
-    #: the sensible default for a computed value, which is what most quantities carrying this
-    #: are; a constant overrides it from `constants.yaml`.
+    #: `approx`, `format` and `full*` -- when a quantity declares none. Three is the constants
+    #: sheet's usual precision.
+    #:
+    #: **A fallback, not a default.** `digits` itself defaults to `None`, meaning "nobody said",
+    #: which is what lets it propagate: a value computed from a four-figure constant comes out at
+    #: four figures instead of resetting to three. Only the printing asks for a number, and only
+    #: the printing falls back here -- see `printed_digits`.
     DEFAULT_DIGITS = 3
 
     #: How far the printed figures may sit from the stored magnitude and still count as the
@@ -115,7 +119,7 @@ class PhysicsQuantity:
                  symbol: str | None = None,
                  si_extra: dict[str, str] | None = None,
                  force_f: bool = False,
-                 digits: int = DEFAULT_DIGITS,
+                 digits: int | None = None,
                  exact: bool = True):
         if isinstance(quantity, pint.Quantity):
             self._quantity = quantity
@@ -131,6 +135,12 @@ class PhysicsQuantity:
             f"si_extra must be a dict[str, str], got {type(self.si_extra)} instead"
 
         self.force_f = force_f
+        #: How many significant figures this value is *known* to, or `None` where nobody has
+        #: said. Presentation only -- nothing branches on it the way `prints_exactly` branches on
+        #: `exact`, and the two are independent: `speed_light` is exact by definition of the metre
+        #: *and* carries `digits: 1`, because that is what the constants sheet prints.
+        #:
+        #: It propagates as a relative precision; see `_digits_from_relative`.
         self.digits = digits
         #: Whether the stored magnitude is the true value, as against a measured or rounded
         #: stand-in for it. A number a statement *gives* is exact -- `s = 100 km` is not
@@ -139,6 +149,11 @@ class PhysicsQuantity:
         #:
         #: It spreads as contamination only, never as a guarantee: see `_binop`.
         self.exact = exact
+
+    @property
+    def printed_digits(self) -> int:
+        """ Significant figures to print with, falling back where the value declares none. """
+        return self.DEFAULT_DIGITS if self.digits is None else self.digits
 
     @staticmethod
     def construct(magnitude, unit, **kwargs):
@@ -171,6 +186,65 @@ class PhysicsQuantity:
             return PhysicsQuantity(magnitude.to(unit), **kwargs)
         return PhysicsQuantity(u.Quantity(magnitude, unit), **kwargs)
 
+    @staticmethod
+    def _relative_from_digits(digits: int | None) -> float | None:
+        """
+        Half a unit in the last significant place, as a fraction of the magnitude.
+
+        `None` in, `None` out: a value nobody has pinned down constrains nothing, and must not be
+        mistaken for one known to zero figures.
+        """
+        return None if digits is None else 0.5 * 10 ** (1 - digits)
+
+    @staticmethod
+    def _digits_from_relative(relative: float | None) -> int | None:
+        """
+        The inverse, floored: how many figures a relative precision entitles you to.
+
+        Exact on the way back -- three figures give 0.005 and 0.005 gives three -- so the pair
+        can be composed through a chain of operations without drifting. Clamped at one, since
+        cancellation can leave a result with no significant figures at all and printing none of
+        them is not an option.
+        """
+        if relative is None or relative <= 0:
+            return None
+        return max(1, math.floor(1 - math.log10(2 * relative)))
+
+    def _digits_with(self, other: Self, op, result: u.Quantity) -> int | None:
+        r"""
+        The significant figures of `op(self, other)`.
+
+        **Products and quotients take the smaller count.** Relative uncertainties add, and the
+        textbook rounds that to "no more figures than the weakest operand" -- which is the rule a
+        competitor was taught, so it is the one a booklet should follow.
+
+        **Sums and differences cannot.** There the *absolute* uncertainties add, and the result's
+        own magnitude decides what that is worth: subtracting 1.0000 from 1.0005, both good to
+        five figures, leaves 0.0005, which is good to one. `min` would claim five and be wrong by
+        four, and it is wrong in the dangerous direction -- a printed figure nobody has earned.
+        So the operands are converted to absolute uncertainties in the result's own unit, added,
+        and read back.
+
+        A quantity declaring no digits contributes no uncertainty, so it never drags a result
+        down; if neither operand declares any, neither does the result.
+        """
+        mine, theirs = self.digits, other.digits
+        if mine is None and theirs is None:
+            return None
+        if op in (operator.mul, operator.truediv):
+            return min(d for d in (mine, theirs) if d is not None)
+
+        magnitude = abs(result.magnitude)
+        if magnitude == 0:
+            return None
+        absolute = 0.0
+        for quantity, digits in ((self._quantity, mine), (other._quantity, theirs)):
+            relative = self._relative_from_digits(digits)
+            if relative is None:
+                continue
+            absolute += abs(quantity.to(result.units).magnitude) * relative
+        return self._digits_from_relative(absolute / magnitude)
+
     def _binop(self, other, op: Callable[[Self, Self | numbers.Number | u.Quantity], Any]) -> Self:
         """
         Arithmetic on the magnitudes, dropping the symbol -- a product of two quantities is not
@@ -190,10 +264,21 @@ class PhysicsQuantity:
         it -- 2.6 billion ulps out -- while `sin(30 deg)` is exactly 0.5 and prints as `=`.
         """
         if isinstance(other, PhysicsQuantity):
-            return PhysicsQuantity(op(self._quantity, other._quantity),
-                                   exact=self.exact and other.exact)
+            result = op(self._quantity, other._quantity)
+            return PhysicsQuantity(result,
+                                   exact=self.exact and other.exact,
+                                   digits=self._digits_with(other, op, result))
         elif isinstance(other, (numbers.Number, pint.registry.Quantity)):
-            return PhysicsQuantity(op(self._quantity, other), exact=self.exact)
+            # A bare number is a pure one -- `2 * r` is twice the radius, not a measurement of it
+            # -- so it declares no digits and constrains nothing. It still goes through the same
+            # arithmetic rather than having this quantity's precision copied over, because for a
+            # sum it is the *result's* magnitude that decides: 0.0005 known to one figure, plus an
+            # exact 1, is 1.0005 known to five.
+            result = op(self._quantity, other)
+            pure = PhysicsQuantity(other if isinstance(other, pint.Quantity)
+                                   else u.Quantity(other, '1'))
+            return PhysicsQuantity(result, exact=self.exact,
+                                   digits=self._digits_with(pure, op, result))
         else:
             raise TypeError(f"Cannot perform {op} with {type(other)} ({other})")
 
@@ -231,23 +316,28 @@ class PhysicsQuantity:
             exponent = exponent._quantity
         if isinstance(exponent, pint.Quantity):
             exponent = exponent.to('').magnitude
-        return PhysicsQuantity(self._quantity ** exponent, exact=self.exact)
+        # A power scales the relative uncertainty by the exponent, so squaring costs about a third
+        # of a figure and a square root gives one back.
+        relative = self._relative_from_digits(self.digits)
+        digits = (None if relative is None
+                  else self._digits_from_relative(abs(exponent) * relative))
+        return PhysicsQuantity(self._quantity ** exponent, exact=self.exact, digits=digits)
 
     def __truediv__(self, other):
         return self._binop(other, operator.truediv)
 
     def __rtruediv__(self, other):
-        return PhysicsQuantity(other / self._quantity)
+        return PhysicsQuantity(other / self._quantity, exact=self.exact, digits=self.digits)
 
     def __mod__(self, other):
         from .quantity_range import QuantityRange
         return QuantityRange(self, other)
 
     def __neg__(self):
-        return PhysicsQuantity(-self._quantity)
+        return PhysicsQuantity(-self._quantity, exact=self.exact, digits=self.digits)
 
     def __abs__(self):
-        return PhysicsQuantity(abs(self._quantity))
+        return PhysicsQuantity(abs(self._quantity), exact=self.exact, digits=self.digits)
 
     def __str__(self):
         return format(self, 'g')
@@ -380,35 +470,52 @@ class PhysicsQuantity:
         unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '{1}'
         return rf'\unit{si_extra}{unit}'
 
+    def _unop(self, func) -> Self:
+        r"""
+        Apply a numpy function, carrying `exact` and `digits` from the operand.
+
+        These bypass `_binop` entirely -- `np.sin` builds its result straight from the constructor
+        -- which is how every one of them used to hand back a quantity that had quietly reverted
+        to `exact=True`: the cosine of a measured angle came out exact, and the negation of a
+        measured constant with it. Contamination has to reach here too, or it is not
+        contamination.
+
+        `digits` rides along unchanged. Strictly a function scales the relative uncertainty by
+        `|x f'(x) / f(x)|`, which for a sine near zero is 1 and near a right angle is unbounded;
+        carrying the count is the conservative reading and does not pretend to a precision the
+        operand never had. Worth revisiting per function, and not worth blocking on.
+        """
+        return PhysicsQuantity(func(self._quantity), exact=self.exact, digits=self.digits)
+
     def sin(self):
-        return PhysicsQuantity(np.sin(self._quantity))
+        return self._unop(np.sin)
 
     def cos(self):
-        return PhysicsQuantity(np.cos(self._quantity))
+        return self._unop(np.cos)
 
     def tan(self):
-        return PhysicsQuantity(np.tan(self._quantity))
+        return self._unop(np.tan)
 
     def arcsin(self):
-        return PhysicsQuantity(np.arcsin(self._quantity))
+        return self._unop(np.arcsin)
 
     def arctan(self):
-        return PhysicsQuantity(np.arctan(self._quantity))
+        return self._unop(np.arctan)
 
     def arccos(self):
-        return PhysicsQuantity(np.arccos(self._quantity))
+        return self._unop(np.arccos)
 
     def log(self):
-        return PhysicsQuantity(np.log(self._quantity))
+        return self._unop(np.log)
 
     def degrees(self):
-        return PhysicsQuantity(np.degrees(self._quantity))
+        return self._unop(np.degrees)
 
     def ceil(self):
-        return PhysicsQuantity(np.ceil(self._quantity))
+        return self._unop(np.ceil)
 
     def floor(self):
-        return PhysicsQuantity(np.floor(self._quantity))
+        return self._unop(np.floor)
 
     def round(self):
         """
@@ -417,7 +524,7 @@ class PhysicsQuantity:
         `20/equinox` rounds an arc length to tens of kilometres, which is
         `round(d.to('kilometre') / 10) * 10` -- and there was no `round` to write it with.
         """
-        return PhysicsQuantity(np.round(self._quantity))
+        return self._unop(np.round)
 
     def approximate(self, digits: int):
         """
@@ -586,7 +693,7 @@ class PhysicsQuantity:
         power of ten. Correct, and not what anyone wants to read for `g \approx 10`. Rounding
         first is what `PhysicsConstant.full_approx` already does for the same reason.
         """
-        return rf"{self._require_symbol('approximately')} \approx {self.approximate(self.digits):g}"
+        return rf"{self._require_symbol('approximately')} \approx {self.approximate(self.printed_digits):g}"
 
     @property
     def apx(self) -> str:
