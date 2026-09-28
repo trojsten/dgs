@@ -26,4 +26,6 @@ siunitx:
 # enough not to be a judgement call; anything absent falls back to English.
 words:
   and: 'és'
+  const: 'konstans'
   or: 'vagy'
+  wherefrom: 'amiből'
