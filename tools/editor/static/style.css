@@ -194,8 +194,9 @@ abbr[title] {
 
 .tab-link:hover { color: #ddd; }
 
-/* The PDF pane. The browser's built-in viewer does the rendering, so there is nothing to
-   vendor -- but it resets to page 1 on every reload, hence the page bookkeeping in app.js. */
+/* The PDF pane. pdf.js draws the pages into #pdf-view (static/pdfview.js) instead of the
+   browser's viewer, which reset its zoom and scroll on every reload and would not say what they
+   were. */
 .output-frame {
   position: relative;
   flex: 1;
@@ -203,14 +204,53 @@ abbr[title] {
   background: #2a2a2a;
 }
 
-#pdf-frame {
-  width: 100%;
-  height: 100%;
-  border: none;
+#pdf-view {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
   display: none;
 }
 
-#pdf-frame.loaded { display: block; }
+#pdf-view.loaded { display: block; }
+
+/* `fit-content` so a page wider than the pane scrolls sideways from its left edge instead of
+   being centred off both sides, where its left half could never be reached. */
+.pdf-pages {
+  width: fit-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+.pdf-pages canvas {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pdf-zoom {
+  position: absolute;
+  top: 0.4rem;
+  right: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.3rem;
+  background: rgba(30, 30, 30, 0.85);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.pdf-zoom[hidden] { display: none; }
+
+.pdf-zoom button { padding: 0 0.45rem; }
+
+#pdf-zoom-label {
+  min-width: 3.2rem;
+  text-align: center;
+}
 
 .placeholder {
   position: absolute;

@@ -287,8 +287,16 @@ $(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call RULE_TEMPLATE,$(language
 # The templates are prerequisites of the stamp rather than of `standalone.tex`, because
 # `standalone.tex` has an empty recipe -- listing them there would mark it out of date
 # without ever regenerating it.
+#
+# So are the problem's two directories, for the reason `naboj_problem_dirs` gives above: which
+# `\protectedInput` lines the document carries is decided by `blocks/answer-body.jtex` asking
+# `path_exists` at render time, and a directory's mtime is what moves when a file in it is added
+# or removed. Without them, adding `answer-extra.md` left the preview with no answer at all, and
+# deleting `answer-interval.md` kept offering the stale interval -- both with make green.
 build/naboj/%/build-standalone: \
-	$$(NABOJ_TEMPLATES)
+	$$(NABOJ_TEMPLATES) \
+	$$(wildcard source/naboj/$$*) \
+	$$(wildcard $$(call truepath, source/naboj/$$*/..))
 	$(call prepare_arguments,standalone)
 	python -m modules.naboj.builder.standalone \
 		$(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) $(word 5,$(words)) -o '$(dir $@)'

@@ -27,7 +27,7 @@ from modules.naboj.builder.contexts import ContextI18nGlobal
 UNNUMBERED = '?'
 
 
-def problem_number(launch_directory: Path, competition: str, volume: int, problem: str) -> str:
+def problem_number(launch_directory: Path, competition: str, volume: str, problem: str) -> str:
     """
     The problem's position in the volume, which is what the booklet prints in its box.
 
@@ -36,7 +36,7 @@ def problem_number(launch_directory: Path, competition: str, volume: int, proble
     no `problems:` list at all. Any failure falls back to `?`: an unnumbered preview is worth far
     more than no preview.
     """
-    meta = Path(launch_directory) / competition / f'{volume:02d}' / 'meta.yaml'
+    meta = Path(launch_directory) / competition / volume / 'meta.yaml'
     try:
         problems = (yaml.safe_load(meta.read_text()) or {}).get('problems') or []
         return str(problems.index(problem) + 1)
@@ -49,7 +49,7 @@ class BuilderNabojStandalone:
 
     def __init__(self,
                  competition: str,
-                 volume: int,
+                 volume: str,
                  problem: str,
                  language: str,
                  output_directory: Path,
@@ -57,10 +57,10 @@ class BuilderNabojStandalone:
                  launch_directory: Path):
         self.output_directory = Path(output_directory)
         self.context = Context(
-            f'{competition}/{volume:02d}/{problem}/{language}',
+            f'{competition}/{volume}/{problem}/{language}',
             module={'id': 'naboj'},
             competition={'id': competition},
-            volume={'id': f'{volume:02d}'},
+            volume={'id': volume},
             problem={
                 'id': problem,
                 'number': problem_number(launch_directory, competition, volume, problem),
@@ -81,7 +81,9 @@ class BuilderNabojStandalone:
 def main():
     parser = argparse.ArgumentParser(description="Build a standalone one-problem Náboj document")
     parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
-    parser.add_argument('volume', type=int)
+    # The directory name, taken as it is: `05` for a volume, and `pool` for the problems that
+    # belong to none yet. Parsing it as a number used to re-pad it, and refused `pool` outright.
+    parser.add_argument('volume', type=str)
     parser.add_argument('problem', type=str)
     parser.add_argument('language', type=str)
     parser.add_argument('-o', '--output', action=argparsedirs.WriteableDir, required=True)

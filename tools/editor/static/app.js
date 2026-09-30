@@ -666,26 +666,45 @@ function failureStatus(body, verb) {
   return body.returncode === null ? `Cannot ${verb}` : `${verb} failed (exit ${body.returncode})`;
 }
 
+let pdfView = null;
+let pdfViewLoading = null;
+
+/**
+ * The pdf.js viewer, loaded on first use: it is an ES module and this file is not, and a
+ * `<script type="module">` would run after `init()` had already asked for a PDF. The promise is
+ * kept so that two early calls share one viewer rather than wiring the buttons twice.
+ */
+function pdfViewer() {
+  pdfViewLoading ??= import("/static/pdfview.js").then(({ PdfView }) => {
+    pdfView = new PdfView(el("pdf-view"), el("pdf-zoom-label"));
+    el("pdf-zoom-in").addEventListener("click", () => pdfView.zoomBy(1.2));
+    el("pdf-zoom-out").addEventListener("click", () => pdfView.zoomBy(1 / 1.2));
+    el("pdf-zoom-fit").addEventListener("click", () => pdfView.setZoom("fit"));
+    return pdfView;
+  });
+  return pdfViewLoading;
+}
+
 /**
  * Point the preview at `url`, or clear it when `url` is null.
  *
- * When only the content changed, reload in place rather than reassigning `src`: the
- * browser's PDF viewer keeps its scroll position across a reload but always jumps back to
- * page one when the src changes. It can throw if the viewer refuses to expose its window,
- * so fall back to the src swap.
+ * The viewer keeps its zoom and scroll offset across a load, so a recompile lands on the spot
+ * being read and a language switch on the same spot in the translation.
  */
-function showPdf(url, { stale = false } = {}) {
-  const frame = el("pdf-frame");
+async function showPdf(url, { stale = false } = {}) {
+  const view = el("pdf-view");
   const placeholder = el("pdf-placeholder");
   const wrapper = el("output-pdf");
   const link = el("pdf-newtab");
+  const zoom = el("pdf-zoom");
 
   wrapper.classList.toggle("stale", stale);
 
   if (!url) {
     state.pdfUrl = null;
-    frame.classList.remove("loaded");
-    frame.removeAttribute("src");
+    view.classList.remove("loaded");
+    zoom.hidden = true;
+    pdfView?.clear();
     placeholder.hidden = false;
     placeholder.textContent = "Nothing compiled yet — press Ctrl/Cmd+Enter.";
     link.removeAttribute("href");
@@ -695,22 +714,21 @@ function showPdf(url, { stale = false } = {}) {
   const sameDocument = state.pdfUrl === url;
   state.pdfUrl = url;
   link.href = url;
-  placeholder.hidden = true;
-  frame.classList.add("loaded");
 
-  // A failed compile did not rewrite the cached file, so there is nothing to refetch --
-  // reloading would only throw away the reader's scroll position for no reason.
+  // A failed compile did not rewrite the cached file, so there is nothing to refetch.
   if (stale && sameDocument) return;
 
-  if (sameDocument) {
-    try {
-      frame.contentWindow.location.reload();
-      return;
-    } catch {
-      // fall through to the src swap
-    }
+  try {
+    await (await pdfViewer()).load(url);
+    placeholder.hidden = true;
+    view.classList.add("loaded");
+    zoom.hidden = false;
+  } catch (e) {
+    view.classList.remove("loaded");
+    zoom.hidden = true;
+    placeholder.hidden = false;
+    placeholder.textContent = `Cannot show the PDF: ${e.message}`;
   }
-  frame.src = url;
 }
 
 function switchOutputTab(name) {
@@ -735,6 +753,7 @@ function switchOutputTab(name) {
 // --- actions ---------------------------------------------------------------
 
 /**
+ * The preview itself ignores the fragment; it is for "open in tab", which is the browser's viewer.
  * `#pagemode=none` keeps the viewer's outline sidebar shut. hyperref marks the document
  * `/UseOutlines`, so without it PDF.js opens the sidebar over the first page every time.
  */

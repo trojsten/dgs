@@ -15,6 +15,10 @@ uv run python tools/editor/app.py [--port 5001]
   lint, and read the PDF beside them. Tab indents rather than moving focus — four spaces
   in the sources, two in `meta.yaml`, to the next stop; Shift+Tab outdents; Escape leaves
   the textarea, since Tab no longer does. A selection is never replaced, only indented.
+  The PDF preview is drawn by pdf.js (`static/pdfview.js`, with pdfjs-dist vendored under
+  `static/vendor/pdfjs/`), not by the browser's viewer, so the editor owns the zoom -- kept in
+  `localStorage` -- and the scroll offset, and a recompile or a language switch keeps both.
+  "open in tab" is still the browser's own viewer, for when text needs selecting.
 - `/audit` — every volume in one table, then one volume in detail: an author
   leaderboard, tag distribution, files by language, and a verdict per problem for
   translations, equation de-duplication, pictures and `values:` extraction.

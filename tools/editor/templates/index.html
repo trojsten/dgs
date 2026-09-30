@@ -55,7 +55,15 @@
         <a id="pdf-newtab" class="tab-link" href="#" target="_blank" rel="noopener">open in tab &#8599;</a>
       </div>
       <div id="output-pdf" class="output-frame">
-        <iframe id="pdf-frame" title="Compiled problem"></iframe>
+        <!-- Drawn by pdf.js (static/pdfview.js), so the editor keeps the zoom and the scroll
+             position across a recompile or a change of language. -->
+        <div id="pdf-view" role="document" aria-label="Compiled problem"></div>
+        <div id="pdf-zoom" class="pdf-zoom" hidden>
+          <button id="pdf-zoom-out" title="Zoom out (Ctrl+wheel)">&minus;</button>
+          <span id="pdf-zoom-label"></span>
+          <button id="pdf-zoom-in" title="Zoom in (Ctrl+wheel)">+</button>
+          <button id="pdf-zoom-fit" title="Fit the width of the pane">fit</button>
+        </div>
         <div id="pdf-placeholder" class="placeholder">Nothing compiled yet &mdash; press Ctrl/Cmd+Enter.</div>
       </div>
       <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
