@@ -34,7 +34,10 @@ siunitx:
   list_final_separator: 'a'
 
 # Words inside maths. These are what the sources already use, or elementary
-# enough not to be a judgement call; anything absent falls back to English.
+# enough not to be a judgement call. **Nothing falls back to English**: a word this file has not
+# got is boxed in red where it was asked for, collected, and the render then fails. Add the word
+# here rather than leaving the box -- a fallback for prose is how a Slovak booklet comes to print
+# `therefore`, which looks right until it is in print.
 words:
   and: 'a'
   const: 'konst.'

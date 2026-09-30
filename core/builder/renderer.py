@@ -162,6 +162,28 @@ class MissingWordError(Exception):
         )
 
 
+class MissingWordsError(Exception):
+    """
+    Raised once, after the output has been written, for every word the render could not resolve.
+
+    The singular `MissingWordError` is for a caller that wants to die on the first miss. This one
+    is the end of a render: the booklet is on disk with a red box at every hole, and *then* the
+    build goes red. Both halves matter. Stopping at the first miss would hand a translator one gap
+    per rebuild, and the lazy resolution in `LocalisedWords` exists precisely so that a Polish
+    build does not fail over a word Polish never asks for. But a warning is not a failure --
+    volume 19 printed `Missing file …onion…!` on page 42 in every language for years while `make`
+    stayed green, and a missing word is the same shape of hole.
+    """
+    def __init__(self, missing):
+        self.missing = list(missing)
+        n = len(self.missing)
+        super().__init__(
+            f"{n} translated word{'' if n == 1 else 's'} could not be resolved. "
+            f"The output was written with each one boxed in red; the boxes are markers, not "
+            f"translations. Add the words and rebuild."
+        )
+
+
 class MissingWordRegistry:
     """
     Every word a render asked for and the language did not have.
@@ -177,8 +199,9 @@ class MissingWordRegistry:
     **The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
     every language for years while `make` stayed green, because nobody reads page 42; and the
     output already carries some 1500 of these boxes, so one more does not stand out. The net is
-    this registry being reported at the end of the render, and the audit reading it from the
-    sources -- exactly how the `onion` case was actually caught.
+    this registry being reported at the end of the render **and the render then failing**, plus
+    the audit reading the same gaps out of the sources -- which is how the `onion` case was
+    actually caught.
     """
     def __init__(self):
         self._missing: list[tuple[str, str, str]] = []
@@ -204,7 +227,7 @@ class MissingWordRegistry:
         return ("Missing translated words, boxed in red in the output:\n"
                 + "\n".join(lines)
                 + "\nAdd them there. There is deliberately no fallback -- the box is a marker, "
-                  "not a translation, and it will print if nobody removes it.")
+                  "not a translation, and this render is about to fail so that nobody ships it.")
 
 
 class LocalisedWords:
@@ -361,9 +384,13 @@ class CLIInterface(cli.CLIInterface, ABC):
     def run(self) -> None:
         super().run()
         # After the output is written, not instead of it: the point of boxing a missing word is
-        # that the booklet still builds with the hole marked. This is the part a machine reads.
+        # that the booklet still builds with the hole marked, so a translator sees every gap in one
+        # pass instead of one per rebuild. The build must not go green on it, though -- that is a
+        # warning nobody reads, and it is exactly how volume 19 shipped a `Missing file` box for
+        # years. Write the output, then fail.
         if (report := self.missing_words.report()) is not None:
-            log.warning(f"{c.err('missing words')} in {c.path(self.args.infile.name)}\n{report}")
+            log.error(f"{c.err('missing words')} in {c.path(self.args.infile.name)}\n{report}")
+            raise MissingWordsError(self.missing_words.missing)
 
     @staticmethod
     def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = frozenset()) -> None:

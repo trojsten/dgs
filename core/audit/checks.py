@@ -459,11 +459,15 @@ def word_missing(sources):
     """
     A word a source asks for and its language has not got.
 
-    The renderer no longer stops for this: it boxes the word in red and carries on, so the
-    booklet still builds with the hole marked. That box is not the safety net -- volume 19
-    printed `Missing file …onion…!` on page 42 in every language for years while `make` stayed
-    green, and the output already carries some 1500 such boxes, so one more does not stand out.
-    This check is the safety net, and it reads the sources rather than the PDF.
+    The renderer boxes the word in red and carries on to the end of the render, so the booklet
+    still builds with every hole marked -- and then fails, so nobody ships it. That box alone was
+    never the safety net: volume 19 printed `Missing file …onion…!` on page 42 in every language
+    for years while `make` stayed green, and the output already carries some 1500 such boxes, so
+    one more does not stand out.
+
+    This check is the half that does not need a render. It reads the sources, so it finds the gap
+    before a build is attempted and in every language at once, which is what an editor wants; the
+    render's own failure is what stops a gap reaching a PDF.
     """
     for unit in sources.unit_list:
         unit_words = (unit.meta or {}).get('words') or {}

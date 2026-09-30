@@ -397,15 +397,20 @@ Slovak booklet printing `therefore` — output that looks right until it is in p
 
 A word the language has not got is **boxed, not guessed**: the renderer emits
 `\errorMessage{and?pl}`, which `core/latex/utilities.tex` sets as a red `\colorbox`, and
-carries on. That is `\protectedInput`'s call for a missing file, for the same reason — one
-absent word should not cost you the other 39 problems, and a translator wants the whole
-booklet with the holes marked.
+carries on to the end of the render. That is `\protectedInput`'s call for a missing file, for the
+same reason — one absent word should not cost you the other 39 problems, and a translator wants
+the whole booklet with the holes marked. **Then it fails**: the output is written, every gap is
+reported at once, and the render exits nonzero, so `make` goes red. There is no fallback to
+English anywhere and never was — eight `core/i18n/*.yaml` said there was, which was a note
+describing code that did not exist.
 
 **The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
 every language for years while `make` stayed green, and the output already carries some 1500
-of these boxes, so one more does not stand out. The net is two things: every miss is collected
-and reported once at the end of the render, and `core/audit`'s `word-missing` check reads them
-off the sources. Fix the word; do not ship the box.
+of these boxes, so one more does not stand out. The net is three things: every miss is collected,
+reported once at the end of the render, and **the render then exits nonzero** — a warning is not a
+failure, and that was the whole of the `onion` problem. `core/audit`'s `word-missing` check is the
+fourth, and the only one that works without a build: it reads the sources, so it finds the gap in
+every language at once before anyone renders anything. Fix the word; do not ship the box.
 
 Resolution is lazy, so a language that never asks for a word does not need it —
 `21/troll-science` writes the equation with translated subscripts in four of its six

@@ -131,6 +131,59 @@ class TestTranslatedWords:
         assert r'\errorMessage{air?hu}' in out
         assert [t for t, _, _ in cli.missing_words.missing] == ['air']
 
+    @staticmethod
+    def render_through_cli(tmp_path, locale, meta, source):
+        """The whole CLI, not just the convertor: this is the path that reports and fails."""
+        import sys
+
+        from modules.naboj.builder.renderer import CLIInterface
+        (tmp_path / 'meta.yaml').write_text(meta)
+        src = tmp_path / 'solution.md'
+        src.write_text(source)
+        out = tmp_path / 'out.md'
+        saved = sys.argv
+        try:
+            sys.argv = ['r', locale, '-C', str(tmp_path / 'meta.yaml'), str(src), str(out)]
+            CLIInterface().run()
+        finally:
+            sys.argv = saved
+        return out
+
+    def test_a_missing_word_fails_the_render(self, tmp_path):
+        """
+        A warning is not a failure. Volume 19 printed `Missing file …onion…!` on page 42 in every
+        language for years while `make` stayed green; a missing word is the same shape of hole, and
+        the red box alone does not stop anyone shipping it.
+        """
+        from core.builder.renderer import MissingWordsError
+        source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
+        with pytest.raises(MissingWordsError) as exc:
+            self.render_through_cli(tmp_path, 'sk', self.META, source)
+        assert [t for t, _, _ in exc.value.missing] == ['therefore']
+
+    def test_the_output_is_written_before_the_render_fails(self, tmp_path):
+        """
+        The booklet still builds, with the hole marked. Failing *instead* of writing would hand a
+        translator one gap per rebuild, which is what collecting them was for.
+        """
+        from core.builder.renderer import MissingWordsError
+        source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
+        with pytest.raises(MissingWordsError):
+            out = self.render_through_cli(tmp_path, 'sk', self.META, source)
+        assert r'\errorMessage{therefore?sk}' in (tmp_path / 'out.md').read_text()
+
+    def test_a_render_that_wants_no_missing_word_still_succeeds(self, tmp_path):
+        """
+        The quiet half, and it is not optional: a language that has every word it asks for must
+        build, and a language that never asks for the word it lacks must build too. Slovak has no
+        `therefore`, and `21/troll-science` is the real case -- it writes translated subscripts in
+        four of its six languages and differently in the other two.
+        """
+        asks_for_nothing_missing = "$a \\QQText{(§ i18n.words['and'] §)} b$\n"
+        out = self.render_through_cli(tmp_path, 'sk', self.META, asks_for_nothing_missing)
+        assert r'\QQText{a}' in out.read_text()
+        assert 'errorMessage' not in out.read_text()
+
     def test_a_word_may_be_called_const(self, tmp_path):
         """
         `words.const` shadows nothing -- the reservation is about the top-level namespace, where a
