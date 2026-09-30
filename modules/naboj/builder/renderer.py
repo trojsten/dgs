@@ -167,8 +167,13 @@ VALID_TAGS: dict[str, str] = {
     'creative': 'requires out-of-the-box thinking',
     'elegant': 'short but interesting',
     'trick': 'a neat trick solves it easily, though the result is serious',
+    # Not merely an easy problem. The test is whether something *collapses*: a given goes unused,
+    # or the answer refuses the question, or it is a constant the statement already handed you.
+    # `26/hairy`, `27/takeoff` and `25/ascent` each carried this tag and lost it -- a hair-growth
+    # rate into a day, m/s^2 into km/h^2, an ascent minus an elevation. Every one is a real
+    # calculation, however short, and nothing in any of them collapses.
     'troll': 'a complex or outright scary statement that boils down to something very simple, '
-             'usually answering 0 or 1',
+             'usually answering 0 or 1. Not just an easy problem: something must collapse',
     'silly': 'something silly in the story; the physics is sound',
     'unreal': 'the physics does not model the real world, but is still computable as stated',
     'truth-or-dare': 'a list of statements to be judged true or false',
