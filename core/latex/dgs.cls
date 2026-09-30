@@ -71,6 +71,7 @@
     polish,
     spanish,
     russian,
+    portuguese,
     english,
 ]{babel}
 % Must precede chemmacros, which pulls in `bm`. When `bm` loads it copies the *current* math
