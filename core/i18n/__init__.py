@@ -72,6 +72,12 @@ class Locale:
             Optional('thin_pairs'): list[str],
         },
         Optional('rtl', default=False): bool,
+        # Per-language LaTeX penalties and overrides emitted into build/core/i18n/<lang>.tex.
+        # Currently used by Portuguese to set \exhyphenpenalty=10000, preventing line breaks
+        # at explicit hyphens in compound words like segunda-feira.
+        Optional('latex'): {
+            Optional('exhyphenpenalty'): int,
+        },
         'siunitx': {
             'list_pair_separator': str,
             'list_final_separator': str,

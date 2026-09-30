@@ -5,6 +5,12 @@ quotes:
   open: '“'
   close: '”'
   extra: 'portuguese'
+latex:
+  # Portuguese compound words (segunda-feira, guarda-chuva, …) must not break at
+  # their explicit hyphens. \exhyphenpenalty=10000 makes TeX treat explicit hyphens
+  # as non-break points; the default (100) is permissive enough to break them.
+  exhyphenpenalty: 10000
+
 cref:
   figure:
     singular: 'figura'
