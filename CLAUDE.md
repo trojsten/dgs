@@ -908,6 +908,28 @@ and after. Reading through a symlink is safe; writing is not.
   foot evaporates -- hence the box, the explicit `\newpage`, and `\vspace*{\fill}`
   rather than `\vfill`. Adding a name costs nothing; a block taller than a page would
   overrun the margin and say so as an Overfull `\vbox`.
+- **A problem statement never numbers its equations, and never labels them.** The number would
+  be a cross-reference to something the contestant does not have in front of them during the
+  competition, and a label nobody may point at is a number in the margin for nothing.
+
+  This is **not** a filter you choose. `MathObject` takes a `labelled` flag and the renderer sets
+  it from the file being rendered — `problem.md` and `problem-extra.md` get no label, everything
+  else does. Deciding it by filter would mean remembering it in nine translations of the same
+  statement and getting it right every time; deciding it here means it cannot be got wrong.
+
+  It is also what lets **one `eq:` entry serve both halves of a problem**, which is the whole
+  reason statements can be hoisted at all. `26/earthquakes` states the Gutenberg–Richter law and
+  then opens its solution with it: the same `(§ eq.grl|disp(',') §)` stands in both files, the
+  statement gets no label and the solution gets `{#eq:earthquakes:grl}`, so there is one copy of
+  the equation and still exactly one label to reference. Before this, hoisting a statement
+  equation that the solution also printed would have emitted the label twice.
+
+  **Hoisting a statement matters more than hoisting a solution**, not less: the statement is what
+  contestants read during the competition, and it must not drift. It had: `20/gases` wrote the
+  rate law out in five languages and the Hungarian had lost its minus sign, so one booklet told
+  its readers the amount of A *grows*. Four languages agreed and the fifth was wrong, and nothing
+  reported it.
+
 - Block equations belong in `meta.yaml` under `eq:`, referenced as
   `(§ eq.<name>|disp('.') §)`. The key becomes the label, so renaming a key
   renames `{#eq:<pid>:<key>}`.

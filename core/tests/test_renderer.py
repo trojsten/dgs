@@ -184,6 +184,63 @@ class TestTranslatedWords:
         assert r'\QQText{a}' in out.read_text()
         assert 'errorMessage' not in out.read_text()
 
+    @staticmethod
+    def render_named(tmp_path, locale, meta, source, filename):
+        """As `render`, but the input file is named -- which is what decides the label."""
+        import sys
+
+        from modules.naboj.builder.renderer import CLIInterface
+        (tmp_path / 'meta.yaml').write_text(meta)
+        src = tmp_path / filename
+        src.write_text(source)
+        saved = sys.argv
+        try:
+            sys.argv = ['r', locale, '-C', str(tmp_path / 'meta.yaml'), str(src),
+                        str(tmp_path / 'out.md')]
+            return CLIInterface().convertor.run()
+        finally:
+            sys.argv = saved
+
+    EQ_META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+               "tags: ['kinematics']\n"
+               "eq:\n  grl: 'a = b'\n")
+
+    def test_a_statement_equation_carries_no_label(self, tmp_path):
+        """
+        A problem statement never numbers its equations. The number would point at a solution the
+        contestant does not have during the competition, and a label nobody may reference is a
+        number in the margin for nothing.
+        """
+        out = self.render_named(tmp_path, 'sk', self.EQ_META,
+                                "(§ eq.grl|disp('.') §)\n", 'problem.md')
+        assert '$$' in out and 'a = b' in out
+        assert '#eq:' not in out
+
+    def test_a_solution_equation_still_does(self, tmp_path):
+        """The other half: a solution's equations are referenced by `[-@eq:…]` and must keep it."""
+        out = self.render_named(tmp_path, 'sk', self.EQ_META,
+                                "(§ eq.grl|disp('.') §)\n", 'solution.md')
+        assert '{#eq:' in out
+
+    def test_one_entry_may_serve_both_halves(self, tmp_path):
+        r"""
+        This is the point of deciding it by file rather than by filter. `26/earthquakes` states
+        the Gutenberg-Richter law and opens its solution with it; one `eq:` entry now serves both,
+        so the equation exists once and there is still exactly one `{#eq:}` to point at. Labelling
+        both would be a duplicate label and a LaTeX error.
+        """
+        source = "(§ eq.grl|disp('.') §)\n"
+        statement = self.render_named(tmp_path, 'sk', self.EQ_META, source, 'problem.md')
+        solution = self.render_named(tmp_path, 'sk', self.EQ_META, source, 'solution.md')
+        assert (statement + solution).count('#eq:') == 1
+
+    def test_the_rule_holds_for_align_and_arr_too(self, tmp_path):
+        """All three display filters attach the label, so all three have to drop it."""
+        meta = self.EQ_META.replace("grl: 'a = b'", "grl: 'a &= b'")
+        for spec in ("align('.')", "arr('rl', '.')"):
+            out = self.render_named(tmp_path, 'sk', meta, f"(§ eq.grl|{spec} §)\n", 'problem.md')
+            assert '#eq:' not in out, spec
+
     def test_a_word_may_be_called_const(self, tmp_path):
         """
         `words.const` shadows nothing -- the reservation is about the top-level namespace, where a

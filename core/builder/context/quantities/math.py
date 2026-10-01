@@ -7,9 +7,29 @@ class MathObject:
     """
     def __init__(self,
                  ident: str,
-                 content: str):
+                 content: str,
+                 labelled: bool = True):
         self.id = ident
         self.content = re.sub(r'\n\Z', '', content)
+        #: Whether a display carries its `{#eq:…}` label, and so an equation number.
+        #:
+        #: **A problem statement never numbers its equations and never labels them**, because a
+        #: number is a cross-reference to something the contestant cannot see -- the solution is
+        #: not in their hands during the competition -- and a label no one may point at is just a
+        #: number in the margin. The renderer sets this from the file it is rendering rather than
+        #: leaving it to a filter, so an author cannot pick the wrong one: see
+        #: `JinjaCLIInterface.build_context`.
+        #:
+        #: It is what lets one `eq:` entry serve both halves of a problem. `26/earthquakes` states
+        #: the Gutenberg-Richter law and then opens its solution with it; written as
+        #: `(§ eq.grl|disp(\',\') §)` in both, the statement gets no label and the solution gets
+        #: one, so there is a single copy of the equation and still exactly one `{#eq:}` to
+        #: reference. Labelling both would be a duplicate label.
+        self.labelled = labelled
+
+    @property
+    def _label(self) -> str:
+        return f" {{#eq:{self.id}}}" if self.labelled else ""
 
     def __str__(self):
         """
@@ -116,7 +136,7 @@ class MathObject:
             content = re.sub(r'^(?!\Z)', '        ', body, flags=re.MULTILINE)
             return (f"$$\n    \\begin{{array}}{{{self._display_columns(columns)}}}\n"
                     f"{content}{interpunction}\n"
-                    f"    \\end{{array}}\n$$ {{#eq:{self.id}}}")
+                    f"    \\end{{array}}\n$${self._label}")
 
         # Distinguish "unknown base spec" from "valid base spec with invalid
         # trailing character," because the latter is the much more common
@@ -149,7 +169,7 @@ class MathObject:
                 return f"${self.content}$"
             case 'disp':
                 content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
-                return f"$$\n{content}{interpunction}\n$$ {{#eq:{self.id}}}"
+                return f"$$\n{content}{interpunction}\n$${self._label}"
             case 'align':
                 # The same shape as `arr` above, and for the same reason: `\begin{aligned}` sits
                 # where `disp`'s content would and the rows sit inside it, eight spaces deep.
@@ -161,6 +181,6 @@ class MathObject:
                 content = re.sub(r'^(?!\Z)', '        ', self.content, flags=re.MULTILINE)
                 return (f"$$\n    \\begin{{aligned}}\n"
                         f"{content}{interpunction}\n"
-                        f"    \\end{{aligned}}\n$$ {{#eq:{self.id}}}")
+                        f"    \\end{{aligned}}\n$${self._label}")
             case _:
                 raise NotImplementedError(f"Unknown format spec {spec!r} for MathObject")

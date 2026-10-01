@@ -486,10 +486,24 @@ class CLIInterface(cli.CLIInterface, ABC):
         if 'blocks' in context.data:
             ctx.add(blocks=context.data['blocks'])
 
-        # Process all equations: create MathObject and store under the `eq` key in the context
+        # Process all equations: create MathObject and store under the `eq` key in the context.
+        #
+        # Whether a display carries its `{#eq:…}` label is decided here, from the file being
+        # rendered, and not by the filter the author writes. **A problem statement never numbers
+        # its equations**: the number would point at a solution the contestant does not have, and
+        # a label nobody may reference is a number in the margin for nothing.
+        #
+        # Deciding it here rather than offering `|dispu` beside `|disp` is what makes the rule
+        # hold: it cannot be got wrong, and it does not have to be remembered in nine translations
+        # of the same statement. It also lets one `eq:` entry serve both halves of a problem --
+        # `26/earthquakes` states the Gutenberg-Richter law and opens its solution with it, and
+        # the same `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the
+        # solution, so there is one copy of the equation and exactly one `{#eq:}` to point at.
         if 'eq' in context.data:
+            labelled = not Path(self.args.infile.name).name.startswith('problem')
             for idx, fragment in context.data['eq'].items():
-                context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment)
+                context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment,
+                                                     labelled=labelled)
             ctx.add(eq=context.data['eq'])
 
         return ctx
