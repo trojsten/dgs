@@ -227,6 +227,17 @@ class CLIInterface(renderer.CLIInterface, ABC):
     description = "dgs Jinja Náboj convertor"
     context_cls = NabojStandaloneContext
 
+    #: A Náboj problem statement never numbers its equations and never labels them. The number
+    #: would be a cross-reference to the solution, which a contestant does not have in front of
+    #: them during the competition, and a label nobody may point at is a number in the margin for
+    #: nothing. Everything else -- solutions, and the three kinds of answer file -- numbers as
+    #: before, and a solution's equations are referenced by `[-@eq:…]` and need the label.
+    #:
+    #: This is Náboj's rule and it is declared here rather than in core, for the reason
+    #: `editor.yaml` and the audit's `audit: true` are per module: another module's files mean
+    #: different things. Scholar's `text.md` is a lecture, where numbering an equation is right.
+    unnumbered_files = ('problem.md', 'problem-extra.md')
+
 
 if __name__ == "__main__":
     CLIInterface().run()

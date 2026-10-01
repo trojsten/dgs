@@ -913,9 +913,26 @@ and after. Reading through a symlink is safe; writing is not.
   competition, and a label nobody may point at is a number in the margin for nothing.
 
   This is **not** a filter you choose. `MathObject` takes a `labelled` flag and the renderer sets
-  it from the file being rendered — `problem.md` and `problem-extra.md` get no label, everything
-  else does. Deciding it by filter would mean remembering it in nine translations of the same
-  statement and getting it right every time; deciding it here means it cannot be got wrong.
+  it from the file being rendered, against the module's own `unnumbered_files` — Náboj names
+  `problem.md` and `problem-extra.md`, and everything else numbers as before.
+
+  **The list is the module's, not core's**, for the reason `editor.yaml` and the audit's
+  `audit: true` are per module: another module's files mean different things. Seminar nests
+  `problem.md` five levels deep and scholar also has `text.md`, a lecture, whose equations
+  *should* be numbered. `core.builder.renderer.CLIInterface.unnumbered_files` is empty, and a
+  module that says nothing numbers everything.
+
+  **Why not an explicit `label=` on `|disp`?** Because the call is not hoisted even when the
+  equation is. There are 5264 call sites naming 2579 distinct equations, so more than half of all
+  equations are written out once per language — `label=False` would be written six times for one
+  equation and could be forgotten in one of them, giving an equation numbered in Slovak and not
+  in English. That is the same one-language drift hoisting exists to prevent. And those argument
+  lists already vary per language *legitimately*: 141 equations are called with different
+  terminal punctuation in different languages, because the punctuation follows the sentence
+  around the display, which is a translator's call. A `label=` would sit in exactly that argument
+  list, varied by the same hand. (A per-entry flag in `meta.yaml` would be un-driftable but
+  cannot express the case that matters: the same entry unlabelled in the statement and labelled
+  in the solution.)
 
   It is also what lets **one `eq:` entry serve both halves of a problem**, which is the whole
   reason statements can be hoisted at all. `26/earthquakes` states the Gutenberg–Richter law and

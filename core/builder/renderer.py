@@ -370,6 +370,18 @@ class StandaloneContext(FileContext):
 
 
 class CLIInterface(cli.CLIInterface, ABC):
+    #: Files whose equations are displayed without a number and without an `{#eq:…}` label.
+    #:
+    #: **Empty here on purpose.** Which of a module's files is a problem statement is the
+    #: module's own taxonomy, not core's: Náboj has `problem.md` beside `solution.md` and three
+    #: kinds of answer file, seminar nests `problem.md` five levels deep, and scholar also has
+    #: `text.md`, a lecture, whose equations *should* be numbered. A list here would be one
+    #: module's convention imposed on the others -- the same mistake `editor.yaml` exists to
+    #: avoid, and the same one `audit: true` records for the audit's checks.
+    #:
+    #: A module that wants the rule names its own files; one that says nothing numbers
+    #: everything, which is what all of them did before this existed.
+    unnumbered_files: tuple[str, ...] = ()
     """
     Jinja standalone convertor CLI interface
     """
@@ -489,18 +501,24 @@ class CLIInterface(cli.CLIInterface, ABC):
         # Process all equations: create MathObject and store under the `eq` key in the context.
         #
         # Whether a display carries its `{#eq:…}` label is decided here, from the file being
-        # rendered, and not by the filter the author writes. **A problem statement never numbers
-        # its equations**: the number would point at a solution the contestant does not have, and
-        # a label nobody may reference is a number in the margin for nothing.
+        # rendered against the module's own `unnumbered_files`, and not by the filter the author
+        # writes. **A problem statement never numbers its equations**: the number would point at a
+        # solution the contestant does not have, and a label nobody may reference is a number in
+        # the margin for nothing.
         #
         # Deciding it here rather than offering `|dispu` beside `|disp` is what makes the rule
-        # hold: it cannot be got wrong, and it does not have to be remembered in nine translations
-        # of the same statement. It also lets one `eq:` entry serve both halves of a problem --
-        # `26/earthquakes` states the Gutenberg-Richter law and opens its solution with it, and
-        # the same `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the
-        # solution, so there is one copy of the equation and exactly one `{#eq:}` to point at.
+        # hold. The equation is hoisted into `eq:` once, but the *call* is not: 5264 call sites
+        # across the repository name 2579 distinct equations, so more than half are written out
+        # once per language. A `label=` argument would be written six times for one equation and
+        # could be forgotten in one of them -- and the same argument lists already vary per
+        # language, legitimately, because terminal punctuation follows the sentence around it.
+        #
+        # It also lets one `eq:` entry serve both halves of a problem -- `26/earthquakes` states
+        # the Gutenberg-Richter law and opens its solution with it, and the same
+        # `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the solution,
+        # so there is one copy of the equation and exactly one `{#eq:}` to point at.
         if 'eq' in context.data:
-            labelled = not Path(self.args.infile.name).name.startswith('problem')
+            labelled = Path(self.args.infile.name).name not in self.unnumbered_files
             for idx, fragment in context.data['eq'].items():
                 context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment,
                                                      labelled=labelled)

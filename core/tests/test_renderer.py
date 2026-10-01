@@ -241,6 +241,33 @@ class TestTranslatedWords:
             out = self.render_named(tmp_path, 'sk', meta, f"(§ eq.grl|{spec} §)\n", 'problem.md')
             assert '#eq:' not in out, spec
 
+    def test_core_itself_has_no_opinion(self):
+        """
+        Which file is a statement is the module's taxonomy, not core's. Náboj has `problem.md`
+        beside three kinds of answer file; seminar nests it five levels deep; scholar also has
+        `text.md`, a lecture, whose equations *should* be numbered. A module that says nothing
+        numbers everything, which is what all three did before this existed.
+        """
+        from core.builder.renderer import CLIInterface as CoreCLI
+        from modules.naboj.builder.renderer import CLIInterface as NabojCLI
+        assert CoreCLI.unnumbered_files == ()
+        assert NabojCLI.unnumbered_files == ('problem.md', 'problem-extra.md')
+
+    def test_problem_extra_is_a_statement_too(self, tmp_path):
+        """It is statement material the contestant reads, so the same rule applies."""
+        out = self.render_named(tmp_path, 'sk', self.EQ_META,
+                                "(§ eq.grl|disp('.') §)\n", 'problem-extra.md')
+        assert '#eq:' not in out
+
+    def test_an_answer_file_is_not_a_statement(self, tmp_path):
+        """
+        Only the two named files are exempt. No answer file in the repository carries a display
+        today, so this pins the boundary rather than describing anything.
+        """
+        out = self.render_named(tmp_path, 'sk', self.EQ_META,
+                                "(§ eq.grl|disp('.') §)\n", 'answer-extra.md')
+        assert '{#eq:' in out
+
     def test_a_word_may_be_called_const(self, tmp_path):
         """
         `words.const` shadows nothing -- the reservation is about the top-level namespace, where a
