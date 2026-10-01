@@ -913,14 +913,32 @@ and after. Reading through a symlink is safe; writing is not.
   competition, and a label nobody may point at is a number in the margin for nothing.
 
   This is **not** a filter you choose. `MathObject` takes a `labelled` flag and the renderer sets
-  it from the file being rendered, against the module's own `unnumbered_files` — Náboj names
-  `problem.md` and `problem-extra.md`, and everything else numbers as before.
+  it from the file being rendered, against the module's own `equation_numbering` — a mapping
+  stated in **both** directions, so that reading it tells you the whole taxonomy rather than only
+  where it differs from a default:
 
-  **The list is the module's, not core's**, for the reason `editor.yaml` and the audit's
+  ```python
+  # modules/naboj/builder/renderer.py
+  equation_numbering = {
+      'problem.md':          False,   'solution.md':        True,
+      'problem-extra.md':    False,   'answer.md':          True,
+                                      'answer-extra.md':    True,
+                                      'answer-also.md':     True,
+                                      'answer-interval.md': True,
+  }
+  ```
+
+  **A file it does not mention keeps its numbers.** That default is the conservative one on
+  purpose: a module that declares nothing is unaffected, and a file type added later is numbered
+  until somebody decides otherwise rather than silently losing its labels. The answer files are
+  listed although none carries a display today — they are part of the taxonomy, and
+  `test_renderer` pins the keys to the two rule families in `module.mk`, so a file added to the
+  module cannot inherit the default without someone noticing.
+
+  **The mapping is the module's, not core's**, for the reason `editor.yaml` and the audit's
   `audit: true` are per module: another module's files mean different things. Seminar nests
   `problem.md` five levels deep and scholar also has `text.md`, a lecture, whose equations
-  *should* be numbered. `core.builder.renderer.CLIInterface.unnumbered_files` is empty, and a
-  module that says nothing numbers everything.
+  *should* be numbered. `core.builder.renderer.CLIInterface.equation_numbering` is empty.
 
   **Why not an explicit `label=` on `|disp`?** Because the call is not hoisted even when the
   equation is. There are 5264 call sites naming 2579 distinct equations, so more than half of all

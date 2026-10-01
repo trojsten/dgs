@@ -370,7 +370,10 @@ class StandaloneContext(FileContext):
 
 
 class CLIInterface(cli.CLIInterface, ABC):
-    #: Files whose equations are displayed without a number and without an `{#eq:…}` label.
+    #: Per file, whether its equations are displayed with a number and an `{#eq:…}` label.
+    #:
+    #: Stated in both directions rather than as a list of exceptions, so that reading a module's
+    #: declaration tells you its whole taxonomy and not merely where it differs from a default.
     #:
     #: **Empty here on purpose.** Which of a module's files is a problem statement is the
     #: module's own taxonomy, not core's: Náboj has `problem.md` beside `solution.md` and three
@@ -379,9 +382,11 @@ class CLIInterface(cli.CLIInterface, ABC):
     #: module's convention imposed on the others -- the same mistake `editor.yaml` exists to
     #: avoid, and the same one `audit: true` records for the audit's checks.
     #:
-    #: A module that wants the rule names its own files; one that says nothing numbers
-    #: everything, which is what all of them did before this existed.
-    unnumbered_files: tuple[str, ...] = ()
+    #: A file this does not mention **keeps its numbers**, which is what every file in every
+    #: module did before any of this existed. That default is deliberately the conservative one:
+    #: a module that says nothing is unaffected, and a file type added to a module later is
+    #: numbered until somebody decides otherwise rather than silently losing its labels.
+    equation_numbering: dict[str, bool] = {}
     """
     Jinja standalone convertor CLI interface
     """
@@ -501,7 +506,7 @@ class CLIInterface(cli.CLIInterface, ABC):
         # Process all equations: create MathObject and store under the `eq` key in the context.
         #
         # Whether a display carries its `{#eq:…}` label is decided here, from the file being
-        # rendered against the module's own `unnumbered_files`, and not by the filter the author
+        # rendered against the module's own `equation_numbering`, and not by the filter the author
         # writes. **A problem statement never numbers its equations**: the number would point at a
         # solution the contestant does not have, and a label nobody may reference is a number in
         # the margin for nothing.
@@ -518,7 +523,7 @@ class CLIInterface(cli.CLIInterface, ABC):
         # `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the solution,
         # so there is one copy of the equation and exactly one `{#eq:}` to point at.
         if 'eq' in context.data:
-            labelled = Path(self.args.infile.name).name not in self.unnumbered_files
+            labelled = self.equation_numbering.get(Path(self.args.infile.name).name, True)
             for idx, fragment in context.data['eq'].items():
                 context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment,
                                                      labelled=labelled)

@@ -227,16 +227,30 @@ class CLIInterface(renderer.CLIInterface, ABC):
     description = "dgs Jinja Náboj convertor"
     context_cls = NabojStandaloneContext
 
-    #: A Náboj problem statement never numbers its equations and never labels them. The number
-    #: would be a cross-reference to the solution, which a contestant does not have in front of
-    #: them during the competition, and a label nobody may point at is a number in the margin for
-    #: nothing. Everything else -- solutions, and the three kinds of answer file -- numbers as
-    #: before, and a solution's equations are referenced by `[-@eq:…]` and need the label.
+    #: Every file a Náboj problem may hold, and whether its equations are numbered.
+    #:
+    #: **A statement never numbers its equations and never labels them.** The number would be a
+    #: cross-reference to the solution, which a contestant does not have in front of them during
+    #: the competition, and a label nobody may point at is a number in the margin for nothing.
+    #: A solution's equations are referenced by `[-@eq:…]` and need theirs.
+    #:
+    #: The answer files are listed although none of them carries a display today: they are part
+    #: of the taxonomy, so the decision is recorded rather than left to the default, and
+    #: `test_renderer` pins these keys to the two file lists in `module.mk` so that a file added
+    #: to the module cannot slip through without one.
     #:
     #: This is Náboj's rule and it is declared here rather than in core, for the reason
     #: `editor.yaml` and the audit's `audit: true` are per module: another module's files mean
     #: different things. Scholar's `text.md` is a lecture, where numbering an equation is right.
-    unnumbered_files = ('problem.md', 'problem-extra.md')
+    equation_numbering = {
+        'problem.md': False,
+        'problem-extra.md': False,
+        'solution.md': True,
+        'answer.md': True,
+        'answer-extra.md': True,
+        'answer-also.md': True,
+        'answer-interval.md': True,
+    }
 
 
 if __name__ == "__main__":

@@ -245,13 +245,33 @@ class TestTranslatedWords:
         """
         Which file is a statement is the module's taxonomy, not core's. Náboj has `problem.md`
         beside three kinds of answer file; seminar nests it five levels deep; scholar also has
-        `text.md`, a lecture, whose equations *should* be numbered. A module that says nothing
-        numbers everything, which is what all three did before this existed.
+        `text.md`, a lecture, whose equations *should* be numbered.
         """
         from core.builder.renderer import CLIInterface as CoreCLI
         from modules.naboj.builder.renderer import CLIInterface as NabojCLI
-        assert CoreCLI.unnumbered_files == ()
-        assert NabojCLI.unnumbered_files == ('problem.md', 'problem-extra.md')
+        assert CoreCLI.equation_numbering == {}
+        assert NabojCLI.equation_numbering['problem.md'] is False
+        assert NabojCLI.equation_numbering['solution.md'] is True
+
+    def test_an_undeclared_file_keeps_its_numbers(self, tmp_path):
+        """
+        The default is the conservative one: a module that says nothing is unaffected, and a file
+        type added later is numbered until somebody decides otherwise rather than silently losing
+        its labels. `whatever.md` is in no module's taxonomy.
+        """
+        out = self.render_named(tmp_path, 'sk', self.EQ_META,
+                                "(§ eq.grl|disp('.') §)\n", 'whatever.md')
+        assert '{#eq:' in out
+
+    def test_naboj_declares_every_file_it_may_hold(self):
+        """
+        Both directions, and no gaps. Pinned to the two rule families in `modules/naboj/module.mk`
+        the way `test_audit` pins `TRANSLATED_FILES`, so a file added to the module cannot slip
+        through without a decision -- it would otherwise inherit the default silently.
+        """
+        from core.audit.sources import SHARED_FILES, TRANSLATED_FILES
+        from modules.naboj.builder.renderer import CLIInterface as NabojCLI
+        assert set(NabojCLI.equation_numbering) == set(TRANSLATED_FILES) | set(SHARED_FILES)
 
     def test_problem_extra_is_a_statement_too(self, tmp_path):
         """It is statement material the contestant reads, so the same rule applies."""
