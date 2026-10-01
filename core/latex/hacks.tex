@@ -10,6 +10,29 @@
 \mathcode`\%="7025
 \DeclareRobustCommand{\%}{\text{\symbol{`\%}}}
 
+% A hyphen that repeats itself when the line breaks at it: `anti-inflamatório` becomes
+% `anti-` / `-inflamatório`. Czech (ČSN 01 6910), Slovak (STN 01 6910) and Portuguese all
+% require this; `core/filters/hyphens.lua` puts it where those languages' prose has a hyphen
+% between two letters, and nowhere else.
+%
+% Two details, both of which cost a rebuild to find.
+%
+% The pre-break list is empty **on purpose**, and the hyphen is written before the discretionary
+% rather than inside it. TeX governs a discretionary break by \exhyphenpenalty when the pre-break
+% list is empty and by \hyphenpenalty when it is not -- so babel's own \babelhyphen{repeat},
+% which is \discretionary{-}{-}{-}, is governed by \hyphenpenalty and does not break at all while
+% this class discourages ordinary hyphenation. This way round the two penalties stay independent:
+% whatever \hyphenpenalty is set to, this breaks iff \exhyphenpenalty allows it.
+%
+% The hyphen is in an \mbox because TeX inserts a breakpoint of its own after an explicit hyphen
+% character, and that one sits *before* this discretionary and costs the same \exhyphenpenalty.
+% When both are legal TeX takes the earlier, and the line then ends `encontraram-` with no hyphen
+% repeated on the next -- which is the bug this macro exists to prevent, appearing only on the
+% words short enough for the two breakpoints to compete. \mbox hides the character from that rule
+% and leaves the discretionary as the only way to break here. \char`\- does not: it is still an
+% explicit hyphen as far as the line breaker is concerned.
+\newcommand{\rephyphen}{\mbox{-}\discretionary{}{-}{}}
+
 % Swap shitty font choices
 \let\tmp\phi
 \let\phi\varphi

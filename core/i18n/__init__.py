@@ -70,6 +70,10 @@ class Locale:
             Optional('singles'): list[str],
             Optional('nbsp_pairs'): list[str],
             Optional('thin_pairs'): list[str],
+            # Whether this language repeats a hyphen when a word breaks at one -- `anti-` on one
+            # line and `-inflamatório` on the next. Read by `core/filters/hyphens.lua`; a
+            # language that does not declare it gets the plain hyphen it has always had.
+            Optional('repeat_hyphen'): bool,
         },
         Optional('rtl', default=False): bool,
         # Per-language LaTeX penalties and overrides emitted into build/core/i18n/<lang>.tex.

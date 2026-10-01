@@ -340,6 +340,66 @@ class TestSpacing:
             assert 'typography' not in yaml.safe_load(f)
 
 
+class TestRepeatedHyphen:
+    r"""
+    Czech, Slovak and Portuguese repeat the hyphen when a word breaks at one.
+
+    `core/filters/hyphens.lua` emits `\rephyphen`, which `core/latex/hacks.tex` defines; see
+    there for why the discretionary is built the way it is. The filter is LaTeX-only, because
+    there is no Unicode character that repeats a hyphen at a break.
+    """
+
+    def test_a_hyphenated_word_gets_the_macro(self, convert):
+        for language in ('pt', 'sk', 'cs'):
+            assert r'anti\rephyphen{}inflamatório' in convert('latex', language, 'anti-inflamatório')
+
+    def test_an_enclitic_pronoun_gets_it_too(self, convert):
+        """The case Portuguese needs it for: a hyphen inside an ordinary verb."""
+        assert r'encontra\rephyphen{}se' in convert('latex', 'pt', 'encontra-se')
+
+    def test_a_language_that_does_not_declare_it_keeps_the_plain_hyphen(self, convert):
+        """
+        The quiet half. A language that declares nothing gets nothing, which is how every
+        `typography:` rule in this project behaves.
+        """
+        for language in ('en', 'de', 'pl', 'ru'):
+            assert convert('latex', language, 'anti-inflamatório') == 'anti-inflamatório'
+
+    def test_the_macro_is_braced(self, convert):
+        r"""Without `{}` the macro runs into the word: `\rephypheninflamatório` is undefined."""
+        assert r'\rephyphen{}i' in convert('latex', 'pt', 'anti-inflamatório')
+
+    def test_it_does_not_reach_anything_that_is_not_prose(self, convert):
+        """
+        The whole argument for doing this in the AST. Hyphens are everywhere in these sources that
+        is not prose, and pandoc has already sorted them into node types a `Str` rule cannot see.
+        """
+        for source in (r'$a-b$', '`x-y`', '2-3',
+                       '![](northern-sun.svg){#fig:drag-queen height=40mm}'):
+            assert 'rephyphen' not in convert('latex', 'pt', source), source
+
+    def test_a_hyphen_needs_a_letter_on_each_side(self, convert):
+        """A range or a dangling hyphen is not a hyphenated word."""
+        for source in ('2-3', 'anti- x', 'x -inflamatório'):
+            assert 'rephyphen' not in convert('latex', 'pt', source), source
+
+    def test_html_keeps_the_plain_hyphen(self, convert):
+        """
+        No Unicode character repeats a hyphen at a break -- U+00AD inserts one but does not
+        repeat it -- so unlike `spacing.lua` this rule cannot serve both writers.
+        """
+        assert 'rephyphen' not in convert('html', 'pt', 'anti-inflamatório')
+
+    def test_the_three_languages_lower_exhyphenpenalty(self):
+        r"""
+        Without this the macro is inert: its discretionary has an empty pre-break list, so
+        `\exhyphenpenalty` is the only thing that decides whether the break may happen.
+        """
+        from core import i18n
+        for language in ('pt', 'sk', 'cs'):
+            assert i18n.languages[language].data['latex']['exhyphenpenalty'] < 1000
+
+
 class TestCrossrefLabelSurvives:
     r"""
     A label that pandoc did not read as an attribute is typeset as text, and refused here.

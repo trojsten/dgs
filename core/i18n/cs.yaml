@@ -11,9 +11,24 @@ quotes:
 # That is the whole list -- **the vocalised forms `ve`, `ze`, `ke`, `se` are not covered**, and
 # neither are the other two-letter prepositions `na`, `do`, `po`, `za`. The sources write 18 `ve\ `
 # and 6 `ze\ ` by hand; those are an author's preference, not the norm, so they stay by hand.
+latex:
+  # Low enough that a hyphenated word may actually break at its hyphen, which is what
+  # `typography.repeat_hyphen` below is for. Forbidding the break (10000) was the other way to
+  # get correct output, and it throws away a breakpoint the norm does not forbid. 50 is TeX's
+  # own default: a mild discouragement, not a ban.
+  #
+  # Independent of \hyphenpenalty, which governs ordinary hyphenation and which `dgs.cls` sets
+  # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
+  # only this parameter decides it.
+  exhyphenpenalty: 50
 typography:
   singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
   nbsp_pairs: ['t. j.']
+  # A word breaking at its hyphen repeats it on the next line -- `česko-` then `-slovenský`.
+  # ČSN 01 6910 states it for the spojovník. `core/filters/hyphens.lua` emits `\rephyphen`,
+  # which `core/latex/hacks.tex` defines; `latex.exhyphenpenalty` above is what lets the break
+  # happen at all.
+  repeat_hyphen: true
 
 cref:
   figure:

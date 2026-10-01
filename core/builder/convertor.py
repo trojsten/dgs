@@ -197,6 +197,10 @@ class Convertor:
         })
         self.nbsp_pairs = typography.get('nbsp_pairs', [])
         self.thin_pairs = typography.get('thin_pairs', [])
+        # Whether `core/filters/hyphens.lua` repeats a hyphen a line breaks at. Passed as a string
+        # because `-M` carries strings; absent is false, so a language that declares nothing is
+        # unaffected and keeps the plain hyphen it has always had.
+        self.repeat_hyphen = bool(typography.get('repeat_hyphen', False))
 
         self.pre_checks = self._filter_regexes(self.pre_checks)
         self.pre_regexes = self._filter_regexes(self.pre_regexes)
@@ -319,6 +323,11 @@ class Convertor:
             "-M", "nbsp-singles=" + ' '.join(self.nbsp_singles),
             "-M", "nbsp-pairs=" + ';'.join(self.nbsp_pairs),
             "-M", "thin-pairs=" + ';'.join(self.thin_pairs),
+            # After `spacing.lua`, which inserts U+00A0 and U+202F into `Str` nodes. Order does
+            # not actually matter here -- one rule looks at spaces, the other at hyphens -- but
+            # keeping the typography filters together and in a fixed order makes the argv readable.
+            "--lua-filter", "./core/filters/hyphens.lua",
+            "-M", f"repeat-hyphen={'true' if self.repeat_hyphen else 'false'}",
         ]
         if self.output_format == 'html':
             args += [

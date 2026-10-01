@@ -6,10 +6,23 @@ quotes:
   close: '”'
   extra: 'portuguese'
 latex:
-  # Portuguese compound words (segunda-feira, guarda-chuva, …) must not break at
-  # their explicit hyphens. \exhyphenpenalty=10000 makes TeX treat explicit hyphens
-  # as non-break points; the default (100) is permissive enough to break them.
-  exhyphenpenalty: 10000
+  # Low enough that a hyphenated word may actually break at its hyphen, which is what
+  # `typography.repeat_hyphen` below is for. Forbidding the break (10000) was the other way to
+  # get correct output, and it throws away a breakpoint the norm does not forbid. 50 is TeX's
+  # own default: a mild discouragement, not a ban.
+  #
+  # Independent of \hyphenpenalty, which governs ordinary hyphenation and which `dgs.cls` sets
+  # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
+  # only this parameter decides it.
+  exhyphenpenalty: 50
+typography:
+  # A word breaking at its hyphen repeats it on the next line -- `anti-` then `-inflamatório`.
+  # Portuguese needs this more than the other two, because enclitic pronouns put a hyphen inside
+  # ordinary verbs: `encontra-se`, `deu-lhe`, `colocou-o`. `core/filters/hyphens.lua` emits
+  # `\rephyphen`, which `core/latex/hacks.tex` defines; `latex.exhyphenpenalty` above is what
+  # lets the break happen at all.
+  repeat_hyphen: true
+
 cref:
   figure:
     singular: 'figura'

@@ -7,9 +7,24 @@ quotes:
 # Spacing the build inserts for this language: `singles` are the one-letter words that must not
 # end a line (STN 01 6910), `nbsp_pairs` and `thin_pairs` the abbreviations whose halves belong
 # together. Both cases of a single are derived, so list it once. See `core/filters/spacing.lua`.
+latex:
+  # Low enough that a hyphenated word may actually break at its hyphen, which is what
+  # `typography.repeat_hyphen` below is for. Forbidding the break (10000) was the other way to
+  # get correct output, and it throws away a breakpoint the norm does not forbid. 50 is TeX's
+  # own default: a mild discouragement, not a ban.
+  #
+  # Independent of \hyphenpenalty, which governs ordinary hyphenation and which `dgs.cls` sets
+  # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
+  # only this parameter decides it.
+  exhyphenpenalty: 50
 typography:
   singles: ['a', 'i', 'k', 'o', 's', 'u', 'v', 'z']
   nbsp_pairs: ['t. j.', 't. z.']
+  # A word breaking at its hyphen repeats it on the next line -- `bielo-` then `-čierny`.
+  # STN 01 6910 states it for the spojovník. `core/filters/hyphens.lua` emits `\rephyphen`,
+  # which `core/latex/hacks.tex` defines; `latex.exhyphenpenalty` above is what lets the break
+  # happen at all.
+  repeat_hyphen: true
 
 cref:
   figure:

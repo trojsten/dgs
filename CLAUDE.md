@@ -612,6 +612,46 @@ Line length does not matter in these files -- they are a registration export, no
 
 What is left in the metas is 3 real `\ `, each a `number\ unit` inside an `eq:`.
 
+### A hyphen that repeats itself
+
+Czech, Slovak and Portuguese repeat the hyphen when a word breaks at one: `anti-inflamatório`
+sets as `anti-` / `-inflamatório`, never `anti-` / `inflamatório`. Portuguese needs it most,
+because enclitic pronouns put a hyphen inside ordinary verbs — `encontra-se`, `deu-lhe`,
+`colocou-o` — but `česko-slovenský` is the same rule, and both ČSN and STN 01 6910 state it.
+
+Authoring needs nothing: `core/filters/hyphens.lua` puts `\rephyphen` wherever a declaring
+language has a hyphen between two letters, the same way `spacing.lua` handles the non-breaking
+spaces and for the same reason — a hyphen in these sources is far more often *not* prose
+(`northern-sun.svg`, `{#fig:drag-queen}`, `forbid-literal-units=false`, `$a-b$`) and pandoc has
+already sorted those into node types a `Str` rule cannot reach. A language opts in with
+`typography: repeat_hyphen: true`; one that declares nothing keeps the plain hyphen.
+
+Unlike `spacing.lua` it is **LaTeX only**. That filter emits Unicode and serves both writers from
+one rule; no Unicode character repeats a hyphen at a break — U+00AD SOFT HYPHEN inserts one but
+does not repeat it — so HTML keeps the plain hyphen.
+
+**Two things about the macro, both of which cost a rebuild to find.** It is
+`\mbox{-}\discretionary{}{-}{}` in `core/latex/hacks.tex`, and neither half is arbitrary:
+
+- The pre-break list is **empty**, with the hyphen written before the discretionary. TeX governs
+  a discretionary break by `\exhyphenpenalty` when the pre-break list is empty and by
+  `\hyphenpenalty` when it is not — so babel's own `\babelhyphen{repeat}`, which is
+  `\discretionary{-}{-}{-}`, is governed by `\hyphenpenalty` and **does not break at all** here.
+  Written this way the two penalties stay independent, and whatever `dgs.cls` does to ordinary
+  hyphenation cannot switch this rule off.
+- The hyphen is in an **`\mbox`**, because TeX inserts a breakpoint of its own after an explicit
+  hyphen character, that one sits *before* the discretionary, and it costs the same
+  `\exhyphenpenalty`. With both legal TeX takes the earlier and the hyphen is not repeated — a
+  bug that shows up only on words short enough for the two breakpoints to compete, which is why
+  `anti-inflamatório` looked right while `encontraram-se` did not. `\char`\-` does not help: it is
+  still an explicit hyphen to the line breaker.
+
+The rule is inert unless the language also lowers `latex: exhyphenpenalty`, which is the only
+thing that decides whether the break may happen at all; the three carry 50, TeX's own default.
+Lowering it from the ban changed nothing in volume 28 — all three booklets build with zero
+hyphen-broken lines — so this buys a breakpoint for the lines that need one and costs nothing
+elsewhere.
+
 ### Where the per-language lists come from
 
 Each `typography:` block cites its source, because the lists are transcribed, not invented.
