@@ -7,7 +7,11 @@ import regex as re
 from pint import UnitRegistry as u
 
 from core.builder.context import PhysicsConstant
-from core.builder.jinja import MarkdownJinjaRenderer, MissingVariablesError
+from core.builder.jinja import (
+    MarkdownJinjaRenderer,
+    MissingVariablesError,
+    PictureJinjaRenderer,
+)
 
 
 @pytest.fixture
@@ -751,3 +755,63 @@ class TestInclude:
     def test_a_template_that_never_includes_needs_no_root(self):
         """The quiet case: `include` is a global, not a requirement, and nothing else changes."""
         assert MarkdownJinjaRenderer().render('(§ five §)', {'five': 5}) == '5'
+
+
+class TestPictureRenderer:
+    """
+    `PictureJinjaRenderer` -- the Markdown dialect with the block and comment tags moved out of
+    the way of the picture formats.
+
+    Every test here has a twin: that the picture renderer passes the format's own punctuation
+    through, and that the Markdown one does *not*. The second half is the whole justification for
+    a second dialect existing, so it is not optional.
+    """
+    #: SVG's syntax for referring to anything it defines -- a gradient, a marker, a clip path.
+    #: 11081 of these across the 2006 pictures in the repository.
+    SVG_URL = '<rect fill="url(#linearGradient42)" marker-end="url(#Arrow1Mend)"/>'
+    #: chemfig's arrow between two named nodes of a reaction scheme. Two live chemistry pictures.
+    CHEMFIG_ARROW = r'\arrow(@c2--c4){0}[-90]'
+
+    def test_svg_url_references_survive(self):
+        assert PictureJinjaRenderer().render(self.SVG_URL, {}) == self.SVG_URL
+
+    def test_the_markdown_dialect_chokes_on_an_svg_url(self):
+        """`(#` opens a comment that `url(#...)` never closes -- the defect the subclass exists for."""
+        with pytest.raises(jinja2.TemplateSyntaxError):
+            MarkdownJinjaRenderer().render(self.SVG_URL, {})
+
+    def test_chemfig_arrows_survive(self):
+        assert PictureJinjaRenderer().render(self.CHEMFIG_ARROW, {}) == self.CHEMFIG_ARROW
+
+    def test_the_markdown_dialect_chokes_on_a_chemfig_arrow(self):
+        """`(@` opens a block that is never closed."""
+        with pytest.raises(jinja2.TemplateSyntaxError):
+            MarkdownJinjaRenderer().render(self.CHEMFIG_ARROW, {})
+
+    def test_the_variable_tag_is_the_markdown_one(self):
+        """The tag an author writes almost always does not change between the two dialects."""
+        assert PictureJinjaRenderer().render('(§ five §)', {'five': 5}) == '5'
+
+    def test_blocks_and_comments_use_the_moved_delimiters(self):
+        rendered = PictureJinjaRenderer().render(
+            '(@§ for i in [1, 2, 3] §@)(§ i §)(@§ endfor §@)(#§ gone §#)!', {})
+        assert rendered == '123!'
+
+    def test_xml_is_not_escaped(self):
+        """
+        `autoescape` is off, and an SVG depends on it: escaping would turn every `&amp;` into
+        `&amp;amp;` and the file would stop being the drawing it was.
+        """
+        xml = '<text>&amp; &lt; &gt; &#8212;</text>'
+        assert PictureJinjaRenderer().render(xml, {}) == xml
+
+    def test_a_tag_inside_a_tspan_is_substituted(self):
+        """The shape a drawing actually has: Inkscape keeps the payload as text inside a tspan."""
+        assert PictureJinjaRenderer().render(
+            '<tspan x="115.8" y="190.1">(§ h §) cm</tspan>', {'h': 30}
+        ) == '<tspan x="115.8" y="190.1">30 cm</tspan>'
+
+    def test_percentage_widths_survive(self):
+        """`(%` is not a delimiter here, so SVG's `width="100%"` needs no escaping."""
+        assert PictureJinjaRenderer().render('<svg width="100%" height="50%"/>', {}) \
+            == '<svg width="100%" height="50%"/>'

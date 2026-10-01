@@ -370,3 +370,43 @@ class MarkdownJinjaRenderer(JinjaRenderer):
                 template: str,
                 context: dict[str, Any]):
         return self.env.from_string(template).render(**context)
+
+
+class PictureJinjaRenderer(MarkdownJinjaRenderer):
+    r"""
+    The Markdown renderer with block and comment tags moved out of the way of the picture formats.
+
+    Everything a Markdown file can do, a `.tikz` or `.svg` can do -- same context, same filters,
+    same two passes. Only the delimiters differ, and they have to, because **the defaults collide
+    with the formats themselves**:
+
+    - `(#`, the comment tag, is how SVG references anything it defines. `url(#linearGradient42)`
+      for a gradient, `url(#Arrow1Mend)` for a marker, and the same for every clip path, mask and
+      filter -- **11081 of them across 2006 files**, 792 of those files in a module that builds.
+      Jinja opens a comment on the `(#`, finds no `#)`, and the render dies on *Missing end of
+      comment tag*.
+    - `(@`, the block tag, is chemfig\'s syntax for an arrow between named nodes in a reaction
+      scheme: `\arrow(@c2--c4){0}[-90]`. Two live chemistry pictures write it.
+
+    Neither is an accident that could be spelled around -- both are the notation those formats
+    have. So the tags move instead, and `§` carries them, for the reason it already carries the
+    variable tag: it appears **nowhere** in any `.svg`, `.tikz` or `.gp` in the repository, while
+    `(`, `#`, `@` and `*` are all load-bearing punctuation in at least one of them.
+
+    The shape is a mnemonic rather than three arbitrary strings -- **`§` hugs the content** in all
+    three, and the character outside it says which tag it is::
+
+        (§  value  §)           a variable, exactly as in Markdown
+        (@§ for ... §@)         a block
+        (#§ comment §#)         a comment
+
+    `(§@` and `(§#` would read better and do not work: Jinja matches the variable tag first and
+    leaves the `@` behind as *unexpected char*, so the opening delimiters have to differ in their
+    second character, not their third.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(block_start_string='(@§',
+                         block_end_string='§@)',
+                         comment_start_string='(#§',
+                         comment_end_string='§#)',
+                         **kwargs)

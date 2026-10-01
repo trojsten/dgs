@@ -3,16 +3,20 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 SUPPORTED_LANGUAGES = sk en cs hu pl es de fr ru fa uk pt
 
-# Language a picture (`.tikz`, `.gp`) is rendered in. It is not cosmetic: it selects the locale
-# the Jinja tags format numbers with, so getting it wrong writes a decimal point where the Slovak
-# figure wants a comma.
+# Language a picture (`.tikz`, `.svg`, `.gp`) is rendered in. It is not cosmetic: it selects the
+# locale the Jinja tags format numbers with, so getting it wrong writes a decimal point where the
+# Slovak figure wants a comma.
 #
 # Resolved per picture, most specific first:
 #   1. an explicit `make lang=en ...`, which always wins;
-#   2. the language directory the picture sits in, for a picture that belongs to one translation
-#      (`problems/johan-august/sk/puzzle.tikz`);
+#   2. the language directory the picture sits in, for a picture that belongs to one translation;
 #   3. `$(lang)` below, for the usual case of a picture at the problem level, shared by every
 #      translation and with nothing in its path to infer from.
+#
+# Case 2 is kept and currently matches nothing. It used to name `johan-august/sk/puzzle.tikz`,
+# which was the only picture in the repository inside a language directory and has been moved up
+# beside its meta. Now that a picture is a template it can ask for `(* words.x *)` itself, so a
+# per-language copy of a drawing has no reason to exist and the case should stay empty.
 #
 # Both rules already referenced `$(lang)`, but nothing ever set it, so they passed an empty
 # argument and died on `invalid choice`. That stayed hidden because a stale intermediate in
@@ -189,8 +193,13 @@ build/%.tex: \
 	@exit 1
 
 # Standalone TeX file from .tikz.tex
+# From `render/`, not from `source/`: a picture is a Jinja template like everything else, so the
+# tags in it are expanded by the per-module `render/<mod>/%.tikz` rule before `standalone.jtex`
+# wraps the result. Reading `source/` here is what used to make a tag in a `.tikz` reach LaTeX
+# verbatim -- `standalone.jtex` splices the content in as `(* content *)`, and Jinja substitutes a
+# variable's value literally rather than rendering it again.
 build/%.tikz.tex: \
-	source/%.tikz \
+	render/%.tikz \
 	core/templates/standalone.jtex
 	@mkdir -p $(dir $@)
 	./standalone.py $(call pathlang,$*) $< $@
@@ -201,7 +210,7 @@ build/%.py: source/%.py
 	$(call _copy,Python)
 
 # Convert SVG image to PDF (for XeLaTeX output)
-build/%.pdf: source/%.svg
+build/%.pdf: render/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
@@ -248,13 +257,14 @@ build/%.dat: source/%.dat
 	$(call _copy,dat)
 
 # Output PNG from SVG (for web)
-output/%.png: source/%.svg
+# From `render/` for the same reason the PDF rule is: the web would otherwise ship the tags.
+output/%.png: render/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert -f png -h 500 -a -o $@ $<
 
 # Copy SVG (for web)
-output/%.svg: source/%.svg
+output/%.svg: render/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert -f svg -h 500 -a -o $@ $<

@@ -31,6 +31,27 @@ render/seminar/%.gp:\
 	$$(PIPELINE_STAMP)
 	$(call jinja,modules.seminar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
+# A picture is a Jinja template, exactly as the gnuplot file above is: the meta beside it is the
+# context, so a figure prints the number the meta computes instead of one typed in by hand.
+# The meta must be *beside* the picture -- there is no search upwards, and a picture that has no
+# meta next to it fails here rather than silently rendering against nothing.
+#
+# `pathlang` rather than the `$(lang)` the `.gp` rule above passes: seminar is monolingual today,
+# so the two agree, but a picture inside a language directory would be rendered in the default
+# language by that rule and in its own by this one. The `.gp` rule wants the same treatment and
+# does not get it here, because that is a separate defect.
+render/seminar/%.tikz:\
+	source/seminar/%.tikz \
+	$$(abspath source/seminar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.seminar.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
+render/seminar/%.svg:\
+	source/seminar/%.svg \
+	$$(abspath source/seminar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.seminar.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
 ### Standalone problems #########################
 # One problem, statement and solution, as its own PDF. Everything else here builds at least a
 # whole round, which is no use while authoring: it fails for reasons that have nothing to do with

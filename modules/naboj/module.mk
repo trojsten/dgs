@@ -57,6 +57,22 @@ render/naboj/%.gp:\
 	$$(PIPELINE_STAMP)
 	$(call jinja,modules.naboj.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
 
+# A picture is a Jinja template, exactly as the gnuplot file above is: the meta beside it is the
+# context, so a figure prints the number the meta computes instead of one typed in by hand.
+# The meta must be *beside* the picture -- there is no search upwards, and a picture that has no
+# meta next to it fails here rather than silently rendering against nothing.
+render/naboj/%.tikz:\
+	source/naboj/%.tikz \
+	$$(abspath source/naboj/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.naboj.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
+render/naboj/%.svg:\
+	source/naboj/%.svg \
+	$$(abspath source/naboj/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.naboj.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
 build/naboj/%.tex: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$(dir $$*)/../$$(subst .tex,.md,$$(notdir $$@)))) \
 	build/core/i18n.stamp \

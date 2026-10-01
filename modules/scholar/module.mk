@@ -23,6 +23,27 @@ render/scholar/%.gp:\
 	$$(PIPELINE_STAMP)
 	$(call jinja,modules.scholar.builder.renderer,$(lang),$(abspath $(dir $<)/meta.yaml))
 
+# A picture is a Jinja template, exactly as the gnuplot file above is: the meta beside it is the
+# context, so a figure prints the number the meta computes instead of one typed in by hand.
+# The meta must be *beside* the picture -- there is no search upwards, and a picture that has no
+# meta next to it fails here rather than silently rendering against nothing. Nothing builds
+# `scholar` today; when something does, `TA1/2022/handouts/07/1-lines/fraunhofer.svg` is the one
+# picture whose meta is a directory up and it wants moving beside it.
+#
+# `pathlang` rather than the `$(lang)` the `.gp` rule above passes; that rule wants the same
+# treatment and does not get it here, because it is a separate defect.
+render/scholar/%.tikz:\
+	source/scholar/%.tikz \
+	$$(abspath source/scholar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.scholar.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
+render/scholar/%.svg:\
+	source/scholar/%.svg \
+	$$(abspath source/scholar/$$(dir $$*)/meta.yaml) \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.scholar.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
+
 ### Standalone units ############################
 # One unit -- a sheet's text, or one problem with its solution -- as its own PDF. Everything else
 # here builds a whole handout, which is no use while authoring.

@@ -16,7 +16,7 @@ from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifie
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
-from core.builder.jinja import MarkdownJinjaRenderer
+from core.builder.jinja import MarkdownJinjaRenderer, PictureJinjaRenderer
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
@@ -26,6 +26,10 @@ log = logging.getLogger('dgs')
 #: only add a punctuation mark. `inl` is deliberately absent -- inline maths belongs in its
 #: sentence.
 DISPLAY_FILTERS = ('disp', 'align', 'arr')
+
+#: Templates that are drawings rather than prose, and so take `PictureJinjaRenderer`. By
+#: extension rather than by path: a picture is a picture wherever it sits.
+PICTURE_SUFFIXES = frozenset({'.svg', '.tikz'})
 
 #: A Markdown list marker, whose width a continuation line has to match.
 RE_LIST_MARKER = re.compile(r'[ \t]*(?:[-*+]|\d+[.)])[ \t]+')
@@ -120,7 +124,23 @@ class JinjaConvertor:
             log.debug(f"{c.debug('Context data')}:")
             pprint.pprint(context.data)
 
-        self.renderer = MarkdownJinjaRenderer(root=self.root)
+        self.renderer = self.renderer_for(Path(template_file.name))(root=self.root)
+
+    @staticmethod
+    def renderer_for(path: Path) -> type[MarkdownJinjaRenderer]:
+        """
+        Which dialect a file is written in, decided by its extension and nothing else.
+
+        A picture gets `PictureJinjaRenderer`, whose block and comment tags are moved out of the
+        way of `url(#…)` and chemfig's `\\arrow(@…)`; everything else gets the Markdown one. The
+        variable tag `(§ … §)` is the same in both, which is the one an author writes almost
+        always.
+
+        `.gp` is deliberately *not* in the set. Gnuplot comments with `#` and never writes `(#`
+        or `(@`, so it has no collision to dodge, and the three gnuplot templates that carry tags
+        today are Markdown-dialect files that would have to be rewritten for nothing.
+        """
+        return PictureJinjaRenderer if path.suffix in PICTURE_SUFFIXES else MarkdownJinjaRenderer
 
     def run(self):
         # Before each pass, not only the first: a `blocks:` or `eq:` value the first pass expands

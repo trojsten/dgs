@@ -555,3 +555,40 @@ class TestDisplayTagsOwnTheirLine:
         """`Convertor.pre_regexes` deletes a `%` line whole; splitting one strands a live `$$`."""
         out = self.out(tmp_path, '%$$ x = 1. $$\n')
         assert '%$$ x = 1. $$' in out, out
+
+
+class TestPictureDialectDispatch:
+    """
+    Which dialect a template is rendered in is decided by its extension and nothing else.
+
+    Stated in both directions on purpose: the quiet half -- that `.md` and `.gp` keep the
+    Markdown dialect -- is what stops the picture delimiters leaking into prose, where `(#` and
+    `(@` are perfectly good tags that nothing collides with.
+    """
+    @pytest.mark.parametrize('name', ['figure.svg', 'scheme.tikz'])
+    def test_a_picture_gets_the_picture_dialect(self, name):
+        from pathlib import Path
+
+        from core.builder.jinja import PictureJinjaRenderer
+        assert JinjaConvertor.renderer_for(Path(name)) is PictureJinjaRenderer
+
+    @pytest.mark.parametrize('name', ['solution.md', 'answer-interval.md', 'freq.gp'])
+    def test_everything_else_keeps_the_markdown_dialect(self, name):
+        """
+        `.gp` is the one worth stating: gnuplot comments with `#` but never writes `(#` or `(@`,
+        so it has no collision to dodge, and the gnuplot templates that already carry tags are
+        Markdown-dialect files that would have to be rewritten for nothing.
+        """
+        from pathlib import Path
+
+        from core.builder.jinja import MarkdownJinjaRenderer
+        assert JinjaConvertor.renderer_for(Path(name)) is MarkdownJinjaRenderer
+
+    def test_the_decision_is_by_extension_not_by_path(self):
+        """A picture is a picture wherever it sits -- there is no directory convention to learn."""
+        from pathlib import Path
+
+        from core.builder.jinja import PictureJinjaRenderer
+        assert JinjaConvertor.renderer_for(
+            Path('source/naboj/phys/29/problems/tangram/tangram-problem.svg')
+        ) is PictureJinjaRenderer

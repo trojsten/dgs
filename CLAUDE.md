@@ -372,6 +372,71 @@ is `%` — MATLAB, Octave, Erlang, PostScript, TeX — and leaves a blank line i
 warning. Python and gnuplot comment with `#` and are unaffected, which is every listing in the
 repository today.
 
+## A picture is a template too
+
+A `.tikz` or an `.svg` goes `source/ → render/ → build/`, the way a `.gp` always has, so a drawing
+can print the number its `meta.yaml` computes instead of one typed in by hand. Same context, same
+filters, same two passes. The `meta.yaml` **beside** the picture is the context -- there is no
+search upwards, and a picture with no meta next to it fails rather than rendering against nothing.
+
+It also means a picture no longer needs to live in a translation directory, because it can ask for
+`(§ words.x §)` itself. `johan-august/sk/puzzle.tikz` was the only one in the repository that did
+and has been moved up beside its meta; the Makefile's `pathlang` keeps the case and it should stay
+empty.
+
+**The block and comment tags move, because the defaults are the formats' own punctuation.**
+
+| | Markdown, `.jtex`, `.gp` | `.tikz`, `.svg` |
+|---|---|---|
+| variable | `(§ x §)` | `(§ x §)` — unchanged |
+| block | `(@ for … @)` | `(@§ for … §@)` |
+| comment | `(# … #)` | `(#§ … §#)` |
+
+`§` hugs the content in all three, and the character outside it says which tag it is. It has to be
+this way round: `(§@` reads better and does not work, because Jinja matches the variable tag first
+and leaves the `@` behind as *unexpected char*.
+
+The two collisions are not hypothetical and not spellable-around:
+
+- **`(#` is how SVG refers to anything it defines** — `url(#linearGradient42)`, `url(#Arrow1Mend)`,
+  and the same for every clip path, mask and filter. **11081 of them across 2006 files**, 792 of
+  those files in a module that builds. Jinja opens a comment on the `(#`, finds no `#)`, and the
+  render dies on *Missing end of comment tag*.
+- **`(@` is chemfig's arrow between named nodes** — `\arrow(@c2--c4){0}[-90]`, in two live
+  chemistry pictures.
+
+`.gp` is deliberately left in the Markdown dialect: gnuplot comments with `#` but never writes
+`(#` or `(@`, so it has nothing to dodge, and the gnuplot templates that already carry tags would
+have to be rewritten for nothing. `core/builder/renderer.py`'s `PICTURE_SUFFIXES` is the whole
+rule, and `renderer_for` is tested in both directions.
+
+**What an SVG can hold is narrower than what a TikZ can.** TikZ is LaTeX, so `(§ v.eq §)` typesets
+properly. SVG text is set by `rsvg-convert` with system fonts, so the same tag prints the literal
+string `v = \qty{10}{\metre\per\second}`. **In an SVG, use plain numbers and words** —
+`(§ v.mag §)`, `(§ words.air §)`. Nothing enforces it; the backslashes on the page are the signal.
+
+Three more things about SVG specifically:
+
+- **It does not reflow.** Text is absolutely positioned, so a substitution wider than the
+  placeholder overflows or collides with whatever is beside it. 452 texts in `phys` are
+  `text-anchor: middle` or `end` and tolerate it; the rest do not. Size the placeholder for the
+  widest value the tag can produce.
+- **The editor is safe, and was checked rather than assumed.** Inkscape keeps the payload as plain
+  UTF-8 inside a `<tspan>`, so a tag typed with the text tool survives a save and still renders;
+  a round trip through Inkscape 1.4 was run on a real drawing. Of 2373 tspans in `phys` only 9 use
+  per-character kerning, and even those keep the string whole. The tag is consumed before
+  `rsvg-convert` ever runs, so `§` needs to exist only in your editing font.
+- **Text converted to paths loses the tag silently** — the one failure here with no symptom at all.
+
+Nothing in the repository carried a tag when this landed, so the conversion had to be a no-op, and
+was: of 1070 pictures rendered, 1059 came back byte-identical and 11 differed only by a stripped
+trailing blank line, which is inert in both formats. The one picture that did not render,
+`seminar/FKS/40/2/3/06/basket.svg`, failed on its problem's `meta.yaml` writing `value:` where the
+schema wants `magnitude:` — that meta has never loaded and its `problem.md` fails the same way.
+
+Sharing one drawing between two problems is a **symlink**, not an `include()`: the two can end up
+in different volumes, and a path written into the text is the fragile half of that.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per
