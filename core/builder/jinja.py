@@ -16,7 +16,7 @@ from core.builder.context.quantities import (
     QuantityProduct,
     QuantityRange,
 )
-from core.filters import latex, numbers
+from core.filters import latex, numbers, plain
 from core.utilities import colour as c
 from core.utilities import logger
 
@@ -258,12 +258,19 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'snap': lambda obj, quantum: obj.snap(quantum),
             'mag': lambda q: q.mag,
             'unit': PhysicsQuantity.only_unit,
+            # Plain text, for a format with no TeX to typeset `\qty{}{}` -- an `.svg`, a `.gp`
+            # axis label. `txt` is fixed notation and `txtg` is Python's `g`; both take a
+            # precision, and both have the `txt0`-`txt9` family below. See `core/filters/plain`.
+            'txt': plain.text,
+            'txtg': plain.text_general,
             'sim': PhysicsQuantity.simplify,
             # An angle as degrees, arcminutes and arcseconds -- see `angle_dms`.
             'dms': latex.angle_dms,
         } |
         self.__generate_format_functions(numbers.format_float, 'f') |
         self.__generate_format_functions(numbers.format_general, 'g') |
+        self.__generate_format_functions(plain.text, 'txt') |
+        self.__generate_format_functions(plain.text_general, 'txtg') |
         self.__generate_format_functions(numbers.format_exponential, 'e') |
         self.__generate_format_functions(latex.num_float, 'nf') |
         self.__generate_format_functions(latex.num_general, 'ng') |

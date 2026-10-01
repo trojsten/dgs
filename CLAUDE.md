@@ -412,8 +412,37 @@ rule, and `renderer_for` is tested in both directions.
 
 **What an SVG can hold is narrower than what a TikZ can.** TikZ is LaTeX, so `(§ v.eq §)` typesets
 properly. SVG text is set by `rsvg-convert` with system fonts, so the same tag prints the literal
-string `v = \qty{10}{\metre\per\second}`. **In an SVG, use plain numbers and words** —
-`(§ v.mag §)`, `(§ words.air §)`. Nothing enforces it; the backslashes on the page are the signal.
+string `v = \qty{10}{\metre\per\second}`. Nothing enforces it; the backslashes on the page are the
+signal.
+
+**`|txt` is the filter for that case** — a quantity written out, unit and all, with no TeX in it:
+
+| | emits | for |
+|---|---|---|
+| `(§ v §)` | `\qty{3}{\metre\per\second}` | Markdown, `.tikz`, `eq:` |
+| `(§ v\|txt §)` | `3 m/s` | `.svg`, a `.gp` axis label |
+| `(§ v\|txt2 §)` | `3.00 m/s` | the `txt0`–`txt9` family, as `f0`–`f9` |
+| `(§ const.gravity\|txtg §)` | `6.6743×10⁻¹¹ m³/kg/s²` | `g` notation, for anything `txt` would write as `0.0000000000…` |
+
+The unit comes from **pint's own `~P` spec**, not a table of ours: short symbols, Unicode
+superscripts for powers, `/` for division, `⋅` for multiplication. A table here would have to
+carry every unit the sources use and would drift from the registry the values are built in. The
+*magnitude* is ours, through the same `format_float` the `|f` family uses, so `|txt` and `|f`
+agree about how many figures a value has where pint would print `3.0`. An exponent is superscripted
+too, because `6.674e-11 m³⋅kg⁻¹` reads as two notations bolted together.
+
+A bare degree closes up — `45°`, not `45 °` — mirroring `__format__`'s `\ang`; a rate of degrees
+does not, so `30 deg/s`. `°C` keeps its space, as SI wants. `core/filters/plain.py` is the whole
+of it.
+
+Two things `|txt` inherits rather than fixes. pint normalises denominators, so water's heat
+capacity is `4180 J/K/kg` — the same parked question as the siunitx side. And a unit the
+arithmetic produced is the unit you get: `omega * R` is `3 m⋅rad/s`, so write `.to('m/s')`, which
+is what `29/curveball`'s own `eq:` entries already do.
+
+**Only reach for it where there is no TeX.** In Markdown, in a `.tikz`, in an `eq:`, `siunitx` is
+better at this than a string can be — it sets the thin space, keeps number and unit on one line,
+and matches the rest of the booklet.
 
 Three more things about SVG specifically:
 

@@ -5,6 +5,7 @@ import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.hacks import natural
+from core.filters.plain import superscript_exponent, text, text_general
 from core.filters.latex import (
     angle_dms,
     approx_exponential,
@@ -449,3 +450,76 @@ class TestNaturalPrecision:
         # prints exactly what it printed before.
         assert format_float(102.0, 2) == '102.00'
         assert format_exponential(1.00356e-4, 3) == '1.004e-04'
+
+
+class TestPlainText:
+    """
+    `txt` / `txtg` -- a quantity written out for a format that has no TeX to typeset it with.
+
+    Every assertion here is paired with what `siunitx` would have produced, because the whole
+    point of the filter is to be the other half of that pair, and because the two must agree
+    about the *number* even while they disagree about everything around it.
+    """
+    @staticmethod
+    def q(magnitude, unit):
+        from pint import UnitRegistry
+        return PhysicsQuantity(UnitRegistry().Quantity(magnitude, unit))
+
+    def test_a_simple_rate(self):
+        assert text(self.q(3, 'm/s')) == '3 m/s'
+
+    def test_a_power_is_a_superscript(self):
+        assert text(self.q(1000, 'kg/m**3')) == '1000 kg/m³'
+
+    def test_a_bare_degree_closes_up(self):
+        """`\\qty{45}{\\degree}` is `\\ang{45}` on the TeX side, for the same reason."""
+        assert text(self.q(45, 'degree')) == '45°'
+
+    def test_a_rate_of_degrees_does_not(self):
+        """Only a bare degree -- `30 deg/s` is a rate, exactly as `__format__` has it."""
+        assert text(self.q(30, 'degree/second')) == '30 deg/s'
+
+    def test_celsius_keeps_its_space(self):
+        """SI puts a space before `°C` and none before a plane angle's `°`."""
+        assert text(self.q(20, 'degC')) == '20 °C'
+
+    def test_a_dimensionless_value_has_no_trailing_space(self):
+        assert text(self.q(7, 'dimensionless')) == '7'
+
+    def test_a_plain_number_passes_through(self):
+        assert text(45) == '45'
+
+    def test_the_magnitude_is_ours_not_pints(self):
+        """
+        pint would print `3.0 m/s` here. Every other filter in the repository prints `3`, and a
+        drawing sits beside prose that used one of them.
+        """
+        assert text(self.q(3.0, 'm/s')) == '3 m/s'
+        assert format_float(3.0) == '3'
+
+    def test_precision_is_honoured(self):
+        assert text(self.q(2 / 3, 'm'), 2) == '0.67 m'
+
+    def test_an_exponent_becomes_a_superscript(self):
+        """`6.674e-11 m³/kg/s²` would otherwise read as two notations bolted together."""
+        assert text_general(self.q(6.6743e-11, 'm**3/kg/s**2')) == '6.6743×10⁻¹¹ m³/kg/s²'
+
+    def test_a_bare_power_of_ten_keeps_no_stray_multiplier(self):
+        """`cut_extra_one` has already dropped the mantissa, as it does for siunitx."""
+        assert superscript_exponent('e+15') == '10¹⁵'
+        assert superscript_exponent('e-06') == '10⁻⁶'
+
+    def test_a_number_without_an_exponent_is_untouched(self):
+        """The quiet case: nothing containing no `e` may be rewritten."""
+        assert superscript_exponent('1000') == '1000'
+        assert superscript_exponent('0.45') == '0.45'
+
+    def test_fixed_notation_is_unreadable_for_a_constant_hence_txtg(self):
+        """Why `txtg` exists at all, stated as a test rather than only in a docstring."""
+        assert text(self.q(6.6743e-11, 'm**3/kg/s**2')).startswith('0.000000000066743')
+
+    def test_something_with_no_plain_spelling_says_so(self):
+        """A range has no plain form yet, and the message has to name a way forward."""
+        from core.builder.context.quantities import QuantityRange
+        with pytest.raises(TypeError, match='range'):
+            text(QuantityRange(self.q(1, 'm'), self.q(2, 'm')))
