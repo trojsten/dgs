@@ -438,11 +438,14 @@ of it.
 A range, a list and a product print the way the booklet prints them, with the separators read off
 `core/latex/siunitx.tex` rather than chosen: `75 cm – 77 cm`, `1 m, 2 m, 3 m`,
 `3 cm × 4 cm × 5 cm` — en dash with spaces, comma and space, and units repeating, which is what
-`range-units` and `list-units` are both set to. **A range goes through `QuantityRange._outward`**,
-not through its two endpoints: it is the set of answers a marker accepts, so rounding each end to
-nearest shrinks it and turns away correct work, and printing the band any other way would put back
-the defect `29/bouncy-v` was fixed for. `|txt` and `__format__` round identically and a test pins
-them against each other.
+`range-units` and `list-units` are both set to.
+
+**A range rounds to nearest here and outward in `__format__`, and that is the one place the two
+disagree.** Outward rounding exists for `answer-interval.md`, which is the set of answers a marker
+accepts — rounding its ends to nearest shrinks that set and turns away correct work, which is the
+`29/bouncy-v` defect. Nothing `|txt` prints is an answer: a range in a drawing labels a span, and
+moving its ends outward would claim a width nobody measured. Both behaviours are asserted in
+`core/tests/test_filters.py`, so neither can be "fixed" into the other by accident.
 
 Two things `|txt` inherits rather than fixes. pint normalises denominators, so water's heat
 capacity is `4180 J/K/kg` — the same parked question as the siunitx side. And a unit the

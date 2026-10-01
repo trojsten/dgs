@@ -536,17 +536,27 @@ class TestPlainText:
         from core.builder.context.quantities import QuantityRange
         assert text(QuantityRange(self.q(2, 'dimensionless'), self.q(5, 'dimensionless'))) == '2 – 5'
 
-    def test_a_range_rounds_outward_exactly_as_siunitx_does(self):
+    def test_a_range_rounds_to_nearest_where_siunitx_rounds_outward(self):
         """
-        The one that matters. A range is the set of answers a marker accepts, so rounding each
-        end to nearest shrinks it and turns away correct work -- `29/bouncy-v` spans
-        [3.67749, 3.75] and `3.7 – 3.8` excludes the solver who used the exact `g`.
+        The one place `txt` and `__format__` disagree, and they must.
 
-        Pinned against `__format__`'s own output rather than against a literal, so the plain and
-        the siunitx paths cannot drift apart: if one changes its grid, this fails.
+        `__format__` prints `answer-interval.md`, the set of answers a marker accepts: rounding
+        its ends to nearest shrinks that set and turns away correct work, which is why
+        `29/bouncy-v` -- spanning [3.67749, 3.75] -- must print `3.6 – 3.8` and not `3.7 – 3.8`.
+
+        Nothing `txt` prints is an answer. A range in a drawing labels a span, so moving its ends
+        outward would claim a width nobody measured. Both are asserted here so that neither can
+        be "fixed" into the other without this failing.
         """
         from core.builder.context.quantities import QuantityRange
         band = QuantityRange(self.q(3.67749, 'm'), self.q(3.75, 'm'))
+        assert text(band, 1) == '3.7 m – 3.8 m'
+        assert format(band, '.1f') == r'\qtyrange{3.6}{3.8}{\metre}'
+
+    def test_a_range_already_on_the_grid_prints_the_same_either_way(self):
+        """The quiet case: outward and nearest differ only where there is something to round."""
+        from core.builder.context.quantities import QuantityRange
+        band = QuantityRange(self.q(3.6, 'm'), self.q(3.8, 'm'))
         assert text(band, 1) == '3.6 m – 3.8 m'
         assert format(band, '.1f') == r'\qtyrange{3.6}{3.8}{\metre}'
 

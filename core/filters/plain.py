@@ -38,10 +38,12 @@ from `core/latex/siunitx.tex` rather than invented here::
     1 m, 2 m, 3 m          a list       `list-separator = {\text{,}\allowbreak\ }`
     3 cm × 4 cm × 5 cm     a product
 
-A range goes through `QuantityRange._outward`, not through its endpoints. It is the set of answers
-a marker accepts, so rounding each end to nearest shrinks it and turns away correct work; printing
-the band any other way would put back the defect `29/bouncy-v` was fixed for. `txt` and
-`__format__` therefore round identically, and a test pins them against each other.
+**A range rounds to nearest here, and outward in `__format__`.** The two disagree on purpose, and
+it is the one place they do. `__format__` prints `answer-interval.md`, which is the set of answers
+a marker accepts: rounding its ends to nearest shrinks that set and turns away correct work, which
+is the defect `29/bouncy-v` was fixed for, so each end moves outward to the last place it prints.
+Nothing `txt` prints is an answer. A range in a drawing labels a span, and widening it would state
+a width nobody measured for a reason that does not apply there.
 """
 import numbers as _numbers
 from typing import Any
@@ -112,13 +114,13 @@ def _render(x: Any, precision: int | None, kind: str) -> str:
         return _scalar(x, precision, kind)
 
     if isinstance(x, QuantityRange):
-        # **Through `_outward`, not by formatting the endpoints.** A range here is the set of
-        # answers a marker accepts, so rounding each end to nearest shrinks it and rejects
-        # correct work -- the whole argument is in `QuantityRange._outward`. Printing the band
-        # some other way would reintroduce exactly the defect `29/bouncy-v` was fixed for.
-        spec = kind if precision is None else f'.{precision}{kind}'
-        ends = (QuantityRange._outward(x.minimum, spec, down=True),
-                QuantityRange._outward(x.maximum, spec, down=False))
+        # **Each end rounded to nearest, which is where this deliberately parts company with
+        # `__format__`.** That rounds outward, and must: what it prints is `answer-interval.md`,
+        # the set of answers a marker accepts, and rounding to nearest shrinks that set and turns
+        # away correct work -- the `29/bouncy-v` defect. Nothing `txt` prints is an answer. A
+        # range in a drawing is a label on a span, so moving its ends outward would state a
+        # width nobody measured, for a reason that does not apply.
+        ends = (x.minimum, x.maximum)
         return RANGE_PHRASE.join(_scalar(end, precision, kind) for end in ends)
 
     if isinstance(x, (QuantityList, QuantityProduct)):
