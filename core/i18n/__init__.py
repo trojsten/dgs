@@ -74,6 +74,10 @@ class Locale:
             # line and `-inflamatório` on the next. Read by `core/filters/hyphens.lua`; a
             # language that does not declare it gets the plain hyphen it has always had.
             Optional('repeat_hyphen'): bool,
+            # Spanish only: RAE exempts a hyphen followed by a proper noun's capital, because the
+            # capital already shows the hyphen is not a division mark. No other language that
+            # repeats has this exception.
+            Optional('repeat_hyphen_not_before_capital'): bool,
         },
         Optional('rtl', default=False): bool,
         # Per-language LaTeX penalties and overrides emitted into build/core/i18n/<lang>.tex.

@@ -32,6 +32,11 @@
 --- Set by `Meta` from `-M repeat-hyphen`, which `core/builder/convertor.py` passes only for a
 --- language whose `typography:` asks for it. A language that declares nothing gets nothing.
 local enabled = false
+--- Spanish only: RAE exempts a hyphen followed by a proper noun, because the capital already
+--- shows that the hyphen is not a division mark. `Ruiz-` / `Giménez`, not `Ruiz-` / `-Giménez`.
+--- Czech, Slovak, Polish and Portuguese have no such exception -- STN 01 6910 gives
+--- `Rakúsko-Uhorsko` and `Bratislava-Ružinov` as cases that *do* repeat.
+local not_before_capital = false
 
 --- Lua patterns are byte-oriented, so `%a` does not match `í` or `č`. Every byte of a multi-byte
 --- UTF-8 character is >= 0x80 and no ASCII digit or punctuation is, so this is enough: it says
@@ -40,9 +45,14 @@ local function is_letter(byte)
     return byte:match('%a') ~= nil or byte:byte() >= 128
 end
 
+local function truthy(meta, key)
+    local flag = meta[key]
+    return flag ~= nil and pandoc.utils.stringify(flag) == 'true'
+end
+
 function Meta(meta)
-    local flag = meta['repeat-hyphen']
-    enabled = flag ~= nil and pandoc.utils.stringify(flag) == 'true'
+    enabled = truthy(meta, 'repeat-hyphen')
+    not_before_capital = truthy(meta, 'repeat-hyphen-not-before-capital')
     return meta
 end
 
@@ -60,9 +70,13 @@ function Str(elem)
         local c = text:sub(i, i)
         -- Letters both sides, so `2-3`, `-5` and a trailing `anti-` are left alone: the rule is
         -- about a hyphenated *word*, and a range or a dangling hyphen is neither.
+        local nxt = text:sub(i + 1, i + 1)
         if c == '-' and i > 1 and i < #text
                 and is_letter(text:sub(i - 1, i - 1))
-                and is_letter(text:sub(i + 1, i + 1)) then
+                and is_letter(nxt)
+                -- The RAE exception. Only ASCII capitals are tested: a multi-byte letter's
+                -- first byte carries no case, and `Ñ-` is not a case anyone writes.
+                and not (not_before_capital and nxt:match('%u')) then
             table.insert(out, pandoc.Str(table.concat(buf)))
             -- Braces, or the macro would run into the word that follows it.
             table.insert(out, pandoc.RawInline('latex', '\\rephyphen{}'))

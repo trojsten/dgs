@@ -201,6 +201,9 @@ class Convertor:
         # because `-M` carries strings; absent is false, so a language that declares nothing is
         # unaffected and keeps the plain hyphen it has always had.
         self.repeat_hyphen = bool(typography.get('repeat_hyphen', False))
+        # Spanish only: RAE exempts a hyphen followed by a proper noun's capital.
+        self.repeat_hyphen_not_before_capital = bool(
+            typography.get('repeat_hyphen_not_before_capital', False))
 
         self.pre_checks = self._filter_regexes(self.pre_checks)
         self.pre_regexes = self._filter_regexes(self.pre_regexes)
@@ -328,6 +331,8 @@ class Convertor:
             # keeping the typography filters together and in a fixed order makes the argv readable.
             "--lua-filter", "./core/filters/hyphens.lua",
             "-M", f"repeat-hyphen={'true' if self.repeat_hyphen else 'false'}",
+            "-M", "repeat-hyphen-not-before-capital="
+                  f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}",
         ]
         if self.output_format == 'html':
             args += [

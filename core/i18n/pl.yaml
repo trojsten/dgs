@@ -5,9 +5,24 @@ quotes:
   open: '„'
   close: '“'
 # See `core/filters/spacing.lua`. One-letter words must not end a line.
+latex:
+  # Low enough that a hyphenated word may actually break at its hyphen, which is what
+  # `typography.repeat_hyphen` below is for. Forbidding the break (10000) was the other way to
+  # get correct output, and it throws away a breakpoint the norm does not forbid. 50 is TeX's
+  # own default: a mild discouragement, not a ban.
+  #
+  # Independent of \hyphenpenalty, which governs ordinary hyphenation and which `dgs.cls` sets
+  # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
+  # only this parameter decides it.
+  exhyphenpenalty: 50
 typography:
   singles: ['a', 'i', 'o', 'u', 'w', 'z']
   nbsp_pairs: ['m. in.']
+  # A word breaking at its łącznik repeats it on the next line -- `czarno-` then `-białe`.
+  # PWN's rule [196]: "należy wówczas przenieść ten łącznik do następnego wiersza, stawiając
+  # znak przeniesienia na końcu poprzedniego wiersza". `core/filters/hyphens.lua` emits
+  # `\rephyphen`, which `core/latex/hacks.tex` defines.
+  repeat_hyphen: true
 
 cref:
   figure:

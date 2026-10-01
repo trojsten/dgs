@@ -614,10 +614,34 @@ What is left in the metas is 3 real `\ `, each a `number\ unit` inside an `eq:`.
 
 ### A hyphen that repeats itself
 
-Czech, Slovak and Portuguese repeat the hyphen when a word breaks at one: `anti-inflamatório`
-sets as `anti-` / `-inflamatório`, never `anti-` / `inflamatório`. Portuguese needs it most,
-because enclitic pronouns put a hyphen inside ordinary verbs — `encontra-se`, `deu-lhe`,
-`colocou-o` — but `česko-slovenský` is the same rule, and both ČSN and STN 01 6910 state it.
+Five of the twelve languages repeat the hyphen when a word breaks at one: `anti-inflamatório`
+sets as `anti-` / `-inflamatório`, never `anti-` / `inflamatório`. **Which five was swept against
+each language's own authority, not assumed**, because the answer is not guessable — the two
+Slavic languages that repeat and the two that do not sit side by side.
+
+| | repeats? | source |
+|---|---|---|
+| Czech | **yes** | ÚJČ, *Internetová jazyková příručka* §164, after ČSN 01 6910: *"Pokud se spojovník objeví na konci řádku a nenaznačuje neúplné slovo, opakuje se na začátku řádku dalšího"* — `česko-` / `-polské` |
+| Slovak | **yes** | STN 01 6910: *"Ak je spojovník na konci riadka, musí sa zopakovať aj na začiatku nasledujúceho riadka"*, and it lists the omission among the commonest errors |
+| Polish | **yes** | PWN, rule [196] — `czarno-` / `-białe`, `warmińsko-` / `-mazurskie` |
+| Portuguese | **yes** | Acordo Ortográfico 1990, **Base XX, item 6** — `ex-` / `-alferes`, `vice-` / `-almirante` |
+| Spanish | **yes, with an exception** | RAE, *Ortografía* 2010 — `léxico-` / `-semántico`, **but not** before a proper noun: `Ruiz-` / `Giménez` |
+| German | no | Duden: the Bindestrich *"gilt bei der Worttrennung am Zeilenende gleichzeitig auch als Trennungsstrich"* |
+| French | no | OQLF: *"on ne le répète donc pas au début de la ligne suivante"* |
+| Hungarian | no | AkH. 12th ed. §238: *"a kötőjelet csak a sor végén tesszük ki. Ennek a sor elején való megismétlése csak szakmunkákban szokás"* |
+| Russian | no | Milchin: *"при переносе слов с дефисом последний обычно не повторяется"*; some sources advise not breaking at a hyphen at all |
+| Ukrainian | no | the Правопис's технічні правила переносу do not state it |
+| English | no | no style guide prescribes it |
+| Farsi | n/a | hyphens are rare and compounds are joined with ZWNJ, not hyphens |
+
+**The Spanish exception is the one that matters here**, and it is Spanish's alone: a capital
+already shows the hyphen is not a division mark, so `Gay-Lussac`, `Navier-Stokes` and
+`Gutenberg-Richter` must *not* repeat. Slovak is the opposite — STN gives `Rakúsko-Uhorsko` and
+`Bratislava-Ružinov` as cases that do. `typography: repeat_hyphen_not_before_capital` carries it,
+and only `es` sets it.
+
+Portuguese needs the rule most often, because enclitic pronouns put a hyphen inside ordinary
+verbs — `encontra-se`, `deu-lhe`, `colocou-o`.
 
 Authoring needs nothing: `core/filters/hyphens.lua` puts `\rephyphen` wherever a declaring
 language has a hyphen between two letters, the same way `spacing.lua` handles the non-breaking

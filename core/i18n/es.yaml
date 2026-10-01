@@ -4,6 +4,29 @@ locale: 'es-ES'
 quotes:
   open: '«'
   close: '»'
+latex:
+  # Low enough that a hyphenated word may actually break at its hyphen, which is what
+  # `typography.repeat_hyphen` below is for. Forbidding the break (10000) was the other way to
+  # get correct output, and it throws away a breakpoint the norm does not forbid. 50 is TeX's
+  # own default: a mild discouragement, not a ban.
+  #
+  # Independent of \hyphenpenalty, which governs ordinary hyphenation and which `dgs.cls` sets
+  # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
+  # only this parameter decides it.
+  exhyphenpenalty: 50
+typography:
+  # A word breaking at its guion repeats it on the next line -- `léxico-` then `-semántico`.
+  # RAE, *Ortografía* 2010: "Cuando, al dividir una expresión compleja formada por varias
+  # palabras unidas con guion, este signo coincida con el final de línea, deberá escribirse otro
+  # guion al comienzo del renglón siguiente."
+  repeat_hyphen: true
+  # ...with an exception none of the other four have, and the one that matters most here:
+  # "Excepto cuando la palabra que sigue es un nombre propio que empieza con mayúscula", because
+  # the capital already shows the hyphen is not a division mark -- `Ruiz-` / `Giménez`, not
+  # `Ruiz-` / `-Giménez`. Physics is full of these: Gay-Lussac, Navier-Stokes, Bose-Einstein,
+  # Gutenberg-Richter, and `26/earthquakes` already carries the last of them.
+  repeat_hyphen_not_before_capital: true
+
 cref:
   figure:
     singular: 'figura'

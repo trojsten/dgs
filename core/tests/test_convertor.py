@@ -349,8 +349,12 @@ class TestRepeatedHyphen:
     there is no Unicode character that repeats a hyphen at a break.
     """
 
+    #: The five languages whose norms require the repetition. See `taste` of each in the locale
+    #: file; the sweep that settled the list is recorded in CLAUDE.md.
+    REPEATING = ('cs', 'sk', 'pl', 'pt', 'es')
+
     def test_a_hyphenated_word_gets_the_macro(self, convert):
-        for language in ('pt', 'sk', 'cs'):
+        for language in self.REPEATING:
             assert r'anti\rephyphen{}inflamatório' in convert('latex', language, 'anti-inflamatório')
 
     def test_an_enclitic_pronoun_gets_it_too(self, convert):
@@ -362,7 +366,7 @@ class TestRepeatedHyphen:
         The quiet half. A language that declares nothing gets nothing, which is how every
         `typography:` rule in this project behaves.
         """
-        for language in ('en', 'de', 'pl', 'ru'):
+        for language in ('en', 'de', 'fr', 'hu', 'ru', 'uk'):
             assert convert('latex', language, 'anti-inflamatório') == 'anti-inflamatório'
 
     def test_the_macro_is_braced(self, convert):
@@ -390,14 +394,43 @@ class TestRepeatedHyphen:
         """
         assert 'rephyphen' not in convert('html', 'pt', 'anti-inflamatório')
 
-    def test_the_three_languages_lower_exhyphenpenalty(self):
+    def test_spanish_exempts_a_following_capital(self, convert):
+        r"""
+        RAE: "Excepto cuando la palabra que sigue es un nombre propio que empieza con mayúscula",
+        because the capital already shows the hyphen is not a division mark. It matters here more
+        than anywhere -- Gay-Lussac, Navier-Stokes, Bose-Einstein, Gutenberg-Richter.
+        """
+        assert convert('latex', 'es', 'Gay-Lussac') == 'Gay-Lussac'
+        assert r'léxico\rephyphen{}semántico' in convert('latex', 'es', 'léxico-semántico')
+
+    def test_only_spanish_exempts_a_capital(self, convert):
+        """
+        STN 01 6910 gives `Rakúsko-Uhorsko` and `Bratislava-Ružinov` as cases that *do* repeat,
+        so the exception is Spanish's alone and must not leak into the other four.
+        """
+        for language in ('cs', 'sk', 'pl', 'pt'):
+            assert r'Gay\rephyphen{}Lussac' in convert('latex', language, 'Gay-Lussac'), language
+
+    def test_every_repeating_language_lowers_exhyphenpenalty(self):
         r"""
         Without this the macro is inert: its discretionary has an empty pre-break list, so
         `\exhyphenpenalty` is the only thing that decides whether the break may happen.
         """
         from core import i18n
-        for language in ('pt', 'sk', 'cs'):
+        for language in self.REPEATING:
             assert i18n.languages[language].data['latex']['exhyphenpenalty'] < 1000
+
+    def test_the_languages_whose_norms_forbid_it_do_not_declare_it(self):
+        """
+        Swept one at a time against each language's own authority, not assumed: German's
+        Bindestrich doubles as the Trennstrich (Duden), French does not repeat it (OQLF),
+        Hungarian repeats only in specialist works (AkH. 238), Russian usually does not
+        (Milchin), Ukrainian's Правопис does not state it, and English has no such rule.
+        """
+        from core import i18n
+        for language in ('de', 'en', 'fr', 'hu', 'ru', 'uk', 'fa'):
+            typography = i18n.languages[language].data.get('typography', {})
+            assert not typography.get('repeat_hyphen'), language
 
 
 class TestCrossrefLabelSurvives:
