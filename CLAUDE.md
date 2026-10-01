@@ -643,6 +643,20 @@ and only `es` sets it.
 Portuguese needs the rule most often, because enclitic pronouns put a hyphen inside ordinary
 verbs — `encontra-se`, `deu-lhe`, `colocou-o`.
 
+**A hyphen joining a digit to a word must not break at all**, and that has to be said out loud
+rather than left to omission. Czech typography forbids dividing `3-dílný` or `10-procentní` at
+the spojovník, the Ukrainian Правопис forbids separating a grammatical ending from its digits
+(`10-й`), and the Russian rules forbid it for `2-местный`, `Боинг-767` and multi-digit numbers.
+Since the five repeating languages carry a lowered `exhyphenpenalty`, a hyphen merely *left
+alone* would be freely breakable — so the filter emits `\nbhyphen` (an `\mbox{-}`, no
+discretionary) whenever a digit sits on either side. Slovak has 70 of these in its sources,
+`10-stupňovej` and `12-krát` among them.
+
+**Russian is deliberately not in the table.** Its own rules *permit* the break — `сет-клин` and
+`монотип-клавиатура` are their examples — they merely do not repeat the hyphen, so a blanket
+`exhyphenpenalty: 10000` for Russian would forbid what the norm allows. What Russian forbids is
+the digit case, which is the paragraph above and is not Russian-specific.
+
 Authoring needs nothing: `core/filters/hyphens.lua` puts `\rephyphen` wherever a declaring
 language has a hyphen between two letters, the same way `spacing.lua` handles the non-breaking
 spaces and for the same reason — a hyphen in these sources is far more often *not* prose

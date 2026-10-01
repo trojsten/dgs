@@ -45,6 +45,10 @@ local function is_letter(byte)
     return byte:match('%a') ~= nil or byte:byte() >= 128
 end
 
+local function is_digit(byte)
+    return byte:match('%d') ~= nil
+end
+
 local function truthy(meta, key)
     local flag = meta[key]
     return flag ~= nil and pandoc.utils.stringify(flag) == 'true'
@@ -70,16 +74,27 @@ function Str(elem)
         local c = text:sub(i, i)
         -- Letters both sides, so `2-3`, `-5` and a trailing `anti-` are left alone: the rule is
         -- about a hyphenated *word*, and a range or a dangling hyphen is neither.
-        local nxt = text:sub(i + 1, i + 1)
-        if c == '-' and i > 1 and i < #text
-                and is_letter(text:sub(i - 1, i - 1))
-                and is_letter(nxt)
-                -- The RAE exception. Only ASCII capitals are tested: a multi-byte letter's
-                -- first byte carries no case, and `Ñ-` is not a case anyone writes.
-                and not (not_before_capital and nxt:match('%u')) then
+        local prv = i > 1 and text:sub(i - 1, i - 1) or ''
+        local nxt = i < #text and text:sub(i + 1, i + 1) or ''
+        local macro = nil
+        if c == '-' and prv ~= '' and nxt ~= '' then
+            if is_digit(prv) or is_digit(nxt) then
+                -- A digit on either side: `3-dílný`, `10-percentný`, `1-2`, `10-й`. These must
+                -- not break at all. Without this they would keep a plain hyphen, which the
+                -- lowered \exhyphenpenalty these languages carry makes freely breakable -- a
+                -- regression this filter would otherwise have introduced.
+                macro = '\\nbhyphen{}'
+            elseif is_letter(prv) and is_letter(nxt)
+                    -- The RAE exception. Only ASCII capitals are tested: a multi-byte letter's
+                    -- first byte carries no case, and `Ñ-` is not a case anyone writes.
+                    and not (not_before_capital and nxt:match('%u')) then
+                macro = '\\rephyphen{}'
+            end
+        end
+        if macro then
             table.insert(out, pandoc.Str(table.concat(buf)))
             -- Braces, or the macro would run into the word that follows it.
-            table.insert(out, pandoc.RawInline('latex', '\\rephyphen{}'))
+            table.insert(out, pandoc.RawInline('latex', macro))
             buf = {}
         else
             table.insert(buf, c)

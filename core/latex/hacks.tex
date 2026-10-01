@@ -33,6 +33,15 @@
 % explicit hyphen as far as the line breaker is concerned.
 \newcommand{\rephyphen}{\mbox{-}\discretionary{}{-}{}}
 
+% A hyphen that is never a breakpoint, for the hyphens that join a digit to a word: `3-dílný`,
+% `10-percentný`, `2-izbový`, `10-й`, `Боинг-767`, and a range like `1-2`. Czech typography
+% forbids dividing those at the spojovník, the Ukrainian Pravopys forbids separating a
+% grammatical ending from its digits, and the Russian rules forbid it for `2-местный` and for
+% multi-digit numbers. The `\mbox` is what does the work -- the same trick as `\rephyphen`, and
+% for the same reason: it hides the character from TeX's explicit-hyphen rule, which would
+% otherwise offer a break there at \exhyphenpenalty.
+\newcommand{\nbhyphen}{\mbox{-}}
+
 % Swap shitty font choices
 \let\tmp\phi
 \let\phi\varphi

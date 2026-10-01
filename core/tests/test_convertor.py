@@ -383,9 +383,30 @@ class TestRepeatedHyphen:
             assert 'rephyphen' not in convert('latex', 'pt', source), source
 
     def test_a_hyphen_needs_a_letter_on_each_side(self, convert):
-        """A range or a dangling hyphen is not a hyphenated word."""
-        for source in ('2-3', 'anti- x', 'x -inflamatório'):
+        """A dangling hyphen is not a hyphenated word."""
+        for source in ('anti- x', 'x -inflamatório'):
             assert 'rephyphen' not in convert('latex', 'pt', source), source
+
+    def test_a_digit_hyphen_is_made_unbreakable(self, convert):
+        r"""
+        Czech typography forbids dividing `3-dílný` or `10-procentní` at the spojovník, the
+        Ukrainian Pravopys forbids separating a grammatical ending from its digits, and the
+        Russian rules forbid it for `2-местный` and for multi-digit numbers.
+
+        It has to be said positively rather than by omission: these languages carry a lowered
+        `\exhyphenpenalty`, so a hyphen merely *left alone* is freely breakable. Slovak has 70 of
+        these in its sources -- `10-stupňovej`, `12-krát`, `1-2`.
+        """
+        for language in self.REPEATING:
+            for source in ('10-stupňovej', '207-krát', '1-2'):
+                out = convert('latex', language, source)
+                assert r'\nbhyphen{}' in out, (language, source)
+                assert 'rephyphen' not in out, (language, source)
+
+    def test_a_digit_hyphen_is_untouched_where_the_rule_is_off(self, convert):
+        """The quiet half: a language that did not opt in keeps what it always had."""
+        for language in ('en', 'de', 'ru'):
+            assert convert('latex', language, '10-stupňovej') == '10-stupňovej'
 
     def test_html_keeps_the_plain_hyphen(self, convert):
         """
