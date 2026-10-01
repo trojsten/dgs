@@ -30,11 +30,28 @@ Two deliberate differences from a naive `f'{quantity:~P}'`:
 `\qty{45}{\degree}` is `\ang{45}` in `PhysicsQuantity.__format__`, for the reason a drawing wants
 too: an angle is written `45°`, closed up, while every other unit takes a space. A bare degree is
 the only case, exactly as there -- `\qty{30}{\degree\per\second}` is a rate, and `30 deg/s`.
+
+A range, a list and a product print the way the booklet prints them, with the separators taken
+from `core/latex/siunitx.tex` rather than invented here::
+
+    75 cm – 77 cm          a range      `range-phrase = {\text{ -- }}`, `range-units = repeat`
+    1 m, 2 m, 3 m          a list       `list-separator = {\text{,}\allowbreak\ }`
+    3 cm × 4 cm × 5 cm     a product
+
+A range goes through `QuantityRange._outward`, not through its endpoints. It is the set of answers
+a marker accepts, so rounding each end to nearest shrinks it and turns away correct work; printing
+the band any other way would put back the defect `29/bouncy-v` was fixed for. `txt` and
+`__format__` therefore round identically, and a test pins them against each other.
 """
 import numbers as _numbers
-from typing import Any, Callable
+from typing import Any
 
-from core.builder.context.quantities import PhysicsQuantity
+from core.builder.context.quantities import (
+    PhysicsQuantity,
+    QuantityList,
+    QuantityProduct,
+    QuantityRange,
+)
 
 from .numbers import format_float, format_general
 
@@ -46,6 +63,17 @@ UNIT_SPEC = '~P'
 DEGREE = 'deg'
 
 SUPERSCRIPT = str.maketrans('0123456789-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁻')
+
+#: The magnitude formatter for each format kind, and the letter that builds its spec.
+KINDS = {'f': format_float, 'g': format_general}
+
+#: What goes between the parts of a range, a list and a product. Taken from the siunitx settings
+#: in `core/latex/siunitx.tex` rather than chosen here, because this filter's job is to print what
+#: the booklet prints: `range-phrase = {\text{ -- }}` is an en dash with spaces around it and
+#: `list-separator = {\text{,}\allowbreak\ }` is a comma and a space.
+RANGE_PHRASE = ' – '
+LIST_SEPARATOR = ', '
+PRODUCT_SEPARATOR = ' × '
 
 
 def superscript_exponent(printed: str) -> str:
@@ -66,16 +94,9 @@ def superscript_exponent(printed: str) -> str:
     return f'{mantissa}×{power}' if mantissa else power
 
 
-def _render(x: Any, precision: int | None, formatter: Callable[[Any, int | None], str]) -> str:
-    if isinstance(x, _numbers.Number):
-        return superscript_exponent(formatter(x, precision))
-
-    if not isinstance(x, PhysicsQuantity):
-        raise TypeError(f"`txt` renders a quantity or a plain number, not {type(x).__name__}. "
-                        f"A range, a list or a product has no plain-text spelling yet; print its "
-                        f"parts separately, or use `siunitx` if the format can typeset it.")
-
-    magnitude = superscript_exponent(formatter(x.mag, precision))
+def _scalar(x: PhysicsQuantity, precision: int | None, kind: str) -> str:
+    """One quantity, magnitude and unit."""
+    magnitude = superscript_exponent(KINDS[kind](x.mag, precision))
     unit = format(x.unit, UNIT_SPEC)
 
     if unit == DEGREE:
@@ -83,9 +104,37 @@ def _render(x: Any, precision: int | None, formatter: Callable[[Any, int | None]
     return f'{magnitude} {unit}' if unit else magnitude
 
 
+def _render(x: Any, precision: int | None, kind: str) -> str:
+    if isinstance(x, _numbers.Number):
+        return superscript_exponent(KINDS[kind](x, precision))
+
+    if isinstance(x, PhysicsQuantity):
+        return _scalar(x, precision, kind)
+
+    if isinstance(x, QuantityRange):
+        # **Through `_outward`, not by formatting the endpoints.** A range here is the set of
+        # answers a marker accepts, so rounding each end to nearest shrinks it and rejects
+        # correct work -- the whole argument is in `QuantityRange._outward`. Printing the band
+        # some other way would reintroduce exactly the defect `29/bouncy-v` was fixed for.
+        spec = kind if precision is None else f'.{precision}{kind}'
+        ends = (QuantityRange._outward(x.minimum, spec, down=True),
+                QuantityRange._outward(x.maximum, spec, down=False))
+        return RANGE_PHRASE.join(_scalar(end, precision, kind) for end in ends)
+
+    if isinstance(x, (QuantityList, QuantityProduct)):
+        # `__init__` has already coerced every element to a common unit, so each one carries it:
+        # `list-units` and `range-units` are both `repeat` in `core/latex/siunitx.tex`, and the
+        # booklet prints `3 cm × 4 cm × 5 cm`.
+        separator = LIST_SEPARATOR if isinstance(x, QuantityList) else PRODUCT_SEPARATOR
+        return separator.join(_scalar(q, precision, kind) for q in x.qs)
+
+    raise TypeError(f"`txt` renders a quantity, a range, a list, a product or a plain number, "
+                    f"not {type(x).__name__}.")
+
+
 def text(x: Any, precision: int | None = None) -> str:
     """A quantity as plain text, the magnitude in fixed notation: `3 m/s`, `1000 kg/m³`, `45°`."""
-    return _render(x, precision, format_float)
+    return _render(x, precision, 'f')
 
 
 def text_general(x: Any, precision: int | None = None) -> str:
@@ -95,4 +144,4 @@ def text_general(x: Any, precision: int | None = None) -> str:
     Worth having rather than leaving to `txt`: fixed notation writes the gravitational constant
     as `0.00000000006674`, which is not a label anybody can read at 7pt.
     """
-    return _render(x, precision, format_general)
+    return _render(x, precision, 'g')

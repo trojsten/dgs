@@ -518,8 +518,40 @@ class TestPlainText:
         """Why `txtg` exists at all, stated as a test rather than only in a docstring."""
         assert text(self.q(6.6743e-11, 'm**3/kg/s**2')).startswith('0.000000000066743')
 
-    def test_something_with_no_plain_spelling_says_so(self):
-        """A range has no plain form yet, and the message has to name a way forward."""
+    def test_a_range_takes_an_en_dash(self):
+        """`range-phrase = {\\text{ -- }}` and `range-units = repeat` in `core/latex/siunitx.tex`."""
         from core.builder.context.quantities import QuantityRange
-        with pytest.raises(TypeError, match='range'):
-            text(QuantityRange(self.q(1, 'm'), self.q(2, 'm')))
+        assert text(QuantityRange(self.q(75, 'cm'), self.q(77, 'cm'))) == '75 cm – 77 cm'
+
+    def test_a_product_takes_a_multiplication_sign(self):
+        from core.builder.context.quantities import QuantityProduct
+        assert text(QuantityProduct(self.q(3, 'cm'), self.q(4, 'cm'), self.q(5, 'cm'))) \
+            == '3 cm × 4 cm × 5 cm'
+
+    def test_a_list_takes_commas(self):
+        from core.builder.context.quantities import QuantityList
+        assert text(QuantityList(self.q(1, 'm'), self.q(2, 'm'), self.q(3, 'm'))) == '1 m, 2 m, 3 m'
+
+    def test_a_dimensionless_range_has_no_units_to_repeat(self):
+        from core.builder.context.quantities import QuantityRange
+        assert text(QuantityRange(self.q(2, 'dimensionless'), self.q(5, 'dimensionless'))) == '2 – 5'
+
+    def test_a_range_rounds_outward_exactly_as_siunitx_does(self):
+        """
+        The one that matters. A range is the set of answers a marker accepts, so rounding each
+        end to nearest shrinks it and turns away correct work -- `29/bouncy-v` spans
+        [3.67749, 3.75] and `3.7 – 3.8` excludes the solver who used the exact `g`.
+
+        Pinned against `__format__`'s own output rather than against a literal, so the plain and
+        the siunitx paths cannot drift apart: if one changes its grid, this fails.
+        """
+        from core.builder.context.quantities import QuantityRange
+        band = QuantityRange(self.q(3.67749, 'm'), self.q(3.75, 'm'))
+        assert text(band, 1) == '3.6 m – 3.8 m'
+        assert format(band, '.1f') == r'\qtyrange{3.6}{3.8}{\metre}'
+
+    def test_something_with_no_plain_spelling_says_so(self):
+        """The quiet half: a `MathObject` is LaTeX by nature and has no plain form."""
+        from core.builder.context.quantities.math import MathObject
+        with pytest.raises(TypeError, match='MathObject'):
+            text(MathObject('x', 'a = b'))
