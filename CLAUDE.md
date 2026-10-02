@@ -965,6 +965,20 @@ and after. Reading through a symlink is safe; writing is not.
   `\nicefrac` used to be tier 4's answer and is not any more. It stays *defined*
   regardless — `math.tex` takes it as one of `\Drv`'s fraction styles, so removing the
   macro would break the derivative notation.
+- **A spaced connective is a macro, never its spelling.** `\Implies`, not
+  `\quad\Rightarrow\quad`; `\Iff` and `\ImpliedBy` for the other two arrows, and `\LAnd`,
+  `\LOr`, `\LXor`, `\LNand` for the logical ones. All seven are in `core/latex/math.tex`,
+  where the comment above them explains why they are `\NewDocumentCommand` rather than
+  `\DeclareMathOperator`: an operator *name* is set upright and given operator spacing, and
+  both are wrong for a binary relation.
+
+  The point of the macro is that the spacing is decided once. Written out, it drifts —
+  `seminar` had 35 `\quad\Rightarrow\quad` against 26 `\qquad\Rightarrow\qquad`, the same
+  connective at two widths, and nothing to say which was meant. They are all `\Implies` now.
+
+  **A bare `\Rightarrow` is a different thing and stays.** Opening a row inside an `aligned`,
+  `&\Rightarrow R_p &= \ldots`, the column is the spacing; `\Implies` there would add a `\quad`
+  the alignment did not ask for. 21 of those in `seminar` were deliberately left.
 - **A display block and its terminal punctuation must agree about the paragraph.**
   Ending in a full stop ends the sentence, so a blank line follows and a new
   paragraph starts — unless the file ends there. Ending in a comma, a semicolon or
