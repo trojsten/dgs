@@ -41,6 +41,7 @@ from core.audit.status import (
     TRANSLATION_STATES,
     shared_file_states,
 )
+from core.builder import reference
 from core.i18n import languages as LOCALES
 
 
@@ -269,6 +270,19 @@ def api_capabilities():
     payload = capabilities.capabilities(REPO_ROOT, refresh=request.args.get("refresh") == "1")
     payload = dict(payload, source=describe_source(REPO_ROOT))
     return jsonify(payload)
+
+
+@app.get("/api/reference")
+def api_reference():
+    """
+    What an author may type: every filter, global, attribute and `meta.yaml` key, with an example.
+
+    The same table `docs/filters.md` is generated from, so the hover and the document cannot
+    disagree -- and `core/tests/test_reference.py` holds both to the code they describe. Sent
+    whole and once: it is a few tens of kilobytes, it never changes while the server is up, and
+    the alternative is a request per hover.
+    """
+    return jsonify(reference.as_json())
 
 
 @app.get("/api/modules")

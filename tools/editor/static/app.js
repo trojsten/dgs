@@ -148,6 +148,171 @@ function wireCodeEditor(textareaId, highlightId, lang, onInput) {
   });
 }
 
+// --- the reference hover ---------------------------------------------------
+
+/* What an author may type, fetched once. The same table `docs/filters.md` is generated from, so
+   the tooltip and the document cannot disagree, and `core/tests/test_reference.py` holds both to
+   the code they describe. */
+async function loadReference() {
+  try {
+    state.reference = await fetchJSON("/api/reference");
+  } catch {
+    state.reference = null;      // the editor is still an editor without it
+  }
+}
+
+/* The span under the pointer, or null.
+
+   The overlay is `pointer-events: none` under a textarea that is not, which is the only way the
+   two layers can work at all: the text you see is the overlay's and the text you edit is the
+   textarea's. So `elementFromPoint` returns the textarea and never a token — unless the two are
+   inverted for the duration of one hit test, which is what this does. Both styles are restored
+   before the handler returns, so nothing observable changes.
+
+   The alternative, walking every `[data-ref]` span and asking each for its rects, is O(tokens)
+   forced layouts per mouse move; a solution with four hundred tags would make the pane crawl. */
+function tokenAtPoint(editor, x, y) {
+  const textarea = editor.querySelector(".code-input");
+  const pre = editor.querySelector(".code-highlight");
+  if (!textarea || !pre) return null;
+  textarea.style.pointerEvents = "none";
+  pre.style.pointerEvents = "auto";
+  const hit = document.elementFromPoint(x, y);
+  textarea.style.pointerEvents = "";
+  pre.style.pointerEvents = "";
+  return hit && pre.contains(hit) ? hit.closest("[data-ref]") : null;
+}
+
+/* The same question asked of the caret rather than the pointer, for F1.
+
+   This one needs no DOM at all: `collectReferences` is the tokeniser's own, so the keyboard and
+   the mouse are answering out of one definition of where a name is rather than two. */
+function refAtCaret(textarea, lang) {
+  const at = textarea.selectionStart;
+  for (const found of collectReferences(textarea.value, lang)) {
+    if (at >= found.start && at <= found.end) return found.ref;
+  }
+  return null;
+}
+
+function hoverElement() {
+  let box = el("reference-hover");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "reference-hover";
+    box.hidden = true;
+    document.body.appendChild(box);
+  }
+  return box;
+}
+
+function hideReference() {
+  hoverElement().hidden = true;
+}
+
+const KIND_LABELS = {
+  "filter": "filter", "global": "global", "attribute": "attribute", "operator": "operator",
+  "namespace": "namespace", "meta-key": "meta.yaml key", "values-key": "values: key",
+  "jinja-builtin": "Jinja's own",
+};
+
+/* `x`/`y` are where to anchor it, in viewport coordinates. Returns whether there was anything to
+   show: a name the table does not hold is a miss, and a miss shows nothing rather than an empty
+   box -- `eq.kin` names an equation this problem happens to have, and there is no entry for that
+   and should not be. */
+function showReference(ref, x, y) {
+  const entry = state.reference?.entries?.[ref];
+  if (!entry) { hideReference(); return false; }
+
+  const box = hoverElement();
+  const parts = [
+    `<div><span class="ref-name">${escapeForHtml(entry.display)}</span>` +
+    `<span class="ref-kind">${escapeForHtml(KIND_LABELS[entry.kind] || entry.kind)}` +
+    `${entry.env === "static" ? " · .jtex only" : ""}</span></div>`,
+  ];
+  if (entry.signature && entry.signature !== entry.display) {
+    parts.push(`<div class="ref-signature">${escapeForHtml(entry.signature)}</div>`);
+  }
+  parts.push(`<div class="ref-summary">${markdownish(entry.summary)}</div>`);
+  if (entry.example) {
+    parts.push(`<div class="ref-example"><b>${escapeForHtml(entry.example)}</b>` +
+               `${escapeForHtml(entry.expect)}</div>`);
+  }
+  if (entry.note) parts.push(`<div class="ref-more">${markdownish(entry.note)}</div>`);
+  box.innerHTML = parts.join("");
+  box.hidden = false;
+
+  // Placed below and right of the pointer, and flipped wherever that would run off the window --
+  // a token near the bottom of a long file is exactly where this matters.
+  const rect = box.getBoundingClientRect();
+  const left = Math.max(4, Math.min(x + 14, window.innerWidth - rect.width - 8));
+  const below = y + 18;
+  const top = below + rect.height > window.innerHeight - 8
+    ? Math.max(4, y - rect.height - 12)
+    : below;
+  box.style.left = `${left}px`;
+  box.style.top = `${top}px`;
+  return true;
+}
+
+function escapeForHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* The summaries are written in the same register as the rest of the documentation, which means
+   they carry `code` and **emphasis**. Rendering those two and nothing else is enough to read
+   them, and keeps the tooltip from needing a Markdown library for three characters of markup. */
+function markdownish(s) {
+  return escapeForHtml(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+}
+
+/* One listener per pane, throttled to a frame: a mouse move fires far more often than the
+   pointer actually crosses a token, and the hit test forces a layout. */
+function wireReferenceHover(textareaId, lang) {
+  const textarea = el(textareaId);
+  const editor = textarea && textarea.closest(".code-editor");
+  if (!editor) return;
+  let pending = false;
+  let shown = null;
+
+  editor.addEventListener("mousemove", (e) => {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(() => {
+      pending = false;
+      const span = tokenAtPoint(editor, e.clientX, e.clientY);
+      const ref = span ? span.dataset.ref : null;
+      if (!ref) { shown = null; hideReference(); return; }
+      // Re-place it on every move even when the token has not changed, so it follows the pointer
+      // along a long token instead of sitting where the pointer first entered.
+      shown = ref;
+      if (!showReference(ref, e.clientX, e.clientY)) shown = null;
+    });
+  });
+
+  editor.addEventListener("mouseleave", () => { shown = null; hideReference(); });
+
+  // The keyboard half. A hover is no use to someone mid-line with both hands on the keys, and
+  // F1 is where help lives.
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key !== "F1") {
+      if (shown !== null) { shown = null; hideReference(); }
+      return;
+    }
+    e.preventDefault();
+    const mode = typeof lang === "function" ? lang() : lang;
+    const ref = refAtCaret(textarea, mode);
+    if (!ref) { setStatus("Nothing to look up at the caret", ""); return; }
+    const where = textarea.getBoundingClientRect();
+    if (!showReference(ref, where.left + 16, where.top + 16)) {
+      setStatus(`No reference entry for ${ref}`, "");
+    }
+  });
+  textarea.addEventListener("blur", hideReference);
+}
+
 function setEditorValue(textareaId, highlightId, lang, value) {
   el(textareaId).value = value;
   refreshHighlight(textareaId, highlightId, lang);
@@ -955,6 +1120,11 @@ function init() {
     scheduleAutocompile();
   });
 
+  // Both panes, because the vocabulary is written in both -- and `derived:` in the meta is where
+  // `PQ`, `QL` and `.to()` actually live: 158 of the 160 `PQ` in the repository are there.
+  wireReferenceHover("source-editor", sourceMode);
+  wireReferenceHover("meta-editor", "dgs-yaml");
+
   document.querySelectorAll("#pane-output .tab").forEach((t) => {
     t.addEventListener("click", () => {
       // TeX is built on demand like the PDF, not fetched like a file already on disk.
@@ -1008,6 +1178,7 @@ function init() {
     applyCapabilities();
     loadModules();
   });
+  loadReference();        // independent of everything else, and nothing waits on it
 }
 
 init();

@@ -370,7 +370,30 @@ abbr[title] {
   white-space: inherit;
 }
 
-.tok-jinja { color: #e0c34a; background: rgba(224, 195, 74, 0.12); border-radius: 2px; }
+/* A Jinja tag is emitted as a run of adjacent siblings, not one span: the names inside it carry
+   their own class and `data-ref` so the hover can find them. They share the tag's wash so the run
+   still reads as one object. */
+.tok-jinja,
+.tok-jinja-filter,
+.tok-jinja-attr,
+.tok-jinja-call,
+.tok-jinja-ns,
+.tok-jinja-op { background: rgba(224, 195, 74, 0.12); }
+
+/* No radius on the pieces: a tag is now a run of them, and rounding each one draws the seams the
+   split is meant to be invisible across. */
+.tok-jinja { color: #e0c34a; }
+.tok-jinja-filter { color: #e8d98a; font-weight: bold; }
+.tok-jinja-attr { color: #c9b96a; }
+.tok-jinja-call { color: #e8d98a; }
+.tok-jinja-ns { color: #b48ead; }
+.tok-jinja-op { color: #e06c75; font-weight: bold; }
+
+/* A name the reference knows about is worth marking as such, the same way the audit page marks a
+   word that has an explanation: a dotted underline and a help cursor. The cursor cannot actually
+   show -- the textarea is on top and owns the pointer -- but the underline does, and it is what
+   tells an author there is something to hover at all. */
+[data-ref] { text-decoration: underline dotted rgba(255, 255, 255, 0.35); text-underline-offset: 0.25em; }
 .tok-math { color: #6fb3d2; }
 .tok-cmd { color: #b48ead; }
 .tok-label { color: #6b7280; }
@@ -454,3 +477,66 @@ abbr[title] {
 }
 
 #topbar select[hidden] { display: none; }
+
+
+/* --- the reference hover ------------------------------------------------- */
+
+/* On `body`, not inside `.code-editor`: that is the only positioned ancestor but it is also
+   `overflow: hidden`, so a tooltip anchored in it would be clipped at the pane's edge -- which is
+   exactly where a tooltip for a token at the end of a line needs to be. Fixed positioning instead,
+   placed from the pointer's viewport coordinates. */
+#reference-hover {
+  position: fixed;
+  z-index: 50;
+  max-width: 34rem;
+  padding: 0.5rem 0.65rem;
+  /* Opaque, and a shade lighter than the pane behind it. A translucent help box lets the code
+     under it show through the prose, which is unreadable at any opacity worth having. */
+  background: #252526;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #ddd;
+  pointer-events: none;          /* never let it eat the click that was aimed at the text */
+}
+
+#reference-hover[hidden] { display: none; }
+
+#reference-hover .ref-name {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-weight: bold;
+  color: #e0c34a;
+}
+
+#reference-hover .ref-kind { margin-left: 0.4rem; color: #777; font-size: 0.75rem; }
+
+#reference-hover .ref-signature {
+  margin-top: 0.15rem;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  color: #9fd88b;
+}
+
+#reference-hover .ref-summary { margin-top: 0.35rem; }
+
+#reference-hover .ref-example {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #3a3a3a;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  color: #999;
+}
+
+#reference-hover .ref-example b { display: block; color: #ccc; font-weight: normal; }
+
+#reference-hover .ref-more { margin-top: 0.4rem; color: #777; font-size: 0.75rem; }
+
+/* The summaries are written in the documentation's register, so they carry `code` spans. */
+#reference-hover code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.95em;
+  color: #9fd88b;
+}
