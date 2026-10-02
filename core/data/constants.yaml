@@ -222,7 +222,7 @@ avogadro:
     aliases:    ['N_A']
     si_extra:
       per-mode: 'reciprocal'
-    digits:     4
+    digits:     1
 
 universal_gas:
     symbol:     'R'
@@ -461,6 +461,13 @@ molar_mass_carbon:
     unit:       'gram / mole'
     digits:     2
     aliases:    ['M_C']
+
+molar_mass_water:
+    symbol:     'M_{\ce{H2O}'
+    magnitude:  18
+    unit:       'gram / mole'
+    digits:     2
+    aliases:    ['M_H2O']
 
 relative_mass_carbon:
     symbol:     'A_r(\ce{C})'
