@@ -592,3 +592,114 @@ class TestPictureDialectDispatch:
         assert JinjaConvertor.renderer_for(
             Path('source/naboj/phys/29/problems/tangram/tangram-problem.svg')
         ) is PictureJinjaRenderer
+
+
+class TestTheContentSchema:
+    """
+    What a `meta.yaml`'s five content keys may hold.
+
+    These existed as a schema and validated **nothing**: the keys were written
+    `dict[ValidIdentifier, str]`, and enschema reads a subscripted generic as a callable and
+    validates by calling it, so the whole check was "can this be passed to `dict()`". A
+    `derived:` entry holding an integer, an `eq:` key that is not an identifier and a `values:`
+    entry with a misspelt `magnitude` all passed, and each then failed much later and somewhere
+    else -- the misspelling as a bare `KeyError: 'magnitude'` out of a constructor, with nothing
+    in it to say which entry of which file was wrong.
+
+    So each case below comes in two halves, and the second is the one that matters: the thing
+    that is wrong is rejected, **and** the thing that merely looks like it is not.
+    """
+
+    @staticmethod
+    def schema():
+        from core.builder.renderer import StandaloneContext
+        return StandaloneContext._schema
+
+    def accepts(self, meta):
+        self.schema().validate({'id': 'demo'} | meta)
+
+    def rejects(self, meta):
+        from enschema import SchemaError
+        with pytest.raises(SchemaError) as caught:
+            self.accepts(meta)
+        return str(caught.value)
+
+    # --- a `values:` entry ------------------------------------------------
+
+    def test_a_misspelt_magnitude_is_rejected_by_name(self):
+        """
+        The message is the point. Tried last in the `Or`, the mapping form is the alternative
+        whose error is reported, so this says `Missing key: 'magnitude'` rather than naming
+        `PhysicsConstant`, which is the one form nobody wrote.
+        """
+        assert "Missing key: 'magnitude'" in self.rejects({'values': {'h': {'magnitide': 5}}})
+
+    def test_an_unknown_entry_key_is_rejected_by_name(self):
+        assert "'bogus'" in self.rejects({'values': {'h': {'magnitude': 5, 'bogus': 1}}})
+
+    def test_a_magnitude_that_yaml_read_as_a_string_is_rejected(self):
+        """
+        YAML 1.1 wants a decimal point *and* a sign before it reads an exponent as a number, so
+        `1e15` parses as the string `'1e15'`. That used to surface as `unsupported operand
+        type(s) for /: 'str' and 'float'` from a `derived:` expression, a long way from the key
+        that caused it.
+        """
+        self.rejects({'values': {'h': {'magnitude': '1e15'}}})
+        self.accepts({'values': {'h': {'magnitude': 1.0e+15}}})     # the spelling that works
+
+    def test_the_forms_that_are_not_mappings_still_pass(self):
+        """
+        The quiet half. A bare number is a dimensionless given written in one line, and a bare
+        string is the documented way to pass LaTeX through verbatim; neither is a defect, and a
+        schema that rejected them would be worse than the one that checked nothing.
+        """
+        self.accepts({'values': {'h': 5}})
+        self.accepts({'values': {'h': 1.5}})
+        self.accepts({'values': {'h': r'\qty{3}{\metre}'}})
+
+    def test_every_keyword_the_constructor_takes_is_accepted(self):
+        """
+        The schema's whole claim is that it lists what the constructor lists. A key rejected here
+        that the constructor would have taken is a worse failure than the one this replaces,
+        because it stops a meta that works.
+        """
+        self.accepts({'values': {'h': {
+            'magnitude': 5, 'unit': r'\metre', 'symbol': 'h', 'digits': 3,
+            'exact': False, 'si_extra': {'per-mode': 'symbol'},
+            'force_f': True, 'aliases': ['height'],
+        }}})
+
+    def test_a_unit_written_with_nothing_after_it_is_dimensionless(self):
+        """How a ratio or a coefficient of friction is written, and it has to keep working."""
+        self.accepts({'values': {'r': {'magnitude': 1.52, 'unit': None, 'symbol': 'r'}}})
+
+    def test_a_declared_type_is_still_checked(self):
+        self.rejects({'values': {'h': {'magnitude': 5, 'digits': 'three'}}})
+        self.rejects({'values': {'h': {'magnitude': 5, 'exact': 'yes'}}})
+
+    # --- the other four keys ----------------------------------------------
+
+    def test_derived_holds_an_expression_and_not_a_number(self):
+        """
+        `derived:` is evaluated as a Jinja *expression*, so a number there is not a shorthand --
+        it is a value that will never be evaluated and a name that should have been in `values:`.
+        """
+        self.rejects({'derived': {'r': 5}})
+        self.accepts({'derived': {'r': 'h * 2'}})
+
+    def test_a_name_must_be_an_identifier_in_every_block(self):
+        for key, value in [('values', 5), ('derived', 'h'), ('eq', 'a=b'), ('blocks', 'text')]:
+            assert "'1bad'" in self.rejects({key: {'1bad': value}})
+
+    def test_a_word_needs_its_languages(self):
+        """`words:` is term -> language -> text; a bare string is a word with no language."""
+        self.rejects({'words': {'air': 'vzduch'}})
+        self.accepts({'words': {'air': {'sk': 'vzduch', 'en': 'air'}}})
+
+    def test_an_empty_block_is_legal(self):
+        """
+        No source has one, but a block emptied while it is being written is not a defect, and the
+        audit validates every meta on every pass -- it should not go red for that.
+        """
+        for key in ('values', 'derived', 'eq', 'blocks', 'words'):
+            self.accepts({key: {}})

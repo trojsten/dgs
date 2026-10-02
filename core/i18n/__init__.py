@@ -57,7 +57,12 @@ class Locale:
         # printing `therefore` -- output that looks right until it is in print. A word this
         # language has not got is boxed in red instead, and collected for one report at the end of
         # the render; `core/audit`'s `word-missing` is what catches it from the sources.
-        Optional('words'): dict[str, str],
+        # Written `{K: V}` and `[V]`, not `dict[K, V]` and `list[V]`: enschema reads a
+        # subscripted generic as a *callable* and validates by calling it, so `list[str]` only
+        # ever asked whether the value could be passed to `list()` -- and `list('abc')` succeeds,
+        # which would have turned a `singles:` written as a bare string into a list of its
+        # letters without a word of complaint. The literal forms do check.
+        Optional('words'): {Optional(str): str},
         # Spacing that the build inserts for this language, read by `core/filters/spacing.lua`:
         # the one-letter words that must not end a line, and the abbreviations whose halves want
         # a non-breaking or a thin space between them.
@@ -67,9 +72,9 @@ class Locale:
         # Slovak's prepositions is the failure this is meant to end. A language that declares
         # nothing gets nothing, which for English is the right answer.
         Optional('typography'): {
-            Optional('singles'): list[str],
-            Optional('nbsp_pairs'): list[str],
-            Optional('thin_pairs'): list[str],
+            Optional('singles'): [str],
+            Optional('nbsp_pairs'): [str],
+            Optional('thin_pairs'): [str],
             # Whether this language repeats a hyphen when a word breaks at one -- `anti-` on one
             # line and `-inflamatório` on the next. Read by `core/filters/hyphens.lua`; a
             # language that does not declare it gets the plain hyphen it has always had.
@@ -90,9 +95,13 @@ class Locale:
             'list_pair_separator': str,
             'list_final_separator': str,
             'output_decimal_marker': str,
-            'units': dict[str, str],
-            'prefixes': dict[str, dict[str, str]],
-            'binary_prefixes': dict[str, dict[str, str]],
+            'units': {Optional(str): str},
+            # Keyed by the **exponent**, not by a name: `3: {name: kilo, symbol: k}`. The old
+            # annotation said `dict[str, dict[str, str]]`, which was wrong in both halves and
+            # went unnoticed for exactly the reason above -- it was never checked against
+            # anything.
+            'prefixes': {Optional(int): {'name': str, 'symbol': str}},
+            'binary_prefixes': {Optional(int): {'name': str, 'symbol': str}},
         }
     })
 

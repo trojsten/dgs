@@ -361,31 +361,74 @@ class ConstantsContext(FileContext):
         })
 
 
+#: What one `values:` entry may hold when it is written out as a mapping.
+#:
+#: Exactly the keywords `PhysicsConstant.construct` and `PhysicsQuantity.__init__` accept, so a
+#: key that passes here reaches the constructor and a key that does not is caught by name --
+#: rather than surfacing as a `TypeError: unexpected keyword argument` from inside the
+#: constructor, or, for a misspelt `magnitude`, as a bare `KeyError` with nothing in it to say
+#: which entry of which file was wrong.
+VALUE_ENTRY = {
+    # **Never a string.** YAML 1.1 wants both a decimal point and a sign before it reads an
+    # exponent as a number, so `1e15`, `1e+15` and `1.0e15` all parse as bare strings -- and the
+    # value then fails much later and somewhere else, as `unsupported operand type(s) for /:
+    # 'str' and 'float'` out of a `derived:` expression. Requiring a number here is what turns
+    # that into a message naming the key. Scientific notation is written `1.0e+15`.
+    'magnitude': Or(int, float),
+    # `unit:` with nothing after it is dimensionless, and is how a ratio or a coefficient of
+    # friction is written.
+    Opt('unit'): Or(str, None),
+    # The LaTeX symbol this quantity is named by. Absent means the entry's own name.
+    Opt('symbol'): Or(str, None),
+    Opt('digits'): int,
+    Opt('exact'): bool,
+    Opt('si_extra'): {Opt(str): str},
+    Opt('force_f'): bool,
+    Opt('aliases'): [str],
+}
+
+
 class StandaloneContext(FileContext):
     """
     Base context for the standalone Markdown renderer
     (in the "source (Markdown / Jinja) -> render (Markdown) -> build (TeX / HTML) -> output (TeX / HTML)" chain)
     """
-    # All three blocks name things, so they share one identifier rule (`ValidIdentifier`).
+    # All five blocks name things, so they share one identifier rule (`ValidIdentifier`).
     # `eq` used to demand `^[a-z][a-zA-Z0-9_]+$`, which uniquely rejected capitals and
     # single-character names -- `eq: {v: ...}` was invalid while `derived: {v: ...}` was fine.
+    #
+    # **Written `{K: V}` and not `dict[K, V]`, which validates nothing.** enschema reads a
+    # subscripted generic as a *callable* and validates by calling it, so `dict[K, V]` only ever
+    # asked whether the value could be passed to `dict()`. Neither the key pattern nor the value
+    # type was checked, for any of these five keys: a `derived:` entry holding an integer, an
+    # `eq:` key that is not an identifier, and a `values:` entry with a misspelt `magnitude` all
+    # validated clean and failed later, somewhere else, with a message about neither.
     _schema = Schema({
         'id': str,
-        Opt('values'): dict[ValidIdentifier, Or(str, float, int, PhysicsConstant)],  # Values
+        # A quantity the statement gives. The mapping form is the usual one; a bare string is the
+        # documented way to pass LaTeX through verbatim, and a bare number is a dimensionless
+        # given written in one line.
+        #
+        # The mapping form goes **last** in the `Or`, because that is the alternative whose error
+        # is reported: tried last, a misspelt key fails as `Missing key: 'magnitude'` instead of
+        # as `should be instance of 'PhysicsConstant'`, which names the one form nobody wrote.
+        #
+        # The key is `Opt`, so an empty block is legal. No source has one, but a block emptied
+        # while it is being written is not a defect and should not light the audit up.
+        Opt('values'): {Opt(ValidIdentifier): Or(str, float, int, PhysicsConstant, VALUE_ENTRY)},
         # Quantities computed from `values` and `const`: name -> Jinja expression.
         # Evaluated in document order, so an entry may use anything defined above it.
-        Opt('derived'): dict[ValidIdentifier, str],
-        Opt('eq'): dict[ValidIdentifier, str],
+        Opt('derived'): {Opt(ValidIdentifier): str},
+        Opt('eq'): {Opt(ValidIdentifier): str},
         # Text kept exactly as written, with no evaluation and no wrapper: a gnuplot
         # preamble, a block of options, anything reused verbatim across files. `derived`
         # evaluates its value as a Jinja expression and `eq` wraps its fragment in a
         # `MathObject` carrying an `{#eq:…}` label; a preamble is neither of those.
-        Opt('blocks'): dict[ValidIdentifier, str],
+        Opt('blocks'): {Opt(ValidIdentifier): str},
         # A word that has to be translated but belongs to this problem alone: term -> language ->
-        # text, reached as `(§ w.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
-        # instead; these are the one-offs, and 167 of the 190 words found inside `\text{}` in phys
-        # appear in exactly one problem.
-        Opt('words'): dict[ValidIdentifier, dict[str, str]],
+        # text, reached as `(§ words.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
+        # instead; these are the one-offs, which is the large majority of them.
+        Opt('words'): {Opt(ValidIdentifier): {Opt(str): str}},
     })
 
 
