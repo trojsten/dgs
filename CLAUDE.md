@@ -271,6 +271,35 @@ currency unit, is set up at module level in `core/builder/jinja.py`, which also
 holds the whole filter / global table; and everything in
 `core/builder/context/quantities/` is immutable except the symbol.
 
+## What an author may type: `docs/filters.md`
+
+Every filter, global, quantity attribute and `meta.yaml` key, with a worked example of each —
+**182 filters and 32 globals** on the Markdown environment alone, of which only 57 names appear
+anywhere in `source/`, because until now the only way to find one was to read `jinja.py`.
+
+It is **generated** from the table in `core/builder/reference.py` by
+`python -m core.builder.reference`, and `--check` exits nonzero when the file on disk is stale,
+which is the CI shape `core/audit/macros.py` already uses. Do not edit it by hand.
+
+The table is what it is — rather than a scrape of the docstrings — because the docstrings are
+written for whoever maintains the code (`num`'s explains why it is idempotent) and ten filter
+roots have none at all. An author needs "what do I type and what comes out", which is a different
+text about the same function.
+
+Three tests hold it to the code, and the point is that **drift fails the suite rather than
+shipping**: the table's names must equal the registered names *in both directions*, so a filter
+added without an entry goes red; every example is **rendered and compared** with the output
+printed beside it; and `docs/filters.md` must match the generator. Adding a filter now means
+adding its entry, and the example is executable, so it cannot be wrong for long.
+
+**The two environments are disjoint**, which nothing said before: `MarkdownJinjaRenderer` serves
+`.md` (and `.svg`/`.tikz` through `PictureJinjaRenderer`) and `StaticRenderer` serves `.jtex`.
+`|disp` is written 4760 times and exists only in the first; `|upnth` is written 11 times and
+exists only in the second. Either mistake is found by a failed build and by nothing else.
+
+The editor serves the same table at `/api/reference` and shows it on hover, so the reference is
+where the typing is.
+
 ## Tests
 
 `uv run pytest` (config in `pytest.ini`, tests in `core/tests/`). The suite is
