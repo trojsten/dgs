@@ -54,8 +54,7 @@ Every example below is rendered in this context, which is what `example_context(
 
 Fixed notation. The digit is decimal places; bare `|f` prints what the value has.
 
-`|f0` is the commonest filter in the repository after the maths ones -- a value rounded to whole
-units. A quantity comes back as a complete `\qty{}{}`, so do not wrap it in `\num{}` yourself.
+A quantity comes back as a complete `\qty{}{}`, so do not wrap it in `\num{}` yourself.
 
     (§ v|f2 §)
 
@@ -275,9 +274,9 @@ Round a range outward onto a grid of `quantum`, where the format spec cannot.
 
 `__format__` already moves each end outward to the last place it prints, which is what keeps a
 printed band from rejecting a correct answer. This is the same operation with the grid chosen rather
-than inferred, because `.0f` is the coarsest a format spec offers and an answer may be good to less.
-`08/same-parallel` is the example. **Not `widen`:** it moves each end to the next grid point and no
-further, and snapping an already-snapped range is a no-op.
+than inferred, because `.0f` is the coarsest a format spec offers and an answer may be good to less
+-- one good to four figures in kilometres wants a grid of ten. **Not `widen`:** it moves each end to
+the next grid point and no further, and snapping an already-snapped range is a no-op.
 
     (§ (result % result_approx)|snap(0.5)|f1 §)
 
@@ -417,9 +416,9 @@ produces
 
 A display block wrapping the fragment in `aligned`, for a chain aligned on a single relation.
 
-Right for 297 of the 373 such blocks in the repository. `aligned` pairs its columns `rl rl rl`, so
-it is right for a single relation and for a grid of independent equations, and **wrong for a chain
-of two or more relations in one row** -- that is `|arr`.
+`aligned` pairs its columns `rl rl rl`, so it is right for a chain with a single relation and for a
+grid of independent equations, and **wrong for a chain of two or more relations in one row** -- that
+is `|arr`.
 
     (§ eq.chain|align('.') §)
 
@@ -646,8 +645,7 @@ produces
 
 `PQ(magnitude, unit, symbol=None)`
 
-Build a quantity in an expression. By far the most-written global -- 158 of its 160 uses are in a
-`derived:` entry.
+Build a quantity inside an expression.
 
 `values:` is where a quantity a *statement gives* belongs; this is for one a `derived:` expression
 needs on the spot, and for the odd literal in a template.
@@ -692,11 +690,10 @@ produces
 A span of two commensurate quantities. **Usually written as the `%` operator rather than by name**
 -- see below.
 
-A range in this repository is the set of answers a marker accepts, so `__format__` rounds each end
-**outward** to the last place it prints: the minimum floored, the maximum ceiled. Rounding to
-nearest would shrink the set and turn away correct work. `|snap(q)` chooses the grid where the
-format spec cannot. `QR` refuses a reversed range, which is why the smaller endpoint is written
-first.
+A range here is the set of answers a marker accepts, so `__format__` rounds each end **outward** to
+the last place it prints: the minimum floored, the maximum ceiled. Rounding to nearest would shrink
+the set and turn away correct work. `|snap(q)` chooses the grid where the format spec cannot. `QR`
+refuses a reversed range, which is why the smaller endpoint is written first.
 
     (§ QR(result, result_approx)|f3 §)
 
@@ -708,10 +705,10 @@ produces
 
 `(a % b)`
 
-Builds a `QuantityRange` from two quantities. This is how every interval in the sources is written;
-`QR` is never spelled out.
+Builds a `QuantityRange` from two quantities. This is how an answer interval is written; `QR` is
+never spelled out.
 
-`answer-interval.md` is 85 files of `$(§ (result % result_approx)|f2 §)$`. Smaller endpoint first --
+An `answer-interval.md` is one tag: `$(§ (result % result_approx)|f2 §)$`. Smaller endpoint first --
 `%` refuses a reversed range, which is the whole reason the `derived:` pair is named `result` and
 `result_approx` that way round and not the other.
 
@@ -1035,8 +1032,7 @@ produces
 
 `.eq  ·  .equals`
 
-`<symbol> = <value>` or `<symbol> \approx <value>`, **the quantity deciding which**. The
-most-written attribute in the sources by a wide margin.
+`<symbol> = <value>` or `<symbol> \approx <value>`, **the quantity deciding which**.
 
 Two independent tests, because each catches what the other cannot. The value has to be the true one
 -- `const.speed_sound` is 343 m/s, which prints back perfectly and is still not the speed of sound,
@@ -1120,7 +1116,7 @@ produces
 
 Converted to a commensurate unit. Carries the symbol, `digits` and `exact` across.
 
-The commonest thing a `derived:` expression ends with, because the unit a result should print in is
+Usually the last thing a `derived:` expression does, because the unit a result should print in is
 rarely the one the arithmetic produced.
 
     (§ d.to('m')|f0 §)
@@ -1198,10 +1194,10 @@ produces
 
 How many figures to **print**, or `None`. Presentation, not uncertainty.
 
-It does **not** propagate through arithmetic. `gforce` is `digits: 1` because the table prints `10
-m/s²`, and inheriting that would claim a precision nobody measured -- `22/tea` computed 24.6 mm and
-the booklet's 25 mm came out as 20. It travels only where the quantity does: `to`, `alias`,
-`simplify`, `approximate`, and a sign.
+It does **not** propagate through arithmetic. A constant shown to one figure because that is what
+the constants sheet prints would, if it propagated, claim that precision for everything computed
+from it, and an answer of 24.6 mm would print as 20. It travels only where the quantity does: `to`,
+`alias`, `simplify`, `approximate`, and a sign.
 
     (§ c_s.digits §)
 
@@ -1223,9 +1219,10 @@ produces
 
 Whether `.eq` may write `=`: exact **and** round-tripping through its own printed form.
 
-The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system for a current that is
-exactly 0.1 A and stores it six ulps out, so an equality test would call it rounded; the two
-populations are nine orders of magnitude apart, so the threshold is not a tuned number.
+The round-trip allows a thousand ulps rather than demanding equality. A value that is exactly 0.1 by
+construction can still be stored a few ulps out -- after solving a linear system, say -- and an
+equality test would call it rounded; a value that really was rounded is wrong by nine orders of
+magnitude more than that, so the threshold is not a tuned number.
 
     (§ v.prints_exactly §) then (§ c_s.prints_exactly §)
 
@@ -1492,8 +1489,7 @@ later entry sees the earlier ones.
 An expression, not a template: anything with two statements in it fails as `TemplateSyntaxError:
 chunk after expression`. **An answer belongs here** -- a typed number in `answer.md` is the
 `answer-literal` finding, and the answer should be `result` printed as `(§ result §)`, so that
-changing an input changes the answer. This is also where `PQ`, `QL` and `.to()` are actually
-written.
+changing an input changes the answer. This is also where `PQ`, `QL` and `.to()` are usually written.
 
 ### `eq:`
 
@@ -1503,10 +1499,11 @@ A block equation, hoisted out of the per-language files so there is one copy. Re
 eq.name|disp('.') §)`; **the key becomes the label**, `{#eq:<pid>:<key>}`.
 
 Hoisting removes the per-language latitude a translator has, deliberately: the physics is the same
-in every language and copies drift. `20/gases` wrote its rate law out in five languages and the
-Hungarian had lost its minus sign. A troll answer, an argument only prose carries, or a derivation
-that genuinely differs per language is worth leaving alone. Long entries wrap as a `|` block scalar
--- write `|2` if the first row is indented deeper than the rest.
+in every language and copies drift. An equation written out once per language has been known to lose
+a minus sign in one of them, so that one booklet told its readers the opposite of what the others
+did, and nothing reported it. A troll answer, an argument only prose carries, or a derivation that
+genuinely differs per language is worth leaving alone. Long entries wrap as a `|` block scalar --
+write `|2` if the first row is indented deeper than the rest.
 
 ### `words:`
 
@@ -1515,11 +1512,10 @@ that genuinely differs per language is worth leaving alone. Long entries wrap as
 A word that appears **inside maths** and has to change with the language. Namespaced: `(§ words.air
 §)`.
 
-The alternative is a copy of the equation per language, which is how the copies drift apart. Of the
-190 words found inside `\text{}` across phys, 167 appear in exactly one problem, so this is the
-common case; a recurring word belongs in `core/i18n/<lang>.yaml` instead. **There is no fallback**:
-a missing word is boxed in red, every miss is reported at the end of the render, and the render then
-exits nonzero.
+The alternative is a copy of the equation per language, which is how the copies drift apart. A word
+belonging to one problem is the common case; a recurring one -- `and`, `or` -- belongs in
+`core/i18n/<lang>.yaml` instead. **There is no fallback**: a missing word is boxed in red, every
+miss is reported at the end of the render, and the render then exits nonzero.
 
 ### `blocks:`
 
@@ -1554,16 +1550,16 @@ than one problem's three roles.
 
 Opt a problem out of a named audit check, **with the reason written beside it**.
 
-`28/central-lamp` answers 100 % whatever its refractive index is, `28/gravity-sudoku` answers 0
-because a solved sudoku's rows all sum to 45, and `28/balance-me` answers which two of nine planets
-are left over. None is the output of a calculation, so none can satisfy `answer-literal`. The reason
-is the point of the key: an unexplained ignore is indistinguishable from a bug.
+Some answers are not the output of a calculation and no amount of `derived:` will make them one --
+an answer that is 100 % whatever the inputs are, one that is zero by a symmetry, one that names
+which of several things is left over. Those cannot satisfy `answer-literal`. The reason written
+beside the ignore is the point of the key: an unexplained ignore is indistinguishable from a bug.
 
 ### `similar:`
 
 `similar: [other-problem-id]`
 
-**Read by nothing.** In the schema so that the handful of problems carrying it still render.
+**Read by nothing.** In the schema so that a meta carrying it still validates.
 
 ### `difficulty:`
 
@@ -1603,9 +1599,9 @@ levels have theirs injected like a problem.
 
 **Scientific notation must be written `1.0e+15`.** YAML 1.1 wants both a decimal point *and* a sign
 before it reads an exponent as a number, so `1e15`, `1e+15` and `1.0e15` all parse as bare
-**strings** -- which the schema accepts, because a bare string is the documented way to pass LaTeX
-through. The first sign of trouble is `derived:` reporting `unsupported operand type(s) for /`, a
-long way from the cause.
+**strings**. The schema rejects a string here for exactly that reason and names the key; before it
+did, the first sign of trouble was a `derived:` expression reporting `unsupported operand type(s)
+for /`, a long way from the cause.
 
 ### `unit:`
 
@@ -1650,19 +1646,20 @@ false for a given that is itself an approximation.
 
 `si_extra: {per-mode: symbol}`
 
-siunitx options passed through to the `\qty[...]` call. Three problems use it.
+siunitx options passed through to the `\qty[...]` call.
 
 ### `force_f:`
 
 `force_f: true`
 
-Print in fixed notation whatever the format spec asks for. Unused in the sources.
+Print in fixed notation whatever the format spec asks for.
 
 ### `aliases:`
 
 `aliases: [...]`
 
-Alternative names, for `constants.yaml`. Accepted on a problem `values:` entry and unused there.
+Alternative names, for a constants file. Accepted on a problem `values:` entry, where nothing reads
+it.
 
 ## `meta.yaml`: a volume
 
@@ -1712,7 +1709,7 @@ allowed to be.
 
 `venues: {...}`
 
-Venues written inline rather than as their own directories. Three volumes do.
+Venues written inline rather than as their own directories.
 
 ### `orgs:`
 

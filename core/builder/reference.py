@@ -218,9 +218,8 @@ _FILTERS: tuple[Entry, ...] = (
     Entry('f', 'filter', precisions=True, section='Numbers',
           summary='Fixed notation. The digit is decimal places; bare `|f` prints what the value '
                   'has.',
-          note='`|f0` is the commonest filter in the repository after the maths ones -- a value '
-               'rounded to whole units. A quantity comes back as a complete `\\qty{}{}`, so do '
-               'not wrap it in `\\num{}` yourself.',
+          note='A quantity comes back as a complete `\\qty{}{}`, so do not wrap it in `\\num{}` '
+               'yourself.',
           example='(§ v|f2 §)', expect='\\qty{3.00}{\\metre\\per\\second}'),
     Entry('g', 'filter', precisions=True, section='Numbers',
           summary="Python's `g`: significant figures, and an exponent only when the number is "
@@ -314,11 +313,11 @@ _FILTERS: tuple[Entry, ...] = (
     Entry('snap', 'filter', section='Quantities',
           signature='|snap(quantum)',
           summary='Round a range outward onto a grid of `quantum`, where the format spec cannot.',
-          note='`__format__` already moves each end outward to the last place it prints, which '
-               'is what keeps a printed band from rejecting a correct answer. This is the same '
-               'operation with the grid chosen rather than inferred, because `.0f` is the '
-               'coarsest a format spec offers and an answer may be good to less. `08/same-'
-               'parallel` is the example. **Not `widen`:** it moves each end to the next grid '
+          note='`__format__` already moves each end outward to the last place it prints, which is '
+               'what keeps a printed band from rejecting a correct answer. This is the same '
+               'operation with the grid chosen rather than inferred, because `.0f` is the coarsest a '
+               'format spec offers and an answer may be good to less -- one good to four figures in '
+               'kilometres wants a grid of ten. **Not `widen`:** it moves each end to the next grid '
                'point and no further, and snapping an already-snapped range is a no-op.',
           example='(§ (result % result_approx)|snap(0.5)|f1 §)', expect='\\qtyrange{64.5}{65.0}{\\day}'),
     Entry('dms', 'filter', section='Quantities',
@@ -387,10 +386,9 @@ _FILTERS: tuple[Entry, ...] = (
           signature="|align, |align('.')",
           summary='A display block wrapping the fragment in `aligned`, for a chain aligned on a '
                   'single relation.',
-          note='Right for 297 of the 373 such blocks in the repository. `aligned` pairs its '
-               'columns `rl rl rl`, so it is right for a single relation and for a grid of '
-               'independent equations, and **wrong for a chain of two or more relations in one '
-               'row** -- that is `|arr`.',
+          note='`aligned` pairs its columns `rl rl rl`, so it is right for a chain with a single '
+               'relation and for a grid of independent equations, and **wrong for a chain of two or '
+               'more relations in one row** -- that is `|arr`.',
           example="(§ eq.chain|align('.') §)", expect='$$\n'
                                                '    \\begin{aligned}\n'
                                                '        a &= b \\\\\n'
@@ -513,8 +511,7 @@ _GLOBALS: tuple[Entry, ...] = (
     # ------------------------------------------------- building a quantity
     Entry('PQ', 'global', section='Building a quantity',
           signature="PQ(magnitude, unit, symbol=None)",
-          summary='Build a quantity in an expression. By far the most-written global -- 158 of '
-                  'its 160 uses are in a `derived:` entry.',
+          summary='Build a quantity inside an expression.',
           note='`values:` is where a quantity a *statement gives* belongs; this is for one a '
                '`derived:` expression needs on the spot, and for the odd literal in a template.',
           example="(§ PQ(9.81, 'm/s^2', symbol='g')|ef2 §)", expect='g = \\qty{9.81}{\\metre\\per\\second\\squared}'),
@@ -533,21 +530,20 @@ _GLOBALS: tuple[Entry, ...] = (
           signature='QR(minimum, maximum)  ·  QuantityRange(...)',
           summary='A span of two commensurate quantities. **Usually written as the `%` operator '
                   'rather than by name** -- see below.',
-          note='A range in this repository is the set of answers a marker accepts, so '
-               '`__format__` rounds each end **outward** to the last place it prints: the '
-               'minimum floored, the maximum ceiled. Rounding to nearest would shrink the set and '
-               'turn away correct work. `|snap(q)` chooses the grid where the format spec cannot. '
-               '`QR` refuses a reversed range, which is why the smaller endpoint is written '
-               'first.',
+          note='A range here is the set of answers a marker accepts, so `__format__` rounds each end '
+               '**outward** to the last place it prints: the minimum floored, the maximum ceiled. '
+               'Rounding to nearest would shrink the set and turn away correct work. `|snap(q)` '
+               'chooses the grid where the format spec cannot. `QR` refuses a reversed range, which '
+               'is why the smaller endpoint is written first.',
           example='(§ QR(result, result_approx)|f3 §)', expect='\\qtyrange{64.566}{64.567}{\\day}'),
     Entry('%', 'operator', section='Building a quantity',
           signature='(a % b)',
-          summary='Builds a `QuantityRange` from two quantities. This is how every interval in '
-                  'the sources is written; `QR` is never spelled out.',
-          note='`answer-interval.md` is 85 files of `$(§ (result % result_approx)|f2 §)$`. '
-               'Smaller endpoint first -- `%` refuses a reversed range, which is the whole reason '
-               'the `derived:` pair is named `result` and `result_approx` that way round and not '
-               'the other.',
+          summary='Builds a `QuantityRange` from two quantities. This is how an answer interval is '
+                  'written; `QR` is never spelled out.',
+          note='An `answer-interval.md` is one tag: `$(§ (result % result_approx)|f2 §)$`. Smaller '
+               'endpoint first -- `%` refuses a reversed range, which is the whole reason the '
+               '`derived:` pair is named `result` and `result_approx` that way round and not the '
+               'other.',
           example='(§ (result % result_approx)|f3 §)', expect='\\qtyrange{64.566}{64.567}{\\day}'),
 
     # ---------------------------------------------------- including a file
@@ -651,8 +647,8 @@ _ATTRIBUTES: tuple[Entry, ...] = (
 
     Entry('eq', 'attribute', aliases=('equals',), section='Attributes of a quantity',
           signature='.eq  ·  .equals',
-          summary=r'`<symbol> = <value>` or `<symbol> \approx <value>`, **the quantity deciding '
-                  'which**. The most-written attribute in the sources by a wide margin.',
+          summary='`<symbol> = <value>` or `<symbol> \\approx <value>`, **the quantity deciding '
+                  'which**.',
           note='Two independent tests, because each catches what the other cannot. The value has '
                'to be the true one -- `const.speed_sound` is 343 m/s, which prints back perfectly '
                'and is still not the speed of sound, and only the declaration knows that -- '
@@ -692,7 +688,7 @@ _ATTRIBUTES: tuple[Entry, ...] = (
           signature=".to('cm')",
           summary='Converted to a commensurate unit. Carries the symbol, `digits` and `exact` '
                   'across.',
-          note='The commonest thing a `derived:` expression ends with, because the unit a result '
+          note='Usually the last thing a `derived:` expression does, because the unit a result '
                'should print in is rarely the one the arithmetic produced.',
           example="(§ d.to('m')|f0 §)", expect='\\qty{5000}{\\metre}'),
     Entry('alias', 'attribute', section='Attributes of a quantity',
@@ -729,10 +725,10 @@ _ATTRIBUTES: tuple[Entry, ...] = (
     Entry('digits', 'attribute', section='Attributes of a quantity',
           signature='.digits',
           summary='How many figures to **print**, or `None`. Presentation, not uncertainty.',
-          note='It does **not** propagate through arithmetic. `gforce` is `digits: 1` because the '
-               'table prints `10 m/s²`, and inheriting that would claim a precision nobody '
-               'measured -- `22/tea` computed 24.6 mm and the booklet\'s 25 mm came out as 20. '
-               'It travels only where the quantity does: `to`, `alias`, `simplify`, '
+          note='It does **not** propagate through arithmetic. A constant shown to one figure because '
+               'that is what the constants sheet prints would, if it propagated, claim that '
+               'precision for everything computed from it, and an answer of 24.6 mm would print as '
+               '20. It travels only where the quantity does: `to`, `alias`, `simplify`, '
                '`approximate`, and a sign.',
           example='(§ c_s.digits §)', expect='3'),
     Entry('printed_digits', 'attribute', section='Attributes of a quantity',
@@ -744,10 +740,11 @@ _ATTRIBUTES: tuple[Entry, ...] = (
           signature='.prints_exactly',
           summary=r'Whether `.eq` may write `=`: exact **and** round-tripping through its own '
                   'printed form.',
-          note='The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system '
-               'for a current that is exactly 0.1 A and stores it six ulps out, so an equality '
-               'test would call it rounded; the two populations are nine orders of magnitude '
-               'apart, so the threshold is not a tuned number.',
+          note='The round-trip allows a thousand ulps rather than demanding equality. A value that '
+               'is exactly 0.1 by construction can still be stored a few ulps out -- after solving a '
+               'linear system, say -- and an equality test would call it rounded; a value that '
+               'really was rounded is wrong by nine orders of magnitude more than that, so the '
+               'threshold is not a tuned number.',
           example='(§ v.prints_exactly §) then (§ c_s.prints_exactly §)', expect='True then False'),
     Entry('minimum', 'attribute', section='Attributes of a range, list or product',
           signature='.minimum',
@@ -899,19 +896,20 @@ _META: tuple[Entry, ...] = (
           summary='A computed quantity. Each value is evaluated as a **Jinja expression**, in '
                   'document order, so a later entry sees the earlier ones.',
           note='An expression, not a template: anything with two statements in it fails as '
-               '`TemplateSyntaxError: chunk after expression`. **An answer belongs here** -- a '
-               'typed number in `answer.md` is the `answer-literal` finding, and the answer '
-               'should be `result` printed as `(§ result §)`, so that changing an input changes '
-               'the answer. This is also where `PQ`, `QL` and `.to()` are actually written.'),
+               '`TemplateSyntaxError: chunk after expression`. **An answer belongs here** -- a typed '
+               'number in `answer.md` is the `answer-literal` finding, and the answer should be '
+               '`result` printed as `(§ result §)`, so that changing an input changes the answer. '
+               'This is also where `PQ`, `QL` and `.to()` are usually written.'),
     Entry('eq', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='eq: {name: "<latex>"}',
           summary='A block equation, hoisted out of the per-language files so there is one copy. '
                   'Reached as `(§ eq.name|disp(\'.\') §)`; **the key becomes the label**, '
                   '`{#eq:<pid>:<key>}`.',
           note='Hoisting removes the per-language latitude a translator has, deliberately: the '
-               'physics is the same in every language and copies drift. `20/gases` wrote its rate '
-               'law out in five languages and the Hungarian had lost its minus sign. A troll '
-               'answer, an argument only prose carries, or a derivation that genuinely differs '
+               'physics is the same in every language and copies drift. An equation written out once '
+               'per language has been known to lose a minus sign in one of them, so that one booklet '
+               'told its readers the opposite of what the others did, and nothing reported it. A '
+               'troll answer, an argument only prose carries, or a derivation that genuinely differs '
                'per language is worth leaving alone. Long entries wrap as a `|` block scalar -- '
                'write `|2` if the first row is indented deeper than the rest.'),
     Entry('words', 'meta-key', env=META, section='`meta.yaml`: a problem',
@@ -919,11 +917,10 @@ _META: tuple[Entry, ...] = (
           summary='A word that appears **inside maths** and has to change with the language. '
                   'Namespaced: `(§ words.air §)`.',
           note='The alternative is a copy of the equation per language, which is how the copies '
-               'drift apart. Of the 190 words found inside `\\text{}` across phys, 167 appear in '
-               'exactly one problem, so this is the common case; a recurring word belongs in '
-               '`core/i18n/<lang>.yaml` instead. **There is no fallback**: a missing word is '
-               'boxed in red, every miss is reported at the end of the render, and the render '
-               'then exits nonzero.'),
+               'drift apart. A word belonging to one problem is the common case; a recurring one -- '
+               '`and`, `or` -- belongs in `core/i18n/<lang>.yaml` instead. **There is no fallback**: '
+               'a missing word is boxed in red, every miss is reported at the end of the render, and '
+               'the render then exits nonzero.'),
     Entry('blocks', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='blocks: {name: |\\n  <text>}',
           summary='Text that comes back **verbatim**, namespaced as `(§ blocks.name §)`. The '
@@ -946,15 +943,14 @@ _META: tuple[Entry, ...] = (
           signature="audit: {ignore: ['answer-literal']}",
           summary='Opt a problem out of a named audit check, **with the reason written beside '
                   'it**.',
-          note='`28/central-lamp` answers 100 % whatever its refractive index is, '
-               '`28/gravity-sudoku` answers 0 because a solved sudoku\'s rows all sum to 45, and '
-               '`28/balance-me` answers which two of nine planets are left over. None is the '
-               'output of a calculation, so none can satisfy `answer-literal`. The reason is the '
-               'point of the key: an unexplained ignore is indistinguishable from a bug.'),
+          note='Some answers are not the output of a calculation and no amount of `derived:` will '
+               'make them one -- an answer that is 100 % whatever the inputs are, one that is zero '
+               'by a symmetry, one that names which of several things is left over. Those cannot '
+               'satisfy `answer-literal`. The reason written beside the ignore is the point of the '
+               'key: an unexplained ignore is indistinguishable from a bug.'),
     Entry('similar', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='similar: [other-problem-id]',
-          summary='**Read by nothing.** In the schema so that the handful of problems carrying '
-                  'it still render.'),
+          summary='**Read by nothing.** In the schema so that a meta carrying it still validates.'),
     Entry('difficulty', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='difficulty: 3',
           summary='**Read by nothing**, like `similar`.'),
@@ -975,11 +971,11 @@ _META: tuple[Entry, ...] = (
           signature='magnitude: 9.81',
           summary='**Required.** The number.',
           note='**Scientific notation must be written `1.0e+15`.** YAML 1.1 wants both a decimal '
-               'point *and* a sign before it reads an exponent as a number, so `1e15`, `1e+15` '
-               'and `1.0e15` all parse as bare **strings** -- which the schema accepts, because a '
-               'bare string is the documented way to pass LaTeX through. The first sign of '
-               'trouble is `derived:` reporting `unsupported operand type(s) for /`, a long way '
-               'from the cause.'),
+               'point *and* a sign before it reads an exponent as a number, so `1e15`, `1e+15` and '
+               '`1.0e15` all parse as bare **strings**. The schema rejects a string here for exactly '
+               'that reason and names the key; before it did, the first sign of trouble was a '
+               '`derived:` expression reporting `unsupported operand type(s) for /`, a long way from '
+               'the cause.'),
     Entry('unit', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature=r'unit: \metre\per\second',
           summary='The unit. Defaults to dimensionless.',
@@ -1007,16 +1003,14 @@ _META: tuple[Entry, ...] = (
                'says otherwise. Set it false for a given that is itself an approximation.'),
     Entry('si_extra', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature='si_extra: {per-mode: symbol}',
-          summary='siunitx options passed through to the `\\qty[...]` call. Three problems use '
-                  'it.'),
+          summary='siunitx options passed through to the `\\qty[...]` call.'),
     Entry('force_f', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature='force_f: true',
-          summary='Print in fixed notation whatever the format spec asks for. Unused in the '
-                  'sources.'),
+          summary='Print in fixed notation whatever the format spec asks for.'),
     Entry('aliases', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature='aliases: [...]',
-          summary='Alternative names, for `constants.yaml`. Accepted on a problem `values:` '
-                  'entry and unused there.'),
+          summary='Alternative names, for a constants file. Accepted on a problem `values:` entry, '
+                  'where nothing reads it.'),
 )
 
 
@@ -1049,7 +1043,7 @@ _HIERARCHY: tuple[Entry, ...] = (
                   '`digits:`, what `.approx` is allowed to be.'),
     Entry('venues', 'meta-key', env=META, section='`meta.yaml`: a volume',
           signature='venues: {...}',
-          summary='Venues written inline rather than as their own directories. Three volumes do.'),
+          summary='Venues written inline rather than as their own directories.'),
     Entry('orgs', 'meta-key', env=META, section='`meta.yaml`: a volume',
           signature='orgs: [...]',
           summary='Organisers, on a volume or on a venue. The documented legacy escape hatch.'),

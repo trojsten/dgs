@@ -328,6 +328,38 @@ and most other rules are still meaningful on source.
 Known checker gap: `format_general` emits Python's `e+NN`, and the "spaces around
 `+`" rule flags it (`\qty{1.737e+06}{...}`). Not an authoring error — ignore.
 
+## A meta's content keys are actually validated now
+
+`values:`, `derived:`, `eq:`, `blocks:` and `words:` are checked against
+`StandaloneContext._schema`, and until recently **none of them was**. The keys were written
+`dict[ValidIdentifier, str]`, and enschema reads a subscripted generic as a *callable* — it
+validates by calling it — so the whole check was "can this be passed to `dict()`". Neither the
+key pattern nor the value type was looked at, for any of the five.
+
+What that let through, each failing much later and somewhere else: a `derived:` entry holding a
+number rather than an expression; an `eq:` key that is not an identifier; a `words:` term with a
+bare string where its languages belong; and a `values:` entry with a misspelt `magnitude`, which
+surfaced as a bare `KeyError: 'magnitude'` out of a constructor with nothing in it to say which
+entry of which file was wrong.
+
+They are written `{K: V}` now, which does validate, and a `values:` entry's own keys are spelled
+out in `VALUE_ENTRY` — exactly the keywords the constructor takes: `magnitude` (required, and
+`Or(int, float)`), `unit`, `symbol`, `digits`, `exact`, `si_extra`, `force_f`, `aliases`. Three
+details worth knowing:
+
+- **The mapping form goes last in the `Or`.** That is the alternative whose error gets reported,
+  so a misspelt key fails as `Missing key: 'magnitude'` instead of `should be instance of
+  'PhysicsConstant'`, which names the one form nobody wrote.
+- **`magnitude` may not be a string**, which is what catches the `1e15` trap above at the key
+  that caused it. The *entry* may still be a bare string — that is the documented way to pass
+  LaTeX through — and a bare number is a dimensionless given written in one line.
+- **`unit:` with nothing after it is dimensionless** and stays legal; that is how a ratio or a
+  coefficient of friction is written.
+
+Every `meta.yaml` under `source/` — all 2524 of them, 961 with content keys — was validated
+against the new schema before it landed, and none failed. That check is not optional, for the
+reason reserving `w` once broke eight problems.
+
 ## Reusable text: `blocks:`
 
 A meta's four content keys each do something to what they hold, and until recently there was
@@ -934,11 +966,11 @@ and after. Reading through a symlink is safe; writing is not.
   keeping meta.yaml under the limit.
 - **A `magnitude:` in scientific notation must be written `1.0e+15`.** YAML 1.1 wants both a
   decimal point *and* a sign before it will read an exponent as a number, so `1e15`, `1e+15`
-  and `1.0e15` all parse as bare **strings**. Nothing complains at that point — the schema
-  accepts `Or(str, float, int, PhysicsConstant)` for a value, because a bare string is the
-  documented way to pass LaTeX through verbatim — so the first sign of trouble is `derived:`
-  reporting `unsupported operand type(s) for /: 'str' and 'float'`, a long way from the cause.
-  `27/kamiokande`'s neutrino flux is the worked example.
+  and `1.0e15` all parse as bare **strings**. **The schema now rejects that**, naming the key —
+  `magnitude` is `Or(int, float)`, and a string there is never anything but this mistake.
+  `27/kamiokande`'s neutrino flux is the worked example. Until it did, nothing complained at
+  that point and the first sign of trouble was `derived:` reporting `unsupported operand
+  type(s) for /: 'str' and 'float'`, a long way from the cause.
 - **Spell a unit the way pint spells it**, because `values:` and `derived:` render through pint
   and anything else blocks a hoist. Three pairs, all of them identical on the page -- a probe
   compiled against `dgs.cls` prints `150 kg` and `1000 kg/m3 5 m2` from either side -- so this is
