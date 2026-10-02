@@ -488,7 +488,10 @@ abbr[title] {
 #reference-hover {
   position: fixed;
   z-index: 50;
-  max-width: 34rem;
+  /* Wide enough for the longest example, which is 104 characters of `array` column spec. The box
+     still sizes to its content, so only an entry that needs the width gets it; the prose inside
+     is capped separately below so it keeps a readable measure however wide the box goes. */
+  max-width: min(54rem, 92vw);
   padding: 0.5rem 0.65rem;
   /* Opaque, and a shade lighter than the pane behind it. A translucent help box lets the code
      under it show through the prose, which is unreadable at any opacity worth having. */
@@ -516,17 +519,27 @@ abbr[title] {
   margin-top: 0.15rem;
   font-family: "SF Mono", Menlo, Consolas, monospace;
   color: #9fd88b;
+  white-space: pre;
 }
+
+/* Prose keeps a readable measure whatever width a long example gives the box. */
+#reference-hover .ref-summary,
+#reference-hover .ref-more { max-width: 34rem; }
 
 #reference-hover .ref-summary { margin-top: 0.35rem; }
 
+/* `pre`, not `pre-wrap`: an example is a line of code to be copied, and wrapping it at whichever
+   space happens to fall at the edge makes it read as two tags rather than one. The box widens for
+   it instead. Anything still too wide is clipped rather than given a scrollbar the pointer cannot
+   reach -- the popup is `pointer-events: none`, and a dead scrollbar is worse than none. */
 #reference-hover .ref-example {
   margin-top: 0.4rem;
   padding-top: 0.4rem;
   border-top: 1px solid #3a3a3a;
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.75rem;
-  white-space: pre-wrap;
+  white-space: pre;
+  overflow: hidden;
   color: #999;
 }
 
@@ -539,4 +552,7 @@ abbr[title] {
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.95em;
   color: #9fd88b;
+  /* A code span is one token however long the line is; breaking `(§ x|f2 §)` across two lines
+     reads as two of them. The longest in the table is 43 characters, well inside the measure. */
+  white-space: nowrap;
 }
