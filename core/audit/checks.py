@@ -1446,6 +1446,115 @@ def hoistable_inline(sources):
             yield Finding('hoistable-inline', 'info', message, unit.path, ' '.join(places))
 
 
+#: `$X = (§ x §)$`: a symbol, a relation and a value tag, where the symbol is the one the
+#: quantity declares. The whole span is `(§ x.eq §)`.
+RE_VALUE_EQUATION = re.compile(r'(?P<symbol>[^=\n]{1,24}?)\s*=\s*'
+                               r'\(§\s*(?P<name>[A-Za-z_][A-Za-z_0-9]*)\s*§\)')
+
+
+def declared_symbols(unit):
+    """name -> symbol, for the `values:` entries that declare one."""
+    values = (unit.meta or {}).get('values')
+    if not isinstance(values, dict):
+        return {}
+    return {str(name): entry['symbol'] for name, entry in values.items()
+            if isinstance(entry, dict) and isinstance(entry.get('symbol'), str)}
+
+
+def inline_bodies(unit):
+    """Every inline span in the problem, stripped, each real file counted once."""
+    seen, out = set(), []
+    for lang, name, text in unit.files():
+        place = unit.real_label(lang, name)
+        if place in seen:
+            continue
+        seen.add(place)
+        out += [(place, m.group(1).strip()) for m in RE_INLINE.finditer(text)]
+    return out
+
+
+def has_decorated_sibling(symbol, bodies):
+    r"""
+    `$F_M$` written beside a symbol `F`.
+
+    Then the letter is a family rather than a name, and which value a bare `$F$` means is an
+    author's call: `24/crane`'s statement pulls with `F` while its solution calls the same force
+    `F_M`. Ten problems in phys are like this and none of them wants a tag.
+    """
+    pattern = re.compile(re.escape(symbol) + r"[_^']")
+    return any(pattern.match(body) for body in bodies)
+
+
+@check('value-equation-literal', 'info', 'A value written as `symbol = tag` rather than `.eq`')
+def value_equation_literal(sources):
+    r"""
+    `$X = (§ x §)$` where `values.x` already declares the symbol `X`.
+
+    Both halves of that span are facts the meta holds. The symbol is one -- a symbol is declared
+    on the quantity, not written beside it -- and so is the relation, which `eq` picks by
+    `prints_exactly` rather than taking on trust: `const.speed_sound` prints back perfectly and
+    is still not the speed of sound, and only the declaration knows that. Written out, a value
+    that stops being exact keeps its `=` and nobody finds out.
+
+    So it is `(§ x.eq §)`, keeping the dollars -- `eq` returns a string and `|inl` raises on one.
+    A span that prints at a precision is `(§ x|ef(2) §)` or `(§ x|af(2) §)`, which assert the
+    relation outright, and is not reported here: choosing between those two is a judgement about
+    the value and the check has no opinion on it.
+
+    493 sites in phys were of this shape before the sweep that added this check, and every one
+    of them rendered byte-identically afterwards, which is what makes it mechanical.
+    """
+    for unit in sources.unit_list:
+        if ignored(unit, 'value-equation-literal'):
+            continue
+        symbols = declared_symbols(unit)
+        if not symbols:
+            continue
+        found = defaultdict(list)
+        for place, body in inline_bodies(unit):
+            m = RE_VALUE_EQUATION.fullmatch(body)
+            if m and symbols.get(m['name']) == m['symbol']:
+                found[m['name']].append(place)
+        for name, places in sorted(found.items()):
+            yield Finding('value-equation-literal', 'info',
+                          f"`${symbols[name]} = (§ {name} §)$` is `$(§ {name}.eq §)$` -- the "
+                          f"symbol is on the quantity and `eq` picks the relation",
+                          unit.path, ' '.join(sorted(set(places))))
+
+
+@check('value-symbol-literal', 'info', 'A declared symbol spelled out rather than `.s`')
+def value_symbol_literal(sources):
+    r"""
+    `$X$` on its own, where `values.x` declares `X` as its symbol.
+
+    `symbol:` states that this symbol names that quantity, so the prose should ask for it rather
+    than keep a second copy. Renaming the symbol then reaches the prose, which is the whole point
+    of declaring it; spelled out, the two drift and nothing says so.
+
+    Only a span that is *nothing but* the symbol is reported. A symbol inside a longer span is
+    a worse bet, not a better one: the span is usually a relation, and a tag inside a literal
+    copy of it makes three spellings out of two. `hoistable-inline` is the check for those.
+
+    `has_decorated_sibling` is the one carve-out, and it is not hypothetical -- see its docstring.
+    """
+    for unit in sources.unit_list:
+        if ignored(unit, 'value-symbol-literal'):
+            continue
+        symbols = declared_symbols(unit)
+        if not symbols:
+            continue
+        bodies = inline_bodies(unit)
+        plain = [body for _, body in bodies]
+        for name, symbol in sorted(symbols.items()):
+            places = sorted({place for place, body in bodies if body == symbol})
+            if not places or has_decorated_sibling(symbol, plain):
+                continue
+            yield Finding('value-symbol-literal', 'info',
+                          f"`${symbol}$` is `$(§ {name}.s §)$` -- the symbol is declared on the "
+                          f"quantity",
+                          unit.path, ' '.join(places))
+
+
 @check('file-empty', 'error', 'A source file exists but has no content')
 def file_empty(sources):
     """

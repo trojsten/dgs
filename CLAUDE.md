@@ -218,6 +218,12 @@ constant) -- and write one tag:
 
     $(§ rho.eq §)$              a value printed in full; `eq` picks `=` or `\approx`
     $(§ result|af(3) §)$        a value printed rounded: same figures, and `\approx` for it
+    $(§ rho.s §)$               the symbol on its own, wherever the prose names it
+
+**`.s` is the same rule for a symbol standing alone**, and it is what makes `symbol:` worth
+declaring: rename the quantity's symbol and the prose follows. Spelled out, `$\rho$` is a second
+copy and the two drift with nothing to say so. Keep the dollars in all three -- `eq` and `s`
+return strings, and `|inl` raises on one.
 
 **Which one is a question about the value, not about the source.** A given declared as exactly
 2 g prints `2` at `|f0` and `2` in full, so nothing was rounded and `=` stands; `|af` there would
@@ -237,6 +243,28 @@ expression has **no name** to hang a symbol on (`(§ (h / 2)|f0 §)`); or the `d
 The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system for a current
 that is exactly 0.1 A and stores it six ulps out, so an equality test would call it rounded; the
 two populations are nine orders of magnitude apart, so the threshold is not a tuned number.
+
+**phys has been swept: 1085 sites in 173 problems.** 492 `$X = (§ x §)$` became `$(§ x.eq §)$`
+(24 of them `|ef(N)`/`|af(N)`, where the span prints at a precision and the relation is asserted
+outright) and 593 bare `$X$` became `$(§ x.s §)$`; 69 `values:` entries that carried no `symbol:`
+got the one the prose was already writing, taken only where every language wrote the same one.
+All 1157 rendered files came back byte-identical, which is the proof such a sweep wants.
+
+`value-equation-literal` and `value-symbol-literal` report both shapes now, so the next one goes
+red instead of accumulating. Three carve-outs, each of which the sweep met:
+
+- **Match over `RE_INLINE`, never over the raw text.** A regex for `$X$` matches across the gap
+  between two tags, and `(§ q.eq §)$ a $(§ a.eq §)` offers `$ a $` -- where `a` is the Slovak for
+  *and*. Caught by the render gate, which is the reason to have one.
+- **A decorated sibling makes the letter a family**: `$F_M$` written beside a symbol `F` means a
+  bare `$F$` is an author's call. Ten problems in phys, `24/crane` the clearest.
+- **Two symbols for one value, consistently in every language**, is deliberate and has no single
+  name to take: `21/ski-jump`'s inclined plane is `d` long and its arc `l`, `22/seychelles` writes
+  both `X` and `x_S`, `24/crane`'s statement says `F` where its solution says `F_M`.
+
+A symbol *inside* a longer span is deliberately left alone. The span is usually a relation, and a
+tag inside a literal copy of one makes three spellings out of two; `hoistable-inline` is the
+check for those, and the fix is to hoist the whole span.
 
 Turning this on moved 25 sites in the whole repository, every one of them a measured constant --
 `R_⊕`, `c_s`, water's heat capacity and latent heat, the Moon's radius. No `values:` entry
