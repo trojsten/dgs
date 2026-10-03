@@ -23,6 +23,37 @@ uv run python tools/editor/app.py [--port 5001]
   leaderboard, tag distribution, files by language, and a verdict per problem for
   translations, equation de-duplication, pictures and `values:` extraction.
 
+**The hover answers two questions, and they come from different places.** Point at a name in
+either pane — a filter, a global, a quantity attribute, a `meta.yaml` key — and the popup shows
+its entry from `core/builder/reference.py`, the same table `docs/filters.md` is generated from.
+F1 asks the same of whatever is under the caret, since a hover is no use to someone mid-line.
+Under that, for anything evaluable, the popup shows **what it renders to here**: the tag's own
+output for this problem in this language, which is the question the table cannot answer.
+
+Two things are evaluable, and `evaluableSpans` in `static/highlight.js` is the one definition of
+both: a `(§ … §)` tag, evaluated as written, and an entry's own name in the meta, for which the
+tag that would reach it is synthesised — hovering `snell` under `eq:` answers for
+`(§ eq.snell §)`, `v0` under `values:` for `(§ v0 §)`, `air` under `words:` for
+`(§ words.air §)`. The deeper level of `values:` and `words:` is not an entry — `magnitude:` is
+a reference key and `sk:` is a language — so neither gets one.
+
+`POST /api/evaluate` does the work, in-process and writing nothing. It reads the **buffers** out
+of the request rather than the files, because the whole point is to answer for the text on
+screen, which is usually unsaved; and it shares `build_render_context` and `render_twice` with
+`core/builder/renderer.py`, so it cannot answer differently from what `make` would write —
+including whether an `eq:` display carries its `{#eq:…}` label, which depends on the open tab
+through the module's `equation_numbering`. A test asserts that agreement rather than trusting it.
+
+A meta that does not validate, or a `derived:` entry that will not evaluate, is reported in the
+popup instead of a value. That is deliberate and it is strict: the build would refuse the same
+meta, and a popup that quietly accepted one it will not is the single disagreement this is meant
+to prevent.
+
+One request per buffer, not one per hover. Building the context evaluates every `derived:` entry
+and costs about the same for forty fragments as for one, so the first hover asks for everything
+in the pane and the rest are map lookups; a keystroke in either pane, a different tab or a
+different problem throws the lot away.
+
 **It degrades rather than failing.** The three output tabs are the pipeline's three stages --
 Rendered Markdown is Jinja and needs only make, TeX adds pandoc, the PDF adds all of TeX Live and
 the fonts -- and `tools/editor/capabilities.py` probes for each at startup. A stage this machine

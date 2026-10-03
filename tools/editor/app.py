@@ -1,4 +1,6 @@
 import argparse
+import collections
+import importlib
 import os
 import re
 import shutil
@@ -42,6 +44,8 @@ from core.audit.status import (
     shared_file_states,
 )
 from core.builder import reference
+from core.builder.renderer import build_render_context, render_twice
+from core.builder.jinja import MarkdownJinjaRenderer
 from core.i18n import languages as LOCALES
 
 
@@ -478,6 +482,140 @@ def write_files(unit, files):
         if not source_path.is_file():
             raise BadRequest(f"Refusing to create a new file: {target} does not exist")
         source_path.write_text(content)
+
+
+# --- evaluating a fragment --------------------------------------------------
+
+#: What to render in for a module that has no languages. The Makefile's `lang ?= sk` is the same
+#: decision made in the same place, and the two should not disagree about what a monolingual
+#: module is written in.
+DEFAULT_LANGUAGE = "sk"
+
+#: How long an evaluated fragment may be before the popup gets an ellipsis instead. A `|disp` of
+#: a twelve-row `aligned` is a legitimate answer and still not a tooltip.
+EVALUATION_LIMIT = 1200
+
+#: The last few render contexts, keyed by everything that goes into one. Building a context
+#: evaluates every `derived:` expression, which is the only slow part of an evaluation, and the
+#: hover asks for one fragment at a time off the same buffer -- so the second hover in a problem
+#: should cost a Jinja render and nothing else. Small on purpose: the key holds the whole meta
+#: text, so an edited buffer is simply a different context and the stale one falls off the end.
+CONTEXT_CACHE = collections.OrderedDict()
+CONTEXT_CACHE_SIZE = 8
+
+
+def module_cli(module):
+    """
+    The module's own renderer CLI class, which is where `context_cls` and `equation_numbering`
+    live. Found by the module's name, the way everything else about a module is -- nothing here
+    names Náboj, seminar or scholar, and a fourth module needs no entry.
+    """
+    try:
+        return importlib.import_module(f"modules.{module.name}.builder.renderer").CLIInterface
+    except (ImportError, AttributeError) as e:
+        raise BadRequest(f"{module.label} has no standalone renderer to evaluate against: {e}")
+
+
+def evaluation_context(unit, target, meta_text):
+    """
+    The context a tag in this file would be rendered against, built from the buffer as it stands.
+
+    `build_render_context` is the renderer's own, so what the popup shows and what `make` writes
+    come out of one definition. The meta is parsed from `meta_text` rather than read from disk
+    because the whole point is to answer for the text on screen, which is usually unsaved.
+    """
+    cli = module_cli(unit.module)
+    language = unit.lang or DEFAULT_LANGUAGE
+    filename = unit.source_path(target).name if target else ""
+    key = (unit.module.name, unit.name, language, filename, meta_text)
+    if key in CONTEXT_CACHE:
+        CONTEXT_CACHE.move_to_end(key)
+        return CONTEXT_CACHE[key]
+
+    meta = cli.context_cls(str(unit.meta_path), unit.meta_path, text=meta_text)
+    meta.add(id=unit.meta_path.parent.name)
+    meta.validate()
+    context = build_render_context(
+        meta, language, root=unit.path,
+        labelled=cli.equation_numbering.get(filename, True))
+
+    CONTEXT_CACHE[key] = context
+    while len(CONTEXT_CACHE) > CONTEXT_CACHE_SIZE:
+        CONTEXT_CACHE.popitem(last=False)
+    return context
+
+
+#: One Jinja environment per root. Building one registers 182 filters and 32 globals and costs
+#: more than the render it is for, which is the whole of the difference between a popup that
+#: appears and one you wait for.
+RENDERERS = {}
+
+
+def evaluate_fragment(fragment, context, root):
+    """One fragment, rendered the way a file is -- two passes, display tags settled before each."""
+    renderer = RENDERERS.get(root)
+    if renderer is None:
+        renderer = RENDERERS[root] = MarkdownJinjaRenderer(root=root)
+    text = render_twice(fragment, context.data, renderer=renderer).strip()
+    if len(text) > EVALUATION_LIMIT:
+        text = text[:EVALUATION_LIMIT] + " …"
+    return text
+
+
+@app.post("/api/evaluate")
+def api_evaluate():
+    """
+    What some fragments of template evaluate to in this unit's context. Nothing is written.
+
+    The editor asks this to show, in the reference popup, what the tag under the pointer actually
+    produces here -- the number, the equation, the word -- rather than the generic example the
+    reference table carries. So it is in-process and reads the buffers out of the request: a make
+    target would write the file, take seconds, and answer for the last save.
+
+    A fragment that fails is reported as a failure of its own; only a context that cannot be
+    built at all fails the request, because that is one answer for every fragment and it is the
+    answer -- a broken `derived:` expression is exactly what somebody hovering wants told.
+    """
+    body = request.get_json(force=True)
+    unit = unit_from_body(body)
+    target = body.get("target")
+    if target:
+        unit.source_path(target)        # validates
+    fragments = body.get("fragments") or []
+    if not isinstance(fragments, list) or not all(isinstance(f, str) for f in fragments):
+        raise BadRequest("`fragments` must be a list of strings")
+
+    meta_text = body.get("meta_yaml")
+    if meta_text is None:
+        if not unit.meta_path.is_file():
+            return jsonify({"ok": False, "error": f"{unit.name} has no meta.yaml yet."})
+        meta_text = unit.meta_path.read_text()
+
+    try:
+        context = evaluation_context(unit, target, meta_text)
+    except Exception as e:
+        return jsonify({"ok": False, "error": one_line(e)})
+
+    results = []
+    for fragment in fragments:
+        try:
+            results.append({"ok": True, "text": evaluate_fragment(fragment, context, unit.path)})
+        except Exception as e:
+            results.append({"ok": False, "error": one_line(e)})
+    return jsonify({"ok": True, "results": results})
+
+
+def one_line(e):
+    """
+    An exception as the one line a tooltip has room for: its first, and what kind it was.
+
+    The type matters -- `DerivedQuantityError` names the entry in its message and
+    `MissingVariablesError` names the tag, but a bare `KeyError: 'magnitude'` says nothing at all
+    without it.
+    """
+    # The renderer colours its own messages, and an escape sequence in a tooltip is a mojibake.
+    first = ANSI_RE.sub("", str(e)).strip().split("\n")[0].strip()
+    return f"{type(e).__name__}: {first}" if first else type(e).__name__
 
 
 @app.post("/api/save")

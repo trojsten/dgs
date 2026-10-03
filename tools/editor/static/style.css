@@ -545,6 +545,37 @@ abbr[title] {
 
 #reference-hover .ref-example b { display: block; color: #ccc; font-weight: normal; }
 
+/* What the fragment comes out as here, which is the one block in the box that is about this
+   problem rather than about the language. `pre-wrap`, unlike `.ref-example` above: an evaluated
+   `|disp` is a four-line block whose own newlines are the point, and it is output to read rather
+   than a line to copy. Capped in height so a long `aligned` cannot grow the box off the screen --
+   the text is clipped, not scrolled, because the popup is `pointer-events: none` and a scrollbar
+   nothing can reach is worse than none. */
+#reference-hover .ref-render {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #3a3a3a;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  max-width: 44rem;
+  max-height: 11rem;
+  overflow: hidden;
+  color: #9fd88b;
+}
+
+#reference-hover .ref-render b {
+  display: block;
+  font-family: inherit;
+  color: #777;
+  font-weight: normal;
+  font-size: 0.7rem;
+  text-transform: lowercase;
+}
+
+#reference-hover .ref-render.waiting { color: #777; font-style: italic; }
+#reference-hover .ref-render.error { color: #e07a6a; }
+
 #reference-hover .ref-more { margin-top: 0.4rem; color: #777; font-size: 0.75rem; }
 
 /* The summaries are written in the documentation's register, so they carry `code` spans. */

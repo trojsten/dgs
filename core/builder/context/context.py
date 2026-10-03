@@ -1,5 +1,6 @@
 import abc
 import copy
+import io
 import logging
 import pprint
 from pathlib import Path
@@ -105,12 +106,27 @@ class Context(abc.ABC):
         log.debug(f"Loading {c.name(self.__class__.__name__)} metadata from {c.path(path)}")
         try:
             with open(path, 'r') as f:
-                contents = yaml.load(f, Loader=UniqueKeyLoader)
-            self._data = copy.deepcopy(self._defaults) | ({} if contents is None else contents)
+                return self.load_string(f.read(), where=path)
         except FileNotFoundError:
             log.critical(c.err(f"[FATAL] Could not load YAML file {c.path(path)}"))
             raise
 
+    def load_string(self, text: str, *, where: Path | str = '<yaml>'):
+        """
+        The same, from text that is not on disk yet.
+
+        `tools/editor` holds the meta in a textarea and previews what a tag evaluates to while it
+        is being typed, so the context it builds has to come from the buffer. Reading the file
+        instead would preview the last save, which is the one thing a live preview must not do.
+
+        `where` is only for the messages, and it has to be passed: PyYAML takes a mark's name off
+        the stream's own `name`, so parsing a bare string names the error `<unicode string>` and
+        `DuplicateKeyError` stops saying which file has the duplicate.
+        """
+        stream = io.StringIO(text)
+        stream.name = str(where)
+        contents = yaml.load(stream, Loader=UniqueKeyLoader)
+        self._data = copy.deepcopy(self._defaults) | ({} if contents is None else contents)
         return self
 
     def ident(self, *path: Any) -> tuple[Any, ...]:

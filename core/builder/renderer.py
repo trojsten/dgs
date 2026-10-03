@@ -91,6 +91,23 @@ def settle_display_tags(template: str) -> str:
     return '\n'.join(settle(line) for line in template.split('\n'))
 
 
+def render_twice(template: str, context: dict, *, renderer: MarkdownJinjaRenderer) -> str:
+    """
+    A render is two passes with the display tags settled before each.
+
+    Both halves matter and neither is obvious, so they live here rather than being written out
+    wherever something renders. The second pass is what expands a tag that came *out* of an
+    `eq:` or a `blocks:` entry on the first; `settle_display_tags` runs before each rather than
+    once, because such a value can itself hold a display tag and it only arrives in the
+    intermediate.
+
+    `tools/editor` renders one fragment at a time to show what it evaluates to, and has to do it
+    exactly this way or the popup would disagree with the build over anything nested.
+    """
+    intermediate = renderer.render(settle_display_tags(template), context)
+    return renderer.render(settle_display_tags(intermediate), context)
+
+
 class JinjaConvertor:
     """
     Jinja template convertor wrapper.
@@ -143,12 +160,7 @@ class JinjaConvertor:
         return PictureJinjaRenderer if path.suffix in PICTURE_SUFFIXES else MarkdownJinjaRenderer
 
     def run(self):
-        # Before each pass, not only the first: a `blocks:` or `eq:` value the first pass expands
-        # can itself hold a display tag, and it arrives in the intermediate.
-        # First pass: expand all equations and values
-        intermediate = self.renderer.render(settle_display_tags(self.template), self.context.data)
-        # Second pass: expand all tags within equations
-        return self.renderer.render(settle_display_tags(intermediate), self.context.data)
+        return render_twice(self.template, self.context.data, renderer=self.renderer)
 
 
 class NameCollisionError(Exception):
@@ -432,6 +444,134 @@ class StandaloneContext(FileContext):
     })
 
 
+def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = frozenset()) -> None:
+    """
+    Refuse names that would silently replace something already in the context. `values` and
+    `derived` are spread into one namespace shared with `const` and `eq`, and whoever is added
+    last wins, so a clash is invisible until a formula quietly uses the wrong thing.
+    """
+    for key in block:
+        if key in RESERVED_NAMES:
+            raise NameCollisionError(key, block_name, "it is used by the rendering context")
+        if key in taken:
+            raise NameCollisionError(key, block_name, "it is already defined under `values`")
+
+
+def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bool = True,
+                         missing_words: 'MissingWordRegistry | None' = None) -> Context:
+    """
+    Everything a template may reach, built from one already-validated problem meta.
+
+    `meta` is a `StandaloneContext` (or a module's subclass of one) carrying `id`; where it came
+    from -- a file or an editor buffer -- is the caller's business and nothing here asks.
+    `root` is the problem's own directory, which is where a `derived:` expression's `include()`
+    looks. `labelled` is what the module's `equation_numbering` decided for the file being
+    rendered, and `missing_words` collects the words the language has not got, so a caller that
+    wants the render to fail can see them.
+    """
+    missing_words = MissingWordRegistry() if missing_words is None else missing_words
+
+    constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
+    constants.validate()
+
+    ctx = Context('cont')
+
+    # Process values: if a PhysicsConstant can be constructed, do so, and add directly to the context
+    if 'values' in meta.data:
+        values = meta.data['values']
+        _reject_name_collisions(values, 'values')
+
+        for key, params in values.items():
+            if isinstance(params, dict):
+                symbol = params.pop('symbol', key)
+                values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
+            elif isinstance(params, (str, numbers.Number)):
+                values[key] = params
+            else:
+                raise TypeError(f"Unsupported type {type(params)} ({params})")
+
+        ctx.add(**values)
+
+    # Constants must be present before `derived` expressions are evaluated, as they use `const.x`
+    ctx.adopt(const=constants)
+
+    # The active language, so a template can reach a translated word. The Markdown stage used to
+    # parse `locale` and drop it -- only the convertor knew which language it was rendering, so
+    # no source could say `and` in nine languages without writing it out nine times.
+    localised = i18n.languages[locale].as_dict()
+    # wrapped so a word this language does not define stops the build with a message naming it,
+    # rather than resolving to something plausible in the wrong language
+    words = LocalisedWords(localised.get('words') or {}, locale,
+                           f'core/i18n/{locale}.yaml', registry=missing_words)
+    # Reachable both ways: `i18n.words['and']` and, since a conjunction inside an equation is
+    # read far more often than written, `i18n.andw` -- see `LocalisedI18n`.
+    localised = LocalisedI18n(localised, words)
+    localised['words'] = words
+    ctx.add(i18n=localised)
+
+    # This problem's own words, resolved when a template asks for one.
+    #
+    # No collision check, unlike `values` and `derived`: those land in the top-level namespace
+    # where a key called `const` would shadow the constants, while a word is reached as
+    # `words.const` and shadows nothing. `22/ht-conundrum` wants exactly that name -- its
+    # equations end in `= const` -- and refusing it would be a rule enforcing nothing.
+    if 'words' in meta.data:
+        ctx.add(words=LocalisedWords(meta.data['words'], locale,
+                                     "this problem's meta.yaml", registry=missing_words))
+
+    # Process derived quantities: evaluate the expressions in document order, adding each result
+    # to the context, so that a later expression may build on an earlier one. This is the only
+    # place a problem computes anything: it replaced `preamble.md`, whose every surviving line
+    # turned out to be a plain `@J set` and none of them the control flow it existed for, so
+    # the file and the prepending step that read it are both gone.
+    if 'derived' in meta.data:
+        _reject_name_collisions(meta.data['derived'], 'derived',
+                                taken=set(meta.data.get('values') or {}))
+        # Same root as the template that will use these: the meta sits beside its problem's
+        # files, so a `derived:` expression may reach for `include()` on equal terms.
+        renderer = MarkdownJinjaRenderer(root=root)
+        for key, expression in meta.data['derived'].items():
+            try:
+                ctx.add(**{key: renderer.evaluate(expression, ctx.data)})
+            except Exception as e:
+                raise DerivedQuantityError(key, expression, e) from e
+
+    # Verbatim blocks, stored as written. Namespaced under `blocks` rather than spread into
+    # the top-level namespace the way `values` and `derived` are, for the reason `words` is:
+    # a block reached as `(§ blocks.setup §)` shadows nothing, so it may be called anything.
+    # Tags inside one are expanded by the second pass, which is what lets a gnuplot preamble
+    # interpolate `(§ tcold.mag §)` without this step knowing anything about it.
+    if 'blocks' in meta.data:
+        ctx.add(blocks=meta.data['blocks'])
+
+    # Process all equations: create MathObject and store under the `eq` key in the context.
+    #
+    # Whether a display carries its `{#eq:…}` label was decided by the caller, from the file
+    # being rendered against the module's own `equation_numbering`, and not by the filter the
+    # author writes. **A problem statement never numbers its equations**: the number would point
+    # at a solution the contestant does not have, and a label nobody may reference is a number in
+    # the margin for nothing.
+    #
+    # Deciding it there rather than offering `|dispu` beside `|disp` is what makes the rule
+    # hold. The equation is hoisted into `eq:` once, but the *call* is not: 5264 call sites
+    # across the repository name 2579 distinct equations, so more than half are written out
+    # once per language. A `label=` argument would be written six times for one equation and
+    # could be forgotten in one of them -- and the same argument lists already vary per
+    # language, legitimately, because terminal punctuation follows the sentence around it.
+    #
+    # It also lets one `eq:` entry serve both halves of a problem -- `26/earthquakes` states
+    # the Gutenberg-Richter law and opens its solution with it, and the same
+    # `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the solution,
+    # so there is one copy of the equation and exactly one `{#eq:}` to point at.
+    if 'eq' in meta.data:
+        for idx, fragment in meta.data['eq'].items():
+            meta.data['eq'][idx] = MathObject(f"{meta.data['id']}:{idx}", fragment,
+                                              labelled=labelled)
+        ctx.add(eq=meta.data['eq'])
+
+    return ctx
+
+
 class CLIInterface(cli.CLIInterface, ABC):
     #: Per file, whether its equations are displayed with a number and an `{#eq:…}` label.
     #:
@@ -472,127 +612,21 @@ class CLIInterface(cli.CLIInterface, ABC):
             log.error(f"{c.err('missing words')} in {c.path(self.args.infile.name)}\n{report}")
             raise MissingWordsError(self.missing_words.missing)
 
-    @staticmethod
-    def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = frozenset()) -> None:
-        """
-        Refuse names that would silently replace something already in the context. `values` and
-        `derived` are spread into one namespace shared with `const` and `eq`, and whoever is added
-        last wins, so a clash is invisible until a formula quietly uses the wrong thing.
-        """
-        for key in block:
-            if key in RESERVED_NAMES:
-                raise NameCollisionError(key, block_name, "it is used by the rendering context")
-            if key in taken:
-                raise NameCollisionError(key, block_name, "it is already defined under `values`")
-
     def build_context(self) -> Context:
-        context = self.context_cls(
-            self.args.context.name,
-            Path(self.args.context.name)
-        ).add(id=Path(self.args.context.name).parent.name)      # Also add the problem id here
-        context.validate()
-        constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
-        constants.validate()
+        """
+        The render context for this invocation: the meta read off disk, then `build_render_context`.
 
-        ctx = Context('cont')
-
-        # Process values: if a PhysicsConstant can be constructed, do so, and add directly to the context
-        if 'values' in context.data:
-            values = context.data['values']
-            self._reject_name_collisions(values, 'values')
-
-            for key, params in values.items():
-                if isinstance(params, dict):
-                    symbol = params.pop('symbol', key)
-                    values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
-                elif isinstance(params, (str, numbers.Number)):
-                    values[key] = params
-                else:
-                    raise TypeError(f"Unsupported type {type(params)} ({params})")
-
-            ctx.add(**values)
-
-        # Constants must be present before `derived` expressions are evaluated, as they use `const.x`
-        ctx.adopt(const=constants)
-
-        # The active language, so a template can reach a translated word. The Markdown stage used to
-        # parse `locale` and drop it -- only the convertor knew which language it was rendering, so
-        # no source could say `and` in nine languages without writing it out nine times.
-        locale = i18n.languages[self.args.locale]
-        localised = locale.as_dict()
-        # wrapped so a word this language does not define stops the build with a message naming it,
-        # rather than resolving to something plausible in the wrong language
-        words = LocalisedWords(localised.get('words') or {}, self.args.locale,
-                               f'core/i18n/{self.args.locale}.yaml', registry=self.missing_words)
-        # Reachable both ways: `i18n.words['and']` and, since a conjunction inside an equation is
-        # read far more often than written, `i18n.andw` -- see `LocalisedI18n`.
-        localised = LocalisedI18n(localised, words)
-        localised['words'] = words
-        ctx.add(i18n=localised)
-
-        # This problem's own words, resolved when a template asks for one.
-        #
-        # No collision check, unlike `values` and `derived`: those land in the top-level namespace
-        # where a key called `const` would shadow the constants, while a word is reached as
-        # `words.const` and shadows nothing. `22/ht-conundrum` wants exactly that name -- its
-        # equations end in `= const` -- and refusing it would be a rule enforcing nothing.
-        if 'words' in context.data:
-            ctx.add(words=LocalisedWords(context.data['words'], self.args.locale,
-                                         "this problem's meta.yaml",
-                                         registry=self.missing_words))
-
-        # Process derived quantities: evaluate the expressions in document order, adding each result
-        # to the context, so that a later expression may build on an earlier one. This is the only
-        # place a problem computes anything: it replaced `preamble.md`, whose every surviving line
-        # turned out to be a plain `@J set` and none of them the control flow it existed for, so
-        # the file and the prepending step that read it are both gone.
-        if 'derived' in context.data:
-            self._reject_name_collisions(context.data['derived'], 'derived',
-                                         taken=set(context.data.get('values') or {}))
-            # Same root as the template that will use these: the meta sits beside its problem's
-            # files, so a `derived:` expression may reach for `include()` on equal terms.
-            renderer = MarkdownJinjaRenderer(root=Path(self.args.context.name).parent)
-            for key, expression in context.data['derived'].items():
-                try:
-                    ctx.add(**{key: renderer.evaluate(expression, ctx.data)})
-                except Exception as e:
-                    raise DerivedQuantityError(key, expression, e) from e
-
-        # Verbatim blocks, stored as written. Namespaced under `blocks` rather than spread into
-        # the top-level namespace the way `values` and `derived` are, for the reason `words` is:
-        # a block reached as `(§ blocks.setup §)` shadows nothing, so it may be called anything.
-        # Tags inside one are expanded by the second pass, which is what lets a gnuplot preamble
-        # interpolate `(§ tcold.mag §)` without this step knowing anything about it.
-        if 'blocks' in context.data:
-            ctx.add(blocks=context.data['blocks'])
-
-        # Process all equations: create MathObject and store under the `eq` key in the context.
-        #
-        # Whether a display carries its `{#eq:…}` label is decided here, from the file being
-        # rendered against the module's own `equation_numbering`, and not by the filter the author
-        # writes. **A problem statement never numbers its equations**: the number would point at a
-        # solution the contestant does not have, and a label nobody may reference is a number in
-        # the margin for nothing.
-        #
-        # Deciding it here rather than offering `|dispu` beside `|disp` is what makes the rule
-        # hold. The equation is hoisted into `eq:` once, but the *call* is not: 5264 call sites
-        # across the repository name 2579 distinct equations, so more than half are written out
-        # once per language. A `label=` argument would be written six times for one equation and
-        # could be forgotten in one of them -- and the same argument lists already vary per
-        # language, legitimately, because terminal punctuation follows the sentence around it.
-        #
-        # It also lets one `eq:` entry serve both halves of a problem -- `26/earthquakes` states
-        # the Gutenberg-Richter law and opens its solution with it, and the same
-        # `(§ eq.grl|disp(',') §)` is unlabelled in the statement and labelled in the solution,
-        # so there is one copy of the equation and exactly one `{#eq:}` to point at.
-        if 'eq' in context.data:
-            labelled = self.equation_numbering.get(Path(self.args.infile.name).name, True)
-            for idx, fragment in context.data['eq'].items():
-                context.data['eq'][idx] = MathObject(f"{context.data['id']}:{idx}", fragment,
-                                                     labelled=labelled)
-            ctx.add(eq=context.data['eq'])
-
-        return ctx
+        Split that way because `tools/editor` needs the same context built from an *unsaved*
+        buffer, and two implementations of what a context holds would be two chances to disagree
+        about it -- which is the one thing a live preview must not do.
+        """
+        meta_path = Path(self.args.context.name)
+        meta = self.context_cls(self.args.context.name, meta_path).add(id=meta_path.parent.name)
+        meta.validate()
+        return build_render_context(
+            meta, self.args.locale, root=meta_path.parent,
+            labelled=self.equation_numbering.get(Path(self.args.infile.name).name, True),
+            missing_words=self.missing_words)
 
     def build_convertor(self, args, **kwargs):
         return JinjaConvertor(self.args.infile,

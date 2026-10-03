@@ -15,11 +15,18 @@ import pytest
 quickjs = pytest.importorskip('quickjs')
 
 HIGHLIGHT_JS = pathlib.Path('tools/editor/static/highlight.js')
-#: A span, with the optional `data-ref` the reference tokens carry. The attribute has to be in
-#: the pattern rather than left out of it: without it the alternation falls through to the *next*
+#: A span, with whatever `data-` attributes it carries -- `data-ref` for a name the reference
+#: table holds, `data-eval` for a fragment the editor can evaluate. The attributes have to be in
+#: the pattern rather than left out of it: without them the match falls through to the *next*
 #: `<span class="…">` and the body of one token swallows the tokens between, which is a corrupt
-#: reading that no assertion would look wrong.
-SPAN = re.compile(r'<span class="([\w-]+)"(?: data-ref="([^"]*)")?>(.*?)</span>', re.DOTALL)
+#: reading that no assertion would look wrong. Hence `DATA` matching *any* of them by name, so
+#: that adding a third one cannot reintroduce that silently.
+SPAN = re.compile(r'<span class="([\w-]+)"((?: data-[\w-]+="[^"]*")*)>(.*?)</span>', re.DOTALL)
+DATA = re.compile(r'data-([\w-]+)="([^"]*)"')
+
+
+def attributes(blob):
+    return {name: htmllib.unescape(value) for name, value in DATA.findall(blob)}
 
 
 @pytest.fixture(scope='module')
@@ -63,9 +70,28 @@ def found(quickjs_context):
 def refs(highlight):
     """Every span that names something the reference holds, as (ref, text), in order."""
     def call(text, mode):
-        return [(ref, htmllib.unescape(body))
-                for _, ref, body in SPAN.findall(highlight(text, mode)) if ref]
+        return [(attributes(blob)['ref'], htmllib.unescape(body))
+                for _, blob, body in SPAN.findall(highlight(text, mode))
+                if 'ref' in attributes(blob)]
     return call
+
+
+@pytest.fixture(scope='module')
+def spans(highlight):
+    """Every highlighted span as {text, cls, attrs}, which is what the hover reads off the DOM."""
+    def call(text, mode):
+        return [{'cls': cls, 'attrs': attributes(blob), 'text': htmllib.unescape(body)}
+                for cls, blob, body in SPAN.findall(highlight(text, mode))]
+    return call
+
+
+@pytest.fixture(scope='module')
+def evals(quickjs_context):
+    """`evaluableSources(text, mode)`: the distinct fragments `app.js` sends to `/api/evaluate`."""
+    import json
+    sources = quickjs_context.eval(
+        '(function (text, mode) { return JSON.stringify(evaluableSources(text, mode)); })')
+    return lambda text, mode: json.loads(sources(text, mode))
 
 
 @pytest.fixture(scope='module')
@@ -383,5 +409,107 @@ class TestTheCaretPath:
     def test_a_meta_resolves_by_caret_too(self, found):
         """The F1 path serves the meta pane as well, which is where `PQ` is actually written."""
         text = 'derived:\n  r: "PQ(1, \'m\').to(\'cm\')"\n'
-        assert {f['ref'] for f in found(text, 'dgs-yaml')} == {
+        # `r` is in there too and carries no `ref` -- a quantity's own name is not in the table,
+        # it is a thing to evaluate, which `TestEvaluableFragments` covers.
+        assert {f['ref'] for f in found(text, 'dgs-yaml') if f['ref']} == {
             'meta-key:derived', 'global:PQ', 'attribute:to'}
+
+
+class TestEvaluableFragments:
+    """
+    What the hover offers to evaluate, which is the other half of what it shows: the reference
+    table says what a filter *is*, and this says what this fragment comes out as in this problem.
+
+    Two sources, one attribute. A `(§ … §)` tag is evaluated as written, and a meta entry's own
+    name is evaluated through the tag that would reach it -- so hovering `snell` under `eq:`
+    answers for `(§ eq.snell §)` without anyone having to type it.
+    """
+
+    META = '\n'.join([
+        'eq:',
+        "  snell: 'a = b'",
+        'values:',
+        '  v0:',
+        '    magnitude: 3',
+        '    unit: m',
+        'derived:',
+        '  r: "v0 * 2"',
+        'blocks:',
+        '  setup: |',
+        '    set term pdf',
+        'words:',
+        '  air:',
+        '    sk: vzduch',
+        '',
+    ])
+
+    def test_a_tag_is_evaluated_as_written(self, evals):
+        assert evals('Preto (§ eq.snell|inl §).', 'dgs-md') == ['(§ eq.snell|inl §)']
+
+    def test_every_piece_of_a_tag_carries_the_whole_tag(self, spans):
+        """
+        The tag is carved into siblings around the names inside it, so the pointer lands on one
+        piece of it and never on the whole. Each piece has to answer for the tag it came out of
+        or hovering the filter would offer nothing while hovering the space beside it worked.
+        """
+        got = spans('(§ eq.snell|inl §)', 'dgs-md')
+        assert [s['text'] for s in got] == ['(§ ', 'eq', '.snell|', 'inl', ' §)']
+        assert {s['attrs'].get('eval') for s in got} == {'(§ eq.snell|inl §)'}
+
+    def test_maths_is_not_evaluable(self, spans):
+        """`$x$` is not a tag and there is nothing to evaluate in it; the popup must not claim so."""
+        assert all('eval' not in s['attrs'] for s in spans('$x = y$', 'dgs-md'))
+
+    @pytest.mark.parametrize(('name', 'expected'), [
+        ('snell', '(§ eq.snell §)'),
+        ('v0', '(§ v0 §)'),
+        ('r', '(§ r §)'),
+        ('setup', '(§ blocks.setup §)'),
+        ('air', '(§ words.air §)'),
+    ])
+    def test_a_meta_entry_is_reached_the_way_a_template_reaches_it(self, spans, name, expected):
+        by_text = {s['text']: s['attrs'].get('eval')
+                   for s in spans(self.META, 'dgs-yaml')}
+        assert by_text[name] == expected
+
+    @pytest.mark.parametrize('key', ['magnitude', 'unit', 'sk'])
+    def test_the_deeper_level_is_not_an_entry(self, spans, key):
+        """
+        `values:` and `words:` have two levels and only the shallower one names something a
+        template may write. `(§ magnitude §)` is not a thing, and offering it would be an
+        invitation to type it.
+        """
+        # By suffix, not by exact text: a key the reference rules did not carve out keeps the
+        # indent the YAML rule matched with it, which is how `sk` under `words.air` arrives.
+        at = [s for s in spans(self.META, 'dgs-yaml') if s['text'].strip() == key]
+        assert at and all('eval' not in s['attrs'] for s in at)
+
+    @pytest.mark.parametrize('key', ['eq', 'values', 'derived', 'blocks', 'words'])
+    def test_the_block_name_itself_is_a_reference_and_not_an_entry(self, spans, key):
+        by_text = {s['text']: s['attrs'] for s in spans(self.META, 'dgs-yaml')}
+        assert by_text[key] == {'ref': f'meta-key:{key}'}
+
+    def test_a_meta_indented_otherwise_still_works(self, evals):
+        """
+        The entry level is whichever indent comes first in that block, not a hard-coded two
+        spaces -- and per block, since nothing says a file indents `eq:` and `values:` alike.
+        """
+        text = 'eq:\n    snell: \'a = b\'\nvalues:\n  v0:\n    magnitude: 3\n'
+        assert evals(text, 'dgs-yaml') == ['(§ eq.snell §)', '(§ v0 §)']
+
+    def test_a_tag_inside_a_meta_entry_is_evaluable_too(self, evals):
+        """An `eq:` entry interpolating a value: both the entry and the tag inside it answer."""
+        text = 'eq:\n  t: \'T = (§ t1|f0 §)\'\n'
+        assert evals(text, 'dgs-yaml') == ['(§ t1|f0 §)', '(§ eq.t §)']
+
+    def test_each_distinct_fragment_is_asked_for_once(self, evals):
+        """The list is what goes to `/api/evaluate`; the same tag twice is one question."""
+        assert evals('(§ v §) and (§ v §) and (§ w §)', 'dgs-md') == ['(§ v §)', '(§ w §)']
+
+    def test_a_gnuplot_script_evaluates_its_tags(self, evals):
+        assert evals("set title 'x'\nplot (§ tcold.mag §)\n", 'dgs-gnuplot') == \
+            ['(§ tcold.mag §)']
+
+    @pytest.mark.parametrize('mode', ['dgs-tex', 'dgs-yaml', 'dgs-md'])
+    def test_nothing_evaluable_is_an_empty_list(self, evals, mode):
+        assert evals('nothing to see here\n', mode) == []
