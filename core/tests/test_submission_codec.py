@@ -17,18 +17,42 @@ import pytest
 
 quickjs = pytest.importorskip('quickjs')
 
+#: The canonical copy, and the page that carries it. An interactive problem is one HTML file
+#: with no dependencies -- that is the whole point of it, since a participant downloads it and
+#: opens it from a folder -- so the codec is inlined into each page between two markers rather
+#: than linked. This test runs the *page's* copy and then checks it is still the canonical one,
+#: so the inlining cannot drift and the next problem starts by pasting the same block in.
 SUBMISSION_JS = pathlib.Path('source/seminar/FKS/.static/web/submission.js')
+PAGES = [pathlib.Path('source/seminar/FKS/.pool/spectre/index.html')]
+BEGIN, END = '// BEGIN submission.js', '// END submission.js'
 
 pytestmark = pytest.mark.skipif(not SUBMISSION_JS.is_file(),
                                 reason='source/seminar/FKS is not checked out')
 
 
+def inlined(page):
+    """The codec as that page carries it, between the markers."""
+    text = page.read_text()
+    assert text.count(BEGIN) == 1 and text.count(END) == 1, f'{page}: markers'
+    return text.split(BEGIN, 1)[1].split(END, 1)[0].strip()
+
+
 @pytest.fixture(scope='module')
 def js():
-    """The shipped file, loaded once; everything below is called out of this one context."""
+    """The *page's* copy, loaded once; everything below is called out of this one context."""
     context = quickjs.Context()
-    context.eval(SUBMISSION_JS.read_text())
+    context.eval(inlined(PAGES[0]))
     return context
+
+
+@pytest.mark.parametrize('page', PAGES, ids=lambda p: p.parent.name)
+def test_the_page_carries_the_canonical_codec(page):
+    """
+    Not "a copy that works" -- the same characters. Two codecs that merely both pass these tests
+    would still be two codecs, and the first block saved by one and loaded by the other would be
+    the thing that found out.
+    """
+    assert inlined(page) == SUBMISSION_JS.read_text().strip()
 
 
 @pytest.fixture(scope='module')
