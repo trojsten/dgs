@@ -1072,14 +1072,29 @@ and after. Reading through a symlink is safe; writing is not.
   - **The statement asks for that form**, for instance when it says to give the answer as an
     equation.
 
-  An `=` between **two spellings of the same value** is not this and is always fine:
+  An `=` between **two spellings of the same value** is not this and is always welcome:
   `\qty{960}{\giga\joule} = \qty{9.6e11}{\joule}`, or the factored and expanded forms of one
-  expression side by side. 152 answers do it, and it is often the kindest thing for a marker.
+  expression side by side. 152 answers do it. This is a courtesy to somebody marking under time
+  pressure who has to accept whatever equivalent form a competitor wrote down, and it is worth
+  most where equivalence is least obvious -- trigonometric answers above all, where
+  `\arctan\dfrac{a^2 - b^2}{2ab}` and `\dfrac{\pi}{2} - 2\arctan\dfrac{b}{a}` are the same
+  number and nothing on the page says so unless the answer says it.
 
-  > **278 answers in phys are still of the `symbol = value` shape, and nothing has been swept.**
-  > The rule is written down first so that new problems follow it; the archive is a separate
-  > pass, and an `answer-labelled` check would report 287 findings across the repository on the
-  > day it was added. Worth doing, not worth doing by accident.
+  A left-hand side that does none of this and only names a symbol is not merely redundant, it is
+  **actively harmful**: it puts a second thing on the line for the marker to read past, and it
+  invites the reading that a competitor who wrote the value without the symbol has answered a
+  different question. Delete it.
+
+  **phys has been swept: 337 answer files lost their symbol**, in two passes, because the first
+  classifier was too strict -- it refused a subscript containing a digit (`E_1`), a macro
+  (`\FDiff{t}`) and a primed symbol (`q'`), and it refused any file with prose after the answer,
+  all of which are the same shape. Every removal was checked against its `HEAD` version one file
+  at a time, and all 337 were a clean prefix deletion with nothing else moving.
+
+  The classifier has to refuse one thing that looks like a symbol and is not: a head containing
+  `(§`. `(§ result §) = …` is a rendered value, and deleting the left-hand side there deletes the
+  answer. Nine remain outside phys -- one in chem, eight in `fks-naboj`, which is not ours to
+  touch.
 
 - **A picture as the whole answer needs nothing around it.** Write the image on its
   own and stop -- no leading `\ `, no `\vspace`. Eleven answer files used to carry
