@@ -55,6 +55,25 @@ def test_the_page_carries_the_canonical_codec(page):
     assert inlined(page) == SUBMISSION_JS.read_text().strip()
 
 
+@pytest.mark.parametrize('page', PAGES, ids=lambda p: p.parent.name)
+def test_the_codec_survives_strict_mode(page):
+    """
+    The page's script opens with `'use strict';`, and the codec is pasted into the middle of it,
+    so the codec is strict whether or not it says so. A bare `Submission = ...` is legal
+    sloppy-mode code and a `ReferenceError` under strict -- thrown at the top level of the one
+    script the page has, so it takes the canvases, the chromaticity diagram and the hand-in panel
+    with it. That is what happened, and nothing caught it: the fixture above evaluates the block
+    on its own, where the page's directive is not in front of it.
+
+    So evaluate it the way the browser does -- the directive first, in the same script -- and
+    insist the global is reachable afterwards.
+    """
+    context = quickjs.Context()
+    context.eval("'use strict';\n"
+                 + inlined(page)
+                 + "\nif (typeof Submission !== 'object') throw new Error('not a global');")
+
+
 @pytest.fixture(scope='module')
 def call(js):
     """
