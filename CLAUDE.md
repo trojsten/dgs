@@ -607,6 +607,19 @@ failure, and that was the whole of the `onion` problem. `core/audit`'s `word-mis
 fourth, and the only one that works without a build: it reads the sources, so it finds the gap in
 every language at once before anyone renders anything. Fix the word; do not ship the box.
 
+**A `symbol:` may itself carry a `words:` tag, and only one level deep.**
+`symbol: '\rho_{(§ words.twin §)}'` resolves wherever the prose writes `(§ x.s §)`, because the
+symbol lands in the first pass's output and the second expands the word in it. It does **not**
+resolve through an `eq:` entry: `(§ x.s §)` written inside one is already the first pass's
+output, so the word would need a third pass and the literal tag reaches the page. Write the word
+directly in the entry there — `\rho_{(§ words.twin §)}` — which is one pass and works.
+
+`21/pool-jump` is the worked example and the reason to know this. Its index abbreviates a prose
+word (Slovak's *Špagetka*, English's *twin*), so sk and cs wrote `\rho_s` while en and hu wrote
+`\rho_t` — but the shared `eq:` entry all four rendered printed `\rho_s`, so **the English
+booklet introduced the twin's density as ρ_t and then solved with ρ_s**, never saying they were
+the same thing. One `words:` entry and each language is single again.
+
 Resolution is lazy, so a language that never asks for a word does not need it —
 `21/troll-science` writes the equation with translated subscripts in four of its six
 languages and differently in the other two.
