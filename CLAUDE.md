@@ -1050,6 +1050,37 @@ and after. Reading through a symlink is safe; writing is not.
   says which. Three things exempt it: end of file, a next line Markdown needs a
   blank before anyway (list, figure, heading, another display), and a block
   indented inside a list item, where the next bullet is the break.
+- **An answer file holds the answer, not a sentence about it.** `answer.md` is what a marker
+  compares against, so it is the value and nothing else: `\dfrac{k(k+2)}{2k+1}`, not
+  `\dfrac{h_2}{h_1} = \dfrac{k(k+2)}{2k+1}`. The symbol on the left restates the question, which
+  the marker already has in front of them, and it costs a line of the answer booklet per problem.
+
+  **In the solution the opposite is usually true**: the final display is a step in a derivation
+  and the left-hand side says what is being computed. Desirable there, not required, and never
+  carried over into `answer.md`.
+
+  Three things earn an `=`, and they have one thing in common -- the left side carries
+  information the right side cannot:
+
+  - **Several quantities at once.** `chem/.pool/trojroztok` answers
+    `V_A = \qty{910}{\micro\litre}, V_B = …`, and without the names the three numbers are a
+    puzzle of their own. Seven answers are of this shape.
+  - **A ratio whose members are not named by the statement.** `04/energy-ratio` answers
+    `E_k : E_p = 15 : 1`; a bare `15 : 1` says nothing about which way round it goes.
+    `06/weighted-triangle` and `08/escape-match` are the other two. A ratio that *is* a complete
+    value -- one number -- needs no label.
+  - **The statement asks for that form**, for instance when it says to give the answer as an
+    equation.
+
+  An `=` between **two spellings of the same value** is not this and is always fine:
+  `\qty{960}{\giga\joule} = \qty{9.6e11}{\joule}`, or the factored and expanded forms of one
+  expression side by side. 152 answers do it, and it is often the kindest thing for a marker.
+
+  > **278 answers in phys are still of the `symbol = value` shape, and nothing has been swept.**
+  > The rule is written down first so that new problems follow it; the archive is a separate
+  > pass, and an `answer-labelled` check would report 287 findings across the repository on the
+  > day it was added. Worth doing, not worth doing by accident.
+
 - **A picture as the whole answer needs nothing around it.** Write the image on its
   own and stop -- no leading `\ `, no `\vspace`. Eleven answer files used to carry
   both, and the reason is worth knowing because the symptom comes back looking like
