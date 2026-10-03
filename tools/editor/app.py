@@ -44,7 +44,7 @@ from core.audit.status import (
     shared_file_states,
 )
 from core.builder import reference
-from core.builder.renderer import build_render_context, render_twice
+from core.builder.renderer import build_render_context, render_to_fixpoint
 from core.builder.jinja import MarkdownJinjaRenderer
 from core.i18n import languages as LOCALES
 
@@ -556,7 +556,7 @@ def evaluate_fragment(fragment, context, root):
     renderer = RENDERERS.get(root)
     if renderer is None:
         renderer = RENDERERS[root] = MarkdownJinjaRenderer(root=root)
-    text = render_twice(fragment, context.data, renderer=renderer).strip()
+    text = render_to_fixpoint(fragment, context.data, renderer=renderer).strip()
     if len(text) > EVALUATION_LIMIT:
         text = text[:EVALUATION_LIMIT] + " …"
     return text

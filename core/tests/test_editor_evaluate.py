@@ -151,14 +151,14 @@ class TestFailuresAreTheAnswerToo:
 class TestItAgreesWithTheRenderer:
     """
     The whole justification for the endpoint existing: it shares `build_render_context` and
-    `render_twice` with the build, so it cannot answer differently. Asserted rather than assumed,
+    `render_to_fixpoint` with the build, so it cannot answer differently. Asserted rather than assumed,
     because "they share a function" stops being true the moment somebody inlines one of them.
     """
 
     FRAGMENTS = ['(§ eq.snell|inl §)', '(§ result_approx|ef2 §)', '(§ eq.result|disp(".") §)']
 
     def test_it_matches_what_the_renderer_would_write(self, ask):
-        from core.builder.renderer import build_render_context, render_twice
+        from core.builder.renderer import build_render_context, render_to_fixpoint
         from core.builder.jinja import MarkdownJinjaRenderer
         from modules.naboj.builder.renderer import CLIInterface
 
@@ -170,5 +170,5 @@ class TestItAgreesWithTheRenderer:
 
         got = ask(self.FRAGMENTS)['results']
         for fragment, result in zip(self.FRAGMENTS, got):
-            assert result['text'] == render_twice(fragment, context.data,
+            assert result['text'] == render_to_fixpoint(fragment, context.data,
                                                   renderer=renderer).strip()

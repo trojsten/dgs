@@ -91,21 +91,46 @@ def settle_display_tags(template: str) -> str:
     return '\n'.join(settle(line) for line in template.split('\n'))
 
 
-def render_twice(template: str, context: dict, *, renderer: MarkdownJinjaRenderer) -> str:
-    """
-    A render is two passes with the display tags settled before each.
+#: How many times a render may feed its own output back in before it is called a loop. Nothing
+#: in the sources needs more than three, and the bound is here so that a value holding its own
+#: tag fails by name instead of spinning. Eight is a round number well clear of anything real.
+MAX_RENDER_PASSES = 8
 
-    Both halves matter and neither is obvious, so they live here rather than being written out
-    wherever something renders. The second pass is what expands a tag that came *out* of an
-    `eq:` or a `blocks:` entry on the first; `settle_display_tags` runs before each rather than
+
+def render_to_fixpoint(template: str, context: dict, *,
+                       renderer: MarkdownJinjaRenderer, where: str = '<template>') -> str:
+    """
+    Render with the display tags settled, and keep rendering until the output stops changing.
+
+    **Always at least twice**, because a tag that came *out* of an `eq:` or a `blocks:` entry only
+    exists in the first pass's output; `settle_display_tags` runs before each pass rather than
     once, because such a value can itself hold a display tag and it only arrives in the
     intermediate.
+
+    **And then as often as it takes**, which is the part that used to be fixed at two. A value can
+    hold a tag that resolves to a value that holds a tag: `symbol: '\\rho_{(§ words.twin §)}'`
+    reached through `(§ x.s §)` *inside* an `eq:` entry is three deep, so the second pass produced
+    the word's tag and nothing expanded it -- the literal `(§ words.twin §)` reached the page.
+    `21/pool-jump` is the one that needs it: its density's symbol carries the word, and its two
+    `eq:` entries ask the quantity for the symbol rather than spelling it out beside the value --
+    which is the rule everywhere else and which, within two passes, could not be followed here.
+
+    It costs nothing where nothing is nested. The loop stops when a pass changes nothing, and a
+    pass over output with no tags left in it changes nothing, so an ordinary file still renders
+    exactly twice -- the second pass is the one that proves it is done.
 
     `tools/editor` renders one fragment at a time to show what it evaluates to, and has to do it
     exactly this way or the popup would disagree with the build over anything nested.
     """
-    intermediate = renderer.render(settle_display_tags(template), context)
-    return renderer.render(settle_display_tags(intermediate), context)
+    text = renderer.render(settle_display_tags(template), context)
+    for _ in range(MAX_RENDER_PASSES - 1):
+        rendered = renderer.render(settle_display_tags(text), context)
+        if rendered == text:
+            return rendered
+        text = rendered
+    raise RecursionError(
+        f"{where}: still changing after {MAX_RENDER_PASSES} passes -- a value probably holds a "
+        f"tag that resolves to itself")
 
 
 class JinjaConvertor:
@@ -134,6 +159,8 @@ class JinjaConvertor:
         # Where `include()` looks. The template's own directory, so a solution names the file
         # sitting beside it and nothing depends on where `make` was invoked from.
         self.root: Path = Path(template_file.name).parent
+        # only so that a render that will not settle can say which file it was
+        self.template_name: str = template_file.name
 
         if debug:
             log.debug(f"{c.debug('Template to render into')}:")
@@ -160,7 +187,8 @@ class JinjaConvertor:
         return PictureJinjaRenderer if path.suffix in PICTURE_SUFFIXES else MarkdownJinjaRenderer
 
     def run(self):
-        return render_twice(self.template, self.context.data, renderer=self.renderer)
+        return render_to_fixpoint(self.template, self.context.data,
+                                  renderer=self.renderer, where=self.template_name)
 
 
 class NameCollisionError(Exception):

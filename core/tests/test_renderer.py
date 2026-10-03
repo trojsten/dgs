@@ -703,3 +703,78 @@ class TestTheContentSchema:
         """
         for key in ('values', 'derived', 'eq', 'blocks', 'words'):
             self.accepts({key: {}})
+
+
+class TestRenderSettles:
+    r"""
+    A render keeps going until its output stops changing, instead of stopping at two passes.
+
+    Two was enough for everything the sources did until `symbol:` learned to carry a `words:`
+    tag. Then `(§ x.s §)` *inside* an `eq:` entry is three deep -- the entry arrives in the first
+    pass's output, `.s` resolves in the second and leaves the word's tag behind, and there was no
+    third pass to expand it. The literal `(§ words.twin §)` reached the page, in maths, where it
+    is a row of backslashes rather than an error.
+    """
+
+    render = staticmethod(TestTranslatedWords.render)
+
+    META = (
+        "authors:\n  idea: []\n  problem: []\n  solution: []\n"
+        "tags: ['kinematics']\n"
+        "words:\n  twin:\n    sk: 's'\n    en: 't'\n"
+        "values:\n"
+        "  rho:\n    magnitude: 200\n    unit: 'kg / m**3'\n"
+        "    symbol: '\\rho_{(§ words.twin §)}'\n"
+        "eq:\n  E: 'E = V g x (§ rho.s §)'\n"
+    )
+
+    # ------------------------------------------------- it settles where two passes did not
+
+    @pytest.mark.parametrize('locale, letter', [('sk', 's'), ('en', 't')])
+    def test_a_symbol_reached_through_an_eq_entry(self, tmp_path, locale, letter):
+        """Three deep: the entry, then `.s`, then the word inside the symbol."""
+        out = self.render(tmp_path, locale, self.META, "teda (§ eq.E|disp('.') §)\n")
+        assert f'\\rho_{{{letter}}}' in out
+        assert '(§' not in out
+
+    @pytest.mark.parametrize('locale, letter', [('sk', 's'), ('en', 't')])
+    def test_the_same_symbol_written_straight_into_the_prose(self, tmp_path, locale, letter):
+        """Two deep, which always worked, and must keep working."""
+        out = self.render(tmp_path, locale, self.META, 'hustota $(§ rho.s §)$\n')
+        assert f'$\\rho_{{{letter}}}$' in out
+
+    # ------------------------------------------------- and it does not spin
+
+    def test_a_tag_that_resolves_to_itself_is_refused(self, tmp_path):
+        """
+        A loop has to fail by name rather than hang. `blocks:` comes back verbatim and the next
+        pass expands what is in it, so a block holding its own tag never settles.
+        """
+        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                "tags: ['kinematics']\n"
+                "blocks:\n  grow: 'x (§ blocks.grow §)'\n")
+        with pytest.raises(RecursionError, match='still changing'):
+            self.render(tmp_path, 'sk', meta, '(§ blocks.grow §)\n')
+
+    # ------------------------------------------------- and it costs nothing where nothing nests
+
+    def test_an_ordinary_file_still_renders_exactly_twice(self, tmp_path):
+        """
+        The loop stops on the first pass that changes nothing, and a pass over output with no
+        tags left changes nothing -- so the common case is the two passes it always was, and the
+        extra passes are paid for only by the files that need them.
+        """
+        from core.builder.jinja import MarkdownJinjaRenderer
+        from core.builder.renderer import render_to_fixpoint
+
+        renderer = MarkdownJinjaRenderer(root=tmp_path)
+        passes = []
+        original = renderer.render
+
+        def counting(text, context):
+            passes.append(text)
+            return original(text, context)
+
+        renderer.render = counting
+        render_to_fixpoint('a value: (§ x §)\n', {'x': 3}, renderer=renderer)
+        assert len(passes) == 2
