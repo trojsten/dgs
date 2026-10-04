@@ -515,6 +515,41 @@ build/naboj/%/html: \
 	      $$(subst source/,build/,$$(problem))/$$(notdir $$*)/$$(file).html)))
 	@mkdir -p $(@D) && touch $@
 
+# A **page**: one problem in one language, assembled from its fragments with its pictures
+# copied in beside it and its maths typeset, so the directory opens from `file://` with
+# nothing else present.
+#
+# This is what goes in `output/`. A fragment is an intermediate -- it is to a page what a
+# `.tex` is to a PDF, and opening one shows prose with `\(…\)` spelled out and broken image
+# links -- so fragments stay in `build/` and everything under `output/` is a thing you can
+# open.
+#
+# **`.PRECIOUS`, and it is load-bearing.** A page whose picture is missing is still written,
+# with a red box where the drawing belongs, and `page.py` then exits nonzero -- the box is not
+# the safety net, the nonzero exit is. Without this make deletes the target of a failed recipe
+# and the page you were meant to look at to find the hole is gone.
+# % <competition>/<volume>/problems/<problem>/<language>
+.PRECIOUS: output/naboj/%/index.html
+output/naboj/%/index.html: \
+	$$(foreach file,problem problem-extra solution answer answer-extra answer-also answer-interval,\
+	  $$(if $$(wildcard source/naboj/$$(dir $$*)$$(notdir $$*)/$$(file).md)$$(wildcard source/naboj/$$(dir $$*)$$(file).md),\
+	    build/naboj/$$(dir $$*)$$(notdir $$*)/$$(file).html)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$(dir $$*)*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$(dir $$*)*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$(dir $$*)*.$$(extension))))) \
+	build/core/i18n.stamp
+	@echo -e '$(c_action)[page] Assembling $(c_filename)build/naboj/$(dir $*)$(c_action) into $(c_extension)HTML$(c_action) page $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(@D)
+	python -m core.html.page build/naboj/$(dir $*) $(notdir $*) $(@D) --module naboj
+
+# Every page of a volume, in one language.
+# % <competition>/<volume>/languages/<language>
+output/naboj/%/pages: \
+	$$(foreach problem,$$(wildcard $$(call truepath, source/naboj/$$*/../../problems/*)),\
+	  $$(subst source/,output/,$$(problem))/$$(notdir $$*)/index.html) ;
+
 # All targets for <language>
 # <competition>/<volume>/languages/<language>
 output/naboj/%: \

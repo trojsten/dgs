@@ -264,6 +264,38 @@ build/seminar/%/html-solutions: \
 	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md)))
 	@mkdir -p $(@D) && touch $@
 
+# A **page**: one problem assembled from its fragments, with its pictures copied in beside it
+# and its maths typeset, so the directory opens from `file://` with nothing else present.
+#
+# This is what goes in `output/`. A fragment is an intermediate -- it is to a page what a
+# `.tex` is to a PDF, and opening one shows prose with `\(…\)` spelled out and broken image
+# links -- so fragments stay in `build/` and everything under `output/` is a thing you can
+# open. They used to land in `output/` and that is exactly how one got opened.
+#
+# **`.PRECIOUS`, and it is load-bearing.** A page whose picture is missing is still written,
+# with a red box where the drawing belongs, and `page.py` then exits nonzero -- the box is not
+# the safety net, the nonzero exit is. Without this make deletes the target of a failed recipe
+# and the page you were meant to look at to find the hole is gone.
+# % <competition>/<semester>/<round>/<problem>, e.g. FKS/42/1/1/01
+.PRECIOUS: output/seminar/%/index.html
+output/seminar/%/index.html: \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/problem.md))) \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/solution.md))) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/seminar/$$*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@echo -e '$(c_action)[page] Assembling $(c_filename)build/seminar/$*$(c_action) into $(c_extension)HTML$(c_action) page $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(@D)
+	python -m core.html.page build/seminar/$* $(lang) $(@D) --module seminar
+
+# Every page of a round. % <competition>/<semester>/<round>, e.g. FKS/42/1/1
+output/seminar/%/pages: \
+	$$(foreach problem,$$(wildcard source/seminar/$$*/*/meta.yaml),\
+	  $$(subst source/,output/,$$(subst /meta.yaml,/index.html,$$(problem)))) ;
+
 output/seminar/%/pdf: \
 	output/seminar/$$*/problems.pdf \
 	output/seminar/$$*/solutions.pdf ;
