@@ -27,6 +27,10 @@ class ContextCompetition(ContextNaboj):
             'address': String,
         },
         'url': String,
+        # Who the colophon names after the copyright sign. It was written into
+        # `blocks/colophon.jtex` as "Náboj Physics international team", which is true of one
+        # competition and of no other -- chem's booklets claimed it too.
+        'rights_holder': String,
         'hacks': dict,
     })
 
