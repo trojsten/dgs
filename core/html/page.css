@@ -29,6 +29,9 @@ html, body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
+    /* a figure may be as wide as the window, and `100vw` counts the scrollbar; `clip` rather
+       than `hidden`, which would make the body a scroll container of its own */
+    overflow-x: clip;
 }
 
 body {
@@ -59,29 +62,53 @@ a {
     color: var(--accent);
 }
 
-/* A picture: the LaTeX `height=40mm` has become a ceiling, so a wide drawing shrinks to the
-   column on a phone rather than overflowing it. */
+/*
+ * A picture, which may be wider than the measure.
+ *
+ * The booklet clamps a drawing to `\linewidth` because a page has an edge; a page that
+ * scrolls has not, so `core/html/page.py` gives the picture the width its authored height
+ * implies and this centres it on the **window** rather than on the text column --
+ * `29/chopper` is 4:1 and asks for 60mm of height, which is 240mm of width against the 180mm
+ * the booklet can give it.
+ *
+ * `left: 50%` with `translateX(-50%)` and no auto margins: the element is laid out at the
+ * container's left edge and then centred on it, which is centred on the window too, because
+ * `main` is. Auto margins would centre it first and the shift would then push it off-centre.
+ *
+ * The breakout is on the **figure** and on a lone picture in a paragraph, never on an `<img>`
+ * inside a figure -- that would shift it twice, once with its figure and once within it.
+ */
+/* No `max-width: 100%` here: it is the containing block that a breakout picture has to get
+   past, and `page.py` already bounds every picture by the window. */
 img {
     display: block;
-    margin: 1.2rem auto;
-    max-width: 100%;
-    height: auto;
 }
 
-/* A reaction scheme rendered by LaTeX. It is a drawing of text, so it needs room to breathe and
-   must not be stretched. */
-img.chemistry {
-    margin: 1.5rem auto;
+figure,
+p > img:only-child {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 1.5rem 0;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) img.chemistry {
-        /* the fallback SVGs are black ink on nothing; invert rather than ship two renderings */
-        filter: invert(0.92) hue-rotate(180deg);
-    }
-}
-
+/* `max-content`, not `fit-content`: the latter is capped by the container, which is the one
+   thing a breakout has to get past. The figure is then as wide as its picture, so the shift
+   centres the picture and the caption lands centred under it rather than across a
+   full-width block. */
 figure {
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+}
+
+figure > img {
+    margin: 0;
+    max-width: 100%;
+}
+
+/* A reaction scheme set by LaTeX. It is a drawing of text, so it needs room to breathe, and it
+   is inline SVG taking `currentColor` -- no filter, and nothing to invert for dark mode. */
+.chemistry {
     margin: 1.5rem 0;
 }
 

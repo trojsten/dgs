@@ -33,6 +33,10 @@ RE_IMG_WHOLE = re.compile(r'<img(?P<before>[^>]*?)\ssrc="(?P<src>[^"]*)"(?P<afte
 RE_STYLE = re.compile(r'\sstyle="(?P<style>[^"]*)"')
 
 
+#: How much of the window a picture may never take, so it cannot push the page sideways.
+#: `100vw` counts the scrollbar in every engine, which is most of this gutter's job.
+GUTTER = 'calc(100vw - 2rem)'
+
 #: `width:40mm` / `height:60mm` as pandoc writes them from `{height=60mm}`.
 RE_LENGTH = re.compile(r'\b(?P<axis>width|height)\s*:\s*(?P<value>[0-9.]+)mm')
 #: The opening `<svg …>`, whose `width`/`height`/`viewBox` give the drawing's proportions.
@@ -99,17 +103,23 @@ def size(style: str, picture: pathlib.Path) -> str:
     r"""
     The authored print size, as a web page can honour it.
 
-    `{height=60mm}` is a height, and LaTeX sets it as one. The web cannot: a page has no known
-    width, so a height alone on a 4:1 drawing asks for 240mm of it. Saying it as a **width**
-    fixes both ends at once -- `width: min(100%, 240mm)` is the printed size wherever there is
-    room for it and shrinks *proportionally* where there is not, with `height: auto` keeping
-    the shape. The picture's own proportions are what convert one into the other, which is why
-    this happens here, with the file in hand, and not in the convertor.
+    `{height=30mm}` is a height, and LaTeX is told `width=\linewidth, height=30mm,
+    keepaspectratio` -- fit the measure, be at most 30mm tall. A web page cannot be told a
+    bare height either: on a 4:1 drawing 30mm of height asks for 46.5mm of a page whose width
+    nobody knows. Said as a **width** it says both at once, and the picture's own proportions
+    are what convert the one into the other -- which is why this happens here, with the file
+    in hand, and not in the convertor.
 
-    It used to be `max-height: 60mm; height: auto`, a ceiling rather than a size. That is why
-    every drawing was too small: a ceiling only ever binds when the picture is *larger* than
-    asked for, and an SVG's intrinsic size is whatever its producer wrote -- `29/chopper` is
-    432x108pt, so it showed at 38mm where the booklet prints 60.
+    **The limit is the window, not the measure.** The booklet clamps a drawing to `\linewidth`
+    because a page has an edge; a page that scrolls has not, so the authored height is honoured
+    and a wide drawing is let past the text column -- `29/chopper` is 4:1 and asks for 60mm of
+    height, which is 240mm of width, more than the 180mm the booklet can give it. The
+    stylesheet centres such a picture on the window; this only says how wide it may be.
+
+    It used to be `max-height: 30mm; height: auto`, a ceiling rather than a size, and that is
+    why every drawing was too small: a ceiling only ever binds when the picture is *larger*
+    than asked for, and an SVG's intrinsic size is whatever its producer wrote -- `29/chopper`
+    is 432x108pt, so it showed 38mm tall.
     """
     lengths = {m['axis']: float(m['value']) for m in RE_LENGTH.finditer(style)}
     width = lengths.get('width')
@@ -118,10 +128,10 @@ def size(style: str, picture: pathlib.Path) -> str:
         if ratio:
             width = lengths['height'] * ratio
     if width is None:
-        # no height we can convert: fall back to the ceiling, which is at least never too wide
-        ceiling = (f'max-height: {lengths["height"]:g}mm; ' if 'height' in lengths else '')
-        return f'max-width: 100%; {ceiling}height: auto'
-    return f'width: min(100%, {width:.1f}mm); height: auto'
+        # no width we can compute: a ceiling is at least never wrong, only sometimes small
+        ceiling = f'max-height: {lengths["height"]:g}mm; ' if 'height' in lengths else ''
+        return f'max-width: {GUTTER}; {ceiling}height: auto'
+    return f'width: min({width:.1f}mm, {GUTTER}); height: auto'
 
 
 class MissingPictures(FileNotFoundError):

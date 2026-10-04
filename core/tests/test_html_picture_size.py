@@ -3,15 +3,15 @@ The printed size of a picture, as a web page can honour it.
 
 `{height=30mm}` is a height, and pandoc gives LaTeX
 `\includegraphics[width=\linewidth, height=30mm, keepaspectratio]` -- *fit the measure, and be
-at most 30mm tall*. The web has no `\linewidth` and cannot be told a bare height either: on a
-4:1 drawing a 60mm height asks for 240mm of a page whose width nobody knows.
+at most 30mm tall*. A web page cannot be told a bare height: on a 4:1 drawing a 60mm height
+asks for 240mm of a page whose width nobody knows. Said as a **width** it says both at once,
+and the picture's own proportions are what convert the one into the other -- which is why this
+lives beside the file and not in the convertor.
 
-Saying it as a **width** says both at once. `width: min(100%, 46.5mm); height: auto` is the
-same sentence, with `100%` where `\linewidth` was -- the printed size wherever there is room
-and a proportional shrink where there is not.
-
-Converting one into the other needs the picture's own proportions, which is why this lives
-beside the file and not in the convertor.
+**What bounds it is the window, not the measure.** The booklet clamps a drawing to
+`\linewidth` because a page has an edge; a page that scrolls has not, so the authored height
+is honoured and a wide drawing is let past the text column. `29/chopper` is 60mm tall on the
+web and 45mm in the booklet, which cannot give 240mm of width to a 180mm column.
 """
 import pathlib
 import struct
@@ -75,19 +75,20 @@ class TestSize:
 
     def test_a_height_becomes_the_width_it_implies(self, wide):
         """`height=60mm` on a 4:1 drawing is 240mm of width, which is what LaTeX sets too."""
-        assert page.size('height:60mm', wide) == 'width: min(100%, 240.0mm); height: auto'
+        assert page.size('height:60mm', wide) == \
+            'width: min(240.0mm, calc(100vw - 2rem)); height: auto'
 
-    def test_it_matches_what_pandoc_tells_latex(self, wide):
+    def test_the_width_is_the_one_the_height_implies(self, wide):
         """
-        `width=\\linewidth, height=30mm, keepaspectratio` is `min(linewidth, 30mm * aspect)`
-        wide. The CSS has to be the same sentence or the booklet and the page disagree.
+        `height=30mm` on a 4:1 drawing is 120mm of width, and that is what LaTeX sets too
+        wherever the column can hold it. Where it cannot, print clamps and the web does not.
         """
-        printed_width = 30.0 * 4.0
-        assert f'min(100%, {printed_width:.1f}mm)' in page.size('height:30mm', wide)
+        assert 'min(120.0mm,' in page.size('height:30mm', wide)
 
     def test_an_authored_width_is_taken_as_it_stands(self, wide):
         """The quiet case: nothing to convert, so the aspect ratio is not consulted at all."""
-        assert page.size('width:80mm', wide) == 'width: min(100%, 80.0mm); height: auto'
+        assert page.size('width:80mm', wide) == \
+            'width: min(80.0mm, calc(100vw - 2rem)); height: auto'
 
     def test_an_unreadable_picture_falls_back_to_a_ceiling(self, tmp_path):
         """
@@ -96,8 +97,9 @@ class TestSize:
         """
         picture = tmp_path / 'p.webp'
         picture.write_bytes(b'RIFF....WEBP')
-        assert page.size('height:30mm', picture) == 'max-width: 100%; max-height: 30mm; height: auto'
+        assert page.size('height:30mm', picture) == \
+            'max-width: calc(100vw - 2rem); max-height: 30mm; height: auto'
 
     def test_no_size_at_all_is_still_bounded(self, wide):
         """LaTeX refuses an unsized picture outright; the web at least must not overflow."""
-        assert page.size('', wide) == 'max-width: 100%; height: auto'
+        assert page.size('', wide) == 'max-width: calc(100vw - 2rem); height: auto'
