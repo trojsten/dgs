@@ -289,12 +289,27 @@ output/%.jpg: source/%.jpg
 	$(call _copy,JPG)
 
 # DeGeŠ convert Markdown to HTML (for web)
-output/%.html: source/%.md
-	$(call pandochtml,sk)
+#
+# **From `render/`, never from `source/`** -- the same input the TeX is built from. This read
+# `source/` until now, which skipped the Jinja pass entirely: every `(§ … §)` reached the page as
+# itself. A solution that includes a program published the literal line
+# `(§ include('winter_is_coming.py') §)`, syntax-highlighted as Python, where the program belonged
+# -- the same failure `pandoc-include` used to produce, in the one branch of the build that had
+# never been moved onto the renderer.
+#
+# It stayed hidden because the web is built from seminar, and only 7 of its sources carry a tag.
+# `output/naboj/%/html` wildcards 4016 that do, and `publish` rsyncs the result to `public_html`.
+#
+# `pathlang` rather than a hardcoded `sk`, for the reason the picture rules use it: a naboj source
+# lives under its language, so the tag has to be formatted in that language -- otherwise a Slovak
+# page gets an English decimal point. Seminar has no language in its path and falls back to
+# `$(lang)`, which is what the `sk` here used to mean.
+output/%.html: render/%.md
+	$(call pandochtml,$(call pathlang,$*))
 
 # DeGeŠ convert Markdown to HTML (for web)
-#output/%.html: source/%.md
-#	$(call pandochtml,sk)
+#output/%.html: render/%.md
+#	$(call pandochtml,$(call pathlang,$*))
 #	./wr -input $@ -template core/latex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
 #	mv $@.conv $@
 
