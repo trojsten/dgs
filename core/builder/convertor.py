@@ -1,5 +1,6 @@
 import re
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable
 from tempfile import SpooledTemporaryFile
@@ -322,9 +323,27 @@ class Convertor:
             # `--math-method`, not the `--mathjax` flag, which pandoc 3 deprecates with a warning
             # on every single file. The URL is empty on purpose: a fragment carries no loader, and
             # the page template that assembles fragments is what points at the vendored MathJax.
-            args += ["--math-method=mathjax"]
+            #
+            # siunitx is rewritten into plain maths here and nowhere else, because MathJax has no
+            # siunitx extension -- none exists -- and the sources make some 9200 calls inside
+            # maths. The filter is over `Math` nodes, so a `\qty` in a code block or a URL is a
+            # different node type and it cannot reach them.
+            args += [
+                "--math-method=mathjax",
+                "--lua-filter", "./core/filters/siunitx.lua",
+            ]
 
-        subprocess.run(args, stdin=self.file, stdout=out, check=True)
+        # `check=True` alone raises `returned non-zero exit status 83` and nothing else, so a
+        # filter that stopped the build on purpose -- `siunitx.lua` naming a unit it has no
+        # symbol for, say -- loses the one sentence that says what to do about it. Capture
+        # stderr and put it in the exception.
+        completed = subprocess.run(args, stdin=self.file, stdout=out, stderr=subprocess.PIPE,
+                                   text=True)
+        if completed.returncode != 0:
+            raise RuntimeError(f"pandoc failed on {getattr(self.infile, 'name', '<stdin>')}:\n"
+                               f"{completed.stderr.strip()}")
+        if completed.stderr.strip():
+            print(completed.stderr, end='', file=sys.stderr)
 
         out.seek(0)
         return out
