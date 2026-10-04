@@ -6,26 +6,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>(* title *)</title>
-<link rel="stylesheet" href="(* root *)/core/html/page.css">
+<style>(* css *)</style>
 <script>
     // Expansion happens in `core/filters/macros.lua` and `core/filters/siunitx.lua`, before the
     // page is written, so there is no macro table here: what reaches MathJax is plain LaTeX.
     // That is deliberate -- it is also what KaTeX or a MathML renderer would be handed.
     window.MathJax = {
-        // `loader.load`, not only `tex.packages`: naming a package tells MathJax to *use* it,
-        // loading it is what makes it present. mhchem is 1157 `\ce` calls in chem alone, and
-        // without this line every one of them reaches the page as red unrendered source.
         tex: {
             packages: {'[+]': ['mhchem']},
             inlineMath: [['\\(', '\\)']],
             displayMath: [['\\[', '\\]']],
         },
         svg: {fontCache: 'global'},
-        loader: {load: ['[tex]/mhchem'], font: 'mathjax-pagella'},
+        loader: {
+            // `loader.load`, not only `tex.packages`: naming a package tells MathJax to *use*
+            // it, loading it is what makes it present. mhchem is 1157 `\ce` calls in chem
+            // alone, and without this line every one reaches the page as unrendered source.
+            load: ['[tex]/mhchem'],
+            // where to find mhchem and the glyph chunks, beside the page rather than on a CDN
+            paths: {mathjax: '(* mathjax *)/mathjax'},
+        },
         options: {enableMenu: false},
     };
 </script>
-<script defer src="(* root *)/core/html/vendor/mathjax/tex-svg.js"></script>
+<script defer src="(* mathjax *)/mathjax/tex-mml-svg-mathjax-pagella.js"></script>
 </head>
 <body>
 <main>
