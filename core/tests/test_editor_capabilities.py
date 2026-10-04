@@ -182,3 +182,41 @@ class TestDescribeSourceExplainsAnEmptyClone:
         if not (ROOT / 'source').is_dir():
             pytest.skip('no source/ here; this is how it looks inside the image')
         assert describe_source(ROOT)['empty'] is False
+
+
+class TestTheHtmlTargetIsDerived:
+    """
+    `html` is derived the same way `tex` is, and for a stronger reason: there is exactly one
+    `output/%.html: render/%.md` in the root Makefile, shared by every module, so a per-module key
+    could only ever drift from it.
+    """
+
+    def test_it_swaps_the_prefix_and_the_extension(self):
+        kind = UnitKind(glob='*', render='render/naboj/{unit}/{language}/{target}.md')
+        assert kind.html == 'output/naboj/{unit}/{language}/{target}.html'
+
+    def test_a_module_with_no_render_rule_has_no_html_rule(self):
+        assert UnitKind(glob='*').html == ''
+
+    def test_something_that_is_not_a_render_target_is_refused(self):
+        """The quiet half: better no HTML tab than a target make has no rule for."""
+        assert UnitKind(glob='*', render='output/naboj/{unit}.pdf').html == ''
+
+    def test_the_tex_override_does_not_leak_into_it(self):
+        """
+        `tex_override` exists for a module whose `.tex` rule is not the usual one. The HTML rule
+        is the root Makefile's for everybody, so an override of the TeX target must not silently
+        redirect it.
+        """
+        kind = UnitKind(glob='*', render='render/x/{target}.md', tex_override='build/odd.tex')
+        assert kind.html == 'output/x/{target}.html'
+
+    @pytest.mark.parametrize('descriptor', sorted(ROOT.glob('modules/*/editor.yaml')))
+    def test_every_real_descriptor_yields_an_output_path(self, descriptor):
+        """Every module that renders Markdown can show its web fragment."""
+        import yaml
+        spec = yaml.safe_load(descriptor.read_text()) or {}
+        for entry in spec.get('units') or []:
+            kind = UnitKind(glob=entry['glob'], render=entry.get('render', ''))
+            if kind.render:
+                assert kind.html.startswith('output/') and kind.html.endswith('.html')

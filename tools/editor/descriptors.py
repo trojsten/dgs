@@ -48,6 +48,19 @@ class UnitKind:
         return "build/" + self.render[len("render/"):-len(".md")] + ".tex"
 
     @property
+    def html(self):
+        """
+        The make target that converts this file to an HTML fragment.
+
+        Derived from `render` exactly as `tex` is, and for the same reason: the root Makefile has
+        one `output/%.html: render/%.md` for every module, so the relation belongs to the build
+        system and a hand-written key per module could only drift from it.
+        """
+        if not self.render.startswith("render/") or not self.render.endswith(".md"):
+            return ""
+        return "output/" + self.render[len("render/"):-len(".md")] + ".html"
+
+    @property
     def fixed_levels(self):
         """
         Depths the glob pins to a literal, like Náboj's `problems/`. Those are not a choice and

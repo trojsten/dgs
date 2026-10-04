@@ -215,6 +215,20 @@ class Unit:
         target = self.tex_target(target)
         return REPO_ROOT / target if target else None
 
+    def html_target(self, target):
+        """
+        The make target that converts this file to an HTML fragment, or None when there is not
+        one. Auxiliary files are excluded for the reason `tex_target` excludes them: a `.gp`
+        becomes a figure, never a page.
+        """
+        if self.is_aux(target) or not self.kind.html:
+            return None
+        return self._format(self.kind.html).format(target=target)
+
+    def html_path(self, target):
+        target = self.html_target(target)
+        return REPO_ROOT / target if target else None
+
     def preview_target(self):
         if not self.kind.preview:
             return None
@@ -540,6 +554,47 @@ def api_tex():
     return jsonify(response)
 
 
+@app.post("/api/html")
+def api_html():
+    """
+    The HTML fragment pandoc produces for one file -- what the web gets.
+
+    Worth having beside the TeX tab rather than folded into it: the two writers disagree, and
+    where they disagree the web is the half nobody looks at. Maths is the obvious case -- the TeX
+    goes to xelatex while the HTML carries `\\(…\\)` for a browser to typeset -- and a list or a
+    table that pandoc renders differently shows up here and nowhere else.
+
+    Like the TeX target it takes the rendered Markdown as its prerequisite, so one call exercises
+    the Jinja stage too. It needs no `tex` tier: pandoc alone is enough, which is the whole point
+    of the fragment and is why a machine with no TeX stack can still check the web output.
+    """
+    body = request.get_json(force=True)
+    unit = unit_from_body(body)
+    target = body.get("target")
+    unit.source_path(target)        # validates
+    make_target = unit.html_target(target)
+
+    with BUILD_LOCK:
+        write_files(unit, body.get("files") or {})
+        if make_target is None:
+            response = refusal(
+                "(none)", "no HTML for this file",
+                f"{target} is not converted to HTML -- an auxiliary file becomes a figure, "
+                f"and {unit.module.label} may declare no render rule.\n")
+        elif not capabilities.tier(REPO_ROOT, "markdown").ok:
+            response = tier_refusal("markdown", make_target)
+        else:
+            response = build(unit, make_target)
+        response["html"] = (
+            read_if_exists(unit.html_path(target)) if response["ok"] else None
+        )
+        # Where the fragment lives, so the pane can point a `<base>` at its directory and let the
+        # relative pictures resolve. Named here rather than reconstructed in the front end, which
+        # would be a second copy of the path rule.
+        response["html_target"] = make_target
+    return jsonify(response)
+
+
 @app.post("/api/compile")
 def api_compile():
     """Write every buffer, then build whichever document previews this unit."""
@@ -606,6 +661,26 @@ def parse_mdcheck_output(stdout):
         else:
             i += 1
     return violations
+
+
+@app.get("/api/output/<path:relative>")
+def api_output(relative):
+    """
+    One file out of `output/`, so the HTML pane's pictures resolve.
+
+    The fragment references them relatively -- `<img src="x.svg">`, a sibling -- so the iframe is
+    given a `<base>` under this route and the browser asks for them the way the web would. That
+    is the point: a picture that does not resolve here does not resolve on the web either, and
+    the pane should show that rather than hide it.
+
+    Path-checked rather than trusted, the way `aux_path` is: resolved, and required to stay
+    inside `output/`.
+    """
+    root = (REPO_ROOT / "output").resolve()
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise BadRequest(f"No such output file: {relative}")
+    return send_file(path)
 
 
 @app.post("/api/lint")

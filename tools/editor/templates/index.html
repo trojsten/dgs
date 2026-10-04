@@ -49,6 +49,7 @@
              thing, but it now sits at the end of the chain it comes from. -->
         <button class="tab" data-output="rendered" data-tier="markdown">Rendered Markdown</button>
         <button class="tab" data-output="tex" data-tier="tex">TeX</button>
+        <button class="tab" data-output="html" data-tier="markdown">HTML</button>
         <button class="tab active" data-output="pdf" data-tier="pdf">PDF</button>
         <button class="tab" data-output="lint" data-tier="markdown">Lint (advisory)</button>
         <button class="tab" data-output="log">Log</button>
@@ -65,6 +66,13 @@
           <button id="pdf-zoom-fit" title="Fit the width of the pane">fit</button>
         </div>
         <div id="pdf-placeholder" class="placeholder">Nothing compiled yet &mdash; press Ctrl/Cmd+Enter.</div>
+      </div>
+      <!-- The fragment the web gets, rendered rather than listed: a list or a table that pandoc
+           writes differently for HTML shows up here and in no other tab. Sandboxed with no
+           `allow-scripts` -- it is our own pandoc output, but a preview pane has no business
+           running anything, and the base URL lets its relative pictures resolve. -->
+      <div id="output-html" class="output-frame" hidden>
+        <iframe id="html-view" title="HTML fragment, as the web gets it"></iframe>
       </div>
       <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
       <pre id="output-tex" class="output" hidden><code id="output-tex-code"></code></pre>

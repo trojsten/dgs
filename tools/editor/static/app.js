@@ -378,8 +378,9 @@ function tierState(output) {
   if (output === "tex" && state.unit && !state.hasTex) {
     return { reason: "this module declares no TeX rule", install: [], label: "TeX" };
   }
-  if ((output === "tex" || output === "lint") && isAux(state.activeTarget)) {
-    return { reason: `${state.activeTarget} is a figure, not prose`, install: [], label: "TeX" };
+  if ((output === "tex" || output === "html" || output === "lint") && isAux(state.activeTarget)) {
+    return { reason: `${state.activeTarget} is a figure, not prose`, install: [],
+             label: output === "html" ? "HTML" : "TeX" };
   }
   return null;
 }
@@ -905,6 +906,7 @@ function switchOutputTab(name) {
   el("output-pdf").hidden = name !== "pdf" || Boolean(blocked);
   el("output-rendered").hidden = name !== "rendered" || Boolean(blocked);
   el("output-tex").hidden = name !== "tex" || Boolean(blocked);
+  el("output-html").hidden = name !== "html" || Boolean(blocked);
   el("output-lint").hidden = name !== "lint" || Boolean(blocked);
   el("output-log").hidden = name !== "log";
   el("output-unavailable").hidden = !blocked || name === "log";
@@ -944,6 +946,46 @@ async function doCompile() {
       if (body.has_pdf) showPdf(state.pdfUrl ?? pdfUrlFor(), { stale: true });
       switchOutputTab("log");
       setStatus(failureStatus(body, "compile"), "error");
+    }
+  } catch (e) {
+    setStatus(e.message, "error");
+  }
+}
+
+/* The fragment the web gets, shown as a page rather than as markup.
+ *
+ * `srcdoc` with a `<base>` under `/api/output/`, so the relative pictures resolve exactly as they
+ * would on the web -- one that does not load here would not load there either, and the pane
+ * should show that. Sandboxed without `allow-scripts`: it is our own pandoc output, but a preview
+ * has no reason to run anything, and that also keeps MathJax out, so maths shows as the `\(…\)`
+ * the fragment actually carries. */
+async function doHtml() {
+  if (!state.unit || !state.activeTarget) return;
+  if (tierState("html")) { switchOutputTab("html"); return; }
+  setStatus("Converting…", "dirty");
+  try {
+    const body = await post("/api/html", { target: state.activeTarget });
+    setLog(logOf(body));
+    markSaved();
+
+    const frame = el("html-view");
+    switchOutputTab("html");
+    if (body.ok) {
+      const base = `/api/output/${(body.html_target ?? "").replace(/^output\//, "")}`
+        .replace(/[^/]*$/, "");
+      frame.srcdoc =
+        `<!doctype html><html><head><meta charset="utf-8">` +
+        `<base href="${base}">` +
+        `<style>body{font:16px/1.5 system-ui,sans-serif;margin:1.25rem;color:#111}` +
+        `img{max-width:100%}</style></head><body>${body.html ?? ""}</body></html>`;
+      setStatus("HTML OK", "ok");
+    } else {
+      frame.srcdoc =
+        `<!doctype html><html><head><meta charset="utf-8">` +
+        `<style>body{font:13px/1.5 ui-monospace,monospace;margin:1rem;color:#a00;white-space:pre-wrap}` +
+        `</style></head><body></body></html>`;
+      frame.srcdoc = frame.srcdoc.replace("</body>", escapeForHtml(logOf(body)) + "</body>");
+      setStatus(failureStatus(body, "convert"), "error");
     }
   } catch (e) {
     setStatus(e.message, "error");
@@ -1129,6 +1171,7 @@ function init() {
     t.addEventListener("click", () => {
       // TeX is built on demand like the PDF, not fetched like a file already on disk.
       if (t.dataset.output === "tex" && !tierState("tex")) doTex();
+      else if (t.dataset.output === "html" && !tierState("html")) doHtml();
       else switchOutputTab(t.dataset.output);
     });
   });
