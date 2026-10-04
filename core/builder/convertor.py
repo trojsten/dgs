@@ -44,14 +44,14 @@ class Convertor:
             RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
         ],
         'html': [
-            # Prepend "obrazky/"
-            RegexReplacement(
-                r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"',
-                r'<img src="obrazky/\g<filename>.\g<extension>"',
-            ),
+            # A picture is referenced where it actually is: beside the file that references it.
+            # This used to prepend `obrazky/`, a directory the build has never produced, so every
+            # image in every fragment was a broken link -- in seminar too, which is what the web
+            # actually ships. The `.gp` line stays, because a gnuplot script becomes a `.png` and
+            # the reference has to follow it.
             RegexReplacement(
                 r'<img src="(?P<filename>.*)\.gp"',
-                r'<img src="obrazky/\g<filename>.png"',
+                r'<img src="\g<filename>.png"',
             ),
             # alter picture heights
             RegexReplacement(
@@ -87,8 +87,6 @@ class Convertor:
     post_checks = {
         'all': [],
         'html': [
-            # This is just a temporary workaround for Trojstenweb's inane choice of paths
-            RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
             RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
