@@ -149,11 +149,12 @@ class MissingPictures(FileNotFoundError):
     """
     Pictures a page names and has not got. Carries the page, which **was still written**.
 
-    The same shape as the renderer's missing-word registry, for the same reason: one absent
-    drawing should not cost you the other six problems of the round, and whoever is fixing it
-    wants the whole page with the holes marked. So the gap is boxed in place, every one is
-    collected, the page is written, and only then does the build go red -- the box is not the
-    safety net, the nonzero exit is.
+    Raised rather than returned because the source really is wrong and a caller that does
+    nothing about it should not get away with it silently. What `main` does about it is warn:
+    the gap is boxed where the drawing belongs, the page is written, and the build stays
+    green. An absent drawing is not a missing word -- a word goes wrong in one language and
+    nowhere else, while a hole in a figure is visible to anyone who opens the page -- and
+    failing would cost a whole round its pages for one hole in one problem.
     """
 
     def __init__(self, page: pathlib.Path, missing: list[str]):
@@ -298,10 +299,13 @@ def main() -> int:
         print(build(args.problem, args.lang, args.destination,
                     title=args.title, engine=args.maths, module=args.module))
     except MissingPictures as gap:
-        # the page is written and carries a box per hole; the build still goes red
+        # The page is written and carries a box per hole, and the build does **not** go red.
+        # Unlike a missing word, which makes a sentence say the wrong thing in one language and
+        # nowhere else, an absent drawing is visible on the page to anyone who opens it -- and
+        # failing here costs the whole round its pages for one hole in one problem.
         print(gap.page)
-        print(f'{len(gap.missing)} picture(s) missing: {", ".join(gap.missing)}', file=sys.stderr)
-        return 1
+        print(f'{gap.page}: {len(gap.missing)} picture(s) missing, boxed on the page: '
+              f'{", ".join(gap.missing)}', file=sys.stderr)
     return 0
 
 

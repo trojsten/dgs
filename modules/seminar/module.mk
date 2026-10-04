@@ -272,12 +272,11 @@ build/seminar/%/html-solutions: \
 # links -- so fragments stay in `build/` and everything under `output/` is a thing you can
 # open. They used to land in `output/` and that is exactly how one got opened.
 #
-# **`.PRECIOUS`, and it is load-bearing.** A page whose picture is missing is still written,
-# with a red box where the drawing belongs, and `page.py` then exits nonzero -- the box is not
-# the safety net, the nonzero exit is. Without this make deletes the target of a failed recipe
-# and the page you were meant to look at to find the hole is gone.
+# A page whose picture is missing is still written, with a red box where the drawing belongs,
+# and the build stays green: an absent drawing is visible to anyone who opens the page, and
+# failing would cost a whole round its pages for one hole in one problem. `page.py` says which
+# pictures are missing on stderr.
 # % <competition>/<semester>/<round>/<problem>, e.g. FKS/42/1/1/01
-.PRECIOUS: output/seminar/%/index.html
 output/seminar/%/index.html: \
 	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/problem.md))) \
 	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/solution.md))) \

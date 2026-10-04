@@ -130,9 +130,10 @@ class TestWhereTheFragmentsAre:
 
 class TestAMissingPictureIsBoxed:
     """
-    The call `\\protectedInput` makes in the booklet: box the hole, keep the rest of the page,
-    and go red separately. One absent drawing should not cost you the other six problems of
-    the round, and whoever is fixing it wants the page with the holes marked.
+    Box the hole, keep the rest of the page, and **do not fail the build**. An absent drawing
+    is not a missing word: a word goes wrong in one language and nowhere else, while a hole in
+    a figure is visible to anyone who opens the page -- and failing would cost a whole round
+    its pages for one hole in one problem.
 
     `FKS/42/1/1/01` is the live case -- its solution names four drawings and the directory
     holds two.
@@ -149,7 +150,6 @@ class TestAMissingPictureIsBoxed:
             page.build(problem, 'sk', tmp_path / 'out', engine='latex', module='seminar')
 
         assert raised.value.missing == ['nikde.svg', 'tiez-nikde.svg']
-        # written anyway -- make needs `.PRECIOUS` for this to survive, and the rules say so
         written = raised.value.page
         assert written.is_file()
         assert body(written).count('dgs-missing') == 2
@@ -168,3 +168,38 @@ class TestAMissingPictureIsBoxed:
         assert 'dgs-missing' not in body(out)
         assert (tmp_path / 'out' / 'tam.svg').is_file()
         assert 'src="tam.svg"' in body(out)
+
+
+class TestTheBuildStaysGreen:
+    """
+    `make` must not lose a round's pages over one absent drawing. `build` still raises -- the
+    source really is wrong, and a caller that ignores it should not do so silently -- but the
+    command line downgrades it to a warning, which is what the make rules depend on.
+    """
+
+    @needs_latex
+    def test_the_command_warns_and_succeeds(self, tmp_path, capsys, monkeypatch):
+        problem = tmp_path / 'unit'
+        problem.mkdir()
+        (problem / 'problem.html').write_text('<p>Pozri <img src="nikde.svg" alt="" />.</p>')
+        monkeypatch.setattr('sys.argv', ['page', str(problem), 'sk', str(tmp_path / 'out'),
+                                         '--module', 'seminar'])
+
+        assert page.main() == 0
+        printed = capsys.readouterr()
+        assert 'nikde.svg' in printed.err, 'the gap has to be said out loud somewhere'
+        assert (tmp_path / 'out' / 'index.html').is_file()
+
+    @needs_latex
+    def test_a_page_with_every_picture_says_nothing(self, tmp_path, capsys, monkeypatch):
+        """The quiet case: no warning when there is nothing to warn about."""
+        problem = tmp_path / 'unit'
+        problem.mkdir()
+        (problem / 'tam.svg').write_text(
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'></svg>")
+        (problem / 'problem.html').write_text('<p>Pozri <img src="tam.svg" alt="" />.</p>')
+        monkeypatch.setattr('sys.argv', ['page', str(problem), 'sk', str(tmp_path / 'out'),
+                                         '--module', 'seminar'])
+
+        assert page.main() == 0
+        assert capsys.readouterr().err == ''

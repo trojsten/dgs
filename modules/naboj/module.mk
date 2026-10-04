@@ -524,12 +524,11 @@ build/naboj/%/html: \
 # links -- so fragments stay in `build/` and everything under `output/` is a thing you can
 # open.
 #
-# **`.PRECIOUS`, and it is load-bearing.** A page whose picture is missing is still written,
-# with a red box where the drawing belongs, and `page.py` then exits nonzero -- the box is not
-# the safety net, the nonzero exit is. Without this make deletes the target of a failed recipe
-# and the page you were meant to look at to find the hole is gone.
+# A page whose picture is missing is still written, with a red box where the drawing belongs,
+# and the build stays green: an absent drawing is visible to anyone who opens the page, and
+# failing would cost a whole round its pages for one hole in one problem. `page.py` says which
+# pictures are missing on stderr.
 # % <competition>/<volume>/problems/<problem>/<language>
-.PRECIOUS: output/naboj/%/index.html
 output/naboj/%/index.html: \
 	$$(foreach file,problem problem-extra solution answer answer-extra answer-also answer-interval,\
 	  $$(if $$(wildcard source/naboj/$$(dir $$*)$$(notdir $$*)/$$(file).md)$$(wildcard source/naboj/$$(dir $$*)$$(file).md),\

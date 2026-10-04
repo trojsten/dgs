@@ -409,14 +409,17 @@ broken maths. Everything under `output/` is now a thing you can open:
     make output/naboj/phys/29/problems/chopper/sk/index.html
     make output/naboj/phys/29/languages/sk/pages      every page of a volume, in one language
 
-**A missing picture is boxed, not fatal.** `page.py` puts a red `Missing picture: …` in its
-place, collects every one, writes the page, and *then* exits nonzero -- `\protectedInput`'s
-call, for the same reason: one absent drawing should not cost you the other six problems of the
-round, and whoever is fixing it wants the page with the holes marked. The box is not the safety
-net; the nonzero exit is. **The make rules are `.PRECIOUS` and that is load-bearing**, because
-make deletes the target of a failed recipe and would otherwise take away the page you were
-about to look at. `FKS/42/1/1/01` is the live case: its solution names four drawings and the
-directory holds two.
+**A missing picture is boxed, and does not fail the build.** `page.py` puts a red
+`Missing picture: …` where the drawing belongs, collects every one, writes the page, names
+them on stderr, and exits 0. `FKS/42/1/1/01` is the live case: its solution names four
+drawings and the directory holds two, and before this it took the whole round's pages down
+with it.
+
+**This is deliberately not the rule for a missing word.** A word goes wrong in one language
+and nowhere else, so nothing but a failed build finds it; a hole in a figure is a red box
+visible to anyone who opens the page. `build()` still raises `MissingPictures` -- the source
+really is wrong, and a caller that ignores it should not do so silently -- and the command
+line is what downgrades it to a warning.
 
 **A gnuplot script may also live in a `blocks:` entry, and one does.** `FKS/42/1/1/03` shares a
 preamble between three plots that way, and that preamble carried a `set terminal pdf` -- which
