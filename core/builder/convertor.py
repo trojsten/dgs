@@ -330,6 +330,10 @@ class Convertor:
             # different node type and it cannot reach them.
             args += [
                 "--math-method=mathjax",
+                # before the other two, so that a fragment on its way to LaTeX keeps its
+                # `\qty` and its `\FDiff`, which LaTeX can set and a rewriting could only spoil
+                "--lua-filter", "./core/filters/texmath.lua",
+                "--lua-filter", "./core/filters/macros.lua",
                 "--lua-filter", "./core/filters/siunitx.lua",
             ]
 

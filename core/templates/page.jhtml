@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+(# One problem, or one round, as a page a browser can open -- from `file://` with the network
+   off, which is why MathJax is vendored under `core/html/vendor/` rather than fetched. #)
+<html lang="(* lang *)">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>(* title *)</title>
+<link rel="stylesheet" href="(* root *)/core/html/page.css">
+<script>
+    // Expansion happens in `core/filters/macros.lua` and `core/filters/siunitx.lua`, before the
+    // page is written, so there is no macro table here: what reaches MathJax is plain LaTeX.
+    // That is deliberate -- it is also what KaTeX or a MathML renderer would be handed.
+    window.MathJax = {
+        // `loader.load`, not only `tex.packages`: naming a package tells MathJax to *use* it,
+        // loading it is what makes it present. mhchem is 1157 `\ce` calls in chem alone, and
+        // without this line every one of them reaches the page as red unrendered source.
+        loader: {load: ['[tex]/mhchem']},
+        tex: {
+            packages: {'[+]': ['mhchem']},
+            inlineMath: [['\\(', '\\)']],
+            displayMath: [['\\[', '\\]']],
+        },
+        svg: {fontCache: 'global'},
+        options: {enableMenu: false},
+    };
+</script>
+<script defer src="(* root *)/core/html/vendor/mathjax/tex-svg.js"></script>
+</head>
+<body>
+<main>
+    <h1>(* title *)</h1>
+    (* content *)
+</main>
+</body>
+</html>

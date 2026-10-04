@@ -1,0 +1,139 @@
+/* A problem on the web. Deliberately plain: this is the booklet's content, not its design. */
+:root {
+    --fg: #1a1a1a;
+    --muted: #666;
+    --rule: #ddd;
+    --bg: #fff;
+    --accent: #0b5fa5;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --fg: #e8e8e8;
+        --muted: #9a9a9a;
+        --rule: #3a3a3a;
+        --bg: #151515;
+        --accent: #6fb3f0;
+    }
+}
+
+:root[data-theme="dark"] {
+    --fg: #e8e8e8;
+    --muted: #9a9a9a;
+    --rule: #3a3a3a;
+    --bg: #151515;
+    --accent: #6fb3f0;
+}
+
+html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+body {
+    font: 17px/1.6 Georgia, 'Times New Roman', serif;
+}
+
+main {
+    /* 16px of gutter at phone width, and a measure that does not run past comfortable reading */
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2rem 16px 6rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    margin: 0 0 1.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+}
+
+h2, h3 {
+    font-size: 1.15rem;
+    margin: 2rem 0 0.6rem;
+}
+
+a {
+    color: var(--accent);
+}
+
+/* A picture: the LaTeX `height=40mm` has become a ceiling, so a wide drawing shrinks to the
+   column on a phone rather than overflowing it. */
+img {
+    display: block;
+    margin: 1.2rem auto;
+    max-width: 100%;
+    height: auto;
+}
+
+/* A reaction scheme rendered by LaTeX. It is a drawing of text, so it needs room to breathe and
+   must not be stretched. */
+img.chemistry {
+    margin: 1.5rem auto;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) img.chemistry {
+        /* the fallback SVGs are black ink on nothing; invert rather than ship two renderings */
+        filter: invert(0.92) hue-rotate(180deg);
+    }
+}
+
+figure {
+    margin: 1.5rem 0;
+}
+
+figcaption {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 0.4rem;
+}
+
+/* pandoc-crossref numbers a display and puts the number in the same block */
+.math.display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.2rem 0;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 1.2rem 0;
+}
+
+th, td {
+    border: 1px solid var(--rule);
+    padding: 0.3rem 0.7rem;
+    text-align: left;
+}
+
+code, pre {
+    font-family: ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-size: 0.9em;
+}
+
+pre {
+    overflow-x: auto;
+    padding: 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+}
+
+blockquote {
+    margin: 1.2rem 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--rule);
+    color: var(--muted);
+}
+
+/* `@E` -- a translation or a file the build could not find. Loud here as it is in the PDF. */
+.error {
+    background: #c00;
+    color: #fff;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+}
