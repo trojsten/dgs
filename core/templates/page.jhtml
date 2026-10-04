@@ -15,13 +15,13 @@
         // `loader.load`, not only `tex.packages`: naming a package tells MathJax to *use* it,
         // loading it is what makes it present. mhchem is 1157 `\ce` calls in chem alone, and
         // without this line every one of them reaches the page as red unrendered source.
-        loader: {load: ['[tex]/mhchem']},
         tex: {
             packages: {'[+]': ['mhchem']},
             inlineMath: [['\\(', '\\)']],
             displayMath: [['\\[', '\\]']],
         },
         svg: {fontCache: 'global'},
+        loader: {load: ['[tex]/mhchem'], font: 'mathjax-pagella'},
         options: {enableMenu: false},
     };
 </script>
