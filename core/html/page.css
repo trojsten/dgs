@@ -25,8 +25,23 @@ html, body {
     overflow-x: clip;
 }
 
+/*
+ * The booklet's own face first, then the nearest things a reader is likely to have.
+ *
+ * It is not only cosmetic. The maths is SVG sized in `ex`, from the `\fontdimen5` xelatex
+ * reported for **Minion Pro**, and `ex` resolves against whatever the page is actually set
+ * in -- so a formula is the size it was measured to be only when the prose around it is
+ * Minion too. Georgia has a much larger x-height, and under it every formula came out
+ * proportionally small.
+ *
+ * `Minion 3` is the same design under Adobe's current name. `Crimson Pro` and `EB Garamond`
+ * are free old-style faces of about Minion's colour and proportion; `Constantia` and
+ * `Georgia` are what Windows and everywhere else actually have. `sans-serif` last, as the
+ * one thing to fall back to when none of them is there.
+ */
 body {
-    font: 17px/1.6 Georgia, 'Times New Roman', serif;
+    font: 17px/1.6 'Minion Pro', 'Minion 3', 'Crimson Pro', 'EB Garamond',
+          Constantia, Georgia, sans-serif;
 }
 
 main {

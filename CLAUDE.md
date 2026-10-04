@@ -350,6 +350,13 @@ A page is `render/ → build/<…>.html` fragments, assembled by `core/html/page
 author wrote keeps working and the directory can be sent to anyone as it stands. The CSS is
 inlined for the same reason: nothing is fetched and nothing is one level up.
 
+**The prose is set in Minion Pro**, the booklet's own face, with `Minion 3`, `Crimson Pro`,
+`EB Garamond`, `Constantia` and `Georgia` behind it and `sans-serif` as the one fallback. That
+is not only cosmetic: the maths is SVG sized in `ex` from the `\fontdimen5` xelatex reported
+for Minion Pro, and `ex` resolves against whatever the page is actually set in -- so a formula
+is the size it was measured to be only when the prose around it is Minion too. Under Georgia,
+whose x-height is much larger, every formula came out proportionally small.
+
 **The page is black on white and does not follow `prefers-color-scheme`.** The maths is SVG
 taking `currentColor` and the drawings are black ink on nothing, so a dark page would mean
 inverting some of the ink and not the rest; `color-scheme: light` says so to the browser too,
