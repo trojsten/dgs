@@ -744,12 +744,38 @@ line-oriented pass is. The fewer of those the better.
 `|align` no longer emits it: `MathObject` writes the longhand directly now, the same shape as
 `arr` -- `\begin{aligned}` four spaces in, where `disp` puts its content, and the rows eight.
 
-The 351 hand-written ones in 193 files stay for now and still build, because the rewrite regexes
-stay until they are gone. What changed is that the tooling stopped recommending the shorthand:
-the audit's `aligned-shorthand` reports it, and `mdcheck` no longer whitelists it. Both used to
+**The way out is to hoist, not to rewrite in place.** The block moves into `eq:` and the source
+calls `(§ eq.<key>|align('.') §)`; `MathObject` then writes the longhand, which is exactly what
+the rewrite was producing. Writing `\begin{aligned}` into the source by hand would trade one
+local dialect for a block that is still a per-language copy -- the duplication everything else
+here exists to remove. **A block that stays in the source stays as `$${ … }$$`.**
+
+**Only a block that already carries a `{#eq:…}` label can go**, because the key becomes the
+label: hoisting an unlabelled one would *give* a solution's display a number it never had and
+renumber everything after it. Those wait on `solution-unlabelled`, which asks the prior question
+of whether they should have been numbered at all.
+
+62 of the 117 have been hoisted -- every labelled one whose label is a valid identifier, across
+`phys/10` to `17`, `pool`, `chem/02` and `chem/03`. **55 remain**: 54 unlabelled, and
+`chem/02/zmätená-tereza`, whose label is `tlmivý` and so cannot become an `eq:` key without
+renaming the label.
+
+The gate for that sweep is one stage lower than usual, and worth knowing. The rendered Markdown
+*must* move -- shorthand to longhand is the point -- so byte-identity is asserted on the
+**converted TeX** instead, normalised for leading whitespace: `|align` indents `\begin{aligned}`
+four spaces and its rows eight where the rewrite left them at zero and four, and leading space
+inside a maths environment is nothing to TeX. 132 of 133 files passed that; the one that did not
+was an unrelated edit already in the working tree.
+
+One trap, caught by the gate rather than by reading. A regex for the block that lets its body
+run to the next `}$$` will start at an *unlabelled* opener and close at a later labelled one,
+swallowing the prose between them into the equation. The body has to exclude a closer of its own.
+
+The rewrite regexes stay until the last of them is gone. The audit's `aligned-shorthand` reports
+each one and names the `eq:` key it should take; `mdcheck` no longer whitelists it. Both used to
 say the opposite -- `aligned-longhand` reported `\begin{aligned}` and asked for `$${`, because
 `MathObject` had a format spec for each and the same equation in two spellings read as two
-equations. There is one spelling now. Convert a file when you touch it.
+equations. There is one spelling now.
 
 ## The build inserts the non-breaking spaces, not you
 

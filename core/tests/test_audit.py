@@ -197,6 +197,27 @@ class TestMaths:
                         '$$\n    \\begin{aligned}\n        a &= b\n    \\end{aligned}\n$$\n'}}
         assert 'aligned-shorthand' not in ids(run(tmp_path, files=files))
 
+    def test_a_labelled_block_is_told_to_hoist(self, tmp_path):
+        """
+        The fix is `eq:` and `|align`, not `\\begin{aligned}` written into the source by hand.
+        Rewriting it in place trades one local dialect for a block that is still a per-language
+        copy, which is the duplication everything else here exists to remove.
+        """
+        files = {'sk': {'solution.md': '$${\n    a &= b\n}$$ {#eq:widget:first}\n'}}
+        report = run(tmp_path, files=files)
+        message = next(f.message for f in report.findings if f.check == 'aligned-shorthand')
+        assert 'eq.first|align' in message
+
+    def test_an_unlabelled_block_is_told_why_it_cannot(self, tmp_path):
+        """
+        The key becomes the label, so hoisting an unlabelled block would give a solution's
+        display a number it never had and renumber everything after it.
+        """
+        files = {'sk': {'solution.md': '$${\n    a &= b\n}$$\n'}}
+        report = run(tmp_path, files=files)
+        message = next(f.message for f in report.findings if f.check == 'aligned-shorthand')
+        assert 'no `{#eq:' in message and 'align' not in message
+
     def test_delimiter_indented(self, tmp_path):
         files = {'hu': {'solution.md': ' $$\n    a = b\n$$\n'}}
         assert 'delimiter-indented' in ids(run(tmp_path, files=files))

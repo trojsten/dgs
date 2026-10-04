@@ -598,10 +598,19 @@ def aligned_shorthand(sources):
     form that `\begin{aligned}` says in standard LaTeX, and the rewrite is line-oriented, so it is
     fragile in exactly the ways a line-oriented rewrite always is.
 
-    `|align` stopped emitting it -- `MathObject` writes the longhand directly now, the same shape
-    as `arr`. This reports the 351 places that still write it by hand. The rewrite regexes stay
-    until those are gone, so nothing is broken meanwhile; a finding here is a file to convert, not
-    a file that fails.
+    **The fix is to hoist it, not to rewrite it in place.** The block moves into `eq:` and the
+    source calls `(§ eq.<key>|align('.') §)`; `MathObject` writes the longhand, which is exactly
+    what the rewrite was producing. Writing `\begin{aligned}` into the source by hand trades one
+    local dialect for a block that is still a per-language copy -- the duplication this repository
+    spends most of its effort removing. A block that stays in the source stays as `$${ … }$$`.
+
+    So a finding is a file to hoist, not a file that fails, and the rewrite regexes stay until the
+    last of them is gone.
+
+    **Only a block that already carries a `{#eq:…}` label can go**, because the key becomes the
+    label: hoisting an unlabelled one would *give* a solution's display a number it did not have,
+    which renumbers everything after it. Those wait on `solution-unlabelled`, which is the check
+    that asks whether they should have been numbered in the first place.
 
     This check used to say the opposite -- it reported `\begin{aligned}` and asked for `$${`.
     """
@@ -609,10 +618,14 @@ def aligned_shorthand(sources):
         for lang, name, text in unit.files():
             for m in blocks_of(text):
                 if m['open']:
+                    label = RE_LABEL.search(m['tail'] or '')
+                    key = label['name'].split(':', 1)[-1] if label else None
+                    how = (f"hoist it into `eq:` as `{key}` and call `(§ eq.{key}|align('.') §)`"
+                           if key and RE_EQ_KEY.match(key)
+                           else 'it carries no `{#eq:…}` label, so hoisting it would give it a '
+                                'number; label it first, or leave it')
                     yield Finding('aligned-shorthand', 'warning',
-                                  'the `$${ … }$$` shorthand is deprecated: write '
-                                  '`\\begin{aligned}` and `\\end{aligned}` inside a plain `$$` '
-                                  'block, which is what the convertor rewrites it into anyway',
+                                  f'the `$${{ … }}$$` shorthand is deprecated -- {how}',
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
