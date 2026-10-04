@@ -217,12 +217,6 @@ build/%.pdf: render/%.svg
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
-build/%.xdv: build/%.tikz.tex
-	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to ' \
-			 '$(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
-
 build/%.pdf: build/%.tikz.tex
 	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to' \
 			 '$(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
@@ -230,9 +224,25 @@ build/%.pdf: build/%.tikz.tex
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
-build/%.svg: build/%.xdv
+# A picture as SVG, for the web, converted from **the PDF the LaTeX path already built**.
+#
+# Not from the `.xdv`, which is what the rule here used to do and which never worked: with
+# `-no-pdf` the pgf graphics go into the XDV as specials that dvisvgm does not reconstruct, so a
+# TikZ drawing came out as its text labels and nothing else -- an 11.8pt sliver of a 333pt
+# picture, correct in neither size nor content. The `build/%.xdv` rule that fed it is gone with
+# it; between them they had been referenced by nothing since the standalone renderer landed.
+#
+# Converting the PDF instead costs one indirection and buys the thing worth having: the web
+# picture is made from the same artefact as the printed one, so the two cannot drift. It also
+# covers every source a `build/%.pdf` can come from -- TikZ, gnuplot, a hand-drawn SVG, a PDF
+# copied in -- with one rule rather than four.
+#
+# `--no-fonts` converts glyphs to paths: no font to install or serve, at the cost of selectable
+# text, which is the right trade for a figure and not for the prose around it.
+build/%.svg: build/%.pdf
 	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
-	dvisvgm --no-fonts -o $@ $<
+	@mkdir -p $(dir $@)
+	dvisvgm --pdf --no-fonts -o $@ $<
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
@@ -265,9 +275,23 @@ output/%.png: render/%.svg
 
 # Copy SVG (for web)
 output/%.svg: render/%.svg
-	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to SVG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert -f svg -h 500 -a -o $@ $<
+
+# A TikZ picture, for the web: `render/%.tikz` -> `build/%.tikz.tex` -> `build/%.pdf` ->
+# `build/%.svg`. Every TikZ drawing in the repository used to be reachable as a PDF and
+# unreachable as anything a browser can show.
+#
+# **Order matters here**, and make's rule is that among pattern rules with the same stem the
+# first one defined whose prerequisites can be made wins. A hand-drawn picture can satisfy both
+# this rule and the one above -- `render/%.svg` exists, and `build/%.svg` could be made from the
+# PDF that `render/%.svg` also makes -- so the rule above, defined first, takes it and the SVG is
+# copied rather than round-tripped through a PDF. A TikZ picture has no `render/%.svg` at all and
+# falls through to here.
+output/%.svg: build/%.svg
+	@echo -e '$(c_action)[dvisvgm] Copying SVG file $(c_filename)$<$(c_action) to $(c_filename)$@$(c_action):$(c_default)'
+	$(call _copy,SVG)
 
 # Copy PNG (for web)
 output/%.png: source/%.png
@@ -288,15 +312,20 @@ output/%.png: build/%.gp
 output/%.jpg: source/%.jpg
 	$(call _copy,JPG)
 
-# DeGeŠ convert Markdown to HTML (for web)
-output/%.html: source/%.md
-	$(call pandochtml,sk)
-
-# DeGeŠ convert Markdown to HTML (for web)
-#output/%.html: source/%.md
-#	$(call pandochtml,sk)
-#	./wr -input $@ -template core/latex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
-#	mv $@.conv $@
+# Markdown to HTML. XFAIL, exactly like the `.tex` fall-through above and for the same reason:
+# a module says which language a file is in and where its context lives, and this rule cannot.
+#
+# It used to read `source/` and hardcode `sk`, which meant the HTML branch skipped the whole Jinja
+# stage -- every `(§ … §)` tag reached pandoc verbatim -- and could only ever produce Slovak. The
+# per-module rules next to the `.tex` ones are the real ones.
+#
+# The commented-out `./wr` variant that stood here is gone with it: it drove `--webtex=eqn://`
+# through a Go tool that is not in the repository, against `core/latex/wr.tex`, which is not
+# either. `core/latex/wrt.tex` is its template, still present and still unused.
+output/%.html: \
+	render/%.md
+	@echo -e '$(c_error)Incorrect fall-through rule called on $@!$(c_default)'
+	@exit 1
 
 .SECONDEXPANSION:
 
