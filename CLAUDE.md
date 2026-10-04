@@ -350,9 +350,10 @@ A page is `render/ → build/<…>.html` fragments, assembled by `core/html/page
 author wrote keeps working and the directory can be sent to anyone as it stands. The CSS is
 inlined for the same reason: nothing is fetched and nothing is one level up.
 
-**The page follows the reader's `prefers-color-scheme`**, through tokens on `:root` redefined
-under a dark media query; `:root[data-theme="dark"|"light"]` overrides it and nothing sets that
-today, so dark text on a dark page means the browser asked for it.
+**The page is black on white and does not follow `prefers-color-scheme`.** The maths is SVG
+taking `currentColor` and the drawings are black ink on nothing, so a dark page would mean
+inverting some of the ink and not the rest; `color-scheme: light` says so to the browser too,
+which is what stops a scrollbar or a form control going dark on its own.
 
 **A picture keeps its authored height, and may be wider than the measure.** `{height=30mm}`
 reaches LaTeX as `\includegraphics[width=\linewidth, height=30mm, keepaspectratio]` -- *fit
@@ -513,8 +514,8 @@ Four things make it practical, and the middle two were each got wrong first:
 - **A rule is not a glyph.** A glyph is a filled path with no `fill` of its own, so the root's
   `fill="currentColor"` reaches it. A fraction bar, a `\sqrt` overbar and an `\hline` are
   *stroked* paths dvisvgm gives an explicit `stroke='#000'`, which overrides anything inherited
-  -- so in dark mode every fraction kept a black bar under white digits. Only the default ink is
-  rewritten to `currentColor`; a colour the drawing actually chose is left alone.
+  -- so a fraction bar would keep its own colour while the digits took the page's. Only the
+  default ink is rewritten to `currentColor`; a colour the drawing actually chose is left alone.
 - **`--no-fonts`** leaves bare paths, which is what lets the ink be the page's at all. No second
   rendering, no second cache, no font to ship.
 

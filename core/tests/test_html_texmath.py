@@ -91,7 +91,7 @@ class TestTheBaseline:
         assert "viewBox='0 -7.38 21.07 7.38'" in out
 
     def test_the_colour_is_the_page_s(self):
-        """`--no-fonts` leaves bare paths, so `currentColor` is what makes dark mode free."""
+        """`--no-fonts` leaves bare paths, so the formula takes the prose's own ink."""
         out = texmath.inline_svg("<svg foo='1'></svg>", 8.0, 2.0, 4.0, display=False)
         assert 'fill="currentColor"' in out
 
@@ -99,8 +99,8 @@ class TestTheBaseline:
         """
         A glyph is a filled path with no `fill` of its own; a **rule** is not. A fraction bar, a
         `\\sqrt` overbar and an `\\hline` are stroked paths dvisvgm gives an explicit
-        `stroke='#000'`, which overrides anything inherited -- so in dark mode every fraction
-        kept a black bar under white digits.
+        `stroke='#000'`, which overrides anything inherited -- so a fraction bar would keep
+        its own colour while the digits took the page's.
         """
         svg = ("<svg><path d='M1 7H9' stroke='#000' fill='none' stroke-width='.44'/></svg>")
         out = texmath.inline_svg(svg, 8.0, 2.0, 4.0, display=False)

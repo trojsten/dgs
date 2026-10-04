@@ -1,28 +1,19 @@
-/* A problem on the web. Deliberately plain: this is the booklet's content, not its design. */
+/*
+ * A problem on the web. Deliberately plain: this is the booklet's content, not its design.
+ *
+ * Black on white, like the booklet, and not the reader's `prefers-color-scheme`: the maths is
+ * SVG taking `currentColor` and the drawings are black ink with no background, so a dark page
+ * means inverting some of the ink and not the rest. `color-scheme: light` says so to the
+ * browser as well, which is what keeps a form control or a scrollbar from going dark on its
+ * own.
+ */
 :root {
-    --fg: #1a1a1a;
+    color-scheme: light;
+    --fg: #000;
     --muted: #666;
     --rule: #ddd;
     --bg: #fff;
     --accent: #0b5fa5;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --fg: #e8e8e8;
-        --muted: #9a9a9a;
-        --rule: #3a3a3a;
-        --bg: #151515;
-        --accent: #6fb3f0;
-    }
-}
-
-:root[data-theme="dark"] {
-    --fg: #e8e8e8;
-    --muted: #9a9a9a;
-    --rule: #3a3a3a;
-    --bg: #151515;
-    --accent: #6fb3f0;
 }
 
 html, body {
@@ -107,7 +98,7 @@ figure > img {
 }
 
 /* A reaction scheme set by LaTeX. It is a drawing of text, so it needs room to breathe, and it
-   is inline SVG taking `currentColor` -- no filter, and nothing to invert for dark mode. */
+   is inline SVG taking `currentColor`, so it needs no filter and no second rendering. */
 .chemistry {
     margin: 1.5rem 0;
 }
@@ -172,7 +163,8 @@ blockquote {
  * `ex`, so a formula scales with the text around it and an inline one sits on its baseline
  * instead of on a line of its own. No `width` is written: the `viewBox` gives the aspect ratio
  * and the browser derives the rest, which keeps the two in step when the reader resizes the
- * type. `--no-fonts` leaves bare paths, so `currentColor` reaches them and dark mode is free.
+ * type. `--no-fonts` leaves bare paths, so `currentColor` reaches them and the ink is the
+ * page's own -- one rendering, whatever the page is set in.
  */
 svg.dgs-math {
     display: inline-block;

@@ -69,17 +69,17 @@ def inline_svg(svg: str, height: float, depth: float, exheight: float, display: 
     The SVG, sized in `ex` and sitting on the baseline.
 
     Inlined into the page rather than linked, so that one file is the whole document and so that
-    `fill="currentColor"` can take the page's text colour -- which is what makes dark mode work
-    without a second rendering.
+    `fill="currentColor"` can take the page's text colour, so the formula is set in the same
+    ink as the prose around it whatever that ink turns out to be.
 
     The size is in `ex` and the width is left off entirely: the `viewBox` gives the aspect ratio,
     so the browser derives the width, and the formula grows and shrinks with the type around it.
     """
     # A glyph is a filled path with no `fill` of its own, so the root's `currentColor` reaches
     # it. A *rule* is not a glyph: a fraction bar, a `\sqrt` overbar, a `\hline` are stroked
-    # paths dvisvgm gives an explicit `stroke='#000'`, which overrides anything inherited --
-    # so in dark mode every fraction kept a black bar under white digits. Only the default ink
-    # is rewritten; a colour the drawing actually chose is left alone.
+    # paths dvisvgm gives an explicit `stroke='#000'`, which overrides anything inherited, so a
+    # fraction bar would keep its own colour while the digits took the page's. Only the default
+    # ink is rewritten; a colour the drawing actually chose is left alone.
     svg = RE_DEFAULT_INK.sub(r"\1='currentColor'", svg)
     opening = svg[:svg.index('>') + 1]
     total, drop = (height + depth) / exheight, depth / exheight

@@ -293,7 +293,7 @@ $(GNUPLOT_SVG_TARGETS): build/%.svg: build/%.gp
 #
 # `core/html/texmath.py` still uses dvisvgm, deliberately: it inlines its output into the page,
 # where `pdftocairo`'s `<symbol id="glyph0-1">` would collide across a hundred formulas and its
-# explicit `fill:rgb(0%,0%,0%)` would defeat the `currentColor` that gives dark mode for free.
+# explicit `fill:rgb(0%,0%,0%)` would defeat the `currentColor` the inlined maths is set in.
 # dvisvgm emits bare anonymous paths, which is exactly what that needs, and the maths it is
 # given comes from xelatex rather than from cairo.
 build/%.svg: build/%.pdf
