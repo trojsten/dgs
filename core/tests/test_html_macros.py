@@ -15,15 +15,23 @@ import tempfile
 import pytest
 
 from core.builder.convertor import Convertor
-from core.html import macros
+from core.html import macros, mathjax
 
 
 def convert(markdown: str) -> str:
+    """
+    Through the real convertor and the real shim pass, which is what the build does.
+
+    The convertor leaves a fragment engine-neutral -- the formula is still the one the author
+    wrote -- and `mathjax.shim_html` is the step that rewrites it for MathJax. Going through
+    both is what lets a test say that a `\\Paren` in a code block is a different node type and
+    out of the filter's reach.
+    """
     with tempfile.NamedTemporaryFile('w+', suffix='.md') as infile, \
          tempfile.NamedTemporaryFile('w+', suffix='.html') as outfile:
         infile.write(markdown)
         infile.seek(0)
-        return Convertor('html', 'sk', infile, outfile).run()
+        return mathjax.shim_html(Convertor('html', 'sk', infile, outfile).run())
 
 
 class TestEveryMacroTheSourcesUseIsCovered:

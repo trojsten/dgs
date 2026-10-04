@@ -39,11 +39,10 @@ class RenderError(RuntimeError):
 
 def digest(latex: str, lang: str) -> str:
     """
-    The cache name, which `core/filters/texmath.lua` computes identically so that the common
-    case -- the fragment is already rendered -- costs a file test rather than a Python process.
+    The cache name: content-addressed, so a fragment that has not changed is not re-rendered
+    and the same scheme written in two problems is one file.
 
-    SHA-1 because that is the hash pandoc's Lua offers (`pandoc.utils.sha1`), and this is a
-    cache key rather than anything that has to resist an adversary.
+    SHA-1 because this is a cache key rather than anything that has to resist an adversary.
     """
     return hashlib.sha1(f'{VERSION}\0{lang}\0{latex}'.encode()).hexdigest()[:32]
 

@@ -54,13 +54,6 @@ class Convertor:
                              purpose="A gnuplot picture is an SVG on the web"),
             RegexReplacement(r'<img src="(?P<stem>[^"]*)\.pdf"', r'<img src="\g<stem>.svg"',
                              purpose="A PDF picture is an SVG on the web"),
-            # `height=40mm` is a print instruction. On a page of unknown width it has to become a
-            # ceiling rather than a size, or a wide drawing overflows its column on a phone.
-            RegexReplacement(
-                r'style="height:(?P<height>[0-9.]*)mm"',
-                r'style="max-width: 100%; max-height: \g<height>mm; height: auto"',
-                purpose="A picture height becomes a responsive ceiling",
-            ),
         ],
     }
 
@@ -321,20 +314,19 @@ class Convertor:
         ]
         if self.output_format == 'html':
             # `--math-method`, not the `--mathjax` flag, which pandoc 3 deprecates with a warning
-            # on every single file. The URL is empty on purpose: a fragment carries no loader, and
-            # the page template that assembles fragments is what points at the vendored MathJax.
+            # on every single file. It is what makes pandoc leave a formula alone in a
+            # `<span class="math">` instead of trying to render it.
             #
-            # siunitx is rewritten into plain maths here and nowhere else, because MathJax has no
-            # siunitx extension -- none exists -- and the sources make some 9200 calls inside
-            # maths. The filter is over `Math` nodes, so a `\qty` in a code block or a URL is a
-            # different node type and it cannot reach them.
+            # **Nothing here is engine-specific, deliberately.** A fragment keeps the formula the
+            # author wrote, so the same `build/**.html` serves both ways of setting it -- the
+            # xelatex one and the MathJax one -- and choosing between them costs a page rebuild
+            # rather than a pandoc rebuild. `core/html/page.py` is where the choice is made.
             args += [
                 "--math-method=mathjax",
-                # before the other two, so that a fragment on its way to LaTeX keeps its
-                # `\qty` and its `\FDiff`, which LaTeX can set and a rewriting could only spoil
-                "--lua-filter", "./core/filters/texmath.lua",
-                "--lua-filter", "./core/filters/macros.lua",
-                "--lua-filter", "./core/filters/siunitx.lua",
+                # The one rewriting that is not about an engine: the HTML writer drops a raw
+                # `tex` inline without a word, so until this runs the 550 `\qty` and `\ce`
+                # fragments written in prose are simply not on the page.
+                "--lua-filter", "./core/filters/rawtex.lua",
             ]
 
         # `check=True` alone raises `returned non-zero exit status 83` and nothing else, so a
