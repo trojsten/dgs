@@ -237,6 +237,32 @@ build/%.svg: render/%.svg
 	@echo -e '$(c_action)Copying $(c_extension)SVG$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
 	$(call _copy,SVG)
 
+# A gnuplot plot as SVG, drawn by gnuplot rather than converted. See `GNUPLOT_PDF` below for
+# why the terminal cannot live in the script.
+#
+# **A static pattern rule, not an implicit one, and that is the whole reason this works.**
+# Make's implicit-rule search takes, in its first pass, any rule whose prerequisites already
+# *exist* -- so once the booklet has been built and `build/%.pdf` is sitting there, the
+# conversion rule below wins over this one however they are ordered, and the picture you get
+# depends on what you happened to build first. A static pattern rule is an explicit rule for
+# each of these targets and is not in that search at all.
+GNUPLOT_SOURCES := $(shell find source -name '*.gp' 2>/dev/null)
+GNUPLOT_SVG_TARGETS := $(patsubst source/%.gp,build/%.svg,$(GNUPLOT_SOURCES))
+
+$(GNUPLOT_SVG_TARGETS): build/%.svg: build/%.gp
+	@echo -e '$(c_action)[gnuplot] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cd $(dir $@); gnuplot -e "$(GNUPLOT_SVG)" \
+		-e "set terminal @gpterm size $(GNUPLOT_SVG_SIZE); set output '$(notdir $@)'; set fit quiet;" \
+		$(notdir $<)
+	@# A script that sets `set terminal pdf` of its own overrides the line above and gnuplot
+	@# writes a PDF into a file named `.svg`, with no error anywhere -- `FKS/42/1/1/03` did it
+	@# from a `blocks:` entry, which is a `.gp` no grep over `source/**/*.gp` can see. The page
+	@# then showed three blank figures. One line is cheaper than finding that again.
+	@head -c 5 $@ | grep -q '<' || { \
+		echo "$@ is not an SVG: does its script (or a blocks: entry) set its own terminal?" >&2; \
+		rm -f $@; exit 1; }
+
 # A picture as SVG, for the web, converted from **the PDF the LaTeX path already built**.
 #
 # Not from the `.xdv`, which is what the rule here used to do and which never worked: with
@@ -250,18 +276,75 @@ build/%.svg: render/%.svg
 # covers every source a `build/%.pdf` can come from -- TikZ, gnuplot, a hand-drawn SVG, a PDF
 # copied in -- with one rule rather than four.
 #
-# `--no-fonts` converts glyphs to paths: no font to install or serve, at the cost of selectable
-# text, which is the right trade for a figure and not for the prose around it.
+# **`pdftocairo`, not `dvisvgm --pdf`**, and the difference is not cosmetic. dvisvgm's PDF
+# reader is a second implementation of a format poppler already reads, and it gets two things
+# wrong that this repository's pictures are made of:
+#
+#   - **Line widths.** A plot that sets `0.25 w` and `0.5 w` and nothing else came out with its
+#     frame and its curve at `stroke-width='4'` -- a heavy black box and a fat line where the
+#     booklet has a hairline. (That was `29/chopper`, which is drawn directly now; the defect is
+#     not gnuplot's and would bite any PDF that states a width the same way.)
+#   - **Embedded rasters.** `29/amusement-speed`'s rollercoaster carries a bitmap of a cart,
+#     which dvisvgm shrinks into a smear in the corner.
+#
+# Both are right in the PDF, right in the booklet, and right out of `pdftocairo`. It converts
+# glyphs to `<symbol>` paths of its own accord, so there is still no font to install or serve,
+# at the cost of selectable text -- the right trade for a figure and not for the prose round it.
+#
+# `core/html/texmath.py` still uses dvisvgm, deliberately: it inlines its output into the page,
+# where `pdftocairo`'s `<symbol id="glyph0-1">` would collide across a hundred formulas and its
+# explicit `fill:rgb(0%,0%,0%)` would defeat the `currentColor` that gives dark mode for free.
+# dvisvgm emits bare anonymous paths, which is exactly what that needs, and the maths it is
+# given comes from xelatex rather than from cairo.
 build/%.svg: build/%.pdf
-	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)[pdftocairo] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	dvisvgm --pdf --no-fonts -o $@ $<
+	pdftocairo -svg $< $@
+
+# A gnuplot plot, in each of the two formats, **drawn by gnuplot both times**.
+#
+# The conversion the rest of the pictures go through -- PDF, then `pdftocairo` -- would work
+# here too, and did. Going direct is one step shorter and takes a PDF parser out of the chain,
+# which is the part that had been getting it wrong.
+#
+# What that costs is that the terminal can no longer live in the script, because the two
+# terminals disagree about two things and a script cannot state both:
+#
+#   - **Size.** `pdfcairo` reads a bare number as inches and also takes `cm`; the `svg`
+#     terminal takes pixels and rejects `cm` outright. Hence `gppt`, which is one **point** in
+#     whatever units this terminal counts in, and a script sizes itself in points.
+#   - **Font size.** `pdfcairo` defaults to `fontscale 0.5`, so its `font "Minion Pro, 12"` is
+#     6pt on the page; the `svg` terminal has no such halving, and `fontscale` there scales the
+#     glyphs **without** scaling the space the layout reserves for them, so it cannot be used to
+#     match. `fontscale 1` below removes the hidden factor instead, and the size written is the
+#     size set. Proved rather than assumed: the PDFs come out byte-identical either way.
+#
+# So a script that wants its own canvas writes one line, `set terminal @gpterm size 432*gppt,
+# 108*gppt`, and the build says which terminal that is. A script that wants the default writes
+# nothing, and the two defaults below are the same picture: `pdfcairo`'s own 5in x 3in, and the
+# 360 x 216 points that is.
+# `@gpterm` carries the terminal **and its font**, because re-issuing `set terminal` resets
+# the font on the `svg` terminal and a script that sizes its own canvas has to re-issue it.
+# Two `-e` options rather than one: gnuplot expands a macro while parsing the line it is on,
+# so `gpterm` has to be assigned on an earlier line than the `@gpterm` that uses it.
+# **The `svg` terminal counts in CSS pixels, 96 to the inch**, where `pdfcairo` counts in
+# points, 72. So `gppt` is 4/3 there and 1/72 here, and the font is 8 against 6 -- the same
+# type at the same size on the same canvas, said in each terminal's own units. Getting only
+# half of that right gives a picture that is the right shape and the wrong size: the web one
+# came out a quarter small when the canvas was converted and the font was not.
+GNUPLOT_PDF = set macros; gppt = 1.0 / 72; gpterm = 'pdfcairo fontscale 1 font \"Minion Pro, 6\"'
+GNUPLOT_SVG = set macros; gppt = 4.0 / 3;  gpterm = 'svg font \"Minion Pro, 8\"'
+#: The default canvas: `pdfcairo`'s own 5in x 3in, said twice.
+GNUPLOT_PDF_SIZE = 5, 3
+GNUPLOT_SVG_SIZE = 480, 288
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
 	@echo -e '$(c_action)[gnuplot] Rendering $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(dir $@); gnuplot -e "set terminal pdf font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cd $(dir $@); gnuplot -e "$(GNUPLOT_PDF)" \
+		-e "set terminal @gpterm size $(GNUPLOT_PDF_SIZE); set output '$(notdir $@)'; set fit quiet;" \
+		$(notdir $<)
 
 # Copy PDF file (for XeLaTeX)
 build/%.pdf: source/%.pdf
@@ -292,7 +375,7 @@ output/%.png: render/%.svg
 # unreachable as anything a browser can show.
 #
 output/%.svg: build/%.svg
-	@echo -e '$(c_action)[dvisvgm] Copying SVG file $(c_filename)$<$(c_action) to $(c_filename)$@$(c_action):$(c_default)'
+	@echo -e '$(c_action)Copying SVG file $(c_filename)$<$(c_action) to $(c_filename)$@$(c_action):$(c_default)'
 	$(call _copy,SVG)
 
 # Copy PNG (for web)
