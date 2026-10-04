@@ -361,11 +361,16 @@ drawing 30mm of height asks for 120mm of a page whose width nobody knows. Said a
 it says both at once.
 
 **What bounds it is the window, not the text column.** The booklet clamps a drawing to
-`\linewidth` because a page has an edge; a page that scrolls has not, so the height the author
-asked for is honoured and a wide drawing is let past the measure, centred on the window:
-`width: min(120.0mm, calc(100vw - 2rem)); height: auto`. `29/chopper` is 4:1 and asks for 60mm,
-which is 240mm of width -- it is 60mm tall on the web and 45mm in the booklet, which cannot
-give 240mm to a 180mm column.
+`\linewidth` because a page has an edge; a page that scrolls has not, so a wide drawing is let
+past the measure and centred on the window instead.
+
+**And it is set at `SCALE` times its printed size**, `2.0` today:
+`width: min(240.0mm, calc(100vw - 2rem)); height: auto` for a drawing the booklet prints
+120mm wide. That is an editorial choice and not a conversion -- print and screen agree about
+the millimetre, and a figure drawn to sit in a 180mm column still reads small on a screen. The
+cap is what keeps it honest: doubling a picture that already fills the window changes nothing,
+so the scale only reaches the small ones, which are the ones that wanted it. It lives in one
+constant in `page.py`, and the tests multiply by it rather than writing the doubled number.
 
 The stylesheet does the centring, and two details of it are load-bearing. The shift is
 `left: 50%` with `translateX(-50%)` and **no auto margins** -- auto margins would centre the

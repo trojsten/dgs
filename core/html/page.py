@@ -37,6 +37,13 @@ RE_STYLE = re.compile(r'\sstyle="(?P<style>[^"]*)"')
 #: `100vw` counts the scrollbar in every engine, which is most of this gutter's job.
 GUTTER = 'calc(100vw - 2rem)'
 
+#: How much bigger than its printed size a drawing is set on the web, before the window caps
+#: it. An editorial choice and not a conversion: print and screen agree about the millimetre,
+#: and a figure drawn to sit in a 180mm column still reads small on a screen held at arm's
+#: length. The cap is what keeps it honest -- doubling a picture that already fills the window
+#: changes nothing, so this only reaches the small ones, which are the ones that wanted it.
+SCALE = 2.0
+
 #: `width:40mm` / `height:60mm` as pandoc writes them from `{height=60mm}`.
 RE_LENGTH = re.compile(r'\b(?P<axis>width|height)\s*:\s*(?P<value>[0-9.]+)mm')
 #: The opening `<svg …>`, whose `width`/`height`/`viewBox` give the drawing's proportions.
@@ -111,10 +118,13 @@ def size(style: str, picture: pathlib.Path) -> str:
     in hand, and not in the convertor.
 
     **The limit is the window, not the measure.** The booklet clamps a drawing to `\linewidth`
-    because a page has an edge; a page that scrolls has not, so the authored height is honoured
-    and a wide drawing is let past the text column -- `29/chopper` is 4:1 and asks for 60mm of
-    height, which is 240mm of width, more than the 180mm the booklet can give it. The
-    stylesheet centres such a picture on the window; this only says how wide it may be.
+    because a page has an edge; a page that scrolls has not, so a wide drawing is let past the
+    text column -- `29/chopper` is 4:1 and asks for 60mm of height, which is 240mm of width,
+    more than the 180mm the booklet can give it. The stylesheet centres such a picture on the
+    window; this only says how wide it may be.
+
+    **And it is set at `SCALE` times its printed size**, which the window then caps. See the
+    constant: it is a choice about reading on a screen, not a conversion.
 
     It used to be `max-height: 30mm; height: auto`, a ceiling rather than a size, and that is
     why every drawing was too small: a ceiling only ever binds when the picture is *larger*
@@ -129,9 +139,10 @@ def size(style: str, picture: pathlib.Path) -> str:
             width = lengths['height'] * ratio
     if width is None:
         # no width we can compute: a ceiling is at least never wrong, only sometimes small
-        ceiling = f'max-height: {lengths["height"]:g}mm; ' if 'height' in lengths else ''
+        ceiling = (f'max-height: {lengths["height"] * SCALE:g}mm; ' if 'height' in lengths
+                   else '')
         return f'max-width: {GUTTER}; {ceiling}height: auto'
-    return f'width: min({width:.1f}mm, {GUTTER}); height: auto'
+    return f'width: min({width * SCALE:.1f}mm, {GUTTER}); height: auto'
 
 
 class MissingPictures(FileNotFoundError):

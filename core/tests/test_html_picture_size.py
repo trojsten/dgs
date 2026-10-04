@@ -9,9 +9,14 @@ and the picture's own proportions are what convert the one into the other -- whi
 lives beside the file and not in the convertor.
 
 **What bounds it is the window, not the measure.** The booklet clamps a drawing to
-`\linewidth` because a page has an edge; a page that scrolls has not, so the authored height
-is honoured and a wide drawing is let past the text column. `29/chopper` is 60mm tall on the
-web and 45mm in the booklet, which cannot give 240mm of width to a 180mm column.
+`\linewidth` because a page has an edge; a page that scrolls has not, so a wide drawing is let
+past the text column -- the booklet cannot give 240mm of width to a 180mm column, and a window
+can.
+
+**And a drawing is set at `SCALE` times its printed size**, which the window then caps: a
+figure drawn to sit in a 180mm column reads small on a screen. The tests below multiply by
+`page.SCALE` rather than writing the doubled number, so the constant stays the one place it
+is decided.
 """
 import pathlib
 import struct
@@ -76,19 +81,20 @@ class TestSize:
     def test_a_height_becomes_the_width_it_implies(self, wide):
         """`height=60mm` on a 4:1 drawing is 240mm of width, which is what LaTeX sets too."""
         assert page.size('height:60mm', wide) == \
-            'width: min(240.0mm, calc(100vw - 2rem)); height: auto'
+            f'width: min({60.0 * 4.0 * page.SCALE:.1f}mm, calc(100vw - 2rem)); height: auto'
 
     def test_the_width_is_the_one_the_height_implies(self, wide):
         """
-        `height=30mm` on a 4:1 drawing is 120mm of width, and that is what LaTeX sets too
-        wherever the column can hold it. Where it cannot, print clamps and the web does not.
+        `height=30mm` on a 4:1 drawing is 120mm of width -- what LaTeX sets wherever the column
+        can hold it -- and then `SCALE` of that. The aspect ratio is the part that has to be
+        right: get it wrong and the drawing is the wrong shape, not merely the wrong size.
         """
-        assert 'min(120.0mm,' in page.size('height:30mm', wide)
+        assert f'min({30.0 * 4.0 * page.SCALE:.1f}mm,' in page.size('height:30mm', wide)
 
     def test_an_authored_width_is_taken_as_it_stands(self, wide):
         """The quiet case: nothing to convert, so the aspect ratio is not consulted at all."""
         assert page.size('width:80mm', wide) == \
-            'width: min(80.0mm, calc(100vw - 2rem)); height: auto'
+            f'width: min({80.0 * page.SCALE:.1f}mm, calc(100vw - 2rem)); height: auto'
 
     def test_an_unreadable_picture_falls_back_to_a_ceiling(self, tmp_path):
         """
@@ -98,7 +104,7 @@ class TestSize:
         picture = tmp_path / 'p.webp'
         picture.write_bytes(b'RIFF....WEBP')
         assert page.size('height:30mm', picture) == \
-            'max-width: calc(100vw - 2rem); max-height: 30mm; height: auto'
+            f'max-width: calc(100vw - 2rem); max-height: {30.0 * page.SCALE:g}mm; height: auto'
 
     def test_no_size_at_all_is_still_bounded(self, wide):
         """LaTeX refuses an unsized picture outright; the web at least must not overflow."""
