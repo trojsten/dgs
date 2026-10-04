@@ -461,10 +461,79 @@ output/naboj/%/languages/tearoffs.zip: \
 	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
 	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
 
-output/naboj/%/html: \
+### HTML fragments, for the web
+#
+# The conversion itself is the root Makefile's `output/%.html: render/%.md`. Everything here only
+# names the files to ask for, the way seminar's `html-problems` and `html-solutions` do.
+#
+# **Náboj's two kinds of source have to be named separately**, because they sit at different
+# levels and both render once per language. A translated file is `<problem>/<language>/<kind>.md`;
+# an answer is `<problem>/<kind>.md`, shared by every language and rendered into each of them --
+# which is exactly the split `NABOJ_TRANSLATABLE` and `NABOJ_NONTRANSLATABLE` make at the top of
+# this file. Wildcarding the translated shape alone is what made the old rule ask for nothing:
+# it looked for `<problem>/<language>/answer.md`, which never exists.
+#
+# The old rule was a no-op at the volume level too -- `<volume>/*/problem.md` is
+# `<volume>/problems/problem.md` -- so `make output/naboj/phys/29/html` reported "up to date"
+# and built not one page. The recursion at the bottom is what covers that level now.
+
+# Where a problem is translated, as output directories: `output/naboj/…/<problem>/<language>/`.
+# Keyed off `problem.md` because that is the one file every translation has.
+naboj_html_languages = $(subst source/,output/,$(dir $(wildcard source/naboj/$(1)/*/problem.md)))
+
+# <competition>/<volume>/problems/<problem>  --  the pictures a fragment points at.
+#
+# A Náboj picture is rendered once, beside the meta, because it is shared by every translation.
+# The fragments are not: they sit one level down, in `<problem>/<language>/`, and the HTML
+# references a picture as a **sibling** -- `src="x.svg"`. So each language directory gets its own
+# copy. Seminar needs none of this; its pictures already sit beside its fragments.
+#
+# The copy is a recipe rather than a prerequisite because the two paths differ by a directory the
+# pattern stem cannot see: one `%` cannot stand for both `<problem>` and `<problem>/<language>`.
+output/naboj/%/html-prerequisites: \
+	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.jpg)) \
+	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.png)) \
+	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.svg)) \
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/naboj/$$*/*.gp)))
+	@for language in $(notdir $(patsubst %/,%,$(dir $(wildcard source/naboj/$*/*/problem.md)))); do \
+		mkdir -p output/naboj/$*/$$language; \
+		for picture in $^; do cp -f "$$picture" "output/naboj/$*/$$language/"; done; \
+	done
+
+output/naboj/%/html-problems: \
+	output/naboj/$$*/html-prerequisites \
 	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem-extra.md))) ;
+
+output/naboj/%/html-solutions: \
+	output/naboj/$$*/html-prerequisites \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) ;
+
+# `answer-extra` is translated and so is wildcarded; the other three are shared and have to be
+# asked for once per language instead.
+output/naboj/%/html-answers: \
+	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer-extra.md))) \
+	$$(foreach kind,answer answer-also answer-interval,\
+		$$(if $$(wildcard source/naboj/$$*/$$(kind).md),\
+			$$(addsuffix $$(kind).html,$$(call naboj_html_languages,$$*)))) ;
+
+# <competition>/<volume>/problems/<problem>  --  everything one problem has, every language.
+output/naboj/%/html: \
+	output/naboj/$$*/html-problems \
+	output/naboj/$$*/html-solutions \
+	output/naboj/$$*/html-answers ;
+
+# <competition>/<volume>  --  every problem in the volume.
+#
+# **A separate name, and it has to be.** The obvious spelling is `output/naboj/%/html` for both
+# levels, with the volume one depending on the problem one -- and make silently refuses it: a
+# pattern rule may not be used to make its own prerequisite, so the chain is abandoned and the
+# whole thing reports `No rule to make target`, with nothing to say which prerequisite was at
+# fault. Every piece builds on its own; only the combination fails.
+output/naboj/%/html-all: \
+	$$(foreach problem,\
+		$$(subst source/,output/,$$(dir $$(wildcard source/naboj/$$*/problems/*/meta.yaml))),\
+		$$(problem)html) ;
 
 # All targets for <language>
 # <competition>/<volume>/languages/<language>
