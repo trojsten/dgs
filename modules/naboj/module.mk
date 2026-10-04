@@ -6,9 +6,14 @@
 source/naboj/%/i18n: \
 	$$(wildcard source/naboj/$$*/.static/i18n/*.yaml) ;
 
-# DeGeŠ convert Markdown file to TeX (for XeLaTeX)
+# DeGeŠ convert Markdown file to TeX (for XeLaTeX) and to HTML (for the web)
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
+#
+# The two formats sit side by side on purpose: one `render/` stage, one language, two writers.
+# The HTML used to come from a rule of its own that read `source/` and hardcoded `sk`, so it
+# skipped Jinja entirely and could only ever be Slovak. A fragment lands in `build/` exactly as
+# a `.tex` does; assembling fragments into a page is the `output/` step, as it is for a PDF.
 
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
@@ -29,6 +34,13 @@ build/naboj/%/$(1).tex: \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
+
+build/naboj/%/$(1).html: \
+	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandochtml,$$(language))
 endef
 $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call NABOJ_TRANSLATABLE,$(filename))))
 
@@ -46,6 +58,13 @@ build/naboj/%/$(1).tex: \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
+
+build/naboj/%/$(1).html: \
+	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandochtml,$$(language))
 endef
 $(foreach filename,answer answer-also answer-interval,$(eval $(call NABOJ_NONTRANSLATABLE,$(filename))))
 
@@ -266,6 +285,26 @@ build/naboj/%/pdf-prerequisites: \
 	build/core/i18n.stamp
 	@mkdir -p $(@D) && touch $@
 
+# The same pictures, in the one format a browser wants. `build/%.svg` takes a picture from any
+# source -- TikZ, gnuplot, a hand-drawn SVG, a PDF -- so unlike the PDF list above this needs one
+# line per depth and not one per extension. A raster picture is copied as it is.
+#
+# Both depths, as above: a picture sits either beside the problem or inside a language directory.
+# % <competition>/<volume>
+build/naboj/%/html-prerequisites: \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$*/problems/*/*.$$(extension))))) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$*/problems/*/*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@mkdir -p $(@D) && touch $@
+
 # All problems, solutions and answers for every language, and overall
 # <competition>/<volume>
 define RULE_TEMPLATE
@@ -461,10 +500,20 @@ output/naboj/%/languages/tearoffs.zip: \
 	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
 	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
 
-output/naboj/%/html: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer.md))) ;
+# Every fragment of one language, and the pictures they point at.
+#
+# What stood here wildcarded `source/naboj/$*/*/problem.md`, one directory too shallow for a
+# layout that is `problems/<problem>/<language>/problem.md`, so the two wildcards that mattered
+# matched nothing and only `answer.md` ever resolved -- in Slovak, whatever language was asked
+# for. It was not reachable from `output/naboj/%` either.
+# % <competition>/<volume>/languages/<language>
+build/naboj/%/html: \
+	$$(call truepath, build/naboj/$$*/../../html-prerequisites) \
+	$$(foreach problem,$$(wildcard $$(call truepath, source/naboj/$$*/../../problems/*)),\
+	  $$(foreach file,problem problem-extra solution answer answer-extra answer-also answer-interval,\
+	    $$(if $$(wildcard $$(problem)/$$(notdir $$*)/$$(file).md)$$(wildcard $$(problem)/$$(file).md),\
+	      $$(subst source/,build/,$$(problem))/$$(notdir $$*)/$$(file).html)))
+	@mkdir -p $(@D) && touch $@
 
 # All targets for <language>
 # <competition>/<volume>/languages/<language>

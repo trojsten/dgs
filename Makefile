@@ -224,6 +224,19 @@ build/%.pdf: build/%.tikz.tex
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
+# A hand-drawn picture, for the web: copied, not round-tripped. It is already an SVG; sending it
+# through a PDF and back would cost two conversions to arrive where it started.
+#
+# Defined before the rule below so that make, which takes the first rule whose prerequisites can
+# be made, prefers it. A hand-drawn picture satisfies both (its `render/%.svg` exists, and a
+# `build/%.pdf` could be made from it); a TikZ, gnuplot or source-PDF picture satisfies only the
+# second. Between them, **`build/%.svg` means "this picture, in the one format the web wants",
+# whatever it was drawn in** -- which is what lets a single extension stand for every picture
+# downstream.
+build/%.svg: render/%.svg
+	@echo -e '$(c_action)Copying $(c_extension)SVG$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
+	$(call _copy,SVG)
+
 # A picture as SVG, for the web, converted from **the PDF the LaTeX path already built**.
 #
 # Not from the `.xdv`, which is what the rule here used to do and which never worked: with
@@ -273,22 +286,11 @@ output/%.png: render/%.svg
 	@mkdir -p $(dir $@)
 	rsvg-convert -f png -h 500 -a -o $@ $<
 
-# Copy SVG (for web)
-output/%.svg: render/%.svg
-	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to SVG file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	rsvg-convert -f svg -h 500 -a -o $@ $<
 
 # A TikZ picture, for the web: `render/%.tikz` -> `build/%.tikz.tex` -> `build/%.pdf` ->
 # `build/%.svg`. Every TikZ drawing in the repository used to be reachable as a PDF and
 # unreachable as anything a browser can show.
 #
-# **Order matters here**, and make's rule is that among pattern rules with the same stem the
-# first one defined whose prerequisites can be made wins. A hand-drawn picture can satisfy both
-# this rule and the one above -- `render/%.svg` exists, and `build/%.svg` could be made from the
-# PDF that `render/%.svg` also makes -- so the rule above, defined first, takes it and the SVG is
-# copied rather than round-tripped through a PDF. A TikZ picture has no `render/%.svg` at all and
-# falls through to here.
 output/%.svg: build/%.svg
 	@echo -e '$(c_action)[dvisvgm] Copying SVG file $(c_filename)$<$(c_action) to $(c_filename)$@$(c_action):$(c_default)'
 	$(call _copy,SVG)

@@ -112,21 +112,35 @@ define prepare_arguments_round
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
-# Jinja template: render Markdown to Markdown. Here language is currently hardcoded as `sk`.
+# Jinja template: render Markdown to Markdown.
+#
+# The recipe used to call `_jinja`, which is defined nowhere -- so it expanded to whitespace and
+# the rule "succeeded" while producing no file at all. It is shadowed by the per-file rules in
+# `RULE_TEMPLATE_SEMINAR` above, which is the only reason nobody ever tripped over it.
 render/%.md: \
 	source/%.md \
-	source/$$(dir $$*)/meta.yaml
-ifdef lang
-	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml))
-else
-	$(call _jinja,sk,$(abspath $(dir $<)/meta.yaml))
-endif
+	source/$$(dir $$*)/meta.yaml \
+	$$(PIPELINE_STAMP)
+	$(call jinja,modules.seminar.builder.renderer,$(call pathlang,$*),$(abspath $(dir $<)/meta.yaml))
 
 build/seminar/%.tex: \
 	render/seminar/%.md \
 	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,sk)
+
+# The HTML twin of the rule above. It is here rather than in `RULE_TEMPLATE_SEMINAR` because
+# this is where the work actually happens: the per-file rules in that define write `$$*` where
+# they need `$$$$*`, so their prerequisite first-expands to `render/seminar//problem.md` and the
+# rules never match anything. `.tex` has been reaching this catch-all all along.
+#
+# `pathlang` rather than the hardcoded `sk` above: seminar has no language directories, so the
+# two agree today, and this one will keep agreeing if that ever changes.
+build/seminar/%.html: \
+	render/seminar/%.md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$(call pandochtml,$(call pathlang,$*))
 
 build/seminar/%/intro.tex build/seminar/%/rules.tex: \
 	modules/seminar/templates/$$(notdir $$@) \
@@ -171,12 +185,18 @@ build/seminar/%/pdf-prerequisites: \
 	source/seminar/$$*/meta.yaml \
 	build/core/i18n.stamp ;
 
-output/seminar/%/html-prerequisites: \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.py)) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
+# `build/%.svg` takes a picture from any source, so this is one line per depth rather than one
+# per extension -- and `.tikz`, which the list here never mentioned, is covered by it. Seminar
+# has no TikZ today; naboj has many, and the two lists should not differ in what they can hold.
+build/seminar/%/html-prerequisites: \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.py)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/seminar/$$*/*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@mkdir -p $(@D) && touch $@
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.jtex \
@@ -231,29 +251,34 @@ output/seminar/%/instagram: \
 
 ### Batch outputs
 
-output/seminar/%/html-problems: \
-	output/seminar/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md))) ;
+# A fragment lands in `build/` beside its `.tex`, as naboj's does. These used to point at
+# `output/`, where the generic `output/%.html: source/%.md` rule picked them up -- the rule that
+# read `source/` and so skipped Jinja for the whole HTML branch.
+build/seminar/%/html-problems: \
+	build/seminar/$$*/html-prerequisites \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md)))
+	@mkdir -p $(@D) && touch $@
 
-output/seminar/%/html-solutions:\
-	output/seminar/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md))) ;
+build/seminar/%/html-solutions: \
+	build/seminar/$$*/html-prerequisites \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md)))
+	@mkdir -p $(@D) && touch $@
 
 output/seminar/%/pdf: \
 	output/seminar/$$*/problems.pdf \
 	output/seminar/$$*/solutions.pdf ;
 
-output/seminar/%/html: \
-	output/seminar/$$*/html-problems \
-	output/seminar/$$*/html-solutions ;
+build/seminar/%/html: \
+	build/seminar/$$*/html-problems \
+	build/seminar/$$*/html-solutions ;
 
 output/seminar/%/problems: \
 	output/seminar/$$*/problems.pdf \
-	output/seminar/$$*/html-problems ;
+	build/seminar/$$*/html-problems ;
 
 output/seminar/%/solutions: \
 	output/seminar/$$*/solutions.pdf \
-	output/seminar/$$*/html-solutions ;
+	build/seminar/$$*/html-solutions ;
 
 output/seminar/%: \
 	output/seminar/$$*/problems \

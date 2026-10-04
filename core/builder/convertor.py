@@ -44,51 +44,39 @@ class Convertor:
             RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
         ],
         'html': [
-            # Prepend "obrazky/"
-            RegexReplacement(
-                r'<img src="(?P<filename>.*)\.(?P<extension>jpg|png|svg)"',
-                r'<img src="obrazky/\g<filename>.\g<extension>"',
-            ),
-            RegexReplacement(
-                r'<img src="(?P<filename>.*)\.gp"',
-                r'<img src="obrazky/\g<filename>.png"',
-            ),
-            # alter picture heights
+            # A picture becomes an SVG, mirroring what the LaTeX rules above do with `.pdf`.
+            # One target extension for every source, because `build/%.svg` takes a picture from
+            # any of them; a raster picture is already web-ready and is left alone.
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.tikz"', r'<img src="\g<stem>.svg"',
+                             purpose="A TikZ picture is an SVG on the web"),
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.gp"', r'<img src="\g<stem>.svg"',
+                             purpose="A gnuplot picture is an SVG on the web"),
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.pdf"', r'<img src="\g<stem>.svg"',
+                             purpose="A PDF picture is an SVG on the web"),
+            # `height=40mm` is a print instruction. On a page of unknown width it has to become a
+            # ceiling rather than a size, or a wide drawing overflows its column on a phone.
             RegexReplacement(
                 r'style="height:(?P<height>[0-9.]*)mm"',
-                r'style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"',
-            ),
-            # Change figure title
-            RegexReplacement(
-                r'<figcaption>Obrázok (?P<number>\d*):',
-                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
-            ),
-            # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
-            RegexReplacement(
-                r'(\\num|\\SI){e',
-                r'\g<1>{1.e',
-            ),
-            # Hack fix: incorrect display of siunitx in MathJAX (adds a dot after short mantissa)
-            RegexReplacement(
-                r'(\\num|\\SI){([0-9])e',
-                r'\g<1>{\g<2>.e',
-            ),
-            RegexReplacement(
-                r'\\qty',
-                r'\\SI',
-            ),
-            RegexReplacement(
-                r'\\unit',
-                r'\\si',
+                r'style="max-width: 100%; max-height: \g<height>mm; height: auto"',
+                purpose="A picture height becomes a responsive ceiling",
             ),
         ],
     }
 
+    #: Extensions an `<img>` may still carry once the rules above have run. Anything else is a
+    #: picture format with no web rule, which is a build error rather than a broken image on the
+    #: page -- the same bargain `\insertPicture` strikes for LaTeX.
+    WEB_PICTURE_SUFFIXES = ('svg', 'png', 'jpg', 'jpeg', 'gif', 'webp')
+
     post_checks = {
         'all': [],
         'html': [
-            # This is just a temporary workaround for Trojstenweb's inane choice of paths
-            RegexFailure(r'<img src="(?!obrazky)', error="Caught an image without 'obrazky/'"),
+            # A picture format with no web rule. This replaces a check that demanded every `src`
+            # start with `obrazky/` -- a directory make never created, invented at publish time by
+            # `dgs-copy.py` for one website -- which made `.tikz`, `.pdf` and the documented
+            # empty-path placeholder all abort an HTML build outright.
+            RegexFailure(r'<img src="[^"]*\.(?!(?:svg|png|jpg|jpeg|gif|webp)")[A-Za-z0-9]+"',
+                         error="Caught a picture in a format the web rules do not convert"),
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
             RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
@@ -133,9 +121,6 @@ class Convertor:
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Keep HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
-            # FixMe: These two are harmful workarounds of downstream problems
-            RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to old siunitx syntax for old failing web"),
-            RegexReplacement(r"\\unit", r"\\si", purpose="Revert to old siunitx syntax for old failing web"),
         ],
     }
 
@@ -159,7 +144,6 @@ class Convertor:
         self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
-        self.math = options.get('math', 'mathjax')
         self.file = None
 
         assert output_format in ['html', 'latex'], \
@@ -335,9 +319,10 @@ class Convertor:
                   f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}",
         ]
         if self.output_format == 'html':
-            args += [
-                "--webtex=eqn://" if self.math == 'webtex' else "--mathjax",
-            ]
+            # `--math-method`, not the `--mathjax` flag, which pandoc 3 deprecates with a warning
+            # on every single file. The URL is empty on purpose: a fragment carries no loader, and
+            # the page template that assembles fragments is what points at the vendored MathJax.
+            args += ["--math-method=mathjax"]
 
         subprocess.run(args, stdin=self.file, stdout=out, check=True)
 
