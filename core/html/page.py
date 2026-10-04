@@ -21,27 +21,13 @@ import sys
 from core import i18n
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
+from core.html import mathjax
 
 TEMPLATE_ROOT = pathlib.Path('core/templates')
 TEMPLATE = 'page.jhtml'
 #: Where a page keeps the pictures it points at, relative to itself.
 PICTURES = 'pictures'
-#: And the maths engine, copied in rather than linked up the tree.
-#:
-#: Firefox gives every `file://` document its own origin, so a page cannot load a script from a
-#: sibling directory: `../../../core/html/vendor/…` is blocked, MathJax never starts, and the
-#: page shows `\(1.8\,\mathrm{m}\)` as text. Online it looked fine, because MathJax was
-#: quietly fetching its font from the CDN -- which is the opposite of what vendoring is for.
-MATHJAX = 'mathjax'
-VENDOR = pathlib.Path('core/html/vendor')
-#: One file with the font baked in, plus mhchem and the glyph chunks.
-#:
-#: The *combined* build and not `tex-svg-nofont.js` plus a font package, because MathJax fetches
-#: a separate font package dynamically and Firefox gives every `file://` document its own
-#: origin, so the fetch is blocked and nothing typesets. Online it hid: MathJax fell through to
-#: the CDN and the page looked right, which is the opposite of what vendoring is for.
-RUNTIME = ('mathjax/tex-mml-svg-mathjax-pagella.js', 'mathjax/input',
-           'mathjax/svg', 'mathjax/LICENSE')
+
 
 RE_IMG = re.compile(r'(<img[^>]*\ssrc=")(?P<src>[^"]*)(")')
 
@@ -82,43 +68,31 @@ def collect(fragment: pathlib.Path, *, sources: list[pathlib.Path],
     return out
 
 
-def install_runtime(destination: pathlib.Path) -> None:
-    """MathJax and its font, beside the page, because `file://` will not reach outside."""
-    for item in RUNTIME:
-        source = VENDOR / item
-        target = destination / MATHJAX / item
-        if target.exists():
-            continue
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if source.is_dir():
-            shutil.copytree(source, target)
-        elif source.is_file():
-            shutil.copyfile(source, target)
-
-
 def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
           title: str | None = None, files=('problem', 'solution', 'answer')) -> pathlib.Path:
     """Assemble `<problem>/<lang>/*.html` into `<destination>/index.html`."""
     sources = [problem / lang, problem, pathlib.Path('.')]
     destination.mkdir(parents=True, exist_ok=True)
 
-    pieces = []
+    bodies, names = [], []
     for name in files:
         fragment = problem / lang / f'{name}.html'
         if not fragment.is_file():
             continue
-        pieces.append(f'<section class="{name}">')
-        pieces.append(collect(fragment, sources=sources, destination=destination))
-        pieces.append('</section>')
-    if not pieces:
+        names.append(name)
+        bodies.append(collect(fragment, sources=sources, destination=destination))
+    if not bodies:
         raise FileNotFoundError(f'{problem}/{lang}: no fragments to assemble')
 
-    install_runtime(destination)
+    # the maths is typeset here, once, so the page carries finished SVG and needs no JavaScript
+    bodies = mathjax.typeset(bodies)
+    pieces = [piece
+              for name, body in zip(names, bodies, strict=True)
+              for piece in (f'<section class="{name}">', body, '</section>')]
     context = Context(
         content='\n'.join(pieces),
         lang=lang,
         title=title or problem.name,
-        mathjax=MATHJAX,
         # inlined rather than linked, for the same `file://` reason as the engine
         css=pathlib.Path('core/html/page.css').read_text(),
     )

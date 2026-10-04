@@ -16,12 +16,13 @@ build/
 render/
 output/
 source/
-# ...but those four are *build stages at the repository root*, and the patterns are bare, so
-# they also match any directory of that name at any depth. `core/html/vendor/mathjax/output/`
-# is MathJax's font data, which is vendored on purpose and has to be in the repository: without
-# this line it was silently left out and a fresh clone rendered no maths at all.
-!core/html/vendor/**
+# ...and note those four are bare patterns, so they match a directory of that name at *any*
+# depth, not only at the root. That once silently excluded a vendored `…/output/` directory
+# from a commit, and `git status` says nothing, because an ignored file is not untracked.
 _*/
 .idea/*
 svg-inkscape/
 *.minted
+
+# `npm ci` fetches these; see package.json. The HTML output needs MathJax at build time.
+node_modules/
