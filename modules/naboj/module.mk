@@ -541,14 +541,30 @@ output/naboj/%/html-all: \
 
 # All targets for <language>
 # <competition>/<volume>/languages/<language>
-output/naboj/%: \
-	output/naboj/%/answers.pdf \
-	output/naboj/%/constants.pdf \
-	output/naboj/%/cover-print.pdf \
-	output/naboj/%/booklet.pdf \
-	output/naboj/%/tearoff.pdf \
-	output/naboj/%/evaluation.pdf \
-	output/naboj/%/booklet-print.pdf ;
+#
+# **One rule per language, with the language spelled out, and that is the whole point.**
+# This used to be a bare `output/naboj/%:`, which is the *same pattern* as the venue aggregate
+# at the bottom of this file -- and make resolves a tie between two equally general patterns by
+# taking the first whose prerequisites it can make. So the rule chosen depended on whether this
+# one happened to be satisfiable: a volume with no `evaluators.jtex` cannot make
+# `evaluation.pdf`, the language rule became inapplicable, and make fell through to the venue
+# rule and reported `Could not load YAML file .../venues/sk/meta.yaml` -- naming a venue called
+# `sk` that nobody had ever written, for a missing file in a different directory entirely.
+#
+# Naming the language makes the stem `<competition>/<volume>` instead of
+# `<competition>/<volume>/languages/<language>`, and make prefers the shorter stem outright, so
+# the choice no longer depends on what happens to be buildable.
+define NABOJ_LANGUAGE_AGGREGATE
+output/naboj/%/languages/$(1): \
+	output/naboj/%/languages/$(1)/answers.pdf \
+	output/naboj/%/languages/$(1)/constants.pdf \
+	output/naboj/%/languages/$(1)/cover-print.pdf \
+	output/naboj/%/languages/$(1)/booklet.pdf \
+	output/naboj/%/languages/$(1)/tearoff.pdf \
+	output/naboj/%/languages/$(1)/evaluation.pdf \
+	output/naboj/%/languages/$(1)/booklet-print.pdf ;
+endef
+$(foreach language,$(SUPPORTED_LANGUAGES),$(eval $(call NABOJ_LANGUAGE_AGGREGATE,$(language))))
 
 # <competition>/<volume>
 output/naboj/%/booklets: \
@@ -587,6 +603,10 @@ output/naboj/%/answers-modulo.pdf: \
 
 # All targets for <venue>
 # <competition>/<volume>/venues/<venue>
+#
+# A venue name is not a fixed vocabulary the way a language is, so this one stays general --
+# which is safe now that the language aggregate above names its language and no longer competes
+# with it for the same target.
 output/naboj/%: \
 	output/naboj/%/instructions.pdf \
 	output/naboj/%/answers-modulo.pdf ;
