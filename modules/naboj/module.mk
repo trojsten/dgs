@@ -494,7 +494,8 @@ output/naboj/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.jpg)) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.png)) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.svg)) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/naboj/$$*/*.gp)))
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/naboj/$$*/*.gp))) \
+	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/naboj/$$*/*.tikz)))
 	@for language in $(notdir $(patsubst %/,%,$(dir $(wildcard source/naboj/$*/*/problem.md)))); do \
 		mkdir -p output/naboj/$*/$$language; \
 		for picture in $^; do cp -f "$$picture" "output/naboj/$*/$$language/"; done; \

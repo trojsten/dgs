@@ -109,6 +109,43 @@ Aj s newlinami.](file.png){#fig:long height=53mm}
         assert re.match(r'.*<figcaption.*Veľmi dlhý text\. Akože masívne\. Veľmi masívne\. Aj s\u00a0newlinami\.', output) is not None
 
 
+    def test_tikz_becomes_svg_in_html(self, convert):
+        """
+        A `.tikz` is LaTeX, so the web gets the SVG the build renders it to -- the same way a
+        `.gp` becomes the PNG gnuplot draws. The reference has to follow the picture, or the
+        fragment points at a file no browser can load.
+        """
+        output = convert('html', 'sk', '![Sieť](network.tikz){#fig:net height=40mm}').replace('\n', ' ')
+        assert 'network.svg' in output
+        assert 'network.tikz' not in output
+
+    def test_gp_becomes_png_in_html(self, convert):
+        output = convert('html', 'sk', '![Graf](plot.gp){#fig:plot height=40mm}').replace('\n', ' ')
+        assert 'plot.png' in output
+        assert 'plot.gp' not in output
+
+    def test_unconvertible_picture_reference_is_refused(self, convert):
+        """
+        The backstop behind the two rules above. Both rewrites anchor on `<img src="`, which is
+        what pandoc writes -- so what this catches is a reference they did not reach, here an
+        `<img>` carrying an attribute before its `src`. A broken `<img>` shows its alt text and
+        says nothing about why, so this is the one picture failure that is silent on the page:
+        `futile-nine` shipped `src="network.tikz"` and the reader got raw LaTeX instead of nine
+        resistors.
+        """
+        with pytest.raises(Exception, match='no browser can load'):
+            convert('html', 'sk', '<img class="figure" src="network.tikz" />')
+
+    def test_a_real_svg_is_left_alone(self, convert):
+        """
+        The quiet half: `.svg` and `.png` are what a browser wants, so nothing rewrites them and
+        the check must not fire on them. `tikz` inside a *name* is not an extension either.
+        """
+        for picture in ('ryba.svg', 'file.png', 'tikz-sketch.svg', 'a.tikz.svg'):
+            output = convert('html', 'sk', f'![Ryba]({picture})' + '{height=40mm}').replace('\n', ' ')
+            assert picture in output, f"{picture} was rewritten: {output}"
+
+
 class TestTags:
     def test_h_latex(self, convert):
         output = convert('latex', 'en', '@H this should not be seen!')

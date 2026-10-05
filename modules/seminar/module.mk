@@ -176,7 +176,8 @@ output/seminar/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
 	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.py)) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) ;
+	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) \
+	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/seminar/$$*/*/*.tikz))) ;
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.jtex \

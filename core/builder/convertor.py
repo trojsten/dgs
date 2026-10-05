@@ -54,6 +54,15 @@ class Convertor:
                 r'<img src="(?P<filename>.*)\.gp"',
                 r'<img src="\g<filename>.png"',
             ),
+            # A `.tikz` is LaTeX, so for the page it goes the same way it goes for the booklet --
+            # `standalone.jtex`, xelatex, and then dvisvgm instead of a PDF. The reference has to
+            # follow it, exactly as the `.gp` line above makes it follow gnuplot's PNG. Without
+            # this the fragment carries `<img src="network.tikz">`, which every browser fails to
+            # load, and the reader gets the alt text -- raw LaTeX, since alt text is not maths.
+            RegexReplacement(
+                r'<img src="(?P<filename>.*)\.tikz"',
+                r'<img src="\g<filename>.svg"',
+            ),
             # alter picture heights
             RegexReplacement(
                 r'style="height:(?P<height>[0-9.]*)mm"',
@@ -72,6 +81,15 @@ class Convertor:
         'html': [
             RegexFailure(r'\\includegraphics', error=r"Caught an unconverted \\includegraphics"),
             RegexFailure(r'\\includesvg', error=r"Caught an unconverted \\includesvg"),
+            # A picture format no browser reads. It is the one failure in this family that is
+            # silent on the page -- a broken `<img>` shows its alt text and nothing says why --
+            # so it is refused here instead of shipped.
+            #
+            # Looser than the two rewrites above, deliberately: they anchor on `<img src="`,
+            # which is what pandoc writes, while this has to catch whatever they did not reach.
+            RegexFailure(r'<img[^>]*src="[^"]*\.(tikz|gp)"',
+                         error="Caught a picture reference no browser can load: a `.tikz` becomes "
+                               "an `.svg` and a `.gp` becomes a `.png` for the web"),
             RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
         ],
         'latex': [

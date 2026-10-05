@@ -217,12 +217,6 @@ build/%.pdf: render/%.svg
 	pdfcrop $@ $@-crop
 	mv $@-crop $@
 
-build/%.xdv: build/%.tikz.tex
-	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to ' \
-			 '$(c_extension)XDV$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -no-pdf -halt-on-error -file-line-error -shell-escape -jobname=$(subst .xdv,,$@) $<
-
 build/%.pdf: build/%.tikz.tex
 	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to' \
 			 '$(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
@@ -230,9 +224,20 @@ build/%.pdf: build/%.tikz.tex
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
-build/%.svg: build/%.xdv
-	@echo -e '$(c_action)[dvisvgm] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
-	dvisvgm --no-fonts -o $@ $<
+# A picture for the web, out of the PDF the booklet already uses.
+#
+# **From the PDF, and not through dvisvgm.** This used to be `build/%.svg: build/%.xdv`, with an
+# `.xdv` rule above it running xelatex a second time with `-no-pdf` -- and it did not work. PGF
+# under xelatex emits dvipdfmx specials, which dvisvgm does not draw, so what came out was a
+# 6pt by 6pt file holding the picture's *text* and none of its paths: `futile-nine`'s nine
+# resistors arrived on the page as a lone letter R. Nothing consumed the rule, so nothing said so.
+#
+# Going through the PDF means the web gets the same drawing as the booklet, by construction --
+# one xelatex run, one artefact, and a converter that only changes its container.
+build/%.svg: build/%.pdf
+	@echo -e '$(c_action)[pdftocairo] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	pdftocairo -svg $< $@
 
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
@@ -268,6 +273,20 @@ output/%.svg: render/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert -f svg -h 500 -a -o $@ $<
+
+# Publish the SVG a `.tikz` renders to (for web)
+#
+# Nothing new is drawn: the picture has already been through `standalone.jtex` and xelatex to
+# become the PDF the booklet sets, and `build/%.svg` only changes that PDF's container. This
+# carries the result into `output/`, the way the rule above carries an `.svg`.
+#
+# It sits *after* `output/%.svg: render/%.svg` deliberately. Both patterns match the same target
+# with the same stem, so make takes the earlier one whose prerequisites it can make: a real
+# drawing has a `render/*.svg` and goes through rsvg-convert, and only a picture that has none --
+# which is exactly a `.tikz` -- falls through to here. Reversing the two would push every SVG in
+# the repository through xelatex.
+output/%.svg: build/%.svg
+	$(call _copy,SVG)
 
 # Copy PNG (for web)
 output/%.png: source/%.png
