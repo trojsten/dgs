@@ -1655,3 +1655,40 @@ class TestABandThatRoundsToOneString:
         """`snap` is for a band that must be *coarser* than the place it prints."""
         band = self._q(2000.0, 'second') % self._q(2019.7, 'second')
         assert r'\qtyrange{2000}{2050}{\second}' == f'{band.snap(50):.0f}'
+
+
+class TestForceF:
+    r"""
+    `force_f` says a value must never be written as a power of ten.
+
+    It was read by exactly one method, `PhysicsConstant.format()`, which nothing in `source/`
+    calls -- so a bare tag, `.eq` and `|f` all ignored it, while `docs/filters.md` promised
+    "fixed notation whatever the format spec asks for". And on that one path it rounded to
+    `printed_digits` *decimals* where `printed_digits` counts significant figures, so a
+    3.1e-06 came back as `0.000`: not a power of ten, and not the number either.
+    """
+    @staticmethod
+    def _tau(force_f):
+        from core.builder.context.quantities import PhysicsConstant
+        return PhysicsConstant.construct('t', magnitude=0.0000031, unit='second',
+                                         symbol=r'\tau', force_f=force_f)
+
+    def test_a_forced_value_never_shows_an_exponent(self):
+        assert r'\qty{0.0000031}{\second}' == f'{self._tau(True)}'
+
+    def test_equals_honours_it_too(self):
+        assert self._tau(True).eq.endswith(r'\qty{0.0000031}{\second}')
+
+    def test_without_it_the_exponent_stands(self):
+        """The quiet half: the default is untouched, and it is what 2524 metas rely on."""
+        assert r'\qty{3.1e-06}{\second}' == f'{self._tau(False)}'
+
+    def test_an_explicit_precision_still_wins(self):
+        """`force_f` replaces the notation, not the precision a caller asked for by name."""
+        assert r'\qty{0.000}{\second}' == f'{self._tau(True):.3f}'
+
+    def test_a_value_with_no_exponent_is_unchanged(self):
+        from core.builder.context.quantities import PhysicsConstant
+        q = PhysicsConstant.construct('e', magnitude=123456.0, unit='joule',
+                                      symbol='E', force_f=True)
+        assert r'\qty{123456}{\joule}' == f'{q}'

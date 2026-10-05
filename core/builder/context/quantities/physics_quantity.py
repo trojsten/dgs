@@ -9,7 +9,7 @@ import numpy as np
 import pint
 from pint import UnitRegistry as u
 
-from core.filters.hacks import BareKind, cut_extra_one, natural
+from core.filters.hacks import BareKind, ExplicitFixed, cut_extra_one, natural
 
 
 class MissingSymbolError(Exception):
@@ -494,9 +494,17 @@ class PhysicsQuantity:
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         # A bare `f` or `e` means Python's six decimal places, which is a precision the
         # caller did not ask for and `1e-8` does not survive. See `natural`.
-        printed = (natural(self._quantity.magnitude, fmt)
-                   if BareKind.match(fmt or '')
-                   else f'{self._quantity.magnitude:{fmt}}')
+        # `force_f` replaces the *notation*, not the precision: a value that asked never to be
+        # written as a power of ten is printed fixed, to its own length. `natural(x, 'f')` is
+        # the shortest fixed string that reads back as the same float, so `3.1e-06` becomes
+        # `0.0000031` rather than the `0.000` that rounding to `printed_digits` decimals gives.
+        # An explicit `.Nf` is left alone -- that caller asked for N decimals and got them.
+        if self.force_f and not ExplicitFixed.match(fmt or ''):
+            printed = natural(self._quantity.magnitude, 'f')
+        elif BareKind.match(fmt or ''):
+            printed = natural(self._quantity.magnitude, fmt)
+        else:
+            printed = f'{self._quantity.magnitude:{fmt}}'
         # `cut_extra_one` drops a mantissa of exactly one so siunitx sets `10^{15}` rather than
         # `1 \cdot 10^{15}`. That is right -- **unless the call also carries an exponent option**,
         # because siunitx then normalises what it reads and takes the empty mantissa for a zero:

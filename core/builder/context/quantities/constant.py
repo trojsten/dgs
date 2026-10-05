@@ -23,7 +23,10 @@ class PhysicsConstant(PhysicsQuantity):
 
     def format(self, fmt: str | None = None):
         if self.force_f:
-            fmt = f'.{self.printed_digits}f'
+            # Not `.{printed_digits}f`, which counts *decimals* where `printed_digits` counts
+            # significant figures: a `\tau` of 3.1e-06 came back as `0.000`, which is not the
+            # number. `__format__` prints it fixed to its own length instead.
+            fmt = ''
         elif fmt is None:
             fmt = f'.{self.printed_digits}g'
 

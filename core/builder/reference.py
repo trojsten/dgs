@@ -1006,7 +1006,9 @@ _META: tuple[Entry, ...] = (
           summary='siunitx options passed through to the `\\qty[...]` call.'),
     Entry('force_f', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature='force_f: true',
-          summary='Print in fixed notation whatever the format spec asks for.'),
+          summary='Never write this value as a power of ten: print it fixed, to its own length. '
+                  'An explicit precision such as `|f2` still wins -- this replaces the notation, '
+                  'not the number of figures.'),
     Entry('aliases', 'values-key', env=META, section='`meta.yaml`: a `values:` entry',
           signature='aliases: [...]',
           summary='Alternative names, for a constants file. Accepted on a problem `values:` entry, '

@@ -1652,7 +1652,8 @@ siunitx options passed through to the `\qty[...]` call.
 
 `force_f: true`
 
-Print in fixed notation whatever the format spec asks for.
+Never write this value as a power of ten: print it fixed, to its own length. An explicit precision
+such as `|f2` still wins -- this replaces the notation, not the number of figures.
 
 ### `aliases:`
 

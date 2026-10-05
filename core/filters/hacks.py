@@ -17,6 +17,10 @@ def cut_extra_one(num: str) -> str:
 #: A bare format kind -- `f` or `e` with no precision after the dot.
 BareKind = re.compile(r'^[fe]$')
 
+#: A fixed-notation spec that names its own precision, as `.2f` does. `force_f` leaves these
+#: alone: the caller asked for that many decimals and is entitled to them.
+ExplicitFixed = re.compile(r'^\.\d+f$')
+
 
 def natural(magnitude, kind: str) -> str:
     r"""
