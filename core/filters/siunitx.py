@@ -155,7 +155,11 @@ def format_number(text: str, locale) -> str:
 
     def plain(value: str) -> str:
         value = value.strip()
-        sign, digits = (value[0], value[1:]) if value[:1] in '+-' else ('', value)
+        # `value[:1] in '+-'` is **true for the empty string**, because every string contains the
+        # empty one -- so a `\num{}` used to reach `value[0]` and take the whole HTML build down
+        # with an `IndexError` naming nothing. An empty argument is not a number; it is left as
+        # the empty string, the way an unparseable one is left standing.
+        sign, digits = (value[0], value[1:]) if value[:1] in ('+', '-') else ('', value)
         whole, point, fraction = digits.partition('.')
         # Only a run of digits is grouped. An argument may be an expression -- `\num{\frac12}` --
         # and inserting thin spaces into markup would corrupt it.

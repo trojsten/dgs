@@ -97,6 +97,27 @@ class TestUnitSymbols:
         assert symbol('gforce', sk) == r'\textit{g}'
 
 
+class TestEmptyArgument:
+    """
+    `\\num{}` is not a number, and it must not be a crash either.
+
+    `value[:1] in '+-'` is true for the empty string -- every string contains the empty one --
+    so the sign test used to index `value[0]` and raise `IndexError` out of a preprocess that
+    names neither the file nor the line. A specimen volume writing `\\num{}` in prose about the
+    macro took the whole HTML build down with it.
+    """
+    def test_empty_number_is_empty(self, en):
+        assert expand(r'\num{}', en) == ''
+
+    def test_empty_quantity_keeps_its_unit(self, en):
+        assert expand(r'\qty{}{\metre}', en) == r'\ \text{m}'
+
+    def test_a_sign_is_still_a_sign(self, en):
+        """The quiet half: a real leading sign must survive the fix."""
+        assert expand(r'\num{-1.5}', en) == '-1.5'
+        assert expand(r'\num{+15}', en) == '+15'
+
+
 class TestItLeavesEverythingElseAlone:
     """The quiet half, and the one that matters: this runs over every line of every document."""
 
