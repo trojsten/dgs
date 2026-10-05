@@ -277,16 +277,23 @@ output/%.svg: render/%.svg
 # Publish the SVG a `.tikz` renders to (for web)
 #
 # Nothing new is drawn: the picture has already been through `standalone.jtex` and xelatex to
-# become the PDF the booklet sets, and `build/%.svg` only changes that PDF's container. This
-# carries the result into `output/`, the way the rule above carries an `.svg`.
+# become the PDF the booklet sets, and `build/%.svg` only changes that PDF's container.
+#
+# **Through rsvg-convert, and at the same height as the rule above**, which is the whole reason
+# this is not a copy. A `.tikz` keeps the PDF's natural size -- `futile-nine`'s network is 92
+# units tall -- while every other picture on the web is published at 500, so a copied one lands
+# at a fifth of the size of the drawing beside it. The `<img>` carries `max-height` and no
+# height, so the intrinsic size is what the browser uses.
 #
 # It sits *after* `output/%.svg: render/%.svg` deliberately. Both patterns match the same target
 # with the same stem, so make takes the earlier one whose prerequisites it can make: a real
-# drawing has a `render/*.svg` and goes through rsvg-convert, and only a picture that has none --
-# which is exactly a `.tikz` -- falls through to here. Reversing the two would push every SVG in
-# the repository through xelatex.
+# drawing has a `render/*.svg` and goes through rsvg-convert directly, and only a picture that
+# has none -- which is exactly a `.tikz` -- falls through to here. Reversing the two would push
+# every SVG in the repository through xelatex.
 output/%.svg: build/%.svg
-	$(call _copy,SVG)
+	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to SVG file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	rsvg-convert -f svg -h 500 -a -o $@ $<
 
 # Copy PNG (for web)
 output/%.png: source/%.png

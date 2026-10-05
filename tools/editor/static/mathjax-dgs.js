@@ -148,5 +148,8 @@ window.MathJax = {
   // `mtextInheritFont` matters more than the choice of face: `\text{}` is where the units and
   // the translated words live, and those should be the page's own font rather than a maths one.
   output: { font: 'mathjax-stix2' },
-  chtml: { displayAlign: 'left', displayIndent: '0', mtextInheritFont: true }
+  // Centred, because `dgs.cls` loads `extarticle` without `fleqn` and so the booklet centres
+  // every display. This said `left` from the day the pane first typeset anything, which put the
+  // preview out of step with the page it exists to preview.
+  chtml: { displayAlign: 'center', mtextInheritFont: true }
 };
