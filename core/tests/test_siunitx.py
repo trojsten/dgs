@@ -150,3 +150,25 @@ class TestItLeavesEverythingElseAlone:
     def test_an_unknown_unit_stays_visible(self, sk):
         """`\\kg` is not a siunitx unit and is an authoring error; it must not vanish."""
         assert r'\kg' in expand(r'\qty{90}{\kg}', sk)
+
+
+class TestComputedPowers:
+    r"""
+    `\tothe{n}` and `\raiseto{n}` are siunitx's argument-taking powers.
+
+    They arrive from the quantity formatter rather than from an author: a unit whose exponent is
+    not 2 or 3 has no `\squared`/`\cubed` to reach for, so the cube root of a volume in litres is
+    `\litre\tothe{0.333}`. The chain parser used to collect macro *names* only, so the argument
+    was dropped and `\tothe` reached the page as a red undefined macro beside a unit with no
+    power on it at all.
+    """
+
+    def test_a_fractional_power_keeps_its_exponent(self, en):
+        assert format_unit(r'\litre\tothe{0.333}', en) == r'\text{l}^{0.333}'
+
+    def test_raiseto_is_the_same(self, en):
+        assert format_unit(r'\metre\raiseto{1.5}', en) == r'\text{m}^{1.5}'
+
+    def test_the_named_powers_still_work(self, en):
+        assert format_unit(r'\metre\squared', en) == r'\text{m}^{2}'
+        assert format_unit(r'\kilo\gram\per\metre\cubed', en) == r'\text{kg}/\text{m}^{3}'

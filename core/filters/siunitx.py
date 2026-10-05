@@ -54,6 +54,11 @@ BUILTIN = {
 
 #: `\per` and the two powers are operators on the unit string, not units.
 OPERATORS = {'per': PER, 'squared': '^{2}', 'cubed': '^{3}', 'square': '^{2}', 'cubic': '^{3}'}
+#: siunitx's two argument-taking powers. They are what a *computed* unit reaches for when the
+#: exponent is not 2 or 3 -- the cube root of a volume in litres is `\litre\tothe{0.333}` -- so
+#: they arrive from the quantity formatter rather than from an author, and dropping the argument
+#: left `\tothe` on the page as a red undefined macro beside a unit with no power at all.
+POWERS = {'tothe', 'raiseto'}
 
 #: How many brace groups each command takes, and how to assemble them.
 ARITY = {
@@ -63,7 +68,7 @@ ARITY = {
 }
 
 _DECLARED = re.compile(r'\\DeclareSIUnit(?:\[[^\]]*\])?\{\\(\w+)\}\{(.*)\}')
-_MACRO = re.compile(r'\\([a-zA-Z]+)')
+_MACRO = re.compile(r'\\([a-zA-Z]+)(?:\{([^{}]*)\})?')
 _COMMAND = re.compile(r'\\(' + '|'.join(sorted(ARITY, key=len, reverse=True)) + r')(?![a-zA-Z])')
 
 
@@ -194,8 +199,13 @@ def format_unit(text: str, locale) -> str:
     the booklet sets it.
     """
     out = []
-    for name in _MACRO.findall(text):
-        out.append(OPERATORS[name] if name in OPERATORS else symbol(name, locale))
+    for name, argument in _MACRO.findall(text):
+        if name in POWERS:
+            out.append(f'^{{{argument}}}')
+        elif name in OPERATORS:
+            out.append(OPERATORS[name])
+        else:
+            out.append(symbol(name, locale))
     return _merge(''.join(out))
 
 

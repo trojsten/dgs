@@ -119,9 +119,17 @@ Aj s newlinami.](file.png){#fig:long height=53mm}
         assert 'network.svg' in output
         assert 'network.tikz' not in output
 
-    def test_gp_becomes_png_in_html(self, convert):
+    def test_gp_becomes_svg_in_html(self, convert):
+        """
+        A gnuplot plot goes to an SVG, not a PNG, and by the same route a `.tikz` takes.
+
+        It used to go to a PNG built by a second gnuplot run with `-e "set terminal pngcairo"`,
+        which never worked once: every `.gp` in the repository opens by setting its own
+        `set terminal pdf size W, H`, and that runs after the `-e` and wins. `output/` got a PDF
+        carrying a `.png` name, and every browser showed the broken-image icon.
+        """
         output = convert('html', 'sk', '![Graf](plot.gp){#fig:plot height=40mm}').replace('\n', ' ')
-        assert 'plot.png' in output
+        assert 'plot.svg' in output
         assert 'plot.gp' not in output
 
     def test_unconvertible_picture_reference_is_refused(self, convert):
@@ -541,3 +549,36 @@ class TestArrayRowSeparatorForTheWeb:
         r"""The quiet half: LaTeX must keep `\jot`, which is the document's own setting for
         exactly this gap -- `dgs.cls` puts it at 10pt against plain LaTeX's 3pt."""
         assert r'\jot' in convert('latex', 'en', self.BLOCK)
+
+
+class TestCodeIsNotExpanded:
+    r"""
+    `siunitx.expand` and `dgsmacros.expand` rewrite maths, and a code span is not maths.
+
+    Markdown sets a code span and a fenced block verbatim, so a macro written in one is being
+    *named* rather than called. `source/naboj/phys/errors/*.md` is prose about the sources and
+    names `\qty` and `\Diff` throughout; `naboj/test/00`'s macro problems print every call in a
+    `<code>` beside its own rendering, which is the whole point of those tables. Expanding there
+    replaces the thing being talked about with its answer.
+
+    The TeX writer never reaches either expander, so this is an HTML-only rule.
+    """
+
+    def test_a_macro_named_in_a_code_span_stays_as_written(self, convert):
+        output = convert('html', 'en', 'Write `\\Int[0][T]{v}{t}` for an integral.')
+        assert '<code>\\Int[0][T]{v}{t}</code>' in output
+
+    def test_a_unit_named_in_a_code_span_stays_as_written(self, convert):
+        output = convert('html', 'en', 'Write `\\qty{3}{\\metre}` for a length.')
+        assert '<code>\\qty{3}{\\metre}</code>' in output
+
+    def test_the_prose_around_a_code_span_is_still_expanded(self, convert):
+        output = convert('html', 'en', 'Write `\\Int` to get $\\Int{x}{x}$.')
+        assert '<code>\\Int</code>' in output
+        assert '\\mathop{}\\!\\mathrm{d}' in output
+
+    def test_a_fenced_block_is_left_alone(self, convert):
+        output = convert('html', 'en', '~~~\n\\Int[0][T]{v}{t}\n\\qty{3}{\\metre}\n~~~\n')
+        assert '\\Int[0][T]{v}{t}' in output
+        assert '\\qty{3}{\\metre}' in output
+        assert '\\mathop' not in output

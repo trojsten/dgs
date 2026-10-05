@@ -18,11 +18,13 @@
 // `\Int` 434 times, `\Nuclide` 161, `\Exp` 130, `\Mean` 81, `\Abs` 72, `\Paren` 36. The ones
 // below are the subset that translates exactly, with no optional or split argument in the way.
 //
-// Deliberately still absent, because a MathJax macro would have to lie about them: everything in
-// the integral family (`\Int`, `\OInt`, `\IInt` and their suffixed variants take two optionals
-// and a differential list), `\Derivative` and `\Eval`, `\Set` and `\Seq` (two optionals each),
-// `\Log`, `\Expected`, `\Distribution`, `\Nuclide` and `\Tuple`. Writing them with a fixed
-// arity would silently eat the next token in the source, which is worse than a red box saying so.
+// The other half of the vocabulary is **not** here, and is not missing either. The integral
+// family, `\Derivative`, `\Eval`, `\Set`, `\Seq`, `\Log`, `\Expected`, `\Distribution`,
+// `\Nuclide`, `\Coord`, `\Tuple` and the four differentials all take optional or split
+// arguments, so a fixed-arity macro would silently eat the next token in the source. They are
+// parsed and expanded in `core/filters/dgsmacros.py` before pandoc ever sees them, exactly as
+// siunitx is -- so by the time a fragment reaches this file those macros are already gone, and
+// what is left below is only what a macro can say truthfully.
 //
 // mhchem is MathJax's own and only has to be asked for; it is what makes `\ce{H2O}` work.
 //
@@ -131,11 +133,73 @@ window.MathJax = {
       // differential, a partial, a finite difference and an inexact one. Collapsing `\FDiff`
       // onto `\Diff` prints `dt` where the physics says `Δt`, which is a change of meaning and
       // not a change of font. `\mathop{}\!` is the spacing `math.tex` gives them.
-      Diff:  ['\\mathop{}\\!\\mathrm{d}#1', 1],
-      PDiff: ['\\mathop{}\\!\\partial#1', 1],
-      FDiff: ['\\mathop{}\\!\\Delta#1', 1],
-      UDiff: ['\\mathop{}\\!\\delta#1', 1],
-      Sum:   ['\\sum #1', 1]
+      // vectors and matrices. `\ArrowVector` is `esvect`'s `\vv`, which MathJax has not got;
+      // `\overrightarrow` is the nearest thing it does have and sets the same arrow over the
+      // same width. `\Transpose`'s `\!` closes the gap a raised `\top` otherwise leaves.
+      ArrowVector:     ['\\overrightarrow{#1}', 1],
+      LongVector:      ['\\overrightarrow{#1}', 1],
+      BoldVector:      ['\\boldsymbol{#1}', 1],
+      UnitVector:      ['\\hat{\\vec{#1}}', 1],
+      UnitArrowVector: ['\\hat{\\overrightarrow{#1}}', 1],
+      UnitBoldVector:  ['\\hat{\\boldsymbol{#1}}', 1],
+      Mat:             ['\\boldsymbol{#1}', 1],
+      Inv:             ['{#1}^{-1}', 1],
+      Transpose:       ['{#1}^{\\!\\top}', 1],
+
+      // vector calculus. `\del` is `\vec\nabla`; `math.tex` raises it 0.06em to sit level with
+      // the operator beside it, which is a print adjustment with no web equivalent and no
+      // meaning, so it is dropped rather than approximated. The `T` forms are the spelled-out
+      // names (`grad`, `div`, `rot`) and the `V` forms put a `\vec` on the argument.
+      del:        '\\vec{\\nabla}',
+      Grad:       '\\vec{\\nabla}\\!',
+      Div:        '\\vec{\\nabla}\\cdot',
+      Rot:        '\\vec{\\nabla}\\times',
+      Laplacian:  '\\mathop{}\\!\\bigtriangleup\\!',
+      GradT:      '\\operatorname{grad}',
+      DivT:       '\\operatorname{div}',
+      RotT:       '\\operatorname{rot}',
+      GradV:      ['\\vec{\\nabla}\\!{\\vec{#1}}', 1],
+      DivV:       ['\\vec{\\nabla}\\cdot{\\vec{#1}}', 1],
+      RotV:       ['\\vec{\\nabla}\\times{\\vec{#1}}', 1],
+      GradTV:     ['\\operatorname{grad}{\\vec{#1}}', 1],
+      DivTV:      ['\\operatorname{div}{\\vec{#1}}', 1],
+      RotTV:      ['\\operatorname{rot}{\\vec{#1}}', 1],
+
+      // functions MathJax does not declare
+      arccot:  '\\operatorname{arccot}',
+      arccsc:  '\\operatorname{arccsc}',
+      atantwo: '\\operatorname{atan2}',
+      sinc:    '\\operatorname{sinc}',
+      hav:     '\\operatorname{hav}',
+      erf:     '\\operatorname{erf}',
+
+      // relations and set operations. `\bigtimes` is the n-ary Cartesian product, which comes
+      // from a package `dgs.cls` loads and which MathJax has not got; `\mathop` is not
+      // decoration, it is what makes the `\limits` the aggregate writes legal at all.
+      bigtimes:  '\\mathop{\\unicode{x2A09}}',
+      Assign:    '\\mathrel{\\unicode{x2254}}',
+      DefEqual:  '\\stackrel{\\mathrm{def}}{=}',
+      Uni:       '\\operatorname{\\cup}',
+      Intersect: '\\operatorname{\\cap}',
+      LXor:      '\\ \\veebar\\ ',
+      LNand:     '\\ \\barwedge\\ ',
+
+      // `\nicefrac` is the `units` package's, which MathJax has not got. `math.tex` keeps it
+      // defined whatever the fraction rule says, because `\Drv` takes it as one of its styles,
+      // so the page needs it too. A raised numerator, a solidus and a lowered denominator is
+      // what the package draws.
+      nicefrac: ['{}^{#1}\\!/\\!_{#2}', 2],
+
+      // growth, concentration, ordinals
+      BigO:            ['\\mathcal{O}\\left(#1\\right)', 1],
+      BigTheta:        ['\\Theta\\left(#1\\right)', 1],
+      SmallO:          ['o\\left(#1\\right)', 1],
+      Concentration:   ['\\left[#1\\right]', 1],
+      kth:             ['#1^{\\text{th}}', 1],
+
+      // `\Operation` is an `aligned` row's trailing `/ x`, the operation applied to both sides.
+      // Its `&` only means anything inside an alignment, which is the only place it is written.
+      Operation: ['& \\qquad \\bigg/ #1', 1]
     }
   },
   options: { renderActions: { addMenu: [] } },

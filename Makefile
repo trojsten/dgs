@@ -303,12 +303,11 @@ output/%.png: source/%.png
 output/%.py: source/%.py
 	$(call _copy,Python)
 
-# Render gnuplot file to PNG (for web)
-output/%.png: build/%.gp
-	@echo -e '$(c_action)[gnuplot] rendering file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	cd $(subst output/,build/,$(dir $@)); gnuplot -e "set terminal pngcairo size 800,600 font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
-	cp $(subst output/,build/,$@) $@
+# A gnuplot plot reaches the web as an SVG, through `build/%.pdf` and `build/%.svg` above --
+# the same route a `.tikz` takes. There used to be a second gnuplot run here with
+# `-e "set terminal pngcairo"`, and it never worked: every `.gp` opens by setting its own
+# `set terminal pdf size W, H`, which runs after the `-e` and wins, so `output/` got a PDF
+# carrying a `.png` name and the page showed a broken image.
 
 # Copy JPG (for web)
 output/%.jpg: source/%.jpg

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from tempfile import SpooledTemporaryFile
 
 from core import i18n
-from core.filters import siunitx
+from core.filters import dgsmacros, siunitx
 
 from .classes import RegexFailure, RegexReplacement
 
@@ -48,19 +48,18 @@ class Convertor:
             # A picture is referenced where it actually is: beside the file that references it.
             # This used to prepend `obrazky/`, a directory the build has never produced, so every
             # image in every fragment was a broken link -- in seminar too, which is what the web
-            # actually ships. The `.gp` line stays, because a gnuplot script becomes a `.png` and
-            # the reference has to follow it.
+            # actually ships.
+            #
+            # Both a `.tikz` and a `.gp` become an **`.svg`** for the page, by the same route the
+            # booklet already takes to a PDF and then one step further through `pdftocairo`. The
+            # `.gp` used to be sent to a `.png` built by a second gnuplot run with `-e "set
+            # terminal pngcairo"`, and that never once worked: every `.gp` in the repository
+            # opens by setting its own `set terminal pdf size W, H`, which runs after the `-e`
+            # and overrules it. What landed in `output/` was a PDF with a `.png` name, and every
+            # browser showed the broken-image icon. Going through the PDF means the plot is
+            # built once, by the script's own terminal, and is a vector on the page.
             RegexReplacement(
-                r'<img src="(?P<filename>.*)\.gp"',
-                r'<img src="\g<filename>.png"',
-            ),
-            # A `.tikz` is LaTeX, so for the page it goes the same way it goes for the booklet --
-            # `standalone.jtex`, xelatex, and then dvisvgm instead of a PDF. The reference has to
-            # follow it, exactly as the `.gp` line above makes it follow gnuplot's PNG. Without
-            # this the fragment carries `<img src="network.tikz">`, which every browser fails to
-            # load, and the reader gets the alt text -- raw LaTeX, since alt text is not maths.
-            RegexReplacement(
-                r'<img src="(?P<filename>.*)\.tikz"',
+                r'<img src="(?P<filename>.*)\.(gp|tikz)"',
                 r'<img src="\g<filename>.svg"',
             ),
             # `|arr` separates its rows with `\\\\[\\jot]`, because `array` zeroes the lengths
@@ -102,8 +101,8 @@ class Convertor:
             # Looser than the two rewrites above, deliberately: they anchor on `<img src="`,
             # which is what pandoc writes, while this has to catch whatever they did not reach.
             RegexFailure(r'<img[^>]*src="[^"]*\.(tikz|gp)"',
-                         error="Caught a picture reference no browser can load: a `.tikz` becomes "
-                               "an `.svg` and a `.gp` becomes a `.png` for the web"),
+                         error="Caught a picture reference no browser can load: a `.tikz` and a "
+                               "`.gp` both become an `.svg` for the web"),
             RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
         ],
         'latex': [
@@ -225,6 +224,7 @@ class Convertor:
 
     def run(self):
         self.file = self.file_operation(self.pre_check)(self.infile)
+        self.in_fence = False           # `outside_code`'s state, which spans lines
         self.file = self.file_operation(self.preprocess)(self.file)
         self.file = self.call_pandoc()
         self.file = self.file_operation(self.postprocess)(self.file)
@@ -303,6 +303,12 @@ class Convertor:
             line = func(line, regex_set)
         return line
 
+    #: An inline code span. Markdown sets one verbatim, so a macro written in one is being
+    #: *named* rather than called.
+    CODE_SPAN = re.compile(r'`+[^`]*`+')
+    #: A fenced block's delimiter, which toggles the same protection across several lines.
+    FENCE = re.compile(r'^\s{0,3}(?:`{3,}|~{3,})')
+
     def preprocess(self, line):
         # return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
         line = self.chain_process(line, [self.pre_regexes])
@@ -312,8 +318,38 @@ class Convertor:
             # in `d;m;s` form and an exponent all need one. A function and not a `pre_regexes`
             # entry for the same reason: this is a small parser, not a substitution.
             # See `core/filters/siunitx`.
-            line = siunitx.expand(line, self.locale)
+            #
+            # The same goes for this repository's own parsed macros one step further on:
+            # `\Int[0][T]{v}{t}` and `\FDiff^{2}_{\text{vap}}{H}` are shapes no fixed-arity
+            # MathJax macro can take. The fixed-arity half stays a macro, in `mathjax-dgs.js`.
+            line = self.outside_code(
+                line, lambda prose: dgsmacros.expand(siunitx.expand(prose, self.locale)))
         return line
+
+    def outside_code(self, line: str, expand: Callable[[str], str]) -> str:
+        r"""
+        `expand` applied to the prose of a line and to nothing else.
+
+        Markdown sets a code span and a fenced block verbatim, so a macro written in one is being
+        *named*, not called: `source/naboj/phys/errors/*.md` is prose *about* the sources and
+        names `\qty` and `\Diff` throughout, and `test/00`'s macro problems print each call in a
+        `<code>` beside its own rendering. Expanding there replaces the thing being talked about
+        with its answer, which is the one place the answer is not wanted.
+
+        The TeX writer never gets here, because neither expander runs for it.
+        """
+        if self.FENCE.match(line):
+            self.in_fence = not self.in_fence
+            return line
+        if self.in_fence:
+            return line
+        out, i = [], 0
+        for span in self.CODE_SPAN.finditer(line):
+            out.append(expand(line[i:span.start()]))
+            out.append(span.group())
+            i = span.end()
+        out.append(expand(line[i:]))
+        return ''.join(out)
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])

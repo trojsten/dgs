@@ -496,7 +496,7 @@ output/naboj/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.jpg)) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.png)) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.svg)) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/naboj/$$*/*.gp))) \
+	$$(subst source/,output/,$$(subst .gp,.svg,$$(wildcard source/naboj/$$*/*.gp))) \
 	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/naboj/$$*/*.tikz))) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.py))
 	@for language in $(notdir $(patsubst %/,%,$(dir $(wildcard source/naboj/$*/*/problem.md)))); do \
