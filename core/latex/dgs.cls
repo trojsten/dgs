@@ -37,6 +37,13 @@
 \RequirePackage{xifthen}
 \RequirePackage{verbatim}
 \RequirePackage{float}
+% Both are inert while `hacks.tex` forces [H] -- a float that never floats has nothing to be
+% barred from and nothing to rise above -- and both were added against that, measured: the volume
+% 28 booklet and tearoff and the volume 29 solutions come out byte-identical with them loaded.
+% They are here so that relaxing the placement later is one line rather than three, and so that
+% the guarantees are already in place when it happens.
+\RequirePackage{flafter}        % a float may never be placed above the text that introduced it
+\RequirePackage{placeins}       % \FloatBarrier; `blocks/problem.jtex` puts one per problem
 \RequirePackage{caption}                                    % fancy formatting of figure and table captions
 \RequirePackage{booktabs}
 \RequirePackage{titlesec}

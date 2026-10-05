@@ -239,9 +239,9 @@ class TestSchemaGuards:
     @pytest.mark.parametrize("name", ['const', 'eq'])
     def test_reserved_names_are_refused(self, name):
         """The two names the render context holds itself; anything else spread in would clobber."""
-        from core.builder.renderer import CLIInterface, NameCollisionError
+        from core.builder.renderer import NameCollisionError, _reject_name_collisions
         with pytest.raises(NameCollisionError, match=name):
-            CLIInterface._reject_name_collisions({name: 'whatever'}, 'derived')
+            _reject_name_collisions({name: 'whatever'}, 'derived')
 
     @pytest.mark.parametrize("name", ['id', 'values', 'derived'])
     def test_only_real_context_names_are_reserved(self, name):
@@ -249,22 +249,22 @@ class TestSchemaGuards:
         `values` and `derived` are section names in the file and `id` lives only in the metadata
         context -- none of them is a render-context name, so none of them is reserved.
         """
-        from core.builder.renderer import CLIInterface
-        CLIInterface._reject_name_collisions({name: '1'}, 'values')
+        from core.builder.renderer import _reject_name_collisions
+        _reject_name_collisions({name: '1'}, 'values')
 
     def test_a_value_may_share_a_name_with_a_constant(self):
         """`const` is adopted as a child context, so `const.g` and a value named `g` coexist."""
-        from core.builder.renderer import CLIInterface
-        CLIInterface._reject_name_collisions({'g': '1', 'c': '2', 'au': '3'}, 'values')
+        from core.builder.renderer import _reject_name_collisions
+        _reject_name_collisions({'g': '1', 'c': '2', 'au': '3'}, 'values')
 
     def test_derived_may_not_shadow_a_value(self):
-        from core.builder.renderer import CLIInterface, NameCollisionError
+        from core.builder.renderer import NameCollisionError, _reject_name_collisions
         with pytest.raises(NameCollisionError, match='already defined'):
-            CLIInterface._reject_name_collisions({'v0': 'v0 * 2'}, 'derived', taken={'v0'})
+            _reject_name_collisions({'v0': 'v0 * 2'}, 'derived', taken={'v0'})
 
     def test_ordinary_names_pass(self):
-        from core.builder.renderer import CLIInterface
-        CLIInterface._reject_name_collisions({'v0': '1', 'T_1': '2'}, 'derived', taken={'other'})
+        from core.builder.renderer import _reject_name_collisions
+        _reject_name_collisions({'v0': '1', 'T_1': '2'}, 'derived', taken={'other'})
 
     def test_all_three_blocks_share_one_identifier_rule(self, tmp_path):
         """`eq` used to reject capitals and single-character names; the others never did."""

@@ -227,6 +227,12 @@ constant) -- and write one tag:
 
     $(§ rho.eq §)$              a value printed in full; `eq` picks `=` or `\approx`
     $(§ result|af(3) §)$        a value printed rounded: same figures, and `\approx` for it
+    $(§ rho.s §)$               the symbol on its own, wherever the prose names it
+
+**`.s` is the same rule for a symbol standing alone**, and it is what makes `symbol:` worth
+declaring: rename the quantity's symbol and the prose follows. Spelled out, `$\rho$` is a second
+copy and the two drift with nothing to say so. Keep the dollars in all three -- `eq` and `s`
+return strings, and `|inl` raises on one.
 
 **Which one is a question about the value, not about the source.** A given declared as exactly
 2 g prints `2` at `|f0` and `2` in full, so nothing was rounded and `=` stands; `|af` there would
@@ -246,6 +252,28 @@ expression has **no name** to hang a symbol on (`(§ (h / 2)|f0 §)`); or the `d
 The round-trip allows a thousand ulps. `29/coil-kirchhoff` solves a 3×3 system for a current
 that is exactly 0.1 A and stores it six ulps out, so an equality test would call it rounded; the
 two populations are nine orders of magnitude apart, so the threshold is not a tuned number.
+
+**phys has been swept: 1085 sites in 173 problems.** 492 `$X = (§ x §)$` became `$(§ x.eq §)$`
+(24 of them `|ef(N)`/`|af(N)`, where the span prints at a precision and the relation is asserted
+outright) and 593 bare `$X$` became `$(§ x.s §)$`; 69 `values:` entries that carried no `symbol:`
+got the one the prose was already writing, taken only where every language wrote the same one.
+All 1157 rendered files came back byte-identical, which is the proof such a sweep wants.
+
+`value-equation-literal` and `value-symbol-literal` report both shapes now, so the next one goes
+red instead of accumulating. Three carve-outs, each of which the sweep met:
+
+- **Match over `RE_INLINE`, never over the raw text.** A regex for `$X$` matches across the gap
+  between two tags, and `(§ q.eq §)$ a $(§ a.eq §)` offers `$ a $` -- where `a` is the Slovak for
+  *and*. Caught by the render gate, which is the reason to have one.
+- **A decorated sibling makes the letter a family**: `$F_M$` written beside a symbol `F` means a
+  bare `$F$` is an author's call. Ten problems in phys, `24/crane` the clearest.
+- **Two symbols for one value, consistently in every language**, is deliberate and has no single
+  name to take: `21/ski-jump`'s inclined plane is `d` long and its arc `l`, `22/seychelles` writes
+  both `X` and `x_S`, `24/crane`'s statement says `F` where its solution says `F_M`.
+
+A symbol *inside* a longer span is deliberately left alone. The span is usually a relation, and a
+tag inside a literal copy of one makes three spellings out of two; `hoistable-inline` is the
+check for those, and the fix is to hoist the whole span.
 
 Turning this on moved 25 sites in the whole repository, every one of them a measured constant --
 `R_⊕`, `c_s`, water's heat capacity and latent heat, the Moon's radius. No `values:` entry
@@ -588,6 +616,23 @@ failure, and that was the whole of the `onion` problem. `core/audit`'s `word-mis
 fourth, and the only one that works without a build: it reads the sources, so it finds the gap in
 every language at once before anyone renders anything. Fix the word; do not ship the box.
 
+**A `symbol:` may itself carry a `words:` tag, at any depth.**
+`symbol: '\rho_{(§ words.twin §)}'` resolves wherever the prose writes `(§ x.s §)`, and also
+through an `eq:` entry that writes `(§ x.s §)` — which is three deep, since the entry arrives
+in the first pass's output, `.s` resolves in the second and leaves the word's tag behind. That
+used to reach the page as a literal `(§ words.twin §)`, because a render was exactly two passes.
+
+**`render_to_fixpoint` keeps passing until the output stops changing**, at least twice and at
+most `MAX_RENDER_PASSES`, after which it raises rather than spinning. It costs nothing where
+nothing nests: a pass over output with no tags left changes nothing, so an ordinary file still
+renders exactly twice, and only the files that need a third pay for one.
+
+`21/pool-jump` is the worked example and the reason to know this. Its index abbreviates a prose
+word (Slovak's *Špagetka*, English's *twin*), so sk and cs wrote `\rho_s` while en and hu wrote
+`\rho_t` — but the shared `eq:` entry all four rendered printed `\rho_s`, so **the English
+booklet introduced the twin's density as ρ_t and then solved with ρ_s**, never saying they were
+the same thing. One `words:` entry and each language is single again.
+
 Resolution is lazy, so a language that never asks for a word does not need it —
 `21/troll-science` writes the equation with translated subscripts in four of its six
 languages and differently in the other two.
@@ -708,12 +753,38 @@ line-oriented pass is. The fewer of those the better.
 `|align` no longer emits it: `MathObject` writes the longhand directly now, the same shape as
 `arr` -- `\begin{aligned}` four spaces in, where `disp` puts its content, and the rows eight.
 
-The 351 hand-written ones in 193 files stay for now and still build, because the rewrite regexes
-stay until they are gone. What changed is that the tooling stopped recommending the shorthand:
-the audit's `aligned-shorthand` reports it, and `mdcheck` no longer whitelists it. Both used to
+**The way out is to hoist, not to rewrite in place.** The block moves into `eq:` and the source
+calls `(§ eq.<key>|align('.') §)`; `MathObject` then writes the longhand, which is exactly what
+the rewrite was producing. Writing `\begin{aligned}` into the source by hand would trade one
+local dialect for a block that is still a per-language copy -- the duplication everything else
+here exists to remove. **A block that stays in the source stays as `$${ … }$$`.**
+
+**Only a block that already carries a `{#eq:…}` label can go**, because the key becomes the
+label: hoisting an unlabelled one would *give* a solution's display a number it never had and
+renumber everything after it. Those wait on `solution-unlabelled`, which asks the prior question
+of whether they should have been numbered at all.
+
+62 of the 117 have been hoisted -- every labelled one whose label is a valid identifier, across
+`phys/10` to `17`, `pool`, `chem/02` and `chem/03`. **55 remain**: 54 unlabelled, and
+`chem/02/zmätená-tereza`, whose label is `tlmivý` and so cannot become an `eq:` key without
+renaming the label.
+
+The gate for that sweep is one stage lower than usual, and worth knowing. The rendered Markdown
+*must* move -- shorthand to longhand is the point -- so byte-identity is asserted on the
+**converted TeX** instead, normalised for leading whitespace: `|align` indents `\begin{aligned}`
+four spaces and its rows eight where the rewrite left them at zero and four, and leading space
+inside a maths environment is nothing to TeX. 132 of 133 files passed that; the one that did not
+was an unrelated edit already in the working tree.
+
+One trap, caught by the gate rather than by reading. A regex for the block that lets its body
+run to the next `}$$` will start at an *unlabelled* opener and close at a later labelled one,
+swallowing the prose between them into the equation. The body has to exclude a closer of its own.
+
+The rewrite regexes stay until the last of them is gone. The audit's `aligned-shorthand` reports
+each one and names the `eq:` key it should take; `mdcheck` no longer whitelists it. Both used to
 say the opposite -- `aligned-longhand` reported `\begin{aligned}` and asked for `$${`, because
 `MathObject` had a format spec for each and the same equation in two spellings read as two
-equations. There is one spelling now. Convert a file when you touch it.
+equations. There is one spelling now.
 
 ## The build inserts the non-breaking spaces, not you
 
@@ -1059,6 +1130,52 @@ and after. Reading through a symlink is safe; writing is not.
   says which. Three things exempt it: end of file, a next line Markdown needs a
   blank before anyway (list, figure, heading, another display), and a block
   indented inside a list item, where the next bullet is the break.
+- **An answer file holds the answer, not a sentence about it.** `answer.md` is what a marker
+  compares against, so it is the value and nothing else: `\dfrac{k(k+2)}{2k+1}`, not
+  `\dfrac{h_2}{h_1} = \dfrac{k(k+2)}{2k+1}`. The symbol on the left restates the question, which
+  the marker already has in front of them, and it costs a line of the answer booklet per problem.
+
+  **In the solution the opposite is usually true**: the final display is a step in a derivation
+  and the left-hand side says what is being computed. Desirable there, not required, and never
+  carried over into `answer.md`.
+
+  Three things earn an `=`, and they have one thing in common -- the left side carries
+  information the right side cannot:
+
+  - **Several quantities at once.** `chem/.pool/trojroztok` answers
+    `V_A = \qty{910}{\micro\litre}, V_B = …`, and without the names the three numbers are a
+    puzzle of their own. Seven answers are of this shape.
+  - **A ratio whose members are not named by the statement.** `04/energy-ratio` answers
+    `E_k : E_p = 15 : 1`; a bare `15 : 1` says nothing about which way round it goes.
+    `06/weighted-triangle` and `08/escape-match` are the other two. A ratio that *is* a complete
+    value -- one number -- needs no label.
+  - **The statement asks for that form**, for instance when it says to give the answer as an
+    equation.
+
+  An `=` between **two spellings of the same value** is not this and is always welcome:
+  `\qty{960}{\giga\joule} = \qty{9.6e11}{\joule}`, or the factored and expanded forms of one
+  expression side by side. 152 answers do it. This is a courtesy to somebody marking under time
+  pressure who has to accept whatever equivalent form a competitor wrote down, and it is worth
+  most where equivalence is least obvious -- trigonometric answers above all, where
+  `\arctan\dfrac{a^2 - b^2}{2ab}` and `\dfrac{\pi}{2} - 2\arctan\dfrac{b}{a}` are the same
+  number and nothing on the page says so unless the answer says it.
+
+  A left-hand side that does none of this and only names a symbol is not merely redundant, it is
+  **actively harmful**: it puts a second thing on the line for the marker to read past, and it
+  invites the reading that a competitor who wrote the value without the symbol has answered a
+  different question. Delete it.
+
+  **phys has been swept: 337 answer files lost their symbol**, in two passes, because the first
+  classifier was too strict -- it refused a subscript containing a digit (`E_1`), a macro
+  (`\FDiff{t}`) and a primed symbol (`q'`), and it refused any file with prose after the answer,
+  all of which are the same shape. Every removal was checked against its `HEAD` version one file
+  at a time, and all 337 were a clean prefix deletion with nothing else moving.
+
+  The classifier has to refuse one thing that looks like a symbol and is not: a head containing
+  `(§`. `(§ result §) = …` is a rendered value, and deleting the left-hand side there deletes the
+  answer. Nine remain outside phys -- one in chem, eight in `fks-naboj`, which is not ours to
+  touch.
+
 - **A picture as the whole answer needs nothing around it.** Write the image on its
   own and stop -- no leading `\ `, no `\vspace`. Eleven answer files used to carry
   both, and the reason is worth knowing because the symptom comes back looking like

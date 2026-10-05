@@ -180,7 +180,7 @@ function tokenAtPoint(editor, x, y) {
   const hit = document.elementFromPoint(x, y);
   textarea.style.pointerEvents = "";
   pre.style.pointerEvents = "";
-  return hit && pre.contains(hit) ? hit.closest("[data-ref]") : null;
+  return hit && pre.contains(hit) ? hit.closest("[data-ref], [data-eval]") : null;
 }
 
 /* The same question asked of the caret rather than the pointer, for F1.
@@ -189,10 +189,77 @@ function tokenAtPoint(editor, x, y) {
    the mouse are answering out of one definition of where a name is rather than two. */
 function refAtCaret(textarea, lang) {
   const at = textarea.selectionStart;
-  for (const found of collectReferences(textarea.value, lang)) {
-    if (at >= found.start && at <= found.end) return found.ref;
+  const within = (x) => at >= x.start && at <= x.end;
+  const found = collectReferences(textarea.value, lang).find(within);
+  const span = evaluableSpans(textarea.value, lang).find(within);
+  if (!found && !span) return null;
+  return { ref: found ? found.ref : null, evalSource: span ? span.source : null };
+}
+
+/* What the fragments of the open buffers evaluate to, and when that answer stopped being true.
+
+   Keyed by the fragment's own text: two spellings of the same tag in one file are one question.
+   `generation` is bumped by anything that changes the answer -- a keystroke in either pane, a
+   different language, a different file -- and a reply from an older generation is dropped rather
+   than shown, because by then it is describing text that is no longer on screen.
+
+   Fetched per pane and in one request, not per hover: `/api/evaluate` costs about as much for
+   forty fragments as for one (building the context evaluates every `derived:` entry, and the
+   rest is noise), so asking once for everything in the buffer makes every hover after the first
+   a map lookup. */
+const evaluations = {
+  generation: 0,
+  results: new Map(),      // fragment -> {ok, text} | {ok: false, error}
+  fetched: new Set(),      // textarea ids answered for in this generation
+  inflight: new Map(),     // textarea id -> the request in the air for it
+  error: null,             // a context that would not build at all: one answer for every fragment
+};
+
+function invalidateEvaluations() {
+  evaluations.generation += 1;
+  evaluations.results.clear();
+  evaluations.fetched.clear();
+  // Whatever is in the air is about the old text; the generation check will drop its reply, and
+  // dropping the promise here lets the next asker start a request for the new text at once.
+  evaluations.inflight.clear();
+  evaluations.error = null;
+}
+
+/* Ask for everything evaluable in one pane, once per generation.
+
+   `inflight` rather than only `fetched`, because the second asker is the common case and not the
+   rare one: the hover fires this and then waits on it, and a pointer that leaves a token and
+   comes back before the reply lands must wait on the same request rather than be told it has
+   already been made. Failures are swallowed -- the popup is help, and an editor whose server is
+   briefly unhappy should still show the reference half rather than an error where the prose was. */
+function ensureEvaluations(textareaId, lang) {
+  if (!state.unit || evaluations.fetched.has(textareaId)) return Promise.resolve();
+  const pending = evaluations.inflight.get(textareaId);
+  if (pending) return pending;
+
+  const job = fetchEvaluations(textareaId, lang)
+    .finally(() => { evaluations.inflight.delete(textareaId); });
+  evaluations.inflight.set(textareaId, job);
+  return job;
+}
+
+async function fetchEvaluations(textareaId, lang) {
+  captureEditors();                               // so `state.meta` is what is on screen
+  const sources = evaluableSources(el(textareaId).value, lang);
+  const generation = evaluations.generation;
+  if (!sources.length) { evaluations.fetched.add(textareaId); return; }
+
+  let body;
+  try {
+    body = await post("/api/evaluate", { target: state.activeTarget, meta_yaml: state.meta,
+                                         fragments: sources });
+  } catch (e) {
+    return;                                       // not marked fetched, so a later hover retries
   }
-  return null;
+  if (generation !== evaluations.generation) return;    // the buffer moved on while we asked
+  evaluations.fetched.add(textareaId);
+  if (!body.ok) { evaluations.error = body.error; return; }
+  sources.forEach((source, i) => evaluations.results.set(source, body.results[i]));
 }
 
 /* The booklet's own face, served from `assets/fonts/` where `core/latex/fonts.tex` points
@@ -234,29 +301,55 @@ const KIND_LABELS = {
   "jinja-builtin": "Jinja's own",
 };
 
+/* What this fragment comes out as *here*, as the popup's last block.
+
+   The reference table's `example` is a worked case of the filter and stays; this is the answer
+   for the problem on screen, which is the thing an author is actually asking when they point at
+   `(§ result_approx|f2 §)`. Absent until `/api/evaluate` has replied, which is why there is a
+   waiting state rather than nothing -- a block that appears after the box has been placed would
+   otherwise move the box out from under the pointer. */
+function renderedBlock(source) {
+  const result = evaluations.results.get(source);
+  const head = `<b>renders as</b>`;
+  if (evaluations.error) {
+    return `<div class="ref-render error">${head}${escapeForHtml(evaluations.error)}</div>`;
+  }
+  if (!result) return `<div class="ref-render waiting">${head}evaluating…</div>`;
+  if (!result.ok) {
+    return `<div class="ref-render error">${head}${escapeForHtml(result.error)}</div>`;
+  }
+  return `<div class="ref-render">${head}${escapeForHtml(result.text) || "<i>(nothing)</i>"}</div>`;
+}
+
 /* `x`/`y` are where to anchor it, in viewport coordinates. Returns whether there was anything to
-   show: a name the table does not hold is a miss, and a miss shows nothing rather than an empty
-   box -- `eq.kin` names an equation this problem happens to have, and there is no entry for that
-   and should not be. */
-function showReference(ref, x, y) {
-  const entry = state.reference?.entries?.[ref];
-  if (!entry) { hideReference(); return false; }
+   show: a name the table does not hold and no fragment to evaluate is a miss, and a miss shows
+   nothing rather than an empty box. */
+function showReference(hit, x, y) {
+  const { ref, evalSource } = typeof hit === "string" ? { ref: hit, evalSource: null } : hit;
+  const entry = ref ? state.reference?.entries?.[ref] : null;
+  if (!entry && !evalSource) { hideReference(); return false; }
 
   const box = hoverElement();
-  const parts = [
-    `<div><span class="ref-name">${escapeForHtml(entry.display)}</span>` +
-    `<span class="ref-kind">${escapeForHtml(KIND_LABELS[entry.kind] || entry.kind)}` +
-    `${entry.env === "static" ? " · .jtex only" : ""}</span></div>`,
-  ];
-  if (entry.signature && entry.signature !== entry.display) {
-    parts.push(`<div class="ref-signature">${escapeForHtml(entry.signature)}</div>`);
+  const parts = [];
+  if (entry) {
+    parts.push(
+      `<div><span class="ref-name">${escapeForHtml(entry.display)}</span>` +
+      `<span class="ref-kind">${escapeForHtml(KIND_LABELS[entry.kind] || entry.kind)}` +
+      `${entry.env === "static" ? " · .jtex only" : ""}</span></div>`);
+    if (entry.signature && entry.signature !== entry.display) {
+      parts.push(`<div class="ref-signature">${escapeForHtml(entry.signature)}</div>`);
+    }
+    parts.push(`<div class="ref-summary">${markdownish(entry.summary)}</div>`);
+    if (entry.example) {
+      parts.push(`<div class="ref-example"><b>${escapeForHtml(entry.example)}</b>` +
+                 `${escapeForHtml(entry.expect)}</div>`);
+    }
+    if (entry.note) parts.push(`<div class="ref-more">${markdownish(entry.note)}</div>`);
+  } else {
+    // Nothing in the table to head the box with, so the fragment itself names what is shown.
+    parts.push(`<div><span class="ref-name">${escapeForHtml(evalSource)}</span></div>`);
   }
-  parts.push(`<div class="ref-summary">${markdownish(entry.summary)}</div>`);
-  if (entry.example) {
-    parts.push(`<div class="ref-example"><b>${escapeForHtml(entry.example)}</b>` +
-               `${escapeForHtml(entry.expect)}</div>`);
-  }
-  if (entry.note) parts.push(`<div class="ref-more">${markdownish(entry.note)}</div>`);
+  if (evalSource) parts.push(renderedBlock(evalSource));
   box.innerHTML = parts.join("");
   box.hidden = false;
 
@@ -295,22 +388,51 @@ function wireReferenceHover(textareaId, lang) {
   let pending = false;
   let shown = null;
 
+  let at = null;    // where the popup was last placed, so a late evaluation can redraw in place
+
+  const mode = () => (typeof lang === "function" ? lang() : lang);
+
+  /* Show it, and if the evaluation it wants has not arrived yet, ask and show it again when it
+     has -- in the same place and only if the pointer has not moved on since. Without the second
+     half the first hover in a buffer would always say "evaluating…" and never update. */
+  function show(hit, x, y) {
+    at = { x, y };
+    if (!showReference(hit, x, y)) { shown = null; return false; }
+    shown = hit;
+    if (hit.evalSource && !evaluations.results.has(hit.evalSource) && !evaluations.error) {
+      const generation = evaluations.generation;
+      ensureEvaluations(textareaId, mode()).then(() => {
+        if (shown === hit && at && generation === evaluations.generation) {
+          showReference(hit, at.x, at.y);
+        }
+      });
+    }
+    return true;
+  }
+
   editor.addEventListener("mousemove", (e) => {
     if (pending) return;
     pending = true;
     requestAnimationFrame(() => {
       pending = false;
       const span = tokenAtPoint(editor, e.clientX, e.clientY);
-      const ref = span ? span.dataset.ref : null;
-      if (!ref) { shown = null; hideReference(); return; }
-      // Re-place it on every move even when the token has not changed, so it follows the pointer
-      // along a long token instead of sitting where the pointer first entered.
-      shown = ref;
-      if (!showReference(ref, e.clientX, e.clientY)) shown = null;
+      const hit = span ? { ref: span.dataset.ref || null,
+                           evalSource: span.dataset.eval || null } : null;
+      if (!hit) { shown = null; hideReference(); return; }
+      // Reuse the object identity across moves within one token, so the late-evaluation redraw
+      // above can tell "still the same token" from "a different one that happens to match".
+      if (shown && shown.ref === hit.ref && shown.evalSource === hit.evalSource) {
+        // Re-place it on every move even when the token has not changed, so it follows the
+        // pointer along a long token instead of sitting where the pointer first entered.
+        at = { x: e.clientX, y: e.clientY };
+        showReference(shown, e.clientX, e.clientY);
+        return;
+      }
+      show(hit, e.clientX, e.clientY);
     });
   });
 
-  editor.addEventListener("mouseleave", () => { shown = null; hideReference(); });
+  editor.addEventListener("mouseleave", () => { shown = null; at = null; hideReference(); });
 
   // The keyboard half. A hover is no use to someone mid-line with both hands on the keys, and
   // F1 is where help lives.
@@ -320,12 +442,11 @@ function wireReferenceHover(textareaId, lang) {
       return;
     }
     e.preventDefault();
-    const mode = typeof lang === "function" ? lang() : lang;
-    const ref = refAtCaret(textarea, mode);
-    if (!ref) { setStatus("Nothing to look up at the caret", ""); return; }
+    const hit = refAtCaret(textarea, mode());
+    if (!hit) { setStatus("Nothing to look up at the caret", ""); return; }
     const where = textarea.getBoundingClientRect();
-    if (!showReference(ref, where.left + 16, where.top + 16)) {
-      setStatus(`No reference entry for ${ref}`, "");
+    if (!show(hit, where.left + 16, where.top + 16)) {
+      setStatus(`Nothing to show for ${hit.ref || hit.evalSource}`, "");
     }
   });
   textarea.addEventListener("blur", hideReference);
@@ -485,6 +606,9 @@ function switchTarget(target) {
     rememberScroll();
   }
   state.activeTarget = target;
+  // Whether an `eq:` entry carries its `{#eq:…}` label is decided by the file being rendered, so
+  // every evaluation is a different answer on a different tab.
+  invalidateEvaluations();
   setEditorValue("source-editor", "source-highlight", sourceMode, state.buffers[target] ?? "");
   renderSourceTabs();
   syncActionsForTarget();
@@ -749,6 +873,7 @@ async function openUnit(moduleName, unit, lang, target) {
   state.hasPreview = data.has_preview;
   state.hasTex = data.has_tex;
   state.activeTarget = null;
+  invalidateEvaluations();
 
   state.meta = data.meta_yaml ?? "";
   state.metaBaseline = state.meta;
@@ -1195,11 +1320,15 @@ function init() {
   wireCodeEditor("source-editor", "source-highlight", sourceMode, () => {
     if (!state.activeTarget) return;
     state.buffers[state.activeTarget] = el("source-editor").value;
+    invalidateEvaluations();
     renderSourceTabs();
     scheduleAutocompile();
   });
   wireCodeEditor("meta-editor", "meta-highlight", "dgs-yaml", () => {
     state.meta = el("meta-editor").value;
+    // Everything either pane evaluates goes through this buffer, so a keystroke here is the one
+    // edit that invalidates both.
+    invalidateEvaluations();
     scheduleAutocompile();
   });
 

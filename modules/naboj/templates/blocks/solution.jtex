@@ -1,3 +1,11 @@
+% A figure belongs to the problem it was written in and may not drift into the next one. The
+% barrier at the top of this block is also the end of the previous problem, so one line per block
+% fences every problem on both sides -- and the last one is fenced by \end{document}.
+%
+% This matters more than it looks: the \setcounter{figure}{0} below renumbers from 1 per problem,
+% so a figure that drifted forward would print its own number under a heading whose counter has
+% been reset. \FloatBarrier costs nothing when nothing is deferred, which with [H] is always.
+\FloatBarrier%
 \hypersetup{linkcolor=black}%
 \setcounter{equation}{0}%
 \setcounter{table}{0}%

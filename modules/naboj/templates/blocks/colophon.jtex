@@ -10,7 +10,7 @@ from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.hash *)}
 {
     \color{black}
     \begin{center}
-        \copyright Náboj Physics international team, (* volume.date.strftime('%Y') *).
+        \copyright (* competition.rights_holder *), (* volume.date.strftime('%Y') *).
         \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}
     \end{center}
 }

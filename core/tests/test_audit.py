@@ -197,6 +197,27 @@ class TestMaths:
                         '$$\n    \\begin{aligned}\n        a &= b\n    \\end{aligned}\n$$\n'}}
         assert 'aligned-shorthand' not in ids(run(tmp_path, files=files))
 
+    def test_a_labelled_block_is_told_to_hoist(self, tmp_path):
+        """
+        The fix is `eq:` and `|align`, not `\\begin{aligned}` written into the source by hand.
+        Rewriting it in place trades one local dialect for a block that is still a per-language
+        copy, which is the duplication everything else here exists to remove.
+        """
+        files = {'sk': {'solution.md': '$${\n    a &= b\n}$$ {#eq:widget:first}\n'}}
+        report = run(tmp_path, files=files)
+        message = next(f.message for f in report.findings if f.check == 'aligned-shorthand')
+        assert 'eq.first|align' in message
+
+    def test_an_unlabelled_block_is_told_why_it_cannot(self, tmp_path):
+        """
+        The key becomes the label, so hoisting an unlabelled block would give a solution's
+        display a number it never had and renumber everything after it.
+        """
+        files = {'sk': {'solution.md': '$${\n    a &= b\n}$$\n'}}
+        report = run(tmp_path, files=files)
+        message = next(f.message for f in report.findings if f.check == 'aligned-shorthand')
+        assert 'no `{#eq:' in message and 'align' not in message
+
     def test_delimiter_indented(self, tmp_path):
         files = {'hu': {'solution.md': ' $$\n    a = b\n$$\n'}}
         assert 'delimiter-indented' in ids(run(tmp_path, files=files))
@@ -1595,3 +1616,109 @@ class TestMacroCollection:
         from core.audit import macros
         (tmp_path / 'solution.md').write_text('$\\diff x$ and \\Paren{y}\n')
         assert {'diff', 'Paren'} <= macros.collect(tmp_path)
+
+
+VALUES_META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+               "tags: ['kinematics']\n"
+               "values:\n"
+               "  v:\n    magnitude: 3\n    unit: 'metre / second'\n    symbol: 'v'\n"
+               "  fmin:\n    magnitude: 20\n    unit: 'hertz'\n    symbol: 'f_{\\text{min}}'\n")
+
+
+class TestValueEquationLiteral:
+    r"""
+    `$X = (§ x §)$` where the quantity already declares the symbol `X`.
+
+    Both halves of that span are the meta's: the symbol, and the relation, which `eq` picks by
+    `prints_exactly` instead of taking on trust. The quiet cases are the ones that matter --
+    every shape below that looks like this and is not came out of the real sweep.
+    """
+
+    def one(self, tmp_path, text, meta=VALUES_META):
+        return ids(run(tmp_path, meta=meta, files={'sk': {'solution.md': text}}))
+
+    # ------------------------------------------------------------------ it fires
+
+    def test_the_declared_symbol_beside_its_own_tag(self, tmp_path):
+        assert 'value-equation-literal' in self.one(tmp_path, 'Riešte pre $v = (§ v §)$.\n')
+
+    def test_a_compound_symbol_too(self, tmp_path):
+        assert 'value-equation-literal' in self.one(
+            tmp_path, 'pri $f_{\\text{min}} = (§ fmin §)$ nastane\n')
+
+    def test_whitespace_is_not_a_difference(self, tmp_path):
+        assert 'value-equation-literal' in self.one(tmp_path, 'teda $v=(§ v §)$ a potom\n')
+
+    # ------------------------------------------------------------------ it stays quiet
+
+    def test_a_different_symbol_is_a_different_statement(self, tmp_path):
+        """
+        `24/crane`'s solution writes `$F_M = (§ F §)$` where its statement writes `$F$`. The
+        left-hand side is then a second name for the value, not the one it declares, and
+        which of the two should win is an author's call.
+        """
+        assert 'value-equation-literal' not in self.one(tmp_path, 'teda $u = (§ v §)$ a potom\n')
+
+    def test_a_precision_is_a_different_filter(self, tmp_path):
+        """`$v = (§ v|f2 §)$` is `|ef(2)` or `|af(2)`, and choosing between those is a judgement
+        about the value. The check declines rather than recommending the wrong one."""
+        assert 'value-equation-literal' not in self.one(tmp_path, 'teda $v = (§ v|f2 §)$ a potom\n')
+
+    def test_an_undeclared_symbol_is_not_this(self, tmp_path):
+        """Nothing to point at: the entry holds no `symbol:`, so there is no `.eq` to write."""
+        meta = VALUES_META.replace("    symbol: 'v'\n", '')
+        assert 'value-equation-literal' not in self.one(tmp_path, 'teda $v = (§ v §)$ a potom\n',
+                                                        meta=meta)
+
+    def test_the_tag_is_already_eq(self, tmp_path):
+        assert 'value-equation-literal' not in self.one(tmp_path, 'teda $(§ v.eq §)$ a potom\n')
+
+    def test_a_word_between_two_tags_is_not_a_span(self, tmp_path):
+        r"""
+        The hazard this check must not reproduce. A regex for `$…$` over the raw text matches
+        across the gap between two tags, and `(§ v.eq §)$ a $(§ fmin.eq §)` offers `$ a $` --
+        where `a` is the Slovak for *and*. `RE_INLINE` consumes left to right, so it does not.
+        """
+        assert 'value-equation-literal' not in self.one(
+            tmp_path, 'Ondite pre $(§ v.eq §)$ a $(§ fmin.eq §)$.\n')
+
+
+class TestValueSymbolLiteral:
+    """A declared symbol standing alone in the prose, where `.s` would ask the quantity for it."""
+
+    def one(self, tmp_path, text, meta=VALUES_META):
+        return ids(run(tmp_path, meta=meta, files={'sk': {'solution.md': text}}))
+
+    # ------------------------------------------------------------------ it fires
+
+    def test_the_symbol_on_its_own(self, tmp_path):
+        assert 'value-symbol-literal' in self.one(tmp_path, 'rýchlosťou $v$ po dráhe\n')
+
+    def test_a_compound_symbol_on_its_own(self, tmp_path):
+        assert 'value-symbol-literal' in self.one(tmp_path, 'frekvencia $f_{\\text{min}}$ je\n')
+
+    # ------------------------------------------------------------------ it stays quiet
+
+    def test_a_decorated_sibling_makes_the_letter_a_family(self, tmp_path):
+        """`$v_1$` beside a symbol `v`: which value a bare `$v$` means is then not the check's
+        to decide. Ten problems in phys are this shape."""
+        assert 'value-symbol-literal' not in self.one(
+            tmp_path, 'rýchlosti $v$ a $v_1$ sa líšia\n')
+
+    def test_the_symbol_inside_a_longer_span(self, tmp_path):
+        """A relation wants hoisting whole into `eq:`; a tag inside a literal copy of it makes
+        three spellings out of two. That is `hoistable-inline`'s question, not this one."""
+        assert 'value-symbol-literal' not in self.one(tmp_path, 'teda $v = s / t$ a potom\n')
+
+    def test_a_display_block_is_not_an_inline_span(self, tmp_path):
+        assert 'value-symbol-literal' not in self.one(tmp_path, 'teda\n$$\n    v\n$$\n')
+
+    def test_an_undeclared_symbol_is_not_this(self, tmp_path):
+        meta = VALUES_META.replace("    symbol: 'v'\n", '')
+        assert 'value-symbol-literal' not in self.one(tmp_path, 'rýchlosťou $v$ po dráhe\n',
+                                                      meta=meta)
+
+    def test_the_problem_may_opt_out(self, tmp_path):
+        meta = VALUES_META + "audit:\n  ignore: ['value-symbol-literal']\n"
+        assert 'value-symbol-literal' not in self.one(tmp_path, 'rýchlosťou $v$ po dráhe\n',
+                                                      meta=meta)

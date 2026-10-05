@@ -74,6 +74,16 @@ const INNER = [
   { re: /(?<=\s)%(?=\s)/g, cls: "tok-jinja-op", kind: "operator", whole: true },
 ];
 
+// A meta's five content keys, and how an entry of each is reached from a template. These are
+// what an author can ask "and what does that come out as" about, so they are what the popup
+// evaluates: `(§ eq.snell §)` for an `eq:` entry, `(§ v0 §)` for a value or a derived quantity.
+//
+// `values:` and `words:` have two levels and they mean different things -- the shallower keys
+// are the entries' own names and the deeper ones are `magnitude:` and its siblings, or a
+// language code. Only the name level names something a template may write, which is why
+// `entryIndent` exists rather than a hard-coded depth.
+const META_EVAL_BLOCKS = { eq: "eq.", values: "", derived: "", blocks: "blocks.", words: "words." };
+
 // Where `INNER` applies. In Markdown and gnuplot that is inside a `(§ … §)`; in a meta it is the
 // values of `derived:`, which is where `PQ`, `QL` and `.to()` are actually written — 158 of the
 // 160 `PQ` in the repository are there and two are in a tag.
@@ -109,6 +119,23 @@ function yamlBlocks(text) {
 // quoted scalar is not one, and YAML requires whitespace before an inline `#`, so both tests are
 // cheap. Needed because a comment in a `derived:` block is prose *about* the expression — one
 // saying "note the .to() there" would otherwise offer a tooltip on its own prose.
+// The shallowest indent at which each content block's entries sit, by block name.
+//
+// Whichever indent comes first rather than a hard-coded two spaces, so a meta indented otherwise
+// still works -- and per block rather than once, because nothing says a file indents `eq:` and
+// `values:` alike.
+function entryIndent(blocks) {
+  const levels = {};
+  for (const block of blocks) {
+    if (!(block.key in META_EVAL_BLOCKS)) continue;
+    const key = /^(\s+)[\w-]+(?=:)/.exec(block.line);
+    if (!key) continue;
+    const indent = key[1].length;
+    if (levels[block.key] === undefined || indent < levels[block.key]) levels[block.key] = indent;
+  }
+  return levels;
+}
+
 function commentStart(line) {
   let quote = null;
   for (let i = 0; i < line.length; i++) {
@@ -137,26 +164,24 @@ function collectReferences(text, lang) {
     }
     regions = regions.concat(tagRegions(text));
     // A key is a name an author can look up too: `derived:` at column 0, and `magnitude:` and its
-    // seven siblings inside `values:`. A key that is neither — a quantity's own name — emits a ref
-    // that the table simply does not hold, and a miss shows nothing, which is the right outcome.
-    //
-    // Inside `values:` there are two levels and they mean different things: the shallower keys
-    // are the quantities' own names, which the table cannot hold and should not claim to, and the
-    // deeper ones are `magnitude:` and its seven siblings. The name level is whichever indent
-    // comes first, rather than a hard-coded two spaces, so a meta indented otherwise still works.
-    let nameLevel = null;
-    for (const block of blocks) {
-      if (block.key !== "values") continue;
-      const key = /^(\s+)[\w-]+(?=:)/.exec(block.line);
-      if (key && (nameLevel === null || key[1].length < nameLevel)) nameLevel = key[1].length;
-    }
+    // seven siblings inside `values:`. A key that is neither — a quantity's own name — has no
+    // entry in the table and should not claim one; it gets an `evalSource` instead, which is the
+    // better answer for it anyway: what a quantity *is* here is a number, not a definition.
+    const nameLevel = entryIndent(blocks);
     for (const block of blocks) {
       const key = /^(\s*)([\w-]+)(?=:)/.exec(block.line);
       if (!key) continue;
       const at = block.start + key[1].length;
-      if (!key[1].length) push(at, at + key[2].length, "tok-key", `meta-key:${key[2]}`);
-      else if (block.key === "values" && nameLevel !== null && key[1].length > nameLevel)
+      const indent = key[1].length;
+      if (!indent) { push(at, at + key[2].length, "tok-key", `meta-key:${key[2]}`); continue; }
+      const level = nameLevel[block.key];
+      if (level !== undefined && indent === level) {
+        const prefix = META_EVAL_BLOCKS[block.key];
+        found.push({ start: at, end: at + key[2].length, cls: "tok-key", ref: null,
+                     priority: -1, evalSource: `(§ ${prefix}${key[2]} §)` });
+      } else if (block.key === "values" && level !== undefined && indent > level) {
         push(at, at + key[2].length, "tok-key", `values-key:${key[2]}`);
+      }
     }
   }
 
@@ -223,6 +248,31 @@ function collectMatches(text, rules) {
   return matches;
 }
 
+/* Every fragment of `text` that can be evaluated against the unit's context, with where it sits.
+
+   Two kinds, and they are the two an author asks "and what does that come out as" about: a
+   `(§ … §)` tag, which is evaluated as written, and a meta entry's own name, for which the tag
+   that would reach it is synthesised -- `snell` under `eq:` is `(§ eq.snell §)`.
+
+   Shared with `app.js`, which sends the distinct sources to `/api/evaluate` in one request. One
+   round trip per buffer rather than one per hover, and the hover is then a map lookup. */
+function evaluableSpans(text, lang) {
+  const spans = tagRegions(text).map(([start, end]) => (
+    { start, end, source: text.slice(start, end) }));
+  if (lang === "dgs-yaml") {
+    for (const found of collectReferences(text, lang)) {
+      if (found.evalSource) {
+        spans.push({ start: found.start, end: found.end, source: found.evalSource });
+      }
+    }
+  }
+  return spans;
+}
+
+function evaluableSources(text, lang) {
+  return [...new Set(evaluableSpans(text, lang).map((s) => s.source))];
+}
+
 function highlight(text, lang) {
   const rules = RULES[lang];
   if (!rules) return escapeHtml(text);
@@ -232,7 +282,15 @@ function highlight(text, lang) {
   // already lets a `(§ … §)` win against the `$…$` it sits inside.
   const matches = collectReferences(text, lang).concat(collectMatches(text, rules))
     .sort((a, b) => a.priority - b.priority || a.start - b.start);
-  const claimed = []; // non-overlapping {start, end, cls, ref}, built by carving out claimed ranges
+  // Which fragment each character belongs to, so that a piece carved out of the middle of a tag
+  // still knows which tag it came from -- hovering `disp` inside `(§ eq.x|disp §)` evaluates the
+  // whole tag, which is what somebody pointing at it wants to see.
+  const evaluable = evaluableSpans(text, lang);
+  const sourceAt = (start, end) => {
+    const span = evaluable.find((s) => start >= s.start && end <= s.end);
+    return span ? span.source : null;
+  };
+  const claimed = []; // non-overlapping {start, end, cls, ref, eval}, built by carving
 
   for (const m of matches) {
     let free = [[m.start, m.end]];
@@ -249,7 +307,7 @@ function highlight(text, lang) {
       // A reference is carried only by a range that survived whole. A name half carved away is no
       // longer that name, and offering its tooltip would point at something that is not there.
       const ref = m.ref && s === m.start && e === m.end ? m.ref : null;
-      if (e > s) claimed.push({ start: s, end: e, cls: m.cls, ref });
+      if (e > s) claimed.push({ start: s, end: e, cls: m.cls, ref, eval: sourceAt(s, e) });
     }
   }
   claimed.sort((a, b) => a.start - b.start);
@@ -260,7 +318,9 @@ function highlight(text, lang) {
     if (c.start < cursor) continue;
     html += escapeHtml(text.slice(cursor, c.start));
     const ref = c.ref ? ` data-ref="${escapeHtml(c.ref)}"` : "";
-    html += `<span class="${c.cls}"${ref}>${escapeHtml(text.slice(c.start, c.end))}</span>`;
+    const evaluates = c.eval ? ` data-eval="${escapeHtml(c.eval).replace(/"/g, "&quot;")}"` : "";
+    html += `<span class="${c.cls}"${ref}${evaluates}>` +
+            `${escapeHtml(text.slice(c.start, c.end))}</span>`;
     cursor = c.end;
   }
   html += escapeHtml(text.slice(cursor));
