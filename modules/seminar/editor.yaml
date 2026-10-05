@@ -2,6 +2,11 @@
 
 label: Seminar
 
+# The audit page covers this module too. Most checks are Náboj's and say so with `modules=`, so
+# what seminar actually gets is the module-agnostic set -- `unit-unknown` among them, which is why
+# this was turned on: `FKS/32/2/3/05` writes `\SI{10}{\m}`, and nothing could see it before.
+audit: true
+
 # The level the audit page aggregates at.
 scope: volume
 
