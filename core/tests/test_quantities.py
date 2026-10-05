@@ -174,12 +174,26 @@ class TestRangeRoundsOutward:
         assert f'{self.span(2.4644, 2.51327):.2f}' == r'\qtyrange{2.46}{2.52}{\metre}'
 
     def test_the_printed_interval_contains_the_computed_one(self):
-        """The property the whole thing exists for, checked at four precisions."""
+        """
+        The property the whole thing exists for, checked at four precisions.
+
+        At precision 1 both ends of this band print as `0.4`, so what comes back is a single
+        value rather than a range -- and the property still holds, because a marker comparing
+        to one decimal accepts everything that rounds to it. Both shapes are checked here;
+        parsing only the two-number one is what this test used to do, and it broke the day
+        the collapse landed.
+        """
         low, high = 0.427521, 0.440973
         for precision in range(1, 5):
             printed = f'{self.span(low, high):.{precision}f}'
-            a, b = (float(x) for x in re.findall(r'\{([\d.]+)\}', printed)[:2])
-            assert a <= low and b >= high, f'{precision}: {printed}'
+            numbers = [float(x) for x in re.findall(r'\{([\d.]+)\}', printed)]
+            if len(numbers) == 1:
+                shown = numbers[0]
+                half = 0.5 * 10 ** -precision
+                assert shown - half <= low and shown + half >= high, f'{precision}: {printed}'
+            else:
+                a, b = numbers[:2]
+                assert a <= low and b >= high, f'{precision}: {printed}'
 
     def test_an_endpoint_already_on_the_grid_is_not_nudged(self):
         """Floating-point noise must not turn 3.7 into 3.6, nor 3.8 into 3.9."""
@@ -1576,3 +1590,68 @@ class TestTaintReachesEveryOperation:
         array = PhysicsQuantity.construct(np.array([1.0, 2.0]), 'm')
         assert array._round_trips('g') is True
 
+
+
+class TestStrippedMantissaAndExponentOptions:
+    r"""
+    `cut_extra_one` drops a mantissa of exactly one so that siunitx sets `10^{15}` rather than
+    `1 \cdot 10^{15}`. That is right on its own and wrong beside an exponent option: siunitx then
+    re-reads the mantissa, takes the empty one for a zero, and
+    `\qty[exponent-mode=scientific]{e+15}{\becquerel}` comes out as `0 \cdot 10^{14}` -- which is
+    not the number, by fourteen orders of magnitude.
+    """
+    def test_a_bare_power_of_ten_still_loses_its_one(self):
+        q = PhysicsQuantity.construct(1.0e15, 'becquerel')
+        assert r'\qty{e+15}{\becquerel}' == f'{q:g}'
+
+    def test_an_exponent_option_keeps_the_mantissa(self):
+        q = PhysicsQuantity.construct(1.0e15, 'becquerel',
+                                      si_extra={'exponent-mode': 'scientific'})
+        assert r'\qty[exponent-mode=scientific]{1e+15}{\becquerel}' == f'{q:g}'
+
+    def test_an_unrelated_option_changes_nothing(self):
+        """The quiet half: only the options that make siunitx re-read the number count."""
+        q = PhysicsQuantity.construct(1.0e15, 'becquerel', si_extra={'per-mode': 'symbol'})
+        assert r'\qty[per-mode=symbol]{e+15}{\becquerel}' == f'{q:g}'
+
+    def test_a_real_mantissa_is_never_touched(self):
+        q = PhysicsQuantity.construct(2.5e15, 'becquerel',
+                                      si_extra={'exponent-mode': 'scientific'})
+        assert r'\qty[exponent-mode=scientific]{2.5e+15}{\becquerel}' == f'{q:g}'
+
+
+class TestABandThatRoundsToOneString:
+    r"""
+    Outward rounding is right when the ends differ and noise when they do not.
+
+    `06/earth-falls` has 64.5663 and 64.5665 days -- seven significant figures of agreement --
+    and the floor and the ceil pulled them apart into `64 -- 65`, a whole day claimed for two
+    numbers that print alike. Twenty-seven problems in the archive carry no `answer-interval.md`
+    at all because of it.
+    """
+    @staticmethod
+    def _q(magnitude, unit='day'):
+        return PhysicsQuantity.construct(magnitude, unit)
+
+    def test_ends_that_print_alike_print_once(self):
+        band = self._q(64.5663) % self._q(64.5665)
+        assert r'\qty{65}{\day}' == f'{band:.0f}'
+
+    def test_the_same_band_is_still_a_range_where_they_differ(self):
+        """The precision decides, not the values: at four places these two are not alike."""
+        band = self._q(64.5663) % self._q(64.5665)
+        assert r'\qtyrange{64.5663}{64.5665}{\day}' == f'{band:.4f}'
+
+    def test_a_band_that_really_moves_still_rounds_outward(self):
+        band = self._q(2000.0, 'second') % self._q(2019.7, 'second')
+        assert r'\qtyrange{2000.0}{2019.7}{\second}' == f'{band:.1f}'
+
+    def test_a_constant_that_does_not_move_is_unaffected(self):
+        """The already-handled case, which this must not break: one value twice."""
+        band = self._q(5) % self._q(5)
+        assert r'\qty{5.0}{\day}' == f'{band:.1f}'
+
+    def test_snap_is_the_opposite_direction_and_still_works(self):
+        """`snap` is for a band that must be *coarser* than the place it prints."""
+        band = self._q(2000.0, 'second') % self._q(2019.7, 'second')
+        assert r'\qtyrange{2000}{2050}{\second}' == f'{band.snap(50):.0f}'

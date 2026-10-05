@@ -509,14 +509,33 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
         values = meta.data['values']
         _reject_name_collisions(values, 'values')
 
+        # `aliases:` names the entry may also be reached by. It is one of the eight keys
+        # `VALUE_ENTRY` spells out, and it used to do nothing here: the constructor filed it
+        # under `.aliases` and the entry went into the namespace under its own key alone, so
+        # `aliases: ['gl']` left no `gl` to write. `ConstantsContext` had always registered
+        # them, which is why the key reads as working until a problem tries it.
+        aliases = {}
         for key, params in values.items():
             if isinstance(params, dict):
                 symbol = params.pop('symbol', key)
+                for alias in params.get('aliases') or []:
+                    aliases[alias] = key
                 values[key] = PhysicsConstant.construct(key, symbol=symbol, **params)
             elif isinstance(params, (str, numbers.Number)):
                 values[key] = params
             else:
                 raise TypeError(f"Unsupported type {type(params)} ({params})")
+
+        # An alias may not quietly replace a value, a constant or anything else already named;
+        # the same rule the keys themselves go through, applied to the second name.
+        _reject_name_collisions({a: values[k] for a, k in aliases.items()
+                                 if a not in values}, 'values')
+        for alias, key in aliases.items():
+            if alias in values:
+                raise NameCollisionError(alias, 'values',
+                                         f"it is already defined under `values` as a key, "
+                                         f"so `{key}` cannot claim it as an alias")
+            values[alias] = values[key]
 
         ctx.add(**values)
 

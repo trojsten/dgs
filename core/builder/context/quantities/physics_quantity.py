@@ -494,9 +494,15 @@ class PhysicsQuantity:
         si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         # A bare `f` or `e` means Python's six decimal places, which is a precision the
         # caller did not ask for and `1e-8` does not survive. See `natural`.
-        magnitude = cut_extra_one(natural(self._quantity.magnitude, fmt)
-                                  if BareKind.match(fmt or '')
-                                  else f'{self._quantity.magnitude:{fmt}}')
+        printed = (natural(self._quantity.magnitude, fmt)
+                   if BareKind.match(fmt or '')
+                   else f'{self._quantity.magnitude:{fmt}}')
+        # `cut_extra_one` drops a mantissa of exactly one so siunitx sets `10^{15}` rather than
+        # `1 \cdot 10^{15}`. That is right -- **unless the call also carries an exponent option**,
+        # because siunitx then normalises what it reads and takes the empty mantissa for a zero:
+        # `\qty[exponent-mode=scientific]{e+15}{\becquerel}` sets `0 \cdot 10^{14}`, which is not
+        # the number. Two separately correct decisions, so the one that yields is the cosmetic one.
+        magnitude = printed if self._has_exponent_option() else cut_extra_one(printed)
         unit = self._latex_unit(si_fragment.group('unit'))
 
         return {
@@ -505,6 +511,14 @@ class PhysicsQuantity:
             'magnitude': magnitude,
             'unit': unit,
         }
+
+    #: siunitx options that make it re-read and re-normalise the mantissa, so an empty one
+    #: becomes a zero rather than a bare power of ten.
+    _EXPONENT_OPTIONS = frozenset({'exponent-mode', 'exponent-base', 'fixed-exponent',
+                                   'engineering-prefix', 'drop-exponent'})
+
+    def _has_exponent_option(self) -> bool:
+        return bool(self.si_extra) and bool(self._EXPONENT_OPTIONS & set(self.si_extra))
 
     @classmethod
     def _latex_unit(cls, unit: str) -> str:

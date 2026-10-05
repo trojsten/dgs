@@ -95,6 +95,24 @@ class QuantityRange:
         return PhysicsQuantity.construct(value, endpoint.unit, si_extra=endpoint.si_extra)
 
     def __format__(self, fmt: str):
+        # **Round to nearest first, and if both ends print the same string, print it once.**
+        #
+        # Outward rounding is right when the ends differ: the band is the set of answers a
+        # marker accepts, and rounding it inward turns away correct work. It turns into noise
+        # when they do not differ. `06/earth-falls` has 64.5663 and 64.5665 days -- seven
+        # significant figures of agreement -- and the floor and the ceil pulled them apart into
+        # `64 -- 65`, a whole day claimed for two numbers that round to the same thing. Twenty
+        # seven problems in the archive carry no `answer-interval.md` at all for this reason.
+        #
+        # This is not the already-handled case of `minimum == maximum` before formatting, which
+        # is a constant that does not move; it is two different values that print alike. And it
+        # is the opposite direction from `snap`, which is for a band that must be *coarser*
+        # than the place it prints.
+        nearest_min = self.minimum.format_struct(fmt)['magnitude']
+        nearest_max = self.maximum.format_struct(fmt)['magnitude']
+        if nearest_min == nearest_max:
+            return format(self.minimum, fmt)
+
         minr = self._outward(self.minimum, fmt, down=True).format_struct(fmt)
         maxr = self._outward(self.maximum, fmt, down=False).format_struct(fmt)
 

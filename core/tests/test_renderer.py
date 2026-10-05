@@ -1,6 +1,7 @@
 import pytest
 
-from core.builder.renderer import JinjaConvertor
+from core.builder.renderer import (JinjaConvertor, NameCollisionError,
+                                   StandaloneContext, build_render_context)
 
 
 class TestNoPreamble:
@@ -778,3 +779,38 @@ class TestRenderSettles:
         renderer.render = counting
         render_to_fixpoint('a value: (§ x §)\n', {'x': 3}, renderer=renderer)
         assert len(passes) == 2
+
+
+class TestValuesAliases:
+    """
+    `aliases:` is one of the eight keys `VALUE_ENTRY` spells out, and on a problem's `values:`
+    entry it used to do nothing: the constructor filed the list under `.aliases` and the entry
+    went into the namespace under its own key alone. `ConstantsContext` had always registered
+    them, which is exactly why the key reads as working right up until a problem tries it.
+    """
+    @staticmethod
+    def _context(values, tmp_path):
+        import yaml
+        (tmp_path / 'meta.yaml').write_text(yaml.safe_dump({'values': values}))
+        meta = StandaloneContext('q', tmp_path / 'meta.yaml')
+        return build_render_context(meta, 'en', root=tmp_path)
+
+    def test_an_alias_reaches_the_same_quantity(self, tmp_path):
+        ctx = self._context({'g_local': {'magnitude': 9.81, 'unit': 'metre/second**2',
+                                         'symbol': 'g', 'aliases': ['gl', 'glocal']}}, tmp_path)
+        assert ctx.data['gl'] is ctx.data['g_local']
+        assert ctx.data['glocal'] is ctx.data['g_local']
+
+    def test_no_aliases_is_still_fine(self, tmp_path):
+        """The quiet half: the overwhelmingly common entry has no `aliases:` at all."""
+        ctx = self._context({'v': {'magnitude': 3, 'unit': 'metre/second'}}, tmp_path)
+        assert 'v' in ctx.data
+
+    def test_an_alias_may_not_shadow_another_value(self, tmp_path):
+        with pytest.raises(NameCollisionError):
+            self._context({'a': {'magnitude': 1, 'unit': 'metre', 'aliases': ['b']},
+                           'b': {'magnitude': 2, 'unit': 'metre'}}, tmp_path)
+
+    def test_an_alias_may_not_shadow_a_reserved_name(self, tmp_path):
+        with pytest.raises(NameCollisionError):
+            self._context({'a': {'magnitude': 1, 'unit': 'metre', 'aliases': ['const']}}, tmp_path)

@@ -16,6 +16,7 @@ define NABOJ_TRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(wildcard source/naboj/$$$$*/../*.py) \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja,\
@@ -36,6 +37,7 @@ define NABOJ_NONTRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(wildcard source/naboj/$$$$*/../*.py) \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call jinja,modules.naboj.builder.renderer,$$(language),$$(abspath $$(dir $$<)/meta.yaml))
@@ -495,7 +497,8 @@ output/naboj/%/html-prerequisites: \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.png)) \
 	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.svg)) \
 	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/naboj/$$*/*.gp))) \
-	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/naboj/$$*/*.tikz)))
+	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/naboj/$$*/*.tikz))) \
+	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.py))
 	@for language in $(notdir $(patsubst %/,%,$(dir $(wildcard source/naboj/$*/*/problem.md)))); do \
 		mkdir -p output/naboj/$*/$$language; \
 		for picture in $^; do cp -f "$$picture" "output/naboj/$*/$$language/"; done; \

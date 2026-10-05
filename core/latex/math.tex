@@ -26,8 +26,10 @@
 \NewDocumentCommand{\Floor}{m}{\dgsfloor@*{#1}}
 \NewDocumentCommand{\Ceil}{m}{\dgsceil@*{#1}}
 
-\NewDocumentCommand{\ExpectedChevrons}{m o}{\dgschevrons@*{#1}\IfNoValueTF{#2}{}{_#2}}
-\NewDocumentCommand{\ExpectedE}{m o}{\mathrm{E}\dgsbracket@*{#1}\IfNoValueTF{#2}{}{_#2}}
+% `_{#2}` and not `_#2`: an unbraced subscript takes one token, so `\Expected{X}[12]`
+% subscripted the 1 and left the 2 on the line.
+\NewDocumentCommand{\ExpectedChevrons}{m o}{\dgschevrons@*{#1}\IfNoValueTF{#2}{}{_{#2}}}
+\NewDocumentCommand{\ExpectedE}{m o}{\mathrm{E}\dgsbracket@*{#1}\IfNoValueTF{#2}{}{_{#2}}}
 \NewDocumentCommand{\Expected}{m o}{\ExpectedE{#1}[#2]}
 
 % List of differentials
@@ -142,7 +144,11 @@
     \IfNoValueTF{#2}{%
         \frac@{#3#4}{\cdiff{#5}{#3}}%
     }{%
-        \frac@{#3^{#2}#4}{\cdiff{#5}{#3}}%
+        % The order goes on the denominator too: `\Derivative[2]{f}{x}` is d²f/dx², not d²f/dx.
+        % `^{#2}` attaches to the last token `\cdiff` leaves, which is the variable -- the same
+        % shape `\DerivativeEmpty@` and `\DerivativeParentheses@` below have always had, and the
+        % reason the fault was visible only in this one of the three.
+        \frac@{#3^{#2}#4}{\cdiff{#5}{#3}^{#2}}%
     }%
 }
 
@@ -257,7 +263,10 @@
 \NewDocumentCommand{\IInt}{O{} O{} m m m}{\iint\limits_{#1}^{#2}#3\diff@#4\diff@#5}
 \NewDocumentCommand{\IIntP}{O{} O{} m m m}{\iint\limits_{#1}^{#2}\Paren{#3}\diff@#4\diff@#5}
 % Surface integral over single differential
-\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
+% `\ifblank`, because `O{}` defaults to empty and `\diff@^{}` is an empty superscript rather
+% than a plain differential -- wrong TeX that draws as a plain `d`, so it left no trace on the
+% page. The comment below records what the previous version of the same fault did.
+\NewDocumentCommand{\IIntI@}{O{} O{} m O{} m O{}}{\iint\limits_{#1}^{#2}#3#6\ifblank{#4}{\diff@}{\diff@^{#4}}#5}
 % `{#4}` rather than `[#4]` handed the *power* to `\IIntI@`'s differential slot and dropped the
 % differential itself, so `\IIntI[S]{B}{S}` set `\iint_S B \diff^{}` -- the `S` never printed.
 % Silently, as a missing differential always is.
@@ -287,7 +296,7 @@
 \NewDocumentCommand{\IIInt}{O{} O{} m m m m}{\iiint\limits_{#1}^{#2}#3\diff@#4\diff@#5\diff@#6}
 % Volume integral over single differential
 % [lower limit][upper limit]{integrand}[differential power]{differential}
-\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\diff@^{#4}#5}
+\NewDocumentCommand{\IIIntI@}{O{} O{} m O{} m O{}}{\iiint\limits_{#1}^{#2}#3#6\ifblank{#4}{\diff@}{\diff@^{#4}}#5}
 % Same slip as `\IIntI` above, plus a stray `[#4]` past the last optional argument, which
 % typeset a literal `[]` after the integral.
 \NewDocumentCommand{\IIIntI}{O{} O{} m O{} m}{\IIIntI@[#1][#2]{#3}[#4]{#5}}
