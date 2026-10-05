@@ -982,7 +982,12 @@ async function doHtml() {
         `<base href="${base}">` +
         `<script src="${location.origin}/static/mathjax-dgs.js"><\/script>` +
         `<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>` +
-        `<style>body{font:16px/1.5 system-ui,sans-serif;margin:1.25rem;color:#111}` +
+        // 180mm is the booklet's own text block -- A4 less the 15mm margins `dgs.cls` sets,
+        // which both modules keep. CSS millimetres are real ones, so the column is the width a
+        // reader will hold, and a line breaks roughly where the page breaks it. Centred, and a
+        // cap rather than a fixed width: a narrow pane still reflows.
+        `<style>body{font:16px/1.5 system-ui,sans-serif;margin:1.25rem auto;` +
+        `max-width:180mm;padding:0 1rem;color:#111}` +
         `img{max-width:100%}</style></head><body>${body.html ?? ""}</body></html>`;
       setStatus("HTML OK", "ok");
     } else {
