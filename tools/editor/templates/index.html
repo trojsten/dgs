@@ -68,11 +68,12 @@
         <div id="pdf-placeholder" class="placeholder">Nothing compiled yet &mdash; press Ctrl/Cmd+Enter.</div>
       </div>
       <!-- The fragment the web gets, rendered rather than listed: a list or a table that pandoc
-           writes differently for HTML shows up here and in no other tab. Sandboxed with no
-           `allow-scripts` -- it is our own pandoc output, but a preview pane has no business
-           running anything, and the base URL lets its relative pictures resolve. -->
+           writes differently for HTML shows up here and in no other tab. `allow-scripts` so
+           MathJax can typeset it, and deliberately without `allow-same-origin`, which leaves the
+           frame on an opaque origin with no way back into the editor. -->
       <div id="output-html" class="output-frame" hidden>
-        <iframe id="html-view" title="HTML fragment, as the web gets it"></iframe>
+        <iframe id="html-view" sandbox="allow-scripts"
+                title="HTML fragment, as the web gets it"></iframe>
       </div>
       <pre id="output-rendered" class="output" hidden><code id="output-rendered-code"></code></pre>
       <pre id="output-tex" class="output" hidden><code id="output-tex-code"></code></pre>

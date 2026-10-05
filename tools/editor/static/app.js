@@ -954,11 +954,13 @@ async function doCompile() {
 
 /* The fragment the web gets, shown as a page rather than as markup.
  *
- * `srcdoc` with a `<base>` under `/api/output/`, so the relative pictures resolve exactly as they
- * would on the web -- one that does not load here would not load there either, and the pane
- * should show that. Sandboxed without `allow-scripts`: it is our own pandoc output, but a preview
- * has no reason to run anything, and that also keeps MathJax out, so maths shows as the `\(…\)`
- * the fragment actually carries. */
+ * `srcdoc` with an absolute `<base>` under `/api/output/`, so the relative pictures resolve
+ * exactly as they would on the web -- one that does not load here would not load there either,
+ * and the pane should show that rather than hide it.
+ *
+ * MathJax typesets it, with `static/mathjax-dgs.js` ahead of it supplying the siunitx macros
+ * MathJax has none of. `allow-scripts` is therefore required, and is given *without*
+ * `allow-same-origin`: the frame runs on an opaque origin and cannot reach back into the editor. */
 async function doHtml() {
   if (!state.unit || !state.activeTarget) return;
   if (tierState("html")) { switchOutputTab("html"); return; }
@@ -971,11 +973,15 @@ async function doHtml() {
     const frame = el("html-view");
     switchOutputTab("html");
     if (body.ok) {
-      const base = `/api/output/${(body.html_target ?? "").replace(/^output\//, "")}`
-        .replace(/[^/]*$/, "");
+      // Absolute, because a `srcdoc` document has no URL of its own for a relative one to
+      // resolve against.
+      const base = `${location.origin}/api/output/` +
+        (body.html_target ?? "").replace(/^output\//, "").replace(/[^/]*$/, "");
       frame.srcdoc =
         `<!doctype html><html><head><meta charset="utf-8">` +
         `<base href="${base}">` +
+        `<script src="${location.origin}/static/mathjax-dgs.js"><\/script>` +
+        `<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>` +
         `<style>body{font:16px/1.5 system-ui,sans-serif;margin:1.25rem;color:#111}` +
         `img{max-width:100%}</style></head><body>${body.html ?? ""}</body></html>`;
       setStatus("HTML OK", "ok");
