@@ -751,13 +751,19 @@ produces
 
 `cbrt(x)`
 
-A cube root. `numpy`, so a bare number -- **not** unit-aware the way `sqrt` is.
+A cube root, unit-aware the way `sqrt` is: the unit's exponents divide by three, so a volume in
+`m^3` comes back in `m`.
 
-    (§ cbrt(27)|f0 §)
+It was `np.cbrt`, which does not know what a unit is -- and on a quantity it did not drop the unit
+but raised, so the global was usable on a bare number and on nothing else. A unit that is not a cube
+keeps an honest fractional power rather than being rounded off: `cbrt(PQ(8, 'litre'))` is `2
+l^{0.333}`.
+
+    (§ cbrt(PQ(27, 'metre**3')) §)
 
 produces
 
-    3
+    \qty{3}{\metre}
 
 ### `pow`
 

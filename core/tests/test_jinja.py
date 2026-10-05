@@ -815,3 +815,34 @@ class TestPictureRenderer:
         """`(%` is not a delimiter here, so SVG's `width="100%"` needs no escaping."""
         assert PictureJinjaRenderer().render('<svg width="100%" height="50%"/>', {}) \
             == '<svg width="100%" height="50%"/>'
+
+
+
+class TestCbrtKnowsUnits:
+    r"""
+    `cbrt` was `np.cbrt`, which does not know what a unit is.
+
+    On a `PhysicsQuantity` it did not merely drop the unit -- it raised `TypeError: loop of ufunc
+    does not support argument 0 ... which has no callable cbrt method`, so the global worked on a
+    bare float and on nothing else. `sqrt` had always been `x ** 0.5` for exactly this reason.
+    """
+    @staticmethod
+    def _value(expression):
+        return MarkdownJinjaRenderer().evaluate(expression, {})
+
+    def test_a_volume_comes_back_as_a_length(self):
+        got = self._value("cbrt(PQ(27, 'metre**3'))")
+        assert r'\qty{3}{\metre}' == f'{got:g}'
+
+    def test_the_exponents_divide_by_three(self):
+        got = self._value("cbrt(PQ(8, 'metre**6/second**3'))")
+        assert r'\qty{2}{\metre\squared\per\second}' == f'{got:g}'
+
+    def test_a_unit_that_is_not_a_cube_keeps_an_honest_fractional_power(self):
+        """Not rounded off and not refused: the page shows what the arithmetic produced."""
+        got = self._value("cbrt(PQ(8, 'litre'))")
+        assert r'\tothe{0.333}' in f'{got:g}'
+
+    def test_a_bare_number_still_works(self):
+        """The quiet half: the one case `np.cbrt` did handle must not regress."""
+        assert abs(self._value('cbrt(27)') - 3.0) < 1e-9

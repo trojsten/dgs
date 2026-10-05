@@ -565,8 +565,13 @@ _GLOBALS: tuple[Entry, ...] = (
                   'comes back a quantity.',
           example="(§ sqrt(PQ(2, 'm^2'))|f4 §)", expect='\\qty{1.4142}{\\metre}'),
     Entry('cbrt', 'global', section='Mathematics', signature='cbrt(x)',
-          summary='A cube root. `numpy`, so a bare number -- **not** unit-aware the way `sqrt` is.',
-          example='(§ cbrt(27)|f0 §)', expect='3'),
+          summary='A cube root, unit-aware the way `sqrt` is: the unit\'s exponents divide by '
+                  'three, so a volume in `m^3` comes back in `m`.',
+          note='It was `np.cbrt`, which does not know what a unit is -- and on a quantity it did '
+               'not drop the unit but raised, so the global was usable on a bare number and on '
+               'nothing else. A unit that is not a cube keeps an honest fractional power rather '
+               'than being rounded off: `cbrt(PQ(8, \'litre\'))` is `2 l^{0.333}`.',
+          example='(§ cbrt(PQ(27, \'metre**3\')) §)', expect='\\qty{3}{\\metre}'),
     Entry('pow', 'global', section='Mathematics', signature='pow(x, y)',
           summary='`x` to the power `y`. Jinja has `**` too; this is for when a filter chain '
                   'reads better.',

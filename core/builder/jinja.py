@@ -327,7 +327,14 @@ class MarkdownJinjaRenderer(JinjaRenderer):
             'floor': lambda x: PhysicsQuantity.floor(x) if isinstance(x, PhysicsQuantity) else np.floor(x),
             'round': lambda x: PhysicsQuantity.round(x) if isinstance(x, PhysicsQuantity) else np.round(x),
             'sqrt': lambda x: (x ** 0.5),
-            'cbrt': np.cbrt,
+            # A power, not `np.cbrt`, for the reason `sqrt` is a power: numpy's version does not
+            # know what a unit is. On a `PhysicsQuantity` it did not merely drop the unit, it
+            # raised `TypeError: loop of ufunc does not support argument 0 ... which has no
+            # callable cbrt method`, so the global was usable on a bare float and on nothing
+            # else. `x ** (1/3)` takes the cube root of the magnitude *and* divides the unit's
+            # exponents by three: a volume in `m^3` comes back in `m`, and a unit that is not a
+            # cube keeps an honest fractional power rather than being quietly rounded off.
+            'cbrt': lambda x: (x ** (1 / 3)),
             'rad': np.radians,
             'deg': np.degrees,
             'gamma': math.gamma,
