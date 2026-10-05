@@ -1194,6 +1194,58 @@ def subscript_unwrapped(sources):
                               unit.path, place, line_of(text, m.start()))
 
 
+#: The argument of a `\qty`, `\unit` and friends -- the slot that holds unit macros.
+RE_UNIT_ARGUMENT = re.compile(
+    r'\\(?:qty|unit|qtyrange|qtylist|qtyproduct|SI|si|SIrange|SIlist)'
+    r'(?:\[[^\]]*\])?(?:\{[^{}]*\}){0,2}\{([^{}]*)\}')
+RE_UNIT_MACRO = re.compile(r'\\([a-zA-Z]+)')
+
+
+@check('unit-unknown', 'warning', 'A unit macro the repository does not define')
+def unit_unknown(sources):
+    r"""
+    A unit written as something that is not one of ours -- `\qty{90}{\kg}`, `\SI{10}{\m}`.
+
+    **Neither LaTeX nor the macro sweep catches these.** They compile, and the booklet prints the
+    right thing, so nothing has ever complained: TeX finds `\kg` defined (siunitx guards the
+    deprecated abbreviations) and `\m` is an OT1 text command, so `macro-undefined`'s `\ifcsname`
+    says "defined" for both and moves on. A macro defined *as an error* is invisible to a check
+    that only asks whether it exists.
+
+    What breaks is everything that is not LaTeX. `core/filters/siunitx` expands units for the web
+    against the set the repository actually declares, and a macro outside it cannot be expanded --
+    it reaches the page as itself and MathJax shows it red. The same goes for `|txt` in a drawing.
+
+    So the rule is the one CLAUDE.md already states for spelling: a unit is written the way pint
+    and `siunitx.tex` spell it. `\kilo\gram`, not `\kg`; `\metre`, not `\m`.
+    """
+    from core.filters.siunitx import BUILTIN, OPERATORS, declared_units
+    from core.i18n import languages
+
+    known = set(declared_units()) | set(BUILTIN) | set(OPERATORS)
+    for locale in languages.values():
+        siunitx = locale.data.get('siunitx') or {}
+        known |= set(siunitx.get('units') or {})
+        for group in ('prefixes', 'binary_prefixes'):
+            known |= {entry['name'] for entry in (siunitx.get(group) or {}).values()}
+
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            place = unit.real_label(lang, name)
+            if (place, name) in seen:
+                continue
+            seen.add((place, name))
+            for argument in RE_UNIT_ARGUMENT.finditer(text):
+                for macro in RE_UNIT_MACRO.finditer(argument.group(1)):
+                    if macro.group(1) in known:
+                        continue
+                    yield Finding('unit-unknown', 'warning',
+                                  f"`\\{macro.group(1)}` is not a unit this repository defines; "
+                                  f"it compiles but cannot be expanded for the web",
+                                  unit.path, place, line_of(text, argument.start()))
+
+
 # --- labelling ---------------------------------------------------------------
 
 #: The file a solution lives in. Náboj's labelling rule is asymmetric, so the checks below have to

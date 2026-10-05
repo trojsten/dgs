@@ -71,6 +71,15 @@ It was worth having. `scholar/TA1` called `\diff` 222 times and `\OIInt` 22, `fk
 being written for macros that exist under another name — and none of it was visible, because
 nothing builds those two modules.
 
+**A macro defined *as an error* is invisible to it**, which is the gap `unit-unknown` fills.
+`\qty{90}{\kg}` compiles and the booklet prints `90 kg`, so the PDF never complained; and the
+sweep's `\ifcsname` reports `\kg` as *defined*, because siunitx guards the deprecated
+abbreviations, and `\m` as defined too, being an OT1 text command. Neither is a unit this
+repository declares, so neither can be expanded for the web -- `core/filters/siunitx` resolves
+against the set `siunitx.tex` and the locale actually define, and anything else reaches the page
+as itself. `unit-unknown` reads the unit slot of every `\qty`, `\unit` and friend and says so.
+Three sites had it: `18/concorde` in two languages, and `chem/04/ohrev-kravou`'s `\atm`.
+
 Adding a check means one function and two tests: one that it fires, one that it stays
 quiet on a case that looks like it and is not. That second half is not optional. Every
 one of those quiet cases in `core/tests/test_audit.py` is a false positive that a

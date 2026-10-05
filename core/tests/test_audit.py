@@ -367,6 +367,45 @@ class TestSiunitxChecks:
         assert 'number-unparsed' not in ids(run(tmp_path, files=files))
 
 
+class TestUnknownUnits:
+    """
+    A unit macro the repository does not define -- `\\qty{90}{\\kg}`.
+
+    **Nothing else catches these.** They compile and the booklet prints the right thing, so the
+    PDF never complained; and `macro-undefined` cannot see them either, because TeX reports `\\kg`
+    as *defined* -- siunitx guards the deprecated abbreviations, and `\\m` is an OT1 text command.
+    A macro defined as an error is invisible to a check that only asks whether it exists. What
+    breaks is the web, where units are expanded against the set the repository declares.
+    """
+
+    def test_it_fires_on_a_unit_that_is_not_ours(self, tmp_path):
+        report = run(tmp_path, files={'sk': {'solution.md': r'Hmotnosť $\qty{90}{\kg}$.'}})
+        assert 'unit-unknown' in ids(report)
+
+    def test_it_names_the_macro(self, tmp_path):
+        report = run(tmp_path, files={'sk': {'solution.md': r'$\SI{10}{\m}$'}})
+        message = next(f.message for f in report.findings if f.check == 'unit-unknown')
+        assert r'\m' in message
+
+    @pytest.mark.parametrize('text', [
+        r'$\qty{90}{\kilo\gram}$',                 # the spelling the convention asks for
+        r'$\qty{3}{\metre\per\second\squared}$',   # prefixes and the two powers
+        r'$\unit{\watthour}$',                      # declared in `core/latex/siunitx.tex`
+        r'$\qty{1.5}{\percent}$',                   # siunitx's own, declared nowhere here
+        r'$\qtyrange{1}{2}{\celsius}$',             # the unit sits in the third argument
+        r'$\qty{5}{\eur}$',                        # the custom currency
+        r'A sentence with \textbf{bold} and no units.',
+        r'$E = \frac{1}{2} m v^2$',                 # `\frac` is not in a unit slot
+    ])
+    def test_it_stays_quiet_on_units_that_are_ours(self, tmp_path, text):
+        """
+        The quiet half, and the one that would hurt: this reads every `\\qty` in the repository,
+        and a false positive on `\\metre` would bury the real findings.
+        """
+        report = run(tmp_path, files={'sk': {'solution.md': text}})
+        assert 'unit-unknown' not in ids(report)
+
+
 class TestTranslations:
     def test_magnitude_disagreement(self, tmp_path):
         files = {'sk': {'problem.md': 'a $\\qty{30}{\\metre}$ pole\n'},
