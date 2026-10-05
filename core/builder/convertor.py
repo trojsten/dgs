@@ -65,21 +65,13 @@ class Convertor:
             ),
             # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
             RegexReplacement(
-                r'(\\num|\\SI){e',
+                r'(\\num|\\qty){e',
                 r'\g<1>{1.e',
             ),
             # Hack fix: incorrect display of siunitx in MathJAX (adds a dot after short mantissa)
             RegexReplacement(
-                r'(\\num|\\SI){([0-9])e',
+                r'(\\num|\\qty){([0-9])e',
                 r'\g<1>{\g<2>.e',
-            ),
-            RegexReplacement(
-                r'\\qty',
-                r'\\SI',
-            ),
-            RegexReplacement(
-                r'\\unit',
-                r'\\si',
             ),
         ],
     }
@@ -131,9 +123,6 @@ class Convertor:
             RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove LaTeX-only lines"),
             RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Keep HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
-            # FixMe: These two are harmful workarounds of downstream problems
-            RegexReplacement(r"\\qty", r"\\SI", purpose="Revert to old siunitx syntax for old failing web"),
-            RegexReplacement(r"\\unit", r"\\si", purpose="Revert to old siunitx syntax for old failing web"),
         ],
     }
 
