@@ -54,5 +54,14 @@ window.MathJax = {
     }
   },
   options: { renderActions: { addMenu: [] } },
-  chtml: { displayAlign: 'left', displayIndent: '0' }
+
+  // The page is set in Minion, and MathJax's own face is a Computer Modern derivative that sits
+  // badly beside it -- lighter, and a different century. STIX2 is Times-shaped and drawn for
+  // scientific text, so it sits far closer to an oldstyle serif. It is a MathJax 4 font package,
+  // which is why the loader asks for version 4.
+  //
+  // `mtextInheritFont` matters more than the choice of face: `\text{}` is where the units and
+  // the translated words live, and those should be the page's own font rather than a maths one.
+  output: { font: 'mathjax-stix2' },
+  chtml: { displayAlign: 'left', displayIndent: '0', mtextInheritFont: true }
 };

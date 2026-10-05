@@ -683,6 +683,22 @@ def api_output(relative):
     return send_file(path)
 
 
+@app.get("/api/font/<path:relative>")
+def api_font(relative):
+    r"""
+    One font file out of `assets/fonts/`, so the HTML pane can set its text in Minion.
+
+    The booklet's own face, from the directory `core/latex/fonts.tex` points `\setmainfont` at --
+    the preview is for judging a page, and a page set in the browser's default serif is a
+    different page. Path-checked the way `api_output` is.
+    """
+    root = (REPO_ROOT / "assets" / "fonts").resolve()
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise BadRequest(f"No such font: {relative}")
+    return send_file(path)
+
+
 @app.post("/api/lint")
 def api_lint():
     body = request.get_json(force=True)

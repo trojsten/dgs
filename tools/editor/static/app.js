@@ -195,6 +195,24 @@ function refAtCaret(textarea, lang) {
   return null;
 }
 
+/* The booklet's own face, served from `assets/fonts/` where `core/latex/fonts.tex` points
+   `\setmainfont`. The preview is for judging a page, and a page set in the browser's default
+   serif is a different page -- Minion is narrower than Georgia, so the line breaks move.
+   The four faces are the four that `fonts.tex` names; `font-display: block` so a line never
+   reflows under the reader after the fonts arrive. */
+function minionFaces() {
+  const face = (file, weight, style) =>
+    `@font-face{font-family:"Minion Pro";` +
+    `src:url("${location.origin}/api/font/MinionPro/${file}") format("opentype");` +
+    `font-weight:${weight};font-style:${style};font-display:block}`;
+  return "<style>" +
+    face("MinionPro-Regular.otf", "normal", "normal") +
+    face("MinionPro-Bold.otf", "bold", "normal") +
+    face("MinionPro-It.otf", "normal", "italic") +
+    face("MinionPro-BoldIt.otf", "bold", "italic") +
+    "</style>";
+}
+
 function hoverElement() {
   let box = el("reference-hover");
   if (!box) {
@@ -981,12 +999,13 @@ async function doHtml() {
         `<!doctype html><html><head><meta charset="utf-8">` +
         `<base href="${base}">` +
         `<script src="${location.origin}/static/mathjax-dgs.js"><\/script>` +
-        `<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>` +
+        `<script async src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"><\/script>` +
+        minionFaces() +
         // 180mm is the booklet's own text block -- A4 less the 15mm margins `dgs.cls` sets,
         // which both modules keep. CSS millimetres are real ones, so the column is the width a
         // reader will hold, and a line breaks roughly where the page breaks it. Centred, and a
         // cap rather than a fixed width: a narrow pane still reflows.
-        `<style>body{font:16px/1.5 system-ui,sans-serif;margin:1.25rem auto;` +
+        `<style>body{font:17px/1.5 "Minion Pro",Georgia,serif;margin:1.25rem auto;` +
         `max-width:180mm;padding:0 1rem;color:#111}` +
         `img{max-width:100%}</style></head><body>${body.html ?? ""}</body></html>`;
       setStatus("HTML OK", "ok");
