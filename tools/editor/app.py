@@ -252,9 +252,27 @@ def read_if_exists(path):
 
 # --- reading ----------------------------------------------------------------
 
+#: The editor's own front-end files. Their newest mtime is the version the page asks for.
+_ASSETS = ("style.css", "highlight.js", "app.js")
+
+
+def asset_version() -> str:
+    """
+    A cache buster, so editing the front end is visible on a reload rather than on a hard one.
+
+    Twice now a stale `app.js` has produced a blank HTML pane that looks exactly like a renderer
+    fault: the browser kept the file it loaded at page load, and a rename inside `doHtml` meant
+    the handler threw before it ever set the iframe. Nothing about that points at the cache.
+    """
+    newest = max((Path(app.static_folder, name).stat().st_mtime
+                  for name in _ASSETS
+                  if Path(app.static_folder, name).is_file()), default=0.0)
+    return f"{newest:.0f}"
+
+
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", assets=asset_version())
 
 
 def hidden_levels(module):

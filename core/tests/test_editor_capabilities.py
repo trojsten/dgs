@@ -220,3 +220,35 @@ class TestTheHtmlTargetIsDerived:
             kind = UnitKind(glob=entry['glob'], render=entry.get('render', ''))
             if kind.render:
                 assert kind.html.startswith('output/') and kind.html.endswith('.html')
+
+
+class TestAssetVersion:
+    """
+    The front end is cache-busted by the newest mtime of its own files.
+
+    Twice a stale `app.js` produced a blank HTML pane that looked exactly like a renderer fault:
+    the browser kept the file it had at page load, and a rename inside `doHtml` meant the handler
+    threw before it ever set the iframe. Nothing about that symptom points at the cache.
+    """
+    def test_the_page_asks_for_a_version(self):
+        import sys, re
+        sys.path.insert(0, 'tools/editor')
+        import app as editor
+        with editor.app.test_client() as client:
+            page = client.get('/').get_data(as_text=True)
+        for name in ('style.css', 'highlight.js', 'app.js'):
+            assert re.search(rf'/static/{re.escape(name)}\?v=\d+', page), name
+
+    def test_the_version_follows_the_files(self, tmp_path):
+        import sys, pathlib, os, time
+        sys.path.insert(0, 'tools/editor')
+        import app as editor
+        before = editor.asset_version()
+        target = pathlib.Path(editor.app.static_folder, 'app.js')
+        stamp = target.stat().st_mtime
+        try:
+            os.utime(target, (stamp + 10, stamp + 10))
+            assert editor.asset_version() != before
+        finally:
+            os.utime(target, (stamp, stamp))
+        assert editor.asset_version() == before
