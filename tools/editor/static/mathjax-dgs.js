@@ -41,9 +41,15 @@ window.MathJax = {
       Moon:  '\\unicode{x263E}',
       Mars:  '\\unicode{x2642}',
 
-      // differentials, in the plain one-argument form the sources mostly write
-      Diff:  ['\\mathrm{d}#1', 1],
-      FDiff: ['\\mathrm{d}#1', 1],
+      // The four differential symbols, in the plain one-argument form the sources mostly write.
+      // They are four *different* things and `math.tex` keeps them apart: an ordinary
+      // differential, a partial, a finite difference and an inexact one. Collapsing `\FDiff`
+      // onto `\Diff` prints `dt` where the physics says `Δt`, which is a change of meaning and
+      // not a change of font. `\mathop{}\!` is the spacing `math.tex` gives them.
+      Diff:  ['\\mathop{}\\!\\mathrm{d}#1', 1],
+      PDiff: ['\\mathop{}\\!\\partial#1', 1],
+      FDiff: ['\\mathop{}\\!\\Delta#1', 1],
+      UDiff: ['\\mathop{}\\!\\delta#1', 1],
       Sum:   ['\\sum #1', 1]
     }
   },
