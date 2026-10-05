@@ -979,6 +979,16 @@ async function doCompile() {
  * MathJax typesets it, with `static/mathjax-dgs.js` ahead of it supplying the siunitx macros
  * MathJax has none of. `allow-scripts` is therefore required, and is given *without*
  * `allow-same-origin`: the frame runs on an opaque origin and cannot reach back into the editor. */
+// What the pane shows when make succeeded and the fragment is not where we looked for it.
+// Without this the body is empty, the iframe is white and the status still reads `HTML OK` --
+// a success message over a blank page, which reads as the preview being broken rather than as
+// a build that did not produce what it claimed. The two paths that reach it are a target whose
+// rule is satisfied without writing the file, and a `html_target` that disagrees with where make
+// put it; naming the path is what tells them apart.
+const missingFragment = (target) =>
+  `<p style="font:13px/1.5 ui-monospace,monospace;color:#a00">` +
+  `make reported success but wrote no fragment at<br>${escapeForHtml(target ?? "(no target)")}</p>`;
+
 async function doHtml() {
   if (!state.unit || !state.activeTarget) return;
   if (tierState("html")) { switchOutputTab("html"); return; }
@@ -1007,8 +1017,9 @@ async function doHtml() {
         // cap rather than a fixed width: a narrow pane still reflows.
         `<style>body{font:17px/1.5 "Minion Pro",Georgia,serif;margin:1.25rem auto;` +
         `max-width:180mm;padding:0 1rem;color:#111}` +
-        `img{max-width:100%}</style></head><body>${body.html ?? ""}</body></html>`;
-      setStatus("HTML OK", "ok");
+        `img{max-width:100%}</style></head><body>${body.html ?? missingFragment(body.html_target)}</body></html>`;
+      setStatus(body.html == null ? "converted, but no fragment" : "HTML OK",
+                body.html == null ? "error" : "ok");
     } else {
       frame.srcdoc =
         `<!doctype html><html><head><meta charset="utf-8">` +
