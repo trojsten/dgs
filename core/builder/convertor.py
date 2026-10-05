@@ -5,6 +5,7 @@ from collections.abc import Callable
 from tempfile import SpooledTemporaryFile
 
 from core import i18n
+from core.filters import siunitx
 
 from .classes import RegexFailure, RegexReplacement
 
@@ -62,16 +63,6 @@ class Convertor:
             RegexReplacement(
                 r'<figcaption>Obrázok (?P<number>\d*):',
                 r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
-            ),
-            # Hack fix: incorrect display of siunitx in MathJAX (adds a one-dot to empty mantissa)
-            RegexReplacement(
-                r'(\\num|\\qty){e',
-                r'\g<1>{1.e',
-            ),
-            # Hack fix: incorrect display of siunitx in MathJAX (adds a dot after short mantissa)
-            RegexReplacement(
-                r'(\\num|\\qty){([0-9])e',
-                r'\g<1>{\g<2>.e',
             ),
         ],
     }
@@ -282,7 +273,15 @@ class Convertor:
 
     def preprocess(self, line):
         # return self.chain_process(line, [self.pre_regexes, self.quotes_regexes]) # Turned off for quote testing!
-        return self.chain_process(line, [self.pre_regexes])
+        line = self.chain_process(line, [self.pre_regexes])
+        if self.output_format == 'html':
+            # siunitx is expanded into ordinary TeX for the web, because MathJax has no siunitx
+            # and the macro shims people reach for cannot parse an argument -- a list, an angle
+            # in `d;m;s` form and an exponent all need one. A function and not a `pre_regexes`
+            # entry for the same reason: this is a small parser, not a substitution.
+            # See `core/filters/siunitx`.
+            line = siunitx.expand(line, self.locale)
+        return line
 
     def postprocess(self, line):
         return self.chain_process(line, [self.post_regexes])
