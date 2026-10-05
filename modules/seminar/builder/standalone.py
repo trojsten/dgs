@@ -30,6 +30,8 @@ def build(launch: Path, unit: str, output: Path, template_root: Path) -> None:
     competition, volume, semester, round_, number = unit.split('/')
     unit_path = Path(launch) / unit
 
+    meta = read_yaml(unit_path / 'meta.yaml')
+
     context = Context(
         unit,
         module='seminar',
@@ -43,7 +45,17 @@ def build(launch: Path, unit: str, output: Path, template_root: Path) -> None:
         language=read_yaml(Path(launch) / competition / 'meta.yaml').get('language', 'sk'),
         # The booklet heads a problem with its title; fall back to the directory name, which is
         # what an unconverted or brand new problem has instead.
-        title=read_yaml(unit_path / 'meta.yaml').get('title') or number,
+        title=meta.get('title') or number,
+        # What `credits.jtex` reads, under the name the booklets call it by, so one macro file
+        # serves both. Every key is present even when the meta has not got it: an absent key is
+        # an undefined, and `MissingVariablesError` would fail the preview of exactly the
+        # half-written problem a preview is for. An empty value simply prints nothing.
+        problem={
+            'points': meta.get('points') or {},
+            'categories': meta.get('categories') or [],
+            'solution': meta.get('solution') or [],
+            'evaluation': meta.get('evaluation') or [],
+        },
     )
     outfile = Path(output) / Path(TEMPLATE).with_suffix('.tex')
     with open(outfile, 'w') as f:

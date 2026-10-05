@@ -8,6 +8,7 @@
    The geometry and the `seminar` titleformats are copied from `base.jtex` verbatim: a preview is
    for judging how a problem will look in print, so line breaking and headings have to match. #)
 
+(@ import 'credits.jtex' as credits @)
 \documentclass[12pt, oneside]{dgs}
 
 \newgeometry{
@@ -61,7 +62,20 @@
 
     (@ for part in ['problem', 'solution'] @)
     \IfFileExists{\activeDirectory/(* part *).tex}{%
-        \subsection{\large \textbf{(* title *)}}%
+        (# The booklet's heading, macro for macro: the title on the left, and on the right what
+           the problem is worth above its statement and who wrote and marked it above its
+           solution. `credits.jtex` holds both, so the preview cannot drift from the print.
+
+           `\texorpdfstring` for the same reason the booklet needs it: the bookmark is a plain
+           string and hyperref drops the `\hfill` out of it with a warning. #)
+        \subsection{%
+            \texorpdfstring{%
+                \large \textbf{(* title *)} \hfill \normalsize%
+                (* credits.worth(problem) if part == 'problem' else credits.credits(problem) *)%
+            }{%
+                (* round *).(* number|int *) (* title *)%
+            }%
+        }%
         \setcounter{equation}{0}%
         \setcounter{figure}{0}%
         \setcounter{table}{0}%
