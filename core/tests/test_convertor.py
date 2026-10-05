@@ -517,3 +517,27 @@ class TestCrossrefLabelSurvives:
     def test_a_label_followed_by_a_space_is_fine(self, convert):
         """The space is the whole difference -- do not refuse the form that works."""
         assert '\\label{eq:x:y}' in convert('latex', 'sk', self.BLOCK + ' trail\n')
+
+
+class TestArrayRowSeparatorForTheWeb:
+    r"""
+    `|arr` separates its rows with `\\[\jot]`, because `array` zeroes the lengths `\openup`
+    raises and two rows of display-style fractions would otherwise touch.
+
+    `\jot` is a TeX length register, and MathJax has no notion of one: it reads the bracket as a
+    dimension it cannot parse and refuses the whole block with `Bracket argument to \\ must be a
+    dimension`, printing that in red where the equations should be. Every one of the 125 `|arr`
+    call sites in `source/` was unrenderable on the web.
+    """
+    BLOCK = ('$$\n    \\begin{array}{l}\n        a \\\\[\\jot]\n        b\n    \\end{array}\n$$\n')
+
+    def test_the_web_gets_an_explicit_length(self, convert):
+        assert r'\\[10pt]' in convert('html', 'en', self.BLOCK)
+
+    def test_no_jot_survives_into_a_fragment(self, convert):
+        assert r'\jot' not in convert('html', 'en', self.BLOCK)
+
+    def test_the_booklet_keeps_the_register(self, convert):
+        r"""The quiet half: LaTeX must keep `\jot`, which is the document's own setting for
+        exactly this gap -- `dgs.cls` puts it at 10pt against plain LaTeX's 3pt."""
+        assert r'\jot' in convert('latex', 'en', self.BLOCK)

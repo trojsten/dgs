@@ -63,6 +63,20 @@ class Convertor:
                 r'<img src="(?P<filename>.*)\.tikz"',
                 r'<img src="\g<filename>.svg"',
             ),
+            # `|arr` separates its rows with `\\\\[\\jot]`, because `array` zeroes the lengths
+            # `\\openup` raises and two rows of display-style fractions would otherwise touch.
+            # `\\jot` is a TeX length register and MathJax has no notion of one, so it reads the
+            # bracket as a dimension it cannot parse and refuses the whole block with
+            # `Bracket argument to \\\\ must be a dimension` -- in red, in place of the equations.
+            # Every one of the 125 `|arr` call sites in `source/` was unrenderable on the web.
+            #
+            # `dgs.cls` puts `\\jot` at 10pt; the web gets that as an explicit length, which is the
+            # one thing MathJax will take.
+            RegexReplacement(
+                r'\\\\\[\\jot\]',
+                r'\\\\[10pt]',
+                purpose=r'MathJax cannot read `\jot` as a dimension',
+            ),
             # alter picture heights
             RegexReplacement(
                 r'style="height:(?P<height>[0-9.]*)mm"',
