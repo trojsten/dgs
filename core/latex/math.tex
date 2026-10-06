@@ -362,17 +362,17 @@
 % `\lxor` and `\lnand` were defined by nothing -- not amssymb, not MnSymbol, not any package in
 % the tree. Either one would have stopped the build the first time it was written, and in the
 % whole repository neither ever was.
-\NewDocumentCommand{\LXor}{}{\quad\veebar\quad}
-\NewDocumentCommand{\LOr}{}{\quad\lor\quad}
-\NewDocumentCommand{\LAnd}{}{\quad\land\quad}
-\NewDocumentCommand{\LNand}{}{\quad\barwedge\quad}
+\NewDocumentCommand{\LXor}{}{\ \veebar\ }
+\NewDocumentCommand{\LOr}{}{\ \lor\ }
+\NewDocumentCommand{\LAnd}{}{\ \land\ }
+\NewDocumentCommand{\LNand}{}{\ \barwedge\ }
 
 \DeclareMathOperator{\union}{\cup}
 \DeclareMathOperator{\intersection}{\cap}
 
-\NewDocumentCommand{\Implies}{}{\quad\Rightarrow\quad}
-\NewDocumentCommand{\Iff}{}{\quad\Leftrightarrow\quad}
-\NewDocumentCommand{\ImpliedBy}{}{\quad\Leftarrow\quad}
+\NewDocumentCommand{\Implies}{}{\ \Rightarrow\ }
+\NewDocumentCommand{\Iff}{}{\ \Leftrightarrow\ }
+\NewDocumentCommand{\ImpliedBy}{}{\ \Leftarrow\ }
 
 % Sinc
 \DeclareMathOperator{\sinc}{sinc}
