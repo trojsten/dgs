@@ -204,13 +204,6 @@ class NabojStandaloneContext(renderer.StandaloneContext):
             Opt('solution'): Or(list[str], []),
         },
         'tags': Or(list[And(str, valid_tag)], []),          # Tags
-        # `chem/01/hemoglobín` and `chem/01/robinson` predate the `authors` block and carry a
-        # singular `author:` holding one real name -- `Dominik` and `Mišo`. Admitted for the same
-        # reason the volume schema admits `orgs` (`contexts/hierarchy.py`): those are real people,
-        # and the key is kept rather than forcing a choice between deleting the name and inventing
-        # which of `idea`, `problem` and `solution` they did. Nothing reads it; whoever fills in
-        # the rest of that volume's authorship can move it then.
-        Opt('author'): str,
         # Editorial metadata a handful of problems carry. Nothing reads these yet, but the schema
         # admits no unknown key, so without them three problems fail to render at all rather than
         # merely being unannotated: `26/liquid-crane` (`difficulty`), `27/antifreeze` (`physics`,
