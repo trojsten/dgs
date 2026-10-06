@@ -6,10 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import i18n
 import regex as re
-from mdcheck import check, exceptions
-from utilities import colour as c
+
+from core import i18n
+from core.mdcheck import check, exceptions
+from core.utilities import colour as c
 
 
 class StyleEnforcer:
@@ -223,7 +224,12 @@ class StyleEnforcer:
             return False
 
 
-try:
-    StyleEnforcer().check()
-except subprocess.CalledProcessError:
-    print("No files found")
+def main():
+    try:
+        StyleEnforcer().check()
+    except subprocess.CalledProcessError:
+        print("No files found")
+
+
+if __name__ == '__main__':
+    main()

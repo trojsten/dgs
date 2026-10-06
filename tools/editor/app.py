@@ -29,7 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # The audit library lives in `core/`, which is not on the path when this file is the entry point.
 # And several `core` modules open their data by a repository-relative path -- `core/i18n` reads
 # `core/i18n/default.yaml` at import time -- so the process has to run from the root, which is the
-# convention everything else here follows: the Makefile, `markdown-check.py`, and every subprocess
+# convention everything else here follows: the Makefile, `core.mdcheck`, and every subprocess
 # this app already launches with `cwd=REPO_ROOT`.
 sys.path.insert(0, str(REPO_ROOT))
 os.chdir(REPO_ROOT)
@@ -870,7 +870,7 @@ def api_lint():
 
     with BUILD_LOCK:
         result = subprocess.run(
-            ["uv", "run", "python", "core/markdown-check.py",
+            ["uv", "run", "python", "-m", "core.mdcheck",
              render_path.relative_to(REPO_ROOT).as_posix(), "-v"],
             cwd=REPO_ROOT, capture_output=True, text=True, timeout=60,
         )

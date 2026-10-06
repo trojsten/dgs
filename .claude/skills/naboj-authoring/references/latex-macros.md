@@ -320,6 +320,6 @@ image syntax instead.
 - **New Jinja global**: same file, `self.env.globals`.
 - **New style-checker rule**: `core/mdcheck/check.py`, subclass `LineChecker` (or
   add a `check.FailIfFound` entry with a short 3-letter key in
-  `core/markdown-check.py::StyleEnforcer.line_errors`).
+  `core/mdcheck/__main__.py::StyleEnforcer.line_errors`).
 - **New template block**: `modules/naboj/templates/blocks/`. Remember `.jtex`
   uses `(* … *)` for variables, not `(§ … §)`.

@@ -63,7 +63,7 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
   `core.builder.renderer.CLIInterface`). `meta.yaml` alone becomes the context.
 - Jinja setup: `core/builder/jinja.py` — see `MarkdownJinjaRenderer` for the exact filter /
   global table.
-- Style linter: `core/markdown-check.py` runs `core/mdcheck/check.py` rules per line.
+- Style linter: `python -m core.mdcheck` runs `core/mdcheck/check.py` rules per line.
 - Templates that assemble PDFs: `modules/naboj/templates/*.jtex` (these use `(* … *)` for
   variables, unlike `.md` files which use `(§ … §)`).
 - Build orchestration: root `Makefile` + `modules/naboj/module.mk` (rules

@@ -143,7 +143,7 @@ def figures(text: str, dialect: Dialect, slug: str, body_role: str = 'problem',
         if tag:
             labels[tag.strip()] = f'{slug}:{name}'
         notes.append(f'figure: `{name}.svg` -- set a real height, 40mm is a placeholder')
-        # `#fig:<id>` or `#fig:<id>:<name>`, and nothing else: `markdown-check`'s `lfn` rule
+        # `#fig:<id>` or `#fig:<id>:<name>`, and nothing else: `core.mdcheck`'s `lfn` rule
         # rejects a label that does not open with the problem's own id -- and rejects a label
         # in an `answer.md` outright, whatever it says, since only a statement and a solution
         # may carry one. An answer's picture is therefore written bare.

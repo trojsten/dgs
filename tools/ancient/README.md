@@ -203,9 +203,9 @@ Per problem, fastest first, from the repository root:
 
 ```sh
 uv run make render/naboj/phys/<vol>/problems/<pid>/sk/{problem,solution}.md
-uv run python core/markdown-check.py render/naboj/phys/<vol>/problems/<pid>/sk/*.md
+uv run python -m core.mdcheck render/naboj/phys/<vol>/problems/<pid>/sk/*.md
 ```
 
-The lint must run on the **real render path**: `core/markdown-check.py` infers the module from
+The lint must run on the **real render path**: `core.mdcheck` infers the module from
 `path.parts[1]` and the problem id from `path.parts[5]`, so a hand-render into `/tmp` silently
 disables the label rules.

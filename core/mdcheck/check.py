@@ -3,7 +3,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 import regex as re
-from mdcheck import exceptions
+from core.mdcheck import exceptions
 
 log = logging.getLogger('root')
 log.setLevel(logging.WARNING)

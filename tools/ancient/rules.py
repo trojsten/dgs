@@ -231,7 +231,7 @@ def fractions(text: str, role: str) -> str:
     archive's choice carries no meaning to preserve, and passing it through put 204 `\dfrac`
     into volume 16's solutions where volumes 12, 13 and 15 have none between them.
 
-    `markdown-check`'s `fra` rule enforces the answer half; the other half is a style CLAUDE.md
+    `core.mdcheck`'s `fra` rule enforces the answer half; the other half is a style CLAUDE.md
     sets out and nothing checks, which is how volume 16 came to break it while passing the lint.
     Neither tier above these is mechanical: a vulgar glyph is for a standalone value and
     `\nicefrac` for a fraction at script size, and both stay a person's call.

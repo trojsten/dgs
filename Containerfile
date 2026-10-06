@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # uv is needed at *run* time, not only here: tools/editor/app.py hardcodes
-# ["uv", "run", "python", "core/markdown-check.py", ...] for /api/lint, and that
+# ["uv", "run", "python", "-m", "core.mdcheck", ...] for /api/lint, and that
 # route answers 500 without it.
 # Pinned inline rather than through an ARG: `COPY --from=` with a variable image
 # reference works, but this is the one line whose failure mode is "silently a
