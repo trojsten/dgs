@@ -303,6 +303,26 @@ class Convertor:
             line = func(line, regex_set)
         return line
 
+    #: The two boxes the renderer leaves in the Markdown, and what they become on the web.
+    #:
+    #: A word the language has not got arrives here as a literal `\errorMessage{and:cs}`, not as
+    #: a tag -- `@E` has already been handled by `pre_regexes`. Pandoc drops raw LaTeX when it
+    #: writes HTML, so without this the box is not merely unstyled on the web, it is **gone**,
+    #: and the hole it exists to mark reads as a missing space. That is volume 19's `onion` in
+    #: another medium, and this box is the one thing that must never be silent.
+    #:
+    #: Raw inline HTML is passed through by pandoc's Markdown reader. The colour is written
+    #: inline because a fragment has no stylesheet of its own: it is dropped into whatever page
+    #: consumes it, and a class alone would leave the box invisible there.
+    BOXES = (
+        (re.compile(r"\\errorMessage\{([^{}]*)\}"),
+         r'<span class="dgs-error" style="background:#c00;color:#fff;'
+         r'padding:0 .25em;border-radius:2px">\1</span>'),
+        (re.compile(r"\\todoMessage\{([^{}]*)\}"),
+         r'<span class="dgs-todo" style="background:#fe6;color:#000;'
+         r'padding:0 .25em;border-radius:2px">\1</span>'),
+    )
+
     #: An inline code span. Markdown sets one verbatim, so a macro written in one is being
     #: *named* rather than called.
     CODE_SPAN = re.compile(r'`+[^`]*`+')
@@ -322,9 +342,15 @@ class Convertor:
             # The same goes for this repository's own parsed macros one step further on:
             # `\Int[0][T]{v}{t}` and `\FDiff^{2}_{\text{vap}}{H}` are shapes no fixed-arity
             # MathJax macro can take. The fixed-arity half stays a macro, in `mathjax-dgs.js`.
-            line = self.outside_code(
-                line, lambda prose: dgsmacros.expand(siunitx.expand(prose, self.locale)))
+            line = self.outside_code(line, self.expand_for_the_web)
         return line
+
+    def expand_for_the_web(self, prose: str) -> str:
+        """Everything the web needs rewritten, over one stretch of prose that is not code."""
+        prose = dgsmacros.expand(siunitx.expand(prose, self.locale))
+        for pattern, replacement in self.BOXES:
+            prose = pattern.sub(replacement, prose)
+        return prose
 
     def outside_code(self, line: str, expand: Callable[[str], str]) -> str:
         r"""

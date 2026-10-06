@@ -604,7 +604,7 @@ would make whatever it held the fallback for every language, and a fallback for 
 Slovak booklet printing `therefore` — output that looks right until it is in print.
 
 A word the language has not got is **boxed, not guessed**: the renderer emits
-`\errorMessage{and?pl}`, which `core/latex/utilities.tex` sets as a red `\colorbox`, and
+`\errorMessage{and:pl}`, which `core/latex/utilities.tex` sets as a red `\colorbox`, and
 carries on to the end of the render. That is `\protectedInput`'s call for a missing file, for the
 same reason — one absent word should not cost you the other 39 problems, and a translator wants
 the whole booklet with the holes marked. **Then it fails**: the output is written, every gap is

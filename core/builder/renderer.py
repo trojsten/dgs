@@ -251,10 +251,15 @@ class MissingWordRegistry:
     Modelled on `make_collect_undefined`: collect the lot and report once, rather than dying on
     the first, so a translator sees every gap in one pass instead of one per rebuild.
 
-    What is emitted in place of the word is `\\errorMessage{term?lang}` -- `core/latex/utilities.tex`
+    What is emitted in place of the word is `\\errorMessage{term:lang}` -- `core/latex/utilities.tex`
     defines that as `\\colorbox{red}{...}`, the same red box `\\protectedInput` puts where a file is
     missing. The reasoning is the same too: one absent word should not cost you the other 39
     problems, and a translator wants the whole booklet with the holes marked.
+
+    The box names the **key**, which is the thing to go and add, and not the tag that asked for it.
+    The two differ for the twelve `JINJA_KEYWORDS`, where `(§ i18n.andw §)` looks up `and`: a box
+    reading `andw` would send a translator searching `core/i18n/cs.yaml` for a key that is not
+    there and never was.
 
     **The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
     every language for years while `make` stayed green, because nobody reads page 42; and the
@@ -270,7 +275,7 @@ class MissingWordRegistry:
         entry = (term, language, where)
         if entry not in self._missing:
             self._missing.append(entry)
-        return rf"\errorMessage{{{term}?{language}}}"
+        return rf"\errorMessage{{{term}:{language}}}"
 
     def clear(self):
         self._missing.clear()

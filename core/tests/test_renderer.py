@@ -117,8 +117,8 @@ class TestTranslatedWords:
         """
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
         out = self.render(tmp_path, 'sk', self.META, source)
-        assert r'\errorMessage{therefore?sk}' in out
-        assert 'therefore}' not in out.replace(r'\errorMessage{therefore?sk}', '')
+        assert r'\errorMessage{therefore:sk}' in out
+        assert 'therefore}' not in out.replace(r'\errorMessage{therefore:sk}', '')
 
     def test_the_report_names_the_file_to_fix(self, tmp_path):
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
@@ -129,7 +129,7 @@ class TestTranslatedWords:
         """A problem's own word has no English to fall back on, so silence would ship a hole."""
         source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
         out, cli = self.render_collecting(tmp_path, 'hu', self.META, source)
-        assert r'\errorMessage{air?hu}' in out
+        assert r'\errorMessage{air:hu}' in out
         assert [t for t, _, _ in cli.missing_words.missing] == ['air']
 
     @staticmethod
@@ -171,7 +171,7 @@ class TestTranslatedWords:
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
         with pytest.raises(MissingWordsError):
             out = self.render_through_cli(tmp_path, 'sk', self.META, source)
-        assert r'\errorMessage{therefore?sk}' in (tmp_path / 'out.md').read_text()
+        assert r'\errorMessage{therefore:sk}' in (tmp_path / 'out.md').read_text()
 
     def test_a_render_that_wants_no_missing_word_still_succeeds(self, tmp_path):
         """
@@ -388,7 +388,32 @@ class TestMissingWordRegistry:
     def test_a_miss_becomes_a_red_box(self):
         from core.builder.renderer import MissingWordRegistry
         reg = MissingWordRegistry()
-        assert self.words({}, registry=reg)['and'] == r'\errorMessage{and?ru}'
+        assert self.words({}, registry=reg)['and'] == r'\errorMessage{and:ru}'
+
+    def test_the_box_names_the_key_and_the_language(self):
+        r"""
+        `term:lang`, because both halves are what a translator needs: which word, and which
+        `core/i18n/<lang>.yaml` to add it to. The separator used to be `?`, which read as a
+        question about the word rather than a coordinate for it.
+        """
+        from core.builder.renderer import MissingWordRegistry
+        reg = MissingWordRegistry()
+        assert self.words({}, language='cs', registry=reg)['therefore'] \
+            == r'\errorMessage{therefore:cs}'
+
+    def test_a_keyword_word_is_boxed_under_its_key_not_its_tag(self):
+        r"""
+        `(§ i18n.andw §)` looks up `and` -- the `w` exists only because Jinja parses `and` as a
+        keyword, and `core/i18n/cs.yaml` has never held a key called `andw`. So the box says
+        `and:cs`: a translator who reads `andw` there would search the file for a key that is
+        not in it. The twelve `JINJA_KEYWORDS` are the only words where the two spellings differ.
+        """
+        from core.builder.renderer import LocalisedI18n, LocalisedWords, MissingWordRegistry
+        reg = MissingWordRegistry()
+        words = LocalisedWords({}, 'cs', 'core/i18n/cs.yaml', registry=reg)
+        i18n = LocalisedI18n({}, words)
+        assert i18n['andw'] == r'\errorMessage{and:cs}'
+        assert reg.missing == [('and', 'cs', 'core/i18n/cs.yaml')]
 
     def test_the_miss_is_recorded(self):
         from core.builder.renderer import MissingWordRegistry

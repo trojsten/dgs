@@ -582,3 +582,42 @@ class TestCodeIsNotExpanded:
         assert '\\Int[0][T]{v}{t}' in output
         assert '\\qty{3}{\\metre}' in output
         assert '\\mathop' not in output
+
+
+class TestErrorBoxesReachTheWeb:
+    r"""
+    `\errorMessage` is what a missing word, and `@E`, leave on the page.
+
+    The box is emitted by the *renderer* for a missing word, so by the time the convertor sees it
+    it is a literal `\errorMessage{and:cs}` in the Markdown rather than a tag. Pandoc drops raw
+    LaTeX when it writes HTML, so it used to vanish completely -- not unstyled, gone, leaving the
+    hole it exists to mark reading as a missing space. That is volume 19's `onion` in another
+    medium, and the box is the one thing that must never be silent.
+    """
+
+    def test_a_missing_word_box_survives_as_html(self, convert):
+        output = convert('html', 'en', 'A word: \\errorMessage{and:cs} here.')
+        assert 'dgs-error' in output
+        assert 'and:cs' in output
+        assert 'errorMessage' not in output
+
+    def test_a_todo_box_survives_as_html(self, convert):
+        output = convert('html', 'en', 'A note: \\todoMessage{write this} here.')
+        assert 'dgs-todo' in output
+        assert 'write this' in output
+
+    def test_latex_keeps_the_macro(self, convert):
+        """The booklet has `\\errorMessage` defined; only the web needs the translation."""
+        output = convert('latex', 'en', 'A word: \\errorMessage{and:cs} here.')
+        assert r'\errorMessage{and:cs}' in output
+        assert 'dgs-error' not in output
+
+    def test_the_macro_named_in_a_code_span_stays_as_written(self, convert):
+        r"""
+        The solutions of `test/00`'s `error-presentations` quote the exact string the specimen
+        produces. This rewrite lived in `pre_regexes` for one commit, which run before the code
+        spans are protected, and turned that quotation into the span it describes.
+        """
+        output = convert('html', 'en', 'You get `\\errorMessage{gap:cs}` in the output.')
+        assert '<code>\\errorMessage{gap:cs}</code>' in output
+        assert 'dgs-error' not in output
