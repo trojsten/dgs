@@ -199,11 +199,11 @@ class NabojStandaloneContext(renderer.StandaloneContext):
         # mean unrecorded. Note the volume-level `authors` in `contexts/hierarchy.py` is a
         # different thing, listing people across the whole volume.
         'authors': {
-            Opt('idea'): Or(list[str], []),
-            Opt('problem'): Or(list[str], []),
-            Opt('solution'): Or(list[str], []),
+            Opt('idea'): [str],
+            Opt('problem'): [str],
+            Opt('solution'): [str],
         },
-        'tags': Or(list[And(str, valid_tag)], []),          # Tags
+        'tags': [And(str, valid_tag)],
         # Editorial metadata a handful of problems carry. Nothing reads these yet, but the schema
         # admits no unknown key, so without them three problems fail to render at all rather than
         # merely being unannotated: `26/liquid-crane` (`difficulty`), `27/antifreeze` (`physics`,
@@ -216,7 +216,7 @@ class NabojStandaloneContext(renderer.StandaloneContext):
         Opt('difficulty'): int,
         Opt('physics'): int,
         Opt('math'): int,
-        Opt('similar'): Or(list[str], []),
+        Opt('similar'): [str],
     })
 
 

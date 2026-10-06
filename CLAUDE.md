@@ -401,6 +401,19 @@ Every `meta.yaml` under `source/` — all 2524 of them, 961 with content keys �
 against the new schema before it landed, and none failed. That check is not optional, for the
 reason reserving `w` once broke eight problems.
 
+**The same trap was still live in naboj's own problem schema**, and has been fixed the same way.
+`authors:`'s three roles, `tags:` and `similar:` in `modules/naboj/builder/renderer.py` were each
+written `Or(list[str], [])` — so `list[str](value)` succeeded for anything iterable and the check
+was "is this iterable". They are `[str]` now, which does match an empty list; the `[]` alternative
+was there because `Or(list[str], …)` looked as though it would not.
+
+The cost was worst on `tags:`, where it meant **`valid_tag` had never once been called**: a bare
+`tags: 'kinematics'` validated, so nothing in `VALID_TAGS` was ever enforced on anything. All 1373
+problem metas under `source/naboj` were validated against the tightened schema before it landed
+and none failed, and `TestTheProblemSchema` in `core/tests/test_renderer.py` pins it — six of its
+nine cases fail against the old spelling, and the other three are the quiet half that must keep
+passing, because an empty list and an absent role are how a problem says *unrecorded*.
+
 ## Reusable text: `blocks:`
 
 A meta's four content keys each do something to what they hold, and until recently there was

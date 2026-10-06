@@ -731,6 +731,90 @@ class TestTheContentSchema:
             self.accepts({key: {}})
 
 
+class TestTheProblemSchema:
+    """
+    What a naboj `meta.yaml`'s `authors:`, `tags:` and `similar:` may hold.
+
+    Same defect as `TestTheContentSchema` above and the same cause: these were written
+    `Or(list[str], [])`, and enschema reads a subscripted generic as a callable and validates by
+    calling it, so `list[str](anything_iterable)` succeeded and the check was "is this iterable".
+    The `[]` alternative was presumably added because `Or(list[str], ...)` looked as though it
+    would not match an empty list -- it would, and so does `[str]`, which is what these say now.
+
+    The cost was worst on `tags:`, where it meant **`valid_tag` was never once called**: a bare
+    string passed, so the vocabulary in `VALID_TAGS` had never been enforced on anything. It was
+    found while importing 135 author names, where nothing would have caught a malformed list.
+
+    Two halves again, and the second is the one that matters: the empty list and the absent key
+    are how a problem says "unrecorded", and a schema that rejected either would stop hundreds of
+    metas that are correct.
+    """
+
+    @staticmethod
+    def schema():
+        from modules.naboj.builder.renderer import NabojStandaloneContext
+        return NabojStandaloneContext._schema
+
+    def accepts(self, meta):
+        self.schema().validate({'id': 'demo', 'authors': {}, 'tags': []} | meta)
+
+    def rejects(self, meta):
+        from enschema import SchemaError
+        with pytest.raises(SchemaError) as caught:
+            self.accepts(meta)
+        return str(caught.value)
+
+    # --- `tags:`, where the vocabulary was never checked -------------------
+
+    def test_a_tag_outside_the_vocabulary_is_rejected(self):
+        self.rejects({'tags': ['not-a-real-tag']})
+
+    def test_a_bare_string_is_not_a_list_of_tags(self):
+        """
+        The one that hid the rest. `'kinematics'` is iterable, so the old schema took it and
+        `valid_tag` never ran -- which is also why it then accepted `'not-a-real-tag'`.
+        """
+        self.rejects({'tags': 'kinematics'})
+        self.rejects({'tags': 'not-a-real-tag'})
+
+    def test_a_tag_must_be_a_string(self):
+        self.rejects({'tags': [99]})
+
+    def test_real_tags_and_no_tags_both_pass(self):
+        """The quiet half. `tags-empty` is an audit finding, deliberately not a schema error."""
+        self.accepts({'tags': ['kinematics', 'optics']})
+        self.accepts({'tags': []})
+
+    # --- `authors:`, three roles that are lists of names -------------------
+
+    def test_a_role_must_hold_strings(self):
+        for role in ('idea', 'problem', 'solution'):
+            self.rejects({'authors': {role: [1, 2, 3]}})
+
+    def test_one_name_written_without_its_list_is_rejected(self):
+        """`idea: 'Kvík'` is the plausible typo, and it used to validate."""
+        self.rejects({'authors': {'idea': 'Kvík'}})
+
+    def test_an_unknown_role_is_rejected(self):
+        assert "'pictures'" in self.rejects({'authors': {'pictures': ['Kvík']}})
+
+    def test_absent_and_empty_both_mean_unrecorded(self):
+        """
+        The quiet half, and the whole reason the roles are optional: 871 phys problems record no
+        author, and `authors-empty` is the audit's job to report, not the schema's to refuse.
+        """
+        self.accepts({'authors': {}})
+        self.accepts({'authors': {'idea': [], 'problem': [], 'solution': []}})
+        self.accepts({'authors': {'idea': ['Kvík', 'Tömáš']}})
+
+    # --- `similar:` --------------------------------------------------------
+
+    def test_similar_is_a_list_of_problem_ids(self):
+        self.rejects({'similar': [None]})
+        self.accepts({'similar': ['half-g']})
+        self.accepts({'similar': []})
+
+
 class TestRenderSettles:
     r"""
     A render keeps going until its output stops changing, instead of stopping at two passes.
