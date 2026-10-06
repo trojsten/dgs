@@ -180,7 +180,6 @@ class Convertor:
         assert output_format in ['html', 'latex'], \
             "Output format is neither 'html' nor 'latex'!"
 
-        # regexes = yaml.safe_load(open('core/builder/regexes.yaml', 'rb'))
 
         (self.quote_open, self.quote_close) = self.locale.data['quotes']['open'], self.locale.data['quotes']['close']
 
