@@ -155,25 +155,31 @@ Aj s newlinami.](file.png){#fig:long height=53mm}
 
 
 class TestTags:
-    def test_h_latex(self, convert):
-        output = convert('latex', 'en', '@H this should not be seen!')
-        assert output == '', \
-            f"Got '{output}'"
+    @pytest.mark.parametrize('tag', ['@H', '@L'])
+    @pytest.mark.parametrize('fmt', ['latex', 'html'])
+    def test_a_format_only_tag_is_refused(self, convert, tag, fmt):
+        """
+        `@H` and `@L` marked a line as belonging to one output format. They are gone, and are
+        refused rather than dropped: a tag silently ignored reads as though it still worked, and
+        with no rule left to consume it the line would simply print, `@L` and all.
+        """
+        with pytest.raises(Exception, match='have been removed'):
+            convert(fmt, 'en', f'{tag} this should not be seen!')
 
-    def test_h_html(self, convert):
-        output = convert('html', 'en', '@H this should not be seen!')
-        assert output == '<p>this should not be seen!</p>', \
-            f"Got '{output}'"
+    @pytest.mark.parametrize('text, kept', [
+        ('@Home is where the heart is', 'is where the heart is'),
+        ('@Ляля wrote in', 'wrote in'),
+        ('write to a@Latvia.lv', 'a@Latvia.lv'),
+    ])
+    def test_the_refusal_does_not_fire_on_ordinary_prose(self, convert, text, kept):
+        """
+        The quiet half: `@H` and `@L` are whole tags, so a word beginning with those letters is
+        not one, and neither is an `@` anywhere but at the start of a line.
 
-    def test_l_latex(self, convert):
-        output = convert('latex', 'en', '@L this should not be seen!')
-        assert output == 'this should not be seen!', \
-            f"Got '{output}'"
-
-    def test_l_html(self, convert):
-        output = convert('html', 'en', '@L this should not be seen!')
-        assert output == '', \
-            f"Got '{output}'"
+        What the line *converts* to is not this check's business -- pandoc reads a leading
+        `@word` as a citation and writes `{[}@Home{]}`, which it did before any of this.
+        """
+        assert kept in convert('latex', 'en', text)
 
     def test_e_latex(self, convert):
         output = convert('latex', 'sk', '@E error')

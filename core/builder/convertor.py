@@ -103,10 +103,8 @@ class Convertor:
             RegexFailure(r'<img[^>]*src="[^"]*\.(tikz|gp)"',
                          error="Caught a picture reference no browser can load: a `.tikz` and a "
                                "`.gp` both become an `.svg` for the web"),
-            RegexFailure(r'@L', error="LaTeX-only tag in HTML"),
         ],
         'latex': [
-            RegexFailure(r'@H', error="HTML-only tag in LaTeX"),
             # Pandoc >= 3.2 wraps an image carrying no attributes in \pandocbounded, a macro that
             # only exists in pandoc's own LaTeX template -- we emit fragments, so it would be
             # undefined at compile time. The cause is always an image without an attribute block,
@@ -136,14 +134,10 @@ class Convertor:
         ],
         'latex': [
             RegexReplacement(r"^@E\s*(.*)$", r"\\errorMessage{\g<1>}", purpose="Replace error tag"),
-            RegexReplacement(r"^@L\s*(.*)$", r"\g<1>", purpose="Keep LaTeX-only lines"),
-            RegexReplacement(r"^@H\s*(.*)$", r"", purpose="Remove HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"\\todoMessage{\g<2>}", purpose="Replace TODO tag"),
         ],
         'html': [
             RegexReplacement(r"^@E\s*(.*)$", r"Error: \g<1>", purpose="Replace error tag"),
-            RegexReplacement(r"^@L\s*(.*)$", r"", purpose="Remove LaTeX-only lines"),
-            RegexReplacement(r"^@H\s*(.*)$", r"\g<1>", purpose="Keep HTML-only tag"),
             RegexReplacement(r"^@T([Oo][Dd][Oo])?\s*(.*)$", r"TODO: \g<2>", purpose="Replace TODO tag"),
         ],
     }
@@ -152,6 +146,18 @@ class Convertor:
         'all': [
             RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
             RegexFailure(r'\^\\circ|\^{\\circ}', error=r"No \circ allowed in exponents"),
+            # `@H` and `@L` marked a line as belonging to one output format only. They are gone:
+            # no source has ever carried one, in any module, on any branch, in any commit, so
+            # there was nothing they kept working and two pairs of rules, two backstops and four
+            # tests saying otherwise.
+            #
+            # Refused rather than dropped, for the reason `-P` now exits argparse: a tag silently
+            # ignored reads as though it still worked, and here it would be worse than that --
+            # with no rule to consume it the line would simply print, `@L` and all.
+            RegexFailure(r'^@[HL]\b',
+                         error="`@H` and `@L` have been removed -- they marked a line as "
+                               "HTML-only or LaTeX-only, and nothing ever used one. Write the "
+                               "line for both formats, or leave it out."),
         ],
         'latex': [],
         'html': [],
