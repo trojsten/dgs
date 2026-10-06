@@ -53,6 +53,40 @@
 
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+
+% A bond that passes *under* another, drawn as a break in the bond that goes behind.
+%
+% `chemfig` has no such thing, and neither has TikZ. `chem/01/zaklínač`'s aconitine was written
+% as though one of them did -- `-[6,0.8,,,under line=0.35]` and `-[:160,0.8,,,,under line=0.55]`,
+% two bonds of the bridged cage that cross others -- and pgfkeys stopped the whole volume on
+% `I do not know the key '/tikz/under line'`. The number is where along the bond the crossing
+% falls, which is exactly what a break needs, so the key is defined here rather than deleted:
+% dropping it compiles, and loses the two depth cues that say which bond goes behind.
+%
+% The break is painted rather than cut, because a `postaction` cannot shorten the path it
+% decorates. That is sound only while the bond beneath is drawn *before* the one on top, which
+% is chemfig's order within one `\chemfig`, and the whole structure sits on white.
+%
+% `\underBondGap` is the half-width of the erased square. 1.6pt is about four times a bond's own
+% line width, which clears a crossing bond without eating into the atom labels at either end.
+\newlength{\underBondGap}
+\setlength{\underBondGap}{1.6pt}
+\usetikzlibrary{decorations.markings}
+\tikzset{
+    under line/.style={
+        postaction={
+            decorate,
+            decoration={
+                markings,
+                mark=at position #1 with {
+                    \fill[white] (-\underBondGap,-\underBondGap)
+                        rectangle (\underBondGap,\underBondGap);
+                },
+            },
+        },
+    },
+}
+
 \makeatother
 
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
