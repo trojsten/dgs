@@ -113,11 +113,6 @@ class ContextSemester(ContextSeminar):
         )
 
 
-class ContextSemesterFull(ContextSemester, BuildableFileSystemTreeContext):
-    def populate(self, competition, volume, semester):
-        self.add_subdirs(ContextRoundFull, 'rounds', (self.root, competition, volume, semester))
-
-
 class ContextRound(ContextSeminar):
     _defaults = {
         'instagram': {
@@ -194,25 +189,6 @@ class ContextRoundFull(ContextRound):
 
 
 """ Buildable contexts """
-
-
-class ContextVolumeBooklet(BuildableFileSystemTreeContext, ContextSeminar):
-    def populate(self, root, competition, volume):
-        self.adopt(
-            module=ContextModule('seminar'),
-            competition=ContextCompetition(root, competition),
-            volume=ContextVolume(root, competition, volume),
-        )
-
-
-class ContextSemesterBooklet(BuildableFileSystemTreeContext, ContextSeminar):
-    def populate(self, root, competition, volume, semester):
-        self.adopt(
-            module=ContextModule('seminar'),
-            competition=ContextCompetition(root, competition),
-            volume=ContextVolume(root, competition, volume),
-            semester=ContextSemesterFull(root, competition, volume, semester),
-        )
 
 
 class ContextBooklet(BuildableFileSystemTreeContext, ContextSeminar):

@@ -100,14 +100,6 @@ build/scholar/%/build-homework: \
 	@mkdir -p $(dir $@)
 	python -m modules.scholar.builder.homework 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
 
-build/scholar/%/build-lecture: \
-	modules/scholar/templates/lecture.jtex \
-	source/scholar/$$*/meta.yaml
-	@echo -e '$(c_action)Building lecture $(c_filename)$*$(c_action):$(c_default)'
-	$(eval words := $(subst /, ,$*))
-	@mkdir -p $(dir $@)
-	python -m modules.scholar.builder.lecture 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
-
 build/scholar/%/problem.tex: \
 	render/scholar/$$*/problem.md \
 	build/core/i18n.stamp \
@@ -141,9 +133,6 @@ build/scholar/%/homework-students.tex: \
 
 build/scholar/%/homework-solutions.tex: \
 	build/scholar/$$*/build-homework ;
-
-build/scholar/%/lecture.tex: \
-	build/scholar/$$*/build-lecture ;
 
 # <subject>/<year>/<target>/<issue>
 build/scholar/%/pdf-prerequisites: \
@@ -210,13 +199,5 @@ output/scholar/%/homework-solutions.pdf: \
 output/scholar/%/homework: \
 	$$(subst meta.yaml,homework-students.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/homework/*/meta.yaml))) \
 	$$(subst meta.yaml,homework-solutions.pdf,$$(subst source,output,$$(wildcard source/scholar/$$*/homework/*/meta.yaml))) ;
-
-output/scholar/%/lecture.pdf: \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*.md))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*.md))) \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/scholar/$$*/*/*/*.md))) \
-	build/scholar/$$*/lecture.tex \
-	build/scholar/$$*/pdf-prerequisites
-	$(call double_xelatex,scholar)
 
 .PHONY:

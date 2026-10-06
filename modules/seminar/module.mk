@@ -2,9 +2,9 @@
 
 # Every seminar template. The per-document ones are already named by the rule that builds them,
 # but `base.jtex` and `base-booklets.jtex` -- which every one of those extends -- were named by no
-# rule at all, and `semester.tex` named no template whatever. A wildcard so that a template added
-# later is picked up without anyone remembering to list it; regenerating a `.tex` is one fast
-# python call, so the extra breadth costs nothing next to shipping a stale document.
+# rule at all. A wildcard so that a template added later is picked up without anyone remembering
+# to list it; regenerating a `.tex` is one fast python call, so the extra breadth costs nothing
+# next to shipping a stale document.
 SEMINAR_TEMPLATES := $(wildcard modules/seminar/templates/*.jtex)
 
 define RULE_TEMPLATE_SEMINAR
@@ -98,13 +98,6 @@ define _prepare_arguments
 	$(eval words := $(subst /, ,$*))
 endef
 
-# _prepare_arguments_semester(builder)
-define prepare_arguments_semester
-	$(call _prepare_arguments)
-	python -m modules.seminar.builder.$(1) 'source/seminar/' 'modules/seminar/templates/' \
-		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -o '$(dir $@)'
-endef
-
 # _prepare_arguments_round(builder)
 define prepare_arguments_round
 	$(call _prepare_arguments)
@@ -127,29 +120,6 @@ build/seminar/%.tex: \
 	build/core/i18n.stamp \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,sk)
-
-build/seminar/%/intro.tex build/seminar/%/rules.tex: \
-	modules/seminar/templates/$$(notdir $$@) \
-	$$(SEMINAR_TEMPLATES)
-	$(call _prepare_arguments)
-	python -m modules.seminar.builder.volume 'source/seminar/' 'source/seminar/$*/' \
-		-c $(word 1,$(words)) -v $(word 2,$(words)) -o '$(dir $@)' || exit 1;
-
-build/seminar/%/semester.tex: \
-	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/intro.tex \
-	build/seminar/$$(word 1, $$(subst /, ,$$*))/$$(word 2, $$(subst /, ,$$*))/rules.tex \
-	$$(wildcard source/seminar/$$*/*/*/problem.md) \
-	$$(wildcard source/seminar/$$*/*/*/meta.yaml) \
-	$$(wildcard source/seminar/$$*/*/meta.yaml) \
-	$$(SEMINAR_TEMPLATES) \
-	source/seminar/$$*/meta.yaml
-	$(call prepare_arguments_semester,semester)
-
-build/seminar/%/invite.tex: \
-	modules/seminar/templates/$$(notdir $$@) \
-	$$(SEMINAR_TEMPLATES) \
-	source/seminar/$$*/meta.yaml
-	$(call prepare_arguments_semester,invite)
 
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
 	modules/seminar/templates/$$(subst .tex,.jtex,$$(notdir $$@)) \
@@ -207,23 +177,6 @@ output/seminar/%/instagram.pdf: \
 	build/seminar/$$*/pdf-prerequisites \
 	build/seminar/$$*/instagram.tex
 	$(call double_xelatex,seminar)
-
-output/seminar/%/semester.pdf: \
-	modules/seminar/templates/semester.jtex \
-	$$(subst source/,build/,$$(subst .md,.tex,$$(wildcard source/seminar/$$*/*/*/problem.md))) \
-	build/seminar/$$*/pdf-prerequisites \
-	build/seminar/$$*/semester.tex
-	$(call double_xelatex,seminar)
-
-output/seminar/%/invite.pdf: \
-	source/seminar/$$*/meta.yaml \
-	build/seminar/$$*/invite.tex
-	$(call double_xelatex,seminar)
-
-output/seminar/%/semester-print.pdf: \
-	output/seminar/$$*/semester.pdf
-	@echo -e '$(c_action)Converting $(c_filename)$<$(c_action) to a short-edge booklet $(c_filename)$@$(c_action):$(c_default)'
-	pdfbook --short-edge --quiet --outfile $@ $<
 
 output/seminar/%/instagram: \
 	output/seminar/$$*/instagram.pdf
