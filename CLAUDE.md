@@ -768,20 +768,28 @@ label: hoisting an unlabelled one would *give* a solution's display a number it 
 renumber everything after it. Those wait on `solution-unlabelled`, which asks the prior question
 of whether they should have been numbered at all.
 
-62 were hoisted in the first sweep, across `phys/10` to `17`, `pool`, `chem/02` and `chem/03`.
-**As of 2026-10-06, 71 remain in the trees that sweep covered** -- 70 in chem across 39 files and
-one in `phys/pool/friction-melting`. (`phys/errors/26.md` and `28.md` hold one apiece as well,
-but those are prose *about* a source quoting the shorthand, not a block to hoist.)
+62 went in the first sweep and the last **12 on 2026-10-06**, across nine problems in `chem/02`
+and `chem/03`. **Every labelled block in the repository is now hoisted**, so what remains is
+unlabelled by definition: 58 in chem and one in `phys/pool/friction-melting`, all waiting on
+`solution-unlabelled`. (`phys/errors/26.md` and `28.md` hold one apiece as well, but those are
+prose *about* a source quoting the shorthand, not blocks to hoist.)
 
-**12 of the 71 carry a label, and 11 of those could go today**: `system`, `cho`, `molar`, `final`,
-`halves`, `halves2`, `partial`, `p`, `m`, `nc` and `sys`, in `chem/02` and `chem/03`. Only
-`chem/02/zmätená-tereza` cannot, and the reason is worth stating exactly, because the obvious test
-gives the wrong answer: its label is `tlmivý`, which *is* a valid Python identifier -- Python 3
-takes Unicode -- but `ValidIdentifier` in `core/builder/context/context.py` is
-`^[A-Za-z_][A-Za-z_0-9]*$`, ASCII only. So the key is refused by the schema and not by the
-language, and `str.isidentifier()` is not the check to reach for.
+Three things that last twelve settled, each of which the next sweep will meet again:
 
-The other 59 are unlabelled and wait on `solution-unlabelled`, as above.
+- **A hoist keeps `|align` even where `|arr` is the right filter.** `veronikin-roztok`'s
+  `&=&&` … `&+&&`, `oceľ`'s `\ce{… &- … &&-> …}` and `alchymisti`'s `&= … &\doteq` all carry two
+  relations in a row, which `aligned` sets ragged. They stay `align` because the shorthand always
+  expanded to `aligned`: changing the environment moves the page, and that is a conversion with
+  its own gate, not a hoist.
+- **A trailing `. \\` is output, not whitespace.** A row separator before `\end{aligned}` sets an
+  empty row, so the three blocks that end that way keep the whole tail in the body and take a bare
+  `|align`. Passing the punctuation to `|align('.')` emits the same string as leaving it on the
+  last row, so the choice is only about which blocks end cleanly.
+- **`str.isidentifier()` is not the test for whether a label can become a key.**
+  `chem/02/zmätená-tereza`'s was `tlmivý`, which *is* a valid Python identifier -- Python 3 takes
+  Unicode -- while `ValidIdentifier` in `core/builder/context/context.py` is
+  `^[A-Za-z_][A-Za-z_0-9]*$`, ASCII only. The schema refuses it, not the language. It is `buffer`
+  now.
 
 `seminar` holds 127 more and `scholar` nine, and neither was in scope: both are monolingual, so
 hoisting buys nothing there -- which is the same reason `hoistable-inline` and
