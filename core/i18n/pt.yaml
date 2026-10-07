@@ -15,6 +15,7 @@ latex:
   # separately: `\rephyphen`'s discretionary carries an empty pre-break list precisely so that
   # only this parameter decides it.
   exhyphenpenalty: 50
+  nonfrenchspacing: true
 typography:
   # A word breaking at its hyphen repeats it on the next line -- `anti-` then `-inflamatório`.
   # Portuguese needs this more than the other two, because enclitic pronouns put a hyphen inside
@@ -43,6 +44,9 @@ siunitx:
   output_decimal_marker: ','
   list_pair_separator: 'e'
   list_final_separator: 'e'
+  units:
+    litre: 'L'
+    liter: 'L'
 
 # Words inside maths. These are what the sources already use, or elementary
 # enough not to be a judgement call. **Nothing falls back to English**: a word this file has not

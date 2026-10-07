@@ -33,12 +33,15 @@ class BuilderNabojVenue(BuilderNaboj):
 
     def build_templates(self, *, new_name: str | None = None) -> None:
         super().build_templates(new_name=new_name)
-        language_renderer = jinja.StaticRenderer(Path('/home/kvik/dgs/source/naboj') / Path(*self.language_path()))
+        language_root = Path(self.launch_directory, *self.language_path())
+        language_renderer = jinja.StaticRenderer(language_root)
 
         for template in self.language_templates:
-            outfile = open(self.output_directory / Path(template).with_suffix('.tex'), 'w')
-            infile = Path('source/naboj') / Path(*self.language_path()) / template
-            language_renderer.render(infile, self.context.data, outfile=outfile)
+            if not (language_root / template).exists():
+                continue
+            rendered = language_renderer.render(Path(template), self.context.data)
+            with open(self.output_directory / Path(template).with_suffix('.tex'), 'w') as outfile:
+                print(rendered, file=outfile)
 
 
 BuilderNabojVenue().build_templates()

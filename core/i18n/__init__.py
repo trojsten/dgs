@@ -90,6 +90,7 @@ class Locale:
         # at explicit hyphens in compound words like segunda-feira.
         Optional('latex'): {
             Optional('exhyphenpenalty'): int,
+            Optional('nonfrenchspacing'): bool,
         },
         'siunitx': {
             'list_pair_separator': str,
