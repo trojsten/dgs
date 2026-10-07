@@ -2,6 +2,9 @@
 (@ if i18n.latex is defined and i18n.latex.exhyphenpenalty is defined @)
 \exhyphenpenalty=(* i18n.latex.exhyphenpenalty *)
 (@ endif @)
+(@ if i18n.latex is defined and i18n.latex.nonfrenchspacing @)
+\nonfrenchspacing
+(@ endif @)
 \setquotestyle[(* i18n.quotes.extra|default('') *)]{(* i18n.quotes.babel_id *)}
 
 \sisetup{
