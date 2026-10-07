@@ -1114,17 +1114,41 @@ const missingFragment = (target) =>
   `<p style="font:13px/1.5 ui-monospace,monospace;color:#a00">` +
   `make reported success but wrote no fragment at<br>${escapeForHtml(target ?? "(no target)")}</p>`;
 
+// An empty fragment is not that, and must not be reported as a fault: `28/john-doe`'s answer.md
+// exists and is deliberately empty, and so is the HTML pandoc makes of it.
+const emptyFragment =
+  `<p style="font:13px/1.5 ui-monospace,monospace;color:#666">` +
+  `the source is empty, so the fragment is too</p>`;
+
+/* The pane while make is running, and the pane when the call failed.
+ *
+ * Both exist because the iframe keeps whatever it last held until something replaces it, and
+ * `make` can take seconds: a click answered by the previous problem's page -- or, on the first
+ * preview of a session, by nothing at all -- reads as the preview being broken, which is the
+ * one reading the pane must never invite. It is the same reason `missingFragment` exists. */
+const frameDocument = (body) =>
+  `<!doctype html><html><head><meta charset="utf-8"><style>` +
+  `body{font:13px/1.5 ui-monospace,monospace;margin:1rem;white-space:pre-wrap}</style>` +
+  `</head><body>${body}</body></html>`;
+
 async function doHtml() {
   if (!state.unit || !state.activeTarget) return;
   if (tierState("html")) { switchOutputTab("html"); return; }
   setStatus("Converting…", "dirty");
+  const frame = el("html-view");
+  switchOutputTab("html");
+  // Only if the wait is long enough to be noticed: a conversion that answers in 80 ms should
+  // not flash a message, and one that takes four seconds of `make` must not look like an
+  // empty pane.
+  const busy = setTimeout(() => {
+    frame.srcdoc = frameDocument(`<span style="color:#666">converting…</span>`);
+  }, 250);
   try {
     const body = await post("/api/html", { target: state.activeTarget });
+    clearTimeout(busy);
     setLog(logOf(body));
     markSaved();
 
-    const frame = el("html-view");
-    switchOutputTab("html");
     if (body.ok) {
       // Absolute, because a `srcdoc` document has no URL of its own for a relative one to
       // resolve against.
@@ -1142,18 +1166,20 @@ async function doHtml() {
         // cap rather than a fixed width: a narrow pane still reflows.
         `<style>body{font:17px/1.5 "Minion Pro",Georgia,serif;margin:1.25rem auto;` +
         `max-width:180mm;padding:0 1rem;color:#111}` +
-        `img{max-width:100%}</style></head><body>${body.html ?? missingFragment(body.html_target)}</body></html>`;
+        `img{max-width:100%}</style></head><body>` +
+        `${body.html || (body.html == null ? missingFragment(body.html_target) : emptyFragment)}` +
+        `</body></html>`;
       setStatus(body.html == null ? "converted, but no fragment" : "HTML OK",
                 body.html == null ? "error" : "ok");
     } else {
-      frame.srcdoc =
-        `<!doctype html><html><head><meta charset="utf-8">` +
-        `<style>body{font:13px/1.5 ui-monospace,monospace;margin:1rem;color:#a00;white-space:pre-wrap}` +
-        `</style></head><body></body></html>`;
-      frame.srcdoc = frame.srcdoc.replace("</body>", escapeForHtml(logOf(body)) + "</body>");
+      frame.srcdoc = frameDocument(
+        `<span style="color:#a00">${escapeForHtml(logOf(body))}</span>`);
       setStatus(failureStatus(body, "convert"), "error");
     }
   } catch (e) {
+    clearTimeout(busy);
+    // The pane is already showing, so the error belongs in it as well as in the status bar.
+    frame.srcdoc = frameDocument(`<span style="color:#a00">${escapeForHtml(e.message)}</span>`);
     setStatus(e.message, "error");
   }
 }
@@ -1162,14 +1188,16 @@ async function doTex() {
   if (!state.unit || !state.activeTarget) return;
   if (tierState("tex")) { switchOutputTab("tex"); return; }
   setStatus("Converting…", "dirty");
+  const out = el("output-tex");
+  const code = el("output-tex-code");
+  switchOutputTab("tex");
+  const busy = setTimeout(() => { code.textContent = "converting…"; }, 250);
   try {
     const body = await post("/api/tex", { target: state.activeTarget });
+    clearTimeout(busy);
     setLog(logOf(body));
     markSaved();
 
-    const out = el("output-tex");
-    const code = el("output-tex-code");
-    switchOutputTab("tex");
     if (body.ok) {
       code.innerHTML = highlight(body.tex ?? "", "dgs-tex");
       out.classList.remove("error");
@@ -1180,6 +1208,9 @@ async function doTex() {
       setStatus(failureStatus(body, "convert"), "error");
     }
   } catch (e) {
+    clearTimeout(busy);
+    code.textContent = e.message;
+    out.classList.add("error");
     setStatus(e.message, "error");
   }
 }
@@ -1187,24 +1218,36 @@ async function doTex() {
 async function doRender() {
   if (!state.unit || !state.activeTarget) return;
   setStatus("Rendering…", "dirty");
+  const out = el("output-rendered");
+  const code = el("output-rendered-code");
+  switchOutputTab("rendered");
+  const busy = setTimeout(() => { code.textContent = "rendering…"; }, 250);
   try {
     const body = await post("/api/render", { target: state.activeTarget });
+    clearTimeout(busy);
     setLog(logOf(body));
     markSaved();
 
-    const out = el("output-rendered");
-    const code = el("output-rendered-code");
-    switchOutputTab("rendered");
     if (body.ok) {
-      code.innerHTML = highlight(body.rendered_md ?? "", "dgs-md");
-      out.classList.remove("error");
-      setStatus("Rendered OK", "ok");
+      // `rendered_md` is null when make succeeded and the file is not where we looked for it --
+      // the Markdown half of what `missingFragment` says for the HTML pane. Painting that as an
+      // empty block under `Rendered OK` is the one reading to avoid.
+      code.innerHTML = body.rendered_md == null
+        ? `<span style="color:#a00">make reported success but wrote no rendered Markdown at\n`
+          + `${escapeForHtml(body.render_target ?? "(no target)")}</span>`
+        : highlight(body.rendered_md, "dgs-md");
+      out.classList.toggle("error", body.rendered_md == null);
+      setStatus(body.rendered_md == null ? "rendered, but no output" : "Rendered OK",
+                body.rendered_md == null ? "error" : "ok");
     } else {
       code.textContent = logOf(body);
       out.classList.add("error");
       setStatus(failureStatus(body, "render"), "error");
     }
   } catch (e) {
+    clearTimeout(busy);
+    code.textContent = e.message;
+    out.classList.add("error");
     setStatus(e.message, "error");
   }
 }

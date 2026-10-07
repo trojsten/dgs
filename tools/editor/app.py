@@ -672,6 +672,10 @@ def api_render():
         write_files(unit, body.get("files") or {})
         make_target = unit.render_target(target)
         response = build(unit, make_target)
+        # The path as well as the text, for the reason `/api/html` returns `html_target`: when
+        # make succeeds and the file is not there, only the path tells you whether the rule wrote
+        # somewhere else or did not write at all.
+        response["render_target"] = make_target
         response["rendered_md"] = (
             read_if_exists(unit.render_path(target)) if response["ok"] else None
         )
@@ -852,7 +856,19 @@ def api_font(relative):
     path = (root / relative).resolve()
     if not path.is_relative_to(root) or not path.is_file():
         raise BadRequest(f"No such font: {relative}")
-    return send_file(path)
+    # The pane's document is sandboxed *without* `allow-same-origin`, so it sits on an opaque
+    # origin -- and `@font-face` is always a CORS fetch. The request therefore arrives with
+    # `Origin: null` and, with no header to allow it, the face is rejected. That failure is
+    # silent in every direction: no console error the pane can show, no missing glyphs, just
+    # Georgia instead of Minion. It is also exactly the difference the pane exists to show --
+    # Minion is the narrower face, so every line breaks somewhere else. Measured on one
+    # solution: 774 px of column in the fallback against 693 in Minion.
+    #
+    # `max_age` because these files never change and the pane asks for four of them on every
+    # preview; the default `no-cache` revalidated all four each time.
+    response = send_file(path, max_age=86400)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
 
 
 @app.post("/api/lint")
