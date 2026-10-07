@@ -680,8 +680,11 @@ word subscript is always `\text{}` — `E_{kin}` is wrong, `E_{\text{kin}}` is r
 
 ## Deduplicating across translations — and when not to
 
-Hoisting an equation into `eq:` removes the per-language latitude a translator otherwise
-has, deliberately: the physics is the same in every language, and copies drift. But it is
+Hoisting an equation into `eq:` does two things, and only the first is about translations.
+It removes the per-language latitude a translator otherwise has, deliberately: the physics is
+the same in every language, and copies drift. And it takes the `{#eq:<pid>:<key>}` tail off the
+author's hands, because **the key *is* the label** -- which is worth having wherever the
+equation is written, and is why the next section applies to the monolingual trees too. But it is
 not worth any cost. **A troll answer, an argument that only prose carries, an answer made of
 words — these are worth leaving alone**, and the metas that do so say why in place.
 
@@ -763,6 +766,64 @@ so, the same way the `answer-literal` exemptions do.
 The check is silent outside the multilingual trees. `chem`, `seminar/FKS`, `scholar/TA1` and
 `fks-naboj` have one language and nothing to drift apart from.
 
+### A labelled display belongs in `eq:`, whatever the language count
+
+The rule above is about drift, and so it has nothing to say about a tree with one language. That
+left `hoistable-equation` -- which reports only an equation written out in *two* files -- silent
+across `02`-`17`, all of them `sk` alone, and across the whole of chem. It was the wrong test,
+and the cost of trusting it was 494 blocks in `10` and `12`-`17` that no sweep had ever seen.
+
+**The key is the label.** `(§ eq.range|disp('.') §)` prints `{#eq:hilltop-gun:range}` by itself,
+so hoisting is one fewer thing to type and one fewer place to misspell a problem id, and that is
+true of a monolingual solution as much as a translated one. One copy in a meta is still one place
+to find the equation.
+
+**884 equations went into `eq:` on 2026-10-07**, which finished naboj: 783 labelled displays --
+522 in phys `10`, `12`-`18` and `pool`, 261 in chem -- the 47 `$${ … }$$` below, 10 whose labels
+had to be renamed before they could become keys, 32 in `pool` that carried no label at all, and
+12 inline fragments. What is left is three per-language variants and the four unlabelled
+shorthand blocks named below.
+
+**What is not hoisted, and why**, since both halves follow from the same rule:
+
+- **A display in a statement.** It carries no label -- see *A problem statement never numbers its
+  equations* -- so there is no key, and giving it one would print a number in the margin of a
+  problem the contestant is reading under time pressure. 40 of those.
+- **A display in an answer file.** An answer is a value, not a step in a derivation. 13 of those.
+- **A language whose derivation genuinely differs**, whose block then wants a key the shared
+  entry already holds: `28/egging`'s Ukrainian, whose `h` is the others' `H - h`, and
+  `27/takeoff`'s German. Three blocks, and bending either onto the shared entry would be
+  rewriting the physics.
+
+**The gate is byte-identical rendered Markdown**, which is stricter than the TeX gate the
+shorthand needed: `disp` prefixes every line of its content with four spaces and re-attaches the
+label the key implies, so a block already written that way round-trips exactly. 267 of 270 chem
+files came back unchanged, and every phys file did. Three traps, each caught by that comparison
+and not by reading:
+
+- **A body written at zero or two spaces** is re-indented to four. Inert to TeX, so assert on the
+  converted TeX with leading whitespace normalised and it disappears.
+- **A space before the terminal punctuation** -- `\lambda ,` -- closes up when the filter
+  re-attaches the stop. Also inert; maths mode ignores it.
+- **A `.` that belongs to a control sequence.** `pool/radioactive-bath` ends a row with `\ \.`,
+  and a rule that strips a trailing stop leaves a bare `\ \` behind. Take the stop only when no
+  backslash precedes it.
+
+**A label that is not a valid key has to be renamed first.** `ValidIdentifier` is ASCII
+`^[A-Za-z_][A-Za-z_0-9]*$`, so `factor-out`, `moles-tnt`, `2hg` and `x+` could not become keys;
+12 were renamed, and it is safe exactly because none was referenced and a display's printed
+number is positional rather than taken from its name. Two were malformed rather than merely
+hyphenated, and both were invisible until something looked: `chem/03/spektrofoto` carried
+`{#eq:spektrofot:dissoc}` -- a typo in the problem id, which is why `hoistable-equation` had been
+skipping that block -- and `chem/03/banský-skanzen`'s label had no `<pid>:<key>` split at all.
+
+**Labelling an unlabelled solution display is a separate decision and moves the page.** It is the
+right one -- `equation_numbering` says a solution's displays are numbered, and
+`solution-unlabelled` asks for it -- but byte-identity is then the wrong gate, because a number
+appears. Assert instead that the *maths* did not move: convert to TeX, normalise the wrapper away,
+and every change should be a display going from `\[ … \]` to `\begin{equation}…\end{equation}`
+with its label. 32 went that way in `pool`.
+
 ## `$${ … }$$` is on its way out
 
 It was DGS's own shorthand for an aligned display, and it works only because
@@ -785,11 +846,15 @@ label: hoisting an unlabelled one would *give* a solution's display a number it 
 renumber everything after it. Those wait on `solution-unlabelled`, which asks the prior question
 of whether they should have been numbered at all.
 
-62 went in the first sweep and the last **12 on 2026-10-06**, across nine problems in `chem/02`
-and `chem/03`. **Every labelled block in the repository is now hoisted**, so what remains is
-unlabelled by definition: 58 in chem and one in `phys/pool/friction-melting`, all waiting on
-`solution-unlabelled`. (`phys/errors/26.md` and `28.md` hold one apiece as well, but those are
-prose *about* a source quoting the shorthand, not blocks to hoist.)
+62 went in the first sweep, 12 on 2026-10-06 across nine problems in `chem/02` and `chem/03`,
+and the last **47 on 2026-10-07** -- 41 in `chem/01`, five in `02`, one in `04`. Those had been
+out of reach until every chem display was given a label, which is what made them hoistable at
+all. **Four are left in the whole repository**, and none of them can go: `chem/01/štrajk` has one
+in its statement and one in its answer, `chem/02/pojmy-dojmy` and `chem/02/stechiolucka` one
+apiece in their statements. A statement never numbers its equations and an answer is a value
+rather than a step, so there is no label for a key to come from. (`phys/errors/26.md` and `28.md`
+hold one apiece as well, but those are prose *about* a source quoting the shorthand, not blocks
+to hoist.)
 
 Three things that last twelve settled, each of which the next sweep will meet again:
 
@@ -808,9 +873,9 @@ Three things that last twelve settled, each of which the next sweep will meet ag
   `^[A-Za-z_][A-Za-z_0-9]*$`, ASCII only. The schema refuses it, not the language. It is `buffer`
   now.
 
-`seminar` holds 127 more and `scholar` nine, and neither was in scope: both are monolingual, so
-hoisting buys nothing there -- which is the same reason `hoistable-inline` and
-`hoistable-equation` are silent outside the multilingual trees.
+`seminar` holds 127 more and `scholar` nine. Those were left out when the reason to hoist was
+thought to be drift alone; it is not, so they are in scope and simply not done yet. `fks-naboj`
+is not ours to touch.
 
 The gate for that sweep is one stage lower than usual, and worth knowing. The rendered Markdown
 *must* move -- shorthand to longhand is the point -- so byte-identity is asserted on the
