@@ -33,7 +33,7 @@ class BuilderNabojVenue(BuilderNaboj):
 
     def build_templates(self, *, new_name: str | None = None) -> None:
         super().build_templates(new_name=new_name)
-        language_root = Path(self.launch_directory, *self.language_path())
+        language_root = Path(self.launch_directory, 'source', 'naboj', *self.language_path())
         language_renderer = jinja.StaticRenderer(language_root)
 
         for template in self.language_templates:
