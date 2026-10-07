@@ -300,10 +300,14 @@ gone, a fraction flattened into three rows -- is the extraction's fault and is s
 A **historical error** is the booklet's own, and is marked rather than silently corrected,
 because the archive is a record of what was set in 2005 as much as it is a problem set.
 
-Ten are marked so far. Two are still open, both because settling them needs a drawing nobody
-has redrawn: `02/hilltop-gun`, whose statement says the gun fires horizontally while its
-trajectory is a launch at alpha, and `09/two-weights`, whose own two equations give
+Ten are marked so far. **One is still open**: `09/two-weights`, whose own two equations give
 l = (V_1 - V_2) rho g/(2k) against the /k it prints.
+
+`02/hilltop-gun` was the other, and recovering volume `02`'s figures closed it -- the drawing
+puts v_0 horizontal and measures s horizontally, which is the statement and the printed answer
+both, leaving the trajectory equation as the odd one out. A drawing is evidence about the
+physics, not only decoration, so an open case in `02`-`11` is worth re-reading once that
+volume's figures are in.
 
 ## Code layout
 
