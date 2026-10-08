@@ -669,6 +669,11 @@ def reference_dangling(sources):
             labels |= {f"{m['kind']}:{m['name']}" for m in RE_LABEL.finditer(text)}
         for key in ((unit.meta or {}).get('eq') or {}):
             labels.add(f'eq:{unit.name}:{key}')
+        # And a declared figure, for exactly the same reason: `(§ pictures.cog §)` emits
+        # `{#fig:<pid>:cog}` at render time and the source holds no label at all, so without this
+        # every `[-@fig:…]` pointing at a converted figure reads as broken. Three did.
+        for key in ((unit.meta or {}).get('pictures') or {}):
+            labels.add(f'fig:{unit.name}:{key}')
         # The templates emit \label{sec:<problem>:problem} and :solution for every problem, so a
         # section reference to any problem in the scope resolves at build time.
         labels |= {f'sec:{unit.name}:problem', f'sec:{unit.name}:solution'}

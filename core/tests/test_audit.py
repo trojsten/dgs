@@ -520,6 +520,22 @@ class TestFiles:
         assert 'asset-unused' not in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
                                              assets=('belt.svg',)))
 
+    def test_a_reference_to_a_declared_picture_resolves(self, tmp_path):
+        """
+        `(§ pictures.belt §)` emits `{#fig:widget:belt}` at render time, so the source holds no
+        label and the crossref looks broken to anything reading the sources. It is not: the
+        booklet resolves it. Three references in volume 29 read as dangling until this.
+        """
+        files = {'sk': {'solution.md': 'see [-@fig:widget:belt]\n\n(§ pictures.belt §)\n'}}
+        assert 'reference-dangling' not in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
+                                                   assets=('belt.svg',)))
+
+    def test_a_reference_to_an_undeclared_picture_still_dangles(self, tmp_path):
+        """The quiet half: declaring one figure must not excuse a reference to another."""
+        files = {'sk': {'solution.md': 'see [-@fig:widget:nope]\n\n(§ pictures.belt §)\n'}}
+        assert 'reference-dangling' in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
+                                               assets=('belt.svg',)))
+
     def test_a_declared_picture_that_does_not_exist(self, tmp_path):
         """The render refuses it too, but the audit reads sources without building anything."""
         meta = self.PICTURES_META.replace('belt.svg', 'nope.svg')
