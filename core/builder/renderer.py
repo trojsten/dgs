@@ -435,6 +435,13 @@ class ConstantsContext(FileContext):
 PICTURE_ENTRY = {
     'file': str,
     'height': str,
+    # A caption that cannot be written at the call site, because it interpolates: a `(§ … §)`
+    # inside a string argument ends the enclosing tag at its first `§)`. Spelled per language, or
+    # as a bare string where every language shares it, exactly as a `words:` term is -- and
+    # resolved the same way, lazily, so a language that has none simply falls back to the call
+    # site and then to an empty caption. The text is emitted as written and the next render pass
+    # expands its tags.
+    Opt('caption'): Or(str, {Opt(str): str}),
 }
 
 
@@ -661,10 +668,18 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
     # solution's always are, which is what stops one being referenceable in English and not in
     # Slovak.
     if 'pictures' in meta.data:
+        def declared_caption(entry):
+            caption = entry.get('caption')
+            if isinstance(caption, dict):
+                return caption.get(locale)
+            return caption
+
         ctx.add(pictures={
             key: Picture(f"{meta.data['id']}:{key}", entry['file'],
                          captioned=captioned,
-                         attributes={k: v for k, v in entry.items() if k != 'file'})
+                         declared_caption=declared_caption(entry),
+                         attributes={k: v for k, v in entry.items()
+                                     if k not in ('file', 'caption')})
             for key, entry in meta.data['pictures'].items()
         })
 

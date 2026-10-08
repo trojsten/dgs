@@ -1557,18 +1557,21 @@ are expanded by the second pass, so a preamble can write `tcold = (§ tcold.mag 
 
 ### `pictures:`
 
-`pictures: {name: {file: <file>, height: <size>}}`
+`pictures: {name: {file: <file>, height: <size>, caption: {lang: text}}}`
 
 A figure, hoisted out of the per-language files the way `eq:` is. Reached as `(§ pictures.name §)`;
 **the key becomes the label**, `{#fig:<pid>:<key>}`, and nobody types one.
 
 Both keys are required and there are no others. The caption is **not** here: it is prose, it is
-translated, and it goes at the call site -- `(§ pictures.name('Lano cez kladku') §)`. The size is a
-default rather than a rule, because a tear-off has a fixed height and translations do not have equal
-line counts, so a language that needs the room writes `(§ pictures.name(height='55mm') §)` and says
-so in one visible place. Whether a figure is captioned -- and so numbered, and so referenceable --
-is decided by the file being rendered, not at the call site: a statement never captions its figures
-and a solution always does, including where the caption is empty.
+translated, and it goes at the call site -- `(§ pictures.name('Lano cez kladku') §)` -- except where
+it *interpolates*, which a string argument cannot express at all, since a `(§ … §)` inside one ends
+the enclosing tag at its first `§)`. That caption goes under `caption:`, per language or as a bare
+string, and is emitted as written for the next pass to expand. The size is a default rather than a
+rule, because a tear-off has a fixed height and translations do not have equal line counts, so a
+language that needs the room writes `(§ pictures.name(height='55mm') §)` and says so in one visible
+place. Whether a figure is captioned -- and so numbered, and so referenceable -- is decided by the
+file being rendered, not at the call site: a statement never captions its figures and a solution
+always does, including where the caption is empty.
 
 ### `authors:`
 

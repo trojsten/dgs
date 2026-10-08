@@ -22,9 +22,25 @@ class Picture:
                  *,
                  captioned: bool = True,
                  caption: str | None = None,
+                 declared_caption: str | None = None,
                  attributes: dict | None = None):
         self.id = ident
         self.file = file
+        #: A caption written in the meta rather than at the call site, already resolved for this
+        #: language by `build_render_context`.
+        #:
+        #: The call site is the right place for a caption and stays the normal one: it is prose,
+        #: only 5 of 386 are the same in every language, and a translator may want it to read
+        #: differently. This is for the one case the call site cannot express -- **a caption that
+        #: interpolates**. A caption is passed as a string argument, and a `(§ … §)` inside a
+        #: string literal ends the enclosing tag at its first `§)`, so
+        #: `(§ pictures.x('… $(§ Imax §)$') §)` does not parse at all.
+        #:
+        #: Here it needs no quoting, because nothing lexes it: the text is emitted into the
+        #: Markdown as written and the *next* render pass expands whatever tags it holds. That is
+        #: how `blocks:` works, and it is the same reason -- `render_to_fixpoint` keeps going
+        #: until the output stops changing.
+        self.declared_caption = declared_caption
         #: Whether this file's figures carry a caption, and therefore a number and a label.
         #:
         #: Set by the renderer from the file being rendered against the module's own
@@ -66,6 +82,7 @@ class Picture:
         return Picture(self.id, self.file,
                        captioned=self.captioned,
                        caption=self.caption if caption is None else caption,
+                       declared_caption=self.declared_caption,
                        attributes=self.attributes | attributes)
 
     @property
@@ -95,13 +112,18 @@ class Picture:
         it put the break where it does nothing and the long line where it hurts, and 21 call
         sites came out over 120 characters, the longest at 249.
         """
-        return re.sub(r'\s*\n\s*', ' ', caption)
+        # Stripped as well as joined: a `caption:` written as a YAML `|` block keeps its
+        # final newline, which would otherwise arrive as a space before the closing `]`.
+        return re.sub(r'\s*\n\s*', ' ', caption).strip()
 
     def __str__(self) -> str:
         """The Markdown include, which the second render pass expands any tags inside."""
         alt = ''
         if self.captioned:
-            alt = self._one_line(self.caption) if self.caption else self.EMPTY_CAPTION
+            # The call site first, then the meta, then the marker that makes it a numbered figure
+            # with nothing written in it.
+            written = self.caption if self.caption else self.declared_caption
+            alt = self._one_line(written) if written else self.EMPTY_CAPTION
         attributes = ' '.join(part for part in (self._label, self._attribute_text()) if part)
         # The attribute block is never omitted even when it is empty: `convertor.py` refuses an
         # image that reaches LaTeX without one -- `RegexFailure(r'\\pandocbounded')` -- because an
