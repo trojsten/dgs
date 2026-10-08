@@ -655,8 +655,24 @@ Four traps, each caught by that gate rather than by reading:
   `\label`. The key goes to whichever is captioned, or the crossref lands on the figure that has
   none.
 - **A caption holding a Jinja tag cannot be a string argument**, since the tag ends at the first
-  `§)`. Four call sites in `25/czechlights` and `25/public-transport` stay literal and show up as
-  `picture-literal`.
+  `§)`. That caption goes under `caption:` in the entry instead, per language or as a bare string
+  where every language shares it:
+
+  ```yaml
+  pictures:
+    toomuch:
+      file: dimensions.svg
+      height: 50mm
+      caption:
+        sk: 'Dĺžky pásikov; hrubo sú miesta, ktorými tečie viac ako $(§ Imax §)$.'
+        en: 'Lengths of the strips; thick lines denote current higher than (§ Imax §).'
+  ```
+
+  Nothing lexes it there, so it needs no quoting: the text is emitted as written and the *next*
+  render pass expands it, exactly as a tag inside a `blocks:` entry is. The call site stays the
+  normal place for a caption and wins where both are given -- this is for the one case the call
+  site cannot express. The four in `25/czechlights` and `25/public-transport` are the only ones
+  in the repository that need it.
 
 **Wrap a long caption across lines, with real newlines.** Jinja takes them inside a string literal,
 and `Picture` emits the caption on one line, so where the break falls is free: a newline inside

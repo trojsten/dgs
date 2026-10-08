@@ -553,6 +553,43 @@ class TestPictures:
                                 "(§ pictures.hanging('first line\nsecond line') §)\n", 'solution.md')
         assert '![first line second line](hanging.png){#fig:' in out
 
+    DECLARED_META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                     "tags: ['kinematics']\n"
+                     "values:\n  Imax:\n    magnitude: 2\n    unit: 'ampere'\n"
+                     "pictures:\n  hanging:\n    file: hanging.png\n    height: 40mm\n"
+                     "    caption:\n      sk: 'viac ako (§ Imax §)'\n"
+                     "      en: 'more than (§ Imax §)'\n")
+
+    def test_a_declared_caption_may_interpolate(self, tmp_path):
+        r"""
+        The one thing a call-site caption cannot do. A caption is passed as a string argument, and
+        a `(§ … §)` inside a string literal ends the enclosing tag at its first `§)`, so
+        `(§ pictures.x('… (§ Imax §)') §)` does not parse at all.
+
+        In the meta nothing lexes it: the text is emitted as written and the *next* render pass
+        expands it, which is exactly how a tag inside a `blocks:` entry works.
+        """
+        out = self.render_named(tmp_path, 'sk', self.DECLARED_META,
+                                '(§ pictures.hanging §)\n', 'solution.md')
+        assert r'![viac ako \qty{2}{\ampere}](hanging.png){#fig:' in out
+
+    def test_a_declared_caption_follows_the_language(self, tmp_path):
+        out = self.render_named(tmp_path, 'en', self.DECLARED_META,
+                                '(§ pictures.hanging §)\n', 'solution.md')
+        assert '![more than ' in out
+
+    def test_the_call_site_beats_the_meta(self, tmp_path):
+        """The call site stays the normal place for a caption; the meta is the exception."""
+        out = self.render_named(tmp_path, 'sk', self.DECLARED_META,
+                                "(§ pictures.hanging('written here') §)\n", 'solution.md')
+        assert '![written here]' in out
+
+    def test_a_statement_ignores_a_declared_caption_too(self, tmp_path):
+        """The rule is about the file, not about where the caption was written."""
+        out = self.render_named(tmp_path, 'sk', self.DECLARED_META,
+                                '(§ pictures.hanging §)\n', 'problem.md')
+        assert out.strip() == '![](hanging.png){height=40mm}'
+
     def test_core_itself_has_no_opinion(self):
         """Which file is a statement is the module's taxonomy, as it is for equation numbering."""
         from core.builder.renderer import CLIInterface as CoreCLI
