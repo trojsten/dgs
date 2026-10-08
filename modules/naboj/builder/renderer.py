@@ -252,6 +252,28 @@ class CLIInterface(renderer.CLIInterface, ABC):
         'answer-interval.md': True,
     }
 
+    #: Every file a Náboj problem may hold, and whether its figures carry a caption.
+    #:
+    #: The same taxonomy and the same rule, because a caption is to a figure what a label is to an
+    #: equation: it is what makes pandoc emit a `figure`, and so what gives the drawing a number
+    #: that a `[-@fig:…]` can reach. **A statement never captions its figures**, so they are never
+    #: numbered -- and nobody wanted them to be, since of the 169 figure labels written in
+    #: statements across the repository not one is referenced from anywhere.
+    #:
+    #: **A solution always does**, including where the caption is empty. That is the half that
+    #: buys something: a figure captioned in one language and not another is numbered in one
+    #: booklet and not another, which is how `18/firework-bee/en` came to print `??` where its
+    #: `sk` and `cs` siblings are fine.
+    figure_captions = {
+        'problem.md': False,
+        'problem-extra.md': False,
+        'solution.md': True,
+        'answer.md': True,
+        'answer-extra.md': True,
+        'answer-also.md': True,
+        'answer-interval.md': True,
+    }
+
 
 if __name__ == "__main__":
     CLIInterface().run()

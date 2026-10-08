@@ -467,6 +467,131 @@ class TestVerbatimBlocks:
         assert '42 then a block' in out
 
 
+class TestPictures:
+    r"""
+    `pictures:` holds a figure -- which file, how big -- and the key becomes its `{#fig:…}` label.
+
+    The figure half of what `eq:` does for an equation, and for a sharper reason: 440 of the
+    repository's 869 hand-written figure labels did not follow the `fig:<pid>:<key>` convention,
+    against about 1 % of the equation labels, and a wrong figure label is silent until a crossref
+    resolves to nothing.
+
+    Whether a figure is captioned is decided by the file being rendered, exactly as `labelled` is,
+    because a caption is what makes pandoc emit a `figure` at all -- and so what gives the drawing
+    a number and a `\label`. That is one decision, not two: a label on an uncaptioned image
+    reaches the page as nothing.
+    """
+
+    render_named = staticmethod(TestTranslatedWords.render_named)
+
+    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+            "tags: ['kinematics']\n"
+            "pictures:\n"
+            "  hanging:\n    file: hanging.png\n    height: 40mm\n")
+
+    def test_a_statement_figure_is_neither_captioned_nor_labelled(self, tmp_path):
+        """
+        A statement never numbers its figures, and nobody wanted it to: of the 169 figure labels
+        written into statements across the repository, not one is referenced from anywhere.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META, '(§ pictures.hanging §)\n', 'problem.md')
+        assert out.strip() == '![](hanging.png){height=40mm}'
+
+    def test_a_solution_figure_is_both(self, tmp_path):
+        out = self.render_named(tmp_path, 'sk', self.META, '(§ pictures.hanging §)\n', 'solution.md')
+        # the prefix is the problem directory's name, which under pytest is the tmp directory
+        assert out.strip().startswith('![<!-- -->](hanging.png){#fig:')
+        assert out.strip().endswith(':hanging height=40mm}')
+
+    def test_an_empty_caption_is_written_as_a_comment(self, tmp_path):
+        """
+        Not `![]` and not `![ ]`, which is the whole of why this spelling exists: pandoc makes a
+        `figure` only when the alt text has content, so both of those come out as a bare
+        `\includegraphics` with no number and no label -- the state the rule exists to end. An
+        HTML comment is content to the parser and nothing on the page.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META, '(§ pictures.hanging §)\n', 'solution.md')
+        assert '![<!-- -->]' in out
+
+    def test_a_caption_given_at_the_call_site_is_used(self, tmp_path):
+        """The caption stays per-language because it is prose; only 5 of 386 are the same in every
+        language, so it is the one part of an include that must not be hoisted."""
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                "(§ pictures.hanging('Lano cez kladku') §)\n", 'solution.md')
+        assert '![Lano cez kladku](hanging.png){#fig:' in out
+        assert ':hanging height=40mm}' in out
+
+    def test_a_size_override_beats_the_meta(self, tmp_path):
+        """
+        The default is in the meta because 166 of 386 multilingual figures disagree about their
+        size by accident. It is only a default because a tear-off has a fixed height and
+        translations do not have equal line counts, so a language that needs the room says so --
+        once, visibly, at the call site.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                "(§ pictures.hanging(height='55mm') §)\n", 'solution.md')
+        assert 'height=55mm' in out and '40mm' not in out
+
+    def test_the_same_picture_may_be_included_twice_in_a_statement(self, tmp_path):
+        """Where nothing is labelled there is nothing to collide. In a solution the same two
+        includes would be a duplicate label, which pandoc-crossref refuses -- as it does for an
+        `eq:` entry displayed twice, and for the same reason."""
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                '(§ pictures.hanging §)\n\n(§ pictures.hanging §)\n', 'problem.md')
+        assert out.count('![](hanging.png)') == 2
+
+    def test_core_itself_has_no_opinion(self):
+        """Which file is a statement is the module's taxonomy, as it is for equation numbering."""
+        from core.builder.renderer import CLIInterface as CoreCLI
+        from modules.naboj.builder.renderer import CLIInterface as NabojCLI
+        assert CoreCLI.figure_captions == {}
+        assert NabojCLI.figure_captions['problem.md'] is False
+        assert NabojCLI.figure_captions['solution.md'] is True
+
+    def test_naboj_declares_every_file_it_may_hold(self):
+        """Both directions and no gaps, pinned the way `equation_numbering` is."""
+        from core.audit.sources import SHARED_FILES, TRANSLATED_FILES
+        from modules.naboj.builder.renderer import CLIInterface as NabojCLI
+        assert set(NabojCLI.figure_captions) == set(TRANSLATED_FILES) | set(SHARED_FILES)
+
+    def test_an_undeclared_file_captions_its_figures(self, tmp_path):
+        """The conservative default, as for equations: a module that says nothing is unaffected."""
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                '(§ pictures.hanging §)\n', 'whatever.md')
+        assert '{#fig:' in out
+
+    def test_pictures_is_a_reserved_name(self):
+        """
+        It is a namespace the context holds, so a `values:` entry may not claim it -- the same
+        rule that `blocks`, `eq` and `words` live under. Checked against every meta under
+        `source/` before it was reserved, because reserving `w` once broke eight problems.
+        """
+        from core.builder.context.context import RESERVED_NAMES
+        from core.builder.renderer import NameCollisionError, _reject_name_collisions
+        assert 'pictures' in RESERVED_NAMES
+        with pytest.raises(NameCollisionError):
+            _reject_name_collisions({'pictures': 1}, 'values')
+        # and the quiet half: a name that merely looks like it is fine
+        _reject_name_collisions({'picture': 1, 'pics': 2}, 'values')
+
+    def test_an_entry_needs_a_file_and_a_height(self):
+        """
+        Both, and nothing else. Every one of the 2003 includes in the repository writes a height
+        and none writes any other attribute, so a third one is a deliberate addition here rather
+        than something invented at a call site -- a mistyped attribute name is silent, and an
+        unsized figure is refused much later with a message about `\pandocbounded`.
+        """
+        from enschema import SchemaError
+
+        from core.builder.renderer import StandaloneContext
+        schema = StandaloneContext._schema
+        schema.validate({'id': 'demo', 'pictures': {'a': {'file': 'a.svg', 'height': '40mm'}}})
+        for bad in ({'file': 'a.svg'}, {'height': '40mm'},
+                    {'file': 'a.svg', 'height': '40mm', 'width': '2cm'}):
+            with pytest.raises(SchemaError):
+                schema.validate({'id': 'demo', 'pictures': {'a': bad}})
+
+
 class TestDisplayTagsOwnTheirLine:
     r"""
     A display tag is put on a line of its own before rendering, and only where it is not already.

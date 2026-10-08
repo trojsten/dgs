@@ -537,7 +537,8 @@ def evaluation_context(unit, target, meta_text):
     meta.validate()
     context = build_render_context(
         meta, language, root=unit.path,
-        labelled=cli.equation_numbering.get(filename, True))
+        labelled=cli.equation_numbering.get(filename, True),
+        captioned=cli.figure_captions.get(filename, True))
 
     CONTEXT_CACHE[key] = context
     while len(CONTEXT_CACHE) > CONTEXT_CACHE_SIZE:

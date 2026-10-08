@@ -82,7 +82,8 @@ const INNER = [
 // are the entries' own names and the deeper ones are `magnitude:` and its siblings, or a
 // language code. Only the name level names something a template may write, which is why
 // `entryIndent` exists rather than a hard-coded depth.
-const META_EVAL_BLOCKS = { eq: "eq.", values: "", derived: "", blocks: "blocks.", words: "words." };
+const META_EVAL_BLOCKS = { eq: "eq.", values: "", derived: "", blocks: "blocks.",
+                           words: "words.", pictures: "pictures." };
 
 // Where `INNER` applies. In Markdown and gnuplot that is inside a `(§ … §)`; in a meta it is the
 // values of `derived:`, which is where `PQ`, `QL` and `.to()` are actually written — 158 of the
