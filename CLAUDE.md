@@ -627,11 +627,16 @@ a key that is not an identifier, and `fig:letna-skola` did not even match its ow
 against about 1 % on the equation side. A wrong figure label is silent until a crossref resolves
 to nothing.
 
-**The size is a default, not a rule.** A tear-off has a fixed height and translations do not have
-equal line counts, so a language that needs the room says so at its own call site. What the
-default kills is the other 166: of 386 figures written in two or more languages, **43 % printed at
-different sizes in different booklets** -- `20/resistor-range` at 14 mm, 35 mm and 55 mm -- none of
-it chosen, because nobody ever sees two booklets side by side.
+**The size is a default, not a rule, and the overrides are deliberate.** 173 drawings print at
+different sizes in different languages, and that is tuning somebody did on purpose: a tear-off has
+a fixed height, translations do not have equal line counts, and the drawing is the only thing on
+the page that can give. **Do not collapse them to the default.** The shape of the set says the
+same thing -- 79 of the 173 are within 1.2× and only 26 exceed 1.5×, which is what careful fitting
+looks like and not what drift looks like.
+
+What the default buys is therefore not uniformity. It is that the common size is written once, and
+that a language which needed different room says so in one visible place instead of being one of
+six numbers nobody can compare.
 
 ### A statement never captions its figures; a solution always does
 
