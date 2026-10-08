@@ -567,6 +567,104 @@ schema wants `magnitude:` — that meta has never loaded and its `problem.md` fa
 Sharing one drawing between two problems is a **symlink**, not an `include()`: the two can end up
 in different volumes, and a path written into the text is the fragile half of that.
 
+## A figure is a meta entry: `pictures:`
+
+An include written out by hand types four things, three of which are facts about the *drawing*
+and were therefore typed once per language:
+
+```
+![Lano visiace cez kladku](hanging.png){#fig:hanging-rope:hanging height=40mm}
+```
+
+Those three move into the meta, and the key becomes the label:
+
+```yaml
+pictures:
+  hanging:
+    file: hanging.png
+    height: 40mm
+```
+
+```
+(§ pictures.hanging §)                        the default size, captioned by the file's rule
+(§ pictures.hanging('Lano cez kladku') §)     a caption, which stays per-language
+(§ pictures.hanging(height='55mm') §)         one language needs the room, visibly
+```
+
+**The key is the label**, and that is the whole bargain. 440 of the repository's 869
+hand-written figure labels did not follow `fig:<pid>:<key>` -- 336 had no key part at all, 104
+a key that is not an identifier, and `fig:letna-skola` did not even match its own problem id --
+against about 1 % on the equation side. A wrong figure label is silent until a crossref resolves
+to nothing.
+
+**The size is a default, not a rule.** A tear-off has a fixed height and translations do not have
+equal line counts, so a language that needs the room says so at its own call site. What the
+default kills is the other 166: of 386 figures written in two or more languages, **43 % printed at
+different sizes in different booklets** -- `20/resistor-range` at 14 mm, 35 mm and 55 mm -- none of
+it chosen, because nobody ever sees two booklets side by side.
+
+### A statement never captions its figures; a solution always does
+
+`figure_captions` in `modules/naboj/builder/renderer.py`, stated in both directions exactly as
+`equation_numbering` is and for the same reason -- which of a module's files is a statement is the
+module's own taxonomy. `core`'s is empty, and a file it does not mention keeps what it had.
+
+**A caption is what makes pandoc emit a `figure`**, so it decides the number and the label
+together. They are one decision, not two, and that is why the rule is worth stating:
+
+- a label written onto an *uncaptioned* image reaches the page as nothing. 553 of the
+  repository's hand-written labels did exactly that;
+- so a figure captioned in one language and not another is numbered in one booklet and not
+  another. `18/firework-bee/en` referenced its figure, nothing captioned it, and the English
+  booklet printed **`??`** while `sk` and `cs` were fine.
+
+Nothing is lost by dropping a statement's labels: of the 169 defined in statements, **not one is
+referenced** from anywhere. All 46 figure crossrefs live in solutions and point at solutions.
+
+**An empty caption is written `![<!-- -->]`.** Not `![]` and not `![ ]` -- pandoc needs the alt
+text to have content before it makes a `figure`, so both of those come out as a bare
+`\includegraphics` with no number and no label, which is the state this rule exists to end. An
+HTML comment is content to the parser and nothing on the page. Nobody types it; the tag emits it.
+
+`convertor.py` used to delete `\caption{}` and its `\label` with it, under "Remove empty captions
+and labels". That rule is gone. It put every such figure straight back to unnumbered, and it was
+dead code until this made it live -- no source writes an empty alt and nothing under `build/`
+carried a `\caption{}`.
+
+### Converting one
+
+`picture-literal` reports a hand-typed include naming a file the problem's own `pictures:` already
+declares -- the figure counterpart of `value-equation-literal`, and silent where nothing is
+declared, because a problem nobody has converted is not a problem with a defect in it.
+
+The gate is sharper than byte-identity, because the caption rule is *supposed* to move the page:
+**the file, the size and the caption's own text must not change**, and the only things that may
+are the label and the empty-caption marker. Then count the dangling `[-@fig:…]` across the
+scope's whole rendered output, which is the one thing a rename can break.
+
+Four traps, each caught by that gate rather than by reading:
+
+- **Offsets go stale across keys.** Replacing one figure's call sites shortens the file, so the
+  next key's offsets are wrong -- `28/buzz-saw` lost the `Uv` of `Uvažujme`. Collect every
+  replacement first and apply them per file in one descending pass.
+- **`onô.svg` generates the key `on`**, which YAML 1.1 loads as the boolean `True`. The schema
+  refuses it by name; avoid the whole `y/n/yes/no/on/off/true/false/null` set, and re-read each
+  meta to check the keys came back as strings.
+- **Two drawings may share one label.** `28/ice-ice-baby` labels both its statement figure and its
+  solution figure `calippo`, which LaTeX never noticed because the statement one carried no
+  `\label`. The key goes to whichever is captioned, or the crossref lands on the figure that has
+  none.
+- **A caption holding a Jinja tag cannot be a string argument**, since the tag ends at the first
+  `§)`. Four call sites in `25/czechlights` and `25/public-transport` stay literal and show up as
+  `picture-literal`.
+
+**Wrap a long caption across lines, with real newlines.** Jinja takes them inside a string literal,
+and `Picture` emits the caption on one line, so where the break falls is free: a newline inside
+`![…]` is a space to pandoc, and the `\caption{}` it writes sets identically either way. Encoding
+the break as a `\n` escape instead gets it exactly backwards -- the break lands where it does
+nothing and the long line where it hurts. That was done for one commit, and it put 21 call sites
+over 120 characters, the longest at 249.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per

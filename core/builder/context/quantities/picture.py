@@ -1,3 +1,6 @@
+import re
+
+
 class Picture:
     r"""
     A figure declared once in `pictures:` and included as `(§ pictures.<key> §)`.
@@ -80,11 +83,25 @@ class Picture:
     def _attribute_text(self) -> str:
         return ' '.join(f"{key}={value}" for key, value in self.attributes.items())
 
+    @staticmethod
+    def _one_line(caption: str) -> str:
+        r"""
+        A caption wrapped across several source lines, emitted on one.
+
+        The wrapping belongs to the source, where a long line is a real cost -- the 120-character
+        limit, a diff nobody can read -- and it buys nothing in the output: a newline inside
+        `![…]` is a space to pandoc, and the `\caption{}` it writes sets identically either way.
+        Encoding the break instead, as a `\n` in the Jinja string, got this exactly backwards:
+        it put the break where it does nothing and the long line where it hurts, and 21 call
+        sites came out over 120 characters, the longest at 249.
+        """
+        return re.sub(r'\s*\n\s*', ' ', caption)
+
     def __str__(self) -> str:
         """The Markdown include, which the second render pass expands any tags inside."""
         alt = ''
         if self.captioned:
-            alt = self.caption if self.caption else self.EMPTY_CAPTION
+            alt = self._one_line(self.caption) if self.caption else self.EMPTY_CAPTION
         attributes = ' '.join(part for part in (self._label, self._attribute_text()) if part)
         # The attribute block is never omitted even when it is empty: `convertor.py` refuses an
         # image that reaches LaTeX without one -- `RegexFailure(r'\\pandocbounded')` -- because an
