@@ -566,6 +566,19 @@ class TestPictures:
                                 '(§ pictures.hanging §)\n\n(§ pictures.hanging §)\n', 'problem.md')
         assert out.count('![](hanging.png)') == 2
 
+    def test_a_wrapped_caption_is_emitted_on_one_line(self, tmp_path):
+        r"""
+        The wrapping belongs to the source and buys nothing in the output, where a newline inside
+        `![…]` is a space to pandoc and the `\caption{}` sets identically either way.
+
+        It was the other way round for one commit -- the break encoded as a `\n` in the Jinja
+        string, which put it where it does nothing and the long line where it hurts: 21 call sites
+        came out over 120 characters and the longest at 249.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                "(§ pictures.hanging('first line\nsecond line') §)\n", 'solution.md')
+        assert '![first line second line](hanging.png){#fig:' in out
+
     def test_core_itself_has_no_opinion(self):
         """Which file is a statement is the module's taxonomy, as it is for equation numbering."""
         from core.builder.renderer import CLIInterface as CoreCLI

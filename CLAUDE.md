@@ -686,7 +686,14 @@ Four traps, each caught by that gate rather than by reading:
   none.
 - **A caption holding a Jinja tag cannot be a string argument**, since the tag ends at the first
   `§)`. Four call sites in `25/czechlights` and `25/public-transport` stay literal and show up as
-  `picture-literal`. A multi-line caption is fine -- `\n` in a Jinja string literal round-trips.
+  `picture-literal`.
+
+**Wrap a long caption across lines, with real newlines.** Jinja takes them inside a string literal,
+and `Picture` emits the caption on one line, so where the break falls is free: a newline inside
+`![…]` is a space to pandoc, and the `\caption{}` it writes sets identically either way. Encoding
+the break as a `\n` escape instead gets it exactly backwards -- the break lands where it does
+nothing and the long line where it hurts. That was done for one commit, and it put 21 call sites
+over 120 characters, the longest at 249.
 
 ## Translated words inside maths
 
