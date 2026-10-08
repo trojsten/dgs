@@ -131,6 +131,7 @@ def example_context() -> dict:
         QuantityProduct,
     )
     from core.builder.context.quantities.math import MathObject
+    from core.builder.context.quantities.picture import Picture
 
     build = PhysicsQuantity.construct
     return {
@@ -164,6 +165,8 @@ def example_context() -> dict:
         },
         'words': {'air': 'vzduch'},
         'blocks': {'setup': 'set xlabel "t"\nset ylabel "v"'},
+        'pictures': {'hanging': Picture('demo:hanging', 'hanging.png',
+                                        attributes={'height': '40mm'})},
     }
 
 
@@ -883,6 +886,21 @@ _NAMESPACES: tuple[Entry, ...] = (
                'form and still works. **There is no fallback to English and never was** -- a word '
                'a language has not got is boxed in red, reported at the end of the render, and the '
                'render then exits nonzero.'),
+    Entry('pictures', 'namespace', section='Namespaces the context adds',
+          signature="pictures.<name>  ·  pictures.<name>('caption')  ·  "
+                    "pictures.<name>(height='55mm')",
+          summary='The figures declared in this problem\'s `pictures:`. Emits the whole Markdown '
+                  'include -- file, size and label -- so the only thing left at the call site is '
+                  'the caption and where the figure sits.',
+          note='**The key is the label.** 440 of the 869 hand-written figure labels in the '
+               'repository did not follow the `fig:<pid>:<key>` convention, and one did not even '
+               'match its own problem id; a wrong figure label is silent until a crossref '
+               'resolves to nothing. A caption is what makes pandoc emit a `figure`, so it '
+               'decides the number and the label together -- which is why a label written onto an '
+               'uncaptioned image reaches the page as nothing at all.',
+          example="(§ pictures.hanging §) (§ pictures.hanging('Lano') §)",
+          expect='![<!-- -->](hanging.png){#fig:demo:hanging height=40mm} '
+                 '![Lano](hanging.png){#fig:demo:hanging height=40mm}'),
 )
 
 
@@ -934,6 +952,20 @@ _META: tuple[Entry, ...] = (
                'never `>`** -- a folded scalar collapses newlines into spaces and gnuplot wants '
                'one directive per line. Tags inside a block are expanded by the second pass, so a '
                'preamble can write `tcold = (§ tcold.mag §)` and stay in step.'),
+    Entry('pictures', 'meta-key', env=META, section='`meta.yaml`: a problem',
+          signature='pictures: {name: {file: <file>, height: <size>}}',
+          summary='A figure, hoisted out of the per-language files the way `eq:` is. Reached as '
+                  '`(§ pictures.name §)`; **the key becomes the label**, `{#fig:<pid>:<key>}`, '
+                  'and nobody types one.',
+          note='Both keys are required and there are no others. The caption is **not** here: it '
+               'is prose, it is translated, and it goes at the call site -- '
+               "`(§ pictures.name('Lano cez kladku') §)`. The size is a default rather than a "
+               'rule, because a tear-off has a fixed height and translations do not have equal '
+               "line counts, so a language that needs the room writes "
+               "`(§ pictures.name(height='55mm') §)` and says so in one visible place. Whether a "
+               'figure is captioned -- and so numbered, and so referenceable -- is decided by the '
+               'file being rendered, not at the call site: a statement never captions its '
+               'figures and a solution always does, including where the caption is empty.'),
     Entry('authors', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='authors: {idea: [...], problem: [...], solution: [...]}',
           summary='**Required.** Who did which of the three jobs. Each role is a list of names, '
@@ -1213,6 +1245,8 @@ def _context_table() -> str:
         ('`const.g`', r'`\qty{9.80665}{\metre\per\second\squared}`',
          'measured, `digits: 2` -- so `.approx` is `9.8`'),
         ('`words.air`', '`vzduch`', 'a `words:` entry'),
+        ('`blocks.setup`', '`set xlabel "t"` …', 'a `blocks:` entry'),
+        ('`pictures.hanging`', '`hanging.png`, `height: 40mm`', 'a `pictures:` entry'),
         ('`n`, `team`, `people`, `date`', '`3`, three names, one author, 2025-10-02',
          'for the `.jtex` examples'),
     ]

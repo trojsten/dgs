@@ -41,8 +41,16 @@ class Convertor:
             RegexReplacement(r"\\includegraphics(?P<options>\[.*\])?{(?P<stem>.*)\.(?P<extension>png|jpg|pdf)}",
                              r"\\insertPicture\g<options>{\g<stem>.\g<extension>}",
                              purpose=r"Change \includegraphics to protected \insertPicture"),
-            # Remove empty labels and captions
-            RegexReplacement(r"^\\caption{}(\\label{.*})?\n", "", purpose="Remove empty captions and labels"),
+            # An empty caption used to be deleted here, and its `\label` with it. That is the
+            # one thing it must not do now: **a caption is what makes pandoc emit a `figure`**,
+            # and so what gives a drawing its number and its label, which is why
+            # `figure_captions` gives every solution figure one whether the author wrote text or
+            # not. Stripping it put the figure straight back to where it started -- unnumbered,
+            # and with a `\label` that no `[-@fig:…]` could reach, which is the defect
+            # `18/firework-bee/en` prints as `??`.
+            #
+            # Removing the rule is inert for everything that exists: no source writes an empty
+            # alt text and no file under `build/` carried a `\caption{}` before this.
         ],
         'html': [
             # A picture is referenced where it actually is: beside the file that references it.

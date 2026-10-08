@@ -342,7 +342,8 @@ SENTENCE_ENDERS = frozenset('.?!')
 
 #: Markdown wants a blank line before each of these however the sentence is going, so a break
 #: after a comma is correct here and must not be reported.
-RE_NEEDS_OWN_PARAGRAPH = re.compile(r'^[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|!\[|#|\$\$|\(§\s*eq\.)')
+RE_NEEDS_OWN_PARAGRAPH = re.compile(
+    r'^[ \t]*(?:[-*+][ \t]|\d+[.)][ \t]|!\[|#|\$\$|\(§\s*(?:eq|pictures)\.)')
 
 
 #: A line that is nothing but `\end{…}`. `display_blocks` steps over these to find the stop.

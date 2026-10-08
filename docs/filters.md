@@ -45,6 +45,8 @@ Every example below is rendered in this context, which is what `example_context(
 | `eq.sys` | `x &+& y &=& 1 \\ x &-& y &=& 0` | a system, for `\|arr` |
 | `const.g` | `\qty{9.80665}{\metre\per\second\squared}` | measured, `digits: 2` -- so `.approx` is `9.8` |
 | `words.air` | `vzduch` | a `words:` entry |
+| `blocks.setup` | `set xlabel "t"` … | a `blocks:` entry |
+| `pictures.hanging` | `hanging.png`, `height: 40mm` | a `pictures:` entry |
 | `n`, `team`, `people`, `date` | `3`, three names, one author, 2025-10-02 | for the `.jtex` examples |
 
 
@@ -1472,6 +1474,25 @@ is spelled as written. `(§ i18n.words['and'] §)` is the older form and still w
 fallback to English and never was** -- a word a language has not got is boxed in red, reported at
 the end of the render, and the render then exits nonzero.
 
+### `pictures.`
+
+`pictures.<name>  ·  pictures.<name>('caption')  ·  pictures.<name>(height='55mm')`
+
+The figures declared in this problem's `pictures:`. Emits the whole Markdown include -- file, size
+and label -- so the only thing left at the call site is the caption and where the figure sits.
+
+**The key is the label.** 440 of the 869 hand-written figure labels in the repository did not follow
+the `fig:<pid>:<key>` convention, and one did not even match its own problem id; a wrong figure
+label is silent until a crossref resolves to nothing. A caption is what makes pandoc emit a
+`figure`, so it decides the number and the label together -- which is why a label written onto an
+uncaptioned image reaches the page as nothing at all.
+
+    (§ pictures.hanging §) (§ pictures.hanging('Lano') §)
+
+produces
+
+    ![<!-- -->](hanging.png){#fig:demo:hanging height=40mm} ![Lano](hanging.png){#fig:demo:hanging height=40mm}
+
 ## `meta.yaml`: a problem
 
 ### `values:`
@@ -1533,6 +1554,21 @@ nothing to what it holds.
 The case it exists for is a gnuplot preamble shared by several plots. **`|`, never `>`** -- a folded
 scalar collapses newlines into spaces and gnuplot wants one directive per line. Tags inside a block
 are expanded by the second pass, so a preamble can write `tcold = (§ tcold.mag §)` and stay in step.
+
+### `pictures:`
+
+`pictures: {name: {file: <file>, height: <size>}}`
+
+A figure, hoisted out of the per-language files the way `eq:` is. Reached as `(§ pictures.name §)`;
+**the key becomes the label**, `{#fig:<pid>:<key>}`, and nobody types one.
+
+Both keys are required and there are no others. The caption is **not** here: it is prose, it is
+translated, and it goes at the call site -- `(§ pictures.name('Lano cez kladku') §)`. The size is a
+default rather than a rule, because a tear-off has a fixed height and translations do not have equal
+line counts, so a language that needs the room writes `(§ pictures.name(height='55mm') §)` and says
+so in one visible place. Whether a figure is captioned -- and so numbered, and so referenceable --
+is decided by the file being rendered, not at the call site: a statement never captions its figures
+and a solution always does, including where the caption is empty.
 
 ### `authors:`
 

@@ -246,8 +246,13 @@ class TestAssetVersion:
         before = editor.asset_version()
         target = pathlib.Path(editor.app.static_folder, 'app.js')
         stamp = target.stat().st_mtime
+        # Past the *newest* of the three, not past this one: the version is their maximum, so
+        # bumping `app.js` by ten seconds proves nothing on a tree where `highlight.js` was
+        # touched more recently -- which is any tree where the front end is being worked on.
+        newest = max(pathlib.Path(editor.app.static_folder, name).stat().st_mtime
+                     for name in editor._ASSETS)
         try:
-            os.utime(target, (stamp + 10, stamp + 10))
+            os.utime(target, (newest + 10, newest + 10))
             assert editor.asset_version() != before
         finally:
             os.utime(target, (stamp, stamp))

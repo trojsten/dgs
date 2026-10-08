@@ -16,6 +16,7 @@ from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifie
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities.math import MathObject
+from core.builder.context.quantities.picture import Picture
 from core.builder.jinja import MarkdownJinjaRenderer, PictureJinjaRenderer
 from core.utilities import colour as c
 
@@ -34,10 +35,20 @@ PICTURE_SUFFIXES = frozenset({'.svg', '.tikz'})
 #: A Markdown list marker, whose width a continuation line has to match.
 RE_LIST_MARKER = re.compile(r'[ \t]*(?:[-*+]|\d+[.)])[ \t]+')
 
-#: A Jinja tag whose filter chain reaches one of those. The `|` is required, so an argument that
-#: merely contains the word -- `default('disp')` -- is not mistaken for a filter.
+#: A Jinja tag that emits block material, in two shapes.
+#:
+#: One is a filter chain reaching `disp`, `align` or `arr`. The `|` is required, so an argument
+#: that merely contains the word -- `default('disp')` -- is not mistaken for a filter.
+#:
+#: The other is a figure, `(§ pictures.x §)`, which carries no filter at all: the include it
+#: splices in is block material for the same reason a display is, and sharing a line with prose
+#: costs it the same thing. Pandoc reads `![…](f){height=40mm}` mid-sentence as an *inline* image,
+#: so the figure loses its own paragraph, its caption and its number without any error anywhere.
 RE_DISPLAY_TAG = re.compile(
-    r'\(§(?:(?!§\)).)*\|[ \t]*(?:' + '|'.join(DISPLAY_FILTERS) + r')[a-z]*\b(?:(?!§\)).)*§\)',
+    r'\(§(?:'
+    r'(?:(?!§\)).)*\|[ \t]*(?:' + '|'.join(DISPLAY_FILTERS) + r')[a-z]*\b(?:(?!§\)).)*'
+    r'|[ \t]*pictures\.(?:(?!§\)).)*'
+    r')§\)',
     re.DOTALL)
 
 
@@ -413,6 +424,20 @@ class ConstantsContext(FileContext):
 #: rather than surfacing as a `TypeError: unexpected keyword argument` from inside the
 #: constructor, or, for a misspelt `magnitude`, as a bare `KeyError` with nothing in it to say
 #: which entry of which file was wrong.
+#: What one `pictures:` entry may hold.
+#:
+#: Both keys are required and there are no others, because both are written by every one of the
+#: repository's 2003 includes and nothing else ever is -- `height` is the only pandoc attribute
+#: any of them uses. A figure wanting `width` instead is a deliberate addition here rather than
+#: something an author can invent at a call site, which is the point: a typo in an attribute name
+#: is silent, and an unsized figure is refused much later by `convertor.py` with a message about
+#: `\pandocbounded`.
+PICTURE_ENTRY = {
+    'file': str,
+    'height': str,
+}
+
+
 VALUE_ENTRY = {
     # **Never a string.** YAML 1.1 wants both a decimal point and a sign before it reads an
     # exponent as a number, so `1e15`, `1e+15` and `1.0e15` all parse as bare strings -- and the
@@ -474,6 +499,11 @@ class StandaloneContext(FileContext):
         # text, reached as `(§ words.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
         # instead; these are the one-offs, which is the large majority of them.
         Opt('words'): {Opt(ValidIdentifier): {Opt(str): str}},
+        # A figure: which file, how big, and -- through the key -- what it is called. Reached as
+        # `(§ pictures.hanging §)`. The key becomes the `{#fig:<pid>:<key>}` label, so nobody
+        # writes one, which is the same bargain `eq:` makes and matters more here: 440 of the 869
+        # hand-written figure labels in the repository did not follow the convention.
+        Opt('pictures'): {Opt(ValidIdentifier): PICTURE_ENTRY},
     })
 
 
@@ -491,6 +521,7 @@ def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = f
 
 
 def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bool = True,
+                         captioned: bool = True,
                          missing_words: 'MissingWordRegistry | None' = None) -> Context:
     """
     Everything a template may reach, built from one already-validated problem meta.
@@ -621,6 +652,22 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
                                               labelled=labelled)
         ctx.add(eq=meta.data['eq'])
 
+    # Figures, namespaced under `pictures` for the reason `blocks` and `words` are: a picture
+    # reached as `(§ pictures.hanging §)` shadows nothing, so it may be called anything.
+    #
+    # `captioned` comes from the caller for the same reason `labelled` does, and is the same
+    # decision wearing a different hat -- a caption is what makes a figure a `figure`, and so
+    # what gives it a number and a label. A statement's figures are never captioned and a
+    # solution's always are, which is what stops one being referenceable in English and not in
+    # Slovak.
+    if 'pictures' in meta.data:
+        ctx.add(pictures={
+            key: Picture(f"{meta.data['id']}:{key}", entry['file'],
+                         captioned=captioned,
+                         attributes={k: v for k, v in entry.items() if k != 'file'})
+            for key, entry in meta.data['pictures'].items()
+        })
+
     return ctx
 
 
@@ -642,6 +689,21 @@ class CLIInterface(cli.CLIInterface, ABC):
     #: a module that says nothing is unaffected, and a file type added to a module later is
     #: numbered until somebody decides otherwise rather than silently losing its labels.
     equation_numbering: dict[str, bool] = {}
+
+    #: Per file, whether its figures carry a caption, and so a number and a `{#fig:…}` label.
+    #:
+    #: The figure half of `equation_numbering`, declared the same way and empty here for the same
+    #: reason -- which of a module's files is a statement is the module's own taxonomy. A file this
+    #: does not mention keeps what it had, which is "captioned if the author wrote a caption".
+    #:
+    #: Two things make this worth stating rather than leaving to the call site. A caption is what
+    #: makes pandoc emit a `figure` at all, so it decides the number and the label together: a
+    #: label on an uncaptioned image reaches the page as nothing, which 553 of the repository's
+    #: hand-written labels do. And it has already gone wrong per language -- `18/firework-bee`
+    #: references its figure in English only, and the English booklet prints `??` because no
+    #: language captioned it.
+    figure_captions: dict[str, bool] = {}
+
     """
     Jinja standalone convertor CLI interface
     """
@@ -673,12 +735,29 @@ class CLIInterface(cli.CLIInterface, ABC):
         about it -- which is the one thing a live preview must not do.
         """
         meta_path = Path(self.args.context.name)
-        meta = self.context_cls(self.args.context.name, meta_path).add(id=meta_path.parent.name)
+        meta = self.context_cls(self.args.context.name, meta_path).add(
+            id=self.label_prefix(meta_path))
         meta.validate()
+        infile = Path(self.args.infile.name).name
         return build_render_context(
             meta, self.args.locale, root=meta_path.parent,
-            labelled=self.equation_numbering.get(Path(self.args.infile.name).name, True),
+            labelled=self.equation_numbering.get(infile, True),
+            captioned=self.figure_captions.get(infile, True),
             missing_words=self.missing_words)
+
+    @staticmethod
+    def label_prefix(meta_path: Path) -> str:
+        """
+        What every `{#eq:…}` and `{#fig:…}` in this problem is named after.
+
+        The problem's own directory, which is right wherever that directory name is unique --
+        Náboj's problems are slugs, so `hilltop-gun` names only one problem in the repository.
+        It is overridable because seminar's are not: its problems are numbered `01`, `02`, … per
+        round, so its house rule is the composite `{#fig:421101:key}` and its labels are currently
+        written by hand in four incompatible spellings, with seven names defined in more than one
+        problem directory.
+        """
+        return meta_path.parent.name
 
     def build_convertor(self, args, **kwargs):
         return JinjaConvertor(self.args.infile,
