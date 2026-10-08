@@ -481,6 +481,51 @@ class TestFiles:
     def test_asset_unused(self, tmp_path):
         assert 'asset-unused' in ids(run(tmp_path, assets=('orphan.svg',)))
 
+    #: A meta whose `pictures:` declares `belt.svg` under the key `belt`.
+    PICTURES_META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                     "tags: ['kinematics']\n"
+                     "pictures:\n  belt:\n    file: belt.svg\n    height: 40mm\n")
+
+    def test_picture_literal(self, tmp_path):
+        """A hand-typed include of a file the problem's own `pictures:` already declares."""
+        files = {'sk': {'problem.md': '![](belt.svg){height=40mm}\n'}}
+        assert 'picture-literal' in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
+                                            assets=('belt.svg',)))
+
+    def test_picture_literal_is_quiet_where_nothing_is_declared(self, tmp_path):
+        """
+        The same include in a problem with no `pictures:` block. A problem nobody has converted is
+        not a problem with a defect in it, and every include in the repository looks like this
+        until its volume is swept.
+        """
+        files = {'sk': {'problem.md': '![](belt.svg){height=40mm}\n'}}
+        assert 'picture-literal' not in ids(run(tmp_path, files=files, assets=('belt.svg',)))
+
+    def test_picture_literal_is_quiet_for_an_undeclared_file(self, tmp_path):
+        """
+        A converted problem may still include a drawing it has not declared -- the check is about
+        a second spelling of one entry, not about every image in a converted unit.
+        """
+        files = {'sk': {'problem.md': '![](other.svg){height=40mm}\n'}}
+        assert 'picture-literal' not in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
+                                                assets=('belt.svg', 'other.svg')))
+
+    def test_a_declared_picture_is_not_unused(self, tmp_path):
+        """
+        `asset-unused` counts what the text references. Once a figure is a `pictures:` entry the
+        text no longer names the file, so without this every converted drawing would be reported
+        as referenced by no language.
+        """
+        files = {'sk': {'problem.md': '(§ pictures.belt §)\n'}}
+        assert 'asset-unused' not in ids(run(tmp_path, meta=self.PICTURES_META, files=files,
+                                             assets=('belt.svg',)))
+
+    def test_a_declared_picture_that_does_not_exist(self, tmp_path):
+        """The render refuses it too, but the audit reads sources without building anything."""
+        meta = self.PICTURES_META.replace('belt.svg', 'nope.svg')
+        files = {'sk': {'problem.md': '(§ pictures.belt §)\n'}}
+        assert 'figure-missing' in ids(run(tmp_path, meta=meta, files=files, assets=('belt.svg',)))
+
     def test_encoding(self, tmp_path):
         files = {'sk': {'problem.md': 'trailing   \nand\ttab\n'}}
         assert 'encoding' in ids(run(tmp_path, files=files))
@@ -613,6 +658,39 @@ class TestTranslationStatus:
         entry = status.detail['languages']['en']['files']['solution.md']
         assert entry['state'] == 'symlink'
         assert 'mirrors sk' in entry['note']
+
+
+class TestPictureStatus:
+    """
+    The verdict shown on the `/audit` page, which nothing exercised until `pictures:` existed --
+    which is how the missing import that would have raised here went unnoticed for a whole commit.
+    """
+
+    META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+            "tags: ['kinematics']\n"
+            "pictures:\n  belt:\n    file: belt.svg\n    height: 40mm\n")
+
+    def test_a_declared_picture_counts_as_included(self, tmp_path):
+        """`(§ pictures.belt §)` names no file, so the drawing would otherwise read as unused."""
+        files = {'sk': {'problem.md': '(§ pictures.belt §)\n'}}
+        status = statuses_of(tmp_path, meta=self.META, files=files, assets=('belt.svg',))['pictures']
+        assert status.state == 'ok'
+        assert status.detail['declared'] == ['belt']
+        assert status.detail['unused'] == []
+
+    def test_a_declared_picture_that_does_not_exist_is_broken(self, tmp_path):
+        meta = self.META.replace('belt.svg', 'nope.svg')
+        files = {'sk': {'problem.md': '(§ pictures.belt §)\n'}}
+        status = statuses_of(tmp_path, meta=meta, files=files, assets=('belt.svg',))['pictures']
+        assert status.state == 'broken'
+        assert status.detail['broken'] == ['pictures.belt: nope.svg']
+
+    def test_a_literal_include_still_reads_as_it_did(self, tmp_path):
+        """The quiet half: nothing about an unconverted problem moves."""
+        files = {'sk': {'problem.md': '![](belt.svg){height=40mm}\n'}}
+        status = statuses_of(tmp_path, files=files, assets=('belt.svg',))['pictures']
+        assert status.state == 'ok'
+        assert status.detail['declared'] == []
 
 
 class TestEquationStatus:

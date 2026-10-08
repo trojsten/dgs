@@ -26,6 +26,7 @@ from core.audit.checks import (
     RE_LABEL,
     RE_TAG,
     blocks_of,
+    declared_pictures,
     ignored,
     magnitudes,
     strip_maths_whitespace,
@@ -227,6 +228,16 @@ def picture_status(unit):
     pictures = {a for a in unit.assets if a.lower().endswith(PICTURE_SUFFIXES)}
     stems = {p.rsplit('.', 1)[0] for p in pictures}
     referenced, unsized, broken, misnamed, hand_written = set(), [], [], [], []
+    # A declared figure is included by `(§ pictures.x §)`, which names no file, so without this
+    # every drawing in a converted problem would read as referenced by no language.
+    declared = declared_pictures(unit)
+    for key, entry in declared.items():
+        target = entry.get('file') if isinstance(entry, dict) else None
+        if not isinstance(target, str):
+            continue
+        referenced.add(target)
+        if not (unit.root / target).exists():
+            broken.append(f'pictures.{key}: {target}')
     for lang, name, text in unit.files():
         where = unit.label(lang, name)
         for m in RE_FIGURE.finditer(text):
@@ -251,7 +262,8 @@ def picture_status(unit):
     referenced_stems = {r.rsplit('.', 1)[0] for r in referenced}
     unused = sorted(p for p in pictures if p.rsplit('.', 1)[0] not in referenced_stems)
 
-    detail = {'pictures': sorted(pictures), 'referenced': sorted(referenced),
+    detail = {'pictures': sorted(pictures), 'declared': sorted(declared),
+              'referenced': sorted(referenced),
               'unused': unused, 'broken': broken, 'misnamed': misnamed,
               'unsized': unsized, 'hand_written': hand_written}
     if not pictures and not referenced:
@@ -272,7 +284,9 @@ def picture_status(unit):
         if unsized:
             parts.append(f"{len(unsized)} without a size")
         return Status('pictures', 'partial', ', '.join(parts), detail)
-    return Status('pictures', 'ok', f"{len(pictures)} included", detail)
+    included = f"{len(pictures)} included"
+    return Status('pictures', 'ok',
+                  f"{included}, {len(declared)} declared" if declared else included, detail)
 
 
 # --- values -----------------------------------------------------------------

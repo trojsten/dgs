@@ -1021,6 +1021,12 @@ def angle_as_qty(sources):
 
 # --- files ------------------------------------------------------------------
 
+def declared_pictures(unit):
+    """`pictures:` as {key: entry}, or empty. The figure counterpart of `declared_symbols`."""
+    pictures = (unit.meta or {}).get('pictures')
+    return pictures if isinstance(pictures, dict) else {}
+
+
 @check('insert-picture', 'error', r'\insertPicture written by hand')
 def insert_picture(sources):
     r"""
@@ -1032,8 +1038,8 @@ def insert_picture(sources):
         for lang, name, text in unit.files():
             for m in re.finditer(r'\\insertPicture', text):
                 yield Finding('insert-picture', 'error',
-                              'the TeX command belongs in the output, not the source; write '
-                              '`![](picture.svg){height=40mm}`',
+                              'the TeX command belongs in the output, not the source; declare '
+                              'the figure in `pictures:` and write `(§ pictures.name §)`',
                               unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
@@ -1066,6 +1072,16 @@ def figure_missing(sources):
                                   f"{target} exists nowhere in the problem; LaTeX falls back to "
                                   f"`example-image`",
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
+        # A declared figure is the same question asked one level up. The render would refuse it
+        # too, but the audit reads sources without building anything, and a missing drawing is
+        # exactly the finding somebody wants before a build rather than after one.
+        for key, entry in declared_pictures(unit).items():
+            target = entry.get('file') if isinstance(entry, dict) else None
+            if not isinstance(target, str) or (unit.root / target).exists():
+                continue
+            yield Finding('figure-missing', 'error',
+                          f"`pictures.{key}` names {target}, which exists nowhere in the problem",
+                          unit.path, 'meta.yaml')
 
 
 #: `![](file.svg}` -- the target closed with a brace instead of a parenthesis. Pandoc does not read
@@ -1101,7 +1117,8 @@ def figure_unsized(sources):
 @check('asset-unused', 'info', 'A picture nothing references')
 def asset_unused(sources):
     for unit in sources.unit_list:
-        referenced = set()
+        referenced = {entry['file'] for entry in declared_pictures(unit).values()
+                      if isinstance(entry, dict) and isinstance(entry.get('file'), str)}
         for _, _, text in unit.files():
             referenced |= {m['file'].split()[0] for m in RE_FIGURE.finditer(text)}
         for asset in sorted(unit.assets):
@@ -1109,6 +1126,35 @@ def asset_unused(sources):
                     and asset not in referenced:
                 yield Finding('asset-unused', 'info',
                               f"{asset} is referenced by no language", unit.path)
+
+
+@check('picture-literal', 'warning', 'A figure written out although it is declared')
+def picture_literal(sources):
+    """
+    A hand-typed include naming a file the problem's own `pictures:` already declares.
+
+    The figure counterpart of `value-equation-literal`, and conditional on the declaration for the
+    same reason: where there is a `pictures:` entry the include is a second spelling of it, and the
+    two drift exactly as a per-language equation does -- 166 of the repository's 386 multilingual
+    figures disagree about their size, 12 about whether they carry a label at all.
+
+    Silent where nothing is declared. A problem nobody has converted is not a problem with a
+    defect in it.
+    """
+    for unit in sources.unit_list:
+        declared = {entry['file']: key for key, entry in declared_pictures(unit).items()
+                    if isinstance(entry, dict) and isinstance(entry.get('file'), str)}
+        if not declared:
+            continue
+        for lang, name, text in unit.files():
+            for m in RE_FIGURE.finditer(text):
+                key = declared.get(m['file'].split()[0])
+                if key is None:
+                    continue
+                yield Finding('picture-literal', 'warning',
+                              f"`pictures.{key}` declares this figure; write "
+                              f"`(§ pictures.{key} §)` instead",
+                              unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
 @check('symlink', 'info', 'A translation that is a symlink')
