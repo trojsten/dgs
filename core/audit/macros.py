@@ -1,7 +1,7 @@
 r"""
 The one audit question that cannot be answered by reading files: is this macro defined at all?
 
-`core/latex/math.tex` alone names 191 macros and `dgs.cls` loads 146 packages on top of it, which
+`core/latex/math.tex` alone names 212 macros and `dgs.cls` loads 52 packages on top of it, which
 shadow and complete each other -- `\Chi` turns out to come from `mathspec`, `\bigtimes` from
 MnSymbol, `\sfrac` from xfrac by way of chemmacros. No amount of reading `core/latex/` settles
 whether a given name exists. The only authority is TeX, so this asks it: one probe document that

@@ -51,7 +51,7 @@ nothing is cached — except the two checks that cannot be answered by reading f
 the macro sweep.
 
 `macro-undefined` is the odd one out and worth knowing about. Whether `\Diff` exists is not a
-question about the sources: `math.tex` names 191 macros, `dgs.cls` loads 146 packages that shadow
+question about the sources: `math.tex` names 212 macros, `dgs.cls` loads 52 packages that shadow
 and complete each other, and the answers surprise in both directions — `\Chi` comes from mathspec,
 `\diff` is defined by nothing although `\diff@` is. So `core/audit/macros.py` asks TeX, once, with
 a probe that runs `\ifcsname` over every control word in the tree; `checks.macro_undefined` reads
@@ -319,7 +319,7 @@ holds the whole filter / global table; and everything in
 ## What an author may type: `docs/filters.md`
 
 Every filter, global, quantity attribute and `meta.yaml` key, with a worked example of each —
-**182 filters and 32 globals** on the Markdown environment alone, of which only 57 names appear
+**182 filters and 32 globals** on the Markdown environment alone, of which only 78 names appear
 anywhere in `source/`, because until now the only way to find one was to read `jinja.py`.
 
 It is **generated** from the table in `core/builder/reference.py` by
@@ -339,8 +339,13 @@ adding its entry, and the example is executable, so it cannot be wrong for long.
 
 **The two environments are disjoint**, which nothing said before: `MarkdownJinjaRenderer` serves
 `.md` (and `.svg`/`.tikz` through `PictureJinjaRenderer`) and `StaticRenderer` serves `.jtex`.
-`|disp` is written 4760 times and exists only in the first; `|upnth` is written 11 times and
+`|disp` is written 5509 times and exists only in the first; `|upnth` is written 11 times and
 exists only in the second. Either mistake is found by a failed build and by nothing else.
+
+Counts in this file are **hand-written and go stale**, which is what these four did: 191 macros
+against 212, 146 packages against 52, 57 names against 78, 4760 `|disp` against 5509. Count over
+**resolved** paths when you refresh one -- `source/` holds 84 symlinks, and reading through them
+counted `|disp` 6330 times, 821 of them the same files twice.
 
 The editor serves the same table at `/api/reference` and shows it on hover, so the reference is
 where the typing is.

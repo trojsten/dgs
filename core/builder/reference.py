@@ -3,8 +3,8 @@ What an author may type, as data: every filter, global, attribute and `meta.yaml
 example that is executed rather than asserted.
 
 The vocabulary is **182 filters and 32 globals** on the Markdown environment alone, and it was
-written down nowhere. The cost is measurable: 57 of those 182 names appear anywhere in `source/`
-and the other 125 are unreachable in practice, because the only way to find one is to read
+written down nowhere. The cost is measurable: 64 of those 182 names appear anywhere in `source/`
+and the other 118 are unreachable in practice, because the only way to find one is to read
 `core/builder/jinja.py`. `CLAUDE.md` covers the half-dozen conventions that have cost somebody a
 bug; this covers the table.
 
@@ -26,7 +26,7 @@ Three things read this:
 
 Two environments, and they are **disjoint**. `MarkdownJinjaRenderer` serves `.md` (and, through
 `PictureJinjaRenderer`, `.svg` and `.tikz`); `StaticRenderer` serves `.jtex`. `|disp` is written
-4760 times and works only in the first; `|upnth` is written 11 times and works only in the
+5509 times and works only in the first; `|upnth` is written 11 times and works only in the
 second. Neither fact was written down, and either mistake is found by a failed build. Every entry
 says which environment it belongs to, and the editor offers only the right set for the pane.
 
