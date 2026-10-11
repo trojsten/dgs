@@ -105,15 +105,16 @@ define prepare_arguments_round
 		-c $(word 1,$(words)) -v $(word 2,$(words)) -s $(word 3,$(words)) -r $(word 4,$(words)) -o '$(dir $@)' || exit 1;
 endef
 
-# Jinja template: render Markdown to Markdown. Here language is currently hardcoded as `sk`.
-render/%.md: \
-	source/%.md \
-	source/$$(dir $$*)/meta.yaml
-ifdef lang
-	$(call _jinja,$(lang),$(abspath $(dir $<)/meta.yaml))
-else
-	$(call _jinja,sk,$(abspath $(dir $<)/meta.yaml))
-endif
+# A global `render/%.md` rule used to sit here, and it could never have worked: its recipe called
+# `_jinja`, which is defined nowhere in the repository, so `$(call _jinja,…)` expanded to nothing
+# and the rule had an empty recipe -- the silent-empty-success shape that `.DELETE_ON_ERROR`
+# exists to prevent, one file over. It also guarded that recipe with `ifdef lang`, a *parse-time*
+# conditional, so the `else` branch was dead anyway: `Makefile:24` always sets `lang`.
+#
+# It never fired. `RULE_TEMPLATE_SEMINAR` above generates `render/seminar/%/<file>.md`, whose stem
+# is shorter for any target both could match, so make always took the specific rule -- which is
+# the only reason seminar has been building. Removed rather than repaired, because the rule it
+# would have become already exists.
 
 build/seminar/%.tex: \
 	render/seminar/%.md \

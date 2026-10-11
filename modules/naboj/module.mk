@@ -233,12 +233,21 @@ build/naboj/%/evaluators.tex: \
 	build/naboj/$$*/build-language ;
 
 # Instructions before the online competition (content)
+#
+# The recipe was a hand-rolled copy of `pandoctex` that had gone stale: it ran
+# `python core/pandoc.py`, and the convertor's entry point is `./pandoc.py` at the repository
+# root. Nothing noticed because no source has an `_extras/instructions-online-inner.md`, so the
+# target has never been reachable -- but a copy of a macro is how that drift happened, so it calls
+# the macro now.
+#
+# Two things still set this rule apart from every other `.tex` here, both left as they were: it
+# reads `source/` directly rather than `render/`, so the Markdown is never Jinja-rendered, and it
+# names neither `build/core/i18n.stamp` nor `$(PIPELINE_STAMP)`. Whoever writes the first
+# `_extras/instructions-online-inner.md` will have to decide whether either is deliberate.
 build/naboj/%/instructions-online-inner.tex: \
 	source/naboj/$$*/_extras/instructions-online-inner.md
 	$(eval language := $(word 4,$(subst /, ,$*)))
-	@echo -e '$(c_action)[pandoc] Converting Markdown file $(c_filename)$<$(c_action) to TeX file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	python core/pandoc.py --format latex $(language) $< $@ || exit 1;
+	$(call pandoctex,$(language))
 
 # Instructions before the online competition (full document)
 # % <competition>/<volume>/languages/<language>
