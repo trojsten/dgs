@@ -1143,8 +1143,21 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--debug", action="store_true")
+    # The reloader is on whether or not `--debug` is, and that is the point: without it the
+    # server keeps serving the code it was started with, and every answer it gives is from then.
+    # The audit is where this bites, because its answers look current and are not -- a session
+    # that fixed `reference-dangling` went on reading **131** findings off the `/audit` page for
+    # hours, against **0** when the same check was run in-process. A stale finding is worse than
+    # no finding: somebody goes and looks for a defect that is not there.
+    #
+    # Separate from `--debug`, which also turns on Werkzeug's interactive debugger -- a console
+    # on the machine, and not something to switch on by accident just to pick up an edit.
+    parser.add_argument("--no-reload", action="store_true",
+                        help="do not restart when the source changes (the server then serves "
+                             "the code it was started with, including in /audit)")
     args = parser.parse_args()
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug,
+            use_reloader=not args.no_reload)
 
 
 if __name__ == "__main__":
