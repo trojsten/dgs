@@ -370,4 +370,20 @@ distclean: clean
 	rm -rf output/
 	rm -rf render/
 
-.PHONY: clean distclean hello
+# The targeted version of `clean`, for the one case make cannot handle itself: a problem that has
+# been renamed or deleted leaves its `render/` and `build/` copies behind, because a target whose
+# prerequisite has vanished has no rule left to remove it (see the note at the head of this file)
+# and `.SECONDARY:` keeps every intermediate. `\protectedInput` then goes on including the stale
+# `.tex`, so a booklet can print a problem that is no longer in the sources.
+#
+# `stale` lists and `prune` removes, deliberately two targets: the audit's `build-orphan` reports
+# the same thing without a build, and a one-word difference between asking and deleting is not a
+# safe thing to offer.
+stale:
+	@python tools/prune.py
+
+prune:
+	@echo -e '$(c_action)Prune:$(c_default)'
+	@python tools/prune.py --delete
+
+.PHONY: clean distclean prune stale

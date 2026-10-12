@@ -6,6 +6,10 @@ Each is a function over a scope's `Sources` yielding `Finding`s. No writing, no 
 whole point of this layer is that it costs a fifth of a second over the entire repository, so the
 overview page can recompute everything on every request.
 
+One check reads outside `source/`: `build-orphan` lists directories under `build/` and `render/`,
+because what is left there after a rename is not a question the sources can answer. It opens no
+file and keeps the cost, and a tree that has never been built reports nothing.
+
 Several checks carry a comment naming a false positive they must *not* produce. Those are not
 hypothetical: each one was produced by the first version of that sweep and cost real time. They are
 tested in `core/tests/test_audit.py`.
@@ -16,6 +20,7 @@ lazily and declare `modules=('naboj',)`; nothing here needs `modules` to be impo
 import re
 from collections import Counter, defaultdict
 
+from core.audit import stale
 from core.audit.model import Finding, check
 
 # --- shared patterns --------------------------------------------------------
@@ -795,6 +800,36 @@ def listed_missing(sources):
         yield Finding('listed-missing', 'error',
                       f"`{name}` is listed in {sources.scope}/meta.yaml but no such directory "
                       f"exists; the page will carry a `Missing file` box in its place")
+
+
+@check('build-orphan', 'warning',
+       'A built directory whose source has been renamed or deleted')
+def build_orphan(sources):
+    r"""
+    The third direction, and the only one that is not a question about the sources.
+
+    `listed-missing` reports the meta naming a problem that is not there; this reports what is
+    left *under* `build/` and `render/` when the directory goes. Make cannot clean up after
+    itself here -- `Makefile:55-61` says so -- and `.SECONDARY:` keeps every intermediate, so a
+    rename leaves both mirrors behind for ever.
+
+    Usually that is only clutter. It is a wrong page when the meta still names the unit, because
+    `\protectedInput` finds the stale `.tex` and includes it: the booklet goes on printing the
+    deleted problem instead of the red `Missing file` box it is owed. Volume 19's `onion` was
+    that shape. So this is a warning and `listed-missing` is the error -- together they say both
+    halves of what happened.
+
+    **It reads directories outside `source/`**, which no other check here does. The cost is the
+    same (a listing, no file opened, nothing written) and the answer degrades the right way: a
+    tree that has never been built simply has nothing to report, as `macro-undefined` does
+    without its sweep.
+    """
+    for orphan in stale.orphans(sources):
+        yield Finding('build-orphan', 'warning',
+                      f"`{orphan}` has no source directory left -- {orphan.files} "
+                      f"file{'' if orphan.files == 1 else 's'} from a rename or a deletion. "
+                      f"`make prune` removes it; if {sources.scope}/meta.yaml still names it, "
+                      f"the booklet is printing this copy")
 
 
 @check('translation-set', 'warning',

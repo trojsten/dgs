@@ -93,6 +93,19 @@ class Sources:
     translated_files: tuple = TRANSLATED_FILES
     shared_files: tuple = SHARED_FILES
 
+    @property
+    def repo_root(self) -> Path:
+        """
+        Where `build/` and `render/` sit, which is beside the `source/` this module was read from.
+
+        Derived rather than passed, so that nothing upstream has to learn a second path: a module
+        root is `<repo>/source/<module>` in the tree and anything at all in a test, and the one
+        thing that distinguishes them is the `source` component. A test builds its own repository
+        shape and gets the answer it asked for.
+        """
+        parent = self.module_root.parent
+        return parent.parent if parent.name == 'source' else parent
+
     def present_translated(self):
         """Translated files any problem in this scope actually has, in the rules' order."""
         found = {name for u in self.units.values() for f in u.translated.values() for name in f}

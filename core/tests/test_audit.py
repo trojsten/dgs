@@ -12,7 +12,7 @@ import re
 import pytest
 import yaml
 
-from core.audit import audit
+from core.audit import audit, stale
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
 from core.audit.sources import SHARED_FILES, TRANSLATED_FILES, read_scope
 from core.audit.status import translation_status
@@ -935,6 +935,91 @@ class TestVolumeListing:
                              [f'phys/99/problems/{n}' for n in ('alpha', 'beta', 'stray')])
         assert [u.name for u in sources.unit_list] == ['beta', 'alpha', 'stray']
         assert sources.unit_list[-1].order is None
+
+
+def make_repo(tmp_path, built=(), beside_the_scope=()):
+    """
+    A repository shape rather than a bare module root, because `build-orphan` is the one check
+    that looks outside `source/` and has to find `build/` beside it.
+
+    `built` names directories to create under both mirrors at the unit level; `beside_the_scope`
+    names directories to create one level up, where the generated aggregates live.
+    """
+    module_root = tmp_path / 'source' / 'naboj'
+    module_root.mkdir(parents=True)
+    make_problem(module_root, name='widget')
+    for stage in ('render', 'build'):
+        for name in built:
+            target = tmp_path / stage / 'naboj' / 'phys' / '99' / 'problems' / name
+            target.mkdir(parents=True)
+            (target / 'solution.tex').write_text('stale')
+        for name in beside_the_scope:
+            target = tmp_path / stage / 'naboj' / 'phys' / '99' / name
+            target.mkdir(parents=True)
+            (target / 'answers.tex').write_text('generated')
+    return module_root
+
+
+class TestBuildOrphans:
+    """
+    What is left under `build/` and `render/` when a problem is renamed. Make cannot clear it up
+    -- a target whose prerequisite has vanished has no rule left to remove it -- so the booklet
+    goes on including the stale `.tex` through `\\protectedInput`.
+
+    The quiet cases are the point here. A first version that merely asked "is there a source
+    directory of this name" called **567** directories stale across the repository, because
+    `build/` is full of generated ones that never had a source: `answers/`, `solutions/`,
+    `build/core/`, every aggregate a template produces.
+    """
+
+    def test_renamed_problem_leaves_an_orphan(self, tmp_path):
+        module_root = make_repo(tmp_path, built=('widget', 'old-name'))
+        report = audit(module_root, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        assert 'build-orphan' in ids(report)
+        messages = [f.message for f in report.findings if f.check == 'build-orphan']
+        assert len(messages) == 2                               # one per mirror
+        assert all('old-name' in m for m in messages)
+        assert not any('widget' in m for m in messages)
+
+    def test_a_built_unit_that_still_has_its_source_is_quiet(self, tmp_path):
+        module_root = make_repo(tmp_path, built=('widget',))
+        assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
+                                               ['phys/99/problems/widget']))
+
+    def test_a_generated_directory_beside_the_scope_is_quiet(self, tmp_path):
+        """`answers/` and `solutions/` are built from templates and never had a source."""
+        module_root = make_repo(tmp_path, built=('widget',),
+                                beside_the_scope=('answers', 'solutions', 'languages'))
+        assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
+                                               ['phys/99/problems/widget']))
+
+    def test_a_tree_that_was_never_built_is_quiet(self, tmp_path):
+        """No `build/` at all reports nothing, as `macro-undefined` does without its sweep."""
+        module_root = make_repo(tmp_path)
+        for stage in ('render', 'build'):
+            assert not (tmp_path / stage).exists()
+        assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
+                                               ['phys/99/problems/widget']))
+
+    def test_remove_takes_the_directory_and_reports_what_went(self, tmp_path):
+        module_root = make_repo(tmp_path, built=('widget', 'old-name'))
+        sources = read_scope(module_root, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        found = stale.orphans(sources)
+        assert [o.stage for o in found] == ['render', 'build']
+        assert stale.remove(found[0]) == 1
+        assert not found[0].path.exists()
+        assert (tmp_path / 'render' / 'naboj' / 'phys' / '99' / 'problems' / 'widget').is_dir()
+
+    def test_remove_unlinks_a_symlink_rather_than_following_it(self, tmp_path):
+        """`source/` holds 84 symlinks; a prune that followed one would delete outside the tree."""
+        module_root = make_repo(tmp_path, built=('widget', 'old-name'))
+        outside = tmp_path / 'precious.md'
+        outside.write_text('not ours to delete')
+        orphan_dir = tmp_path / 'render' / 'naboj' / 'phys' / '99' / 'problems' / 'old-name'
+        (orphan_dir / 'link.md').symlink_to(outside)
+        sources = read_scope(module_root, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        stale.remove(next(o for o in stale.orphans(sources) if o.stage == 'render'))
+        assert outside.read_text() == 'not ours to delete'
 
     def test_fingerprint_ignores_the_order(self, tmp_path):
         """Reordering the meta must not call every cached build stale."""

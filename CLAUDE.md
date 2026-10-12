@@ -50,6 +50,30 @@ nothing is cached — except the two checks that cannot be answered by reading f
 `build/.audit/` with a fingerprint of the sources: the build checks, which shell out to make, and
 the macro sweep.
 
+**There is a third direction, and it is the one make cannot fix: `build-orphan`.** Rename a
+problem and its `render/` and `build/` copies stay where they are for ever — a target whose
+prerequisite has vanished has no rule left to remove it, and `.SECONDARY:` keeps every
+intermediate. Mostly that is clutter. It is a *wrong page* when the meta still names the unit,
+because `\protectedInput` finds the stale `.tex` and the booklet goes on printing the deleted
+problem instead of the red box it is owed; volume 19's `onion` was exactly that. So
+`listed-missing` is the error and this is the warning, and together they say what happened.
+
+`make stale` lists them and **`make prune` removes them** — two targets on purpose, since one
+word between asking and deleting is not a safe thing to offer. `core/audit/stale.py` is the whole
+of it, and it is the one check that reads outside `source/`: a directory listing, no file opened,
+and a tree that has never been built reports nothing.
+
+**It looks at unit directories and nothing coarser**, which is the only reason it is usable.
+`build/` is full of directories that never had a source — `answers/`, `solutions/`, `build/core/`,
+every aggregate a template produces — so the obvious rule, *is there a source directory of this
+name*, calls **567** of them stale. What makes a unit different is that the audit already knows
+where units live: the scope's unit paths give both the parent to look in and the names that belong
+there, which is also what keeps it module-agnostic (naboj's units sit under `problems/`, seminar's
+under `1/1`, and neither is written down). The cost of the narrow rule is that **a unit whose
+siblings are gone too is invisible**, because the parent is no longer a place units live:
+`build/naboj/phys/00`, 161 files left from before the specimen volume became its own module, wants
+a human. Leaves are what renames leave behind, and leaves are what this finds.
+
 `macro-undefined` is the odd one out and worth knowing about. Whether `\Diff` exists is not a
 question about the sources: `math.tex` names 212 macros, `dgs.cls` loads 52 packages that shadow
 and complete each other, and the answers surprise in both directions — `\Chi` comes from mathspec,
