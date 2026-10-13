@@ -104,8 +104,10 @@ class MathObject:
 
         `array` sets its cells in **text** style, so a `\frac` inside one comes out at script
         size -- next to an `aligned` block on the same page the difference is glaring. `array`'s
-        `>{…}` prefix fixes it per column, which is why `core/latex/wrt.tex` requires the `array`
-        package. Authors never write this; they write `|arr('rclcl')` and get it.
+        `>{…}` prefix fixes it per column, and that prefix is an `array` package feature --
+        reaching the document indirectly, through `\RequirePackage[table]{xcolor}` in `dgs.cls`,
+        which loads `colortbl`, which loads `array`. Drop that `table` option and this breaks.
+        Authors never write this; they write `|arr('rclcl')` and get it.
         """
         return ''.join(f'>{{\\displaystyle}}{c}' if c in cls._COLUMN_TYPES else c
                        for c in columns)

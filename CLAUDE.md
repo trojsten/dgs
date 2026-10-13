@@ -1551,8 +1551,12 @@ and after. Reading through a symlink is safe; writing is not.
 
   It does three things for you, all of them `array` defects that would otherwise be the author's
   to remember. Every column is put in **display style**, because `array` sets its cells in text
-  style and a `\frac` inside one would otherwise come out at script size -- that is what
-  `\RequirePackage{array}` in `wrt.tex` is for. The terminal punctuation lands **inside the final
+  style and a `\frac` inside one would otherwise come out at script size. The `>{…}` prefix that
+  fixes it belongs to the `array` package, which **nothing requires by name**: it arrives through
+  `\RequirePackage[table]{xcolor}` in `dgs.cls` → `colortbl` → `array`, so dropping that `table`
+  option would break every `|arr` block in the repository. (This note used to credit
+  `\RequirePackage{array}` in `core/latex/wrt.tex`, which was never loaded by anything and is
+  now deleted.) The terminal punctuation lands **inside the final
   cell**: after `\end{array}` a stop floats at the array's vertical centre, beside the middle row.
   And every row separator gets **`\jot`** of glue, because `array` zeroes `\baselineskip` and
   `\lineskip` and spaces its rows by a strut alone -- two rows of display-style fractions

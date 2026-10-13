@@ -253,8 +253,8 @@
 \NewDocumentCommand{\OIntD}{O{} m m}{\OInt@[#1]{#2}{#3}<\cdot>}
 \NewDocumentCommand{\OIntDV}{O{} m m}{\OIntD[#1]{\vec{#2}}{\vec{#3}}}
 % Loop integral over #1 of cross product of #2 and d#3 (for instance magnetic B dl)
-% `\cross` belongs to the `physics` package, which `dgs.cls` does not load -- only the dead
-% `core/latex/wrt.tex` does. Every other cross-product integral in this file uses `\times`.
+% `\cross` belongs to the `physics` package, which nothing in this repository loads. Every other
+% cross-product integral in this file uses `\times`.
 \NewDocumentCommand{\OIntC}{O{} m m}{\OInt@[#1]{#2}{#3}<\times>}
 \NewDocumentCommand{\OIntCV}{O{} m m}{\OIntC[#1]{\vec{#2}}{\vec{#3}}}
 
