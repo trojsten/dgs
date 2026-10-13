@@ -627,3 +627,69 @@ class TestErrorBoxesReachTheWeb:
         output = convert('html', 'en', 'You get `\\errorMessage{gap:cs}` in the output.')
         assert '<code>\\errorMessage{gap:cs}</code>' in output
         assert 'dgs-error' not in output
+
+
+class TestFigureCaptionStyling:
+    r"""
+    The HTML figure caption is centred and its text italicised, as the booklet sets it.
+
+    Two things had gone wrong with the rule that does it, and the second is the instructive one.
+    It matched `<figcaption>Obrázok (\d*):` -- the Slovak word, written into the pattern -- so ten
+    of the eleven languages could never have matched; pandoc-crossref takes that word from
+    `figureTitle` in the locale, and it is `Figure`, `Abbildung`, `Ábra` and eight more.
+
+    But they were missing nothing, because the rule had stopped firing for **every** language,
+    Slovak included: pandoc writes `<figcaption aria-hidden="true">` and the pattern wanted a bare
+    `<figcaption>`. 209 built fragments carried a caption and not one was styled. A post-regex that
+    silently stops matching is indistinguishable from one that never ran, so these tests assert the
+    two things that broke it -- the word and the attribute -- rather than the output as a whole.
+    """
+    CAPTIONED = '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}'
+
+    def styled(self, convert, language, caption):
+        out = convert('html', language, f'![{caption}](ryba.svg)' + '{#fig:ryba height=47mm}')
+        return out.replace('\n', ' ')
+
+    def test_the_caption_is_centred_and_its_text_italic(self, convert):
+        out = self.styled(convert, 'sk', 'Masívna ryba')
+        assert 'text-align: center;' in out
+        assert 'font-style: italic;' in out
+
+    def test_the_span_is_closed(self, convert):
+        """It used to open a `<span>` and leave the browser to guess where it ended."""
+        out = self.styled(convert, 'sk', 'Masívna ryba')
+        assert out.count('<span style="font-style: italic;">') == out.count('</span>') == 1
+
+    def test_only_the_caption_text_is_italic_not_the_number(self, convert):
+        out = self.styled(convert, 'sk', 'Masívna ryba')
+        assert re.search(r'Obrázok\s*1:\s*<span style="font-style: italic;">Masívna ryba</span>',
+                         out) is not None
+
+    @pytest.mark.parametrize('language, word', [('en', 'Figure'), ('de', 'Abbildung')])
+    def test_it_does_not_depend_on_the_language(self, convert, language, word):
+        """The half that was broken for a decade: the word belongs to the locale, not the rule."""
+        out = self.styled(convert, language, 'A fish')
+        assert word in out
+        assert f'{word} 1: <span style="font-style: italic;">A fish</span>' in out
+
+    def test_it_survives_the_attribute_pandoc_writes(self, convert):
+        """`aria-hidden="true"` is why it stopped firing; it must be kept, not matched away."""
+        out = self.styled(convert, 'sk', 'Masívna ryba')
+        assert 'aria-hidden="true"' in out
+        assert 'style="text-align: center;"' in out
+
+    def test_an_unnumbered_caption_is_left_alone(self, convert):
+        """
+        The quiet half. Without a number there is no label to hold outside the span, so the rule
+        must not fire -- and an uncaptioned image is not a `figure` at all, so pandoc writes no
+        `<figcaption>` for it in the first place.
+        """
+        out = convert('html', 'sk', '![](ryba.svg){height=47mm}').replace('\n', ' ')
+        assert '<figcaption' not in out
+        assert 'font-style: italic;' not in out
+
+    def test_the_booklet_is_untouched(self, convert):
+        """The other quiet half: this is an HTML rule and LaTeX has its own caption machinery."""
+        out = convert('latex', 'sk', self.CAPTIONED)
+        assert 'font-style' not in out
+        assert 'text-align' not in out

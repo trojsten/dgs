@@ -89,10 +89,27 @@ class Convertor:
                 r'style="height:(?P<height>[0-9.]*)mm"',
                 r'style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"',
             ),
-            # Change figure title
+            # Centre the figure caption and italicise the caption text, as the booklet does.
+            #
+            # **It keys on the number, not on the word**, because the word is the locale's:
+            # pandoc-crossref takes it from `figureTitle` in `build/core/i18n/<lang>.yaml`, so it
+            # is `Obrázok`, `Figure`, `Abbildung`, `Ábra` and seven more. This rule used to match
+            # `<figcaption>Obrázok (\d*):` -- Slovak, hardcoded -- so ten of the eleven languages
+            # could never have matched it.
+            #
+            # They were not missing anything, which is the part worth keeping in mind: the rule
+            # had stopped firing for **every** language, Slovak included, because pandoc writes
+            # `<figcaption aria-hidden="true">` and the pattern wanted a bare `<figcaption>`.
+            # 209 built fragments carry a caption and not one of them was styled. A post-regex
+            # that silently stops matching looks exactly like one that never ran, which is the
+            # whole argument for `post_checks` -- and this rule had none.
+            #
+            # It also opened a `<span>` it never closed, and left the browser to guess.
             RegexReplacement(
-                r'<figcaption>Obrázok (?P<number>\d*):',
-                r'<figcaption style="text-align: center;">Obrázok \g<number>: <span style="font-style: italic;">',
+                r'<figcaption(?P<attrs>[^>]*)>(?P<label>[^<:]*?\d+:)\s*(?P<text>.*?)</figcaption>',
+                r'<figcaption\g<attrs> style="text-align: center;">\g<label> '
+                r'<span style="font-style: italic;">\g<text></span></figcaption>',
+                purpose='Centre the figure caption and italicise its text',
             ),
         ],
     }
