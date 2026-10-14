@@ -9,4 +9,3 @@ class QuantityList(QuantitySequence):
     here, which is only how siunitx wants the input.
     """
     _KIND = 'list'
-    _SEPARATOR = ';'

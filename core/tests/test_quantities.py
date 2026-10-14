@@ -13,6 +13,7 @@ from core.builder.context.quantities import (
     QuantityRange,
     QuantitySequence,
     UnknownUnitMacroError,
+    backend,
 )
 
 
@@ -1746,3 +1747,97 @@ class TestAggregateBase:
         group has to be omitted rather than emptied.
         """
         assert format(QuantityList(PhysicsQuantity.construct(1, '')), 'g').endswith('{1}')
+
+
+class TestBackends:
+    r"""
+    A quantity spells itself according to the render, not according to a hard-coded choice.
+
+    The point of the seam: `\qty{3}{\metre}` is a package macro, not maths, so **pandoc drops
+    it** -- `--to typst` turns `A quantity: \qty{3}{\metre}.` into `A quantity: .`, and `--to
+    html` does the same. That is why `core/filters/siunitx.py` exists to parse it back apart,
+    and why the spelling had to become a choice before a third output format could be cheap.
+    """
+
+    @pytest.fixture
+    def speed(self):
+        return PhysicsQuantity.construct(3, 'metre / second')
+
+    def test_the_default_is_latex(self, speed):
+        assert backend.current() is backend.LATEX
+        assert format(speed, 'g') == r'\qty{3}{\metre\per\second}'
+
+    def test_plain_spells_the_same_quantity_without_tex(self, speed):
+        with backend.using('plain'):
+            assert format(speed, 'g') == '3 m/s'
+
+    def test_using_restores_the_previous_backend(self, speed):
+        with backend.using('plain'):
+            assert backend.current() is backend.PLAIN
+        assert backend.current() is backend.LATEX
+
+    def test_nested_scopes_unwind(self, speed):
+        with backend.using('plain'):
+            with backend.using('latex'):
+                assert format(speed, 'g') == r'\qty{3}{\metre\per\second}'
+            assert format(speed, 'g') == '3 m/s'
+
+    def test_an_unknown_backend_fails_at_the_call_not_at_the_page(self):
+        with pytest.raises(ValueError, match='Unknown quantity backend'):
+            backend.resolve('typst')
+
+    def test_the_degree_closes_up_in_both(self):
+        """`\\ang{45}` and `45°` are the same decision made twice, so both backends make it."""
+        angle = PhysicsQuantity.construct(45, 'degree')
+        assert format(angle, 'g') == r'\ang{45}'
+        with backend.using('plain'):
+            assert format(angle, 'g') == '45°'
+
+    def test_a_rate_of_degrees_is_not_an_angle(self):
+        rate = PhysicsQuantity.construct(30, 'degree / second')
+        assert format(rate, 'g').startswith(r'\qty')
+        with backend.using('plain'):
+            assert format(rate, 'g') == '30 deg/s'
+
+    def test_the_unit_alone_follows_the_backend(self, speed):
+        assert speed.only_unit() == r'\unit{\metre\per\second}'
+        with backend.using('plain'):
+            assert speed.only_unit() == 'm/s'
+
+    def test_a_range_rounds_outward_only_for_latex(self):
+        """
+        The one place the two disagree about a *value*. LaTeX prints the set of answers a marker
+        accepts and must not shrink it; plain text labels a span in a drawing and must not
+        widen it.
+        """
+        band = QuantityRange(PhysicsQuantity.construct(3.67749, 'metre / second'),
+                             PhysicsQuantity.construct(3.75, 'metre / second'))
+        assert format(band, '.1f') == r'\qtyrange{3.6}{3.8}{\metre\per\second}'
+        with backend.using('plain'):
+            assert format(band, '.1f') == '3.7 m/s – 3.8 m/s'
+
+    def test_force_f_is_honoured_in_both(self):
+        """
+        The one output this unification changed. `|txtg` used to ignore `force_f` and write a
+        power of ten for a quantity declared never to be written as one. Nothing in the corpus
+        formats a `force_f` quantity as text, so no rendered file moved.
+        """
+        fixed = PhysicsQuantity.construct(3.1e-6, 'second', force_f=True)
+        assert format(fixed, 'g') == r'\qty{0.0000031}{\second}'
+        with backend.using('plain'):
+            assert format(fixed, 'g') == '0.0000031 s'
+
+    @pytest.mark.parametrize('cls, latex, plain_text', [
+        (QuantityList, r'\qtylist{3;4}{\metre}', '3 m, 4 m'),
+        (QuantityProduct, r'\qtyproduct{3 x 4}{\metre}', '3 m × 4 m'),
+    ])
+    def test_the_aggregates_are_a_different_operation_in_each(self, cls, latex, plain_text):
+        """
+        siunitx takes the magnitudes as one argument and prints the separator itself; plain text
+        writes each element out in full, unit and all. The `;` is input syntax, not typography,
+        which is why it belongs to the backend and not to `QuantityList`.
+        """
+        pair = cls(*[PhysicsQuantity.construct(x, 'metre') for x in (3, 4)])
+        assert format(pair, 'g') == latex
+        with backend.using('plain'):
+            assert format(pair, 'g') == plain_text

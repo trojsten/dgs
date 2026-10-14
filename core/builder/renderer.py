@@ -15,6 +15,7 @@ from core import cli, i18n
 from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifier
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
+from core.builder.context.quantities import backend as quantity_backend
 from core.builder.context.quantities.math import MathObject
 from core.builder.context.quantities.picture import Picture
 from core.builder.jinja import MarkdownJinjaRenderer, PictureJinjaRenderer
@@ -528,7 +529,7 @@ def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = f
 
 
 def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bool = True,
-                         captioned: bool = True,
+                         captioned: bool = True, backend: str = 'latex',
                          missing_words: 'MissingWordRegistry | None' = None) -> Context:
     """
     Everything a template may reach, built from one already-validated problem meta.
@@ -539,7 +540,15 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
     looks. `labelled` is what the module's `equation_numbering` decided for the file being
     rendered, and `missing_words` collects the words the language has not got, so a caller that
     wants the render to fail can see them.
+
+    `backend` is how every quantity in this render spells itself -- `latex` for siunitx, `plain`
+    for text with no TeX in it. It is set here and read at format time rather than stored on each
+    quantity, because a quantity's identity does not depend on who prints it and because the
+    arithmetic builds new ones in twenty places; see
+    `core/builder/context/quantities/backend.py`. `|txt` overrides it for one call, which is why
+    the specimen volume can show both spellings on one page.
     """
+    quantity_backend.set_current(backend)
     missing_words = MissingWordRegistry() if missing_words is None else missing_words
 
     constants = ConstantsContext('constants', Path('core/data/constants.yaml'))

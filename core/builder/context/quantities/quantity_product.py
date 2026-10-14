@@ -9,4 +9,3 @@ class QuantityProduct(QuantitySequence):
     The ` x ` is siunitx's input syntax; the `×` on the page comes from its own settings.
     """
     _KIND = 'product'
-    _SEPARATOR = ' x '

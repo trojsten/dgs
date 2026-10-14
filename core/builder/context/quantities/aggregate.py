@@ -21,6 +21,7 @@ three places to teach about a backend. There is one.
 """
 from core.utilities.dicts import strict_merge
 
+from . import backend as _backend
 from .physics_quantity import PhysicsQuantity
 
 
@@ -32,19 +33,16 @@ class QuantityAggregate:
     #: -- and whether there is a unit is a property of the values, not of the class.
     _KIND: str = None
 
-    def _assemble(self, groups: list[str], unit: str) -> str:
-        r"""
-        `\qtyrange[opts]{1}{2}{\metre}` and its five siblings, from parts already formatted.
-
-        `groups` are the brace groups before the unit: one joined string for a list or a product,
-        two endpoints for a range. The unit decides the command, so an empty one gives `\num…`
-        and omits the trailing group altogether rather than passing `{}` -- siunitx reads an
-        empty unit as a unit, and sets the number followed by nothing where it would have gone.
+    def _assemble(self, magnitudes: list[str], unit: str) -> str:
         """
-        command = ('qty' if unit else 'num') + self._KIND
-        si_extra = PhysicsQuantity.format_si_extra(self.si_extra)
-        body = ''.join(f'{{{group}}}' for group in groups)
-        return rf'\{command}{si_extra}{body}' + (f'{{{unit}}}' if unit else '')
+        Hand the parts to the current backend, which decides how several values are written.
+
+        One magnitude for a list or a product -- already joined by the separator siunitx parses
+        -- and two for a range. The backends do quite different things with them: LaTeX makes a
+        single `\\qtylist{3;4;5}{\\metre}` call, while plain text writes every element out in
+        full and joins them with an en dash or a comma.
+        """
+        return _backend.current().aggregate(self._KIND, magnitudes, unit, self.si_extra)
 
     def __str__(self):
         return format(self, 'g')
@@ -54,14 +52,11 @@ class QuantitySequence(QuantityAggregate):
     """
     An arbitrary number of commensurate quantities, printed in one call with a separator.
 
-    The separator is siunitx's own input syntax rather than what reaches the page: `;` between
-    list items and ` x ` between product factors is what `\\qtylist` and `\\qtyproduct` *parse*.
-    What they print is set in `core/latex/siunitx.tex` (`list-separator`, `inter-unit-product`
-    and the rest), which is also where `core/filters/plain.py` copies its own separators from.
+    How the elements are joined is the backend's business and not stated here, because the two
+    disagree about what the operation even is: siunitx takes them as one argument with `;` or
+    ` x ` between them and prints the separator itself, while plain text writes each element out
+    in full, unit and all, and joins those.
     """
-
-    #: What the magnitudes are joined with on the way *in* to siunitx. Not a typographic choice.
-    _SEPARATOR: str = None
 
     def __init__(self, *qs: PhysicsQuantity):
         # Force the same unit everywhere first; if that cannot be done, pint raises.
@@ -73,8 +68,7 @@ class QuantitySequence(QuantityAggregate):
     def __format__(self, fmt: str):
         formatted = [q.format_struct(fmt) for q in self.qs]
         # The unit is the first element's: the constructor has already coerced them all to it.
-        return self._assemble([self._SEPARATOR.join(f['magnitude'] for f in formatted)],
-                              formatted[0]['unit'])
+        return self._assemble([f['magnitude'] for f in formatted], formatted[0]['unit'])
 
     def to(self, unit):
         """Convert every element to another commensurate unit."""

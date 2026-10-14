@@ -11,6 +11,8 @@ from pint import UnitRegistry as u
 
 from core.filters.hacks import BareKind, ExplicitFixed, cut_extra_one, natural
 
+from . import backend as _backend
+
 
 class MissingSymbolError(Exception):
     """
@@ -284,25 +286,17 @@ class PhysicsQuantity:
 
     def __format__(self, fmt):
         """
-        Format the quantity as a siunitx command (\\num or \\qty).
-        The format spec is forwarded to the underlying magnitude formatting:
-        empty spec prints the magnitude with Python's default for its type
-        (plain decimal for ints, repr-like for floats), which is usually
-        what callers want for verbatim output. Pass 'g', '.3f' etc. for
-        specific formatting.
+        Spell the quantity the way the current backend does.
+
+        The format spec is forwarded to the magnitude formatting and nowhere else: an empty spec
+        prints the magnitude with Python's default for its type, which is what a caller wanting
+        verbatim output expects. Pass `g`, `.3f` and so on for a precision.
+
+        **Which backend is a property of the render, not of this object** -- see
+        `core/builder/context/quantities/backend.py` for why it is read here rather than stored.
         """
         fragments = self.format_struct(fmt=fmt)
-        cmd = fragments['cmd']
-        si_extra = self.format_si_extra(self.si_extra)
-        magnitude = f"{{{fragments['magnitude']}}}"
-        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else ''
-        # An angle on its own is `\ang`, siunitx's own command for one, and what the sources
-        # write by hand throughout. Only here: there is no `\anglist` or `\angrange`, so a list
-        # or a range of angles stays `\qtylist` / `\qtyrange` and keeps `\degree` as its unit.
-        # Only a bare degree, too -- `\qty{30}{\degree\per\second}` is a rate, not an angle.
-        if fragments['unit'] == r'\degree':
-            return rf'\ang{si_extra}{magnitude}'
-        return rf'\{cmd}{si_extra}{magnitude}{unit}'
+        return _backend.current().scalar(fragments['magnitude'], fragments['unit'], self.si_extra)
 
     def __repr__(self):
         return f"{self.__class__.__name__} ({self._quantity})"
@@ -404,11 +398,8 @@ class PhysicsQuantity:
                                si_extra=self.si_extra, digits=self.digits, exact=self.exact)
 
     def only_unit(self):
-        r""" Return a nicely formatted unit (\unit{...} in siunitx format) """
-        fragments = self.format_struct(fmt='g')
-        si_extra = self.format_si_extra(self.si_extra)
-        unit = f"{{{fragments['unit']}}}" if fragments['unit'] else '{1}'
-        return rf'\unit{si_extra}{unit}'
+        """The unit with no number in front of it, spelled by the current backend."""
+        return _backend.current().bare_unit(self.format_struct(fmt='g')['unit'], self.si_extra)
 
     def _unop(self, func) -> Self:
         r"""
@@ -511,13 +502,11 @@ class PhysicsQuantity:
         # `\qty[exponent-mode=scientific]{e+15}{\becquerel}` sets `0 \cdot 10^{14}`, which is not
         # the number. Two separately correct decisions, so the one that yields is the cosmetic one.
         magnitude = printed if self._has_exponent_option() else cut_extra_one(printed)
-        unit = self._latex_unit(si_fragment.group('unit'))
 
         return {
-            'cmd': 'num' if unit == '' else 'qty',
             'si_extra': self.si_extra,
             'magnitude': magnitude,
-            'unit': unit,
+            'unit': _backend.current().unit(self),
         }
 
     #: siunitx options that make it re-read and re-normalise the mantissa, so an empty one
@@ -527,6 +516,11 @@ class PhysicsQuantity:
 
     def _has_exponent_option(self) -> bool:
         return bool(self.si_extra) and bool(self._EXPONENT_OPTIONS & set(self.si_extra))
+
+    def latex_unit(self) -> str:
+        """This quantity's unit as siunitx macros. The LaTeX backend's half of `Backend.unit`."""
+        return self._latex_unit(re.search(r'\\SI\[]{.*}{(?P<unit>.*)}$',
+                                          f'{self._quantity:Lx}').group('unit'))
 
     @classmethod
     def _latex_unit(cls, unit: str) -> str:

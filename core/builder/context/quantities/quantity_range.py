@@ -2,6 +2,7 @@ from typing import Self
 
 from core.utilities.dicts import strict_merge
 
+from . import backend
 from .aggregate import QuantityAggregate
 from .physics_quantity import PhysicsQuantity
 
@@ -119,6 +120,16 @@ class QuantityRange(QuantityAggregate):
         nearest_max = self.maximum.format_struct(fmt)['magnitude']
         if nearest_min == nearest_max:
             return format(self.minimum, fmt)
+
+        # **Whether to move the ends outward is the backend's to say**, and it is the one place
+        # the two disagree about a value rather than about a spelling. What LaTeX prints is
+        # `answer-interval.md`, the set of answers a marker accepts: rounding to nearest shrinks
+        # it and turns away correct work, the `29/bouncy-v` defect. What plain text prints is a
+        # label on a span in a drawing, and widening that would claim a width nobody measured.
+        # `backend.rounds_outward` carries it, and `backend.py` says why that flag is uneasy.
+        if not backend.current().rounds_outward:
+            return self._assemble([nearest_min, nearest_max],
+                                  self.minimum.format_struct(fmt)['unit'])
 
         minr = self._outward(self.minimum, fmt, down=True).format_struct(fmt)
         maxr = self._outward(self.maximum, fmt, down=False).format_struct(fmt)
