@@ -51,8 +51,8 @@ from typing import Any
 from core.builder.context.quantities import (
     PhysicsQuantity,
     QuantityList,
-    QuantityProduct,
     QuantityRange,
+    QuantitySequence,
 )
 
 from .numbers import format_float, format_general
@@ -123,7 +123,7 @@ def _render(x: Any, precision: int | None, kind: str) -> str:
         ends = (x.minimum, x.maximum)
         return RANGE_PHRASE.join(_scalar(end, precision, kind) for end in ends)
 
-    if isinstance(x, (QuantityList, QuantityProduct)):
+    if isinstance(x, QuantitySequence):
         # `__init__` has already coerced every element to a common unit, so each one carries it:
         # `list-units` and `range-units` are both `repeat` in `core/latex/siunitx.tex`, and the
         # booklet prints `3 cm × 4 cm × 5 cm`.

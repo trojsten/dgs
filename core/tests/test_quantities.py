@@ -7,9 +7,11 @@ import regex as re
 from core.builder.context.quantities import (
     MissingSymbolError,
     PhysicsQuantity,
+    QuantityAggregate,
     QuantityList,
     QuantityProduct,
     QuantityRange,
+    QuantitySequence,
     UnknownUnitMacroError,
 )
 
@@ -1692,3 +1694,55 @@ class TestForceF:
         q = PhysicsConstant.construct('e', magnitude=123456.0, unit='joule',
                                       symbol='E', force_f=True)
         assert r'\qty{123456}{\joule}' == f'{q}'
+
+
+class TestAggregateBase:
+    """
+    What `QuantityAggregate` and `QuantitySequence` are for.
+
+    `QuantityList` and `QuantityProduct` used to be the same 59 lines written twice -- identical
+    constructor, `si_extra`, `to`, `__eq__`, `__str__`, `__repr__`, `__len__`, `__iter__` and
+    `__getitem__`, and `__format__`s differing only in a separator and two macro names. These
+    pin the three things that could quietly change when they stopped being two copies: that the
+    separators did not get swapped, that a list and a product of the same quantities are still
+    not equal, and that the dimensionless `\\numproduct` form still exists -- the one of the six
+    siunitx commands no source in the repository happens to call.
+    """
+
+    @pytest.fixture
+    def three(self):
+        return [PhysicsQuantity.construct(x, 'metre') for x in (3, 4, 5)]
+
+    def test_all_three_aggregates_share_the_base(self):
+        for cls in (QuantityList, QuantityProduct, QuantityRange):
+            assert issubclass(cls, QuantityAggregate)
+
+    def test_only_the_sequences_are_sequences(self):
+        """A range has two named endpoints, not a row of elements, and must not inherit them."""
+        assert issubclass(QuantityList, QuantitySequence)
+        assert issubclass(QuantityProduct, QuantitySequence)
+        assert not issubclass(QuantityRange, QuantitySequence)
+        assert not hasattr(QuantityRange(PhysicsQuantity.construct(1, 'metre'),
+                                         PhysicsQuantity.construct(2, 'metre')), 'qs')
+
+    def test_the_separators_did_not_get_swapped(self, three):
+        assert format(QuantityList(*three), 'g') == r'\qtylist{3;4;5}{\metre}'
+        assert format(QuantityProduct(*three), 'g') == r'\qtyproduct{3 x 4 x 5}{\metre}'
+
+    def test_a_list_is_not_a_product(self, three):
+        """Same quantities, different statements about them. `type`, not `isinstance`."""
+        assert QuantityList(*three) != QuantityProduct(*three)
+        assert QuantityList(*three) == QuantityList(*three)
+
+    def test_the_dimensionless_forms(self):
+        """`\\numproduct` is not called anywhere in `source/`, so only a test holds it up."""
+        two = [PhysicsQuantity.construct(x, '') for x in (3, 4)]
+        assert format(QuantityProduct(*two), 'g') == r'\numproduct{3 x 4}'
+        assert format(QuantityList(*two), 'g') == r'\numlist{3;4}'
+
+    def test_an_empty_unit_passes_no_group_at_all(self):
+        """
+        siunitx reads `{}` as a unit and sets the number followed by nothing, so the trailing
+        group has to be omitted rather than emptied.
+        """
+        assert format(QuantityList(PhysicsQuantity.construct(1, '')), 'g').endswith('{1}')

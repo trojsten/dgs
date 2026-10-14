@@ -6,9 +6,7 @@ from enschema import Or, Schema
 
 from core.builder.context.quantities import (
     PhysicsQuantity,
-    QuantityList,
-    QuantityProduct,
-    QuantityRange,
+    QuantityAggregate,
 )
 
 from ..builder.context.quantities.math import MathObject
@@ -135,7 +133,7 @@ def format_people(people: str | list | dict, *, func: Callable = identity, and_w
 #: `\qty{…}{…}` otherwise, and `\qtyrange`, `\qtylist`, `\qtyproduct` for the collections.
 #: `format_float` and `format_general` delegate to their `__format__`, so what comes back is
 #: already a call and must not be wrapped in another one.
-_SELF_FORMATTING = (PhysicsQuantity, QuantityRange, QuantityList, QuantityProduct)
+_SELF_FORMATTING = (PhysicsQuantity, QuantityAggregate)
 
 
 def num(x: float):

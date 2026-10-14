@@ -2,14 +2,21 @@ from typing import Self
 
 from core.utilities.dicts import strict_merge
 
+from .aggregate import QuantityAggregate
 from .physics_quantity import PhysicsQuantity
 
 
-class QuantityRange:
+class QuantityRange(QuantityAggregate):
     """
     Represents a range of two magnitudes of commensurate quantities.
     Also meant to be useful for result tolerances.
+
+    The third aggregate, and the one that is not a sequence: two named endpoints rather than a
+    row of elements, which is what `_outward` and `snap` need to talk about. It shares the
+    siunitx assembly with the other two and nothing else.
     """
+
+    _KIND = 'range'
 
     def __init__(self,
                  minimum: PhysicsQuantity,
@@ -116,18 +123,7 @@ class QuantityRange:
         minr = self._outward(self.minimum, fmt, down=True).format_struct(fmt)
         maxr = self._outward(self.maximum, fmt, down=False).format_struct(fmt)
 
-        si_extraf = PhysicsQuantity.format_si_extra(self.si_extra)
-        minf = f"{{{minr['magnitude']}}}"
-        maxf = f"{{{maxr['magnitude']}}}"
-
-        # Use \numrange for dimensionless quantities, \qtyrange otherwise.
-        if minr['unit']:
-            cmd = 'qtyrange'
-            unitf = f"{{{minr['unit']}}}"
-        else:
-            cmd = 'numrange'
-            unitf = ''
-        return rf'\{cmd}{si_extraf}{minf}{maxf}{unitf}'
+        return self._assemble([minr['magnitude'], maxr['magnitude']], minr['unit'])
 
     def snap(self, quantum: float) -> Self:
         """
@@ -163,6 +159,3 @@ class QuantityRange:
     def to(self, unit) -> Self:
         """ Convert both endpoints to another commensurate unit. """
         return QuantityRange(self.minimum.to(unit), self.maximum.to(unit))
-
-    def __str__(self):
-        return format(self, 'g')
