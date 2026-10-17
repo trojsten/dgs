@@ -152,6 +152,7 @@ build/naboj/%/build-venue: \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../../copy-static)) \
 	$$(call naboj_problem_dirs,$$*) \
 	$$(NABOJ_TEMPLATES) \
+	$$(wildcard $$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.jtex))) \
 	$$(subst $$(cdir),,$$(abspath source/naboj/$$*/../../../i18n))
 	$(call prepare_arguments,venue)
 	python -m modules.naboj.builder.venue 'source/naboj/' 'modules/naboj/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
@@ -216,7 +217,7 @@ build/naboj/%/constants.tex: \
 # Instructions to be put on the table before the competition (content)
 # % <competition>/<volume>/venues/<venue>
 build/naboj/%/instructions-inner.tex: \
-	$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.md))) \
+	$$(wildcard $$(subst $(cdir),,$$(abspath source/naboj/$$*/../../languages/*/instructions-inner.jtex))) \
 	build/naboj/$$*/build-venue ;
 
 # Instructions to be put on the table before the competition (full document)

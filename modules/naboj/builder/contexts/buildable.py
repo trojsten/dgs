@@ -60,8 +60,7 @@ class BuildableContextVenue(BuildableContextNaboj):
     def populate(self, competition, volume, venue):
         super().populate(competition, volume)
         self.adopt(
-            venue=ContextVenue(self.root, competition, volume, venue)
-                               .override('start', self.data['volume']['start']),
+            venue=ContextVenue(self.root, competition, volume, venue),
             i18n=ContextI18nGlobal(self.root, competition)
         ).add(language=i18n.languages[self.data['venue']['language']].as_dict())
 
