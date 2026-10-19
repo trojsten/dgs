@@ -27,12 +27,19 @@
     \unskip{\tiny\dotfill}
 }
 
+% The \makebox is exactly \linewidth wide whatever it holds. graphicx's scaling is not
+% exact, so `width=\linewidth` can come out a hundredth of a point wider than the line,
+% too little for an overfull warning but enough that the picture no longer fits beside
+% `center`'s empty \item label: TeX breaks after the label, and an empty centred line --
+% a whole \baselineskip -- opens above the drawing. `29/amusement-speed` lost 5 mm to it.
 \NewDocumentCommand{\insertPicture}{O{} m}{%
     \begin{center}
-        \IfFileExists{\activeDirectory/#2}{%
-            \includegraphics[#1]{\activeDirectory/#2}%
-        }{%
-            \includegraphics[#1]{example-image}%
+        \makebox[\linewidth]{%
+            \IfFileExists{\activeDirectory/#2}{%
+                \includegraphics[#1]{\activeDirectory/#2}%
+            }{%
+                \includegraphics[#1]{example-image}%
+            }%
         }%
     \end{center}
 }
