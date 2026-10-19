@@ -122,6 +122,20 @@ build/seminar/%.tex: \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,sk)
 
+# The HTML twin of `build/seminar/%.tex` below. It is here rather than in
+# `RULE_TEMPLATE_SEMINAR` because this is where the work actually happens: the per-file rules in
+# that define write `$$*` where they need `$$$$*`, so their prerequisite first-expands to
+# `render/seminar//problem.md` and the rules never match anything. `.tex` has been reaching this
+# catch-all all along.
+#
+# `pathlang` rather than the hardcoded `sk` below: seminar has no language directories, so the
+# two agree today, and this one will keep agreeing if that ever changes.
+build/seminar/%.html: \
+	render/seminar/%.md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$(call pandochtml,$(call pathlang,$*))
+
 build/seminar/%/problems.tex build/seminar/%/solutions.tex build/seminar/%/solutions-full.tex build/seminar/%/instagram.tex: \
 	modules/seminar/templates/$$(subst .tex,.jtex,$$(notdir $$@)) \
 	$$(SEMINAR_TEMPLATES) \
@@ -142,13 +156,18 @@ build/seminar/%/pdf-prerequisites: \
 	source/seminar/$$*/meta.yaml \
 	build/core/i18n.stamp ;
 
-output/seminar/%/html-prerequisites: \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.svg)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.png)) \
-	$$(subst source/,output/,$$(wildcard source/seminar/$$*/*/*.py)) \
-	$$(subst source/,output/,$$(subst .gp,.png,$$(wildcard source/seminar/$$*/*/*.gp))) \
-	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/seminar/$$*/*/*.tikz))) ;
+# `build/%.svg` takes a picture from any source, so this is one line per depth rather than one
+# per extension -- and `.tikz`, which the list here never mentioned, is covered by it. Seminar
+# has no TikZ today; naboj has many, and the two lists should not differ in what they can hold.
+build/seminar/%/html-prerequisites: \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*/*.py)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/seminar/$$*/*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@mkdir -p $(@D) && touch $@
 
 output/seminar/%/problems.pdf: \
 	modules/seminar/templates/problems.jtex \
@@ -186,29 +205,65 @@ output/seminar/%/instagram: \
 
 ### Batch outputs
 
-output/seminar/%/html-problems: \
-	output/seminar/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md))) ;
+# A fragment lands in `build/` beside its `.tex`, as naboj's does. These used to point at
+# `output/`, where the generic `output/%.html: source/%.md` rule picked them up -- the rule that
+# read `source/` and so skipped Jinja for the whole HTML branch.
+build/seminar/%/html-problems: \
+	build/seminar/$$*/html-prerequisites \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/problem.md)))
+	@mkdir -p $(@D) && touch $@
 
-output/seminar/%/html-solutions:\
-	output/seminar/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md))) ;
+build/seminar/%/html-solutions: \
+	build/seminar/$$*/html-prerequisites \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/*/solution.md)))
+	@mkdir -p $(@D) && touch $@
+
+# A **page**: one problem assembled from its fragments, with its pictures copied in beside it
+# and its maths typeset, so the directory opens from `file://` with nothing else present.
+#
+# This is what goes in `output/`. A fragment is an intermediate -- it is to a page what a
+# `.tex` is to a PDF, and opening one shows prose with `\(…\)` spelled out and broken image
+# links -- so fragments stay in `build/` and everything under `output/` is a thing you can
+# open. They used to land in `output/` and that is exactly how one got opened.
+#
+# A page whose picture is missing is still written, with a red box where the drawing belongs,
+# and the build stays green: an absent drawing is visible to anyone who opens the page, and
+# failing would cost a whole round its pages for one hole in one problem. `page.py` says which
+# pictures are missing on stderr.
+# % <competition>/<semester>/<round>/<problem>, e.g. FKS/42/1/1/01
+output/seminar/%/index.html: \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/problem.md))) \
+	$$(subst source/,build/,$$(subst .md,.html,$$(wildcard source/seminar/$$*/solution.md))) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/seminar/$$*/*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/seminar/$$*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@echo -e '$(c_action)[page] Assembling $(c_filename)build/seminar/$*$(c_action) into $(c_extension)HTML$(c_action) page $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(@D)
+	python -m core.html.page build/seminar/$* $(lang) $(@D) --module seminar
+
+# Every page of a round. % <competition>/<semester>/<round>, e.g. FKS/42/1/1
+output/seminar/%/pages: \
+	$$(foreach problem,$$(wildcard source/seminar/$$*/*/meta.yaml),\
+	  $$(subst source/,output/,$$(subst /meta.yaml,/index.html,$$(problem)))) ;
 
 output/seminar/%/pdf: \
 	output/seminar/$$*/problems.pdf \
 	output/seminar/$$*/solutions.pdf ;
 
-output/seminar/%/html: \
-	output/seminar/$$*/html-problems \
-	output/seminar/$$*/html-solutions ;
+build/seminar/%/html: \
+	build/seminar/$$*/html-problems \
+	build/seminar/$$*/html-solutions ;
 
 output/seminar/%/problems: \
 	output/seminar/$$*/problems.pdf \
-	output/seminar/$$*/html-problems ;
+	build/seminar/$$*/html-problems ;
 
 output/seminar/%/solutions: \
 	output/seminar/$$*/solutions.pdf \
-	output/seminar/$$*/html-solutions ;
+	build/seminar/$$*/html-solutions ;
 
 output/seminar/%: \
 	output/seminar/$$*/problems \

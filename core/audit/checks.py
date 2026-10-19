@@ -1843,3 +1843,64 @@ def macro_undefined(sources):
                 yield Finding('macro-undefined', 'error',
                               rf'`\{name}` is not defined by anything the build loads{often}',
                               unit.path, where, number)
+
+
+#: A fenced code block, and an inline code span. Markdown sets both verbatim, so a macro written
+#: in one is being *named* rather than called -- which is how CLAUDE.md and the handouts discuss
+#: `\qty` without tripping the check below.
+RE_FENCE = re.compile(r'^[ \t]{0,3}(?P<fence>`{3,}|~{3,}).*?^[ \t]{0,3}(?P=fence)[ \t]*$',
+                      re.DOTALL | re.MULTILINE)
+RE_CODE_SPAN = re.compile(r'`+[^`\n]*`+')
+
+def only_prose(text):
+    """
+    The text with everything that is not prose blanked, newlines kept so line numbers survive.
+
+    Display maths, inline maths, fenced blocks, code spans and Jinja tags, in that order: a
+    display has to go before an inline so that a `$$` is never read as two `$`.
+    """
+    text = without_blocks(text)
+    for pattern in (RE_FENCE, RE_CODE_SPAN, RE_INLINE, RE_TAG):
+        text = pattern.sub(lambda m: '\n' * m[0].count('\n'), text)
+    return text
+
+
+@check('siunitx-in-prose', 'warning', 'A siunitx macro written outside maths')
+def siunitx_in_prose(sources):
+    r"""
+    A source is Markdown with Jinja in it, not LaTeX, so a quantity in running text is a tag or
+    it is maths -- `(§ m §)` from `values:` for a number the statement gives, `$\qty{30}{\gram}$`
+    for one it does not. A bare `\qty{30}{\gram}` between two words is neither.
+
+    It survives into the booklet, which is why it has gone unnoticed for so long: xelatex loads
+    siunitx and sets it perfectly. **The web is where it shows.**
+    `Convertor.expand_for_the_web` reaches a prose macro before `rawtex.lua` can promote it to
+    maths and expands it as though it were already there, so what lands on the page is
+    `0{,}900 %` with the TeX braces showing, or `20 ` with the unit gone, or -- for `\ang` --
+    the degree sign orphaned in a math span of its own and the following space eaten.
+
+    So the quiet half of this check is everything that is *already* right: the same macro inside
+    `$…$`, inside a `$$` block, inside a code span where it is being named rather than called,
+    and inside a Jinja tag.
+
+    The macro set is `RE_SI_HEAD`, not a list of its own, so the v2 spellings come with it:
+    `seminar/FKS` is written in `\SI` almost throughout, and a hand-written list would have
+    left that whole module unchecked, which is the mistake `SI_ARITY` records above.
+
+    Volumes 25 and 26 are the worked examples of the fix -- `25/czechlights` writes
+    `$\qty{9.73}{\ohm}$` and `$\qtylist{3.89;2.16;2.16;0.97}{\ampere}$`, both in running text,
+    both in maths.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            label = unit.real_label(lang, name)
+            if label in seen:
+                continue
+            seen.add(label)
+            prose = only_prose(text)
+            for m in RE_SI_HEAD.finditer(prose):
+                yield Finding('siunitx-in-prose', 'warning',
+                              rf'`\{m["macro"]}` is in running text; wrap it in `$…$`, or '
+                              rf'declare the quantity in `values:` and write the tag',
+                              unit.path, label, line_of(prose, m.start()))

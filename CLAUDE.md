@@ -389,6 +389,281 @@ quantity behaviour are expected to come with tests in the matching
 `--wrap=preserve` plus the wide `--columns` mean the rendered Markdown's line
 breaks survive into the TeX, so don't reflow rendered output to "fix" long lines.
 
+## HTML output, and the maths in it
+
+A page is `render/ → build/<…>.html` fragments, assembled by `core/html/page.py` into one
+`index.html` with the pictures copied in **beside it, under their own names** -- the `src` the
+author wrote keeps working and the directory can be sent to anyone as it stands. The CSS is
+inlined for the same reason: nothing is fetched and nothing is one level up.
+
+**The prose is set in Minion Pro**, the booklet's own face, with `Minion 3`, `Crimson Pro`,
+`EB Garamond`, `Constantia` and `Georgia` behind it and `sans-serif` as the one fallback. That
+is not only cosmetic: the maths is SVG sized in `ex` from the `\fontdimen5` xelatex reported
+for Minion Pro, and `ex` resolves against whatever the page is actually set in -- so a formula
+is the size it was measured to be only when the prose around it is Minion too. Under Georgia,
+whose x-height is much larger, every formula came out proportionally small.
+
+**The page is black on white and does not follow `prefers-color-scheme`.** The maths is SVG
+taking `currentColor` and the drawings are black ink on nothing, so a dark page would mean
+inverting some of the ink and not the rest; `color-scheme: light` says so to the browser too,
+which is what stops a scrollbar or a form control going dark on its own.
+
+**A picture keeps its authored height, and may be wider than the measure.** `{height=30mm}`
+reaches LaTeX as `\includegraphics[width=\linewidth, height=30mm, keepaspectratio]` -- *fit
+the measure, and be at most 30mm tall*. A web page cannot be told a bare height: on a 4:1
+drawing 30mm of height asks for 120mm of a page whose width nobody knows. Said as a **width**
+it says both at once.
+
+**What bounds it is the window, not the text column.** The booklet clamps a drawing to
+`\linewidth` because a page has an edge; a page that scrolls has not, so a wide drawing is let
+past the measure and centred on the window instead.
+
+**And it is set at `SCALE` times its printed size**, `2.0` today:
+`width: min(240.0mm, calc(100vw - 2rem)); height: auto` for a drawing the booklet prints
+120mm wide. That is an editorial choice and not a conversion -- print and screen agree about
+the millimetre, and a figure drawn to sit in a 180mm column still reads small on a screen. The
+cap is what keeps it honest: doubling a picture that already fills the window changes nothing,
+so the scale only reaches the small ones, which are the ones that wanted it. It lives in one
+constant in `page.py`, and the tests multiply by it rather than writing the doubled number.
+
+The stylesheet does the centring, and two details of it are load-bearing. The shift is
+`left: 50%` with `translateX(-50%)` and **no auto margins** -- auto margins would centre the
+element first and the shift would then push it off-centre. And a `<figure>` takes
+`width: max-content`, not `fit-content`, because the latter is capped by the container, which
+is the one thing a breakout has to get past; shrink-wrapped, it puts the caption under the
+picture rather than across a full-width block.
+
+Converting the one into the other needs the drawing's own proportions, which is why `page.py`
+does it, with the file in hand, rather than the convertor: `aspect()` reads an SVG's
+`width`/`height` (falling back to its `viewBox`, since `width="100%"` is relative to something
+we have not got), a PNG's `IHDR` and a JPEG's first `SOF`. A format it cannot read falls back
+to a ceiling, which is at least never *too wide*; guessing a ratio would distort the drawing.
+
+It used to *be* that ceiling for everything -- `max-height: 30mm; height: auto` -- and that is
+why every picture came out too small. A ceiling only binds when the picture is **larger** than
+asked for, and an SVG's intrinsic size is whatever its producer wrote: `29/chopper` is
+432x108pt, so it showed 38mm tall where the booklet prints 60.
+
+**A fragment is an intermediate and lives in `build/`; a page is output and lives in
+`output/`.** A fragment is to a page what a `.tex` is to a PDF -- it has no `<head>`, so
+nothing typesets its `\(…\)`, and its `<img>` point at files that are not beside it. Fragments
+used to be written into `output/` and that is exactly how one came to be opened and reported as
+broken maths. Everything under `output/` is now a thing you can open:
+
+    make output/seminar/FKS/42/1/1/01/index.html      one page
+    make output/seminar/FKS/42/1/1/pages              every page of a round
+    make output/naboj/phys/29/problems/chopper/sk/index.html
+    make output/naboj/phys/29/languages/sk/pages      every page of a volume, in one language
+
+**A missing picture is boxed, and does not fail the build.** `page.py` puts a red
+`Missing picture: …` where the drawing belongs, collects every one, writes the page, names
+them on stderr, and exits 0. `FKS/42/1/1/01` is the live case: its solution names four
+drawings and the directory holds two, and before this it took the whole round's pages down
+with it.
+
+**This is deliberately not the rule for a missing word.** A word goes wrong in one language
+and nowhere else, so nothing but a failed build finds it; a hole in a figure is a red box
+visible to anyone who opens the page. `build()` still raises `MissingPictures` -- the source
+really is wrong, and a caller that ignores it should not do so silently -- and the command
+line is what downgrades it to a warning.
+
+**A gnuplot script may also live in a `blocks:` entry, and one does.** `FKS/42/1/1/03` shares a
+preamble between three plots that way, and that preamble carried a `set terminal pdf` -- which
+no grep over `source/**/*.gp` can see, because the `.gp` only exists after Jinja has run. It
+overrode the build's terminal and gnuplot wrote three PDFs into files named `.svg`, with no
+error anywhere; the page showed three blank figures. The SVG rule now checks that what came out
+starts with a `<` and fails naming the file if it did not.
+
+**Where a unit's fragments are is the module's to say, and it already says it.**
+`modules/naboj/editor.yaml` carries `languages: true`, so a Náboj problem holds a directory per
+language and a fragment is `<problem>/<lang>/solution.html`; seminar's descriptor carries no
+such key, because **seminar is monolingual** -- one language, not one of several that happens to
+be checked out -- and its fragments sit in `<problem>/` directly. `page.py` reads that rather
+than looking in both places: a rule of "wherever it is" would make a Náboj problem with a
+missing language directory assemble quietly from whatever lay beside it. The same descriptor
+gives the file order, so `files=` is an override and not a list to keep in step. `lang` is
+wanted either way -- it picks the i18n and the babel the maths is set with, which a
+one-language module has as much as a six-language one.
+
+**The maths is typeset at build time, and there are two engines.**
+`page.py --maths latex|mathjax` chooses; `core/html/__init__.py`'s `ENGINE` is only the default.
+
+**The expansion happens in the convertor, not per engine.** `Convertor.expand_for_the_web`
+rewrites siunitx and this repository's own parsed macros into plain TeX on the way in, through
+`core/filters/siunitx.py` and `dgsmacros.py`, so a fragment holds ordinary maths and both
+engines read the same one: MathJax because it has no siunitx extension and cannot express
+`\FDiff`, xelatex because plain maths is what it reads anyway. The fixed-arity half of
+`math.tex` stays a MathJax macro, in `tools/editor/static/mathjax-dgs.js`, which is what lets
+the editor set a fragment in the browser.
+
+There was briefly a second implementation of this, running `macros.lua` and `siunitx.lua` per
+page from `core/html/mathjax.py` so that the fragment stayed engine-neutral. Both were written
+within a day of each other on either side of `html-output`, and the merge kept this one; the
+Lua pair, their generated tables and `core/html/{macros,siunitx}.py` are gone. `mathjax.shim_html`
+survives as an empty seam, because an engine-specific rewriting would still belong there.
+
+### A picture is the booklet's picture
+
+There is no separate web drawing. A TikZ drawing, a hand-drawn SVG and a PDF copied in all reach
+the page as `build/%.svg` made from `build/%.pdf` -- the same artefact the booklet prints -- so
+they cannot drift from what was printed. (A hand-drawn `.svg` short-circuits that and is copied:
+round-tripping it through a PDF would cost two conversions to arrive where it started.)
+
+**The converter is `pdftocairo`, and that is not a detail.** `dvisvgm --pdf` was tried first and
+reads the format wrongly in two ways these pictures are made of: it gave a plot that sets
+`0.25 w` and `0.5 w` a `stroke-width='4'` frame and curve -- a heavy black box and a fat line
+where the booklet has a hairline -- and it smears `29/amusement-speed`'s embedded bitmap into
+the corner. Both are right out of `pdftocairo`. `core/tests/test_picture_svg.py` converts a plot
+whose widths are known and compares in both directions: no width the PDF never asked for, and a
+deliberately thick line still thick, so a conversion cannot pass by flattening everything.
+
+**A gnuplot plot skips the conversion and is drawn twice by gnuplot**, once per terminal. One
+step shorter, and it takes the PDF parser out of the chain for the files that provoked the bug
+above. What it costs is that **the terminal cannot live in the script any more**, because the
+two terminals disagree about two things and one line cannot say both. The build supplies
+`@gpterm` -- the terminal *and its font* -- and `gppt`, one point in whatever units that
+terminal counts in, and a script that wants its own canvas writes
+
+    set terminal @gpterm size 432*gppt, 108*gppt
+
+A script that wants the default writes nothing at all, which is 39 of the 42.
+
+Three things about that, each of which cost a wrong picture to find:
+
+- **`pdfcairo` hides a `fontscale 0.5`**, so its `font "Minion Pro, 12"` sets 6pt on the page.
+  The `svg` terminal has no such halving, and its `fontscale` scales the glyphs *without*
+  scaling the space the layout reserves for them -- so it cannot be used to match, and setting
+  it moved the plot area by 16 %. The build passes `fontscale 1` and the size it means. That is
+  a no-op for print, proved rather than assumed: all 42 PDFs are byte-identical across the
+  change.
+- **The `svg` terminal counts in CSS pixels, 96 to the inch**, where `pdfcairo` counts in points,
+  72. Hence `gppt` is 4/3 there and 1/72 here, and the font is 8 against 6. Converting the
+  canvas and forgetting the font gives a picture of the right shape a quarter too small.
+- **Re-issuing `set terminal` resets the font** on the `svg` terminal but not on `pdfcairo`,
+  which is why `@gpterm` carries the font rather than the build setting it separately. And
+  because gnuplot expands a macro while parsing the line it is on, the assignment and the use
+  have to be on different `-e` options.
+
+The remaining difference from print is the grid: `set grid` uses linetype 0, which `pdfcairo`
+draws dotted and the `svg` terminal draws as a `2,4` dash of its own. Forcing it changes the
+PDF, so it stays.
+
+The maths keeps dvisvgm, deliberately, and the reason is the next section: its output is inlined
+into the page, where `pdftocairo`'s `<symbol id="glyph0-1">` would collide across a hundred
+formulas and its explicit `fill:rgb(0%,0%,0%)` would defeat `currentColor`.
+
+### `latex`: the booklet's own maths
+
+Every formula goes to the xelatex that sets the booklet, through `core/templates/mathpage.jtex`,
+and the SVG it gives back is set in the booklet's own type: MinionPro, `math.tex` loaded,
+chemfig drawn rather than approximated -- `chem/01`'s reaction schemes come out as drawings
+with no special case anywhere.
+
+**One qualification, and it is the price of expanding in the convertor.** A fragment reaches
+this engine with its siunitx already rewritten, so what xelatex sets is
+`3\,\mathrm{m}/\mathrm{s}` and not `\qty{3}{\metre\per\second}`. `core/filters/siunitx.py`
+is held to what siunitx itself prints under `core/latex/siunitx.tex`, and `core/tests/test_siunitx.py`
+is that comparison, so the two agree today -- but it is our arithmetic on the page, not the
+package's, and a `\sisetup` changed in the TeX and not in the Python would show here first.
+Were the fragment left unexpanded this engine would need none of that, which is the one thing
+the rejected per-engine design bought.
+
+Four things make it practical, and the middle two were each got wrong first:
+
+- **One xelatex run per page.** `standalone`'s `multi=dgsmath` puts each formula on its own page,
+  so a hundred formulas cost one compile and one `dvisvgm`, about two seconds. Cached under
+  `build/.html-math/` by the hash of the formula, the language and `VERSION` -- which is in the
+  hash so that changing the wrapper or the conversion invalidates what it produced.
+- **The baseline is measured, not guessed.** An image does not know where its baseline sits,
+  which is what dropped every inline formula onto a line of its own the first time this was
+  tried in a browser. The `dgsmath` environment boxes the formula and `\typeout`s
+  `DGSMETRIC <height> <depth> <x-height>`; `height` and `vertical-align` follow from those three
+  **in `ex`**, which is also what makes a formula scale with the text around it. dvisvgm's own
+  absolute `width` and `height` are stripped for that reason -- left on, they would pin the
+  formula at one size while the page's type changed around it.
+- **A rule is not a glyph.** A glyph is a filled path with no `fill` of its own, so the root's
+  `fill="currentColor"` reaches it. A fraction bar, a `\sqrt` overbar and an `\hline` are
+  *stroked* paths dvisvgm gives an explicit `stroke='#000'`, which overrides anything inherited
+  -- so a fraction bar would keep its own colour while the digits took the page's. Only the
+  default ink is rewritten to `currentColor`; a colour the drawing actually chose is left alone.
+- **`--no-fonts`** leaves bare paths, which is what lets the ink be the page's at all. No second
+  rendering, no second cache, no font to ship.
+
+**`mathpage.jtex`'s package list is `standalone.jtex`'s, line for line, and a test says so.**
+A package added to one and not the other is how the web and the print maths start to differ, and
+the difference is exactly the kind nobody notices until a reader compares them.
+
+### `mathjax`: selectable text, and what it costs
+
+MathJax under node, in Pagella. It buys text a reader can select and a search engine can index,
+and a smaller page; it costs the typeface and a reimplementation of two LaTeX packages:
+
+- **The expansion**, which has already happened by the time a fragment reaches this module:
+  `Convertor.expand_for_the_web` did it, before pandoc. Nothing is rewritten here.
+- **The escape hatch.** chemfig is TikZ in a lab coat, 84 times in `chem/01` alone, and no web
+  implementation of it exists. `mathjax.draw()` sends those to LaTeX through `mathimage.py` and
+  inlines the drawing -- inlined rather than an `<img>`, because `page.py` collects the page's
+  pictures *before* the maths is typeset, so an `<img>` written at that point would point into
+  the build tree and the directory would stop being self-contained.
+
+`mjx-container` is an unknown element to the browser and therefore inline by default, so a
+display would run on in the middle of the sentence that introduced it. MathJax writes
+`display="true"` on the ones that are blocks and nothing else distinguishes them; the stylesheet
+keys off that.
+
+### Raw LaTeX in prose is dropped by the HTML writer
+
+siunitx and mhchem both work outside maths and the sources use that: `\qty{0.900}{\percent}` and
+`\ce{NaCl}` are written in running text **550 times** across phys and chem, with no dollars round
+them. pandoc reads each as a `RawInline` of format `tex`, the LaTeX writer passes it through, and
+**the HTML writer throws it away without a word** -- `chem/01/robinson` asked its reader for
+"prikvapkaný jeden ekvivalent ." with the reagent simply gone, and nothing said so.
+
+`core/filters/rawtex.lua` turns those into `Math` nodes, and its rule is **inverted on purpose**:
+anything raw becomes maths *unless* it is known to be layout. A macro nobody listed then appears
+on the page, possibly set oddly, instead of vanishing -- and a silent drop is the one failure
+with no symptom. What is left out is the handful that mean nothing to a browser: `\vspace`,
+`\hspace`, `\newpage`, `\noindent` and their neighbours, which are print instructions a page that
+reflows has nowhere to put.
+
+It is not about either engine -- both need it, because without it the material is not in the
+fragment for either to set -- and it is **not** a duplicate of `expand_for_the_web`, which runs
+before pandoc and therefore before any of this. The two divide cleanly: the expansion consumes
+what it knows, siunitx and `math.tex`, and whatever it leaves alone is still a `RawInline` for
+this filter to rescue. `\ce` is the whole of that remainder in practice, and it is the case
+`chem/01/robinson` lost.
+
+### A siunitx macro in prose is an authoring error
+
+The source is Markdown with Jinja in it. **It is not LaTeX**, so a quantity in running text is a
+tag or it is maths -- `(§ m §)` from `values:` for a number the statement gives,
+`$\qty{30}{\gram}$` for one it does not -- and a bare `\qty{30}{\gram}` between two words is
+neither. `25/czechlights` is how it should read: `$\qty{9.73}{\ohm}$` and
+`$\qtylist{3.89;2.16;2.16;0.97}{\ampere}$`, both in running text, both inside dollars.
+
+It went unnoticed because **the booklet is fine**: xelatex loads siunitx and sets a prose `\qty`
+perfectly, so nothing downstream ever complained. The web is where it shows, and it shows badly,
+because `expand_for_the_web` reaches a prose macro before `rawtex.lua` could promote it and
+expands it as though it were already maths:
+
+| written in prose | lands on the page |
+|---|---|
+| `\qty{0.900}{\percent}` | `0{,}900 %` -- the TeX braces showing |
+| `\qty{20}{\celsius}` | `20 ` -- the unit gone |
+| `\ang{32.53} od` | `32{,}53^`, then `\circ` alone in a math span, and the space before `od` eaten |
+
+Inside `$…$` all three are right, so the fix is per occurrence and mechanical: add the dollars,
+or declare the quantity and write the tag. The audit's **`siunitx-in-prose`** finds them, over
+`RE_SI_HEAD` so that the v2 spellings `\SI` and `\si` come with it, and it is quiet for the
+four shapes that are already correct -- inline maths, a `$$` block, a code span naming the macro,
+and a Jinja tag. `\ce` is deliberately not in the set: mhchem in running text is right, and
+`rawtex.lua` is what carries it to the page.
+
+**369 of them in naboj across 68 problems** -- 281 in phys, 88 in chem -- `\qty` 147, `\unit`
+68, `\num` 63, `\ang` 56, `\qtylist` 26, the rest in ones and sixes. Nothing has been swept
+yet; `seminar` and `scholar` are not counted here and `scholar/TA1` alone writes 787 `\num` in
+prose.
+
 ## Style checker
 
 `python -m core.mdcheck <files>`. It infers the module from the *path*
@@ -1583,12 +1858,13 @@ and after. Reading through a symlink is safe; writing is not.
   the rest were grids, single chains, or a `&&=` already doing the right thing. `27/highway` and
   `20/star-triangle` are the worked examples.
 
-  A **literal** `\begin{array}` -- the monolingual trees, where hoisting into `eq:` buys nothing --
-  gets none of that automatically. Use the `L`, `C` and `R` column types from `core/latex/math.tex`
-  for display style and write `\\[\jot]` on the separators yourself: `chem/03/veronikin-roztok`
-  and `FKS/34/2/3/06` are the examples. Note that pandoc wraps display maths containing `\\` in an
-  `aligned` of its own -- which is what the deprecated `$${ … }$$` idiom relied on -- but leaves
-  a block alone once it opens with an explicit environment.
+  A **literal** `\begin{array}` -- one written out in a solution file instead of hoisted -- gets
+  none of that automatically. Use the `L`, `C` and `R` column types from `core/latex/math.tex` for
+  display style and write `\\[\jot]` on the separators yourself. Ten are left, all of them in
+  `seminar/FKS`, which is simply not swept yet rather than out of scope; `FKS/34/2/3/06` holds
+  four and is the example. Note that pandoc wraps display maths containing `\\` in an `aligned`
+  of its own -- which is what the deprecated `$${ … }$$` idiom relied on -- but leaves a block
+  alone once it opens with an explicit environment.
 - **A block scalar takes its indentation from its first line.** If that line is deeper than the
   rows below it -- which is what lining up empty leading columns does -- YAML ends the block at the
   first shallower row and reports `expected <block end>` several lines later. Write `|2` rather

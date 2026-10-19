@@ -1901,3 +1901,45 @@ class TestValueSymbolLiteral:
         meta = VALUES_META + "audit:\n  ignore: ['value-symbol-literal']\n"
         assert 'value-symbol-literal' not in self.one(tmp_path, 'rýchlosťou $v$ po dráhe\n',
                                                       meta=meta)
+
+
+class TestSiunitxInProse:
+    r"""
+    A quantity in running text is a tag or it is maths; a bare `\qty` is neither.
+
+    The quiet half is the whole point of this one. Every shape below that does *not* fire is
+    somewhere the macro is already right: `$…$`, a `$$` block, a code span naming the macro
+    rather than calling it, a Jinja tag, and mhchem, which is not siunitx and works either way.
+    """
+
+    @staticmethod
+    def findings(tmp_path, text):
+        report = run(tmp_path, files={'sk': {'problem.md': text}})
+        return [f for f in report.findings if f.check == 'siunitx-in-prose']
+
+    def test_it_fires_on_a_bare_qty(self, tmp_path):
+        assert len(self.findings(tmp_path, r'Fuňo váži \qty{30}{\gram} aj s~chvostom.')) == 1
+
+    def test_it_names_the_macro_and_the_line(self, tmp_path):
+        found = self.findings(tmp_path, 'Prvý riadok.\n\nUhol \\ang{32.53} od zvislice.\n')
+        assert r'\ang' in found[0].message
+        assert found[0].line == 3
+
+    def test_the_v2_spelling_counts_too(self, tmp_path):
+        """`seminar/FKS` is written in these; a hand-written macro list would have missed it."""
+        assert len(self.findings(tmp_path, r'Vzdialenosť \SI{1}{au} od Slnka.')) == 1
+
+    def test_an_option_group_does_not_hide_it(self, tmp_path):
+        assert len(self.findings(
+            tmp_path, r'Hustota \qty[per-mode=symbol]{1000}{\kilo\gram} vody.')) == 1
+
+    @pytest.mark.parametrize('text', [
+        pytest.param(r'Odpor $\qty{9.73}{\ohm}$ je malý.', id='inline-maths'),
+        pytest.param('Preto\n\n$$\n    R = \\qty{9.73}{\\ohm}\n$$\n', id='display-block'),
+        pytest.param('Píšeme `\\qty{30}{\\gram}` v~zdroji.', id='code-span'),
+        pytest.param('Skript:\n\n```\n\\qty{30}{\\gram}\n```\n', id='fenced-block'),
+        pytest.param(r'Hmotnosť (§ m|f0 §) a~nič viac.', id='jinja-tag'),
+        pytest.param(r'Roztok \ce{NaCl} vo vode.', id='mhchem-is-not-siunitx'),
+    ])
+    def test_it_stays_quiet(self, tmp_path, text):
+        assert self.findings(tmp_path, text) == []

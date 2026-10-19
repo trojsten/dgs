@@ -1,5 +1,6 @@
 import re
 import subprocess
+import sys
 import tempfile
 from collections.abc import Callable
 from tempfile import SpooledTemporaryFile
@@ -53,23 +54,19 @@ class Convertor:
             # alt text and no file under `build/` carried a `\caption{}` before this.
         ],
         'html': [
-            # A picture is referenced where it actually is: beside the file that references it.
-            # This used to prepend `obrazky/`, a directory the build has never produced, so every
-            # image in every fragment was a broken link -- in seminar too, which is what the web
-            # actually ships.
+            # A picture becomes an SVG, mirroring what the LaTeX rules above do with `.pdf`.
+            # One target extension for every source, because `build/%.svg` takes a picture from
+            # any of them; a raster picture is already web-ready and is left alone.
             #
-            # Both a `.tikz` and a `.gp` become an **`.svg`** for the page, by the same route the
-            # booklet already takes to a PDF and then one step further through `pdftocairo`. The
-            # `.gp` used to be sent to a `.png` built by a second gnuplot run with `-e "set
-            # terminal pngcairo"`, and that never once worked: every `.gp` in the repository
-            # opens by setting its own `set terminal pdf size W, H`, which runs after the `-e`
-            # and overrules it. What landed in `output/` was a PDF with a `.png` name, and every
-            # browser showed the broken-image icon. Going through the PDF means the plot is
-            # built once, by the script's own terminal, and is a vector on the page.
-            RegexReplacement(
-                r'<img src="(?P<filename>.*)\.(gp|tikz)"',
-                r'<img src="\g<filename>.svg"',
-            ),
+            # These also stopped prepending `obrazky/`, a directory the build has never produced,
+            # which had made every image in every fragment a broken link -- in seminar too, which
+            # is what the web actually ships.
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.tikz"', r'<img src="\g<stem>.svg"',
+                             purpose="A TikZ picture is an SVG on the web"),
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.gp"', r'<img src="\g<stem>.svg"',
+                             purpose="A gnuplot picture is an SVG on the web"),
+            RegexReplacement(r'<img src="(?P<stem>[^"]*)\.pdf"', r'<img src="\g<stem>.svg"',
+                             purpose="A PDF picture is an SVG on the web"),
             # `|arr` separates its rows with `\\\\[\\jot]`, because `array` zeroes the lengths
             # `\\openup` raises and two rows of display-style fractions would otherwise touch.
             # `\\jot` is a TeX length register and MathJax has no notion of one, so it reads the
@@ -78,18 +75,16 @@ class Convertor:
             # Every one of the 125 `|arr` call sites in `source/` was unrenderable on the web.
             #
             # `dgs.cls` puts `\\jot` at 10pt; the web gets that as an explicit length, which is the
-            # one thing MathJax will take.
+            # one thing MathJax will take. Still needed after the maths was moved to build time:
+            # `page.py --maths mathjax` is one of the two engines, not a fallback.
             RegexReplacement(
                 r'\\\\\[\\jot\]',
                 r'\\\\[10pt]',
                 purpose=r'MathJax cannot read `\jot` as a dimension',
             ),
-            # alter picture heights
-            RegexReplacement(
-                r'style="height:(?P<height>[0-9.]*)mm"',
-                r'style="max-width: 100%; max-height: calc(1.7 * \g<height>mm); margin: auto; display: block;"',
-            ),
-            # Centre the figure caption and italicise the caption text, as the booklet does.
+            # Mark the caption's label off from its text, so the stylesheet can set the number
+            # upright and the text italic, as the booklet does. The styling itself is
+            # `figcaption` in `core/html/page.css`; this rule only supplies the spans it needs.
             #
             # **It keys on the number, not on the word**, because the word is the locale's:
             # pandoc-crossref takes it from `figureTitle` in `build/core/i18n/<lang>.yaml`, so it
@@ -107,12 +102,23 @@ class Convertor:
             # It also opened a `<span>` it never closed, and left the browser to guess.
             RegexReplacement(
                 r'<figcaption(?P<attrs>[^>]*)>(?P<label>[^<:]*?\d+:)\s*(?P<text>.*?)</figcaption>',
-                r'<figcaption\g<attrs> style="text-align: center;">\g<label> '
-                r'<span style="font-style: italic;">\g<text></span></figcaption>',
-                purpose='Centre the figure caption and italicise its text',
+                r'<figcaption\g<attrs>><span class="caption-label">\g<label></span> '
+                r'<span class="caption-text">\g<text></span></figcaption>',
+                purpose="Mark the figure caption's label off from its text",
             ),
+            # The authored `style="height:Nmm"` is deliberately left as pandoc wrote it.
+            # `core/html/page.py` reads it (`RE_LENGTH`, `size_style`) and turns the height into
+            # the width a web page can actually be told, using the drawing's own proportions. A
+            # rule here used to rewrite it into `max-height: calc(1.7 * Nmm)` -- a ceiling rather
+            # than a size, which is why every picture came out too small, and which would now eat
+            # the input `page.py` needs.
         ],
     }
+
+    #: Extensions an `<img>` may still carry once the rules above have run. Anything else is a
+    #: picture format with no web rule, which is a build error rather than a broken image on the
+    #: page -- the same bargain `\insertPicture` strikes for LaTeX.
+    WEB_PICTURE_SUFFIXES = ('svg', 'png', 'jpg', 'jpeg', 'gif', 'webp')
 
     post_checks = {
         'all': [],
@@ -128,6 +134,16 @@ class Convertor:
             RegexFailure(r'<img[^>]*src="[^"]*\.(tikz|gp)"',
                          error="Caught a picture reference no browser can load: a `.tikz` and a "
                                "`.gp` both become an `.svg` for the web"),
+            # Any other picture format with no web rule. This replaces a check that demanded
+            # every `src` start with `obrazky/` -- a directory make never created, invented at
+            # publish time by `dgs-copy.py` for one website -- which made `.tikz`, `.pdf` and the
+            # documented empty-path placeholder all abort an HTML build outright.
+            #
+            # After the `.tikz`/`.gp` rule above, so the two formats that do have a route to the
+            # web keep their own message; this is the catch-all for everything else, and it reads
+            # `WEB_PICTURE_SUFFIXES` rather than carrying a second copy of the list.
+            RegexFailure(r'<img src="[^"]*\.(?!(?:' + '|'.join(WEB_PICTURE_SUFFIXES) + r')")[A-Za-z0-9]+"',
+                         error="Caught a picture in a format the web rules do not convert"),
         ],
         'latex': [
             # Pandoc >= 3.2 wraps an image carrying no attributes in \pandocbounded, a macro that
@@ -169,7 +185,16 @@ class Convertor:
 
     pre_checks = {
         'all': [
-            RegexFailure(r'(<<<<<<<<|========|>>>>>>>>)', error="Git conflict markers present"),
+            # Git writes markers of **exactly seven** characters, so the eight this asked for
+            # could never match one: the check had never fired, and an unresolved conflict would
+            # have gone through into a booklet. These checks run a line at a time, so `^` is the
+            # start of the line git puts a marker at, and the trailing `\s|$` is what separates
+            # `<<<<<<< HEAD` from seven angle brackets inside a sentence.
+            #
+            # The `=` arm would also match a seven-character setext heading underline. No source
+            # has one -- the whole repository writes ATX `#` headings -- and the other two arms
+            # are unambiguous, so drop it rather than loosen the rule if that ever changes.
+            RegexFailure(r'^(<{7}|={7}|>{7})(?:\s|$)', error="Git conflict markers present"),
             RegexFailure(r'\^\\circ|\^{\\circ}', error=r"No \circ allowed in exponents"),
             # `@H` and `@L` marked a line as belonging to one output format only. They are gone:
             # no source has ever carried one, in any module, on any branch, in any commit, so
@@ -199,7 +224,6 @@ class Convertor:
         self.locale: i18n.Locale = i18n.languages[locale_code]
         self.infile = infile
         self.outfile = outfile
-        self.math = options.get('math', 'mathjax')
         self.file = None
 
         assert output_format in ['html', 'latex'], \
@@ -445,11 +469,35 @@ class Convertor:
                   f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}",
         ]
         if self.output_format == 'html':
+            # `--math-method`, not the `--mathjax` flag, which pandoc 3 deprecates with a warning
+            # on every single file. It is what makes pandoc leave a formula alone in a
+            # `<span class="math">` instead of trying to render it.
+            #
+            # **Nothing here is engine-specific, deliberately.** A fragment keeps the formula the
+            # author wrote, so the same `build/**.html` serves both ways of setting it -- the
+            # xelatex one and the MathJax one -- and choosing between them costs a page rebuild
+            # rather than a pandoc rebuild. `core/html/page.py` is where the choice is made.
             args += [
-                "--webtex=eqn://" if self.math == 'webtex' else "--mathjax",
+                "--math-method=mathjax",
+                # Raw LaTeX in prose, which the HTML writer drops without a word. Not about
+                # either engine and not a duplicate of `expand_for_the_web`: that one expands
+                # what it knows -- siunitx and this repository's own macros -- and everything
+                # else, mhchem's `\ce` above all, is still a `RawInline` that pandoc throws
+                # away. `chem/01/robinson` asked its reader for "prikvapkaný jeden ekvivalent ."
+                # with the reagent simply gone.
+                "--lua-filter", "./core/filters/rawtex.lua",
             ]
 
-        subprocess.run(args, stdin=self.file, stdout=out, check=True)
+        # `check=True` alone raises `returned non-zero exit status 83` and nothing else, so a
+        # filter that stopped the build on purpose loses the one sentence that says what to do
+        # about it. Capture stderr and put it in the exception.
+        completed = subprocess.run(args, stdin=self.file, stdout=out, stderr=subprocess.PIPE,
+                                   text=True)
+        if completed.returncode != 0:
+            raise RuntimeError(f"pandoc failed on {getattr(self.infile, 'name', '<stdin>')}:\n"
+                               f"{completed.stderr.strip()}")
+        if completed.stderr.strip():
+            print(completed.stderr, end='', file=sys.stderr)
 
         out.seek(0)
         return out

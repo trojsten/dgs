@@ -16,7 +16,13 @@ build/
 render/
 output/
 source/
+# ...and note those four are bare patterns, so they match a directory of that name at *any*
+# depth, not only at the root. That once silently excluded a vendored `…/output/` directory
+# from a commit, and `git status` says nothing, because an ignored file is not untracked.
 _*/
 .idea/*
 svg-inkscape/
 *.minted
+
+# `npm ci` fetches these; see package.json. The HTML output needs MathJax at build time.
+node_modules/

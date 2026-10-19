@@ -1,3 +1,4 @@
+import pathlib
 import re
 import tempfile
 
@@ -631,18 +632,26 @@ class TestErrorBoxesReachTheWeb:
 
 class TestFigureCaptionStyling:
     r"""
-    The HTML figure caption is centred and its text italicised, as the booklet sets it.
+    The HTML figure caption is split into its number and its text, as the booklet sets them:
+    the number upright, the text italic. The **styling** is `figcaption` and `.caption-text` in
+    `core/html/page.css`; the rule here only marks the two halves off, which is the half a
+    stylesheet cannot do for itself.
 
-    Two things had gone wrong with the rule that does it, and the second is the instructive one.
-    It matched `<figcaption>Obrázok (\d*):` -- the Slovak word, written into the pattern -- so ten
-    of the eleven languages could never have matched; pandoc-crossref takes that word from
-    `figureTitle` in the locale, and it is `Figure`, `Abbildung`, `Ábra` and eight more.
+    Two things had gone wrong with that rule, and the second is the instructive one. It matched
+    `<figcaption>Obrázok (\d*):` -- the Slovak word, written into the pattern -- so ten of the
+    eleven languages could never have matched; pandoc-crossref takes that word from `figureTitle`
+    in the locale, and it is `Figure`, `Abbildung`, `Ábra` and eight more.
 
     But they were missing nothing, because the rule had stopped firing for **every** language,
     Slovak included: pandoc writes `<figcaption aria-hidden="true">` and the pattern wanted a bare
     `<figcaption>`. 209 built fragments carried a caption and not one was styled. A post-regex that
     silently stops matching is indistinguishable from one that never ran, so these tests assert the
     two things that broke it -- the word and the attribute -- rather than the output as a whole.
+
+    It used to write the styles inline, `style="text-align: center;"` and an italic `<span>`.
+    That had to go when the page gained a stylesheet of its own: `page.css` italicises the
+    caption, so an inline span could not keep the number upright -- it can only add italics, not
+    take them away. Classes let the stylesheet say which half gets which.
     """
     CAPTIONED = '![Masívna ryba](ryba.svg){#fig:ryba height=47mm}'
 
@@ -650,33 +659,45 @@ class TestFigureCaptionStyling:
         out = convert('html', language, f'![{caption}](ryba.svg)' + '{#fig:ryba height=47mm}')
         return out.replace('\n', ' ')
 
-    def test_the_caption_is_centred_and_its_text_italic(self, convert):
+    def test_the_two_halves_are_marked_off(self, convert):
         out = self.styled(convert, 'sk', 'Masívna ryba')
-        assert 'text-align: center;' in out
-        assert 'font-style: italic;' in out
+        assert 'class="caption-label"' in out
+        assert 'class="caption-text"' in out
 
-    def test_the_span_is_closed(self, convert):
+    def test_the_spans_are_closed(self, convert):
         """It used to open a `<span>` and leave the browser to guess where it ended."""
         out = self.styled(convert, 'sk', 'Masívna ryba')
-        assert out.count('<span style="font-style: italic;">') == out.count('</span>') == 1
+        assert out.count('<span class="caption-') == out.count('</span>') == 2
 
-    def test_only_the_caption_text_is_italic_not_the_number(self, convert):
+    def test_only_the_caption_text_is_marked_italic_not_the_number(self, convert):
         out = self.styled(convert, 'sk', 'Masívna ryba')
-        assert re.search(r'Obrázok\s*1:\s*<span style="font-style: italic;">Masívna ryba</span>',
-                         out) is not None
+        assert re.search(r'<span class="caption-label">Obrázok\s*1:</span>\s*'
+                         r'<span class="caption-text">Masívna ryba</span>', out) is not None
+
+    def test_the_styling_itself_is_in_the_stylesheet(self):
+        """
+        The other half of the split, asserted here so that removing either one fails: the rule
+        marks the halves, `page.css` says what each looks like. If the caption were italicised
+        wholesale again, the number would go italic with it and nothing else would notice.
+        """
+        css = (pathlib.Path(__file__).parent.parent / 'html' / 'page.css').read_text()
+        figcaption = css.split('figcaption {')[1].split('}')[0]
+        assert 'font-style' not in figcaption
+        assert '.caption-text {' in css
 
     @pytest.mark.parametrize('language, word', [('en', 'Figure'), ('de', 'Abbildung')])
     def test_it_does_not_depend_on_the_language(self, convert, language, word):
         """The half that was broken for a decade: the word belongs to the locale, not the rule."""
         out = self.styled(convert, language, 'A fish')
         assert word in out
-        assert f'{word} 1: <span style="font-style: italic;">A fish</span>' in out
+        assert (f'<span class="caption-label">{word} 1:</span> '
+                f'<span class="caption-text">A fish</span>') in out
 
     def test_it_survives_the_attribute_pandoc_writes(self, convert):
         """`aria-hidden="true"` is why it stopped firing; it must be kept, not matched away."""
         out = self.styled(convert, 'sk', 'Masívna ryba')
         assert 'aria-hidden="true"' in out
-        assert 'style="text-align: center;"' in out
+        assert 'class="caption-label"' in out
 
     def test_an_unnumbered_caption_is_left_alone(self, convert):
         """
@@ -686,7 +707,7 @@ class TestFigureCaptionStyling:
         """
         out = convert('html', 'sk', '![](ryba.svg){height=47mm}').replace('\n', ' ')
         assert '<figcaption' not in out
-        assert 'font-style: italic;' not in out
+        assert 'caption-text' not in out
 
     def test_the_booklet_is_untouched(self, convert):
         """The other quiet half: this is an HTML rule and LaTeX has its own caption machinery."""

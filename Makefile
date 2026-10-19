@@ -224,26 +224,127 @@ build/%.pdf: build/%.tikz.tex
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
 
-# A picture for the web, out of the PDF the booklet already uses.
+# A hand-drawn picture, for the web: copied, not round-tripped. It is already an SVG; sending it
+# through a PDF and back would cost two conversions to arrive where it started.
 #
-# **From the PDF, and not through dvisvgm.** This used to be `build/%.svg: build/%.xdv`, with an
-# `.xdv` rule above it running xelatex a second time with `-no-pdf` -- and it did not work. PGF
-# under xelatex emits dvipdfmx specials, which dvisvgm does not draw, so what came out was a
-# 6pt by 6pt file holding the picture's *text* and none of its paths: `futile-nine`'s nine
-# resistors arrived on the page as a lone letter R. Nothing consumed the rule, so nothing said so.
+# Defined before the rule below so that make, which takes the first rule whose prerequisites can
+# be made, prefers it. A hand-drawn picture satisfies both (its `render/%.svg` exists, and a
+# `build/%.pdf` could be made from it); a TikZ, gnuplot or source-PDF picture satisfies only the
+# second. Between them, **`build/%.svg` means "this picture, in the one format the web wants",
+# whatever it was drawn in** -- which is what lets a single extension stand for every picture
+# downstream.
+build/%.svg: render/%.svg
+	@echo -e '$(c_action)Copying $(c_extension)SVG$(c_action) file $(c_filename)$<$(c_action):$(c_default)'
+	$(call _copy,SVG)
+
+# A gnuplot plot as SVG, drawn by gnuplot rather than converted. See `GNUPLOT_PDF` below for
+# why the terminal cannot live in the script.
 #
-# Going through the PDF means the web gets the same drawing as the booklet, by construction --
-# one xelatex run, one artefact, and a converter that only changes its container.
+# **A static pattern rule, not an implicit one, and that is the whole reason this works.**
+# Make's implicit-rule search takes, in its first pass, any rule whose prerequisites already
+# *exist* -- so once the booklet has been built and `build/%.pdf` is sitting there, the
+# conversion rule below wins over this one however they are ordered, and the picture you get
+# depends on what you happened to build first. A static pattern rule is an explicit rule for
+# each of these targets and is not in that search at all.
+GNUPLOT_SOURCES := $(shell find source -name '*.gp' 2>/dev/null)
+GNUPLOT_SVG_TARGETS := $(patsubst source/%.gp,build/%.svg,$(GNUPLOT_SOURCES))
+
+$(GNUPLOT_SVG_TARGETS): build/%.svg: build/%.gp
+	@echo -e '$(c_action)[gnuplot] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(dir $@)
+	cd $(dir $@); gnuplot -e "$(GNUPLOT_SVG)" \
+		-e "set terminal @gpterm size $(GNUPLOT_SVG_SIZE); set output '$(notdir $@)'; set fit quiet;" \
+		$(notdir $<)
+	@# A script that sets `set terminal pdf` of its own overrides the line above and gnuplot
+	@# writes a PDF into a file named `.svg`, with no error anywhere -- `FKS/42/1/1/03` did it
+	@# from a `blocks:` entry, which is a `.gp` no grep over `source/**/*.gp` can see. The page
+	@# then showed three blank figures. One line is cheaper than finding that again.
+	@head -c 5 $@ | grep -q '<' || { \
+		echo "$@ is not an SVG: does its script (or a blocks: entry) set its own terminal?" >&2; \
+		rm -f $@; exit 1; }
+
+# A picture as SVG, for the web, converted from **the PDF the LaTeX path already built**.
+#
+# Not from the `.xdv`, which is what the rule here used to do and which never worked: with
+# `-no-pdf` the pgf graphics go into the XDV as specials that dvisvgm does not reconstruct, so a
+# TikZ drawing came out as its text labels and nothing else -- an 11.8pt sliver of a 333pt
+# picture, correct in neither size nor content. The `build/%.xdv` rule that fed it is gone with
+# it; between them they had been referenced by nothing since the standalone renderer landed.
+#
+# Converting the PDF instead costs one indirection and buys the thing worth having: the web
+# picture is made from the same artefact as the printed one, so the two cannot drift. It also
+# covers every source a `build/%.pdf` can come from -- TikZ, gnuplot, a hand-drawn SVG, a PDF
+# copied in -- with one rule rather than four.
+#
+# **`pdftocairo`, not `dvisvgm --pdf`**, and the difference is not cosmetic. dvisvgm's PDF
+# reader is a second implementation of a format poppler already reads, and it gets two things
+# wrong that this repository's pictures are made of:
+#
+#   - **Line widths.** A plot that sets `0.25 w` and `0.5 w` and nothing else came out with its
+#     frame and its curve at `stroke-width='4'` -- a heavy black box and a fat line where the
+#     booklet has a hairline. (That was `29/chopper`, which is drawn directly now; the defect is
+#     not gnuplot's and would bite any PDF that states a width the same way.)
+#   - **Embedded rasters.** `29/amusement-speed`'s rollercoaster carries a bitmap of a cart,
+#     which dvisvgm shrinks into a smear in the corner.
+#
+# Both are right in the PDF, right in the booklet, and right out of `pdftocairo`. It converts
+# glyphs to `<symbol>` paths of its own accord, so there is still no font to install or serve,
+# at the cost of selectable text -- the right trade for a figure and not for the prose round it.
+#
+# `core/html/texmath.py` still uses dvisvgm, deliberately: it inlines its output into the page,
+# where `pdftocairo`'s `<symbol id="glyph0-1">` would collide across a hundred formulas and its
+# explicit `fill:rgb(0%,0%,0%)` would defeat the `currentColor` the inlined maths is set in.
+# dvisvgm emits bare anonymous paths, which is exactly what that needs, and the maths it is
+# given comes from xelatex rather than from cairo.
 build/%.svg: build/%.pdf
 	@echo -e '$(c_action)[pdftocairo] Rendering $(c_filename)$<$(c_action) to $(c_extension)SVG$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	pdftocairo -svg $< $@
 
+# A gnuplot plot, in each of the two formats, **drawn by gnuplot both times**.
+#
+# The conversion the rest of the pictures go through -- PDF, then `pdftocairo` -- would work
+# here too, and did. Going direct is one step shorter and takes a PDF parser out of the chain,
+# which is the part that had been getting it wrong.
+#
+# What that costs is that the terminal can no longer live in the script, because the two
+# terminals disagree about two things and a script cannot state both:
+#
+#   - **Size.** `pdfcairo` reads a bare number as inches and also takes `cm`; the `svg`
+#     terminal takes pixels and rejects `cm` outright. Hence `gppt`, which is one **point** in
+#     whatever units this terminal counts in, and a script sizes itself in points.
+#   - **Font size.** `pdfcairo` defaults to `fontscale 0.5`, so its `font "Minion Pro, 12"` is
+#     6pt on the page; the `svg` terminal has no such halving, and `fontscale` there scales the
+#     glyphs **without** scaling the space the layout reserves for them, so it cannot be used to
+#     match. `fontscale 1` below removes the hidden factor instead, and the size written is the
+#     size set. Proved rather than assumed: the PDFs come out byte-identical either way.
+#
+# So a script that wants its own canvas writes one line, `set terminal @gpterm size 432*gppt,
+# 108*gppt`, and the build says which terminal that is. A script that wants the default writes
+# nothing, and the two defaults below are the same picture: `pdfcairo`'s own 5in x 3in, and the
+# 360 x 216 points that is.
+# `@gpterm` carries the terminal **and its font**, because re-issuing `set terminal` resets
+# the font on the `svg` terminal and a script that sizes its own canvas has to re-issue it.
+# Two `-e` options rather than one: gnuplot expands a macro while parsing the line it is on,
+# so `gpterm` has to be assigned on an earlier line than the `@gpterm` that uses it.
+# **The `svg` terminal counts in CSS pixels, 96 to the inch**, where `pdfcairo` counts in
+# points, 72. So `gppt` is 4/3 there and 1/72 here, and the font is 8 against 6 -- the same
+# type at the same size on the same canvas, said in each terminal's own units. Getting only
+# half of that right gives a picture that is the right shape and the wrong size: the web one
+# came out a quarter small when the canvas was converted and the font was not.
+GNUPLOT_PDF = set macros; gppt = 1.0 / 72; gpterm = 'pdfcairo fontscale 1 font \"Minion Pro, 6\"'
+GNUPLOT_SVG = set macros; gppt = 4.0 / 3;  gpterm = 'svg font \"Minion Pro, 8\"'
+#: The default canvas: `pdfcairo`'s own 5in x 3in, said twice.
+GNUPLOT_PDF_SIZE = 5, 3
+GNUPLOT_SVG_SIZE = 480, 288
+
 # Render gnuplot file to PDF (for XeLaTeX)
 build/%.pdf: build/%.gp
 	@echo -e '$(c_action)[gnuplot] Rendering $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
-	cd $(dir $@); gnuplot -e "set terminal pdf font 'Minion Pro, 12'; set output '$(notdir $@)'; set fit quiet;" $(notdir $<)
+	cd $(dir $@); gnuplot -e "$(GNUPLOT_PDF)" \
+		-e "set terminal @gpterm size $(GNUPLOT_PDF_SIZE); set output '$(notdir $@)'; set fit quiet;" \
+		$(notdir $<)
 
 # Copy PDF file (for XeLaTeX)
 build/%.pdf: source/%.pdf
@@ -268,11 +369,14 @@ output/%.png: render/%.svg
 	@mkdir -p $(dir $@)
 	rsvg-convert -f png -h 500 -a -o $@ $<
 
-# Copy SVG (for web)
-output/%.svg: render/%.svg
-	@echo -e '$(c_action)[rsvg-convert] Converting SVG file $(c_filename)$<$(c_action) to PNG file $(c_filename)$@$(c_action):$(c_default)'
-	@mkdir -p $(dir $@)
-	rsvg-convert -f svg -h 500 -a -o $@ $<
+
+# A TikZ picture, for the web: `render/%.tikz` -> `build/%.tikz.tex` -> `build/%.pdf` ->
+# `build/%.svg`. Every TikZ drawing in the repository used to be reachable as a PDF and
+# unreachable as anything a browser can show.
+#
+output/%.svg: build/%.svg
+	@echo -e '$(c_action)Copying SVG file $(c_filename)$<$(c_action) to $(c_filename)$@$(c_action):$(c_default)'
+	$(call _copy,SVG)
 
 # Publish the SVG a `.tikz` renders to (for web)
 #
@@ -313,30 +417,20 @@ output/%.py: source/%.py
 output/%.jpg: source/%.jpg
 	$(call _copy,JPG)
 
-# DeGeŠ convert Markdown to HTML (for web)
+# Markdown to HTML. XFAIL, exactly like the `.tex` fall-through above and for the same reason:
+# a module says which language a file is in and where its context lives, and this rule cannot.
 #
-# **From `render/`, never from `source/`** -- the same input the TeX is built from. This read
-# `source/` until now, which skipped the Jinja pass entirely: every `(§ … §)` reached the page as
-# itself. A solution that includes a program published the literal line
-# `(§ include('winter_is_coming.py') §)`, syntax-highlighted as Python, where the program belonged
-# -- the same failure `pandoc-include` used to produce, in the one branch of the build that had
-# never been moved onto the renderer.
+# It used to read `source/` and hardcode `sk`, which meant the HTML branch skipped the whole Jinja
+# stage -- every `(§ … §)` tag reached pandoc verbatim -- and could only ever produce Slovak. The
+# per-module rules next to the `.tex` ones are the real ones.
 #
-# It stayed hidden because the web is built from seminar, and only 7 of its sources carry a tag.
-# `output/naboj/%/html` wildcards 4016 that do, and `publish` rsyncs the result to `public_html`.
-#
-# `pathlang` rather than a hardcoded `sk`, for the reason the picture rules use it: a naboj source
-# lives under its language, so the tag has to be formatted in that language -- otherwise a Slovak
-# page gets an English decimal point. Seminar has no language in its path and falls back to
-# `$(lang)`, which is what the `sk` here used to mean.
-output/%.html: render/%.md
-	$(call pandochtml,$(call pathlang,$*))
-
-# DeGeŠ convert Markdown to HTML (for web)
-#output/%.html: render/%.md
-#	$(call pandochtml,$(call pathlang,$*))
-#	./wr -input $@ -template core/latex/wr.tex --engine xelatex -innerhtml -eqdir .webtex -output $@.conv
-#	mv $@.conv $@
+# The commented-out `./wr` variant that stood here is gone with it: it drove `--webtex=eqn://`
+# through a Go tool that is not in the repository, against `core/latex/wr.tex`, which is not
+# either. `core/latex/wrt.tex` is its template, still present and still unused.
+output/%.html: \
+	render/%.md
+	@echo -e '$(c_error)Incorrect fall-through rule called on $@!$(c_default)'
+	@exit 1
 
 .SECONDEXPANSION:
 

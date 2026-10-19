@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+(# One problem as a page a browser can open, from `file://` with the network off.
+
+   There is no script here and no stylesheet link, which is the point: the maths was typeset
+   into SVG by `core/html/mathjax.py` at build time and the CSS is inlined, so the page needs
+   nothing but itself and the `pictures/` directory beside it. Firefox gives every `file://`
+   document its own origin, so anything it had to fetch -- even from a sibling directory -- it
+   would not get. #)
+<html lang="(* lang *)">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>(* title *)</title>
+<style>(* css *)</style>
+</head>
+<body>
+<main>
+    <h1>(* title *)</h1>
+    (* content *)
+</main>
+</body>
+</html>

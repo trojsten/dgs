@@ -1,0 +1,239 @@
+/*
+ * A problem on the web. Deliberately plain: this is the booklet's content, not its design.
+ *
+ * Black on white, like the booklet, and not the reader's `prefers-color-scheme`: the maths is
+ * SVG taking `currentColor` and the drawings are black ink with no background, so a dark page
+ * means inverting some of the ink and not the rest. `color-scheme: light` says so to the
+ * browser as well, which is what keeps a form control or a scrollbar from going dark on its
+ * own.
+ */
+:root {
+    color-scheme: light;
+    --fg: #000;
+    --muted: #666;
+    --rule: #ddd;
+    --bg: #fff;
+    --accent: #0b5fa5;
+}
+
+html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    /* a figure may be as wide as the window, and `100vw` counts the scrollbar; `clip` rather
+       than `hidden`, which would make the body a scroll container of its own */
+    overflow-x: clip;
+}
+
+/*
+ * The booklet's own face first, then the nearest things a reader is likely to have.
+ *
+ * It is not only cosmetic. The maths is SVG sized in `ex`, from the `\fontdimen5` xelatex
+ * reported for **Minion Pro**, and `ex` resolves against whatever the page is actually set
+ * in -- so a formula is the size it was measured to be only when the prose around it is
+ * Minion too. Georgia has a much larger x-height, and under it every formula came out
+ * proportionally small.
+ *
+ * `Minion 3` is the same design under Adobe's current name. `Crimson Pro` and `EB Garamond`
+ * are free old-style faces of about Minion's colour and proportion; `Constantia` and
+ * `Georgia` are what Windows and everywhere else actually have. `sans-serif` last, as the
+ * one thing to fall back to when none of them is there.
+ */
+body {
+    font: 17px/1.6 'Minion Pro', 'Minion 3', 'Crimson Pro', 'EB Garamond',
+          Constantia, Georgia, sans-serif;
+}
+
+main {
+    /* 16px of gutter at phone width, and a measure that does not run past comfortable reading */
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2rem 16px 6rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+    margin: 0 0 1.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+}
+
+h2, h3 {
+    font-size: 1.15rem;
+    margin: 2rem 0 0.6rem;
+}
+
+a {
+    color: var(--accent);
+}
+
+/*
+ * A picture, which may be wider than the measure.
+ *
+ * The booklet clamps a drawing to `\linewidth` because a page has an edge; a page that
+ * scrolls has not, so `core/html/page.py` gives the picture the width its authored height
+ * implies and this centres it on the **window** rather than on the text column --
+ * `29/chopper` is 4:1 and asks for 60mm of height, which is 240mm of width against the 180mm
+ * the booklet can give it.
+ *
+ * `left: 50%` with `translateX(-50%)` and no auto margins: the element is laid out at the
+ * container's left edge and then centred on it, which is centred on the window too, because
+ * `main` is. Auto margins would centre it first and the shift would then push it off-centre.
+ *
+ * The breakout is on the **figure** and on a lone picture in a paragraph, never on an `<img>`
+ * inside a figure -- that would shift it twice, once with its figure and once within it.
+ */
+/* No `max-width: 100%` here: it is the containing block that a breakout picture has to get
+   past, and `page.py` already bounds every picture by the window. */
+img {
+    display: block;
+}
+
+figure,
+p > img:only-child {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 1.5rem 0;
+}
+
+/* `max-content`, not `fit-content`: the latter is capped by the container, which is the one
+   thing a breakout has to get past. The figure is then as wide as its picture, so the shift
+   centres the picture and the caption lands centred under it rather than across a
+   full-width block. */
+figure {
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+}
+
+figure > img {
+    margin: 0;
+    max-width: 100%;
+}
+
+/* A reaction scheme set by LaTeX. It is a drawing of text, so it needs room to breathe, and it
+   is inline SVG taking `currentColor`, so it needs no filter and no second rendering. */
+.chemistry {
+    margin: 1.5rem 0;
+}
+
+/* The booklet sets the number upright and the caption text italic, so the two halves are
+   styled separately. `HTMLConvertor`'s `post_regexes` marks them off, keying on the number
+   rather than the word -- the word is `Obrázok`, `Figure`, `Abbildung` or one of eight more. */
+figcaption {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+}
+
+.caption-text {
+    font-style: italic;
+}
+
+/* pandoc-crossref numbers a display and puts the number in the same block */
+.math.display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.2rem 0;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 1.2rem 0;
+}
+
+th, td {
+    border: 1px solid var(--rule);
+    padding: 0.3rem 0.7rem;
+    text-align: left;
+}
+
+code, pre {
+    font-family: ui-monospace, 'DejaVu Sans Mono', monospace;
+    font-size: 0.9em;
+}
+
+pre {
+    overflow-x: auto;
+    padding: 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+}
+
+blockquote {
+    margin: 1.2rem 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--rule);
+    color: var(--muted);
+}
+
+/* `@E` -- a translation or a file the build could not find. Loud here as it is in the PDF. */
+.error {
+    background: #c00;
+    color: #fff;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+}
+
+/*
+ * Maths set by xelatex and shipped as SVG.
+ *
+ * `height` and `vertical-align` are written on each `<svg>` from the box LaTeX measured, in
+ * `ex`, so a formula scales with the text around it and an inline one sits on its baseline
+ * instead of on a line of its own. No `width` is written: the `viewBox` gives the aspect ratio
+ * and the browser derives the rest, which keeps the two in step when the reader resizes the
+ * type. `--no-fonts` leaves bare paths, so `currentColor` reaches them and the ink is the
+ * page's own -- one rendering, whatever the page is set in.
+ */
+svg.dgs-math {
+    display: inline-block;
+}
+
+/* a `span`, not a `div`: pandoc puts a display inside a paragraph, which a `div` would close */
+.dgs-math-display {
+    display: block;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 1rem 0;
+}
+
+/*
+ * ... and the same maths set by MathJax instead (`page.py --maths mathjax`).
+ *
+ * `mjx-container` is an unknown element to the browser, so it is inline by default and a
+ * display would otherwise run on in the middle of the sentence that introduced it. MathJax
+ * writes `display="true"` on the ones that are blocks; nothing else distinguishes them.
+ */
+mjx-container[display="true"] {
+    display: block;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin: 1rem 0;
+}
+
+mjx-container svg {
+    /* `--no-fonts` is not in play here, but the glyphs are still paths and still want the ink */
+    fill: currentColor;
+    stroke: currentColor;
+}
+
+/*
+ * A picture the page names and has not got.
+ *
+ * The same call `\protectedInput` makes in the booklet: box the hole, keep the rest of the
+ * page, and let the build go red separately. A silent gap is the failure worth avoiding --
+ * a picture that is simply absent renders as nothing at all, and reads as a page that
+ * never had a figure.
+ */
+.dgs-missing {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.9rem;
+}

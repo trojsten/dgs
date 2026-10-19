@@ -27,11 +27,18 @@ def problem_count(seminar: str, volume: int) -> tuple[str, int]:
     return sr, count
 
 
-COPY_EXTENSIONS = ['jpg', 'svg', 'png', 'kmz', 'py']
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Copy a DeGeŠ round to www-archiv")
+    """
+    Copy a round's PDFs to the archive.
+
+    It used to carry the HTML too, and a flat `obrazky/` directory of every picture in the round
+    symlinked together -- a layout the old website wanted and nothing else did. That layout had
+    reached back into the convertor, which rewrote every `<img src=>` to sit under `obrazky/` and
+    *failed the build* on any that did not, so a TikZ picture could not be part of an HTML page
+    at all. Both are gone, and the HTML is now a thing this repository renders for itself rather
+    than an export shaped by one consumer.
+    """
+    parser = argparse.ArgumentParser(description="Copy a DeGeŠ round's PDFs to www-archiv")
     parser.add_argument('seminar', choices=['FKS', 'KMS', 'KSP', 'UFO', 'PRASK', 'FX', 'Suši'])
     parser.add_argument('volume', type=int)
     parser.add_argument('part', type=int, choices=[1, 2])
@@ -44,7 +51,9 @@ def main():
     issue = 100 if args.round == 'outdoor' else int(args.round)
 
     # FKS hack: volumes <= 37 are now marked as "FKS-old"
-    seminar_remote, count = problem_count(args.seminar, args.volume)
+    # the count was the HTML loop's; what is left of this function is the remote name,
+    # which still has to know that FKS up to volume 37 is published as `FKS-old`
+    seminar_remote, _ = problem_count(args.seminar, args.volume)
 
     path_fragment_local = f"{args.seminar}/{args.volume:02d}/{args.part}/{issue}"
     path_fragment_remote = f"{seminar_remote}/{args.volume}/{args.part}/{issue}"
@@ -52,27 +61,11 @@ def main():
     # delete the temporary directory if present
     os.system("rm -rf tasks")
 
-    # copy HTML files
-    for local, remote in (('problem', 'zadania'), ('solution', 'vzoraky')):
-        for problem in range(1, count + 1):
-            pfl = f"{path_fragment_local}/{problem:02d}"
-            fire(f"mkdir -p tasks/{path_fragment_remote}/{remote}/html && "
-                 f"ln -s $(pwd)/output/seminar/{pfl}/{local}.html "
-                 f"tasks/{path_fragment_remote}/{remote}/html/prikl{problem}.html")
-
     # copy pdf files
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/problems.pdf "
          f"tasks/{path_fragment_remote}/zadania/zadania.pdf")
     fire(f"ln -s $(pwd)/output/seminar/{path_fragment_local}/solutions.pdf "
          f"tasks/{path_fragment_remote}/vzoraky/vzoraky.pdf")
-
-    # copy pictures
-    copy_wildcard = ' -o '.join([f"-name '*.{x}'" for x in COPY_EXTENSIONS])
-
-    # stupid hack to make it work with trojstenweb
-    fire(rf"mkdir -p tasks/{path_fragment_remote}/obrazky/ && "
-         rf"find output/seminar/{path_fragment_local}/ \( {copy_wildcard} \) "
-         rf"-exec ln -s $(pwd)/'{{}}' tasks/{path_fragment_remote}/obrazky/ \;")
 
     # rsync everything to server
     if not args.dry_run:

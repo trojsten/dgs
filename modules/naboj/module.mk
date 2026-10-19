@@ -6,9 +6,14 @@
 source/naboj/%/i18n: \
 	$$(wildcard source/naboj/$$*/.static/i18n/*.yaml) ;
 
-# DeGeŠ convert Markdown file to TeX (for XeLaTeX)
+# DeGeŠ convert Markdown file to TeX (for XeLaTeX) and to HTML (for the web)
 # % <competition>/<volume>/problems/<language>/<problem>
 # Overrides global convertor!
+#
+# The two formats sit side by side on purpose: one `render/` stage, one language, two writers.
+# The HTML used to come from a rule of its own that read `source/` and hardcoded `sk`, so it
+# skipped Jinja entirely and could only ever be Slovak. A fragment lands in `build/` exactly as
+# a `.tex` does; assembling fragments into a page is the `output/` step, as it is for a PDF.
 
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
@@ -30,6 +35,13 @@ build/naboj/%/$(1).tex: \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
+
+build/naboj/%/$(1).html: \
+	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandochtml,$$(language))
 endef
 $(foreach filename,problem solution problem-extra answer-extra,$(eval $(call NABOJ_TRANSLATABLE,$(filename))))
 
@@ -48,6 +60,13 @@ build/naboj/%/$(1).tex: \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
 	$$(call pandoctex,$$(language))
+
+build/naboj/%/$(1).html: \
+	render/naboj/$$$$*/$(1).md \
+	build/core/i18n.stamp \
+	$$(PIPELINE_STAMP)
+	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
+	$$(call pandochtml,$$(language))
 endef
 $(foreach filename,answer answer-also answer-interval,$(eval $(call NABOJ_NONTRANSLATABLE,$(filename))))
 
@@ -277,6 +296,26 @@ build/naboj/%/pdf-prerequisites: \
 	build/core/i18n.stamp
 	@mkdir -p $(@D) && touch $@
 
+# The same pictures, in the one format a browser wants. `build/%.svg` takes a picture from any
+# source -- TikZ, gnuplot, a hand-drawn SVG, a PDF -- so unlike the PDF list above this needs one
+# line per depth and not one per extension. A raster picture is copied as it is.
+#
+# Both depths, as above: a picture sits either beside the problem or inside a language directory.
+# % <competition>/<volume>
+build/naboj/%/html-prerequisites: \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*.png)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$*/problems/*/*/*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$*/problems/*/*.$$(extension))))) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$*/problems/*/*/*.$$(extension))))) \
+	build/core/i18n.stamp
+	@mkdir -p $(@D) && touch $@
+
 # All problems, solutions and answers for every language, and overall
 # <competition>/<volume>
 define RULE_TEMPLATE
@@ -472,81 +511,54 @@ output/naboj/%/languages/tearoffs.zip: \
 	$(foreach path,$^,ln -sf $(notdir $(path)) $(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path));)
 	zip --junk-paths $@ $(foreach path,$^,$(subst tearoff,$(word 6,$(subst /, ,$(path))),$(path)))
 
-### HTML fragments, for the web
+# Every fragment of one language, and the pictures they point at.
 #
-# The conversion itself is the root Makefile's `output/%.html: render/%.md`. Everything here only
-# names the files to ask for, the way seminar's `html-problems` and `html-solutions` do.
+# What stood here wildcarded `source/naboj/$*/*/problem.md`, one directory too shallow for a
+# layout that is `problems/<problem>/<language>/problem.md`, so the two wildcards that mattered
+# matched nothing and only `answer.md` ever resolved -- in Slovak, whatever language was asked
+# for. It was not reachable from `output/naboj/%` either.
+# % <competition>/<volume>/languages/<language>
+build/naboj/%/html: \
+	$$(call truepath, build/naboj/$$*/../../html-prerequisites) \
+	$$(foreach problem,$$(wildcard $$(call truepath, source/naboj/$$*/../../problems/*)),\
+	  $$(foreach file,problem problem-extra solution answer answer-extra answer-also answer-interval,\
+	    $$(if $$(wildcard $$(problem)/$$(notdir $$*)/$$(file).md)$$(wildcard $$(problem)/$$(file).md),\
+	      $$(subst source/,build/,$$(problem))/$$(notdir $$*)/$$(file).html)))
+	@mkdir -p $(@D) && touch $@
+
+# A **page**: one problem in one language, assembled from its fragments with its pictures
+# copied in beside it and its maths typeset, so the directory opens from `file://` with
+# nothing else present.
 #
-# **Náboj's two kinds of source have to be named separately**, because they sit at different
-# levels and both render once per language. A translated file is `<problem>/<language>/<kind>.md`;
-# an answer is `<problem>/<kind>.md`, shared by every language and rendered into each of them --
-# which is exactly the split `NABOJ_TRANSLATABLE` and `NABOJ_NONTRANSLATABLE` make at the top of
-# this file. Wildcarding the translated shape alone is what made the old rule ask for nothing:
-# it looked for `<problem>/<language>/answer.md`, which never exists.
+# This is what goes in `output/`. A fragment is an intermediate -- it is to a page what a
+# `.tex` is to a PDF, and opening one shows prose with `\(…\)` spelled out and broken image
+# links -- so fragments stay in `build/` and everything under `output/` is a thing you can
+# open.
 #
-# The old rule was a no-op at the volume level too -- `<volume>/*/problem.md` is
-# `<volume>/problems/problem.md` -- so `make output/naboj/phys/29/html` reported "up to date"
-# and built not one page. The recursion at the bottom is what covers that level now.
+# A page whose picture is missing is still written, with a red box where the drawing belongs,
+# and the build stays green: an absent drawing is visible to anyone who opens the page, and
+# failing would cost a whole round its pages for one hole in one problem. `page.py` says which
+# pictures are missing on stderr.
+# % <competition>/<volume>/problems/<problem>/<language>
+output/naboj/%/index.html: \
+	$$(foreach file,problem problem-extra solution answer answer-extra answer-also answer-interval,\
+	  $$(if $$(wildcard source/naboj/$$(dir $$*)$$(notdir $$*)/$$(file).md)$$(wildcard source/naboj/$$(dir $$*)$$(file).md),\
+	    build/naboj/$$(dir $$*)$$(notdir $$*)/$$(file).html)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$(dir $$*)*.jpg)) \
+	$$(subst source/,build/,$$(wildcard source/naboj/$$(dir $$*)*.png)) \
+	$$(foreach extension,pdf tikz svg gp,\
+	  $$(subst source/,build/,$$(subst .$$(extension),.svg,\
+	    $$(wildcard source/naboj/$$(dir $$*)*.$$(extension))))) \
+	build/core/i18n.stamp
+	@echo -e '$(c_action)[page] Assembling $(c_filename)build/naboj/$(dir $*)$(c_action) into $(c_extension)HTML$(c_action) page $(c_filename)$@$(c_action):$(c_default)'
+	@mkdir -p $(@D)
+	python -m core.html.page build/naboj/$(dir $*) $(notdir $*) $(@D) --module naboj
 
-# Where a problem is translated, as output directories: `output/naboj/…/<problem>/<language>/`.
-# Keyed off `problem.md` because that is the one file every translation has.
-naboj_html_languages = $(subst source/,output/,$(dir $(wildcard source/naboj/$(1)/*/problem.md)))
-
-# <competition>/<volume>/problems/<problem>  --  the pictures a fragment points at.
-#
-# A Náboj picture is rendered once, beside the meta, because it is shared by every translation.
-# The fragments are not: they sit one level down, in `<problem>/<language>/`, and the HTML
-# references a picture as a **sibling** -- `src="x.svg"`. So each language directory gets its own
-# copy. Seminar needs none of this; its pictures already sit beside its fragments.
-#
-# The copy is a recipe rather than a prerequisite because the two paths differ by a directory the
-# pattern stem cannot see: one `%` cannot stand for both `<problem>` and `<problem>/<language>`.
-output/naboj/%/html-prerequisites: \
-	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.jpg)) \
-	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.png)) \
-	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.svg)) \
-	$$(subst source/,output/,$$(subst .gp,.svg,$$(wildcard source/naboj/$$*/*.gp))) \
-	$$(subst source/,output/,$$(subst .tikz,.svg,$$(wildcard source/naboj/$$*/*.tikz))) \
-	$$(subst source/,output/,$$(wildcard source/naboj/$$*/*.py))
-	@for language in $(notdir $(patsubst %/,%,$(dir $(wildcard source/naboj/$*/*/problem.md)))); do \
-		mkdir -p output/naboj/$*/$$language; \
-		for picture in $^; do cp -f "$$picture" "output/naboj/$*/$$language/"; done; \
-	done
-
-output/naboj/%/html-problems: \
-	output/naboj/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem.md))) \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/problem-extra.md))) ;
-
-output/naboj/%/html-solutions: \
-	output/naboj/$$*/html-prerequisites \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/solution.md))) ;
-
-# `answer-extra` is translated and so is wildcarded; the other three are shared and have to be
-# asked for once per language instead.
-output/naboj/%/html-answers: \
-	$$(subst source/,output/,$$(subst .md,.html,$$(wildcard source/naboj/$$*/*/answer-extra.md))) \
-	$$(foreach kind,answer answer-also answer-interval,\
-		$$(if $$(wildcard source/naboj/$$*/$$(kind).md),\
-			$$(addsuffix $$(kind).html,$$(call naboj_html_languages,$$*)))) ;
-
-# <competition>/<volume>/problems/<problem>  --  everything one problem has, every language.
-output/naboj/%/html: \
-	output/naboj/$$*/html-problems \
-	output/naboj/$$*/html-solutions \
-	output/naboj/$$*/html-answers ;
-
-# <competition>/<volume>  --  every problem in the volume.
-#
-# **A separate name, and it has to be.** The obvious spelling is `output/naboj/%/html` for both
-# levels, with the volume one depending on the problem one -- and make silently refuses it: a
-# pattern rule may not be used to make its own prerequisite, so the chain is abandoned and the
-# whole thing reports `No rule to make target`, with nothing to say which prerequisite was at
-# fault. Every piece builds on its own; only the combination fails.
-output/naboj/%/html-all: \
-	$$(foreach problem,\
-		$$(subst source/,output/,$$(dir $$(wildcard source/naboj/$$*/problems/*/meta.yaml))),\
-		$$(problem)html) ;
+# Every page of a volume, in one language.
+# % <competition>/<volume>/languages/<language>
+output/naboj/%/pages: \
+	$$(foreach problem,$$(wildcard $$(call truepath, source/naboj/$$*/../../problems/*)),\
+	  $$(subst source/,output/,$$(problem))/$$(notdir $$*)/index.html) ;
 
 # All targets for <language>
 # <competition>/<volume>/languages/<language>
