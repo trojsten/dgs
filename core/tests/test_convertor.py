@@ -8,7 +8,12 @@ from core.builder.convertor import Convertor
 
 
 @pytest.fixture
-def convert():
+def convert(i18n_built):
+    """
+    `i18n_built` because the convertor hands pandoc-crossref `build/core/i18n/<lang>.yaml`:
+    without it every figure word falls back to English and a Slovak caption test fails looking
+    like a broken regex.
+    """
     def _convert(fmt, language, string):
         infile = tempfile.NamedTemporaryFile(mode='w+')
         outfile = tempfile.NamedTemporaryFile(mode='w+')

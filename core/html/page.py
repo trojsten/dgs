@@ -200,7 +200,7 @@ def collect(fragment: pathlib.Path, *, sources: list[pathlib.Path],
 ENGINES = {'latex': texmath.typeset, 'mathjax': mathjax.typeset}
 
 
-def describe(module: str):
+def describe(module: str, repo_root: pathlib.Path | None = None):
     """
     What `modules/<module>/editor.yaml` says this module's units hold.
 
@@ -208,8 +208,15 @@ def describe(module: str):
     is Náboj's, and seminar's descriptor does not carry it because **seminar is monolingual**
     -- one language, not one of several that happens to be checked out. That is a fact about
     the module, so it belongs to the module, the way `equation_numbering` and `audit: true` do.
+
+    `repo_root` is the checkout to read that from, the working directory by default.
+    `load_modules` knows a module only when `source/<module>/` is populated, so without the
+    parameter nothing here could be exercised in a checkout that has no content repositories
+    -- and the content repositories are optional. A test points this at a tree of its own
+    holding one descriptor; the tests that assert what a *real* module says live with that
+    module, under `modules/<module>/tests/`.
     """
-    modules = descriptors.load_modules(pathlib.Path('.'))
+    modules = descriptors.load_modules(repo_root or pathlib.Path('.'))
     if module not in modules:
         raise ValueError(
             f'no such module: {module} -- '
@@ -226,7 +233,7 @@ def describe(module: str):
 
 def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
           title: str | None = None, files=None, engine: str | None = None,
-          module: str | None = None) -> pathlib.Path:
+          module: str | None = None, repo_root: pathlib.Path | None = None) -> pathlib.Path:
     """
     Assemble one unit's fragments into `<destination>/index.html`.
 
@@ -242,7 +249,7 @@ def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
 
     # `build/<module>/…`, the same rule `core/markdown-check.py` infers a module by
     module = module or (problem.parts[1] if len(problem.parts) > 1 else '')
-    languages, targets = describe(module)
+    languages, targets = describe(module, repo_root)
     directory = problem / lang if languages else problem
 
     sources = [directory, problem]
@@ -260,9 +267,9 @@ def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
         raise FileNotFoundError(f'{directory}: no fragments to assemble')
 
     # The maths is typeset here, once, so the page carries finished SVG and needs no
-    # JavaScript. The fragments are engine-neutral -- they hold the formula the author wrote --
-    # so either engine can set the same build, and the choice costs a page rebuild and nothing
-    # upstream of it.
+    # JavaScript. A fragment holds plain maths -- `Convertor.expand_for_the_web` rewrote
+    # siunitx and `math.tex` before pandoc ran -- so either engine can set the same build, and
+    # the choice costs a page rebuild and nothing upstream of it.
     bodies = ENGINES[engine](bodies, lang)
     pieces = [piece
               for name, body in zip(names, bodies, strict=True)

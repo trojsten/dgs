@@ -140,7 +140,7 @@ class TestTypesetting:
         assert texmath.typeset(plain, 'sk') == plain
 
     @needs_latex
-    def test_it_sets_siunitx_and_math_tex_for_real(self, tmp_path, monkeypatch):
+    def test_it_sets_siunitx_and_math_tex_for_real(self, i18n_built, tmp_path, monkeypatch):
         """
         The fires case, and the reason for the whole module: `\\qty` and `\\FDiff` reach xelatex
         unrewritten, so what comes back is the booklet's own output -- including the Slovak

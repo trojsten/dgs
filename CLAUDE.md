@@ -376,11 +376,41 @@ where the typing is.
 
 ## Tests
 
-`uv run pytest` (config in `pytest.ini`, tests in `core/tests/`). The suite is
-the fast way to check anything in `core/` — it covers quantities, formatting,
-filters, the Jinja environments and `MathObject` in detail. New filters or
-quantity behaviour are expected to come with tests in the matching
-`core/tests/test_*.py`.
+`uv run pytest` (config in `pytest.ini`). The suite is the fast way to check
+anything in `core/` — it covers quantities, formatting, filters, the Jinja
+environments and `MathObject` in detail. New filters or quantity behaviour are
+expected to come with tests in the matching `core/tests/test_*.py`.
+
+**`core/tests/` must pass in a checkout with no content repositories and no
+`build/`**, and that is a rule, not an observation. Nothing under `source/` is
+tracked -- `.gitmodules` says so outright, each module names its own
+repositories in `modules/<module>/editor.yaml` under `sources:` -- so cloning
+them is optional and a core test that needs one fails for everybody who has not.
+`descriptors.load_modules` is the usual way in: it knows a module **only** when
+`source/<module>/` is populated, so `page.describe('naboj')` is not a core test
+however much it looks like one.
+
+Such a test goes in **`modules/<module>/tests/`**, with
+`pytestmark = pytest.mark.skipif(not pathlib.Path('source/<module>').is_dir(), …)`
+at the top, and `pythonpath = .` in `pytest.ini` is what lets it `import core`
+from there. Give the file a name no other module uses -- `test_naboj_page_layout.py`,
+not `test_page_layout.py` -- because there are no `__init__.py` under `modules/`
+and pytest refuses two test modules with the same basename.
+
+What core *may* lean on is core's own build artefacts. `build/core/i18n/<lang>.yaml`
+is the one that bites: pandoc-crossref reads it for `figureTitle`, so without it
+every figure word silently falls back to English and `Obrázok 1:` arrives as
+`Figure 1:` -- a failure that reads like a broken regex and is a missing file.
+`core/tests/conftest.py`'s session-scoped `i18n_built` builds it from
+`core/i18n/*.yaml`, all of it core's own, so a suite run before any `make` behaves
+the same as one run after.
+
+The seam that keeps the rest of `core/html/page.py` testable is `repo_root`, on
+both `describe()` and `build()`: core hands it a `tmp_path` holding two stub
+descriptors, `translated` and `flat`, one of each shape. The stub symlinks `core`
+because `build()` reads `core/html/page.css` relative to the working directory,
+as `main()` does for everything -- so a stub root has to stand in for the real one
+entirely, which is also what lets the two CLI tests `chdir` into it.
 
 ## Pandoc
 
