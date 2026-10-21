@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import argparse
 import logging
 import numbers
 import pprint
@@ -744,10 +743,9 @@ class CLIInterface(cli.CLIInterface, ABC):
         # After the output is written, not instead of it: the point of boxing a missing word is
         # that the booklet still builds with the hole marked, so a translator sees every gap in one
         # pass instead of one per rebuild. The build must not go green on it, though -- that is a
-        # warning nobody reads, and it is exactly how volume 19 shipped a `Missing file` box for
-        # years. Write the output, then fail.
+        # warning nobody reads. Write the output, then fail.
         if (report := self.missing_words.report()) is not None:
-            log.error(f"{c.err('missing words')} in {c.path(self.args.infile.name)}\n{report}")
+            log.error(f"{c.err('missing words')} in {c.path(self.infile_name)}\n{report}")
             raise MissingWordsError(self.missing_words.missing)
 
     def build_context(self) -> Context:
@@ -758,11 +756,15 @@ class CLIInterface(cli.CLIInterface, ABC):
         buffer, and two implementations of what a context holds would be two chances to disagree
         about it -- which is the one thing a live preview must not do.
         """
-        meta_path = Path(self.args.context.name)
-        meta = self.context_cls(self.args.context.name, meta_path).add(
+        meta_path = self.args.context
+        meta = self.context_cls(str(meta_path), meta_path).add(
             id=self.label_prefix(meta_path))
         meta.validate()
-        infile = Path(self.args.infile.name).name
+        # `Path.name` *is* the basename, so the old `Path(…name).name` round trip is gone with
+        # the file object it worked around. `<stdin>` keeps the lookups below missing, which is
+        # what an unnamed input got before and what makes both of them default to True.
+        infile = '<stdin>' if self.args.infile is None else self.args.infile.name
+
         return build_render_context(
             meta, self.args.locale, root=meta_path.parent,
             labelled=self.equation_numbering.get(infile, True),
@@ -784,9 +786,9 @@ class CLIInterface(cli.CLIInterface, ABC):
         return meta_path.parent.name
 
     def build_convertor(self, args, **kwargs):
-        return JinjaConvertor(self.args.infile,
+        return JinjaConvertor(self.infile,
                               self.build_context(),
                               debug=self.args.debug)
 
     def add_extra_arguments(self):
-        self.parser.add_argument('-C', '--context', type=argparse.FileType('r'))
+        self.parser.add_argument('-C', '--context', type=Path)
