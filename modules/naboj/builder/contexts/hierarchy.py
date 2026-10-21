@@ -1,5 +1,6 @@
 import datetime
 import itertools
+import zoneinfo
 
 from enschema import And, Optional, Regex, Schema
 
@@ -9,6 +10,11 @@ from core.utilities import lists
 from core.utilities.schema import valid_language, valid_language_name
 
 from .base import ContextNaboj
+
+
+def valid_timezone(name: str) -> bool:
+    """ An IANA zone name, `Europe/Lisbon`; an offset like `+01:00` would be wrong half the year. """
+    return isinstance(name, str) and name in zoneinfo.available_timezones()
 
 
 class ContextCompetition(ContextNaboj):
@@ -79,7 +85,11 @@ class ContextVenue(ContextNaboj):
         'problems_modulo': [[ContextNaboj.problem]],
         Optional('orgs'): [And(str, len)],
         'evaluators': int,
-        'start': And(int, lambda x: 0 <= x < 1440),
+        # The venue's local start, for a venue that genuinely starts at another moment. A venue
+        # that merely sits in another time zone gives `timezone` instead and leaves this out, so
+        # that its start follows the volume's and cannot drift from it.
+        Optional('start'): And(int, lambda x: 0 <= x < 1440),
+        Optional('timezone'): valid_timezone,
     })
 
     def populate(self, competition, volume, venue):
@@ -122,6 +132,8 @@ class ContextVolume(ContextNaboj):
         'constants': dict,
         'table': int,
         'start': And(int, lambda x: 0 <= x < 1440),
+        # The zone `start` is written in, and the one a venue without a `timezone` is in.
+        Optional('timezone', default='Europe/Bratislava'): valid_timezone,
     })
 
     def populate(self, competition, volume):
