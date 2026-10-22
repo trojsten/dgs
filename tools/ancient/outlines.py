@@ -96,7 +96,7 @@ def main() -> int:
         if mark not in by_shapes:
             unknown.append(str(svg))
             continue
-        stem, glyphs = by_shapes[mark]
+        _stem, glyphs = by_shapes[mark]
         fixed, n = convert(text, glyphs)
         if n:
             svg.write_text(fixed)

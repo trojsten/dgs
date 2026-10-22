@@ -174,7 +174,7 @@ class TestTranslatedWords:
         from core.builder.renderer import MissingWordsError
         source = "$a \\QQText{(§ i18n.words['therefore'] §)} b$\n"
         with pytest.raises(MissingWordsError):
-            out = self.render_through_cli(tmp_path, 'sk', self.META, source)
+            self.render_through_cli(tmp_path, 'sk', self.META, source)
         assert r'\errorMessage{therefore:sk}' in (tmp_path / 'out.md').read_text()
 
     def test_a_render_that_wants_no_missing_word_still_succeeds(self, tmp_path):

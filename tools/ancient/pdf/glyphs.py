@@ -374,7 +374,7 @@ def read_page(pdf: Path, page: int, shift: int | None = None,
     """
     raw = trace(pdf, page)
     mb = RE_MEDIABOX.search(raw)
-    height = float(mb.group(4)) if mb else 842.0
+    float(mb.group(4)) if mb else 842.0
 
     table = identified(volume, _fingerprint(pdf)) if volume else {}
     if shift is None:

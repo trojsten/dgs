@@ -120,7 +120,7 @@ class TestFailuresAreTheAnswerToo:
         assert 'x' in body['error']
 
     def test_unparseable_yaml_says_so(self, ask):
-        body = ask(['(§ x §)'], meta='values: [unclosed\n')
+        ask(['(§ x §)'], meta='values: [unclosed\n')
 
     def test_a_meta_the_schema_refuses_is_refused(self, ask):
         """Strict on purpose: `make` would refuse it too, and a popup that quietly accepted a

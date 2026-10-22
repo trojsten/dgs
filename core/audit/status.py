@@ -252,7 +252,7 @@ def picture_status(unit):
                     misnamed.append(f'{where}: {target}')
                 else:
                     broken.append(f'{where}: {target}')
-            if not text[m.end():m.end() + 1] == '{':
+            if text[m.end():m.end() + 1] != '{':
                 unsized.append(f'{where}: {target}')
         if RE_INSERT_PICTURE.search(text):
             hand_written.append(where)

@@ -152,7 +152,7 @@ class TestTypesetting:
         """
         monkeypatch.setattr(texmath, 'CACHE', tmp_path)         # not the build's cache
         out, = texmath.typeset(
-            [r'<p><span class="math inline">\(\qty{4.506}{\hour}\)</span> '
-             r'and <span class="math display">\[\FDiff{t}\]</span></p>'], 'sk')
+            [(r'<p><span class="math inline">\(\qty{4.506}{\hour}\)</span> '
+             r'and <span class="math display">\[\FDiff{t}\]</span></p>')], 'sk')
         assert '<svg' in out and 'dgs-math-display' in out
         assert not re.search(r'\\[a-zA-Z]+', out), 'a macro reached the page unexpanded'

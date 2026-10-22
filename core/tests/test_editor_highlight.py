@@ -425,23 +425,7 @@ class TestEvaluableFragments:
     answers for `(§ eq.snell §)` without anyone having to type it.
     """
 
-    META = '\n'.join([
-        'eq:',
-        "  snell: 'a = b'",
-        'values:',
-        '  v0:',
-        '    magnitude: 3',
-        '    unit: m',
-        'derived:',
-        '  r: "v0 * 2"',
-        'blocks:',
-        '  setup: |',
-        '    set term pdf',
-        'words:',
-        '  air:',
-        '    sk: vzduch',
-        '',
-    ])
+    META = 'eq:\n  snell: \'a = b\'\nvalues:\n  v0:\n    magnitude: 3\n    unit: m\nderived:\n  r: "v0 * 2"\nblocks:\n  setup: |\n    set term pdf\nwords:\n  air:\n    sk: vzduch\n'
 
     def test_a_tag_is_evaluated_as_written(self, evals):
         assert evals('Preto (§ eq.snell|inl §).', 'dgs-md') == ['(§ eq.snell|inl §)']

@@ -75,8 +75,8 @@ def compose(sources: list[str], labels: list[str], gap: float) -> str:
     prefixes = {'xmlns:xlink="http://www.w3.org/1999/xlink"'}
     for source in sources:
         prefixes |= set(RE_NAMESPACE.findall(RE_ROOT.search(source).group(0)))
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" {" ".join(sorted(prefixes))}'
-             f' width="{width:g}" height="{height:g}" viewBox="0 0 {width:g} {height:g}">']
+    parts = [(f'<svg xmlns="http://www.w3.org/2000/svg" {" ".join(sorted(prefixes))}'
+             f' width="{width:g}" height="{height:g}" viewBox="0 0 {width:g} {height:g}">')]
     x = 0.0
     for index, (source, (w, h), label) in enumerate(zip(sources, sizes, labels)):
         # A `clipPath`, not the `overflow="hidden"` the SVG spec already implies for a nested

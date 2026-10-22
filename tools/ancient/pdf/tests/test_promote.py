@@ -35,7 +35,7 @@ class TestSpliceOrder:
         # exactly where it was: volume 05 came out with 79 problems instead of 50, running 29
         # of them twice, and nothing said so.
         out = _splice_order(META, ['three-balls', 'reversing-tram-again', 'late-train'])
-        lines = [ln for ln in out.split('\n') if ln.startswith('  ') or ln.startswith('  #')]
+        [ln for ln in out.split('\n') if ln.startswith(('  ', '  #'))]
         assert out.count('- reversing-tram-again') == 1
         assert out.count('- late-train') == 1
         note = out.split('\n')[out.split('\n').index('  - reversing-tram-again') - 1]

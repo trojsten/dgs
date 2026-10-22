@@ -557,8 +557,8 @@ class TestHoisting:
         files = {'sk': {'solution.md': block}, 'en': {'solution.md': block}}
         report = run(tmp_path, files=files)
         assert 'hoistable-equation' in ids(report)
-        assert 'identical' in [f.message for f in report.findings
-                               if f.check == 'hoistable-equation'][0]
+        assert 'identical' in next(f.message for f in report.findings
+                               if f.check == 'hoistable-equation')
 
     def test_whitespace_does_not_block_hoisting(self, tmp_path):
         files = {'sk': {'solution.md': '$$\n    a = b\n$$ {#eq:widget:first}\n'},

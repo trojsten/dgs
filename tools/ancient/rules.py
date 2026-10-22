@@ -161,7 +161,7 @@ def break_displays(text: str, width: int = 100, limit: int = 120) -> str:
     out, display = [], False
     for line in text.split('\n'):
         stripped = line.strip()
-        if stripped.startswith('$$') or stripped.startswith('}$$'):
+        if stripped.startswith(('$$', '}$$')):
             display = not display
             out.append(line)
             continue
@@ -288,7 +288,7 @@ def inline_math(text: str) -> str:
     out, display = [], False
     for line in text.split('\n'):
         stripped = line.strip()
-        if stripped.startswith('$$') or stripped.startswith('}$$'):
+        if stripped.startswith(('$$', '}$$')):
             display = not display
         if display or line.startswith('%#') or '$' not in line:
             out.append(line)
@@ -317,7 +317,7 @@ def line_breaks(text: str) -> str:
     out, display = [], False
     for line in text.split('\n'):
         stripped = line.strip()
-        if stripped.startswith('$$') or stripped.startswith('}$$'):
+        if stripped.startswith(('$$', '}$$')):
             display = not display
         if not display and stripped.endswith('\\\\'):
             out.extend([line.rstrip()[:-2].rstrip(), ''])
@@ -580,10 +580,10 @@ def spaced_units(text: str) -> str:
     - **`N\%`** in prose, which is a percentage and wants siunitx like any other unit.
     """
     def chain(m: re.Match) -> str:
-        parts, pos = [], 0
+        parts, _pos = [], 0
         for box in RE_BOX.finditer(m.group('boxes')):
             parts.append(box['body'] + (f"^{{{box['exponent']}}}" if box['exponent'] else ''))
-            pos = box.end()
+            box.end()
         return f"\\,\\textrm{{{'.'.join(parts)}}}" if parts else m.group(0)
 
     # A run of upright boxes joined by full stops, introduced by 2007's medium space.
@@ -800,7 +800,7 @@ def wrap(text: str, width: int = 100, limit: int = 120) -> str:
         stripped = line.strip()
         # `$$`, `$${`, `}$$` and the closing `$$ {#eq:…}` all delimit; everything between is a
         # formula and is never re-broken.
-        if stripped.startswith('$$') or stripped.startswith('}$$'):
+        if stripped.startswith(('$$', '}$$')):
             display = not display
             out.append(line)
             continue

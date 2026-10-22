@@ -159,7 +159,7 @@ def fingerprint(repo_root: Path, names) -> str:
     return h.hexdigest()
 
 
-def sweep(repo_root: Path = REPO_ROOT, *, source_root: Path = None, run=run_xelatex) -> dict:
+def sweep(repo_root: Path = REPO_ROOT, *, source_root: Path | None = None, run=run_xelatex) -> dict:
     """Ask TeX about every control word in the tree, and cache the answer."""
     names = collect(source_root or repo_root / 'source')
     started = time.time()
@@ -216,7 +216,7 @@ def undefined_names(repo_root: Path = REPO_ROOT) -> frozenset:
     return frozenset(payload['undefined']) if payload else frozenset()
 
 
-def is_stale(repo_root: Path = REPO_ROOT, *, source_root: Path = None) -> bool | None:
+def is_stale(repo_root: Path = REPO_ROOT, *, source_root: Path | None = None) -> bool | None:
     """True when the sources or the definitions have moved since the sweep; None if it never ran."""
     payload = read_cache(repo_root)
     if payload is None:

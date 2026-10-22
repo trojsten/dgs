@@ -239,8 +239,8 @@ def write(out: Path, volume: str, pdf: Path, dry_run: bool = False) -> str:
     found, complaints = segment.problems(lines)
 
     report = [f'# {pdf.name} -> volume {volume}', '',
-              f'- sheets: {totals["pages"]}, logical pages: {totals["halves"]}, '
-              f'lines: {totals["lines"]}',
+              (f'- sheets: {totals["pages"]}, logical pages: {totals["halves"]}, '
+              f'lines: {totals["lines"]}'),
               f'- encoding shift: {totals["shift"]}',
               f'- `ý` bitmaps spliced: {totals["y-spliced"]}',
               f'- accents composed: {totals["composed"]}',

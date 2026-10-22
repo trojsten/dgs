@@ -370,11 +370,11 @@ class Convertor:
     #: consumes it, and a class alone would leave the box invisible there.
     BOXES = (
         (re.compile(r"\\errorMessage\{([^{}]*)\}"),
-         r'<span class="dgs-error" style="background:#c00;color:#fff;'
-         r'padding:0 .25em;border-radius:2px">\1</span>'),
+         (r'<span class="dgs-error" style="background:#c00;color:#fff;'
+         r'padding:0 .25em;border-radius:2px">\1</span>')),
         (re.compile(r"\\todoMessage\{([^{}]*)\}"),
-         r'<span class="dgs-todo" style="background:#fe6;color:#000;'
-         r'padding:0 .25em;border-radius:2px">\1</span>'),
+         (r'<span class="dgs-todo" style="background:#fe6;color:#000;'
+         r'padding:0 .25em;border-radius:2px">\1</span>')),
     )
 
     #: An inline code span. Markdown sets one verbatim, so a macro written in one is being
@@ -465,8 +465,8 @@ class Convertor:
             # keeping the typography filters together and in a fixed order makes the argv readable.
             "--lua-filter", "./core/filters/hyphens.lua",
             "-M", f"repeat-hyphen={'true' if self.repeat_hyphen else 'false'}",
-            "-M", "repeat-hyphen-not-before-capital="
-                  f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}",
+            "-M", ("repeat-hyphen-not-before-capital="
+                  f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}"),
         ]
         if self.output_format == 'html':
             # `--math-method`, not the `--mathjax` flag, which pandoc 3 deprecates with a warning

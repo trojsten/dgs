@@ -242,8 +242,8 @@ def find_figure(stem: str, ancient: Path, cache: Path) -> tuple[Path | None, lis
         cache.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(svg, cached)
         _crop(cached)
-        return cached, [f'figure: `{stem}` was drawn on a whole page and has been cropped '
-                        f'to the drawing']
+        return cached, [(f'figure: `{stem}` was drawn on a whole page and has been cropped '
+                        f'to the drawing')]
     if cached.exists():
         return cached, []
     for odg in ancient.rglob(f'{stem}.odg'):
@@ -382,8 +382,8 @@ def _from_eps(eps: Path, out: Path) -> tuple[Path | None, list[str]]:
         textual.unlink(missing_ok=True)
     outlined.replace(out)
     pdf.unlink(missing_ok=True)
-    return out, note or [f'eps: `{eps.name}` converted with its glyphs outlined; the font pass '
-                         f'cannot reach them']
+    return out, note or [(f'eps: `{eps.name}` converted with its glyphs outlined; the font pass '
+                         f'cannot reach them')]
 
 
 def convert_body(text: str, dialect: Dialect, slug: str, label: bool = False,

@@ -482,7 +482,7 @@ class PhysicsQuantity:
         Format the physical quantity to a dict for further processing.
         """
         pint_output = f"{self._quantity:Lx}"
-        si_fragment = re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
+        re.search(r'\\SI\[]{(?P<magnitude>.*)}{(?P<unit>.*)}$', pint_output)
         # A bare `f` or `e` means Python's six decimal places, which is a precision the
         # caller did not ask for and `1e-8` does not survive. See `natural`.
         # `force_f` replaces the *notation*, not the precision: a value that asked never to be

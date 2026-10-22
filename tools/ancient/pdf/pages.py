@@ -14,6 +14,7 @@ not carry two plausible page numbers is reported rather than split on a guess.
 
 from __future__ import annotations
 
+import itertools
 import re
 from dataclasses import dataclass
 
@@ -54,7 +55,7 @@ def gutter(glyphs: list[Glyph]) -> float | None:
 
     # The widest gap between consecutive glyph positions in the middle third.
     best_gap, best_at = 0.0, None
-    for a, b in zip(inner, inner[1:]):
+    for a, b in itertools.pairwise(inner):
         if b - a > best_gap:
             best_gap, best_at = b - a, (a + b) / 2
     # A gutter is wide *relative to the sheet*. A fixed threshold in points fails on a sheet

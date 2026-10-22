@@ -101,14 +101,14 @@ class Dialect:
             # `center`, which `figures()` reads directly, so the descriptor below is never
             # consulted. It is written out anyway rather than left absent, because an absent
             # year is the signal that nobody has looked at it.
-            2007: dict(figure_arity=2, figure_file=1, figure_caption=None, figure_label=None),
-            2009: dict(figure_arity=2, figure_file=1, figure_caption=None, figure_label=None),
-            2010: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
-            2011: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
-            2012: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
-            2013: dict(figure_arity=4, figure_file=1, figure_caption=3, figure_label=2),
-            2014: dict(figure_arity=5, figure_file=1, figure_caption=2, figure_label=3),
-            2015: dict(figure_arity=5, figure_file=1, figure_caption=2, figure_label=3),
+            2007: {'figure_arity': 2, 'figure_file': 1, 'figure_caption': None, 'figure_label': None},
+            2009: {'figure_arity': 2, 'figure_file': 1, 'figure_caption': None, 'figure_label': None},
+            2010: {'figure_arity': 4, 'figure_file': 1, 'figure_caption': 3, 'figure_label': 2},
+            2011: {'figure_arity': 4, 'figure_file': 1, 'figure_caption': 3, 'figure_label': 2},
+            2012: {'figure_arity': 4, 'figure_file': 1, 'figure_caption': 3, 'figure_label': 2},
+            2013: {'figure_arity': 4, 'figure_file': 1, 'figure_caption': 3, 'figure_label': 2},
+            2014: {'figure_arity': 5, 'figure_file': 1, 'figure_caption': 2, 'figure_label': 3},
+            2015: {'figure_arity': 5, 'figure_file': 1, 'figure_caption': 2, 'figure_label': 3},
         }
         if year not in known:
             raise SystemExit(

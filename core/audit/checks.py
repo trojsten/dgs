@@ -367,7 +367,7 @@ def display_blocks(text):
     terminal punctuation has to sit *inside* the final cell: after `\\end{array}` it would float
     at the array's vertical centre, beside the middle row. So closing lines are stepped over.
     """
-    lines = text.splitlines()
+    text.splitlines()
     for m in blocks_of(text):
         body = [l for l in m.group('body').splitlines() if l.strip()]
         while body and RE_ENVIRONMENT_CLOSE.match(body[-1]):
@@ -1586,7 +1586,7 @@ def hoistable_inline(sources):
             places, spellings = found['places'], found['spellings']
             if len(places) < 2:
                 continue
-            shown = sorted(spellings)[0]
+            shown = min(spellings)
             shown = shown if len(shown) <= 60 else shown[:57] + '…'
             if len(spellings) > 1:
                 message = (f"`{shown}` is written out in {len(places)} files in "
