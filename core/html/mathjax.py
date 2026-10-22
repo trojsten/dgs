@@ -29,6 +29,7 @@ import html
 import json
 import pathlib
 import re
+import shutil
 import subprocess
 
 from core.html import mathimage, texmath
@@ -37,6 +38,24 @@ RENDERER = pathlib.Path('core/html/mathjax-render.cjs')
 #: Picked by loading the font's component; naming it in `loader.font` does nothing. See the
 #: comment at the top of the renderer, which was expensive to learn.
 FONT = '@mathjax/mathjax-pagella-font'
+
+#: What `npm ci` puts in `node_modules`, and what the renderer asks node for by name.
+PACKAGES = ('mathjax', FONT)
+
+
+def available() -> bool:
+    """
+    Whether this engine can run at all: node, **and the packages**.
+
+    The two are a different question, and asking only the first is how CI came to report
+    `Cannot find module '@mathjax/mathjax-pagella-font/package.json'` from inside a test that
+    should have skipped -- a hosted runner has node whether or not anyone ran `npm ci`. The
+    container is the other way round: it installs the packages for nobody, having no node.
+    """
+    return (shutil.which('node') is not None
+            and all((pathlib.Path('node_modules') / name / 'package.json').is_file()
+                    for name in PACKAGES))
+
 
 #: What marks a fragment as beyond MathJax altogether. chemfig, and the `\schemestart`
 #: environment it draws reaction arrows in; `\chemname` and `\setchemfig` only appear inside one.

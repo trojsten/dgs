@@ -16,7 +16,11 @@ from core.html import texmath
 STANDALONE = pathlib.Path('core/templates/standalone.jtex')
 MATHPAGE = pathlib.Path('core/templates/mathpage.jtex')
 
-needs_latex = pytest.mark.skipif(not shutil.which('xelatex'), reason='xelatex is not installed')
+# Asked of the module, not guessed: it shells out to `dvisvgm` as well, and CI had TeX
+# without it -- the test died in `subprocess` where it should have skipped.
+needs_latex = pytest.mark.skipif(
+    not all(shutil.which(tool) for tool in texmath.REQUIRES),
+    reason=f'needs {" and ".join(texmath.REQUIRES)}')
 
 
 def packages(template: pathlib.Path) -> list[str]:

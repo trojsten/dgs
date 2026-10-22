@@ -791,4 +791,13 @@ class CLIInterface(cli.CLIInterface, ABC):
                               debug=self.args.debug)
 
     def add_extra_arguments(self):
-        self.parser.add_argument('-C', '--context', type=Path)
+        # Required, because `build_context` has no other source for the meta and there is no
+        # sensible default: a template without its context renders every `(§ … §)` to nothing.
+        # Omitting it used to raise `AttributeError: 'NoneType' object has no attribute 'name'`
+        # from the middle of `build_context`, which says neither what was missing nor that it
+        # was an argument. Every invocation already passes one -- the `jinja` macro in the root
+        # Makefile writes `--context $(3)` for all four modules -- so this only changes what a
+        # hand-run command prints.
+        self.parser.add_argument('-C', '--context', type=Path, required=True,
+                                 metavar='META',
+                                 help="the problem's meta.yaml, the context to render against")

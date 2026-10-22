@@ -18,7 +18,7 @@ RE_TEX_ERROR = re.compile(r'^(?P<file>\./[^:]+):(?P<line>\d+): (?P<message>.+)$'
 
 #: What a naboj volume builds. Every module's targets differ, so this is a naboj fact; a module
 #: that wants build checks says so by appearing here.
-TARGETS = {'naboj': ('booklet', 'solutions', 'answers', 'tearoff')}
+TARGETS = {'naboj': ('booklet', 'problems', 'solutions', 'answers', 'tearoff')}
 
 CACHE_DIR = Path('build') / '.audit'
 

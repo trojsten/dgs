@@ -29,6 +29,11 @@ import subprocess
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
 
+#: The two binaries `compile_page` shells out to, named here so that a test guard asks the
+#: module what it needs instead of guessing. `xelatex` alone is not the question: CI had TeX
+#: and no `dvisvgm`, and six tests died in `subprocess` rather than skipping.
+REQUIRES = ('xelatex', 'dvisvgm')
+
 TEMPLATE_ROOT = pathlib.Path('core/templates')
 TEMPLATE = 'mathpage.jtex'
 CACHE = pathlib.Path('build/.html-math')

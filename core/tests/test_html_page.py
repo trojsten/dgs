@@ -12,10 +12,16 @@ import shutil
 import pytest
 
 from core import html
-from core.html import page
+from core.html import mathjax, page, texmath
 
-needs_latex = pytest.mark.skipif(not shutil.which('xelatex'), reason='xelatex is not installed')
-needs_node = pytest.mark.skipif(not shutil.which('node'), reason='node is not installed')
+# Asked of the modules rather than guessed: `texmath` shells out to two binaries and the
+# MathJax engine needs node *and* what `npm ci` installs, and a guard that checks only the
+# obvious half does not skip -- it lets the test die in `subprocess` instead.
+needs_latex = pytest.mark.skipif(
+    not all(shutil.which(tool) for tool in texmath.REQUIRES),
+    reason=f'needs {" and ".join(texmath.REQUIRES)}')
+needs_node = pytest.mark.skipif(
+    not mathjax.available(), reason='needs node and `npm ci`')
 
 #: A fragment as the convertor really writes one: the maths is plain, because
 #: `expand_for_the_web` turned `$\qty{3}{\metre\per\second}$` into this before pandoc ran.

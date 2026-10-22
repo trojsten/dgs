@@ -25,10 +25,30 @@ jobs:
         python-version: "3.14"
     - name: Install dependencies
       run: uv sync --dev
+    # **`--no-install-recommends` silently drops `dvisvgm`**, which is why it is named here --
+    # the Containerfile carries the same note for the same reason. Without it the HTML maths
+    # tests do not skip, they die in `subprocess` with `No such file or directory: 'dvisvgm'`,
+    # because xelatex is installed further down and the guard used to ask only about that.
+    #
+    # `poppler-utils` is `pdftocairo`, which converts every picture for the web, and
+    # `gnuplot-nox` draws the plots. Both were absent, so `test_picture_svg.py` skipped itself
+    # and CI had never once exercised the picture pipeline.
     - name: "Install utilities"
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends librsvg2-bin lcdf-typetools
+        sudo apt-get install -y --no-install-recommends \
+          librsvg2-bin lcdf-typetools dvisvgm ghostscript poppler-utils gnuplot-nox
+    # MathJax is the other HTML maths engine, and it is node's. A hosted runner has node
+    # whether or not anyone installed the packages, which is exactly how CI reported
+    # `Cannot find module '@mathjax/mathjax-pagella-font/package.json'` from a test that should
+    # have skipped; `mathjax.available()` now asks about both, and this step supplies them.
+    - name: "Set up node"
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: npm
+    - name: "Install MathJax"
+      run: npm ci
     # The same script a developer runs from install.sh, so CI and a workstation cannot drift onto
     # different pandocs. It pins the filter, asks the binary which pandoc it was built with,
     # installs exactly that one and fails if the pair still disagrees; why, and how to bump the
@@ -96,6 +116,22 @@ jobs:
         TEXHOME=`kpsewhich -var-value=TEXMFHOME`
         mkdir -p $TEXHOME/tex/latex/
         ln -s $PWD/core/latex/dgs.cls $TEXHOME/tex/latex/dgs.cls
+    # A tool that is absent makes its tests *skip*, which is a green run that tested nothing --
+    # which is how the picture pipeline went untested here for as long as it existed. Fail at a
+    # named step instead, the way "Verify FontPro prerequisites" above does.
+    - name: "Verify the HTML output's prerequisites"
+      run: |
+        missing=""
+        for tool in dvisvgm pdftocairo gnuplot rsvg-convert; do
+          command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
+        done
+        for package in mathjax @mathjax/mathjax-pagella-font; do
+          test -f "node_modules/$package/package.json" || missing="$missing $package"
+        done
+        if [ -n "$missing" ]; then
+          echo "::error::missing:$missing"
+          exit 1
+        fi
     - name: Test with pytest
       run: |
         uv run python -m pytest -s -v
