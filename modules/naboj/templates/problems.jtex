@@ -1,0 +1,29 @@
+(# The statements on their own: the problem set without the answers anywhere in it.
+
+   One problem per page, the way `solutions.jtex` next door sets one solution per page -- the two
+   documents are the same shape for the two halves of the booklet, and that is the whole point of
+   having this one.
+
+   What it adds that nothing else had: the statements as their own PDF. Until now they existed
+   only inside `booklet.pdf`, which carries the solutions and the answers with them, so there was
+   no document to hand to a proofreader -- or to a competitor -- without the whole key in it.
+   `tearoff.pdf` and `online.pdf` do paginate the statements, but neither is this: a tearoff is
+   cut into slips and the online one is burst into a PDF per problem. #)
+
+(@ extends 'base-booklet.jtex' @)
+
+(@ set target = 'booklet' @)
+
+(@ block content @)
+    \setcounter{volume}{(* volume.number *)}%
+    \pagestyle{naboj}
+
+    (@ if language.booklet.contents.problems @)
+        \section{(* i18n[language.id].section.problems *)}
+        \pagestyle{problems}
+        (@ for problem in volume.problems @)%
+            (@ include 'blocks/problem.jtex' @)%
+            \newpage
+        (@ endfor @)
+    (@ endif @)
+(@ endblock @)
