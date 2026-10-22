@@ -1,7 +1,11 @@
 import pytest
 
-from core.builder.renderer import (JinjaConvertor, NameCollisionError,
-                                   StandaloneContext, build_render_context)
+from core.builder.renderer import (
+    JinjaConvertor,
+    NameCollisionError,
+    StandaloneContext,
+    build_render_context,
+)
 
 
 class TestNoPreamble:
@@ -408,7 +412,11 @@ class TestMissingWordRegistry:
         `and:cs`: a translator who reads `andw` there would search the file for a key that is
         not in it. The twelve `JINJA_KEYWORDS` are the only words where the two spellings differ.
         """
-        from core.builder.renderer import LocalisedI18n, LocalisedWords, MissingWordRegistry
+        from core.builder.renderer import (
+            LocalisedI18n,
+            LocalisedWords,
+            MissingWordRegistry,
+        )
         reg = MissingWordRegistry()
         words = LocalisedWords({}, 'cs', 'core/i18n/cs.yaml', registry=reg)
         i18n = LocalisedI18n({}, words)
@@ -530,7 +538,7 @@ class TestPictures:
         assert out.strip().endswith(':hanging height=40mm}')
 
     def test_an_empty_caption_is_written_as_a_comment(self, tmp_path):
-        """
+        r"""
         Not `![]` and not `![ ]`, which is the whole of why this spelling exists: pandoc makes a
         `figure` only when the alt text has content, so both of those come out as a bare
         `\includegraphics` with no number and no label -- the state the rule exists to end. An
@@ -651,7 +659,7 @@ class TestPictures:
         _reject_name_collisions({'picture': 1, 'pics': 2}, 'values')
 
     def test_an_entry_needs_a_file_and_a_height(self):
-        """
+        r"""
         Both, and nothing else. Every one of the 2003 includes in the repository writes a height
         and none writes any other attribute, so a third one is a deliberate addition here rather
         than something invented at a call site -- a mistyped attribute name is silent, and an

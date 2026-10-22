@@ -2,7 +2,7 @@
 import logging
 from abc import ABC
 
-from enschema import And, Or, Schema
+from enschema import And, Schema
 from enschema import Optional as Opt
 
 from core.builder import renderer

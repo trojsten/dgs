@@ -529,7 +529,7 @@ def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = f
 
 def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bool = True,
                          captioned: bool = True, backend: str = 'latex',
-                         missing_words: 'MissingWordRegistry | None' = None) -> Context:
+                         missing_words: MissingWordRegistry | None = None) -> Context:
     """
     Everything a template may reach, built from one already-validated problem meta.
 

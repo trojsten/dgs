@@ -15,8 +15,8 @@ import yaml
 EDITOR = pathlib.Path(__file__).resolve().parents[2] / 'tools' / 'editor'
 sys.path.insert(0, str(EDITOR))
 
-import capabilities                                   # noqa: E402
-from descriptors import UnitKind, declared_sources, describe_source   # noqa: E402
+import capabilities
+from descriptors import UnitKind, declared_sources, describe_source
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -231,7 +231,8 @@ class TestAssetVersion:
     threw before it ever set the iframe. Nothing about that symptom points at the cache.
     """
     def test_the_page_asks_for_a_version(self):
-        import sys, re
+        import re
+        import sys
         sys.path.insert(0, 'tools/editor')
         import app as editor
         with editor.app.test_client() as client:
@@ -240,7 +241,9 @@ class TestAssetVersion:
             assert re.search(rf'/static/{re.escape(name)}\?v=\d+', page), name
 
     def test_the_version_follows_the_files(self, tmp_path):
-        import sys, pathlib, os, time
+        import os
+        import pathlib
+        import sys
         sys.path.insert(0, 'tools/editor')
         import app as editor
         before = editor.asset_version()

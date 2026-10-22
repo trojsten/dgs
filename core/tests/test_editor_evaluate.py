@@ -17,7 +17,7 @@ import pytest
 EDITOR = pathlib.Path(__file__).resolve().parents[2] / 'tools' / 'editor'
 sys.path.insert(0, str(EDITOR))
 
-import app as editor                                  # noqa: E402
+import app as editor
 
 UNIT = 'phys/29/problems/speedy-reflection'
 META = pathlib.Path('source/naboj/phys/29/problems/speedy-reflection/meta.yaml')
@@ -158,8 +158,8 @@ class TestItAgreesWithTheRenderer:
     FRAGMENTS = ['(§ eq.snell|inl §)', '(§ result_approx|ef2 §)', '(§ eq.result|disp(".") §)']
 
     def test_it_matches_what_the_renderer_would_write(self, ask):
-        from core.builder.renderer import build_render_context, render_to_fixpoint
         from core.builder.jinja import MarkdownJinjaRenderer
+        from core.builder.renderer import build_render_context, render_to_fixpoint
         from modules.naboj.builder.renderer import CLIInterface
 
         meta = CLIInterface.context_cls(str(META), META).add(id=META.parent.name)

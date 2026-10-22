@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import sys
 import threading
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 # One place for install text, quoting the repository's own scripts rather than inventing

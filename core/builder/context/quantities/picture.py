@@ -68,7 +68,7 @@ class Picture:
     #: caption prints empty.
     EMPTY_CAPTION = '<!-- -->'
 
-    def __call__(self, caption: str | None = None, **attributes) -> 'Picture':
+    def __call__(self, caption: str | None = None, **attributes) -> Picture:
         """
         The same picture with a caption, or with an attribute overridden at this call site.
 

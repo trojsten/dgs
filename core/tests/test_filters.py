@@ -5,7 +5,6 @@ import pytest
 
 from core.builder.context.quantities import MissingSymbolError, PhysicsQuantity
 from core.filters.hacks import natural
-from core.filters.plain import superscript_exponent, text, text_general
 from core.filters.latex import (
     angle_dms,
     approx_exponential,
@@ -33,6 +32,7 @@ from core.filters.numbers import (
     plural,
     roman,
 )
+from core.filters.plain import superscript_exponent, text, text_general
 
 
 class TestRender:

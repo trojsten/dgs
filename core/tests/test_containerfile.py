@@ -32,7 +32,7 @@ class TestTheFontProPinDoesNotDrift:
     """
 
     def test_the_arg_is_a_full_commit(self, containerfile):
-        match = re.search(r'^ARG FONTPRO_COMMIT=([0-9a-f]{40})\s*$', containerfile, re.M)
+        match = re.search(r'^ARG FONTPRO_COMMIT=([0-9a-f]{40})\s*$', containerfile, re.MULTILINE)
         assert match, 'Containerfile has no pinned 40-character FONTPRO_COMMIT'
 
     def test_it_matches_the_submodule(self, containerfile):
@@ -40,7 +40,7 @@ class TestTheFontProPinDoesNotDrift:
         # too, and this is how that looks.
         if not (ROOT / '.git').exists():
             pytest.skip('not a checkout; this is how it looks from inside the image')
-        arg = re.search(r'^ARG FONTPRO_COMMIT=([0-9a-f]{40})\s*$', containerfile, re.M)
+        arg = re.search(r'^ARG FONTPRO_COMMIT=([0-9a-f]{40})\s*$', containerfile, re.MULTILINE)
         assert arg
         gitlink = subprocess.run(['git', 'rev-parse', 'HEAD:assets/fonts/FontPro'],
                                  cwd=ROOT, capture_output=True, text=True)

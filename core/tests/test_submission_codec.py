@@ -102,7 +102,6 @@ def roundtrip(js):
             try { readBlob(text, app, n); return null; } catch (e) { return e.code; }
         };
     ''')
-    return None
 
 
 BODY = [0, 1, 127, 128, 254, 255, 42]
@@ -170,7 +169,7 @@ class TestEveryFailureIsNamed:
         return js.eval(f'makeBlob("spectre", 4, {BODY})')
 
     def test_a_changed_character_is_caught(self, js, blob):
-        for i in range(0, len(blob) - 4):
+        for i in range(len(blob) - 4):
             other = 'B' if blob[i] == 'A' else 'A'
             damaged = blob[:i] + other + blob[i + 1:]
             assert js.eval(f'failure({damaged!r}, "spectre", {len(BODY)})') == 'damaged', i

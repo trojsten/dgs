@@ -3,6 +3,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 import regex as re
+
 from core.mdcheck import exceptions
 
 log = logging.getLogger('root')

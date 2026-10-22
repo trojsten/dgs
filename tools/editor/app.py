@@ -14,9 +14,9 @@ from pathlib import Path
 import capabilities
 from descriptors import (
     AUX_EXTENSIONS,
-    describe_source,
     RENDERABLE_AUX_EXTENSIONS,
     audited_modules,
+    describe_source,
     discover_scopes,
     discover_units,
     load_modules,
@@ -44,8 +44,8 @@ from core.audit.status import (
     shared_file_states,
 )
 from core.builder import reference
-from core.builder.renderer import build_render_context, render_to_fixpoint
 from core.builder.jinja import MarkdownJinjaRenderer
+from core.builder.renderer import build_render_context, render_to_fixpoint
 from core.i18n import languages as LOCALES
 
 
