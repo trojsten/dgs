@@ -4,10 +4,21 @@
     \loadgeometry{main}
     \thispagestyle{seminar-booklet-first}
 
-    \afterpage{%
-        \globaldefs=1
-        \restoregeometry
-    }%
+    % `\restoregeometry` on its own, **not** `\globaldefs=1\restoregeometry`.
+    %
+    % `\afterpage` runs its material from inside the output routine, so with `\globaldefs=1`
+    % every assignment the page builder makes while shipping that page becomes global --
+    % including the ones that are supposed to be local to a list. A list straddling the first
+    % page break therefore loses `\leftskip` permanently: its first item on the new page is
+    % correct and every item after it is flush with the margin, one `\leftmargin` too far
+    % left. `FKS/42/1/2/04`'s five-item list is the case that showed it.
+    %
+    % `\globaldefs` is back to 0 by the end of the document, which is why nothing else looks
+    % wrong and why this took a page of bisection to find. It replaced an
+    % `\afterpage{\aftergroup\restoregeometry}` in `4a528e4` and has been vestigial since
+    % `65c3dc1` gave the booklets `\savegeometry`/`\loadgeometry`: with it gone, every page
+    % of `42/1/2` is identical except the list that was broken.
+    \afterpage{\restoregeometry}%
 
     \pagestyle{seminar-booklet-body}
 
