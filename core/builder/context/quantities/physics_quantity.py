@@ -73,6 +73,18 @@ class PhysicsQuantity:
         'electron_volt': r'\electronvolt',  # siunitx built-in
     }
 
+    #: What pint emits as a macro **and a bare letter**, which `siunitx.tex` refuses outright:
+    #: this document sets `forbid-literal-units`, so `\qty{25}{\degree F}` raises *Literal units
+    #: disabled* and the unit vanishes from the page. pint 0.26.2 formats Fahrenheit that way
+    #: where 0.26.1 wrote `\degree_Fahrenheit` and so reached `PINT_TO_SIUNITX` by name.
+    #:
+    #: Separate from both tables above because it is neither: the macro is valid TeX, so the
+    #: underscore pass never sees it, and it is a repair rather than a choice of spelling.
+    #: `phys/23/yankees` is the problem that printed `25` with nothing after it.
+    PINT_LITERALS = {
+        r'\degree F': r'\fahrenheit',
+    }
+
     #: A `\macro` whose name contains an underscore, i.e. one pint built from a
     #: multi-word unit name. `\kilo\meter_per_hour` matches only the second part.
     _UNDERSCORE_MACRO = re.compile(r'\\([A-Za-z]+(?:_[A-Za-z0-9]+)+)')
@@ -525,13 +537,16 @@ class PhysicsQuantity:
     @classmethod
     def _latex_unit(cls, unit: str) -> str:
         r"""
-        Rewrite pint's multi-word unit macros into the siunitx macros DGS declares.
-        Raises `UnknownUnitMacroError` for anything unmapped rather than emitting
-        an invalid `\foo_bar`.
+        Repair what pint spells as a macro and a literal, then rewrite its multi-word unit
+        macros into the siunitx macros DGS declares. Raises `UnknownUnitMacroError` for
+        anything unmapped rather than emitting an invalid `\foo_bar`.
 
         Then put the two units pint spells American into British, to match the sources.
         Multi-word names go first, so a mapping that produces one of them is caught too.
         """
+        for literal, macro in cls.PINT_LITERALS.items():
+            unit = unit.replace(literal, macro)
+
         def substitute(match: re.Match) -> str:
             name = match.group(1)
             if name not in cls.PINT_TO_SIUNITX:
