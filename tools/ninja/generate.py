@@ -696,6 +696,19 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     templates = sorted(str(p.relative_to(repo))
                        for p in (repo / 'modules/seminar/templates').rglob('*.jtex'))
 
+    # `source/seminar/<competition>/.static/` is what every round of that competition inputs:
+    # the format override, the logo, and the intro and rules templates. `module.mk` copied the
+    # whole tree with one `cp -r` whose own target it never touched, so it depended on nothing
+    # and ran on every build; here each file is an edge and the documents name what they read.
+    static = []
+    for path in sorted(p for p in listed(repo / 'source/seminar' / competition / '.static')
+                       .rglob('*') if p.is_file()):
+        listed(path.parent)
+        source = path.relative_to(repo).as_posix()
+        target = source.replace('source/', 'build/', 1)
+        _copied(build, target, source)
+        static.append(target)
+
     fragments = {name: [] for name in SEMINAR_TARGETS}
     pictures, drawings, pages = [], [], []
     for problem in problems:
@@ -750,7 +763,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         pdf = f'output/seminar/{scope}/{name}.pdf'
         included = [f for kind in SEMINAR_DOCUMENT_GROUPS[name] for f in fragments[kind]]
         build(pdf, 'document_pdf', None,
-              implicit=[f'{outdir}/{name}.tex', *included, *pictures,
+              implicit=[f'{outdir}/{name}.tex', *included, *pictures, *static,
                         'build/core/i18n/sk.tex', 'core/latex/dgs.cls'],
               implicit_outputs=[pdf.replace('.pdf', e)
                                 for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
