@@ -40,7 +40,7 @@ a reference key and `sk:` is a language — so neither gets one.
 `POST /api/evaluate` does the work, in-process and writing nothing. It reads the **buffers** out
 of the request rather than the files, because the whole point is to answer for the text on
 screen, which is usually unsaved; and it shares `build_render_context` and `render_twice` with
-`core/builder/renderer.py`, so it cannot answer differently from what `make` would write —
+`core/builder/renderer.py`, so it cannot answer differently from what the build would write —
 including whether an `eq:` display carries its `{#eq:…}` label, which depends on the open tab
 through the module's `equation_numbering`. A test asserts that agreement rather than trusting it.
 
@@ -55,12 +55,12 @@ in the pane and the rest are map lookups; a keystroke in either pane, a differen
 different problem throws the lot away.
 
 **It degrades rather than failing.** The three output tabs are the pipeline's three stages --
-Rendered Markdown is Jinja and needs only make, TeX adds pandoc, the PDF adds all of TeX Live and
-the fonts -- and `tools/editor/capabilities.py` probes for each at startup. A stage this machine
+Rendered Markdown is Jinja and needs only Ninja, TeX adds pandoc, the PDF adds all of TeX Live
+and the fonts -- and `tools/editor/capabilities.py` probes for each at startup. A stage this machine
 cannot do is greyed, and the pane behind it says what is missing and the command that fixes it, so
 a translator with no TeX Live can still check their own rendering. `install.md` has the tiers;
 `uv run python tools/editor/capabilities.py` prints the same report. `uv` is not required --
-without it the app calls `make` directly with its own interpreter's directory on `PATH`.
+without it the app calls `ninja` directly with its own interpreter's directory on `PATH`.
 
 It must run from the root, and it `chdir`s there itself: several `core` modules open
 their data by a repository-relative path, so `core/i18n` fails to import from anywhere

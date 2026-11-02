@@ -33,7 +33,7 @@ class UnitKind:
     @property
     def tex(self):
         """
-        The make target that converts this file to TeX.
+        The build target that converts this file to TeX.
 
         Derived from `render` rather than written out per module, because the relation is the
         build system's own: every `.tex` rule in every `module.mk` reads
@@ -50,7 +50,7 @@ class UnitKind:
     @property
     def html(self):
         """
-        The make target that converts this file to an HTML fragment.
+        The build target that converts this file to an HTML fragment.
 
         Derived from `render` exactly as `tex` is, and for the same reason: the root Makefile has
         one `output/%.html: render/%.md` for every module, so the relation belongs to the build

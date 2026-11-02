@@ -184,7 +184,7 @@ class Unit:
     def meta_path(self):
         return self.path / "meta.yaml"
 
-    # -- make targets --------------------------------------------------------
+    # -- build targets -------------------------------------------------------
 
     def _format(self, template):
         parent = self.name.rsplit("/", 1)[0] if "/" in self.name else ""
@@ -193,7 +193,8 @@ class Unit:
 
     def render_target(self, target):
         """
-        The make target that renders this file. A gnuplot script keeps its own name and extension
+        The build target that renders this file. A gnuplot script keeps its own name and
+        extension
         (`render/<module>/%.gp`); a declared target is always `.md`.
         """
         if self.is_aux(target):
@@ -205,11 +206,12 @@ class Unit:
 
     def tex_target(self, target):
         """
-        The make target that converts this file to TeX, or None when there is not one.
+        The build target that converts this file to TeX, or None when there is not one.
 
         An auxiliary file has none on purpose: a `.gp` becomes a figure through gnuplot, never a
-        `.tex`, and asking for `build/.../time.gp.tex` would hit the Makefile's fall-through rule
-        and print `Incorrect fall-through rule called`.
+        `.tex`, and `build/.../time.gp.tex` is a target the graph does not declare -- under make
+        it reached the fall-through rule that printed `Incorrect fall-through rule called`,
+        which is the shape of defect a generated graph makes impossible.
         """
         if self.is_aux(target) or not self.kind.tex:
             return None
@@ -221,7 +223,7 @@ class Unit:
 
     def html_target(self, target):
         """
-        The make target that converts this file to an HTML fragment, or None when there is not
+        The build target that converts this file to an HTML fragment, or None when there is not
         one. Auxiliary files are excluded for the reason `tex_target` excludes them: a `.gp`
         becomes a figure, never a page.
         """
@@ -369,7 +371,7 @@ def api_unit(module, unit):
 
 # --- running the build ------------------------------------------------------
 
-def make_env():
+def build_env():
     """
     How to invoke ninja, and in what environment.
 
@@ -409,13 +411,13 @@ def ensure_graph(env):
 
 def run_build(target, *, timeout=60):
     """
-    Run the build and return the same dict `make_result` does -- or say why we could not.
+    Run the build and return the same dict `build_result` does -- or say why we could not.
 
     Without the guards, a machine with no ninja and no uv raises `FileNotFoundError` out of the
     route, Flask answers 500 with an HTML body, and the front end's `fetchJSON` reports a bare
     "HTTP 500", which tells nobody what to install.
     """
-    argv, env = make_env()
+    argv, env = build_env()
     if (failed := ensure_graph(env)) is not None:
         return refusal(target, 'the build graph could not be generated',
                        f'`tools.ninja.generate` failed:\n\n{failed.stderr.strip()}\n')
@@ -432,7 +434,7 @@ def run_build(target, *, timeout=60):
     except subprocess.TimeoutExpired:
         return refusal(target, f"timed out after {timeout} s",
                        f"`ninja {target}` did not finish within {timeout} seconds.\n")
-    return make_result(target, result)
+    return build_result(target, result)
 
 
 # XeLaTeX runs with `-file-line-error`, so its errors arrive as `file.tex:12: message`.
@@ -469,12 +471,12 @@ def summarise_failure(text):
     return None
 
 
-def make_result(target, result):
+def build_result(target, result):
     combined = ANSI_RE.sub("", result.stdout + result.stderr)
     return {
         "ok": result.returncode == 0,
         "returncode": result.returncode,
-        "command": f"make {target}",
+        "command": f"ninja {target}",
         "summary": None if result.returncode == 0 else summarise_failure(combined),
         "stdout": ANSI_RE.sub("", result.stdout),
         "stderr": ANSI_RE.sub("", result.stderr),
@@ -482,8 +484,8 @@ def make_result(target, result):
 
 
 def refusal(target, summary, explanation):
-    """A failure of ours rather than make's: no exit code, and a reason worth reading."""
-    return {"ok": False, "returncode": None, "command": f"make {target}",
+    """A failure of ours rather than the build's: no exit code, and a reason worth reading."""
+    return {"ok": False, "returncode": None, "command": f"ninja {target}",
             "summary": summary, "stdout": explanation, "stderr": ""}
 
 
@@ -516,10 +518,10 @@ def missing_meta_result(target, unit):
     )
 
 
-def build(unit, make_target, *, timeout=60):
+def build(unit, build_target, *, timeout=60):
     if not unit.meta_path.is_file():
-        return missing_meta_result(make_target, unit)
-    return run_build(make_target, timeout=timeout)
+        return missing_meta_result(build_target, unit)
+    return run_build(build_target, timeout=timeout)
 
 
 # --- writing ----------------------------------------------------------------
@@ -576,9 +578,9 @@ def evaluation_context(unit, target, meta_text):
     """
     The context a tag in this file would be rendered against, built from the buffer as it stands.
 
-    `build_render_context` is the renderer's own, so what the popup shows and what `make` writes
-    come out of one definition. The meta is parsed from `meta_text` rather than read from disk
-    because the whole point is to answer for the text on screen, which is usually unsaved.
+    `build_render_context` is the renderer's own, so what the popup shows and what the build
+    writes come out of one definition. The meta is parsed from `meta_text` rather than read from
+    disk because the whole point is to answer for the text on screen, which is usually unsaved.
     """
     cli = module_cli(unit.module)
     language = unit.lang or DEFAULT_LANGUAGE
@@ -626,8 +628,8 @@ def api_evaluate():
 
     The editor asks this to show, in the reference popup, what the tag under the pointer actually
     produces here -- the number, the equation, the word -- rather than the generic example the
-    reference table carries. So it is in-process and reads the buffers out of the request: a make
-    target would write the file, take seconds, and answer for the last save.
+    reference table carries. So it is in-process and reads the buffers out of the request: a
+    build target would write the file, take seconds, and answer for the last save.
 
     A fragment that fails is reported as a failure of its own; only a context that cannot be
     built at all fails the request, because that is one answer for every fragment and it is the
@@ -695,12 +697,12 @@ def api_render():
 
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
-        make_target = unit.render_target(target)
-        response = build(unit, make_target)
+        build_target = unit.render_target(target)
+        response = build(unit, build_target)
         # The path as well as the text, for the reason `/api/html` returns `html_target`: when
-        # make succeeds and the file is not there, only the path tells you whether the rule wrote
-        # somewhere else or did not write at all.
-        response["render_target"] = make_target
+        # the build succeeds and the file is not there, only the path tells you whether the edge
+        # wrote somewhere else or did not write at all.
+        response["render_target"] = build_target
         response["rendered_md"] = (
             read_if_exists(unit.render_path(target)) if response["ok"] else None
         )
@@ -712,27 +714,27 @@ def api_tex():
     """
     The TeX pandoc produces for one file.
 
-    Its make target takes the rendered Markdown as its prerequisite, so asking for TeX exercises
-    the Markdown stage in the same call -- and `build()` keeps the `missing_meta_result` answer
-    for a unit that has no meta.yaml yet.
+    Its build target takes the rendered Markdown as its prerequisite, so asking for TeX
+    exercises the Markdown stage in the same call -- and `build()` keeps the
+    `missing_meta_result` answer for a unit that has no meta.yaml yet.
     """
     body = request.get_json(force=True)
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
-    make_target = unit.tex_target(target)
+    build_target = unit.tex_target(target)
 
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
-        if make_target is None:
+        if build_target is None:
             response = refusal(
                 "(none)", "no TeX for this file",
                 f"{target} is not converted to TeX -- an auxiliary file becomes a figure, "
                 f"and {unit.module.label} may declare no TeX rule.\n")
         elif not capabilities.tier(REPO_ROOT, "tex").ok:
-            response = tier_refusal("tex", make_target)
+            response = tier_refusal("tex", build_target)
         else:
-            response = build(unit, make_target)
+            response = build(unit, build_target)
         response["tex"] = (
             read_if_exists(unit.tex_path(target)) if response["ok"] else None
         )
@@ -757,26 +759,26 @@ def api_html():
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
-    make_target = unit.html_target(target)
+    build_target = unit.html_target(target)
 
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
-        if make_target is None:
+        if build_target is None:
             response = refusal(
                 "(none)", "no HTML for this file",
                 f"{target} is not converted to HTML -- an auxiliary file becomes a figure, "
                 f"and {unit.module.label} may declare no render rule.\n")
         elif not capabilities.tier(REPO_ROOT, "markdown").ok:
-            response = tier_refusal("markdown", make_target)
+            response = tier_refusal("markdown", build_target)
         else:
-            response = build(unit, make_target)
+            response = build(unit, build_target)
         response["html"] = (
             read_if_exists(unit.html_path(target)) if response["ok"] else None
         )
         # Where the fragment lives, so the pane can point a `<base>` at its directory and let the
         # relative pictures resolve. Named here rather than reconstructed in the front end, which
         # would be a second copy of the path rule.
-        response["html_target"] = make_target
+        response["html_target"] = build_target
     return jsonify(response)
 
 
@@ -785,14 +787,14 @@ def api_compile():
     """Write every buffer, then build whichever document previews this unit."""
     body = request.get_json(force=True)
     unit = unit_from_body(body)
-    make_target = unit.preview_target()
+    build_target = unit.preview_target()
 
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
 
-        if make_target is not None and not capabilities.tier(REPO_ROOT, "pdf").ok:
-            response = tier_refusal("pdf", make_target)
-        elif make_target is None:
+        if build_target is not None and not capabilities.tier(REPO_ROOT, "pdf").ok:
+            response = tier_refusal("pdf", build_target)
+        elif build_target is None:
             response = refusal(
                 "(none)", "no preview for this module",
                 f"{unit.module.label} declares no preview document in "
@@ -800,8 +802,8 @@ def api_compile():
             )
         else:
             # A whole handout or round takes longer than a single problem.
-            response = build(unit, make_target, timeout=600)
-            built = REPO_ROOT / make_target
+            response = build(unit, build_target, timeout=600)
+            built = REPO_ROOT / build_target
             if response["ok"] and built.is_file():
                 cached = unit.cached_pdf()
                 cached.parent.mkdir(parents=True, exist_ok=True)
@@ -1131,9 +1133,9 @@ def api_audit_build(module, scope):
     resolved, units = scope_units(module, scope)
     sources = run_scope_audit(resolved, scope, units).sources
 
-    def run(make_target, timeout):
+    def run(build_target, timeout):
         with BUILD_LOCK:
-            result = run_build(make_target, timeout=timeout)
+            result = run_build(build_target, timeout=timeout)
         return {"returncode": result["returncode"],
                 "log": (result["stdout"] or "") + (result["stderr"] or "")}
 
