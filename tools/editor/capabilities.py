@@ -4,7 +4,8 @@ What this machine can actually do, so the editor can say so instead of failing.
 The pipeline is three stages and the editor's tabs are those three stages: `render/…md` is
 Jinja and needs nothing but Python; `build/…tex` adds pandoc; `output/…pdf` adds the whole TeX
 stack and the fonts. A machine that has only the first is still useful to a translator, and this
-module is what lets the app know that rather than shelling out and reporting whatever make printed.
+module is what lets the app know that rather than shelling out and reporting whatever the
+build printed.
 
 Nothing here may raise because a tool is absent -- that is the entire point of it -- so every
 probe goes through `_run`, which swallows `FileNotFoundError` and a timeout and returns `None`.
@@ -24,7 +25,7 @@ from pathlib import Path
 # One place for install text, quoting the repository's own scripts rather than inventing
 # commands that would drift from them.
 INSTALL = {
-    'make': ['sudo apt install make'],
+    'ninja': ['uv sync', 'sudo apt install ninja-build'],
     'uv': ['curl -LsSf https://astral.sh/uv/install.sh | sh'],
     'python': ['uv sync --dev', '# or activate the venv you installed into'],
     'pandoc': ['./install-pandoc.sh', 'export PATH="$HOME/.local/bin:$PATH"'],
@@ -84,44 +85,44 @@ def _run(argv, *, stdin=None, timeout=30):
 # --- individual probes -------------------------------------------------------
 
 
-def probe_make():
+def probe_ninja():
     """
-    BSD make accepts the invocation and then misparses `.SECONDEXPANSION`, which every rule in
-    this repository leans on, so finding *a* make is not enough.
+    Ninja, which the build runs through since `tools/ninja/generate.py` replaced the Makefile.
+
+    Unlike make there is nothing to disambiguate -- there is one Ninja and no dialects -- so this
+    only has to find it. It is a project dependency (`pyproject.toml`), so `uv run ninja` always
+    has one; the probe is for an editor started outside uv.
     """
-    path = _which('make')
+    path = _which('ninja')
     if not path:
-        return Tool('make', False)
-    result = _run(['make', '--version'], timeout=10)
-    first = result[1].splitlines()[0] if result and result[1] else ''
-    if 'GNU Make' not in first:
-        return Tool('make', False, path, first, 'found, but it is not GNU make')
-    return Tool('make', True, path, first)
+        return Tool('ninja', False)
+    result = _run(['ninja', '--version'], timeout=10)
+    return Tool('ninja', True, path, (result[1].strip() if result and result[1] else ''))
 
 
 def probe_python_launcher():
     """
-    How `run_make` should invoke make, and why `uv` is not required.
+    How `run_build` should invoke ninja, and why `uv` is not required.
 
-    `uv` is only there to put the project's interpreter on PATH for the Makefile's bare `python`
-    in `define jinja` and `define _pandoc`. This process *is* such an interpreter -- it imported
-    jinja2, yaml and all of core.audit to get here -- so when uv is absent we call make directly
-    with our own interpreter's directory prepended to PATH. In a venv that directory holds the
-    `python` the recipes call.
+    `uv` is only there to put the project's interpreter on PATH, because the generated rules call
+    a bare `python` exactly as the Makefile's recipes did. This process *is* such an interpreter
+    -- it imported jinja2, yaml and all of core.audit to get here -- so when uv is absent we call
+    ninja directly with our own interpreter's directory prepended to PATH. In a venv that
+    directory holds both the `python` the rules call and the `ninja` that calls them.
     """
     # Deliberately NOT resolve()d: a venv's `bin/python` is a symlink to the base interpreter,
     # so resolving it lands in /usr/local/bin and loses the venv -- which is the one directory
     # that matters, because that is where the dependencies are importable from.
     bindir = str(Path(sys.executable).parent)
     if _which('uv'):
-        return {'argv': ['uv', 'run', 'make'], 'via': 'uv', 'path_prefix': '',
+        return {'argv': ['uv', 'run', 'ninja'], 'via': 'uv', 'path_prefix': '',
                 'note': ''}
     if (Path(bindir) / 'python').exists():
-        return {'argv': ['make'], 'via': 'python', 'path_prefix': bindir,
-                'note': f'uv is not installed; running make with {bindir} on PATH'}
-    return {'argv': ['make'], 'via': 'none', 'path_prefix': bindir,
+        return {'argv': ['ninja'], 'via': 'python', 'path_prefix': bindir,
+                'note': f'uv is not installed; running ninja with {bindir} on PATH'}
+    return {'argv': ['ninja'], 'via': 'none', 'path_prefix': bindir,
             'note': ('uv is not installed and there is no `python` beside this interpreter, so '
-                     "the Makefile's recipes will not find one")}
+                     'the build rules will not find one')}
 
 
 def probe_pandoc():
@@ -229,23 +230,23 @@ def capabilities(repo_root, *, refresh=False):
             return _CACHE['payload']
 
         launcher = probe_python_launcher()
-        make = probe_make()
+        ninja = probe_ninja()
         pandoc, crossref = probe_pandoc()
         latex = probe_latex(repo_root)
         advisories = probe_advisories()
 
         python_ok = launcher['via'] != 'none'
-        floor = [make, Tool('python', python_ok, sys.executable, detail=launcher['note'])]
+        floor = [ninja, Tool('python', python_ok, sys.executable, detail=launcher['note'])]
         tools = floor + [pandoc, crossref] + latex
 
-        markdown = _tier('markdown', 'Rendered Markdown', tools, {'make', 'python'})
+        markdown = _tier('markdown', 'Rendered Markdown', tools, {'ninja', 'python'})
         # What it takes to compile a `.tex` -- no pandoc. The macro sweep needs exactly this and
         # nothing more: it writes its own probe document and hands it straight to xelatex.
         latex = _tier('latex', 'LaTeX', tools,
                       {'xelatex', 'texfot', 'dgs.cls', 'MinionPro.sty'})
-        tex = _tier('tex', 'TeX', tools, {'make', 'python', 'pandoc', 'pandoc-crossref'})
+        tex = _tier('tex', 'TeX', tools, {'ninja', 'python', 'pandoc', 'pandoc-crossref'})
         pdf = _tier('pdf', 'PDF', tools,
-                    {'make', 'python', 'pandoc', 'pandoc-crossref',
+                    {'ninja', 'python', 'pandoc', 'pandoc-crossref',
                      'xelatex', 'texfot', 'dgs.cls', 'MinionPro.sty'})
 
         # A tier is never usable when the one below it is not, whatever its own tools say.

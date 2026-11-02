@@ -1,7 +1,7 @@
 """
 The editor's capability probe, and the TeX target it exposes.
 
-Everything here runs without pandoc, xelatex or make: the probe's job is to *report* what is
+Everything here runs without pandoc, xelatex or ninja: the probe's job is to *report* what is
 missing, so the tests feed it a fake environment rather than the machine's real one. That is also
 why these live outside `tools/` -- `pytest.ini` collects `core/tests/`, and a probe that only
 worked on a fully installed machine would be exactly the thing this change exists to remove.
@@ -47,7 +47,7 @@ class TestTheTexTargetIsDerived:
         assert UnitKind(glob='*').tex == ''
 
     def test_something_that_is_not_a_render_target_is_refused(self):
-        """Better no TeX tab than a target make has no rule for."""
+        """Better no TeX tab than a target the build graph has no edge for."""
         assert UnitKind(glob='*', render='output/naboj/{unit}.pdf').tex == ''
 
     @pytest.mark.parametrize('descriptor', sorted(ROOT.glob('modules/*/editor.yaml')))
@@ -81,7 +81,7 @@ class TestTiersDegradeInOrder:
                 return (0, f'/texmf/{argv[1]}\n') if argv[1] in present else (1, '')
             if tool not in present:
                 return None
-            if tool == 'make':
+            if tool == 'ninja':
                 return 0, 'GNU Make 4.4\n'
             if tool == 'pandoc':
                 if stdin is None:                      # `pandoc --version`
@@ -97,11 +97,11 @@ class TestTiersDegradeInOrder:
         return {t['id']: t['ok'] for t in payload['tiers']}
 
     def test_markdown_alone_needs_no_pandoc_and_no_latex(self, monkeypatch):
-        payload = self._payload(monkeypatch, present={'make', 'uv'})
+        payload = self._payload(monkeypatch, present={'ninja', 'uv'})
         assert self.tiers(payload) == {
             'markdown': True, 'tex': False, 'latex': False, 'pdf': False}
 
-    def test_no_make_takes_every_pipeline_tier_with_it(self, monkeypatch):
+    def test_no_ninja_takes_every_pipeline_tier_with_it(self, monkeypatch):
         payload = self._payload(monkeypatch, present={'pandoc', 'pandoc-crossref', 'xelatex'})
         tiers = self.tiers(payload)
         assert tiers['markdown'] is False
@@ -114,7 +114,7 @@ class TestTiersDegradeInOrder:
         straight to xelatex, so a machine with TeX but no pandoc can still run it.
         """
         payload = self._payload(monkeypatch, present={
-            'make', 'uv', 'xelatex', 'texfot', 'dgs.cls', 'MinionPro.sty'})
+            'ninja', 'uv', 'xelatex', 'texfot', 'dgs.cls', 'MinionPro.sty'})
         tiers = self.tiers(payload)
         assert tiers['latex'] is True
         assert tiers['tex'] is False        # no pandoc
@@ -123,19 +123,19 @@ class TestTiersDegradeInOrder:
     def test_xelatex_without_the_class_is_not_a_pdf(self, monkeypatch):
         """`which xelatex` is not enough: dgs.cls and MinionPro.sty decide it."""
         payload = self._payload(monkeypatch, present={
-            'make', 'uv', 'pandoc', 'pandoc-crossref', 'xelatex', 'texfot'})
+            'ninja', 'uv', 'pandoc', 'pandoc-crossref', 'xelatex', 'texfot'})
         assert self.tiers(payload)['tex'] is True
         assert self.tiers(payload)['pdf'] is False
 
     def test_a_missing_tier_carries_a_reason_and_a_command(self, monkeypatch):
-        payload = self._payload(monkeypatch, present={'make', 'uv'})
+        payload = self._payload(monkeypatch, present={'ninja', 'uv'})
         tex = next(t for t in payload['tiers'] if t['id'] == 'tex')
         assert tex['reason']
         assert any('install-pandoc' in line for line in tex['install'])
 
     def test_the_install_hint_is_not_repeated(self, monkeypatch):
         """pandoc and its filter share one script; saying it twice reads like two steps."""
-        payload = self._payload(monkeypatch, present={'make', 'uv'})
+        payload = self._payload(monkeypatch, present={'ninja', 'uv'})
         tex = next(t for t in payload['tiers'] if t['id'] == 'tex')
         assert len(tex['install']) == len(set(tex['install']))
 
@@ -143,12 +143,12 @@ class TestTiersDegradeInOrder:
 class TestTheLauncherDoesNotNeedUv:
     def test_uv_is_used_when_it_is_there(self, monkeypatch):
         monkeypatch.setattr(capabilities, '_which', lambda name: '/usr/bin/uv' if name == 'uv' else '')
-        assert capabilities.probe_python_launcher()['argv'] == ['uv', 'run', 'make']
+        assert capabilities.probe_python_launcher()['argv'] == ['uv', 'run', 'ninja']
 
     def test_without_uv_it_falls_back_to_the_running_interpreter(self, monkeypatch):
         monkeypatch.setattr(capabilities, '_which', lambda name: '')
         launcher = capabilities.probe_python_launcher()
-        assert launcher['argv'] == ['make']
+        assert launcher['argv'] == ['ninja']
         # the venv's bin directory, not the base interpreter it symlinks to
         assert launcher['path_prefix'] == str(pathlib.Path(sys.executable).parent)
 

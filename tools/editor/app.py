@@ -367,16 +367,16 @@ def api_unit(module, unit):
     })
 
 
-# --- running make -----------------------------------------------------------
+# --- running the build ------------------------------------------------------
 
 def make_env():
     """
-    How to invoke make, and in what environment.
+    How to invoke ninja, and in what environment.
 
-    `uv run` is here only to put the project's interpreter on PATH, because the Makefile's
-    recipes call a bare `python`. When uv is absent we call make directly and prepend the
-    directory of the interpreter running this app -- in a venv that is exactly where `python`
-    lives -- so an editor started from an activated venv works with no uv installed at all.
+    `uv run` is here only to put the project's interpreter on PATH, because the generated rules
+    call a bare `python`. When uv is absent we call ninja directly and prepend the directory of
+    the interpreter running this app -- in a venv that is exactly where both `python` and
+    `ninja` live -- so an editor started from an activated venv works with no uv installed.
     """
     launcher = capabilities.capabilities(REPO_ROOT)["launcher"]
     env = None
@@ -386,15 +386,39 @@ def make_env():
     return launcher["argv"], env
 
 
-def run_make(target, *, timeout=60):
-    """
-    Run make and return the same dict `make_result` does -- or say why we could not.
+#: The generated graph. Ninja keeps it current itself -- `tools/ninja/generate.py` is emitted as
+#: a `generator` rule depending on the directories whose listings it was computed from -- but it
+#: has to exist before Ninja can read it at all.
+BUILD_NINJA = REPO_ROOT / 'build.ninja'
 
-    Without the guards, a machine with no make and no uv raises `FileNotFoundError` out of the
+
+def ensure_graph(env):
+    """
+    `build.ninja` present. Ninja regenerates it when it is stale; only its absence is ours.
+
+    A first run after a clone has no graph, and `ninja: error: loading 'build.ninja'` names a
+    file nobody has heard of. One generator run costs about a second for the whole repository.
+    """
+    if BUILD_NINJA.is_file():
+        return None
+    result = subprocess.run(
+        [sys.executable, '-m', 'tools.ninja.generate', '--scope', 'all', '-o', str(BUILD_NINJA)],
+        cwd=REPO_ROOT, capture_output=True, text=True, timeout=300, env=env)
+    return None if result.returncode == 0 else result
+
+
+def run_build(target, *, timeout=60):
+    """
+    Run the build and return the same dict `make_result` does -- or say why we could not.
+
+    Without the guards, a machine with no ninja and no uv raises `FileNotFoundError` out of the
     route, Flask answers 500 with an HTML body, and the front end's `fetchJSON` reports a bare
     "HTTP 500", which tells nobody what to install.
     """
     argv, env = make_env()
+    if (failed := ensure_graph(env)) is not None:
+        return refusal(target, 'the build graph could not be generated',
+                       f'`tools.ninja.generate` failed:\n\n{failed.stderr.strip()}\n')
     try:
         result = subprocess.run(
             [*argv, target], cwd=REPO_ROOT, capture_output=True, text=True,
@@ -407,7 +431,7 @@ def run_make(target, *, timeout=60):
             f"See install.md, or run\n\n    uv run python tools/editor/capabilities.py\n")
     except subprocess.TimeoutExpired:
         return refusal(target, f"timed out after {timeout} s",
-                       f"`make {target}` did not finish within {timeout} seconds.\n")
+                       f"`ninja {target}` did not finish within {timeout} seconds.\n")
     return make_result(target, result)
 
 
@@ -479,10 +503,10 @@ def tier_refusal(tier_id, target):
 
 def missing_meta_result(target, unit):
     """
-    Every render rule takes the unit's `meta.yaml` as a prerequisite, so without one make cannot
-    build the chain at all and reports `No rule to make target`, naming the PDF rather than the
-    file that is actually missing. Say what is wrong instead -- an unconverted unit opens in the
-    editor precisely so that a meta.yaml can be written for it.
+    A unit with no `meta.yaml` is not in the build graph at all, so Ninja answers
+    `unknown target`, naming the PDF rather than the file that is actually missing. (Make said
+    `No rule to make target` for the same reason.) Say what is wrong instead -- an unconverted
+    unit opens in the editor precisely so that a meta.yaml can be written for it.
     """
     return refusal(
         target, "meta.yaml does not exist",
@@ -495,7 +519,7 @@ def missing_meta_result(target, unit):
 def build(unit, make_target, *, timeout=60):
     if not unit.meta_path.is_file():
         return missing_meta_result(make_target, unit)
-    return run_make(make_target, timeout=timeout)
+    return run_build(make_target, timeout=timeout)
 
 
 # --- writing ----------------------------------------------------------------
@@ -1109,7 +1133,7 @@ def api_audit_build(module, scope):
 
     def run(make_target, timeout):
         with BUILD_LOCK:
-            result = run_make(make_target, timeout=timeout)
+            result = run_build(make_target, timeout=timeout)
         return {"returncode": result["returncode"],
                 "log": (result["stdout"] or "") + (result["stderr"] or "")}
 
