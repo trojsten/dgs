@@ -937,17 +937,23 @@ class TestVolumeListing:
         assert sources.unit_list[-1].order is None
 
 
-def make_repo(tmp_path, built=(), beside_the_scope=()):
+def make_repo(tmp_path, built=(), beside_the_scope=(), languages=(), built_languages=()):
     """
     A repository shape rather than a bare module root, because `build-orphan` is the one check
     that looks outside `source/` and has to find `build/` beside it.
 
     `built` names directories to create under both mirrors at the unit level; `beside_the_scope`
-    names directories to create one level up, where the generated aggregates live.
+    names directories to create one level up, where the generated aggregates live. `languages`
+    names the translations the scope has, and `built_languages` the ones its mirrors hold --
+    which is how a dropped translation is staged, by listing it in the second and not the first.
     """
     module_root = tmp_path / 'source' / 'naboj'
     module_root.mkdir(parents=True)
     make_problem(module_root, name='widget')
+    for name in languages:
+        target = module_root / 'phys' / '99' / 'languages' / name
+        target.mkdir(parents=True)
+        (target / 'meta.yaml').write_text('booklet:\n    contents:\n        problems: True\n')
     for stage in ('render', 'build'):
         for name in built:
             target = tmp_path / stage / 'naboj' / 'phys' / '99' / 'problems' / name
@@ -957,6 +963,10 @@ def make_repo(tmp_path, built=(), beside_the_scope=()):
             target = tmp_path / stage / 'naboj' / 'phys' / '99' / name
             target.mkdir(parents=True)
             (target / 'answers.tex').write_text('generated')
+        for name in built_languages:
+            target = tmp_path / stage / 'naboj' / 'phys' / '99' / 'languages' / name
+            target.mkdir(parents=True)
+            (target / 'booklet.tex').write_text('stale')
     return module_root
 
 
@@ -998,6 +1008,37 @@ class TestBuildOrphans:
         module_root = make_repo(tmp_path)
         for stage in ('render', 'build'):
             assert not (tmp_path / stage).exists()
+        assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
+                                               ['phys/99/problems/widget']))
+
+    def test_a_dropped_translation_leaves_an_orphan(self, tmp_path):
+        r"""
+        The case the unit sweep cannot see: `languages/` is not a place units live, so a stale
+        `build/naboj/phys/29/languages/uk/` sits there unnoticed -- and the language documents
+        are pattern rules, so it is enough to build a whole booklet from. Volume 29 printed a
+        40-page Ukrainian problems booklet that way, out of a volume that has `en`, `es`, `sk`.
+        """
+        module_root = make_repo(tmp_path, built=('widget',),
+                                languages=('sk',), built_languages=('sk', 'uk'))
+        report = audit(module_root, 'naboj', 'phys/99', ['phys/99/problems/widget'])
+        messages = [f.message for f in report.findings if f.check == 'build-orphan']
+        assert len(messages) == 2                               # one per mirror
+        assert all('languages/uk' in m for m in messages)
+        assert not any('languages/sk' in m for m in messages)
+
+    def test_a_translation_that_still_has_its_source_is_quiet(self, tmp_path):
+        module_root = make_repo(tmp_path, built=('widget',),
+                                languages=('sk', 'en'), built_languages=('sk', 'en'))
+        assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
+                                               ['phys/99/problems/widget']))
+
+    def test_a_module_with_no_languages_at_all_is_quiet(self, tmp_path):
+        """
+        Seminar's shape. There is no `source/<scope>/languages/`, so there is no notion of a
+        language directory here and the pass yields nothing -- it is self-limiting rather than
+        a rule about naboj. The built `languages/` below would otherwise be a tempting orphan.
+        """
+        module_root = make_repo(tmp_path, built=('widget',), beside_the_scope=('languages',))
         assert 'build-orphan' not in ids(audit(module_root, 'naboj', 'phys/99',
                                                ['phys/99/problems/widget']))
 

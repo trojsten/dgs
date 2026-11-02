@@ -63,7 +63,32 @@ word between asking and deleting is not a safe thing to offer. `core/audit/stale
 of it, and it is the one check that reads outside `source/`: a directory listing, no file opened,
 and a tree that has never been built reports nothing.
 
-**It looks at unit directories and nothing coarser**, which is the only reason it is usable.
+**It looks at two kinds of directory and nothing coarser**, which is the only reason it is
+usable. A **unit** directory, above; and a **language** directory, which the unit sweep cannot
+see, because `languages/` is not a place units live. That half is self-limiting rather than a
+rule about Náboj: a module with no `source/<scope>/languages/` has no notion of one and yields
+nothing, which is how seminar and scholar pass through.
+
+It is worth having for the same reason as the first half, only louder. The language documents in
+`modules/naboj/module.mk` are pattern rules, so `%` matches any string and the rest of each
+prerequisite list is `$(wildcard …)`, which yields *nothing* for a language that is not there
+rather than failing. A stale `build/<volume>/languages/<lang>/` therefore supplies everything
+they ask for: `make output/naboj/phys/29/languages/uk/booklet.pdf` built a **40-page Ukrainian
+problems booklet** out of intermediates whose sources had been removed, for a volume that has
+`en`, `es` and `sk`. Clearing `build/` was the only thing that turned it back into an error.
+
+Two changes came out of that, and they catch the two halves. Every language document now takes
+**`source/naboj/$*/meta.yaml`** as a prerequisite — the one thing in those lists not derived from
+something else — so a cold build of a language that does not exist fails at once and names the
+missing file. And this check finds the warm one, where the stale `build/` is already there. The
+aggregates never had the problem: `output/naboj/%/languages` and `booklets` wildcard
+`source/naboj/$*/languages/*` and always did.
+
+`fks-naboj`'s ten language directories have no meta and are unbuildable by name as a result.
+They already were — it spells languages `slovak` rather than `sk`, so nothing in
+`SUPPORTED_LANGUAGES` ever matched them.
+
+The rest of the narrow rule, and why it is narrow:
 `build/` is full of directories that never had a source — `answers/`, `solutions/`, `build/core/`,
 every aggregate a template produces — so the obvious rule, *is there a source directory of this
 name*, calls **567** of them stale. What makes a unit different is that the audit already knows
