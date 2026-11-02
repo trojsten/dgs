@@ -151,6 +151,14 @@ def rules(w: Writer) -> None:
            '$run pandoc.py --format latex $lang $in $out',
            description=described('{a}[convert] Converting {x}Markdown{a} file {f}$in{a} '
                                  'to {x}TeX{a} file {f}$out'))
+    # The other writer, from the same rendered Markdown. A fragment is to a page what a
+    # `.tex` is to a PDF, so it lands in `build/` and the assembly into `output/` is the `page`
+    # rule below. The two writers disagree -- maths above all -- and where they disagree the web
+    # is the half nobody looks at, which is the reason it is built at all.
+    w.rule('pandoc_html',
+           '$run pandoc.py --format html $lang $in $out',
+           description=described('{a}[convert] Converting {x}Markdown{a} file {f}$in{a} '
+                                 'to {x}HTML{a} fragment {f}$out'))
     w.rule('copy',
            'mkdir -p $$(dirname $out) && cp $in $out',
            # `$kind` is bound by every edge, through `_copied`: a rule block may not carry a
@@ -205,6 +213,43 @@ def rules(w: Writer) -> None:
            + ' && ' + _depfile('$out'),
            description=described('{a}[XeLaTeX] Compiling {x}PDF{a} file {f}$out'),
            depfile='$out.d', deps='gcc')
+    # A picture in the one format a browser wants, converted from **the PDF the LaTeX path
+    # already built** -- so the web picture and the printed one cannot drift. `pdftocairo` and
+    # not `dvisvgm --pdf`: dvisvgm reads line widths and embedded rasters wrongly, which is a
+    # hairline turned into a heavy frame and a bitmap smeared into the corner (`Makefile:276-299`
+    # has the whole account). A hand-drawn `.svg` short-circuits this and is copied instead.
+    w.rule('pdf_svg',
+           'mkdir -p $$(dirname $out) && pdftocairo -svg $in $out',
+           description=described('{a}[pdftocairo] Rendering {f}$in{a} '
+                                 'to {x}SVG{a} file {f}$out'))
+    # A gnuplot plot is drawn twice by gnuplot rather than converted, one terminal each. The two
+    # disagree about their units -- the `svg` terminal counts CSS pixels, 96 to the inch, where
+    # `pdfcairo` counts points and hides a `fontscale 0.5` -- so `gppt` is 4/3 here against 1/72
+    # there and the font is 8 against 6. The same type at the same size on the same canvas, said
+    # in each terminal's own units.
+    w.rule('gnuplot_svg',
+           'mkdir -p $$(dirname $out) && cd $$(dirname $out) && gnuplot '
+           '-e "set macros; gppt = 4.0 / 3; '
+           '''gpterm = 'svg font \\"Minion Pro, 8\\"' " '''
+           '-e "set terminal @gpterm size 480, 288; '
+           "set output '$$(basename $out)'; set fit quiet;\" $$(basename $in) && "
+           # A script that sets a terminal of its own wins over the `-e` above, and gnuplot then
+           # writes a PDF into a file named `.svg` with no error anywhere -- `FKS/42/1/1/03` did
+           # it from a `blocks:` entry, which is a `.gp` no grep over `source/**/*.gp` can see,
+           # and the page showed three blank figures.
+           '{ head -c 5 $$(basename $out) | grep -q "<" || { echo "$out is not an SVG: does '
+           'its script (or a blocks: entry) set its own terminal?" >&2; '
+           'rm -f $$(basename $out); exit 1; }; }',
+           description=described('{a}[gnuplot] Rendering {f}$in{a} '
+                                 'to {x}SVG{a} file {f}$out'))
+    # One unit's fragments into `<outdir>/index.html`, with the pictures it names copied in
+    # beside it and its maths typeset, so the directory opens from `file://` with nothing else
+    # present. The pictures it copies are not declared: which ones they are is decided by
+    # reading the fragments, and they are a copy of files this graph already builds.
+    w.rule('page',
+           'mkdir -p $outdir && $run -m core.html.page $unit $lang $outdir --module $module',
+           description=described('{a}[page] Assembling {f}$unit{a} into {x}HTML{a} page '
+                                 '{f}$outdir/index.html'))
     w.rule('standalone_tex',
            "mkdir -p $outdir && $run -m modules.naboj.builder.standalone "
            "$competition $volume $problem $lang -o '$outdir'",
@@ -424,7 +469,7 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     # -- pictures --------------------------------------------------------------------------------
     w.comment('Pictures. A `.svg`, `.tikz` and `.gp` are Jinja templates first; the meta beside '
               'them is the context, so a drawing can print the number the meta computes.')
-    pictures = []
+    pictures, drawings = [], []
     for problem in problems:
         rel = listed(problem).relative_to(repo / 'source').as_posix()
         meta = (problem / 'meta.yaml').resolve()
@@ -435,7 +480,9 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                           implicit=[str(meta.relative_to(repo))],
                           variables={'lang': 'sk', 'meta': str(meta),
                                      'renderer': NABOJ_RENDERER})
-                pictures.append(_picture_pdf(build, w, stem, extension, problem, repo))
+                printed, shown = _picture(build, w, stem, extension, problem, repo)
+                pictures.append(printed)
+                drawings.append(shown)
         for extension in PICTURE_COPIES:
             for picture in sorted(problem.glob(f'*.{extension}')):
                 stem = f'{rel}/{picture.stem}'
@@ -443,28 +490,45 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                     continue
                 _copied(build, f'build/{stem}.{extension}', f'source/{stem}.{extension}')
                 pictures.append(f'build/{stem}.{extension}')
+                # A raster goes to the page as it is; a PDF copied in is converted like any
+                # other drawing.
+                drawings.append(_picture_svg(build, w, stem, extension) if extension == 'pdf'
+                                else f'build/{stem}.{extension}')
     w.newline()
 
     # -- fragments -------------------------------------------------------------------------------
     w.comment('One fragment per problem per language. A translated file lives inside the language '
               'directory; a shared one sits beside the meta and is rendered once per language.')
     fragments = {lang: {group: [] for group in NABOJ_GROUPS} for lang in languages}
+    pages = {lang: [] for lang in languages}
     for problem in problems:
         rel = problem.relative_to(repo / 'source').as_posix()
         meta = (problem / 'meta.yaml').resolve()
         for lang in languages:
             listed(problem / lang)
+            web = []
             for name in TRANSLATED:
                 if not (problem / lang / f'{name}.md').is_file():
                     continue
-                fragments[lang][_group(name)].append(_fragment(
+                tex, fragment = _fragment(
                     build, f'source/{rel}/{lang}/{name}.md', f'{rel}/{lang}/{name}', lang, meta,
-                    repo))
+                    repo)
+                fragments[lang][_group(name)].append(tex)
+                web.append(fragment)
             for name in SHARED:
                 if not (problem / f'{name}.md').is_file():
                     continue
-                fragments[lang][_group(name)].append(_fragment(
-                    build, f'source/{rel}/{name}.md', f'{rel}/{lang}/{name}', lang, meta, repo))
+                tex, fragment = _fragment(
+                    build, f'source/{rel}/{name}.md', f'{rel}/{lang}/{name}', lang, meta, repo)
+                fragments[lang][_group(name)].append(tex)
+                web.append(fragment)
+
+            # The page: the same problem in the same language, for a browser. Only where there
+            # is something to assemble -- `page.py` refuses an empty unit, and rightly, so a
+            # declared edge with no fragments would be an edge that cannot run.
+            if web:
+                pages[lang].append(_page(build, rel, lang, 'naboj', fragments=web,
+                                         pictures=_beside(drawings, rel), nested=True))
 
             # The standalone: one problem, one language, one PDF. **This is the editor's
             # preview** -- `modules/naboj/editor.yaml`'s `preview:` names it and `/api/compile`
@@ -537,7 +601,11 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         w.build(f'output/naboj/{scope}/languages/{lang}/all', 'phony',
                 [f'output/naboj/{scope}/languages/{lang}/{name}.pdf'
                  for name in (*LANGUAGE_PDFS, 'booklet-print', 'cover-print')])
-        counts['edges'] += 1
+        # Every page of this volume in this language. Not folded into `all`, which is the
+        # Makefile's reading too: the documents are what a volume is run from, and the pages
+        # are a second output of the same sources rather than part of the first.
+        w.build(f'output/naboj/{scope}/languages/{lang}/pages', 'phony', pages[lang])
+        counts['edges'] += 2
         counts['languages'].append(f'{scope}:{lang}')
     w.newline()
 
@@ -583,11 +651,13 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     w.build(f'output/naboj/{scope}/languages', 'phony',
             [f'output/naboj/{scope}/languages/{lang}/all' for lang in languages]
             + ([f'output/naboj/{scope}/languages/tearoffs.zip'] if languages else []))
+    w.build(f'output/naboj/{scope}/pages', 'phony',
+            [f'output/naboj/{scope}/languages/{lang}/pages' for lang in languages])
     w.build(f'output/naboj/{scope}/venues', 'phony',
             [f'output/naboj/{scope}/venues/{venue}/all' for venue in venues])
     w.build(f'output/naboj/{scope}/all', 'phony',
             [f'output/naboj/{scope}/languages', f'output/naboj/{scope}/venues'])
-    counts['edges'] += 4
+    counts['edges'] += 5
     w.newline()
 
     counts['problems'] = len(problems)
@@ -627,7 +697,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                        for p in (repo / 'modules/seminar/templates').rglob('*.jtex'))
 
     fragments = {name: [] for name in SEMINAR_TARGETS}
-    pictures = []
+    pictures, drawings, pages = [], [], []
     for problem in problems:
         rel = listed(problem).relative_to(repo / 'source').as_posix()
         meta = (problem / 'meta.yaml').resolve()
@@ -641,7 +711,9 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                           implicit=[str(meta.relative_to(repo))],
                           variables={'lang': 'sk', 'meta': str(meta),
                                      'renderer': SEMINAR_RENDERER})
-                pictures.append(_picture_pdf(build, w, stem, extension, problem, repo))
+                printed, shown = _picture(build, w, stem, extension, problem, repo)
+                pictures.append(printed)
+                drawings.append(shown)
         for extension in PICTURE_COPIES:
             for picture in sorted(problem.glob(f'*.{extension}')):
                 stem = f'{rel}/{picture.stem}'
@@ -649,11 +721,22 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                     continue
                 _copied(build, f'build/{stem}.{extension}', f'source/{stem}.{extension}')
                 pictures.append(f'build/{stem}.{extension}')
+                drawings.append(_picture_svg(build, w, stem, extension) if extension == 'pdf'
+                                else f'build/{stem}.{extension}')
+        web = []
         for name in SEMINAR_TARGETS:
             if (problem / f'{name}.md').is_file():
-                fragments[name].append(_fragment(build, f'source/{rel}/{name}.md',
-                                                 f'{rel}/{name}', 'sk', meta, repo,
-                                                 SEMINAR_RENDERER))
+                tex, fragment = _fragment(build, f'source/{rel}/{name}.md',
+                                          f'{rel}/{name}', 'sk', meta, repo,
+                                          SEMINAR_RENDERER)
+                fragments[name].append(tex)
+                web.append(fragment)
+        # A seminar page sits in the problem directory, not in a language directory under it:
+        # seminar is monolingual, which `modules/seminar/editor.yaml` says by carrying no
+        # `languages:` key and which `page.py` reads from there.
+        if web:
+            pages.append(_page(build, rel, 'sk', 'seminar', fragments=web,
+                               pictures=_beside(drawings, rel), nested=False))
 
     outdir = f'build/seminar/{scope}'
     build([f'{outdir}/{name}.tex' for name in ROUND_DOCUMENTS], 'round', None,
@@ -675,7 +758,8 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
 
     w.build(f'output/seminar/{scope}/all', 'phony',
             [f'output/seminar/{scope}/{name}.pdf' for name in ROUND_PDFS])
-    counts['edges'] += 1
+    w.build(f'output/seminar/{scope}/pages', 'phony', pages)
+    counts['edges'] += 2
     w.newline()
 
     counts['problems'] = len(problems)
@@ -714,6 +798,13 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     templates = sorted(str(p.relative_to(repo))
                        for p in (repo / 'modules/scholar/templates').rglob('*.jtex'))
 
+    # **Fragments but no pages**, which is the one asymmetry with the other two modules.
+    # `page.py` collects the targets `modules/scholar/editor.yaml` declares, and that descriptor
+    # says `targets: [text]` where 28 of this module's issues hold a `content.md` instead -- so
+    # an issue page would be an edge that could only ever fail with `no fragments to assemble`.
+    # The `.html` fragments are still built, because those are what the editor's HTML tab shows
+    # and they are right whatever the descriptor calls them. Settling `content` against `text`
+    # is scholar's own question and is noted at `SCHOLAR_TARGETS`.
     units, pictures = 0, []
     for kind, (builder, documents) in SCHOLAR_KINDS.items():
         if not (root / kind).is_dir():
@@ -737,7 +828,11 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                                   implicit=[f'source/{rel}/meta.yaml'],
                                   variables={'lang': 'sk', 'meta': str(meta.resolve()),
                                              'renderer': SCHOLAR_RENDERER})
-                        pictures.append(_picture_pdf(build, w, stem, extension, place, repo))
+                        # The `.svg` the second half of this emits is unreferenced here and
+                        # is still worth having: `build/<x>.svg` is a target anyone may ask
+                        # for, and it is the same picture the booklet prints.
+                        printed, _ = _picture(build, w, stem, extension, place, repo)
+                        pictures.append(printed)
                 for extension in PICTURE_COPIES:
                     for picture in sorted(place.glob(f'*.{extension}')):
                         stem = f'{rel}/{picture.stem}'
@@ -745,11 +840,14 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                             continue
                         _copied(build, f'build/{stem}.{extension}', f'source/{stem}.{extension}')
                         pictures.append(f'build/{stem}.{extension}')
+                        if extension == 'pdf':
+                            _picture_svg(build, w, stem, extension)
                 for name in SCHOLAR_TARGETS:
                     if (place / f'{name}.md').is_file():
-                        fragments.append(_fragment(build, f'source/{rel}/{name}.md',
-                                                   f'{rel}/{name}', 'sk', meta.resolve(), repo,
-                                                   SCHOLAR_RENDERER))
+                        tex, _ = _fragment(build, f'source/{rel}/{name}.md',
+                                           f'{rel}/{name}', 'sk', meta.resolve(), repo,
+                                           SCHOLAR_RENDERER)
+                        fragments.append(tex)
 
             outdir = f'build/{issue_rel}'
             build([f'{outdir}/{name}.tex' for name in documents], 'scholar_issue', None,
@@ -799,8 +897,15 @@ def _group(name: str) -> str:
 
 
 def _fragment(build, source: str, stem: str, lang: str, meta: pathlib.Path,
-              repo: pathlib.Path, renderer: str | None = None) -> str:
-    """`source/…/x.md` → `render/…/x.md` → `build/…/x.tex`, the two steps every fragment takes."""
+              repo: pathlib.Path, renderer: str | None = None) -> tuple[str, str]:
+    """
+    `source/…/x.md` → `render/…/x.md` → `build/…/x.{tex,html}`.
+
+    One Jinja stage, one language, **two writers**. The `.tex` goes to xelatex and the `.html`
+    goes into a page, and both are made from the same rendered Markdown -- which is the whole
+    point of the arrangement, since a second route to the web would be a second chance for the
+    two to disagree about what the problem says.
+    """
     _rendered(build, f'render/{stem}.md', source,
               implicit=[str(meta.relative_to(repo))],
               variables={'lang': lang, 'meta': str(meta),
@@ -808,7 +913,10 @@ def _fragment(build, source: str, stem: str, lang: str, meta: pathlib.Path,
     build(f'build/{stem}.tex', 'pandoc_tex', [f'render/{stem}.md'],
           implicit=[f'build/core/i18n/{lang}.yaml'],
           variables={'lang': lang})
-    return f'build/{stem}.tex'
+    build(f'build/{stem}.html', 'pandoc_html', [f'render/{stem}.md'],
+          implicit=[f'build/core/i18n/{lang}.yaml'],
+          variables={'lang': lang})
+    return f'build/{stem}.tex', f'build/{stem}.html'
 
 
 #: What a template is called in the line the build prints. The jinja step serves four formats,
@@ -836,9 +944,14 @@ def _copied(build, target: str, source: str, **kwargs):
     return build(target, 'copy', [source], variables=variables, **kwargs)
 
 
-def _picture_pdf(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
-                 repo: pathlib.Path) -> str:
-    """The three routes a drawing takes to the `.pdf` the booklet includes."""
+def _picture(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
+             repo: pathlib.Path) -> tuple[str, str]:
+    """
+    The routes a drawing takes to the two formats it is wanted in.
+
+    `build/<stem>.pdf` is what the booklet includes and `build/<stem>.svg` is what a page
+    shows, and **it is the same picture** -- see `_picture_svg` for why that matters.
+    """
     if extension == 'svg':
         build(f'build/{stem}.pdf', 'svg_pdf', [f'render/{stem}.svg'])
     elif extension == 'tikz':
@@ -852,7 +965,66 @@ def _picture_pdf(build, w: Writer, stem: str, extension: str, problem: pathlib.P
         _copied(build, f'build/{stem}.gp', f'render/{stem}.gp',
                 implicit=[f'build/{name}' for name in data])
         build(f'build/{stem}.pdf', 'gnuplot_pdf', [f'build/{stem}.gp'])
-    return f'build/{stem}.pdf'
+    return f'build/{stem}.pdf', _picture_svg(build, w, stem, extension)
+
+
+def _picture_svg(build, w: Writer, stem: str, extension: str) -> str:
+    """
+    The same picture, in the one format a browser wants.
+
+    **There is no separate web drawing.** A TikZ drawing, a PDF copied in and a `.gp` all reach
+    the page through the artefact the booklet prints, so the two cannot drift -- the first two
+    by conversion and the plot by being drawn a second time in the `svg` terminal, which is one
+    step shorter and takes the PDF parser out of the chain for the files that provoked the
+    conversion bug. A hand-drawn `.svg` is copied: round-tripping it through a PDF would cost
+    two conversions to arrive where it started.
+
+    `w.has` because a picture with two sources of the same name reaches this twice -- the same
+    guard `_already_drawn` applies on the PDF side, and for the same reason.
+    """
+    target = f'build/{stem}.svg'
+    if w.has(target):
+        return target
+    if extension == 'svg':
+        _copied(build, target, f'render/{stem}.svg')
+    elif extension == 'gp':
+        build(target, 'gnuplot_svg', [f'build/{stem}.gp'])
+    else:
+        build(target, 'pdf_svg', [f'build/{stem}.pdf'])
+    return target
+
+
+#: What a page's maths is set with when the engine is `latex`, which is the default: the
+#: `\input`s of `core/templates/mathpage.jtex`. Every document edge gets these from xelatex's
+#: own `-recorder`; a page runs its xelatex inside `core.html.texmath`, where there is no
+#: recorder to read, so they are named here instead.
+MATHPAGE_INPUTS = ('core/templates/mathpage.jtex', 'core/latex/fonts.tex',
+                   'core/latex/utilities.tex', 'core/latex/math.tex',
+                   'core/latex/symbols.tex', 'core/latex/siunitx.tex')
+
+
+def _page(build, rel: str, lang: str, module: str, *, fragments: list, pictures: list,
+          nested: bool) -> str:
+    """
+    One unit's fragments assembled into a page, which is what goes in `output/`.
+
+    `nested` is the module's own answer to where a fragment lives: Náboj holds a directory per
+    language inside a problem, so its page is `<problem>/<lang>/index.html`; seminar and scholar
+    are monolingual and theirs sits in the unit directory. `page.py` reads the same fact out of
+    `modules/<module>/editor.yaml`, which is why the module is passed rather than guessed from
+    the path.
+    """
+    outdir = f'output/{rel}/{lang}' if nested else f'output/{rel}'
+    build(f'{outdir}/index.html', 'page', None,
+          implicit=[*fragments, *pictures, f'build/core/i18n/{lang}.tex',
+                    'core/templates/page.jhtml', 'core/html/page.css', *MATHPAGE_INPUTS],
+          variables={'unit': f'build/{rel}', 'lang': lang, 'module': module, 'outdir': outdir})
+    return f'{outdir}/index.html'
+
+
+def _beside(drawings: list, rel: str) -> list:
+    """The pictures that sit in this unit's own directory, which are the ones its page names."""
+    return [picture for picture in drawings if picture.rsplit('/', 1)[0] == f'build/{rel}']
 
 
 def main() -> int:
