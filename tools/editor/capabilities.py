@@ -70,7 +70,17 @@ class Tier:
 
 
 def _which(name):
-    return shutil.which(name) or ''
+    """
+    On `PATH`, or beside the interpreter running this app.
+
+    The second half is not a convenience. `ninja` is a project dependency, so the one the build
+    actually uses is `.venv/bin/ninja`, and that directory is on `PATH` only inside an activated
+    venv -- `probe_python_launcher` prepends it for exactly this reason when uv is absent.
+    Looking only at `PATH`, an editor started as `python tools/editor/app.py` probed its way to
+    "no ninja", and since a tier is never usable when one below it is missing, all three
+    pipeline tiers went dark on a machine that builds perfectly.
+    """
+    return shutil.which(name) or shutil.which(name, path=str(Path(sys.executable).parent)) or ''
 
 
 def _run(argv, *, stdin=None, timeout=30):
@@ -90,13 +100,15 @@ def probe_ninja():
     Ninja, which the build runs through since `tools/ninja/generate.py` replaced the Makefile.
 
     Unlike make there is nothing to disambiguate -- there is one Ninja and no dialects -- so this
-    only has to find it. It is a project dependency (`pyproject.toml`), so `uv run ninja` always
-    has one; the probe is for an editor started outside uv.
+    only has to find it, and `_which` is what knows where to look.
+
+    It runs the path it found rather than the bare name, because the two are not the same
+    question: the venv's `ninja` answers `which` only when the venv is activated.
     """
     path = _which('ninja')
     if not path:
         return Tool('ninja', False)
-    result = _run(['ninja', '--version'], timeout=10)
+    result = _run([path, '--version'], timeout=10)
     return Tool('ninja', True, path, (result[1].strip() if result and result[1] else ''))
 
 
