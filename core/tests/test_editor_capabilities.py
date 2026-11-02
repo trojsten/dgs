@@ -185,41 +185,52 @@ class TestDescribeSourceExplainsAnEmptyClone:
 
 
 class TestTheHtmlTargetIsDerived:
-    """
-    `html` is derived the same way `tex` is, and for a stronger reason: there is exactly one
-    `output/%.html: render/%.md` in the root Makefile, shared by every module, so a per-module key
-    could only ever drift from it.
+    r"""
+    `html` is derived the same way `tex` is, and lands beside it.
+
+    **A fragment is an intermediate and belongs in `build/`.** It has no `<head>`, so nothing
+    typesets its `\(…\)`, and its `<img>` point at files that are not next to it; assembling
+    fragments into a page is `core/html/page.py`, and that is the step whose output is in
+    `output/`. This used to say `output/` and was wrong for long enough to matter -- the rule it
+    named became an XFAIL fall-through when the per-module `.html` rules landed, so the editor's
+    HTML tab asked the build for something nothing made.
     """
 
     def test_it_swaps_the_prefix_and_the_extension(self):
         kind = UnitKind(glob='*', render='render/naboj/{unit}/{language}/{target}.md')
-        assert kind.html == 'output/naboj/{unit}/{language}/{target}.html'
+        assert kind.html == 'build/naboj/{unit}/{language}/{target}.html'
+
+    def test_it_sits_beside_the_tex(self):
+        """The two writers, one rendered Markdown: the only difference is the extension."""
+        kind = UnitKind(glob='*', render='render/naboj/{unit}/{language}/{target}.md')
+        assert kind.html == kind.tex.removesuffix('.tex') + '.html'
 
     def test_a_module_with_no_render_rule_has_no_html_rule(self):
         assert UnitKind(glob='*').html == ''
 
     def test_something_that_is_not_a_render_target_is_refused(self):
-        """The quiet half: better no HTML tab than a target make has no rule for."""
+        """The quiet half: better no HTML tab than a target the graph has no edge for."""
         assert UnitKind(glob='*', render='output/naboj/{unit}.pdf').html == ''
 
     def test_the_tex_override_does_not_leak_into_it(self):
         """
-        `tex_override` exists for a module whose `.tex` rule is not the usual one. The HTML rule
-        is the root Makefile's for everybody, so an override of the TeX target must not silently
-        redirect it.
+        `tex_override` exists for a module whose `.tex` rule is not the usual one. An override of
+        the TeX target must not silently redirect the HTML one, which is a different writer.
         """
         kind = UnitKind(glob='*', render='render/x/{target}.md', tex_override='build/odd.tex')
-        assert kind.html == 'output/x/{target}.html'
+        assert kind.html == 'build/x/{target}.html'
 
     @pytest.mark.parametrize('descriptor', sorted(ROOT.glob('modules/*/editor.yaml')))
-    def test_every_real_descriptor_yields_an_output_path(self, descriptor):
+    def test_every_real_descriptor_yields_a_build_path(self, descriptor):
         """Every module that renders Markdown can show its web fragment."""
         import yaml
         spec = yaml.safe_load(descriptor.read_text()) or {}
+        module = descriptor.parent.name
         for entry in spec.get('units') or []:
             kind = UnitKind(glob=entry['glob'], render=entry.get('render', ''))
             if kind.render:
-                assert kind.html.startswith('output/') and kind.html.endswith('.html')
+                assert kind.html.startswith(f'build/{module}/')
+                assert kind.html.endswith('.html')
 
 
 class TestAssetVersion:

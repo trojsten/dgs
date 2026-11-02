@@ -1097,7 +1097,7 @@ async function doCompile() {
 
 /* The fragment the web gets, shown as a page rather than as markup.
  *
- * `srcdoc` with an absolute `<base>` under `/api/output/`, so the relative pictures resolve
+ * `srcdoc` with an absolute `<base>` under `/api/build/`, so the relative pictures resolve
  * exactly as they would on the web -- one that does not load here would not load there either,
  * and the pane should show that rather than hide it.
  *
@@ -1152,9 +1152,11 @@ async function doHtml() {
 
     if (body.ok) {
       // Absolute, because a `srcdoc` document has no URL of its own for a relative one to
-      // resolve against.
-      const base = `${location.origin}/api/output/` +
-        (body.html_target ?? "").replace(/^output\//, "").replace(/[^/]*$/, "");
+      // resolve against. The server says which directory, because it is not the fragment's
+      // own: a Náboj fragment sits inside the language directory and its drawings beside the
+      // problem above it.
+      const base = `${location.origin}/api/build/` +
+        (body.html_base ?? "").replace(/^build\//, "");
       frame.srcdoc =
         `<!doctype html><html><head><meta charset="utf-8">` +
         `<base href="${base}">` +

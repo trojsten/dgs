@@ -235,6 +235,19 @@ class Unit:
         target = self.html_target(target)
         return REPO_ROOT / target if target else None
 
+    def pictures_dir(self):
+        """
+        Where a relative `<img src>` in this unit's fragments resolves.
+
+        A fragment says `![](x.svg)` because that is what the author wrote next to the problem,
+        and the built drawing lands in the unit's own `build/` directory whatever the module --
+        beside the problem for Náboj, whose fragments are a level deeper inside the language
+        directory, and in the unit directory itself for the monolingual two. `page.py` copies
+        the pictures next to the page instead, which is what makes a page self-contained; the
+        HTML pane has no page, so it is pointed here.
+        """
+        return f"build/{self.module.name}/{self.name}/"
+
     def preview_target(self):
         if not self.kind.preview:
             return None
@@ -775,10 +788,12 @@ def api_html():
         response["html"] = (
             read_if_exists(unit.html_path(target)) if response["ok"] else None
         )
-        # Where the fragment lives, so the pane can point a `<base>` at its directory and let the
-        # relative pictures resolve. Named here rather than reconstructed in the front end, which
-        # would be a second copy of the path rule.
+        # Where the fragment lives, and where its pictures do -- which for Náboj is not the
+        # same directory, since a fragment sits inside the language and a drawing beside the
+        # problem. Named here rather than reconstructed in the front end, which would be a
+        # second copy of two path rules.
         response["html_target"] = build_target
+        response["html_base"] = unit.pictures_dir()
     return jsonify(response)
 
 
@@ -848,6 +863,25 @@ def parse_mdcheck_output(stdout):
         else:
             i += 1
     return violations
+
+
+@app.get("/api/build/<path:relative>")
+def api_build(relative):
+    """
+    One file out of `build/`, so the HTML pane's pictures resolve.
+
+    The twin of `api_output` below, and it is needed because a fragment is an intermediate: it
+    lives in `build/` beside the drawings it names, where a page lives in `output/` with its
+    pictures copied in. Serving it the same way keeps the pane honest -- a picture that does
+    not resolve here has not been built, and the pane should show that rather than hide it.
+
+    Path-checked rather than trusted, exactly as `api_output` is.
+    """
+    root = (REPO_ROOT / "build").resolve()
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise BadRequest(f"No such build file: {relative}")
+    return send_file(path)
 
 
 @app.get("/api/output/<path:relative>")
