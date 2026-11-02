@@ -581,7 +581,19 @@ terminal counts in, and a script that wants its own canvas writes
 
     set terminal @gpterm size 432*gppt, 108*gppt
 
-A script that wants the default writes nothing at all, which is 39 of the 42.
+A script that wants the default writes nothing at all, which is 30 of the 42. Of the 12 that do
+not, nine are scholar's and were written this way; the other three are naboj's and were not --
+they still opened `set terminal pdf size 6, 1.5` when the web path was added, and so did
+`FKS/42/1/1/03`'s `blocks:` preamble, which is a thirteenth script that no `.gp` on disk carries.
+All four say `@gpterm` now.
+
+**`set terminal pdf` left in a script is not a print defect and is a web one**, which is what
+made it survive. Re-issued over a `pdfcairo` that is already current it keeps the font *and* the
+`fontscale`, so the printed figure is unchanged -- all six of those plots are pixel-identical
+across the conversion, and so is volume 29's whole booklet. On the `svg` terminal it is simply a
+different terminal, so gnuplot writes a PDF into a file named `.svg` and the page shows a blank
+figure. Hence the sniff below, and hence the rule that the terminal is the build's to supply
+even where leaving it in the script appears to cost nothing.
 
 Three things about that, each of which cost a wrong picture to find:
 
