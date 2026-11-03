@@ -860,6 +860,10 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     # The `.html` fragments are still built, because those are what the editor's HTML tab shows
     # and they are right whatever the descriptor calls them. Settling `content` against `text`
     # is scholar's own question and is noted at `SCHOLAR_TARGETS`.
+    # **Per issue, not per year.** These used to accumulate over the whole loop and every
+    # document took the lot, so one plot that would not draw stopped the issues *after* it as
+    # well: `2025/homework/03/monte-carlo.gp` took `04` down with it although `04` names no
+    # drawing of 03's. An issue is a document; what it reads is what is under it.
     units, pictures = 0, []
     for kind, (builder, documents) in SCHOLAR_KINDS.items():
         if not (root / kind).is_dir():
@@ -868,6 +872,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                             if i.is_dir() and _visible(i)):
             units += 1
             issue_rel = issue.relative_to(repo / 'source').as_posix()
+            drawn = []
             # the issue's own text, then one directory per problem below it
             places = [issue, *sorted(c for c in listed(issue).iterdir()
                                      if c.is_dir() and _visible(c))]
@@ -889,14 +894,14 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                         # is still worth having: `build/<x>.svg` is a target anyone may ask
                         # for, and it is the same picture the booklet prints.
                         printed, _ = _picture(build, w, stem, extension, place, repo)
-                        pictures.append(printed)
+                        drawn.append(printed)
                 for extension in PICTURE_COPIES:
                     for picture in sorted(place.glob(f'*.{extension}')):
                         stem = f'{rel}/{picture.stem}'
                         if _already_drawn(w, stem, extension):
                             continue
                         _copied(build, f'build/{stem}.{extension}', f'source/{stem}.{extension}')
-                        pictures.append(f'build/{stem}.{extension}')
+                        drawn.append(f'build/{stem}.{extension}')
                         if extension == 'pdf':
                             _picture_svg(build, w, stem, extension)
                 for name in SCHOLAR_TARGETS:
@@ -914,7 +919,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             for name in documents:
                 pdf = f'output/{issue_rel}/{name}.pdf'
                 build(pdf, 'document_pdf', None,
-                      implicit=[f'{outdir}/{name}.tex', *fragments, *pictures, *static,
+                      implicit=[f'{outdir}/{name}.tex', *fragments, *drawn, *static,
                                 'build/core/i18n/sk.tex', 'core/latex/dgs.cls'],
                       implicit_outputs=[pdf.replace('.pdf', e)
                                         for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
@@ -922,6 +927,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             w.build(f'output/{issue_rel}/all', 'phony',
                     [f'output/{issue_rel}/{name}.pdf' for name in documents])
             counts['edges'] += 1
+            pictures += drawn
 
         w.build(f'output/scholar/{scope}/{kind}', 'phony',
                 [f'output/scholar/{scope}/{kind}/{i.name}/all'
