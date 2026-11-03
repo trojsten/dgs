@@ -587,6 +587,26 @@ they still opened `set terminal pdf size 6, 1.5` when the web path was added, an
 `FKS/42/1/1/03`'s `blocks:` preamble, which is a thirteenth script that no `.gp` on disk carries.
 All four say `@gpterm` now.
 
+> **Open: scholar's nine say `@gpterm` and then set a font of their own, and none of them
+> draws.** Every one of them -- the `monte-carlo.gp` of `TA1/2018`, `2019`, `2022`, `2024` and
+> `2025`, the `voigt.gp` of `2018`, `2019` and `2022`, plus the copy inside `TA1/2025/2025/` --
+> opens
+>
+>     set terminal @gpterm size 510.236*gppt, 311.811*gppt font "Minion Pro, 10"
+>
+> and `@gpterm` already carries the font, so pdfcairo refuses the line outright: *Duplicated or
+> contradicting arguments in cairo terminal options*. They have been broken since `@gpterm`
+> landed and nothing said so, because nothing built scholar until the Ninja graph did. It is
+> one failing edge today, `build/scholar/TA1/2025/homework/03/monte-carlo.pdf`, and it is the
+> only thing between `TA1/2025` and a clean build.
+>
+> **Deliberately not fixed, and the reason is that the fix is a choice.** Deleting the trailing
+> `font` makes all nine build at once, at the 6pt the build supplies rather than the 10pt their
+> authors asked for on a 510pt canvas -- visibly smaller labels on somebody else's drawings.
+> Letting `@gpterm` take a size instead is a change here rather than in the content, and it is
+> the only way a script can ask for larger type without re-specifying the face. Neither is
+> urgent: scholar is not being run, and Náboj is.
+
 **`set terminal pdf` left in a script is not a print defect and is a web one**, which is what
 made it survive. Re-issued over a `pdfcairo` that is already current it keeps the font *and* the
 `fontscale`, so the printed figure is unchanged -- all six of those plots are pixel-identical
