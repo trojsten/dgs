@@ -341,7 +341,8 @@ def languages_of(volume: pathlib.Path) -> list[str]:
     that is not in this list simply has no edges and Ninja refuses it by name.
     """
     root = volume / 'languages'
-    return sorted(child.name for child in root.iterdir() if child.is_dir()) if root.is_dir() else []
+    return sorted(child.name for child in root.iterdir()
+                  if child.is_dir() and _visible(child)) if root.is_dir() else []
 
 
 def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
@@ -352,7 +353,8 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
     w.newline()
     rules(w)
 
-    totals = {'edges': 0, 'problems': 0, 'pictures': 0, 'languages': [], 'listed': set()}
+    totals = {'edges': 0, 'problems': 0, 'pictures': 0, 'languages': [],
+              'listed': set(), 'read': set()}
     needs = {'languages': set(), 'competitions': set()}
 
     # Two passes over the scopes: the first writes their edges into a buffer and collects what
@@ -373,6 +375,7 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
             totals[key] += counts[key]
         totals['languages'] += counts['languages']
         totals['listed'] |= counts['listed']
+        totals['read'] |= counts.get('read', set())
         for key in ('languages', 'competitions'):
             needs[key] |= counts.get('needs', {}).get(key, set())
 
@@ -399,9 +402,13 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
               'mtime moves on exactly that event and no other. `naboj_problem_dirs` in '
               'modules/naboj/module.mk:114-132 is the same trick for the same reason -- the '
               'difference is that here it is needed in one place instead of on every document.')
+    w.comment('A handful of *files* are in there too. A venue meta names the language its '
+              'documents are set in, which decides which i18n table they need, and that is a '
+              'fact no directory listing holds -- so the file itself is watched, or changing '
+              '`language:` would leave the graph pointing at the locale it used to say.')
     w.build('build.ninja', 'regenerate', None,
             implicit=['tools/ninja/generate.py', 'tools/ninja/writer.py',
-                      *sorted(totals['listed'])],
+                      *sorted(totals['listed']), *sorted(totals['read'])],
             variables={'scope': ' '.join(scopes)})
     totals['edges'] += 1
 
@@ -449,7 +456,7 @@ def core_edges(repo: pathlib.Path, w: Writer, needs: dict) -> int:
 
 
 def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
-    counts = {'edges': 0, 'languages': [], 'listed': set()}
+    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
 
     def listed(directory: pathlib.Path) -> pathlib.Path:
         """Record a directory whose *listing* this graph depends on, and return it."""
@@ -465,7 +472,8 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     volume = repo / 'source' / 'naboj' / scope
     listed(volume / 'languages')
     languages = languages_of(volume)
-    problems = sorted(p.parent for p in listed(volume / 'problems').glob('*/meta.yaml'))
+    problems = sorted(p.parent for p in listed(volume / 'problems').glob('*/meta.yaml')
+                      if _visible(p.parent))
 
     w.comment(f'==== {scope} ' + '=' * 60)
 
@@ -631,13 +639,23 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     w.comment('Venues. One `venue.py` invocation writes `instructions.tex`, `answers-modulo.tex` '
               'and, when the source is there, `instructions-inner.tex` for the venue\'s language.')
     venues = sorted(child.name for child in listed(volume / 'venues').iterdir()
-                    if child.is_dir()) if (volume / 'venues').is_dir() else []
+                    if child.is_dir() and _visible(child)) if (volume / 'venues').is_dir() else []
     for venue in venues:
+        venue_meta = f'source/naboj/{scope}/venues/{venue}/meta.yaml'
+        # **A venue is set in its own language, which need not be one of the volume's.** Volume
+        # 29 has `en` and `sk` and runs in Praha and Olomouc, so its Czech venue documents
+        # `\input{build/core/i18n/cs.tex}` -- a file nothing asked for, because the edges were
+        # taking the *volume's* languages. The whole of `all` failed on it, 34 documents at
+        # once, and it was invisible under make, whose `i18n.stamp` built every locale whether
+        # anything wanted it or not.
+        venue_language = _venue_language(repo / venue_meta)
+        counts['needs']['languages'] |= {venue_language} - {None}
+        counts['read'].add(venue_meta)
         outdir = f'build/naboj/{scope}/venues/{venue}'
         documents = [f'{outdir}/{name}.tex' for name in VENUE_DOCUMENTS]
         build(documents, 'venue', None,
               implicit=[*templates, static,
-                        f'source/naboj/{scope}/venues/{venue}/meta.yaml',
+                        venue_meta,
                         f'source/naboj/{scope}/meta.yaml',
                         f'source/naboj/{competition}/meta.yaml',
                         *sorted(str((p / 'meta.yaml').relative_to(repo)) for p in problems)],
@@ -647,7 +665,8 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             pdf = f'output/naboj/{scope}/venues/{venue}/{name}.pdf'
             build(pdf, 'document_pdf', None,
                   implicit=[f'{outdir}/{name}.tex', *pictures, static, 'core/latex/dgs.cls',
-                            *[f'build/core/i18n/{l}.tex' for l in languages]],
+                            *([f'build/core/i18n/{venue_language}.tex']
+                              if venue_language else [])],
                   implicit_outputs=[pdf.replace('.pdf', e)
                                     for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
                   variables={'tex': f'{outdir}/{name}.tex'})
@@ -701,7 +720,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
 
     competition, volume_id, semester, round_id = scope.split('/')
     root = repo / 'source' / 'seminar' / scope
-    problems = sorted(p.parent for p in listed(root).glob('*/meta.yaml'))
+    problems = sorted(p.parent for p in listed(root).glob('*/meta.yaml') if _visible(p.parent))
 
     w.comment(f'==== seminar/{scope} ' + '=' * 50)
 
@@ -816,13 +835,23 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     root = repo / 'source' / 'scholar' / scope
     w.comment(f'==== scholar/{scope} ' + '=' * 50)
 
-    # Scholar's `.static/` trees -- `source/scholar/{STA,TA1}/.static` -- get no
-    # `copy_static` edge and are a prerequisite of nothing, where every naboj document
-    # takes its competition's. Recorded rather than guessed at: scholar builds under
-    # neither system today, so a fix here could not be checked against anything.
     counts['needs'] = {'languages': {'sk'}, 'competitions': set()}
     templates = sorted(str(p.relative_to(repo))
                        for p in (repo / 'modules/scholar/templates').rglob('*.jtex'))
+
+    # `source/scholar/<course>/.static/`, which every document of that course `\input`s, copied
+    # one file to an edge exactly as seminar's is. It used to be a prerequisite of nothing at
+    # all, on the grounds that scholar built under neither system so a fix could not be checked;
+    # it builds now, and the first thing it did was stop at `File
+    # 'build/scholar/STA/.static/format-override.tex' not found`.
+    static = []
+    for path in sorted(p for p in listed(repo / 'source/scholar' / course / '.static')
+                       .rglob('*') if p.is_file()):
+        listed(path.parent)
+        source = path.relative_to(repo).as_posix()
+        target = source.replace('source/', 'build/', 1)
+        _copied(build, target, source)
+        static.append(target)
 
     # **Fragments but no pages**, which is the one asymmetry with the other two modules.
     # `page.py` collects the targets `modules/scholar/editor.yaml` declares, and that descriptor
@@ -835,11 +864,13 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     for kind, (builder, documents) in SCHOLAR_KINDS.items():
         if not (root / kind).is_dir():
             continue
-        for issue in sorted(i for i in listed(root / kind).iterdir() if i.is_dir()):
+        for issue in sorted(i for i in listed(root / kind).iterdir()
+                            if i.is_dir() and _visible(i)):
             units += 1
             issue_rel = issue.relative_to(repo / 'source').as_posix()
             # the issue's own text, then one directory per problem below it
-            places = [issue, *sorted(c for c in listed(issue).iterdir() if c.is_dir())]
+            places = [issue, *sorted(c for c in listed(issue).iterdir()
+                                     if c.is_dir() and _visible(c))]
             fragments = []
             for place in places:
                 rel = place.relative_to(repo / 'source').as_posix()
@@ -883,7 +914,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             for name in documents:
                 pdf = f'output/{issue_rel}/{name}.pdf'
                 build(pdf, 'document_pdf', None,
-                      implicit=[f'{outdir}/{name}.tex', *fragments, *pictures,
+                      implicit=[f'{outdir}/{name}.tex', *fragments, *pictures, *static,
                                 'build/core/i18n/sk.tex', 'core/latex/dgs.cls'],
                       implicit_outputs=[pdf.replace('.pdf', e)
                                         for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
@@ -894,7 +925,8 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
 
         w.build(f'output/scholar/{scope}/{kind}', 'phony',
                 [f'output/scholar/{scope}/{kind}/{i.name}/all'
-                 for i in sorted(x for x in (root / kind).iterdir() if x.is_dir())])
+                 for i in sorted(x for x in (root / kind).iterdir()
+                                 if x.is_dir() and _visible(x))])
         counts['edges'] += 1
     w.newline()
 
@@ -1048,6 +1080,50 @@ def _page(build, rel: str, lang: str, module: str, *, fragments: list, pictures:
     return f'{outdir}/index.html'
 
 
+def _visible(path: pathlib.Path) -> bool:
+    """
+    A directory whose name begins with a dot is not content, and nothing may treat it as one.
+
+    Two were being built as though they were. `scholar/STA/2023/homework/02/.priors` is a draft
+    kept beside the real problems: it was rendered, and failed on a meta the problem schema
+    refuses. `seminar/FKS/.template` is the scaffolding a new volume is copied from, and
+    `--scope all` made six scopes out of it. Neither is a defect in the sources -- a leading dot
+    is how a filesystem has always said *this is not one of the others*, and `.static/` sits
+    beside the units in every module without anyone mistaking it for one.
+    """
+    return not path.name.startswith('.')
+
+
+def _venue_language(meta: pathlib.Path) -> str | None:
+    """
+    The one thing in this generator read out of a file rather than off a directory listing.
+
+    A venue's documents are set in the venue's language, which decides the i18n table they
+    `\\input`, and no listing anywhere holds that fact -- so it is read here, and the meta goes
+    into the generator edge's inputs so that changing `language:` regenerates the graph.
+
+    A line scan rather than `yaml.safe_load`, because this module imports nothing outside the
+    standard library and `tools/ninja/bootstrap.py` leans on that: its last-resort path runs the
+    generator under whatever `python3` is on PATH, where the project's packages are not
+    importable. `language:` is a plain scalar in every venue meta that has one, and the schema
+    requires it to be one, so there is no YAML here to get wrong.
+
+    **`None` where there is no key, and no guess.** 69 of the 144 venue metas have none -- all
+    of `phys/02` and `20`-`25`, several of them empty files -- and those venues cannot build
+    today for a reason that has nothing to do with this graph: `contexts/buildable.py:66`
+    subscripts `i18n.languages[venue.language]` outright, so the builder raises before anything
+    reads an i18n table. Falling back to the volume's language would paper over that with the
+    wrong locale; raising here would be worse still, because one incomplete venue in a volume
+    nobody builds would stop the generator emitting *any* scope's edges.
+    """
+    for line in meta.read_text(encoding='utf-8').splitlines():
+        key, separator, value = line.partition(':')
+        if (separator and key.strip() == 'language'
+                and (language := value.split('#')[0].strip().strip('\'"'))):
+            return language
+    return None
+
+
 def _beside(drawings: list, rel: str) -> list:
     """The pictures that sit in this unit's own directory, which are the ones its page names."""
     return [picture for picture in drawings if picture.rsplit('/', 1)[0] == f'build/{rel}']
@@ -1066,15 +1142,30 @@ def main() -> int:
     scopes = args.scope
     if 'all' in scopes:
         scopes = [s for s in scopes if s != 'all']
-        scopes += sorted(str(p.parent.relative_to(repo / 'source/naboj'))
-                         for p in (repo / 'source/naboj').glob('*/*/problems')
-                         if (p.parent / 'languages').is_dir())
-        scopes += sorted(f'seminar:{p.relative_to(repo / "source/seminar")}'
-                         for p in (repo / 'source/seminar').glob('*/*/*/*')
-                         if p.is_dir() and any(p.glob('*/meta.yaml')))
-        scopes += sorted(f'scholar:{p.relative_to(repo / "source/scholar")}'
-                         for p in (repo / 'source/scholar').glob('*/*')
-                         if p.is_dir() and (p / 'handouts').is_dir() or (p / 'homework').is_dir())
+
+        def named(root: pathlib.Path, pattern: str):
+            """Every directory matching `pattern` under `root`, by its path relative to it.
+
+            `pathlib.glob` is not the `glob` module: `*` matches a leading dot here, which is
+            how `seminar:FKS/.template/1/1` became six scopes of a scaffolding directory. Every
+            part has to be visible, not only the last -- `.template/1/1` ends in `1`.
+            """
+            for path in root.glob(pattern):
+                relative = path.relative_to(root)
+                if path.is_dir() and all(not part.startswith('.') for part in relative.parts):
+                    yield path, relative
+
+        scopes += sorted(str(relative.parent)
+                         for path, relative in named(repo / 'source/naboj', '*/*/problems')
+                         if (path.parent / 'languages').is_dir())
+        scopes += sorted(f'seminar:{relative}'
+                         for path, relative in named(repo / 'source/seminar', '*/*/*/*')
+                         if any(path.glob('*/meta.yaml')))
+        # `A and (B or C)`. Written without the brackets this was `(A and B) or C`, so a
+        # `homework/` directory got in whether or not its parent was a directory at all.
+        scopes += sorted(f'scholar:{relative}'
+                         for path, relative in named(repo / 'source/scholar', '*/*')
+                         if ((path / 'handouts').is_dir() or (path / 'homework').is_dir()))
     with args.output.open('w') as out:
         counts = generate(repo, scopes, out)
     print(f"{args.output}: {counts['edges']} edges, {len(scopes)} scopes, "
