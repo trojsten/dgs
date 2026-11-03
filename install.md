@@ -12,7 +12,7 @@ uv run python tools/editor/capabilities.py
 | tier | what you can do | what it needs |
 |---|---|---|
 | — | open, edit and **save** files; the whole `/audit` page | Python and the dependencies below |
-| Rendered Markdown | see what your Jinja tags expand to | GNU make |
+| Rendered Markdown | see what your Jinja tags expand to | Ninja, which `uv sync` installs |
 | TeX | see what pandoc makes of it | + `pandoc` and `pandoc-crossref` |
 | PDF | compile and read the page | + TeX Live, `dgs.cls`, and the MinionPro fonts |
 
@@ -87,7 +87,7 @@ against, installs that one, and verifies the result with a probe document.
 
 **The trap:** it installs into `$HOME/.local/bin` and only *warns* if that is not on your `PATH`,
 so the install goes green and nothing works. There is a second half the script cannot warn about —
-the editor shells out to make with **its own** environment, so a `PATH` exported in `~/.zshrc` is
+the editor shells out to the build with **its own** environment, so a `PATH` exported in `~/.zshrc` is
 invisible to an editor started from a desktop launcher or a systemd unit. The symptom is a TeX tab
 greyed out on a machine where `pandoc` works fine in the terminal. `capabilities.py` reports the
 PATH the server would actually use.
@@ -115,7 +115,46 @@ It installs the apt packages itself, including `lcdf-typetools` — FontPro's sc
 
 It does **not** install the Python side. Do step 1 as well.
 
-## 5. Running the editor
+## 5. The build graph
+
+```
+./dgs-build output/naboj/phys/29/languages/sk/booklet.pdf
+```
+
+That is the whole of it, and the first run is the only interesting one. The build is a Ninja
+graph that `tools/ninja/generate.py` writes from the source tree, and **`build.ninja` is
+generated and gitignored, so a fresh clone has none**. Ninja has no bootstrap of its own -- it
+finds no manifest the way `make` finds a `Makefile`, and stops at
+
+```
+ninja: error: loading 'build.ninja': No such file or directory
+```
+
+which names a file nobody has heard of. `./dgs-build` generates it when it is missing and then
+becomes Ninja, so there is nothing to remember; the editor does the same thing from its own
+Build button. Running `ninja` directly is fine once a graph exists.
+
+**It is not part of `install.sh`, deliberately.** The graph is a function of `source/`, which is
+cloned in step 2 and grows a repository whenever you clone another one -- so a graph written at
+install time would be wrong by the end of the install. And `install.sh` is the PDF tier; somebody
+writing or translating never runs it and still needs a build.
+
+After that, regenerating is Ninja's job. `build.ninja` is itself an output of a `generator` edge
+that depends on `generate.py` and on every source *directory* the graph was read from, so adding
+or removing a problem, a language or a picture re-runs the generator mid-build. Three things it
+will not notice, where you run the generator yourself:
+
+```
+uv run python -m tools.ninja.generate --scope all
+```
+
+- **a new volume, round or year.** The scope directories themselves are not tracked;
+- **a new `modules/*/templates/*.jtex`** -- changing one is seen, adding one is not;
+- **a different scope set.** The scopes are baked into the graph, and a target outside them is
+  `unknown target` rather than a reason to regenerate. `--scope phys/29` is a much smaller graph
+  if you want one; `all` is what `./dgs-build` writes and costs about two seconds.
+
+## 6. Running the editor
 
 ```
 uv run python tools/editor/app.py --port 5001
@@ -126,7 +165,7 @@ path — `core/i18n/__init__.py` reads `core/i18n/default.yaml` at import time �
 from anywhere else. The app `chdir`s there itself, but the working copy it picks is the one the
 file lives in. Port 5000 is the default and is often taken.
 
-`uv` is not required to run it. Without uv the editor calls `make` directly, with the directory of
+`uv` is not required to run it. Without uv the editor calls `ninja` directly, with the directory of
 the interpreter running it prepended to `PATH` — so an editor started from an activated venv works
 with no uv installed at all.
 
@@ -136,8 +175,8 @@ Worth knowing, because two of them fail quietly:
 
 - **A missing `build/core/i18n/<lang>.yaml`** does not break the TeX tier; it silently changes it.
   pandoc-crossref falls back to English prefixes, so a Slovak booklet says `eq.~\ref{…}` where it
-  should say `rovnica~\ref{…}`. The `.tex` rules depend on `build/core/i18n.stamp` so make builds
-  it for you; if you ever bypass make, build it first.
+  should say `rovnica~\ref{…}`. Every `.tex` edge depends on `build/core/i18n/<lang>.yaml`, so
+  the build makes it for you; if you ever bypass the build, build it first.
 - **A font present but lacking a glyph** is not a compile error. xelatex writes
   `Missing character:` into the log, exits 0, and ships a hole in the page. `core/tests/test_latex.py`
   exists to catch that.

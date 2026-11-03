@@ -1,5 +1,6 @@
 import argparse
 import collections
+import functools
 import importlib
 import os
 import re
@@ -46,6 +47,7 @@ from core.audit.status import (
 from core.builder import reference
 from core.builder.jinja import MarkdownJinjaRenderer
 from core.builder.renderer import build_render_context, render_to_fixpoint
+from tools.ninja import bootstrap
 from core.i18n import languages as LOCALES
 
 
@@ -401,25 +403,11 @@ def build_env():
     return launcher["argv"], env
 
 
-#: The generated graph. Ninja keeps it current itself -- `tools/ninja/generate.py` is emitted as
-#: a `generator` rule depending on the directories whose listings it was computed from -- but it
-#: has to exist before Ninja can read it at all.
-BUILD_NINJA = REPO_ROOT / 'build.ninja'
-
-
-def ensure_graph(env):
-    """
-    `build.ninja` present. Ninja regenerates it when it is stale; only its absence is ours.
-
-    A first run after a clone has no graph, and `ninja: error: loading 'build.ninja'` names a
-    file nobody has heard of. One generator run costs about a second for the whole repository.
-    """
-    if BUILD_NINJA.is_file():
-        return None
-    result = subprocess.run(
-        [sys.executable, '-m', 'tools.ninja.generate', '--scope', 'all', '-o', str(BUILD_NINJA)],
-        cwd=REPO_ROOT, capture_output=True, text=True, timeout=300, env=env)
-    return None if result.returncode == 0 else result
+#: `build.ninja` present before Ninja is asked to read it. Ninja regenerates the graph when it is
+#: stale -- `tools/ninja/generate.py` is emitted as a `generator` rule depending on the
+#: directories whose listings it was computed from -- so only its *absence* is ours to fix, and
+#: `./dgs-build` fixes it the same way from a terminal.
+ensure_graph = functools.partial(bootstrap.ensure_graph, REPO_ROOT, python=sys.executable)
 
 
 def run_build(target, *, timeout=60):
@@ -431,7 +419,7 @@ def run_build(target, *, timeout=60):
     "HTTP 500", which tells nobody what to install.
     """
     argv, env = build_env()
-    if (failed := ensure_graph(env)) is not None:
+    if (failed := ensure_graph(env=env)) is not None:
         return refusal(target, 'the build graph could not be generated',
                        f'`tools.ninja.generate` failed:\n\n{failed.stderr.strip()}\n')
     try:
