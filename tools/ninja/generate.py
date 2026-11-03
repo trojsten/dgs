@@ -404,6 +404,19 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
                       *sorted(totals['listed'])],
             variables={'scope': ' '.join(scopes)})
     totals['edges'] += 1
+
+    w.newline()
+    w.comment('And a `phony` for each of those directories, which is what makes *removing* one '
+              'recoverable. An input with no rule that has gone missing is a hard error -- '
+              '`\'source/naboj/phys/29/problems/amusement-speed/es\', needed by '
+              '\'build.ninja\', missing and no known rule to make it` -- and it is '
+              'unrecoverable, because the edge that would notice the removal is the one Ninja '
+              'is refusing to run. A phony whose output does not exist is simply dirty, so the '
+              'generator reruns and the directory leaves the graph. Deleting a language cost a '
+              'hand-run generator until this was here.')
+    for directory in sorted(totals['listed']):
+        w.build(directory, 'phony', None)
+        totals['edges'] += 1
     return totals
 
 
