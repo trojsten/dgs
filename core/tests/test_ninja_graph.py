@@ -18,7 +18,7 @@ import pathlib
 
 import pytest
 
-from tools.ninja.generate import _beside, _fragment, _page, _picture_svg
+from tools.ninja.generate import _beside, _fragment, _page, _picture_svg, _standalone
 from tools.ninja.writer import Writer
 
 REPO = pathlib.Path('/repo')
@@ -141,3 +141,40 @@ class TestWhichPicturesAPageNames:
                     'build/scholar/TA1/2018/handouts/02/01/graph.svg']
         assert _beside(drawings, 'scholar/TA1/2018/handouts/02') == [drawings[0]]
         assert _beside(drawings, 'scholar/TA1/2018/handouts/02/01') == [drawings[1]]
+
+
+class TestTheEditorsPreview:
+    """
+    `modules/<module>/editor.yaml` names `output/<unit>/standalone.pdf` as its `preview:`, and
+    `/api/compile` asks for that and nothing else -- so a module whose standalone has no edge
+    has an editor that renders and converts and then cannot show the page. Seminar and scholar
+    were in exactly that state while make built both.
+    """
+
+    def test_it_builds_the_target_the_descriptor_names(self, writer):
+        assert _standalone(writer.build, 'seminar', 'seminar/FKS/42/1/3/01',
+                           [], [], 'sk') == 'output/seminar/FKS/42/1/3/01/standalone.pdf'
+
+    def test_the_builder_is_given_the_path_below_its_own_source_root(self, writer):
+        """
+        `-l/--launch` defaults to `source/<module>/`, so the argument is the unit *below* that.
+        Passing the whole `seminar/FKS/...` would look right and resolve one level too high.
+        """
+        _standalone(writer.build, 'seminar', 'seminar/FKS/42/1/3/01', [], [], 'sk')
+        assert '\n  unit = FKS/42/1/3/01\n' in written(writer)
+
+    def test_a_scholar_sheet_and_a_problem_below_it_each_get_one(self, writer):
+        """Both shapes `editor.yaml` declares: the issue holding `text.md`, and a problem."""
+        for rel in ('scholar/TA1/2025/handouts/01', 'scholar/TA1/2025/handouts/01/1-wien'):
+            assert _standalone(writer.build, 'scholar', rel, [], [], 'sk') \
+                == f'output/{rel}/standalone.pdf'
+
+    def test_the_pdf_waits_for_the_tex_and_the_class(self, writer):
+        _standalone(writer.build, 'seminar', 'seminar/FKS/42/1/3/01',
+                    ['build/seminar/FKS/42/1/3/01/problem.tex'], [], 'sk')
+        pdf = next(line for line in written(writer).splitlines()
+                   if 'document_pdf' in line)
+        for wanted in ('build/seminar/FKS/42/1/3/01/standalone.tex',
+                       'build/seminar/FKS/42/1/3/01/problem.tex',
+                       'build/core/i18n/sk.tex', 'core/latex/dgs.cls'):
+            assert wanted in pdf, wanted

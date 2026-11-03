@@ -254,6 +254,12 @@ def rules(w: Writer) -> None:
            "mkdir -p $outdir && $run -m modules.naboj.builder.standalone "
            "$competition $volume $problem $lang -o '$outdir'",
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
+    # Seminar's and scholar's standalone builders take the unit as one path and find their own
+    # templates, where naboj's takes the competition, volume, problem and language apart. Two
+    # rules rather than one contorted one.
+    w.rule('unit_standalone_tex',
+           "mkdir -p $outdir && $run -m modules.$module.builder.standalone $unit -o '$outdir'",
+           description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     w.rule('scholar_issue',
            "mkdir -p $outdir && $run -m modules.scholar.builder.$builder 'source/scholar/' "
            "'modules/scholar/templates/' $course $year $issue -o '$outdir'",
@@ -768,14 +774,22 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                 pictures.append(f'build/{stem}.{extension}')
                 drawings.append(_picture_svg(build, w, stem, extension) if extension == 'pdf'
                                 else f'build/{stem}.{extension}')
-        web = []
+        web, mine = [], []
         for name in SEMINAR_TARGETS:
             if (problem / f'{name}.md').is_file():
                 tex, fragment = _fragment(build, f'source/{rel}/{name}.md',
                                           f'{rel}/{name}', 'sk', meta, repo,
                                           SEMINAR_RENDERER)
                 fragments[name].append(tex)
+                mine.append(tex)
                 web.append(fragment)
+
+        # The standalone: one problem, one PDF, and **this is the editor's preview** --
+        # `modules/seminar/editor.yaml`'s `preview:` names it and `/api/compile` asks for
+        # nothing else. It was missing while naboj's was there, so the editor could render and
+        # convert a seminar problem and then not show it, which reads as a broken button.
+        _standalone(build, 'seminar', rel, [*mine, *_beside(pictures, rel), *static],
+                    templates, 'sk')
         # A seminar page sits in the problem directory, not in a language directory under it:
         # seminar is monolingual, which `modules/seminar/editor.yaml` says by carrying no
         # `languages:` key and which `page.py` reads from there.
@@ -904,12 +918,20 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                         drawn.append(f'build/{stem}.{extension}')
                         if extension == 'pdf':
                             _picture_svg(build, w, stem, extension)
+                mine = []
                 for name in SCHOLAR_TARGETS:
                     if (place / f'{name}.md').is_file():
                         tex, _ = _fragment(build, f'source/{rel}/{name}.md',
                                            f'{rel}/{name}', 'sk', meta.resolve(), repo,
                                            SCHOLAR_RENDERER)
                         fragments.append(tex)
+                        mine.append(tex)
+
+                # The editor's preview, for both shapes a scholar unit comes in: the sheet
+                # itself, which holds `text.md`, and a problem below it. `editor.yaml` names
+                # the same target for all four of its unit kinds.
+                _standalone(build, 'scholar', rel, [*mine, *_beside(drawn, rel), *static],
+                            templates, 'sk')
 
             outdir = f'build/{issue_rel}'
             build([f'{outdir}/{name}.tex' for name in documents], 'scholar_issue', None,
@@ -1128,6 +1150,36 @@ def _venue_language(meta: pathlib.Path) -> str | None:
                 and (language := value.split('#')[0].strip().strip('\'"'))):
             return language
     return None
+
+
+def _standalone(build, module: str, rel: str, inputs: list, templates: list, lang: str) -> str:
+    """
+    One unit, one PDF: the document `modules/<module>/editor.yaml` names as its `preview:`.
+
+    naboj's is written at its own call site, because its builder takes the competition, volume,
+    problem and language apart where these two take the unit as one path. What the three share
+    is the reason for existing: `/api/compile` asks for this target and nothing else, so a
+    module whose standalone has no edge has an editor that renders Markdown, converts TeX and
+    then cannot show the page. That was seminar and scholar until now, and make built both.
+
+    The builders are deliberately forgiving -- each reads its meta through a `read_yaml` that
+    answers `{}` to anything unparseable -- because a preview has to compile for the problem in
+    front of you even when the round around it does not. This edge keeps that: the only source
+    it names is the unit's own.
+    """
+    unit = rel.split('/', 1)[1]                      # the path below `source/<module>/`
+    outdir = f'build/{rel}'
+    build(f'{outdir}/standalone.tex', 'unit_standalone_tex', None,
+          implicit=[*templates, f'source/{rel}/meta.yaml'],
+          variables={'module': module, 'unit': unit, 'outdir': outdir})
+    pdf = f'output/{rel}/standalone.pdf'
+    build(pdf, 'document_pdf', None,
+          implicit=[f'{outdir}/standalone.tex', *inputs,
+                    f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
+          implicit_outputs=[pdf.replace('.pdf', e)
+                            for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
+          variables={'tex': f'{outdir}/standalone.tex'})
+    return pdf
 
 
 def _beside(drawings: list, rel: str) -> list:
