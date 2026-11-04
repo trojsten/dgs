@@ -681,7 +681,3 @@ output/naboj/%/venues: \
 output/naboj/%/all: \
 	output/naboj/%/languages \
 	output/naboj/%/venues ;
-
-output/naboj/%/copy: \
-	output/naboj/%
-	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)
