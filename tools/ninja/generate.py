@@ -59,6 +59,7 @@ SEMINAR_DOCUMENT_GROUPS = {
     'problems': ('problem',),
     'solutions': ('solution',),
     'solutions-full': ('problem', 'solution'),
+    'instagram': ('problem',),
 }
 
 #: Scholar has two kinds of issue and each has its own builder, writing three documents and two
@@ -102,6 +103,9 @@ LANGUAGE_PDFS = ('booklet', 'problems', 'solutions', 'answers', 'constants', 'co
 #: `instagram` is built but its `output/` rule is commented out in `modules/seminar/module.mk:270`;
 #: it is kept here as a `.tex` so nothing is lost, and not as a PDF so nothing new appears.
 ROUND_DOCUMENTS = ('problems', 'solutions', 'solutions-full', 'instagram')
+#: What `all` is. `instagram.pdf` is built on request and is deliberately not in it, which is
+#: `modules/seminar/module.mk:270`'s reading too -- its line in the round aggregate is commented
+#: out, and what a round is run for is its problems and its solutions.
 ROUND_PDFS = ('problems', 'solutions', 'solutions-full')
 
 #: A seminar problem's two fragments. Seminar is monolingual -- one language, not one of several
@@ -295,6 +299,13 @@ def rules(w: Writer) -> None:
     w.rule('burst',
            'pdftk $in burst output $$(dirname $in)/%02d.pdf && touch $out',
            description=described('{a}[pdftk] Splitting {f}$in{a} into individual pages'))
+    # `pdftoppm` names its files `<prefix>-01.png` and how many there are depends on how long
+    # the document came out, so the outputs cannot be declared -- the same shape as `burst`
+    # above, and the same answer: a stamp Ninja can date, beside the files themselves.
+    w.rule('page_images',
+           'mkdir -p $$(dirname $prefix) && pdftoppm -png -r 150 -aa yes -aaVector yes '
+           '$in $prefix && mkdir -p $$(dirname $out) && touch $out',
+           description=described('{a}[pdftoppm] Rendering {f}$in{a} to images at {f}$prefix'))
     w.rule('tearoff_zip',
            'mkdir -p $$(dirname $out) && rm -f $out && $run -m tools.ninja.zip $out $in',
            description=described('{a}Packing {x}tear-offs{a} into {f}$out'))
@@ -748,6 +759,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         static.append(target)
 
     fragments = {name: [] for name in SEMINAR_TARGETS}
+    web_fragments = {name: [] for name in SEMINAR_TARGETS}
     pictures, drawings, pages = [], [], []
     for problem in problems:
         rel = listed(problem).relative_to(repo / 'source').as_posix()
@@ -781,6 +793,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                                           f'{rel}/{name}', 'sk', meta, repo,
                                           SEMINAR_RENDERER)
                 fragments[name].append(tex)
+                web_fragments[name].append(fragment)
                 mine.append(tex)
                 web.append(fragment)
 
@@ -805,7 +818,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
           variables={'competition': competition, 'volume': volume_id, 'semester': semester,
                      'round': round_id, 'outdir': outdir})
 
-    for name in ROUND_PDFS:
+    for name in ROUND_DOCUMENTS:
         pdf = f'output/seminar/{scope}/{name}.pdf'
         included = [f for kind in SEMINAR_DOCUMENT_GROUPS[name] for f in fragments[kind]]
         build(pdf, 'document_pdf', None,
@@ -815,10 +828,26 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                                 for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
               variables={'tex': f'{outdir}/{name}.tex'})
 
+    # The instagram pictures: one PNG per page of `instagram.pdf`, under the name make gave
+    # them. `output/.../instagram` was a file target there that the recipe never created, so it
+    # re-ran on every build; here the stamp carries the date and the phony carries the name.
+    build(f'{outdir}/instagram.images', 'page_images',
+          [f'output/seminar/{scope}/instagram.pdf'],
+          variables={'prefix': f'output/seminar/{scope}/instagram'})
+
+    # The names make offered, kept. `all` and `pages` are this generator's; `pdf`, `problems`
+    # and `solutions` are `modules/seminar/module.mk:258-270`, and the last two reach the HTML
+    # fragments as well, exactly as `html-problems` and `html-solutions` did there.
     w.build(f'output/seminar/{scope}/all', 'phony',
             [f'output/seminar/{scope}/{name}.pdf' for name in ROUND_PDFS])
+    w.build(f'output/seminar/{scope}/pdf', 'phony',
+            [f'output/seminar/{scope}/{name}.pdf' for name in ('problems', 'solutions')])
+    for name, kind in (('problems', 'problem'), ('solutions', 'solution')):
+        w.build(f'output/seminar/{scope}/{name}', 'phony',
+                [f'output/seminar/{scope}/{name}.pdf', *web_fragments[kind]])
+    w.build(f'output/seminar/{scope}/instagram', 'phony', [f'{outdir}/instagram.images'])
     w.build(f'output/seminar/{scope}/pages', 'phony', pages)
-    counts['edges'] += 2
+    counts['edges'] += 6
     w.newline()
 
     counts['problems'] = len(problems)
