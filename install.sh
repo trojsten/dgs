@@ -7,8 +7,10 @@ DIR=$(dirname $0)
 #
 # `lcdf-typetools` is not optional: FontPro's scripts call otfinfo, otftotfm and cfftot1,
 # and die without them. CI has always installed it; this script used to forget.
+# `mupdf-tools` is `mutool`, which dvisvgm needs to read a PDF at all from Ghostscript 10.01.0
+# on -- Debian 13 ships 10.05, and without it every formula on an HTML page fails to convert.
 sudo apt install texlive-full texlive-fonts-extra texlive-science librsvg2-bin gnuplot \
-                lcdf-typetools
+                lcdf-typetools mupdf-tools
 "$DIR/install-pandoc.sh"
 
 TEXHOME=`kpsewhich -var-value=TEXMFHOME`

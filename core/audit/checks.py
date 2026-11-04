@@ -825,11 +825,17 @@ def build_orphan(sources):
     without its sweep.
     """
     for orphan in stale.orphans(sources):
+        # The tail differs because the consequence does. A stale unit is pulled in by
+        # `\protectedInput` and prints the problem that was deleted; a stale language is a whole
+        # booklet that still builds for a translation nobody has any more.
+        consequence = (f"if {sources.scope}/meta.yaml still names it, the booklet is printing "
+                       f"this copy" if orphan.kind == 'unit' else
+                       "the language documents are pattern rules, so this is enough to build a "
+                       "whole booklet from")
         yield Finding('build-orphan', 'warning',
                       f"`{orphan}` has no source directory left -- {orphan.files} "
                       f"file{'' if orphan.files == 1 else 's'} from a rename or a deletion. "
-                      f"`make prune` removes it; if {sources.scope}/meta.yaml still names it, "
-                      f"the booklet is printing this copy")
+                      f"`dgs-build prune` removes it; {consequence}")
 
 
 @check('translation-set', 'warning',

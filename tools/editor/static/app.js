@@ -912,7 +912,7 @@ function captureEditors() {
 
 /**
  * Only dirty buffers go over the wire. Writing every file on every compile would bump
- * their mtimes and make `make` redo the whole problem each time instead of just the part
+ * their mtimes and make the build redo the whole problem each time instead of just the part
  * that changed.
  */
 function dirtyFiles() {
@@ -1097,22 +1097,23 @@ async function doCompile() {
 
 /* The fragment the web gets, shown as a page rather than as markup.
  *
- * `srcdoc` with an absolute `<base>` under `/api/output/`, so the relative pictures resolve
+ * `srcdoc` with an absolute `<base>` under `/api/build/`, so the relative pictures resolve
  * exactly as they would on the web -- one that does not load here would not load there either,
  * and the pane should show that rather than hide it.
  *
  * MathJax typesets it, with `static/mathjax-dgs.js` ahead of it supplying the siunitx macros
  * MathJax has none of. `allow-scripts` is therefore required, and is given *without*
  * `allow-same-origin`: the frame runs on an opaque origin and cannot reach back into the editor. */
-// What the pane shows when make succeeded and the fragment is not where we looked for it.
+// What the pane shows when the build succeeded and the fragment is not where we looked.
 // Without this the body is empty, the iframe is white and the status still reads `HTML OK` --
 // a success message over a blank page, which reads as the preview being broken rather than as
 // a build that did not produce what it claimed. The two paths that reach it are a target whose
-// rule is satisfied without writing the file, and a `html_target` that disagrees with where make
-// put it; naming the path is what tells them apart.
+// edge is satisfied without writing the file, and a `html_target` that disagrees with where
+// the build put it; naming the path is what tells them apart.
 const missingFragment = (target) =>
   `<p style="font:13px/1.5 ui-monospace,monospace;color:#a00">` +
-  `make reported success but wrote no fragment at<br>${escapeForHtml(target ?? "(no target)")}</p>`;
+  `the build reported success but wrote no fragment at<br>` +
+  `${escapeForHtml(target ?? "(no target)")}</p>`;
 
 // An empty fragment is not that, and must not be reported as a fault: `28/john-doe`'s answer.md
 // exists and is deliberately empty, and so is the HTML pandoc makes of it.
@@ -1120,10 +1121,10 @@ const emptyFragment =
   `<p style="font:13px/1.5 ui-monospace,monospace;color:#666">` +
   `the source is empty, so the fragment is too</p>`;
 
-/* The pane while make is running, and the pane when the call failed.
+/* The pane while the build is running, and the pane when the call failed.
  *
  * Both exist because the iframe keeps whatever it last held until something replaces it, and
- * `make` can take seconds: a click answered by the previous problem's page -- or, on the first
+ * a build can take seconds: a click answered by the previous problem's page -- or, on the first
  * preview of a session, by nothing at all -- reads as the preview being broken, which is the
  * one reading the pane must never invite. It is the same reason `missingFragment` exists. */
 const frameDocument = (body) =>
@@ -1138,7 +1139,7 @@ async function doHtml() {
   const frame = el("html-view");
   switchOutputTab("html");
   // Only if the wait is long enough to be noticed: a conversion that answers in 80 ms should
-  // not flash a message, and one that takes four seconds of `make` must not look like an
+  // not flash a message, and one that takes four seconds of building must not look like an
   // empty pane.
   const busy = setTimeout(() => {
     frame.srcdoc = frameDocument(`<span style="color:#666">converting…</span>`);
@@ -1151,9 +1152,11 @@ async function doHtml() {
 
     if (body.ok) {
       // Absolute, because a `srcdoc` document has no URL of its own for a relative one to
-      // resolve against.
-      const base = `${location.origin}/api/output/` +
-        (body.html_target ?? "").replace(/^output\//, "").replace(/[^/]*$/, "");
+      // resolve against. The server says which directory, because it is not the fragment's
+      // own: a Náboj fragment sits inside the language directory and its drawings beside the
+      // problem above it.
+      const base = `${location.origin}/api/build/` +
+        (body.html_base ?? "").replace(/^build\//, "");
       frame.srcdoc =
         `<!doctype html><html><head><meta charset="utf-8">` +
         `<base href="${base}">` +
@@ -1229,11 +1232,11 @@ async function doRender() {
     markSaved();
 
     if (body.ok) {
-      // `rendered_md` is null when make succeeded and the file is not where we looked for it --
+      // `rendered_md` is null when the build succeeded and the file is not where we looked --
       // the Markdown half of what `missingFragment` says for the HTML pane. Painting that as an
       // empty block under `Rendered OK` is the one reading to avoid.
       code.innerHTML = body.rendered_md == null
-        ? `<span style="color:#a00">make reported success but wrote no rendered Markdown at\n`
+        ? `<span style="color:#a00">the build reported success but wrote no rendered Markdown at\n`
           + `${escapeForHtml(body.render_target ?? "(no target)")}</span>`
         : highlight(body.rendered_md, "dgs-md");
       out.classList.toggle("error", body.rendered_md == null);

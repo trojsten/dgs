@@ -2,8 +2,8 @@
 The audit checks that cost minutes rather than milliseconds: does it render, does it compile.
 
 Kept apart from `core.audit.checks` because everything there is a file read and a regex, and this
-shells out to make. Run one scope at a time, when asked, and cache the answer -- the source-only
-layer can afford to recompute on every request and this cannot.
+shells out to the build. Run one scope at a time, when asked, and cache the answer -- the
+source-only layer can afford to recompute on every request and this cannot.
 """
 import json
 import re
@@ -56,14 +56,15 @@ def run_targets(repo_root: Path, module: str, scope: str, languages, targets, *,
     """
     Build every target of every language, collecting what came back.
 
-    `run` is injected rather than called directly so the Flask app can pass its own make runner --
-    the one that holds `BUILD_LOCK` and strips ANSI -- and so this is testable without a toolchain.
+    `run` is injected rather than called directly so the Flask app can pass its own build
+    runner -- the one that holds `BUILD_LOCK` and strips ANSI -- and so this is testable without
+    a toolchain.
     """
     results = []
     for language in languages:
         for target in targets:
-            make_target = f"output/{module}/{scope}/languages/{language}/{target}.pdf"
-            outcome = run(make_target, timeout=timeout)
+            build_target = f"output/{module}/{scope}/languages/{language}/{target}.pdf"
+            outcome = run(build_target, timeout=timeout)
             log = RE_ANSI.sub('', outcome.get('log', ''))
             overfulls = sorted(
                 ({'box': m['box'], 'size': float(m['size'])} for m in RE_OVERFULL.finditer(log)),

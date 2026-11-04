@@ -13,6 +13,12 @@
 *.dblite
 .idea/
 build/
+
+# The Ninja spike (`tools/ninja/generate.py`). The graph is generated, never written by hand,
+# and `.ninja_log` / `.ninja_deps` are Ninja's own state beside it.
+build.ninja
+.ninja_log
+.ninja_deps
 render/
 output/
 source/

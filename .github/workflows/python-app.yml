@@ -33,11 +33,19 @@ jobs:
     # `poppler-utils` is `pdftocairo`, which converts every picture for the web, and
     # `gnuplot-nox` draws the plots. Both were absent, so `test_picture_svg.py` skipped itself
     # and CI had never once exercised the picture pipeline.
+    #
+    # `mupdf-tools` is `mutool`, and it is dvisvgm's PDF reader now. Ghostscript dropped the
+    # interpreter dvisvgm drove in **10.01.0**, so on a runner carrying 10.05 every `--pdf`
+    # run ends in `To process PDF files, either Ghostscript < 10.01.0 or mutool is required` --
+    # which is the whole of the HTML maths, and it surfaced the moment those tests stopped
+    # skipping. dvisvgm picks mutool up by itself when it finds it; `DVISVGM_PDF_PROC` forces
+    # the choice. Ghostscript stays -- `pdfcrop` is Ghostscript, and dvisvgm still wants it for
+    # PostScript specials.
     - name: "Install utilities"
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends \
-          librsvg2-bin lcdf-typetools dvisvgm ghostscript poppler-utils gnuplot-nox
+          librsvg2-bin lcdf-typetools dvisvgm ghostscript mupdf-tools poppler-utils gnuplot-nox
     # MathJax is the other HTML maths engine, and it is node's. A hosted runner has node
     # whether or not anyone installed the packages, which is exactly how CI reported
     # `Cannot find module '@mathjax/mathjax-pagella-font/package.json'` from a test that should
@@ -122,7 +130,7 @@ jobs:
     - name: "Verify the HTML output's prerequisites"
       run: |
         missing=""
-        for tool in dvisvgm pdftocairo gnuplot rsvg-convert; do
+        for tool in dvisvgm mutool pdftocairo gnuplot rsvg-convert; do
           command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
         done
         for package in mathjax @mathjax/mathjax-pagella-font; do
@@ -135,12 +143,35 @@ jobs:
     - name: Test with pytest
       run: |
         uv run python -m pytest -s -v
+    # `source/seminar/test`, which is where `modules/seminar/editor.yaml` says this repository
+    # goes. It was cloned to `.../testing` while nothing read it; a scope is named after the
+    # directory, so the two had to agree before anything could be built by name.
     - name: "Clone testing repository"
       uses: actions/checkout@master
       with:
         repository: TrojstenSK/dgs-seminar-testing
-        path: source/seminar/testing
-    - name: "Build testing/01/1/1"
+        path: source/seminar/test
+
+    # The graph before the build, as its own step. It reads the whole source tree and writes
+    # every edge, so a generator that crashes or emits two different edges for one output fails
+    # here -- named, and in under two seconds -- rather than as a confusing Ninja parse error in
+    # the step below.
+    - name: "Generate the build graph"
       run: |
-        pwd
-        # pipenv run make output/seminar/test/01/1/1
+        uv run python -m tools.ninja.generate --scope all
+
+    # One real round, end to end: Jinja, pandoc, the pictures and two xelatex passes. The scope
+    # is read out of the graph rather than written here, because it is this repository's own
+    # layout and a path typed into CI is a second copy of it that goes stale silently -- which
+    # is exactly what the commented-out line this replaces had done.
+    - name: "Build a seminar round"
+      run: |
+        set -euo pipefail
+        scope=$(./dgs-build -t targets all \
+                | sed -n 's|^output/seminar/\(.*\)/all: phony.*|\1|p' | head -1)
+        if [ -z "$scope" ]; then
+          echo "::error::no seminar round in the graph; is source/seminar/test populated?"
+          exit 1
+        fi
+        echo "building output/seminar/$scope/all"
+        ./dgs-build -k 0 "output/seminar/$scope/all"

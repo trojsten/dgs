@@ -112,6 +112,12 @@ FROM common AS tex
 # --no-install-recommends silently drops dvisvgm and ghostscript, which is why
 # both are named: Makefile:208 runs pdfcrop (ghostscript) and :226 dvisvgm.
 #
+# mupdf-tools is mutool, which is dvisvgm's PDF reader now: Ghostscript dropped
+# the interpreter dvisvgm drove in 10.01.0 and trixie ships 10.05, so without it
+# every `dvisvgm --pdf` in the image dies on "either Ghostscript < 10.01.0 or
+# mutool is required" -- i.e. all of the HTML maths. Ghostscript stays anyway,
+# for pdfcrop and for PostScript specials.
+#
 # texlive-full is 5-6 GB and drags in CJK, ConTeXt, asymptote and the doc tree.
 # This list is about 2.4 GB. texlive-fonts-extra is 1.7 GB of that and is not
 # optional: MnSymbol (dgs.cls:93), esvect (:100), ifsym and skull (fonts.tex:51)
@@ -125,7 +131,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         texlive-lang-german texlive-lang-french texlive-lang-polish \
         texlive-lang-spanish texlive-lang-portuguese texlive-lang-cyrillic \
         lcdf-typetools fontconfig \
-        ghostscript dvisvgm librsvg2-bin poppler-utils gnuplot-nox \
+        ghostscript dvisvgm mupdf-tools librsvg2-bin poppler-utils gnuplot-nox \
         pdftk-java zip rsync \
     && rm -rf /var/lib/apt/lists/*
 
@@ -135,7 +141,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN missing=""; \
     for tool in tex fontinst vptovf pltotf otfinfo otftotfm cfftot1 kpsewhich \
                 mktexlsr updmap-sys perl \
-                xelatex texfot pdfcrop pdfjam pdftk pdftoppm dvisvgm \
+                xelatex texfot pdfcrop pdfjam pdftk pdftoppm dvisvgm mutool \
                 rsvg-convert gnuplot zip rsync fc-cache; do \
         command -v "$tool" >/dev/null || missing="$missing $tool"; \
     done; \

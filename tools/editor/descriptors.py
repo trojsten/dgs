@@ -33,7 +33,7 @@ class UnitKind:
     @property
     def tex(self):
         """
-        The make target that converts this file to TeX.
+        The build target that converts this file to TeX.
 
         Derived from `render` rather than written out per module, because the relation is the
         build system's own: every `.tex` rule in every `module.mk` reads
@@ -49,16 +49,23 @@ class UnitKind:
 
     @property
     def html(self):
-        """
-        The make target that converts this file to an HTML fragment.
+        r"""
+        The build target that converts this file to an HTML fragment.
 
-        Derived from `render` exactly as `tex` is, and for the same reason: the root Makefile has
-        one `output/%.html: render/%.md` for every module, so the relation belongs to the build
-        system and a hand-written key per module could only drift from it.
+        Derived from `render` exactly as `tex` is, and it lands in **`build/`** beside the
+        `.tex`, because that is what it is: a fragment is to a page what a `.tex` is to a PDF --
+        no `<head>`, nothing to typeset its `\(…\)`, and `<img>` pointing at files that are not
+        beside it. The page is the `output/` step, and `core/html/page.py` is what makes one.
+
+        This said `output/` until now, which was true of a root-Makefile rule that has since
+        become an XFAIL fall-through: the per-module `.html` rules landed beside the `.tex` ones
+        and this did not follow them, so the editor's HTML tab has been asking for a target
+        nothing builds. Under make that is `Incorrect fall-through rule called`; under Ninja it
+        is `unknown target`, which is how it was found.
         """
         if not self.render.startswith("render/") or not self.render.endswith(".md"):
             return ""
-        return "output/" + self.render[len("render/"):-len(".md")] + ".html"
+        return "build/" + self.render[len("render/"):-len(".md")] + ".html"
 
     @property
     def fixed_levels(self):

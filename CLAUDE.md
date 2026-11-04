@@ -47,7 +47,7 @@ stale entry is still worth catching in the sources rather than in a PDF. Both di
 are checked (`unit-unlisted`, `listed-missing`). The page can sort alphabetically instead,
 and keeps showing the competition number when it does. A pass over the whole repository is a fifth of a second, so
 nothing is cached — except the two checks that cannot be answered by reading files, which land in
-`build/.audit/` with a fingerprint of the sources: the build checks, which shell out to make, and
+`build/.audit/` with a fingerprint of the sources: the build checks, which shell out to the build, and
 the macro sweep.
 
 **There is a third direction, and it is the one make cannot fix: `build-orphan`.** Rename a
@@ -58,12 +58,38 @@ because `\protectedInput` finds the stale `.tex` and the booklet goes on printin
 problem instead of the red box it is owed; volume 19's `onion` was exactly that. So
 `listed-missing` is the error and this is the warning, and together they say what happened.
 
-`make stale` lists them and **`make prune` removes them** — two targets on purpose, since one
+`./dgs-build stale` lists them and **`./dgs-build prune` removes them** (`make stale` and
+`make prune` are the same two targets) — two targets on purpose, since one
 word between asking and deleting is not a safe thing to offer. `core/audit/stale.py` is the whole
 of it, and it is the one check that reads outside `source/`: a directory listing, no file opened,
 and a tree that has never been built reports nothing.
 
-**It looks at unit directories and nothing coarser**, which is the only reason it is usable.
+**It looks at two kinds of directory and nothing coarser**, which is the only reason it is
+usable. A **unit** directory, above; and a **language** directory, which the unit sweep cannot
+see, because `languages/` is not a place units live. That half is self-limiting rather than a
+rule about Náboj: a module with no `source/<scope>/languages/` has no notion of one and yields
+nothing, which is how seminar and scholar pass through.
+
+It is worth having for the same reason as the first half, only louder. The language documents in
+`modules/naboj/module.mk` are pattern rules, so `%` matches any string and the rest of each
+prerequisite list is `$(wildcard …)`, which yields *nothing* for a language that is not there
+rather than failing. A stale `build/<volume>/languages/<lang>/` therefore supplies everything
+they ask for: `make output/naboj/phys/29/languages/uk/booklet.pdf` built a **40-page Ukrainian
+problems booklet** out of intermediates whose sources had been removed, for a volume that has
+`en`, `es` and `sk`. Clearing `build/` was the only thing that turned it back into an error.
+
+Two changes came out of that, and they catch the two halves. Every language document now takes
+**`source/naboj/$*/meta.yaml`** as a prerequisite — the one thing in those lists not derived from
+something else — so a cold build of a language that does not exist fails at once and names the
+missing file. And this check finds the warm one, where the stale `build/` is already there. The
+aggregates never had the problem: `output/naboj/%/languages` and `booklets` wildcard
+`source/naboj/$*/languages/*` and always did.
+
+`fks-naboj`'s ten language directories have no meta and are unbuildable by name as a result.
+They already were — it spells languages `slovak` rather than `sk`, so nothing in
+`SUPPORTED_LANGUAGES` ever matched them.
+
+The rest of the narrow rule, and why it is narrow:
 `build/` is full of directories that never had a source — `answers/`, `solutions/`, `build/core/`,
 every aggregate a template produces — so the obvious rule, *is there a source directory of this
 name*, calls **567** of them stale. What makes a unit different is that the audit already knows
@@ -556,7 +582,39 @@ terminal counts in, and a script that wants its own canvas writes
 
     set terminal @gpterm size 432*gppt, 108*gppt
 
-A script that wants the default writes nothing at all, which is 39 of the 42.
+A script that wants the default writes nothing at all, which is 30 of the 42. Of the 12 that do
+not, nine are scholar's and were written this way; the other three are naboj's and were not --
+they still opened `set terminal pdf size 6, 1.5` when the web path was added, and so did
+`FKS/42/1/1/03`'s `blocks:` preamble, which is a thirteenth script that no `.gp` on disk carries.
+All four say `@gpterm` now.
+
+> **Open: scholar's nine say `@gpterm` and then set a font of their own, and none of them
+> draws.** Every one of them -- the `monte-carlo.gp` of `TA1/2018`, `2019`, `2022`, `2024` and
+> `2025`, the `voigt.gp` of `2018`, `2019` and `2022`, plus the copy inside `TA1/2025/2025/` --
+> opens
+>
+>     set terminal @gpterm size 510.236*gppt, 311.811*gppt font "Minion Pro, 10"
+>
+> and `@gpterm` already carries the font, so pdfcairo refuses the line outright: *Duplicated or
+> contradicting arguments in cairo terminal options*. They have been broken since `@gpterm`
+> landed and nothing said so, because nothing built scholar until the Ninja graph did. It is
+> one failing edge today, `build/scholar/TA1/2025/homework/03/monte-carlo.pdf`, and it is the
+> only thing between `TA1/2025` and a clean build.
+>
+> **Deliberately not fixed, and the reason is that the fix is a choice.** Deleting the trailing
+> `font` makes all nine build at once, at the 6pt the build supplies rather than the 10pt their
+> authors asked for on a 510pt canvas -- visibly smaller labels on somebody else's drawings.
+> Letting `@gpterm` take a size instead is a change here rather than in the content, and it is
+> the only way a script can ask for larger type without re-specifying the face. Neither is
+> urgent: scholar is not being run, and Náboj is.
+
+**`set terminal pdf` left in a script is not a print defect and is a web one**, which is what
+made it survive. Re-issued over a `pdfcairo` that is already current it keeps the font *and* the
+`fontscale`, so the printed figure is unchanged -- all six of those plots are pixel-identical
+across the conversion, and so is volume 29's whole booklet. On the `svg` terminal it is simply a
+different terminal, so gnuplot writes a PDF into a file named `.svg` and the page shows a blank
+figure. Hence the sniff below, and hence the rule that the terminal is the build's to supply
+even where leaving it in the script appears to cost nothing.
 
 Three things about that, each of which cost a wrong picture to find:
 

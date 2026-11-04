@@ -429,9 +429,31 @@ build/naboj/%/answers: \
 
 ### Languages ###################################
 
+# `source/naboj/$*/meta.yaml` on every language document below, and it is the only prerequisite
+# here that is not derived from something else. It is what pins `%` to a language that exists.
+#
+# These are pattern rules, so `%` matches any string, and the rest of each list is built with
+# `$(wildcard …)`, which yields nothing for a language that is not there rather than failing.
+# A target with no prerequisites whose file exists is up to date, so `make …/languages/uk/
+# booklet.pdf` for a volume with no Ukrainian would report success over whatever `build/` still
+# held from an older run -- and volume 29 did exactly that, printing a 40-page Ukrainian
+# problems booklet out of intermediates whose sources had been removed. Clearing `build/` was
+# the only thing that turned it back into an error.
+#
+# The meta is the source of truth and make has to find it before anything else can run, so a
+# language that does not exist now fails at once and says which file is missing, whatever is
+# lying in `build/`. The aggregates -- `output/naboj/%/languages` and `booklets` -- already
+# worked this way, wildcarding `source/naboj/$*/languages/*`; it was only the single-document
+# rules that would take any name.
+#
+# `fks-naboj`'s ten language directories have no meta and are now unbuildable by name. They
+# already were: its layout spells languages `slovak` rather than `sk`, so nothing in
+# `SUPPORTED_LANGUAGES` ever matched them.
+
 # Full booklet
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/booklet.pdf: \
+	source/naboj/$$*/meta.yaml \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems/$$(word 4,$$(subst /, ,$$*)))) \
@@ -446,6 +468,7 @@ output/naboj/%/booklet.pdf: \
 # for this language, the shared pictures, and the rendered statements.
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/problems.pdf: \
+	source/naboj/$$*/meta.yaml \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../problems/$$(word 4,$$(subst /, ,$$*)))) \
@@ -454,6 +477,7 @@ output/naboj/%/problems.pdf: \
 
 # % <competition>/<volume>/languages/<language>
 output/naboj/%/solutions.pdf: \
+	source/naboj/$$*/meta.yaml \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../solutions/$$(word 4,$$(subst /, ,$$*)))) \
@@ -468,6 +492,7 @@ output/naboj/%/booklet-print.pdf: \
 	mv output/naboj/$*/booklet-book.pdf $@
 
 output/naboj/%/answers.pdf: \
+	source/naboj/$$*/meta.yaml \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../answers/$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/%/../../pdf-prerequisites)) \
 	build/naboj/%/answers.tex
@@ -490,6 +515,7 @@ output/naboj/%/constants.pdf: \
 	$(call double_xelatex,naboj)
 
 output/naboj/%/evaluation.pdf: \
+	source/naboj/$$*/meta.yaml \
 	build/naboj/%/evaluators.tex
 	$(call double_xelatex,naboj)
 
@@ -501,6 +527,7 @@ output/naboj/%/instructions-online.pdf: \
 	$(call double_xelatex,naboj)
 
 output/naboj/%/cover.pdf: \
+	source/naboj/$$*/meta.yaml \
 	build/naboj/%/cover.tex
 	$(call double_xelatex,naboj)
 
@@ -511,6 +538,7 @@ output/naboj/%/cover-print.pdf: \
 # Tearoffs, three problems per page, aligned for cutting
 # <competition>/<volume>/languages/<language>
 output/naboj/%/tearoff.pdf: \
+	source/naboj/$$*/meta.yaml \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../$$(word 4,$$(subst /, ,$$*)))) \
 	$$(subst $$(cdir),,$$(abspath build/naboj/$$*/../../pdf-prerequisites)) \
 	build/naboj/%/tearoff.tex
@@ -653,7 +681,3 @@ output/naboj/%/venues: \
 output/naboj/%/all: \
 	output/naboj/%/languages \
 	output/naboj/%/venues ;
-
-output/naboj/%/copy: \
-	output/naboj/%
-	rsync -rzvhPL output/naboj/$*/ ago:/home/balaz/public_html/naboj/$(subst output/,,$*)

@@ -121,10 +121,17 @@ class TestGnuplotDrawsTheSamePlotTwice:
     def canvas(path: pathlib.Path) -> tuple[float, float]:
         if path.suffix == '.svg':
             found = re.search(r'width="([\d.]+)"\s+height="([\d.]+)"', path.read_text())
-        else:                                           # a PDF's MediaBox, in points
-            found = re.search(rb'/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)',
-                              path.read_bytes())
+            assert found, 'the SVG declares no canvas'
             return tuple(float(x) for x in found.groups())
+        # The page size is **asked of poppler**, not read out of the file. cairo puts the page
+        # dictionary into a compressed object stream from 1.17 on, so the `/MediaBox` a regex
+        # over the bytes used to find is simply not there on a newer machine -- which is how
+        # this passed here and failed in CI, with `NoneType has no attribute groups` and
+        # nothing to say that the PDF was perfectly good. `pdfinfo` is poppler, the same
+        # package as the `pdftocairo` this module already requires.
+        out = subprocess.run(['pdfinfo', str(path)], check=True, capture_output=True, text=True)
+        found = re.search(r'Page size:\s+([\d.]+) x ([\d.]+) pts', out.stdout)
+        assert found, f'pdfinfo reported no page size:\n{out.stdout}'
         return tuple(float(x) for x in found.groups())
 
     def test_the_canvas_is_the_same_physical_size(self, tmp_path):

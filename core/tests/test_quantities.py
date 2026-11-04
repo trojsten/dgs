@@ -468,10 +468,13 @@ class TestOnlyUnit:
                r'\unit{\metre\per\second}'
 
     def test_celsius(self):
-        """Degree-Celsius is converted to siunitx \\celsius."""
+        """
+        Degree-Celsius reaches the page as the macro pint spells it, which `siunitx.tex`
+        declares so that it sets `°C` like every other temperature in the booklet.
+        """
         from pint import UnitRegistry as u
         T = PhysicsQuantity(u.Quantity(25, 'degree_Celsius'))
-        assert T.only_unit() == r'\unit{\celsius}'
+        assert T.only_unit() == r'\unit{\degreeCelsius}'
 
     def test_joule(self):
         assert PhysicsQuantity.construct(1.5, 'joule').only_unit() == r'\unit{\joule}'
@@ -1197,8 +1200,11 @@ class TestUnitMacros:
         pytest.param('ly', r'\lightyear', id='light_year'),
         pytest.param('t', r'\tonne', id='metric_ton'),
         pytest.param('eV', r'\electronvolt', id='electron_volt'),
-        pytest.param('degC', r'\celsius', id='degree_Celsius'),
-        pytest.param('delta_degC', r'\dcelsius', id='delta_degree_Celsius'),
+        # pint 0.26.2 spells all three itself, and in valid TeX, so they no longer reach
+        # `PINT_TO_SIUNITX` -- see the note beside `\degreeCelsius` in `core/latex/siunitx.tex`.
+        # Each still sets as `°C` or `°F`, which is what the entries there are for.
+        pytest.param('degC', r'\degreeCelsius', id='degree_Celsius'),
+        pytest.param('delta_degC', r'\degreeCelsius', id='delta_degree_Celsius'),
         pytest.param('degF', r'\fahrenheit', id='degree_Fahrenheit'),
         pytest.param('rpm', r'\rpm', id='revolutions_per_minute'),
         pytest.param('atm', r'\atmosphere', id='standard_atmosphere'),

@@ -812,7 +812,7 @@ function wireErrorReporting() {
 }
 
 /**
- * Both buttons here shell out: the build checks run make all the way to a PDF, and the macro
+ * Both buttons here shell out: the build checks go all the way to a PDF, and the macro
  * sweep needs xelatex. The source-only checks -- which is every other thing on this page -- need
  * no toolchain at all, so the page stays fully useful on a machine that can do neither.
  */

@@ -3,7 +3,8 @@ Static audit of a scope -- a volume, a seminar year, whatever a module groups it
 
 Two layers. This one is source-only: it reads every file once and runs a registry of checks over
 the result, which costs about a fifth of a second for the whole repository, so nothing needs to be
-cached or made incremental. `core.audit.build` is the other one, and it shells out to make.
+cached or made incremental. `core.audit.build` is the other one, and it shells out to the
+build -- to whatever runner its caller injects, which is the editor's Ninja one.
 
     from core.audit import audit
     report = audit(Path('source/naboj'), 'naboj', 'phys/28', units)

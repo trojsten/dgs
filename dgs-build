@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# The build, from a terminal: `./dgs-build output/naboj/phys/29/languages/sk/booklet.pdf`.
+#
+# All it does is choose an interpreter and hand over to `tools.ninja.bootstrap`, which generates
+# `build.ninja` if a fresh clone has none and then becomes Ninja. Choosing the interpreter is the
+# one thing that cannot be done from Python, and everything after it is in that module -- so the
+# editor and the command line answer "how is this build run" in one place rather than two.
+#
+# The venv goes first because it is the cheap answer and its existence means somebody has already
+# synced: `uv run` costs an extra process and reaches the same interpreter. uv is still what runs
+# when there is no venv, because it makes one. A bare `python3` is the last resort and may be
+# older than the 3.14 `pyproject.toml` asks for, which is why it is tried last rather than first.
+set -euo pipefail
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+if [[ -x .venv/bin/python3 ]]; then
+    exec .venv/bin/python3 -m tools.ninja.bootstrap "$@"
+elif command -v uv > /dev/null 2>&1; then
+    exec uv run python -m tools.ninja.bootstrap "$@"
+else
+    exec python3 -m tools.ninja.bootstrap "$@"
+fi

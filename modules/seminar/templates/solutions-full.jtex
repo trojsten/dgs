@@ -2,5 +2,8 @@
 
 (@ block problem_again @)
     \protectedInput{\activeDirectory/problem.tex}%
-    \hline
+    % `\hline` stood here and is a *tabular* command, so every `solutions-full.pdf` ever
+    % asked for died on `Misplaced \noalign`. A rule between the restated problem and its
+    % solution is vertical-mode material and wants `\hrule`, with a `\par` to get there.
+    \par\medskip\hrule\medskip
 (@ endblock @)
