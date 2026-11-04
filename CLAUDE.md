@@ -445,10 +445,14 @@ Math Alphanumeric codepoints by then and Minion has no glyph at those. LaTeX get
 from `mathspec`, which maps the math letters onto the text font's own glyphs; Typst has no
 equivalent.
 
-So the maths is **TeX Gyre Pagella Math**, chosen by setting the candidates side by side in a
-real paragraph, and vendored into `assets/fonts/TeXGyrePagella/` beside the text faces already
-there. It is also what the web maths is already set in, through
-`@mathjax/mathjax-pagella-font`. **A number and a unit are set in the body font** regardless,
+So the maths is **STIX Two Math**, chosen by setting the candidates side by side in a real
+Slovak paragraph -- against Pagella, Garamond-Math, Schola, Bonum, Termes and Computer Modern --
+and vendored into `assets/fonts/STIXTwo/` with its OFL. It is drawn for scientific publishing and
+carries by far the largest symbol set of them, which matters for a repository that writes
+chemistry. (`Berenis ADF Pro Math` is *not* a candidate although it exists: it warns
+`current font is not designed for math` and leaves radicals unstretched.) Pagella Math stays
+vendored as the nearest alternative, and because the web maths is set in Pagella already.
+**A number and a unit are set in the body font** regardless,
 which is what siunitx does in the booklet, so `29,7 m/s` is Minion inside the formula as well as
 in the sentence around it. `MATH-FONT` in `core/typst/dgs.typ` is one line; the exact answer, for
 whoever wants it, is a MATH table built onto Minion Pro, or Minion Math, which is commercial.

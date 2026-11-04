@@ -30,23 +30,29 @@
 //: What LaTeX does instead is `mathspec`'s trick -- map the math letters onto the *text* font's
 //: own glyphs -- which is why the booklet's maths is Minion. Typst has no equivalent.
 //:
-//: So the maths is set in a real math font chosen to sit beside Minion: **TeX Gyre Pagella
-//: Math**, Palatino's, which carries the closest weight and colour of the candidates -- they
-//: were set side by side in a real paragraph before this was chosen, against Garamond-Math
-//: (closer in style, visibly lighter), Termes, STIX, Asana and Computer Modern. It is also
-//: what the web maths is already set in: `package.json` pulls
-//: `@mathjax/mathjax-pagella-font`, so the two routes to a formula now agree about the face.
+//: So the maths is set in a real math font chosen to sit beside Minion: **STIX Two Math**,
+//: drawn for scientific publishing and carrying by far the largest symbol set of the
+//: candidates -- which matters for a repository that writes `\varnothing`, `\oplus` and
+//: chemistry. The candidates were set side by side in a real Slovak paragraph before this was
+//: chosen, against Pagella (wider, Palatino's), Garamond-Math (closest in style and visibly
+//: lighter than the prose), Schola (heavier), Bonum, Termes and Computer Modern.
 //:
-//: The file is vendored into `assets/fonts/TeXGyrePagella/` beside the text faces that were
-//: already there -- it is GUST-licensed, redistributable, and 600 KB -- so the build does not
-//: depend on a TeX Live installation for a font.
+//: **Berenis ADF Pro Math is not among them although it exists**: it warns
+//: `current font is not designed for math` and leaves radicals unstretched and a sum at text
+//: size, so its MATH table is incomplete whatever its name says.
+//:
+//: STIX *Two* rather than the 2013 STIX: the same design, maintained, with better-proportioned
+//: radicals. The file is vendored into `assets/fonts/STIXTwo/` with its OFL, so the build does
+//: not depend on a TeX Live installation for a font. Pagella Math stays vendored beside it as
+//: the nearest alternative, and because the web maths is set in Pagella already
+//: (`@mathjax/mathjax-pagella-font`).
 //:
 //: The two places where a math font would be visibly wrong are handled below: **a number and a
 //: unit are set in the body font**, as siunitx sets them in the booklet.
 //:
 //: The exact answer, if anyone ever wants it, is a MATH table built onto Minion Pro -- or
 //: Minion Math, which is a commercial font this repository does not have.
-#let MATH-FONT = "TeX Gyre Pagella Math"
+#let MATH-FONT = "STIX Two Math"
 
 // ===========================================================================================
 // The language, which the generated `build/core/i18n/<lang>.typ` supplies
