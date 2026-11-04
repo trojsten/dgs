@@ -30,14 +30,23 @@
 //: What LaTeX does instead is `mathspec`'s trick -- map the math letters onto the *text* font's
 //: own glyphs -- which is why the booklet's maths is Minion. Typst has no equivalent.
 //:
-//: So the maths is set in a real math font chosen to sit beside Minion: Garamond-Math, which is
-//: already in `assets/fonts/` and is an old-style face with the same axis and much the same
-//: colour. The two places where that would be visibly wrong are handled below: **a number and a
+//: So the maths is set in a real math font chosen to sit beside Minion: **TeX Gyre Pagella
+//: Math**, Palatino's, which carries the closest weight and colour of the candidates -- they
+//: were set side by side in a real paragraph before this was chosen, against Garamond-Math
+//: (closer in style, visibly lighter), Termes, STIX, Asana and Computer Modern. It is also
+//: what the web maths is already set in: `package.json` pulls
+//: `@mathjax/mathjax-pagella-font`, so the two routes to a formula now agree about the face.
+//:
+//: The file is vendored into `assets/fonts/TeXGyrePagella/` beside the text faces that were
+//: already there -- it is GUST-licensed, redistributable, and 600 KB -- so the build does not
+//: depend on a TeX Live installation for a font.
+//:
+//: The two places where a math font would be visibly wrong are handled below: **a number and a
 //: unit are set in the body font**, as siunitx sets them in the booklet.
 //:
 //: The exact answer, if anyone ever wants it, is a MATH table built onto Minion Pro -- or
 //: Minion Math, which is a commercial font this repository does not have.
-#let MATH-FONT = "Garamond-Math"
+#let MATH-FONT = "TeX Gyre Pagella Math"
 
 // ===========================================================================================
 // The language, which the generated `build/core/i18n/<lang>.typ` supplies

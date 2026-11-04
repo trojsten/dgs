@@ -379,9 +379,10 @@ is not going anywhere. Beside it there is now a second one: a repository whose u
                           →  output/…/round.pdf     typst compile
 
 Three stages where the Markdown flavour has five, and the two that go are the two slowest. A
-round compiles in a fifth of a second, Typst reads `assets/fonts/MinionPro` directly -- no
-FontPro, no `TEXMFLOCAL`, no `sudo` -- and it reads SVG, PNG and JPEG natively, so the whole
-picture-conversion chain is absent as well.
+round compiles in a fifth of a second, Typst reads `assets/fonts/` directly -- no FontPro, no
+`TEXMFLOCAL`, no `sudo` -- and it reads SVG, PNG and JPEG natively, so the whole
+picture-conversion chain is absent as well. The build passes `--ignore-system-fonts`, so every
+face comes from this repository and two machines cannot set the same document differently.
 
 **The flavour is declared, never inferred.** `format: typst` in the *competition's* own
 `meta.yaml` (`modules/seminar/builder/context.py`'s `ContextCompetition`), read by
@@ -431,6 +432,26 @@ meta read raw bypasses every `enschema` check.
   `path_exists`, and emits `dgs.missing-file` instead. That is `\protectedInput`'s red box, and it
   exists for the reason volume 19's `onion` taught: one missing problem must not take the other
   thirty-nine down with it.
+
+### The maths cannot be Minion, and that was measured too
+
+Typst lays maths out from a font's OpenType **MATH table** and takes its math italics from the
+Math Alphanumeric Symbols block. **Minion Pro has neither**, so
+`show math.equation: set text(font: "Minion Pro")` warns `current font is not designed for math`
+and sets a page where radicals do not stretch and sums carry their limits beside them. Listing
+Minion before a math font does not help -- the MATH table comes from the first family, not per
+glyph -- and a `show regex("[A-Za-z]")` inside an equation never fires, because the letters are
+Math Alphanumeric codepoints by then and Minion has no glyph at those. LaTeX gets Minion maths
+from `mathspec`, which maps the math letters onto the text font's own glyphs; Typst has no
+equivalent.
+
+So the maths is **TeX Gyre Pagella Math**, chosen by setting the candidates side by side in a
+real paragraph, and vendored into `assets/fonts/TeXGyrePagella/` beside the text faces already
+there. It is also what the web maths is already set in, through
+`@mathjax/mathjax-pagella-font`. **A number and a unit are set in the body font** regardless,
+which is what siunitx does in the booklet, so `29,7 m/s` is Minion inside the formula as well as
+in the sentence around it. `MATH-FONT` in `core/typst/dgs.typ` is one line; the exact answer, for
+whoever wants it, is a MATH table built onto Minion Pro, or Minion Math, which is commercial.
 
 ### Units: no Typst package, and that was measured
 

@@ -302,11 +302,16 @@ def rules(w: Writer) -> None:
     #
     # `--root .` makes `/core/typst/dgs.typ` mean this repository rather than the filesystem,
     # and `--font-path` hands Typst the whole of `assets/fonts/`: no FontPro, no TEXMFLOCAL, no
-    # `sudo`. The whole tree rather than `MinionPro/` alone, because the maths is set in
-    # Garamond-Math, which is in there too -- `core/typst/dgs.typ` says why it is not Minion.
+    # `sudo`. The whole tree rather than `MinionPro/` alone, because the maths and the listings
+    # are set in two more faces that live there -- `core/typst/dgs.typ` says which and why.
+    #
+    # `--ignore-system-fonts` is the half that makes it reproducible: every face comes from this
+    # repository, so two machines cannot set the same document differently, and a face that is
+    # missing says so instead of being silently substituted for whatever fontconfig likes.
     w.rule('typst_pdf',
            'mkdir -p $$(dirname $out) && typst compile --root . '
-           '--font-path assets/fonts --deps $out.d --deps-format make $in $out',
+           '--font-path assets/fonts --ignore-system-fonts '
+           '--deps $out.d --deps-format make $in $out',
            depfile='$out.d', deps='gcc',
            description=described('{a}[typst] Compiling {x}PDF{a} file {f}$out'))
     w.rule('venue',
