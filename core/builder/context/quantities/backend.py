@@ -250,21 +250,28 @@ class TypstBackend(Backend):
         return ' thin '.join(cls._factor(factor) for factor in cls.RE_TIMES.split(group))
 
     def unit(self, quantity) -> str:
-        """
+        r"""
         pint's compact spelling turned into Typst maths.
 
-        pint normalises every division out of the denominator -- `J/(kg K)` arrives as
-        `J/K/kg` -- so the parts after the first are the denominator, and they are set as one
-        group under the rule. That is what `per-mode = fraction` does on the LaTeX side, and the
-        one-place-only normalisation is the parked question in `CLAUDE.md` about which way round
-        a compound denominator reads.
+        **A solidus, not a fraction**, which is `core/latex/siunitx.tex`'s `per-mode = symbol`:
+        the booklet prints `29,7 m/s` on one line and so does this. Typst's `/` would build a
+        stacked fraction, so the slash is escaped -- `\/` -- and set tight, with no space on
+        either side.
+
+        pint normalises every division out of the denominator, so `J/(kg K)` arrives as
+        `J/K/kg` and the parts after the first are all denominator. More than one factor down
+        there takes brackets, which is siunitx's `bracket-unit-denominator` and the difference
+        between `J/(K kg)` and a `J/K` multiplied by a `kg`. Which way round those two factors
+        read is the parked question in `CLAUDE.md`: pint decides it, not us.
         """
         compact = format(quantity.unit, self.PINT_COMPACT)
         numerator, *denominators = compact.split('/')
         if not denominators:
             return self._group(numerator)
         below = ' thin '.join(self._group(part) for part in denominators)
-        return f'{self._group(numerator)}/({below})'
+        if len(denominators) > 1 or self.RE_TIMES.search(denominators[0]):
+            below = f'({below})'
+        return rf'{self._group(numerator)}\/{below}'
 
     @staticmethod
     def _reject_options(si_extra: dict) -> None:

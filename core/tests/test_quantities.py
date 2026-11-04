@@ -1814,7 +1814,12 @@ class TestBackends:
         with backend.using('plain'):
             assert format(rate, 'g') == '30 deg/s'
         with backend.using('typst'):
-            assert format(rate, 'g') == '#qty("30", $degree/(upright("s"))$)'
+            assert format(rate, 'g') == r'#qty("30", $degree\/upright("s")$)'
+
+    def test_a_single_denominator_needs_no_brackets(self):
+        """`m/s`, as `per-mode = symbol` prints it, and not `m/(s)`."""
+        with backend.using('typst'):
+            assert r'\/upright("s")$' in format(PhysicsQuantity.construct(3, 'metre/second'), 'g')
 
     def test_typst_calls_the_library_rather_than_a_package(self, speed):
         """
@@ -1823,24 +1828,25 @@ class TestBackends:
         of a compound unit silently. What reaches the page is a call into `core/typst/dgs.typ`.
         """
         with backend.using('typst'):
-            assert format(speed, 'g') == '#qty("3", $upright("m")/(upright("s"))$)'
+            assert format(speed, 'g') == r'#qty("3", $upright("m")\/upright("s")$)'
 
-    def test_typst_sets_a_compound_denominator_under_one_rule(self):
+    def test_typst_sets_a_compound_denominator_in_brackets(self):
         """
         pint normalises every division out of the denominator -- `J/(kg K)` arrives as `J/K/kg`
-        -- so the parts after the first are the denominator and are set as one group. Written
-        out flat they would read as `J/K · kg`, which is a different quantity.
+        -- so the parts after the first are all denominator, and more than one of them takes
+        brackets. Written out flat they would read as `J/K` times `kg`, a different quantity;
+        this is siunitx's `bracket-unit-denominator` making the same decision.
         """
         capacity = PhysicsQuantity.construct(4180, 'joule / kilogram / kelvin')
         with backend.using('typst'):
             assert format(capacity, 'g') == (
-                '#qty("4180", $upright("J")/(upright("K") thin upright("kg"))$)')
+                r'#qty("4180", $upright("J")\/(upright("K") thin upright("kg"))$)')
 
     def test_typst_writes_an_exponent_as_an_exponent(self):
         gravitation = PhysicsQuantity.construct(1, 'metre ** 3 / kilogram / second ** 2')
         with backend.using('typst'):
             assert format(gravitation, 'g') == (
-                '#qty("1", $upright("m")^3/(upright("kg") thin upright("s")^2)$)')
+                r'#qty("1", $upright("m")^3\/(upright("kg") thin upright("s")^2)$)')
 
     def test_every_call_the_backend_emits_is_in_the_fragment_preamble(self):
         """
