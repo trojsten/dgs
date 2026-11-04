@@ -47,7 +47,7 @@ stale entry is still worth catching in the sources rather than in a PDF. Both di
 are checked (`unit-unlisted`, `listed-missing`). The page can sort alphabetically instead,
 and keeps showing the competition number when it does. A pass over the whole repository is a fifth of a second, so
 nothing is cached — except the two checks that cannot be answered by reading files, which land in
-`build/.audit/` with a fingerprint of the sources: the build checks, which shell out to make, and
+`build/.audit/` with a fingerprint of the sources: the build checks, which shell out to the build, and
 the macro sweep.
 
 **There is a third direction, and it is the one make cannot fix: `build-orphan`.** Rename a
@@ -58,7 +58,8 @@ because `\protectedInput` finds the stale `.tex` and the booklet goes on printin
 problem instead of the red box it is owed; volume 19's `onion` was exactly that. So
 `listed-missing` is the error and this is the warning, and together they say what happened.
 
-`make stale` lists them and **`make prune` removes them** — two targets on purpose, since one
+`./dgs-build stale` lists them and **`./dgs-build prune` removes them** (`make stale` and
+`make prune` are the same two targets) — two targets on purpose, since one
 word between asking and deleting is not a safe thing to offer. `core/audit/stale.py` is the whole
 of it, and it is the one check that reads outside `source/`: a directory listing, no file opened,
 and a tree that has never been built reports nothing.

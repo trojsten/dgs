@@ -835,7 +835,7 @@ def build_orphan(sources):
         yield Finding('build-orphan', 'warning',
                       f"`{orphan}` has no source directory left -- {orphan.files} "
                       f"file{'' if orphan.files == 1 else 's'} from a rename or a deletion. "
-                      f"`make prune` removes it; {consequence}")
+                      f"`dgs-build prune` removes it; {consequence}")
 
 
 @check('translation-set', 'warning',
