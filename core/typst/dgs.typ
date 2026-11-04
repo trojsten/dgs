@@ -9,6 +9,37 @@
 // booklet's own, and no attempt is made to reproduce `dgs.cls`'s geometry, heads or tear-offs.
 
 // ===========================================================================================
+// The faces
+// ===========================================================================================
+
+//: The booklet's own, from `assets/fonts/` -- `core/latex/fonts.tex` chooses the same three.
+#let BODY-FONT = "Minion Pro"
+#let MONO-FONT = "Ubuntu Mono"
+
+//: **Minion Pro cannot set the maths, and no option here can make it.**
+//:
+//: Typst lays maths out from a font's OpenType MATH table -- the constants that say how far a
+//: radical's bar sits above its content, how a fraction is spaced, how a big operator grows --
+//: and from the Math Alphanumeric Symbols block, which is where a math italic `l` comes from.
+//: Minion Pro has neither: `#show math.equation: set text(font: "Minion Pro")` gives
+//: `warning: current font is not designed for math` and a page where radicals do not stretch,
+//: integrals are the size of an `x` and sums carry their limits beside them rather than under.
+//: Listing it before a math font does not help either, because the MATH table is taken from the
+//: first family and not per glyph. Measured, all three.
+//:
+//: What LaTeX does instead is `mathspec`'s trick -- map the math letters onto the *text* font's
+//: own glyphs -- which is why the booklet's maths is Minion. Typst has no equivalent.
+//:
+//: So the maths is set in a real math font chosen to sit beside Minion: Garamond-Math, which is
+//: already in `assets/fonts/` and is an old-style face with the same axis and much the same
+//: colour. The two places where that would be visibly wrong are handled below: **a number and a
+//: unit are set in the body font**, as siunitx sets them in the booklet.
+//:
+//: The exact answer, if anyone ever wants it, is a MATH table built onto Minion Pro -- or
+//: Minion Math, which is a commercial font this repository does not have.
+#let MATH-FONT = "Garamond-Math"
+
+// ===========================================================================================
 // The language, which the generated `build/core/i18n/<lang>.typ` supplies
 // ===========================================================================================
 
@@ -36,27 +67,35 @@
 
 // `6.674e-11` becomes `6.674 × 10^(-11)`, and a bare mantissa gives the power alone, so that
 // `1e15` is `10^15` and not `1 × 10^15`.
+// A number is set in the body font, not in the math font: siunitx does the same in the booklet
+// (`mathlf`, Minion's lining figures in maths), and digits are the one thing in a formula a
+// reader compares directly against the prose around it.
 #let _number(value) = context {
   let marker = _language().decimal-marker
   let parts = value.split("e")
   let mantissa = parts.at(0).replace(".", marker)
+  let digits(s) = math.text(font: BODY-FONT, s)
   if parts.len() == 1 {
-    math.text(mantissa)
+    digits(mantissa)
   } else {
     let exponent = parts.at(1)
     if exponent.starts-with("+") { exponent = exponent.slice(1) }
-    let power = math.attach(math.text("10"), t: math.text(exponent))
-    if mantissa == "" { power } else { math.text(mantissa) + sym.space.thin + sym.times + sym.space.thin + power }
+    let power = math.attach(digits("10"), t: digits(exponent))
+    if mantissa == "" { power } else { digits(mantissa) + sym.space.thin + sym.times + sym.space.thin + power }
   }
 }
+
+// And so is a unit, for the same reason: `m` in `29,7 m/s` is a symbol the reader reads as a
+// word, and siunitx sets it upright in the text font.
+#let _unit(unit) = math.text(font: BODY-FONT, unit)
 
 #let num(value) = $#_number(value)$
 
 // A number and its unit, thin-spaced, which is what siunitx does and what the booklet prints.
-#let qty(value, unit) = $#_number(value) thin unit$
+#let qty(value, unit) = $#_number(value) thin #_unit(unit)$
 
 // A bare unit, for `|unit`.
-#let unit(unit) = $unit$
+#let unit(unit) = $#_unit(unit)$
 
 // An angle closes up against its number -- `45°`, not `45 °`. The one unit that does, mirroring
 // `\ang` on the LaTeX side and `45°` on the plain one.
@@ -177,8 +216,13 @@
   dgs-language.update(language)
 
   set page(paper: "a4", margin: 15mm, numbering: "1")
-  set text(font: "Minion Pro", size: 12pt, lang: language.code)
+  set text(font: BODY-FONT, size: 12pt, lang: language.code)
   set par(justify: true, leading: 0.65em)
+  // The maths, and the listings. `core/latex/fonts.tex` sets the monospace face to Ubuntu Mono
+  // and this follows it; the maths cannot follow the booklet and `MATH-FONT` says why at
+  // length.
+  show math.equation: set text(font: MATH-FONT)
+  show raw: set text(font: MONO-FONT, size: 0.9em)
   // Typst numbers an equation only when it is told to, and a reference refuses to exist without
   // a numbering -- which is the opposite default from pandoc-crossref and a better one.
   set math.equation(numbering: "(1)")

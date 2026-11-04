@@ -301,11 +301,12 @@ def rules(w: Writer) -> None:
     # way.
     #
     # `--root .` makes `/core/typst/dgs.typ` mean this repository rather than the filesystem,
-    # and `--font-path` hands Typst the OTFs that are already here: no FontPro, no TEXMFLOCAL,
-    # no `sudo`.
+    # and `--font-path` hands Typst the whole of `assets/fonts/`: no FontPro, no TEXMFLOCAL, no
+    # `sudo`. The whole tree rather than `MinionPro/` alone, because the maths is set in
+    # Garamond-Math, which is in there too -- `core/typst/dgs.typ` says why it is not Minion.
     w.rule('typst_pdf',
            'mkdir -p $$(dirname $out) && typst compile --root . '
-           '--font-path assets/fonts/MinionPro --deps $out.d --deps-format make $in $out',
+           '--font-path assets/fonts --deps $out.d --deps-format make $in $out',
            depfile='$out.d', deps='gcc',
            description=described('{a}[typst] Compiling {x}PDF{a} file {f}$out'))
     w.rule('venue',
