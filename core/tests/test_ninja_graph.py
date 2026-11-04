@@ -18,7 +18,14 @@ import pathlib
 
 import pytest
 
-from tools.ninja.generate import _beside, _fragment, _page, _picture_svg, _standalone
+from tools.ninja.generate import (
+    _beside,
+    _fragment,
+    _instagram,
+    _page,
+    _picture_svg,
+    _standalone,
+)
 from tools.ninja.writer import Writer
 
 REPO = pathlib.Path('/repo')
@@ -178,3 +185,36 @@ class TestTheEditorsPreview:
                        'build/seminar/FKS/42/1/3/01/problem.tex',
                        'build/core/i18n/sk.tex', 'core/latex/dgs.cls'):
             assert wanted in pdf, wanted
+
+
+class TestTheInstagramPages:
+    """
+    One page per problem is a fact about `instagram.jtex`, not a thing to discover by listing
+    whatever `pdftoppm` happened to write -- so the pages are declared, and a document that
+    does not have that many stops the build instead of being cut into misnumbered images.
+    """
+
+    PREFIX = 'output/seminar/FKS/42/1/3/instagram'
+    COUNTED = 'build/seminar/FKS/42/1/3/instagram.pages'
+
+    def test_there_is_one_image_per_problem(self, writer):
+        assert _instagram(writer.build, self.PREFIX, self.COUNTED, 3) == [
+            f'{self.PREFIX}-01.png', f'{self.PREFIX}-02.png', f'{self.PREFIX}-03.png']
+
+    def test_every_page_waits_for_the_count_to_be_checked(self, writer):
+        _instagram(writer.build, self.PREFIX, self.COUNTED, 3)
+        pages = [line for line in written(writer).splitlines() if 'page_image' in line]
+        assert len(pages) == 3
+        for page in pages:
+            assert f'{self.PREFIX}.pdf | {self.COUNTED}' in page, page
+
+    def test_the_check_is_told_how_many_pages_to_expect(self, writer):
+        _instagram(writer.build, self.PREFIX, self.COUNTED, 7)
+        written_out = written(writer)
+        assert f'build {self.COUNTED}: page_count {self.PREFIX}.pdf' in written_out
+        assert '\n  pages = 7\n' in written_out
+
+    def test_a_page_names_itself_as_pdftoppms_prefix(self, writer):
+        """`-singlefile` writes `<prefix>.png`, so the prefix is the output without its suffix."""
+        _instagram(writer.build, self.PREFIX, self.COUNTED, 1)
+        assert f'\n  prefix = {self.PREFIX}-01\n' in written(writer)

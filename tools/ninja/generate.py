@@ -299,13 +299,29 @@ def rules(w: Writer) -> None:
     w.rule('burst',
            'pdftk $in burst output $$(dirname $in)/%02d.pdf && touch $out',
            description=described('{a}[pdftk] Splitting {f}$in{a} into individual pages'))
-    # `pdftoppm` names its files `<prefix>-01.png` and how many there are depends on how long
-    # the document came out, so the outputs cannot be declared -- the same shape as `burst`
-    # above, and the same answer: a stamp Ninja can date, beside the files themselves.
-    w.rule('page_images',
-           'mkdir -p $$(dirname $prefix) && pdftoppm -png -r 150 -aa yes -aaVector yes '
-           '$in $prefix && mkdir -p $$(dirname $out) && touch $out',
-           description=described('{a}[pdftoppm] Rendering {f}$in{a} to images at {f}$prefix'))
+    # One page of a PDF to one PNG. Unlike `burst` above the count is **not** unknowable here:
+    # `instagram.jtex` ends every problem with a `\clearpage`, so the document is one page per
+    # problem and the generator knows how many problems there are. So the pages are declared,
+    # one edge each, and `-f`/`-l`/`-singlefile` let the name be ours rather than pdftoppm's
+    # digit-padding rule. `test -f` is what makes a page that did not come out loud: a page
+    # number past the end of the document is not an error to pdftoppm, it simply writes
+    # nothing, and an undeclared-looking silence is exactly what this build is migrating away
+    # from.
+    # An instagram document is one page per problem -- `instagram.jtex` ends each with a
+    # `\clearpage` -- so the page count is a fact the generator already knows, and a document
+    # that does not have it is a layout defect rather than a thing to render anyway. Checked
+    # once per document; every page then hangs off the check, so no PNG is cut from a page that
+    # belongs to the problem before it.
+    w.rule('page_count',
+           "count=$$(pdfinfo $in | sed -n 's/^Pages: *//p'); "
+           'if [ "$$count" != "$pages" ]; then '
+           'echo "$in has $$count pages, one per problem would be $pages" >&2; exit 1; fi; '
+           'mkdir -p $$(dirname $out) && touch $out',
+           description=described('{a}Checking {f}$in{a} is {x}$pages{a} pages'))
+    w.rule('page_image',
+           'mkdir -p $$(dirname $out) && pdftoppm -png -r 150 -aa yes -aaVector yes '
+           '-f $page -l $page -singlefile $in $prefix && test -f $out',
+           description=described('{a}[pdftoppm] Rendering page {x}$page{a} of {f}$in'))
     w.rule('tearoff_zip',
            'mkdir -p $$(dirname $out) && rm -f $out && $run -m tools.ninja.zip $out $in',
            description=described('{a}Packing {x}tear-offs{a} into {f}$out'))
@@ -828,12 +844,8 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                                 for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
               variables={'tex': f'{outdir}/{name}.tex'})
 
-    # The instagram pictures: one PNG per page of `instagram.pdf`, under the name make gave
-    # them. `output/.../instagram` was a file target there that the recipe never created, so it
-    # re-ran on every build; here the stamp carries the date and the phony carries the name.
-    build(f'{outdir}/instagram.images', 'page_images',
-          [f'output/seminar/{scope}/instagram.pdf'],
-          variables={'prefix': f'output/seminar/{scope}/instagram'})
+    images = _instagram(build, f'output/seminar/{scope}/instagram',
+                        f'{outdir}/instagram.pages', len(problems))
 
     # The names make offered, kept. `all` and `pages` are this generator's; `pdf`, `problems`
     # and `solutions` are `modules/seminar/module.mk:258-270`, and the last two reach the HTML
@@ -845,7 +857,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     for name, kind in (('problems', 'problem'), ('solutions', 'solution')):
         w.build(f'output/seminar/{scope}/{name}', 'phony',
                 [f'output/seminar/{scope}/{name}.pdf', *web_fragments[kind]])
-    w.build(f'output/seminar/{scope}/instagram', 'phony', [f'{outdir}/instagram.images'])
+    w.build(f'output/seminar/{scope}/instagram', 'phony', images)
     w.build(f'output/seminar/{scope}/pages', 'phony', pages)
     counts['edges'] += 6
     w.newline()
@@ -1209,6 +1221,32 @@ def _standalone(build, module: str, rel: str, inputs: list, templates: list, lan
                             for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
           variables={'tex': f'{outdir}/standalone.tex'})
     return pdf
+
+
+def _instagram(build, prefix: str, counted: str, problems: int) -> list:
+    """
+    The instagram pictures: one PNG per problem, under the name make gave them.
+
+    The count is not a thing to discover after the fact. `modules/seminar/templates/instagram.jtex`
+    sets each problem on its own page and ends it with a `\\clearpage`, so the document is one
+    page per problem and the generator knows how many problems a round has -- which is why this
+    is not `burst`, whose page count genuinely is unknowable until pdftk has run. Every PNG is
+    a declared output, and `output/<round>/instagram` was a *file* target in make whose recipe
+    never created it, so it re-ran on every build.
+
+    The count is also checked, once per document rather than once per page, and every page hangs
+    off the check. Without it a document that came out longer would be cut into images silently
+    misnumbered -- `instagram-02.png` holding the tail of the first problem rather than the
+    second, which is worse than no image at all.
+    """
+    build(counted, 'page_count', [f'{prefix}.pdf'], variables={'pages': str(problems)})
+    images = []
+    for number in range(1, problems + 1):
+        image = f'{prefix}-{number:02d}.png'
+        build(image, 'page_image', [f'{prefix}.pdf'], implicit=[counted],
+              variables={'page': str(number), 'prefix': image.removesuffix('.png')})
+        images.append(image)
+    return images
 
 
 def _beside(drawings: list, rel: str) -> list:
