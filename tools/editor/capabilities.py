@@ -42,6 +42,7 @@ INSTALL = {
     ],
     'gnuplot': ['sudo apt install gnuplot'],
     'rsvg-convert': ['sudo apt install librsvg2-bin'],
+    'mutool': ['sudo apt install mupdf-tools'],
 }
 
 
@@ -211,9 +212,17 @@ def probe_advisories():
     instagram document to PNGs, and `pdfjam` imposes a semester booklet. Those three were
     missing from this list, which is how a machine with no `pdftk` -- this one -- could report
     the PDF tier green and then fail one edge out of 59 355 with nothing having said why.
+
+    **`mutool` is dvisvgm's, not ours.** Ghostscript dropped the PDF interpreter dvisvgm drove
+    in 10.01.0, so from Debian 13 onwards `dvisvgm --pdf` refuses the file outright -- `To
+    process PDF files, either Ghostscript < 10.01.0 or mutool is required` -- and that is the
+    whole of the HTML maths, which goes through dvisvgm for every formula. dvisvgm finds mutool
+    by itself; `DVISVGM_PDF_PROC=gs|mutool` forces the choice. It is listed even where
+    Ghostscript is old enough not to need it, because there is no reading of a version that
+    makes a machine without it safe to upgrade.
     """
     return [Tool(name, bool(_which(name)), _which(name))
-            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'pdfcrop',
+            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'mutool', 'pdfcrop',
                          'pdftk', 'pdftoppm', 'pdfjam')]
 
 

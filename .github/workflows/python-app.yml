@@ -33,11 +33,19 @@ jobs:
     # `poppler-utils` is `pdftocairo`, which converts every picture for the web, and
     # `gnuplot-nox` draws the plots. Both were absent, so `test_picture_svg.py` skipped itself
     # and CI had never once exercised the picture pipeline.
+    #
+    # `mupdf-tools` is `mutool`, and it is dvisvgm's PDF reader now. Ghostscript dropped the
+    # interpreter dvisvgm drove in **10.01.0**, so on a runner carrying 10.05 every `--pdf`
+    # run ends in `To process PDF files, either Ghostscript < 10.01.0 or mutool is required` --
+    # which is the whole of the HTML maths, and it surfaced the moment those tests stopped
+    # skipping. dvisvgm picks mutool up by itself when it finds it; `DVISVGM_PDF_PROC` forces
+    # the choice. Ghostscript stays -- `pdfcrop` is Ghostscript, and dvisvgm still wants it for
+    # PostScript specials.
     - name: "Install utilities"
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends \
-          librsvg2-bin lcdf-typetools dvisvgm ghostscript poppler-utils gnuplot-nox
+          librsvg2-bin lcdf-typetools dvisvgm ghostscript mupdf-tools poppler-utils gnuplot-nox
     # MathJax is the other HTML maths engine, and it is node's. A hosted runner has node
     # whether or not anyone installed the packages, which is exactly how CI reported
     # `Cannot find module '@mathjax/mathjax-pagella-font/package.json'` from a test that should
@@ -122,7 +130,7 @@ jobs:
     - name: "Verify the HTML output's prerequisites"
       run: |
         missing=""
-        for tool in dvisvgm pdftocairo gnuplot rsvg-convert; do
+        for tool in dvisvgm mutool pdftocairo gnuplot rsvg-convert; do
           command -v "$tool" >/dev/null 2>&1 || missing="$missing $tool"
         done
         for package in mathjax @mathjax/mathjax-pagella-font; do
