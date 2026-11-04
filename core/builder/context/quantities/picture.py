@@ -1,5 +1,7 @@
 import re
 
+from . import backend as _backend
+
 
 class Picture:
     r"""
@@ -59,15 +61,6 @@ class Picture:
         self.caption = caption
         self.attributes = dict(attributes or {})
 
-    #: What goes between `![` and `]` when a solution's figure has no caption of its own.
-    #:
-    #: Not the empty string and not a space: pandoc makes a `figure` environment only when the alt
-    #: text has content, so `![]` and `![ ]` both come out as a bare `\includegraphics` with no
-    #: number and no `\label` -- which is exactly the state this rule exists to end. An HTML
-    #: comment is content to the parser and nothing to the page, so the figure is numbered and the
-    #: caption prints empty.
-    EMPTY_CAPTION = '<!-- -->'
-
     def __call__(self, caption: str | None = None, **attributes) -> Picture:
         """
         The same picture with a caption, or with an attribute overridden at this call site.
@@ -84,21 +77,6 @@ class Picture:
                        caption=self.caption if caption is None else caption,
                        declared_caption=self.declared_caption,
                        attributes=self.attributes | attributes)
-
-    @property
-    def _label(self) -> str:
-        """
-        The label, where the figure is captioned, and nothing where it is not.
-
-        Nothing rather than a label is not a simplification. An uncaptioned image is not a
-        `figure` at all, so pandoc emits no `\\label` for it whatever the attribute block says --
-        553 of the repository's hand-written labels sit on uncaptioned images and reach the page
-        as nothing. Emitting one here would be writing markup that is known to be discarded.
-        """
-        return f"#fig:{self.id}" if self.captioned else ""
-
-    def _attribute_text(self) -> str:
-        return ' '.join(f"{key}={value}" for key, value in self.attributes.items())
 
     @staticmethod
     def _one_line(caption: str) -> str:
@@ -117,18 +95,22 @@ class Picture:
         return re.sub(r'\s*\n\s*', ' ', caption).strip()
 
     def __str__(self) -> str:
-        """The Markdown include, which the second render pass expands any tags inside."""
-        alt = ''
+        """
+        The include, in whatever markup this render is for, with its caption already resolved.
+
+        What is decided here is the caption and nothing else: the call site first, then the
+        meta, then nothing -- `None`, which means *captioned, with no text*, a distinction only
+        the markup knows how to write. How a figure is spelled, how it carries its label and
+        what an empty caption looks like are `markup.py`'s, and the second render pass expands
+        whatever tags the caption brought with it either way.
+        """
+        caption = None
         if self.captioned:
-            # The call site first, then the meta, then the marker that makes it a numbered figure
-            # with nothing written in it.
             written = self.caption if self.caption else self.declared_caption
-            alt = self._one_line(written) if written else self.EMPTY_CAPTION
-        attributes = ' '.join(part for part in (self._label, self._attribute_text()) if part)
-        # The attribute block is never omitted even when it is empty: `convertor.py` refuses an
-        # image that reaches LaTeX without one -- `RegexFailure(r'\\pandocbounded')` -- because an
-        # unsized figure is set at its natural size and walks off the page.
-        return f"![{alt}]({self.file}){{{attributes}}}"
+            caption = self._one_line(written) if written else None
+        return _backend.markup().figure(file=self.file, ident=self.id,
+                                        captioned=self.captioned, caption=caption,
+                                        attributes=self.attributes)
 
     def __repr__(self) -> str:
         return repr(self.__str__())

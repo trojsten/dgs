@@ -17,7 +17,11 @@ from core.builder.context.quantities import PhysicsConstant
 from core.builder.context.quantities import backend as quantity_backend
 from core.builder.context.quantities.math import MathObject
 from core.builder.context.quantities.picture import Picture
-from core.builder.jinja import MarkdownJinjaRenderer, PictureJinjaRenderer
+from core.builder.jinja import (
+    MarkdownJinjaRenderer,
+    PictureJinjaRenderer,
+    TypstJinjaRenderer,
+)
 from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
@@ -31,6 +35,19 @@ DISPLAY_FILTERS = ('disp', 'align', 'arr')
 #: Templates that are drawings rather than prose, and so take `PictureJinjaRenderer`. By
 #: extension rather than by path: a picture is a picture wherever it sits.
 PICTURE_SUFFIXES = frozenset({'.svg', '.tikz'})
+
+#: Sources written in Typst rather than in Markdown.
+#:
+#: The extension decides two things at once, and they must not be decided separately: which
+#: dialect the tags are written in, and how a quantity, an equation and a figure spell
+#: themselves. A `.typ` whose tags lexed but whose values came out as `\qty{3}{\metre}` would
+#: compile and print the backslashes -- the failure `|txt` exists for in drawings -- so the two
+#: hang off one rule.
+TYPST_SUFFIXES = frozenset({'.typ'})
+
+#: How a quantity spells itself, by the extension of the file being rendered. Anything not
+#: named here is Markdown with LaTeX in it, which is every source that existed before Typst.
+BACKEND_BY_SUFFIX = {suffix: 'typst' for suffix in TYPST_SUFFIXES}
 
 #: A Markdown list marker, whose width a continuation line has to match.
 RE_LIST_MARKER = re.compile(r'[ \t]*(?:[-*+]|\d+[.)])[ \t]+')
@@ -191,10 +208,16 @@ class JinjaConvertor:
         variable tag `(§ … §)` is the same in both, which is the one an author writes almost
         always.
 
+        A `.typ` gets `TypstJinjaRenderer`, which is the picture dialect again -- Typst writes
+        `(#` to open code and `(@` for a reference, so it collides with the defaults exactly as
+        SVG does.
+
         `.gp` is deliberately *not* in the set. Gnuplot comments with `#` and never writes `(#`
         or `(@`, so it has no collision to dodge, and the three gnuplot templates that carry tags
         today are Markdown-dialect files that would have to be rewritten for nothing.
         """
+        if path.suffix in TYPST_SUFFIXES:
+            return TypstJinjaRenderer
         return PictureJinjaRenderer if path.suffix in PICTURE_SUFFIXES else MarkdownJinjaRenderer
 
     def run(self):
@@ -769,6 +792,7 @@ class CLIInterface(cli.CLIInterface, ABC):
             meta, self.args.locale, root=meta_path.parent,
             labelled=self.equation_numbering.get(infile, True),
             captioned=self.figure_captions.get(infile, True),
+            backend=BACKEND_BY_SUFFIX.get(Path(infile).suffix, 'latex'),
             missing_words=self.missing_words)
 
     @staticmethod

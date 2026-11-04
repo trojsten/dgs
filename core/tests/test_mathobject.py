@@ -1,5 +1,6 @@
 import pytest
 
+from core.builder.context.quantities import backend
 from core.builder.context.quantities.math import MathObject
 
 
@@ -144,3 +145,46 @@ class TestMathObjectConstruction:
 
     def test_repr(self, equation):
         assert repr(equation) == "'a + b = c'"
+
+
+class TestTheTypstMarkup:
+    r"""
+    The same equation, written for the typesetter that reads it.
+
+    Three of LaTeX's requirements have no counterpart and are not imitated. A label is Typst's
+    own `<eq:…>` rather than pandoc-crossref's `{#eq:…}`; alignment needs no environment,
+    because Typst's display maths aligns on `&` by itself; and an array's column spec exists
+    only because `aligned` pairs its columns `rl rl`, so `|arr` is refused outright rather than
+    approximated into a layout nobody asked for.
+    """
+
+    def test_inline_is_a_dollar_pair_with_no_space(self, equation):
+        """Which is Typst's entire rule for inline against display."""
+        with backend.using('typst'):
+            assert f'{equation:inl}' == '$a + b = c$'
+
+    def test_a_hoisted_fragment_does_not_become_a_display_by_accident(self):
+        """A YAML block scalar brings a newline, and a space after `$` means display."""
+        with backend.using('typst'):
+            assert f'{MathObject("e", "a + b = c\n"):inl}' == '$a + b = c$'
+
+    def test_a_display_carries_a_typst_label(self, equation):
+        with backend.using('typst'):
+            assert f'{equation:disp.}' == '$\na + b = c.\n$ <eq:e1>'
+
+    def test_an_unlabelled_display_carries_none(self):
+        with backend.using('typst'):
+            assert f'{MathObject("e1", "a = b", labelled=False):disp}' == '$\na = b\n$'
+
+    def test_align_is_a_display_because_typst_aligns_by_itself(self, multiline):
+        with backend.using('typst'):
+            assert f'{multiline:align}' == f'{multiline:disp}'
+
+    def test_an_array_is_refused_rather_than_approximated(self, multiline):
+        with backend.using('typst'):
+            with pytest.raises(NotImplementedError, match='no Typst spelling'):
+                format(multiline, 'arr:rcl')
+
+    def test_the_markdown_markup_is_untouched_by_any_of_it(self, equation):
+        """The two are alternatives, so the default one has to be exactly what it was."""
+        assert f'{equation:disp.}' == '$$\n    a + b = c.\n$$ {#eq:e1}'

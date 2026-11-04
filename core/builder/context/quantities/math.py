@@ -1,9 +1,16 @@
 import regex as re
 
+from . import backend as _backend
+
 
 class MathObject:
     """
-    A representation of a named LaTeX math object.
+    A named equation, written in whatever markup this render is for.
+
+    **The markup is not the equation.** Which delimiters a display takes, how its rows align and
+    what a label looks like are `markup.py`'s business; what belongs here is everything that is
+    the same in every markup -- which format specs exist, what a trailing punctuation mark may
+    attach to, and whether this display is labelled at all.
     """
     def __init__(self,
                  ident: str,
@@ -29,7 +36,7 @@ class MathObject:
 
     @property
     def _label(self) -> str:
-        return f" {{#eq:{self.id}}}" if self.labelled else ""
+        return _backend.markup().equation_label(self.id) if self.labelled else ""
 
     def __str__(self):
         """
@@ -54,64 +61,6 @@ class MathObject:
     _ARRAY_PREFIX = 'arr:'
     _COLUMN_TYPES = frozenset('lcr')
 
-    @staticmethod
-    def _shield_brackets(content: str) -> str:
-        r"""
-        Put `{}` in front of a row that starts with `[`.
-
-        LaTeX's `\\` takes an optional length, so a row beginning with a bracket -- a concentration
-        `[A]`, an interval, a unit in square brackets -- is read as `\\[A]` and the compile dies on
-        `Missing number, treated as zero`. amsmath's `aligned` does not scan for that argument and
-        so tolerates it, which is why the problem only appears on the way *in* to an array:
-        `01/rovnováha` had written `[A] … \\ [B] …` happily for years.
-        """
-        rows, out = re.split(r'(?<=\\\\)\n', content), []
-        for row in rows:
-            stripped = row.lstrip()
-            if stripped.startswith('['):
-                pad = row[:len(row) - len(stripped)]
-                row = f'{pad}{{}}{stripped}'
-            out.append(row)
-        return '\n'.join(out)
-
-    @staticmethod
-    def _open_up_rows(content: str) -> str:
-        r"""
-        Give every row separator a `\jot` of glue.
-
-        `array` sets `\baselineskip` and `\lineskip` to zero and spaces its rows by a strut
-        alone, so two rows whose content is taller than that strut -- which is every row holding
-        a display-style `\frac` -- end up touching: in `20/star-triangle` the denominator of one
-        row sat directly on the numerator of the next. `aligned` avoids it by doing `\openup\jot`,
-        which array ignores because array zeroes the very lengths `\openup` raises. The one lever
-        left is explicit glue on the separator.
-
-        `\jot` by name rather than a length of our own, because it is the document's own
-        setting for exactly this: the gap between the rows of a display. `dgs.cls` puts it at
-        10pt, five times greater than plain LaTeX's default and a good deal more than the 3pt a
-        bare `article` would give -- so a fixed length tuned in a scratch document would have
-        been wrong in the booklets, and is wrong again the day anyone retunes `\setDisplaySkips`.
-
-        A separator that already carries its own `[…]` is left alone -- the author asked for a
-        particular gap.
-        """
-        return re.sub(r'\\\\(?=\n)', r'\\\\[\\jot]', content)
-
-    @classmethod
-    def _display_columns(cls, columns: str) -> str:
-        r"""
-        Put every column of an array in display style.
-
-        `array` sets its cells in **text** style, so a `\frac` inside one comes out at script
-        size -- next to an `aligned` block on the same page the difference is glaring. `array`'s
-        `>{…}` prefix fixes it per column, and that prefix is an `array` package feature --
-        reaching the document indirectly, through `\RequirePackage[table]{xcolor}` in `dgs.cls`,
-        which loads `colortbl`, which loads `array`. Drop that `table` option and this breaks.
-        Authors never write this; they write `|arr('rclcl')` and get it.
-        """
-        return ''.join(f'>{{\\displaystyle}}{c}' if c in cls._COLUMN_TYPES else c
-                       for c in columns)
-
     def __format__(self, spec: str = ''):
         interpunction = ''
         if len(spec) > 0 and spec[-1] in self._INTERPUNCTION:
@@ -130,15 +79,8 @@ class MathObject:
                     f"Unknown array column type(s) {''.join(sorted(unknown))!r}; "
                     f"expected only {''.join(sorted(self._COLUMN_TYPES))} and `|`"
                 )
-            # Eight spaces, not four: `\begin{array}` sits where `disp`'s content would, and the
-            # rows sit inside it. The punctuation lands on the end of the last row -- inside the
-            # final cell, where it belongs. Put after `\end{array}` it would float at the array's
-            # vertical centre, beside the middle row.
-            body = self._open_up_rows(self._shield_brackets(self.content))
-            content = re.sub(r'^(?!\Z)', '        ', body, flags=re.MULTILINE)
-            return (f"$$\n    \\begin{{array}}{{{self._display_columns(columns)}}}\n"
-                    f"{content}{interpunction}\n"
-                    f"    \\end{{array}}\n$${self._label}")
+            return _backend.markup().array(self.content, columns=columns,
+                                           label=self._label, punctuation=interpunction)
 
         # Distinguish "unknown base spec" from "valid base spec with invalid
         # trailing character," because the latter is the much more common
@@ -164,25 +106,17 @@ class MathObject:
                 f"`(§ eq.foo|inl §){interpunction}`"
             )
 
+        markup = _backend.markup()
         match spec:
             case '':
                 return self.content
             case 'inl':
-                return f"${self.content}$"
+                return markup.inline(self.content)
             case 'disp':
-                content = re.sub(r'^(?!\Z)', '    ', self.content, flags=re.MULTILINE)
-                return f"$$\n{content}{interpunction}\n$${self._label}"
+                return markup.display(self.content, label=self._label,
+                                      punctuation=interpunction)
             case 'align':
-                # The same shape as `arr` above, and for the same reason: `\begin{aligned}` sits
-                # where `disp`'s content would and the rows sit inside it, eight spaces deep.
-                #
-                # This used to emit the `$${ … }$$` shorthand and leave `Convertor.pre_regexes` to
-                # rewrite it into exactly this on the way to pandoc. Two per-line regexes for a
-                # form nothing else wanted; the filter knows what it means, so it says it. The
-                # regexes stay for the 351 `$${` that authors write by hand.
-                content = re.sub(r'^(?!\Z)', '        ', self.content, flags=re.MULTILINE)
-                return (f"$$\n    \\begin{{aligned}}\n"
-                        f"{content}{interpunction}\n"
-                        f"    \\end{{aligned}}\n$${self._label}")
+                return markup.aligned(self.content, label=self._label,
+                                      punctuation=interpunction)
             case _:
                 raise NotImplementedError(f"Unknown format spec {spec!r} for MathObject")

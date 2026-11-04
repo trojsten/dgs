@@ -32,9 +32,12 @@ text is a label on a span in a drawing, and widening it would claim a width nobo
 is a distinction between *purposes* that happens to line up with the backends today. If a drawing
 ever has to carry an interval, this is the flag that has to stop riding on the backend.
 """
+import re
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import ClassVar
+
+from . import markup as _markup
 
 #: pint's "pretty" spec: `~` picks the short symbol over the full name (`m`, not `meter`) and `P`
 #: gives Unicode superscripts, `/` and `⋅`.
@@ -65,15 +68,22 @@ def superscript_exponent(printed: str) -> str:
 
 
 class Backend:
-    """
+    r"""
     One way of spelling quantities.
 
     Four questions, which is all the difference between the two amounts to: how a unit is
     written, how a single value is written, how several are written together, and whether a
     range rounds outward.
+
+    `markup` is the fifth, and it belongs to a document rather than to a value: how an equation
+    and a figure are written. It rides here because the two axes are not independent in any way
+    anybody needs -- `PlainBackend` writes `3 m/s` *into a Markdown document*, because a drawing
+    has no xelatex to typeset `\qty` with -- and one switch cannot then be set half way. See
+    `markup.py`.
     """
     name: str = None
     rounds_outward: bool = True
+    markup: _markup.Markup = _markup.MARKDOWN
 
     def unit(self, quantity) -> str:
         """The unit alone, spelled for this backend. Empty for a dimensionless quantity."""
@@ -187,18 +197,131 @@ class PlainBackend(Backend):
         return unit
 
 
+class TypstBackend(Backend):
+    r"""
+    Typst, where the page is set by the same program that reads the source.
+
+    **No units package.** The plan was to call one, and both candidates were measured instead of
+    read about: `metro`, the siunitx port, does not load at all under Typst 0.15 -- it dies in
+    its own `defs/units.typ` on `unknown variable: kelvin`, and 0.3.0 is the latest there is --
+    and `unify` 0.7.1 loads but loses parts of a compound unit without saying so:
+    `J / (kg K)` comes out as `J^-1`, and `m^3 / (kg s^2)` as `m^3 ^-1 s^2 )`. A dropped unit
+    that compiles is the exact failure this repository keeps finding in other people's silence,
+    so the spelling is ours, and the arithmetic that produces it is in Python where the tests
+    are.
+
+    What reaches the page is a call into `core/typst/dgs.typ`: `#qty`, `#num`, `#ang` and the
+    aggregate three. The *unit* arrives as finished Typst maths, because pint knows what the
+    unit is and Typst would have to parse it back out of a string; the *magnitude* arrives as a
+    string, because how a number is written -- the decimal comma, the exponent -- follows the
+    language the document is set in, which only the document knows.
+    """
+    name = 'typst'
+    rounds_outward = True
+    markup = _markup.TYPST
+
+    #: pint's compact spec: short symbols, `**` for powers, `/` for every division, `*` between
+    #: factors. ASCII and unambiguous, which `~P`'s `m³/kg/s²` is not -- a Unicode superscript
+    #: would have to be parsed back into an exponent to be set as one.
+    PINT_COMPACT: ClassVar[str] = '~C'
+
+    #: Typst's own symbol for a plane angle. pint spells it `deg`.
+    DEGREE: ClassVar[str] = 'degree'
+
+    @staticmethod
+    def _factor(factor: str) -> str:
+        """One unit symbol, possibly with an exponent: `s**2` becomes `upright("s")^2`."""
+        symbol, separator, exponent = factor.partition('**')
+        if symbol == '1':
+            return '1'
+        if symbol == 'deg':
+            symbol = TypstBackend.DEGREE
+        else:
+            symbol = f'upright("{symbol}")'
+        return f'{symbol}^{exponent}' if separator else symbol
+
+    #: A `*` that multiplies, as against the two that raise to a power. `m**3*s` has one of
+    #: each, and splitting on a bare `*` turns the exponent into two more unit symbols.
+    RE_TIMES: ClassVar = re.compile(r'(?<!\*)\*(?!\*)')
+
+    @classmethod
+    def _group(cls, group: str) -> str:
+        """A product of symbols, thin-spaced the way siunitx spaces one."""
+        return ' thin '.join(cls._factor(factor) for factor in cls.RE_TIMES.split(group))
+
+    def unit(self, quantity) -> str:
+        """
+        pint's compact spelling turned into Typst maths.
+
+        pint normalises every division out of the denominator -- `J/(kg K)` arrives as
+        `J/K/kg` -- so the parts after the first are the denominator, and they are set as one
+        group under the rule. That is what `per-mode = fraction` does on the LaTeX side, and the
+        one-place-only normalisation is the parked question in `CLAUDE.md` about which way round
+        a compound denominator reads.
+        """
+        compact = format(quantity.unit, self.PINT_COMPACT)
+        numerator, *denominators = compact.split('/')
+        if not denominators:
+            return self._group(numerator)
+        below = ' thin '.join(self._group(part) for part in denominators)
+        return f'{self._group(numerator)}/({below})'
+
+    @staticmethod
+    def _reject_options(si_extra: dict) -> None:
+        if si_extra:
+            raise ValueError(
+                f"siunitx options have no Typst spelling yet: {sorted(si_extra)}. They are "
+                f"package options -- `per-mode`, `parse-numbers` -- and what they ask for has "
+                f"to be decided in `core/typst/dgs.typ` before it can be written here."
+            )
+
+    def scalar(self, magnitude: str, unit: str, si_extra: dict) -> str:
+        self._reject_options(si_extra)
+        if unit == self.DEGREE:
+            # An angle on its own closes up against its number, which is the decision `\ang`
+            # makes on the LaTeX side and `45°` makes on the plain one. Only a bare degree: a
+            # rate of degrees is a unit like any other.
+            return f'#ang("{magnitude}")'
+        if not unit:
+            return f'#num("{magnitude}")'
+        return f'#qty("{magnitude}", ${unit}$)'
+
+    def aggregate(self, kind: str, magnitudes: list[str], unit: str, si_extra: dict) -> str:
+        """
+        `#qtyrange`, `#qtylist`, `#qtyproduct`, and the three `num` siblings without a unit.
+
+        A range takes its two ends as separate arguments, as siunitx does; a list and a product
+        take an array, because they may hold any number of them.
+        """
+        self._reject_options(si_extra)
+        written = ', '.join(f'"{magnitude}"' for magnitude in magnitudes)
+        arguments = written if kind == 'range' else f'({written})'
+        command = ('qty' if unit else 'num') + kind
+        return f'#{command}({arguments}' + (f', ${unit}$)' if unit else ')')
+
+    def bare_unit(self, unit: str, si_extra: dict) -> str:
+        self._reject_options(si_extra)
+        return f'#unit(${unit or "1"}$)'
+
+
 LATEX = LatexBackend()
 PLAIN = PlainBackend()
+TYPST = TypstBackend()
 
 #: Read at format time. A `ContextVar` rather than a module global so that the editor, which
 #: renders in-process under Flask, cannot have one request's backend leak into another's.
 _CURRENT: ContextVar[Backend] = ContextVar('dgs_quantity_backend', default=LATEX)
 
-BACKENDS = {backend.name: backend for backend in (LATEX, PLAIN)}
+BACKENDS = {backend.name: backend for backend in (LATEX, PLAIN, TYPST)}
 
 
 def current() -> Backend:
     return _CURRENT.get()
+
+
+def markup() -> _markup.Markup:
+    """How this render writes an equation and a figure. See `markup.py`."""
+    return _CURRENT.get().markup
 
 
 def resolve(backend) -> Backend:

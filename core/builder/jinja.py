@@ -209,6 +209,29 @@ class StaticRenderer(JinjaRenderer):
         # Other exceptions are deferred to the base class
 
 
+class StaticTypstRenderer(StaticRenderer):
+    r"""
+    `StaticRenderer` with the block and comment tags moved, for a `.jtyp` document template.
+
+    The same filters and the same globals -- a document is a document, and `path_exists` is as
+    load-bearing here as it is for a `.jtex`, more so in fact: `\protectedInput` makes its
+    decision inside TeX, and Typst cannot, so this is where a missing fragment becomes a box
+    instead of `error: file not found`.
+
+    The delimiters move for the reason `TypstJinjaRenderer`'s do: `(#` opens Typst code and
+    `(@` is a reference. The variable tag `(*` stays as it is -- Typst has no use for it, and a
+    document template reads better with the same variable tag every other template in the
+    repository uses.
+    """
+    def __init__(self, template_root: os.PathLike, **kwargs: object) -> None:
+        super().__init__(template_root,
+                         block_start_string='(@§',
+                         block_end_string='§@)',
+                         comment_start_string='(#§',
+                         comment_end_string='§#)',
+                         **kwargs)
+
+
 class MarkdownJinjaRenderer(JinjaRenderer):
     """
     A Jinja2 renderer for pre-rendering dynamically added Markdown files.
@@ -424,3 +447,23 @@ class PictureJinjaRenderer(MarkdownJinjaRenderer):
                          comment_start_string='(#§',
                          comment_end_string='§#)',
                          **kwargs)
+
+
+class TypstJinjaRenderer(PictureJinjaRenderer):
+    r"""
+    The Markdown renderer for a Typst source, and it borrows the picture dialect wholesale.
+
+    A Typst source is prose with tags in it, exactly as a Markdown one is, so the variable tag
+    and every filter are the same. What differs is the same thing that differs for SVG: **the
+    default block and comment tags are the format's own punctuation.**
+
+    - `(#` opens code in Typst, which is how everything that is not prose is written --
+      `(#emph[x])`, `(#link("…")[…])`;
+    - `(@` is a reference, and a reference in parentheses is ordinary prose: *(@eq:power)*, the
+      very shape a solution writes when it points back at an equation.
+
+    So the tags move exactly as they do for a drawing, and for the same reason -- `§` appears in
+    no Typst source and `(`, `#` and `@` are all load-bearing there. Inheriting
+    `PictureJinjaRenderer` rather than restating the delimiters is deliberate: the two dialects
+    must not drift apart, and there is one dialect here, used by two formats.
+    """

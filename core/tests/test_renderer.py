@@ -1,5 +1,6 @@
 import pytest
 
+from core.builder.context.quantities import backend
 from core.builder.renderer import (
     JinjaConvertor,
     NameCollisionError,
@@ -676,6 +677,45 @@ class TestPictures:
                 schema.validate({'id': 'demo', 'pictures': {'a': bad}})
 
 
+class TestTypstFigures:
+    """
+    The figure half of the Typst markup, which is the one place the two formats differ in kind.
+
+    Markdown has to say *captioned with nothing in it* as an HTML comment, because pandoc makes
+    a `figure` only when the alt text has content. Typst says it as `caption: []`, and says
+    *uncaptioned* as a bare `#image`, which is unnumbered and has nothing to label -- the same
+    distinction the Markdown side draws through a trick, drawn directly.
+    """
+
+    @staticmethod
+    def picture(**kwargs):
+        from core.builder.context.quantities.picture import Picture
+        return Picture('drenched:hanging', 'hanging.png',
+                       attributes={'height': '40mm'}, **kwargs)
+
+    def test_a_captioned_figure_is_a_figure_with_a_label(self):
+        with backend.using('typst'):
+            assert str(self.picture(caption='Lano cez kladku')) == (
+                '#figure(image("hanging.png", height: 40mm), caption: [Lano cez kladku]) '
+                '<fig:drenched:hanging>')
+
+    def test_an_empty_caption_needs_no_marker(self):
+        with backend.using('typst'):
+            assert str(self.picture()) == (
+                '#figure(image("hanging.png", height: 40mm), caption: []) '
+                '<fig:drenched:hanging>')
+
+    def test_an_uncaptioned_figure_is_a_bare_image(self):
+        """A statement's figure: no caption, so no number, so nothing to point at."""
+        with backend.using('typst'):
+            assert str(self.picture(captioned=False)) == (
+                '#image("hanging.png", height: 40mm)')
+
+    def test_the_markdown_spelling_is_untouched(self):
+        assert str(self.picture(caption='Lano cez kladku')) == (
+            '![Lano cez kladku](hanging.png){#fig:drenched:hanging height=40mm}')
+
+
 class TestDisplayTagsOwnTheirLine:
     r"""
     A display tag is put on a line of its own before rendering, and only where it is not already.
@@ -792,6 +832,20 @@ class TestPictureDialectDispatch:
 
         from core.builder.jinja import MarkdownJinjaRenderer
         assert JinjaConvertor.renderer_for(Path(name)) is MarkdownJinjaRenderer
+
+    def test_a_typst_source_gets_the_same_dialect_as_a_picture(self):
+        """
+        One dialect, two formats. Typst writes `(#` to open code and `(@` for a reference --
+        *(@eq:power)* is ordinary prose in a solution -- so it collides with the defaults
+        exactly as SVG's `url(#…)` does, and inheriting the picture renderer is what stops the
+        two drifting apart.
+        """
+        from pathlib import Path
+
+        from core.builder.jinja import PictureJinjaRenderer, TypstJinjaRenderer
+        renderer = JinjaConvertor.renderer_for(Path('problem.typ'))
+        assert renderer is TypstJinjaRenderer
+        assert issubclass(renderer, PictureJinjaRenderer)
 
     def test_the_decision_is_by_extension_not_by_path(self):
         """A picture is a picture wherever it sits -- there is no directory convention to learn."""

@@ -1790,20 +1790,67 @@ class TestBackends:
 
     def test_an_unknown_backend_fails_at_the_call_not_at_the_page(self):
         with pytest.raises(ValueError, match='Unknown quantity backend'):
-            backend.resolve('typst')
+            backend.resolve('context')
 
-    def test_the_degree_closes_up_in_both(self):
-        """`\\ang{45}` and `45°` are the same decision made twice, so both backends make it."""
+    def test_the_degree_closes_up_in_all_three(self):
+        """
+        `\\ang{45}`, `45°` and `#ang("45")` are one decision made three times.
+
+        A bare degree closes up against its number and a rate of degrees does not, which is
+        siunitx's rule, the typographer's rule and therefore ours in every spelling.
+        """
         angle = PhysicsQuantity.construct(45, 'degree')
         assert format(angle, 'g') == r'\ang{45}'
         with backend.using('plain'):
             assert format(angle, 'g') == '45°'
+        with backend.using('typst'):
+            assert format(angle, 'g') == '#ang("45")'
 
     def test_a_rate_of_degrees_is_not_an_angle(self):
         rate = PhysicsQuantity.construct(30, 'degree / second')
         assert format(rate, 'g').startswith(r'\qty')
         with backend.using('plain'):
             assert format(rate, 'g') == '30 deg/s'
+        with backend.using('typst'):
+            assert format(rate, 'g') == '#qty("30", $degree/(upright("s"))$)'
+
+    def test_typst_calls_the_library_rather_than_a_package(self, speed):
+        """
+        Neither Typst units package survives contact with this repository's units, so the
+        spelling is ours: `metro` does not load at all under Typst 0.15 and `unify` loses parts
+        of a compound unit silently. What reaches the page is a call into `core/typst/dgs.typ`.
+        """
+        with backend.using('typst'):
+            assert format(speed, 'g') == '#qty("3", $upright("m")/(upright("s"))$)'
+
+    def test_typst_sets_a_compound_denominator_under_one_rule(self):
+        """
+        pint normalises every division out of the denominator -- `J/(kg K)` arrives as `J/K/kg`
+        -- so the parts after the first are the denominator and are set as one group. Written
+        out flat they would read as `J/K · kg`, which is a different quantity.
+        """
+        capacity = PhysicsQuantity.construct(4180, 'joule / kilogram / kelvin')
+        with backend.using('typst'):
+            assert format(capacity, 'g') == (
+                '#qty("4180", $upright("J")/(upright("K") thin upright("kg"))$)')
+
+    def test_typst_writes_an_exponent_as_an_exponent(self):
+        gravitation = PhysicsQuantity.construct(1, 'metre ** 3 / kilogram / second ** 2')
+        with backend.using('typst'):
+            assert format(gravitation, 'g') == (
+                '#qty("1", $upright("m")^3/(upright("kg") thin upright("s")^2)$)')
+
+    def test_typst_refuses_siunitx_options_rather_than_dropping_them(self):
+        """
+        `per-mode` and friends are package options with no Typst counterpart. Silently ignoring
+        one would print a different unit than the author asked for, which is the failure this
+        whole seam exists to stop.
+        """
+        quantity = PhysicsQuantity.construct(3, 'metre / second',
+                                             si_extra={'per-mode': 'symbol'})
+        with backend.using('typst'):
+            with pytest.raises(ValueError, match='no Typst spelling'):
+                format(quantity, 'g')
 
     def test_the_unit_alone_follows_the_backend(self, speed):
         assert speed.only_unit() == r'\unit{\metre\per\second}'
