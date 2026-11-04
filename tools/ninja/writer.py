@@ -97,6 +97,18 @@ class Writer:
         return outputs
 
 
+    def default(self, targets) -> None:
+        """
+        What `ninja` with no arguments builds.
+
+        Ninja's own default is every output nothing else depends on, which here is 33 929 of
+        them -- the whole repository, every preview PDF included. `make` with no goal touched a
+        stamp and stopped, so the two spellings of "I typed the command to see what happens"
+        must not differ by four hours of xelatex.
+        """
+        self.out.write('default ' + ' '.join(escape_path(t) for t in _listify(targets)) + '\n')
+
+
     def has(self, output: str) -> bool:
         """Whether something already produces this path."""
         return escape_path(str(output)) in self.emitted

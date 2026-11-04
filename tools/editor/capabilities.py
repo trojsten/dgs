@@ -203,9 +203,18 @@ def probe_latex(repo_root):
 
 
 def probe_advisories():
-    """Needed only by a unit that has a figure, so never a gate -- but worth naming."""
+    """
+    Needed only by some units and some documents, so never a gate -- but worth naming.
+
+    The first four draw a figure. The last three take a finished PDF apart: `pdftk` bursts a
+    volume's online booklet into one file per page, `pdftoppm` renders a seminar round's
+    instagram document to PNGs, and `pdfjam` imposes a semester booklet. Those three were
+    missing from this list, which is how a machine with no `pdftk` -- this one -- could report
+    the PDF tier green and then fail one edge out of 59 355 with nothing having said why.
+    """
     return [Tool(name, bool(_which(name)), _which(name))
-            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'pdfcrop')]
+            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'pdfcrop',
+                         'pdftk', 'pdftoppm', 'pdfjam')]
 
 
 def _first_line(text):
@@ -309,7 +318,7 @@ def main():
             for line in t['install']:
                 print(f'      $ {line}')
     if report['advisories']:
-        print('\n  figures may not build without:')
+        print('\n  some figures and documents may not build without:')
         for t in report['advisories']:
             print(f'      {t["name"]}')
     if report['launcher']['note']:

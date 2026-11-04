@@ -457,6 +457,16 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
     for directory in sorted(totals['listed']):
         w.build(directory, 'phony', None)
         totals['edges'] += 1
+
+    w.newline()
+    w.comment('What a bare `ninja` builds. Left unsaid it would be every root of the graph -- '
+              'the whole repository -- where a bare `make` touched a stamp and stopped. The '
+              'i18n tables are the nearest honest equivalent: core\'s own, needed by every '
+              'other edge, and a second or two.')
+    w.build('core', 'phony', None,
+            implicit=[f'build/core/i18n/{lang}.tex' for lang in sorted(needs['languages'])])
+    w.default('core')
+    totals['edges'] += 1
     return totals
 
 
