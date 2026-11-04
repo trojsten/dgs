@@ -135,12 +135,35 @@ jobs:
     - name: Test with pytest
       run: |
         uv run python -m pytest -s -v
+    # `source/seminar/test`, which is where `modules/seminar/editor.yaml` says this repository
+    # goes. It was cloned to `.../testing` while nothing read it; a scope is named after the
+    # directory, so the two had to agree before anything could be built by name.
     - name: "Clone testing repository"
       uses: actions/checkout@master
       with:
         repository: TrojstenSK/dgs-seminar-testing
-        path: source/seminar/testing
-    - name: "Build testing/01/1/1"
+        path: source/seminar/test
+
+    # The graph before the build, as its own step. It reads the whole source tree and writes
+    # every edge, so a generator that crashes or emits two different edges for one output fails
+    # here -- named, and in under two seconds -- rather than as a confusing Ninja parse error in
+    # the step below.
+    - name: "Generate the build graph"
       run: |
-        pwd
-        # pipenv run make output/seminar/test/01/1/1
+        uv run python -m tools.ninja.generate --scope all
+
+    # One real round, end to end: Jinja, pandoc, the pictures and two xelatex passes. The scope
+    # is read out of the graph rather than written here, because it is this repository's own
+    # layout and a path typed into CI is a second copy of it that goes stale silently -- which
+    # is exactly what the commented-out line this replaces had done.
+    - name: "Build a seminar round"
+      run: |
+        set -euo pipefail
+        scope=$(./dgs-build -t targets all \
+                | sed -n 's|^output/seminar/\(.*\)/all: phony.*|\1|p' | head -1)
+        if [ -z "$scope" ]; then
+          echo "::error::no seminar round in the graph; is source/seminar/test populated?"
+          exit 1
+        fi
+        echo "building output/seminar/$scope/all"
+        ./dgs-build -k 0 "output/seminar/$scope/all"

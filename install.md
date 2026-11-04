@@ -27,7 +27,7 @@ an image:
 ```
 ./dgs-container build          # or: podman pull ghcr.io/trojstensk/dgs:full
 ./dgs-container editor         # browser at localhost:5001
-./dgs-container make output/naboj/phys/29/languages/sk/booklet.pdf
+./dgs-container ninja output/naboj/phys/29/languages/sk/booklet.pdf
 ```
 
 `DGS_TARGET=light` gets you a much smaller image with the Markdown and TeX tiers but no PDF —

@@ -4,8 +4,8 @@
 #
 # This exists for two reasons, and brevity is not one of them:
 #
-#  - forgetting `-v "$PWD/output:/dgs/output"` is *silent*. make builds the booklet into the
-#    container's ephemeral layer, prints every success line, and the PDF is gone.
+#  - forgetting `-v "$PWD/output:/dgs/output"` is *silent*. The build writes the booklet into
+#    the container's ephemeral layer, prints every success line, and the PDF is gone.
 #  - `build` reads the FontPro commit out of git, because `.git/` is not in the build context
 #    and the Containerfile's ARG default can only ever be a second copy of it.
 set -euo pipefail
@@ -26,7 +26,7 @@ mount=(-v "$PWD:/dgs")
 usage() {
     sed -n '2,9p' "$0"
     echo
-    echo "usage: $0 {build|editor|make|test|check|shell} [args...]"
+    echo "usage: $0 {build|editor|ninja|make|test|check|shell} [args...]"
     echo "  DGS_TARGET=light|full (default full)   DGS_PORT (default 5001)"
 }
 
@@ -67,9 +67,24 @@ editor)
         python tools/editor/app.py --host 0.0.0.0 --port 5000 "$@"
     ;;
 
+ninja)
+    shift
+    mkdir -p build render output
+    # `./dgs-build`, not `ninja`: a fresh mount has no `build.ninja` and nothing inside the
+    # image can have one, since the graph is a function of `source/`, which is bind-mounted
+    # from the host and never baked. The wrapper generates it on the first run.
+    #
+    # `ninja` itself needs no apt package here -- it is a project dependency, so `uv sync`
+    # already put it in /opt/venv/bin, which is first on PATH.
+    exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" ./dgs-build "$@"
+    ;;
+
 make)
     shift
     mkdir -p build render output
+    # The Makefile still builds every tree the Ninja graph does; it is kept while the graph is
+    # new, and this is how you reach it. See `ninja` above for the one that is being moved to.
+    #
     # --network=none: nothing in a build needs the network, UV_OFFLINE is already set, and
     # -shell-escape is unconditional, so this costs nothing and closes the one real hole.
     exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" make "$@"
