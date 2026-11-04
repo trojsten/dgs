@@ -1,0 +1,39 @@
+(#§
+  One round of a Typst-flavoured seminar, as thin as a generated file can be.
+
+  Everything that decides how the page looks is in `core/typst/dgs.typ`, which is hand-written
+  and imported rather than generated: a layout decision belongs where it can be compiled on its
+  own. What this file carries is what only Python knows -- which problems there are, in which
+  order, what they are called, what they are worth, and where their rendered fragments landed.
+
+  **The include decision is made here, not in Typst.** `#include` of a file that is not there is
+  a hard error in Typst, and there is no way to test for one or to catch it; so `path_exists`
+  answers the question and a missing fragment becomes a red box, which is what
+  `\protectedInput` does on the LaTeX side and what volume 19's `onion` taught us to want.
+
+  The block and comment tags are moved out of the way of Typst's own punctuation -- `#` opens
+  code and `@` is a reference. See `StaticTypstRenderer`.
+§#)
+#import "/core/typst/dgs.typ" as dgs
+#import "/build/core/i18n/(* competition.language *).typ": language
+
+#show: dgs.document.with(
+  language: language,
+  title: [(* kind_verbose *) (* round.number *). kola (* semester.feminine.genitive *) časti],
+  subtitle: [(* competition.full.nominative *), termín (* round.deadline.strftime('%d. %m. %Y') *)],
+)
+
+(@§ for problem in round.problems §@)
+(@§ set directory = 'render/' ~ module.id ~ '/' ~ competition.id ~ '/' ~ volume.id ~ '/' ~ semester.id ~ '/' ~ round.id ~ '/' ~ problem.id §@)
+#dgs.problem(
+  [(* problem.title *)],
+  number: [(* round.number *).(* problem.number *)],
+  worth: [(* problem.points.description *) bod(* '%s'|format(plural(problem.points.description, "", "y", "ov")) *)(@§ if problem.categories §@), kategórie (* problem.categories|join(', ') *)(@§ endif §@)],
+)
+
+(@§ if path_exists(directory ~ '/' ~ kind ~ '.typ') §@)
+#include "/(* directory *)/(* kind *).typ"
+(@§ else §@)
+#dgs.missing-file("(* directory *)/(* kind *).typ")
+(@§ endif §@)
+(@§ endfor §@)

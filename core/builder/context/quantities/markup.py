@@ -61,6 +61,15 @@ class Markup:
         """
         raise NotImplementedError
 
+    def fragment_preamble(self) -> str:
+        """
+        What a rendered fragment needs at the top of it before anything can read it.
+
+        Empty for everything that goes through pandoc, which reads a fragment as text and needs
+        no declarations to do it.
+        """
+        return ''
+
 
 class MarkdownMarkup(Markup):
     r"""
@@ -215,6 +224,39 @@ class TypstMarkup(Markup):
       unlabellable -- the same distinction the Markdown side draws, expressed directly.
     """
     name = 'typst'
+
+    #: Every function `TypstBackend` can emit a call to, and therefore everything a fragment
+    #: has to have in scope. Named one by one rather than imported with `*`: a call to
+    #: something not in this list is then `unknown variable: qtyrange` at the line that wrote
+    #: it, which is the error anybody would want, and the author's own names are not shadowed
+    #: by the whole of a layout library.
+    #:
+    #: `core/tests/test_quantities.py` holds the two halves to this: that the backend emits
+    #: nothing outside this set, and that `core/typst/dgs.typ` defines every name in it.
+    SPELLINGS = ('num', 'qty', 'ang', 'unit',
+                 'numrange', 'qtyrange', 'numlist', 'qtylist', 'numproduct', 'qtyproduct')
+
+    def fragment_preamble(self) -> str:
+        r"""
+        The import a rendered fragment opens with, which the build writes and nobody authors.
+
+        **Typst's `#include` does not pass its scope down**: a document that imports the layout
+        library and then includes a fragment gives that fragment nothing, and the fragment dies
+        on `unknown variable: qty`. Two ways out, and this is the one that keeps the error
+        messages:
+
+        - `#eval(read(path), scope: …)` hands the fragment a scope and works -- labels and
+          references cross the boundary intact, and `read` is recorded in the depfile. But every
+          error inside the fragment is then reported *at the `#eval` call*, in the generated
+          document, with the author's own file and line nowhere in the message.
+        - an import at the top of the fragment, which is this. Errors keep pointing at
+          `render/…/solution.typ:7:51`, and the fragment is a Typst file that compiles on its
+          own, which is what a preview will want.
+
+        It is the same kind of thing as the non-breaking spaces: a mechanical requirement of the
+        output format that the build satisfies so that no author has to remember it.
+        """
+        return f'#import "/core/typst/dgs.typ": {", ".join(self.SPELLINGS)}\n'
 
     def equation_label(self, ident: str) -> str:
         return f" <eq:{ident}>"

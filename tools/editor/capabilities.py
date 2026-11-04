@@ -43,6 +43,8 @@ INSTALL = {
     'gnuplot': ['sudo apt install gnuplot'],
     'rsvg-convert': ['sudo apt install librsvg2-bin'],
     'mutool': ['sudo apt install mupdf-tools'],
+    'typst': ['sudo apt install typst',
+              '# or a release from https://github.com/typst/typst'],
 }
 
 
@@ -213,6 +215,14 @@ def probe_advisories():
     missing from this list, which is how a machine with no `pdftk` -- this one -- could report
     the PDF tier green and then fail one edge out of 59 355 with nothing having said why.
 
+    **`typst` is a whole flavour's build, and still only an advisory.** A content repository
+    whose meta says `format: typst` is rendered by Jinja and set by Typst, with no pandoc and no
+    TeX anywhere in the chain -- so for that repository this is not optional at all. It is here
+    rather than in a tier because the tiers describe the Markdown flavour, which is every
+    repository that exists today: a machine without Typst can still edit, audit, convert and
+    print all of them, and saying otherwise would grey out three tiers for a tool most people do
+    not yet need.
+
     **`mutool` is dvisvgm's, not ours.** Ghostscript dropped the PDF interpreter dvisvgm drove
     in 10.01.0, so from Debian 13 onwards `dvisvgm --pdf` refuses the file outright -- `To
     process PDF files, either Ghostscript < 10.01.0 or mutool is required` -- and that is the
@@ -223,7 +233,7 @@ def probe_advisories():
     """
     return [Tool(name, bool(_which(name)), _which(name))
             for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'mutool', 'pdfcrop',
-                         'pdftk', 'pdftoppm', 'pdfjam')]
+                         'pdftk', 'pdftoppm', 'pdfjam', 'typst')]
 
 
 def _first_line(text):

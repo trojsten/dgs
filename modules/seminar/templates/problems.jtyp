@@ -1,0 +1,4 @@
+(#§ The round's problems. See `round-base.jtyp`, which is the whole of it. §#)
+(@§ extends 'round-base.jtyp' §@)
+(@§ set kind = 'problem' §@)
+(@§ set kind_verbose = 'Zadania' §@)

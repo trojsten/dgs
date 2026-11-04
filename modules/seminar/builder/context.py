@@ -12,7 +12,7 @@ from core.builder.context import (
 )
 from core.builder.renderer import StandaloneContext
 from core.utilities.schema import valid_language
-from modules.seminar.builder.validators import SeminarRoundValidator
+from modules.seminar.builder.validators import ROUND_VALIDATORS
 
 
 class ContextSeminar(FileSystemTreeContext, metaclass=ABCMeta):
@@ -33,6 +33,11 @@ class ContextCompetition(ContextSeminar):
     _schema = Schema({
         'id': And(str, len),
         'short': And(str, len),
+        # Which markup this repository is written in, and therefore which files its units hold
+        # and how a quantity, an equation and a figure spell themselves. Absent means Markdown,
+        # which is every repository that exists today; a repository is wholly one or the other
+        # and says so here rather than being guessed from whichever files happen to be present.
+        Optional('format'): Or('markdown', 'typst'),
         'full': Schema({
             'nominative': And(str, len),
             Optional('genitive'): And(str, len),
@@ -193,7 +198,7 @@ class ContextRoundFull(ContextRound):
 
 class ContextBooklet(BuildableFileSystemTreeContext, ContextSeminar):
     _schema = Schema({})  # nothing inherent to this context
-    _validator_class = SeminarRoundValidator
+    _validator_class = ROUND_VALIDATORS['markdown']
 
     def populate(self, competition, volume, semester, issue):
         super().populate(competition)
@@ -205,3 +210,10 @@ class ContextBooklet(BuildableFileSystemTreeContext, ContextSeminar):
             semester=ContextSemester(self.root, competition, volume, semester),
             round=ContextRoundFull(self.root, competition, volume, semester, issue),
         )
+        # Which file names a problem must hold follows the repository's markup, and the
+        # repository has just said which that is. Assigned here rather than declared on the
+        # class because `validate_repo` runs after `populate` -- see
+        # `BuildableFileSystemTreeContext.__init__` -- so this is the first moment the answer
+        # is known and the last before it is needed.
+        self._validator_class = ROUND_VALIDATORS[self.data['competition'].get('format',
+                                                                              'markdown')]

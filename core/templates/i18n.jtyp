@@ -1,0 +1,45 @@
+(#§
+  Everything about a language that Typst does not already know, generated from
+  `core/i18n/<lang>.yaml` by `core.builder.i18n` -- the same invocation that writes the `.tex`
+  the booklet inputs and the `.yaml` pandoc-crossref reads. One source, three consumers.
+
+  What Typst does know from `set text(lang:)` is hyphenation and the direction of the script,
+  and that is all it is asked for. The decimal marker, the one-letter words that must not end a
+  line, the abbreviations whose halves belong together and the word a reference is introduced
+  by are this repository's own, decided per language with a citation in the YAML.
+
+  `core/i18n/default.yaml` holds no typography at all, so a language that declares nothing gets
+  empty tuples and every rule reading them is a no-op. That is how English and Hungarian come
+  to get nothing, deliberately: a fallback here would make one language's prepositions
+  another's.
+
+  The `cref` words are lower case, because that is how the sentence around a reference reads in
+  these sources -- the same strings `override.jtex` hands `\crefname`.
+
+  The block and comment tags are moved out of the way of Typst's own punctuation, which is why
+  this file reads oddly: `#` opens code and `@` is a reference. See `StaticTypstRenderer`.
+§#)
+#let language = (
+  code: "(* id *)",
+  full: "(* i18n.full *)",
+  native: "(* i18n.native *)",
+  locale: "(* i18n.locale *)",
+  quotes: (open: "(* i18n.quotes.open *)", close: "(* i18n.quotes.close *)"),
+  decimal-marker: "(* i18n.siunitx.output_decimal_marker *)",
+  list-pair: "(* i18n.siunitx.list_pair_separator *)",
+  list-final: "(* i18n.siunitx.list_final_separator *)",
+  singles: ((@§ for single in i18n.get('typography', {}).get('singles', []) §@)"(* single *)", (@§ endfor §@)),
+  nbsp-pairs: ((@§ for pair in i18n.get('typography', {}).get('nbsp_pairs', []) §@)"(* pair *)", (@§ endfor §@)),
+  thin-pairs: ((@§ for pair in i18n.get('typography', {}).get('thin_pairs', []) §@)"(* pair *)", (@§ endfor §@)),
+  cref: (
+    figure: "(* i18n.cref.figure.singular *)",
+    table: "(* i18n.cref.table.singular *)",
+    equation: "(* i18n.cref.equation.singular *)",
+    section: "(* i18n.cref.section.singular *)",
+  ),
+  words: (
+(@§ for term, text in (i18n.get('words') or {}).items() §@)
+    "(* term *)": "(* text *)",
+(@§ endfor §@)
+  ),
+)

@@ -366,6 +366,98 @@ currency unit, is set up at module level in `core/builder/jinja.py`, which also
 holds the whole filter / global table; and everything in
 `core/builder/context/quantities/` is immutable except the symbol.
 
+## A content repository is Markdown **or** Typst
+
+Everything above describes the Markdown flavour, which is every repository that exists today and
+is not going anywhere. Beside it there is now a second one: a repository whose units hold
+`problem.typ` and `solution.typ`, rendered by the same Jinja and set by Typst.
+
+**Pandoc and TeX are not in that chain at all.** Nothing converts one markup into another:
+
+    source/…/problem.typ  →  render/…/problem.typ   Jinja, to a fixpoint
+                          →  build/…/round.typ      Jinja, a thin document
+                          →  output/…/round.pdf     typst compile
+
+Three stages where the Markdown flavour has five, and the two that go are the two slowest. A
+round compiles in a fifth of a second, Typst reads `assets/fonts/MinionPro` directly -- no
+FontPro, no `TEXMFLOCAL`, no `sudo` -- and it reads SVG, PNG and JPEG natively, so the whole
+picture-conversion chain is absent as well.
+
+**The flavour is declared, never inferred.** `format: typst` in the *competition's* own
+`meta.yaml` (`modules/seminar/builder/context.py`'s `ContextCompetition`), read by
+`tools/ninja/generate.py`'s `_flavour` with the same line scan `_venue_language` uses, and by
+`BuilderRound.templates` and `ROUND_VALIDATORS` to decide which documents a round has and which
+files a problem must hold. Looking at which files happen to be present would let a
+half-converted repository build half a round and say nothing.
+
+**Jinja owns the data; Typst owns the page.** The Python context keeps computing what a document
+says -- `values:`, `derived:`, pint, the plurals, the declensions, the deadline, the credits --
+and the generated document is little more than a list of calls carrying those values. Every
+layout decision is hand-written Typst in **this** repository: `core/typst/dgs.typ`, imported and
+never generated, so it compiles on its own and `phys` and `chem` would share it rather than each
+keeping a copy that drifts. Typst *can* read a `meta.yaml` itself (`yaml()` is a builtin) and
+deliberately does not: the data a document needs is the computed context, not the file, and a
+meta read raw bypasses every `enschema` check.
+
+### What an author writes differently
+
+- **The maths is Typst maths**, in `eq:` entries and in the prose alike: `T = 2 pi sqrt(l/g)`,
+  `v_infinity`, `alpha`. A `symbol:` is Typst too -- `symbol: alpha`, not `\alpha`.
+- **`|arr` does not exist here** and says so with a message rather than approximating: the column
+  spec is a LaTeX `array` requirement, and Typst's display maths aligns on `&` by itself, so
+  `|align` is the answer. `|disp`, `|inl` and `|align` are unchanged.
+- **The tags move**, exactly as they do in an SVG, because `(#` opens code in Typst and `(@` is a
+  reference -- *(@eq:power)* is ordinary prose. A `.typ` source therefore writes `(§ x §)` for a
+  variable, `(@§ for … §@)` for a block and `(#§ … §#)` for a comment, and
+  `TypstJinjaRenderer` inherits the picture dialect so the two cannot drift.
+- **Nothing else.** The same `values:`, `derived:`, `eq:`, `words:`, `blocks:`, `pictures:` and
+  `include()`, validated by the same schemas.
+
+### What the build inserts
+
+- **The import at the top of a rendered fragment.** Typst's `#include` passes no scope down, so a
+  fragment that says `#qty(…)` would die on `unknown variable: qty`. `TypstMarkup.fragment_preamble`
+  writes the import, and `TypstMarkup.SPELLINGS` is the list of names, pinned to
+  `core/typst/dgs.typ` from both directions by `core/tests/test_quantities.py`. The alternative,
+  `#eval(read(path), scope: …)`, works and was measured -- labels and references cross it and
+  `read` lands in the depfile -- but it reports every error *at the `#eval` call*, with the
+  author's file and line nowhere in the message.
+- **The non-breaking spaces**, as `show regex(…)` rules built from the same
+  `core/i18n/<lang>.yaml` lists `core/filters/spacing.lua` uses. Quotes and hyphenation come from
+  `#set text(lang:)`. **The repeated hyphen does not, and is not forgotten:** Typst exposes no
+  discretionary, so a Typst source keeps a plain hyphen until it does.
+- **The missing-file box.** `#include` of a file that is not there is a hard Typst error, and
+  there is no way to test for a file or to catch one -- so the *template* decides, with Jinja's
+  `path_exists`, and emits `dgs.missing-file` instead. That is `\protectedInput`'s red box, and it
+  exists for the reason volume 19's `onion` taught: one missing problem must not take the other
+  thirty-nine down with it.
+
+### Units: no Typst package, and that was measured
+
+Both candidates were tried rather than read about. **`metro`, the siunitx port, does not load at
+all** under Typst 0.15 -- it dies inside its own `defs/units.typ` on `unknown variable: kelvin`,
+and 0.3.0 is the latest there is. **`unify` 0.7.1 loads and loses parts of a compound unit
+silently**: `J/(kg K)` comes out as `J^-1` and `m^3/(kg s^2)` as `m^3 ^-1 s^2 )`. A dropped unit
+that still compiles is exactly the failure this repository keeps finding in other people's
+silence.
+
+So the spelling is ours: `TypstBackend` emits `#qty("148", $upright("mm")$)` and its siblings into
+`core/typst/dgs.typ`. The **unit** arrives as finished Typst maths, converted from pint's compact
+spec in Python where the tests are; the **magnitude** arrives as a string, because the decimal
+comma and the exponent follow the language, and only the document knows which language it is in.
+siunitx options (`per-mode` and friends) raise rather than being ignored.
+
+### What is not there yet
+
+The prototype sets a seminar round's **problems and solutions**. `solutions-full`, the instagram
+squares, the editor's standalone preview, Náboj's language dimension, `.tikz` and `.gp` drawings
+(both of which are a program writing a PDF, which is the chain this flavour does without) and the
+audit's checks -- which are all Markdown-shaped, over `RE_INLINE` and siunitx -- are not written.
+**HTML is deliberately deferred**, and it is the most promising of them: Typst 0.15 exports
+equations as **MathML**, inlines images as `data:` URIs and localises a reference by itself, which
+would replace `core/html/texmath.py`, dvisvgm, Ghostscript and MathJax for a Typst scope -- behind
+`--features html`, and experimental today.
+
 ## What an author may type: `docs/filters.md`
 
 Every filter, global, quantity attribute and `meta.yaml` key, with a worked example of each —

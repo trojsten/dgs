@@ -221,8 +221,16 @@ class JinjaConvertor:
         return PictureJinjaRenderer if path.suffix in PICTURE_SUFFIXES else MarkdownJinjaRenderer
 
     def run(self):
-        return render_to_fixpoint(self.template, self.context.data,
-                                  renderer=self.renderer, where=self.template_name)
+        """
+        The rendered fragment, with whatever its markup needs in front of it.
+
+        The preamble is the markup's to decide and is empty for everything that goes through
+        pandoc; a Typst fragment opens with the import that puts `qty` and its siblings in
+        scope, because Typst's `#include` passes nothing down to the file it includes. See
+        `TypstMarkup.fragment_preamble`.
+        """
+        return quantity_backend.markup().fragment_preamble() + render_to_fixpoint(
+            self.template, self.context.data, renderer=self.renderer, where=self.template_name)
 
 
 class NameCollisionError(Exception):

@@ -4,11 +4,19 @@ from schema import Forbidden
 from core.builder.validator import File, FileSystemValidator
 
 
-class SeminarRoundValidator(FileSystemValidator):
-    _schema = Schema({
+def _round_schema(suffix: str) -> Schema:
+    """
+    What a round's directory must hold, in the markup its repository is written in.
+
+    The two flavours differ in exactly two file names and in nothing else, which is the whole
+    claim this function makes: a Typst repository is the same tree with `problem.typ` where
+    `problem.md` would be. Parameterised rather than copied so that the next thing a round must
+    carry is declared once.
+    """
+    return Schema({
         Regex(r'0[1-8]'): {
-            'problem.md': File,
-            'solution.md': File,
+            f'problem.{suffix}': File,
+            f'solution.{suffix}': File,
             # Anything else the problem carries: a data set, a photo, a Google Earth track, a
             # script the author wrote to check the answer. This used to be a whitelist of eight
             # extensions, which meant every new kind of attachment failed the whole round until
@@ -34,3 +42,20 @@ class SeminarRoundValidator(FileSystemValidator):
         Optional('camp.yaml'): File,
         'meta.yaml': File,
     })
+
+
+class SeminarRoundValidator(FileSystemValidator):
+    """A round written in Markdown, which is every seminar repository that exists today."""
+    _schema = _round_schema('md')
+
+
+class SeminarTypstRoundValidator(FileSystemValidator):
+    """A round written in Typst, declared by `format: typst` in the competition's meta."""
+    _schema = _round_schema('typ')
+
+
+#: Which validator a repository takes, by the `format:` its competition meta declares.
+ROUND_VALIDATORS = {
+    'markdown': SeminarRoundValidator,
+    'typst': SeminarTypstRoundValidator,
+}

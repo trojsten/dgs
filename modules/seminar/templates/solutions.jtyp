@@ -1,0 +1,4 @@
+(#§ The round's solutions, which differ from its problems in two words and one file name. §#)
+(@§ extends 'round-base.jtyp' §@)
+(@§ set kind = 'solution' §@)
+(@§ set kind_verbose = 'Vzorové riešenia' §@)

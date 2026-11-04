@@ -6,8 +6,14 @@ class BuilderSeminar(builder.BaseBuilder):
 
     def add_arguments(self):
         super().add_arguments()
+        # A hand-written list of what `source/seminar/` might hold, which is a second copy of
+        # what `modules/seminar/editor.yaml` lists under `sources:` and drifts from it -- three
+        # of these have never been cloned by anybody. It stays a list only because argparse
+        # wants the choices before `launch` has been parsed; `typst` is the Typst-flavoured
+        # scratch repository.
         self.parser.add_argument('-c', '--competition',
-                                 choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old', 'test'])
+                                 choices=['FKS', 'KMS', 'UFO', 'KSP', 'Prask', 'FX', 'FKS-old',
+                                          'test', 'typst'])
         self.parser.add_argument('-v', '--volume', type=int)
         self.parser.add_argument('-s', '--semester', type=int)
         self.parser.add_argument('-r', '--round', type=int)

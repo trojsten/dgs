@@ -1,4 +1,5 @@
 import math
+import pathlib
 
 import pint
 import pytest
@@ -15,6 +16,7 @@ from core.builder.context.quantities import (
     UnknownUnitMacroError,
     backend,
 )
+from core.builder.context.quantities.markup import TypstMarkup
 
 
 @pytest.fixture
@@ -1840,6 +1842,37 @@ class TestBackends:
             assert format(gravitation, 'g') == (
                 '#qty("1", $upright("m")^3/(upright("kg") thin upright("s")^2)$)')
 
+    def test_every_call_the_backend_emits_is_in_the_fragment_preamble(self):
+        """
+        The two halves have to agree or a fragment dies on `unknown variable`.
+
+        `TypstMarkup.SPELLINGS` is what a rendered fragment imports, and the backend is what
+        writes the calls; they are in the same package and they are still two lists, so this is
+        the test that makes them one.
+        """
+        unit = PhysicsQuantity.construct(3, 'metre / second')
+        pair = [PhysicsQuantity.construct(1, 'metre'), PhysicsQuantity.construct(2, 'metre')]
+        emitted = set()
+        with backend.using('typst'):
+            emitted.add(format(unit, 'g'))
+            emitted.add(format(PhysicsQuantity.construct(45, 'degree'), 'g'))
+            emitted.add(format(PhysicsQuantity.construct(3, ''), 'g'))
+            emitted.add(unit.only_unit())
+            emitted.add(format(QuantityRange(*pair), 'g'))
+            emitted.add(format(QuantityList(*pair), 'g'))
+            emitted.add(format(QuantityProduct(*pair), 'g'))
+        called = {written.split('(')[0].lstrip('#') for written in emitted}
+        assert called <= set(TypstMarkup.SPELLINGS), called - set(TypstMarkup.SPELLINGS)
+
+    def test_the_library_defines_every_name_the_preamble_imports(self):
+        """
+        The other half, and the one that catches a rename in `core/typst/dgs.typ`: an import of
+        a name the library does not define is an error at the top of every fragment at once.
+        """
+        library = pathlib.Path('core/typst/dgs.typ').read_text(encoding='utf-8')
+        defined = set(re.findall(r'^#let ([a-z-]+)\(', library, flags=re.MULTILINE))
+        assert set(TypstMarkup.SPELLINGS) <= defined, set(TypstMarkup.SPELLINGS) - defined
+
     def test_typst_refuses_siunitx_options_rather_than_dropping_them(self):
         """
         `per-mode` and friends are package options with no Typst counterpart. Silently ignoring
@@ -1848,9 +1881,8 @@ class TestBackends:
         """
         quantity = PhysicsQuantity.construct(3, 'metre / second',
                                              si_extra={'per-mode': 'symbol'})
-        with backend.using('typst'):
-            with pytest.raises(ValueError, match='no Typst spelling'):
-                format(quantity, 'g')
+        with backend.using('typst'), pytest.raises(ValueError, match='no Typst spelling'):
+            format(quantity, 'g')
 
     def test_the_unit_alone_follows_the_backend(self, speed):
         assert speed.only_unit() == r'\unit{\metre\per\second}'

@@ -11,7 +11,7 @@ import argparsedirs
 
 from core.builder.context import Context
 from core.builder.context.buildable import BuildableContext
-from core.builder.jinja import JinjaRenderer
+from core.builder.jinja import JinjaRenderer, StaticTypstRenderer
 from core.utilities import colour as c
 from core.utilities import crawler
 
@@ -62,6 +62,18 @@ class BaseBuilder(metaclass=ABCMeta):
     default_suffix_map = {
         '.jtex': '.tex',
         '.jyaml': '.yaml',
+        '.jtyp': '.typ',
+    }
+
+    #: Templates whose dialect is not `_renderer_class`'s, by suffix.
+    #:
+    #: A `.jtyp` is a Typst document, where `(#` opens code and `(@` is a reference, so the
+    #: block and comment tags have to move exactly as they do for an SVG. The *renderer* is a
+    #: property of the template's format and not of the builder -- one builder writes a round's
+    #: `.jtex` documents and its `.typ` one from the same context -- so the choice is made per
+    #: template here rather than by giving the builder a second class attribute to set.
+    renderer_overrides: ClassVar[dict[str, type[JinjaRenderer]]] = {
+        '.jtyp': StaticTypstRenderer,
     }
 
     def __init__(self,
@@ -84,6 +96,8 @@ class BaseBuilder(metaclass=ABCMeta):
         self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
 
         self.renderer = self._renderer_class(Path(self.template_root))
+        #: Built on demand, because most builders never render a template that needs one.
+        self._overridden: dict[str, JinjaRenderer] = {}
 
     def add_core_arguments(self) -> None:
         """ Create the default ArgumentParser """
@@ -148,6 +162,16 @@ class BaseBuilder(metaclass=ABCMeta):
             raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
                              f"only supports {', '.join(self.suffix_map.keys())}")
 
+    def renderer_for(self, template: str | Path) -> JinjaRenderer:
+        """Which dialect this template is written in, decided by its extension and nothing else."""
+        suffix = Path(template).suffix
+        override = self.renderer_overrides.get(suffix)
+        if override is None:
+            return self.renderer
+        if suffix not in self._overridden:
+            self._overridden[suffix] = override(Path(self.template_root))
+        return self._overridden[suffix]
+
     def build_templates(self, *, new_name: str | None = None) -> None:
         """
         Build all templates for this builder.
@@ -166,7 +190,7 @@ class BaseBuilder(metaclass=ABCMeta):
         for template in self.templates:
             outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
             print(
-                self.renderer.render(Path(template), self.context.data),
+                self.renderer_for(template).render(Path(template), self.context.data),
                 file=outfile
             )
 

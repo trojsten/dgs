@@ -113,6 +113,26 @@ ROUND_PDFS = ('problems', 'solutions', 'solutions-full')
 #: split to make.
 SEMINAR_TARGETS = ('problem', 'solution')
 
+#: A Typst round's documents, and which of a problem's files each is made of.
+#:
+#: Fewer than `ROUND_DOCUMENTS`, deliberately: the Typst flavour sets a round's problems and its
+#: solutions, and the two documents that are about distribution rather than about the physics --
+#: the full solutions with their credits, and the instagram squares -- wait until the shape has
+#: stopped moving. `modules/seminar/builder/round.py` names the same two.
+TYPST_ROUND_DOCUMENTS = {'problems': 'problem', 'solutions': 'solution'}
+
+#: Pictures a Typst document can read as they are. Typst takes SVG, PNG and JPEG natively, so
+#: there is no conversion chain here at all -- what the Markdown flavour needs `pdftocairo`,
+#: `rsvg-convert` and a `.tikz.tex` wrapper for, this one needs nothing for. An `.svg` is a Jinja
+#: template like any other and is *rendered*; a bitmap is copied.
+#:
+#: `.tikz` and `.gp` are deliberately absent. Both are drawn by a program that writes a PDF, and
+#: a Typst source that wanted one would be asking for the LaTeX chain back; CeTZ draws in Typst
+#: and gnuplot can write SVG directly, and which of those a Typst repository should use is a
+#: question for whoever writes the first drawing, not for this generator.
+TYPST_PICTURE_TEMPLATES = ('svg',)
+TYPST_PICTURE_COPIES = ('png', 'jpg')
+
 #: What `modules/naboj/builder/venue.py` writes: two from the template root, and
 #: `instructions-inner.tex` per language, which it skips when the source is absent.
 VENUE_DOCUMENTS = ('instructions', 'answers-modulo')
@@ -273,6 +293,21 @@ def rules(w: Writer) -> None:
            "'modules/seminar/templates/' -c $competition -v $volume -s $semester -r $round "
            "-o '$outdir'",
            description=described('{a}Building {x}round{a} documents for {f}$outdir'))
+    # Typst, which is the whole of a Typst-flavoured document's build: no pandoc, no `.tex`, no
+    # second pass, and no `.fls` to parse. `--deps … --deps-format make` writes the Makefile
+    # depfile Ninja reads directly, so what the document actually opened -- every fragment it
+    # included, every picture, the i18n table, the layout library -- is recorded by the compiler
+    # that opened it, which is the same honesty `tools/ninja/fls.py` buys from xelatex the hard
+    # way.
+    #
+    # `--root .` makes `/core/typst/dgs.typ` mean this repository rather than the filesystem,
+    # and `--font-path` hands Typst the OTFs that are already here: no FontPro, no TEXMFLOCAL,
+    # no `sudo`.
+    w.rule('typst_pdf',
+           'mkdir -p $$(dirname $out) && typst compile --root . '
+           '--font-path assets/fonts/MinionPro --deps $out.d --deps-format make $in $out',
+           depfile='$out.d', deps='gcc',
+           description=described('{a}[typst] Compiling {x}PDF{a} file {f}$out'))
     w.rule('venue',
            "mkdir -p $outdir && $run -m modules.naboj.builder.venue 'source/naboj/' "
            "'modules/naboj/templates/' $competition $volume $venue -o '$outdir'",
@@ -475,16 +510,20 @@ def core_edges(repo: pathlib.Path, w: Writer, needs: dict) -> int:
     The edges every scope shares, emitted once however many scopes there are.
 
     The i18n tables, and each competition's `.static/` tree. One `core.builder.i18n` invocation
-    writes both the `.tex` the booklet `\input`s and the `.yaml` every pandoc run reads as
-    `crossrefYaml` -- two outputs on one edge, where `Makefile:165` declares only the first and
-    leaves `core/templates/crossref.jyaml` a prerequisite of nothing at all.
+    writes the `.tex` the booklet `\input`s, the `.yaml` every pandoc run reads as `crossrefYaml`
+    and the `.typ` a Typst document imports -- three outputs on one edge, where `Makefile:165`
+    declares only the first and leaves `core/templates/crossref.jyaml` a prerequisite of nothing
+    at all. A language is decided once, in `core/i18n/<lang>.yaml`, with the citation that
+    decided it; nothing downstream transcribes it into a second place.
     """
     w.comment('==== core ' + '=' * 60)
     edges = 0
     for lang in sorted(needs['languages']):
         w.build(f'build/core/i18n/{lang}.tex', 'i18n', [f'core/i18n/{lang}.yaml'],
-                implicit=['core/templates/override.jtex', 'core/templates/crossref.jyaml'],
-                implicit_outputs=[f'build/core/i18n/{lang}.yaml'],
+                implicit=['core/templates/override.jtex', 'core/templates/crossref.jyaml',
+                          'core/templates/i18n.jtyp'],
+                implicit_outputs=[f'build/core/i18n/{lang}.yaml',
+                                  f'build/core/i18n/{lang}.typ'],
                 variables={'lang': lang})
         edges += 1
     for competition in sorted(needs['competitions']):
@@ -762,6 +801,9 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         return w.build(*args, **kwargs)
 
     competition, volume_id, semester, round_id = scope.split('/')
+    if _flavour(repo / 'source/seminar' / competition / 'meta.yaml') == 'typst':
+        return seminar_typst_edges(repo, scope, w)
+
     root = repo / 'source' / 'seminar' / scope
     problems = sorted(p.parent for p in listed(root).glob('*/meta.yaml') if _visible(p.parent))
 
@@ -870,6 +912,111 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     w.build(f'output/seminar/{scope}/instagram', 'phony', images)
     w.build(f'output/seminar/{scope}/pages', 'phony', pages)
     counts['edges'] += 6
+    w.newline()
+
+    counts['problems'] = len(problems)
+    counts['pictures'] = len(pictures)
+    return counts
+
+
+def seminar_typst_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
+    """
+    One seminar round whose repository is written in Typst.
+
+    **Three stages instead of five**, and that is the whole of what this flavour is: Jinja
+    renders each `.typ` source, Jinja writes a thin document, and Typst compiles it. There is no
+    pandoc edge, no `.tex`, no second xelatex pass, no i18n `.yaml` for crossref, no picture
+    conversion and no `.fls` to turn into a depfile -- Typst reads SVG, PNG and JPEG as they
+    come and reports its own dependencies.
+
+    What is *not* different is everything above the markup: the same renderer, the same context,
+    the same validated metas, the same `include()`. A problem in a Typst repository is the same
+    problem; only the page it is set on is reached another way.
+    """
+    counts = {'edges': 0, 'languages': ['sk'], 'listed': set(), 'read': set()}
+
+    def listed(directory: pathlib.Path) -> pathlib.Path:
+        if directory.is_dir():
+            counts['listed'].add(str(directory.relative_to(repo)))
+        return directory
+
+    def build(*args, **kwargs):
+        counts['edges'] += 1
+        return w.build(*args, **kwargs)
+
+    competition, volume_id, semester, round_id = scope.split('/')
+    root = repo / 'source' / 'seminar' / scope
+    problems = sorted(p.parent for p in listed(root).glob('*/meta.yaml') if _visible(p.parent))
+
+    w.comment(f'==== seminar/{scope} (typst) ' + '=' * 41)
+
+    # The competition meta is *read*, not merely listed: `format:` is what sent this scope here
+    # rather than to `seminar_edges`, and no directory listing holds that fact. Same mechanism
+    # as a venue's `language:`, and for the same reason -- changing it regenerates the graph.
+    counts['read'].add(f'source/seminar/{competition}/meta.yaml')
+    counts['needs'] = {'languages': {'sk'}, 'competitions': set()}
+    templates = sorted(str(p.relative_to(repo))
+                       for p in (repo / 'modules/seminar/templates').rglob('*.jtyp'))
+
+    fragments = {name: [] for name in SEMINAR_TARGETS}
+    pictures = []
+    for problem in problems:
+        rel = listed(problem).relative_to(repo / 'source').as_posix()
+        meta = (problem / 'meta.yaml').resolve()
+        # A picture lands **beside the fragment that names it**, in `render/`, because that is
+        # where Typst looks: `image("pendulum.svg")` resolves against the file the call is
+        # written in. The Markdown flavour can rewrite the path on the way through pandoc; here
+        # there is no pass to rewrite it in, so the file is put where the author said it is.
+        for extension in TYPST_PICTURE_TEMPLATES:
+            for picture in sorted(problem.glob(f'*.{extension}')):
+                stem = f'{rel}/{picture.stem}'
+                _rendered(build, f'render/{stem}.{extension}', f'source/{stem}.{extension}',
+                          implicit=[str(meta.relative_to(repo))],
+                          variables={'lang': 'sk', 'meta': str(meta),
+                                     'renderer': SEMINAR_RENDERER})
+                pictures.append(f'render/{stem}.{extension}')
+        for extension in TYPST_PICTURE_COPIES:
+            for picture in sorted(problem.glob(f'*.{extension}')):
+                stem = f'{rel}/{picture.stem}'
+                _copied(build, f'render/{stem}.{extension}', f'source/{stem}.{extension}')
+                pictures.append(f'render/{stem}.{extension}')
+
+        # `(§ include('pad.py') §)` inlines a program sitting beside the solution, so the
+        # program is an input of the render. The Markdown flavour does not say so and should;
+        # here it is said, because a listing that changed and a solution that did not is
+        # exactly the stale output this build was rewritten to stop producing.
+        listings = sorted(str(p.relative_to(repo)) for p in problem.glob('*.py'))
+        for name in SEMINAR_TARGETS:
+            if (problem / f'{name}.typ').is_file():
+                _rendered(build, f'render/{rel}/{name}.typ', f'source/{rel}/{name}.typ',
+                          implicit=[str(meta.relative_to(repo)), *listings],
+                          variables={'lang': 'sk', 'meta': str(meta),
+                                     'renderer': SEMINAR_RENDERER})
+                fragments[name].append(f'render/{rel}/{name}.typ')
+
+    # One builder invocation writes both documents, exactly as it writes four for a Markdown
+    # round -- which templates it renders is the repository's flavour to decide, and
+    # `BuilderRound.templates` decides it from the same `format:` key this function read.
+    outdir = f'build/seminar/{scope}'
+    build([f'{outdir}/{name}.typ' for name in TYPST_ROUND_DOCUMENTS], 'round', None,
+          implicit=[*templates,
+                    f'source/seminar/{competition}/meta.yaml',
+                    f'source/seminar/{scope}/meta.yaml',
+                    *sorted(str((p / 'meta.yaml').relative_to(repo)) for p in problems)],
+          variables={'competition': competition, 'volume': volume_id, 'semester': semester,
+                     'round': round_id, 'outdir': outdir})
+
+    for name, kind in TYPST_ROUND_DOCUMENTS.items():
+        # The fragments and the pictures are named here although `--deps` will report them: a
+        # depfile is what Ninja knows on the *second* build, and the first one has to be right
+        # too -- a document compiled before its fragments exist is a page of red boxes.
+        build(f'output/seminar/{scope}/{name}.pdf', 'typst_pdf', [f'{outdir}/{name}.typ'],
+              implicit=[*fragments[kind], *pictures,
+                        'build/core/i18n/sk.typ', 'core/typst/dgs.typ'])
+
+    w.build(f'output/seminar/{scope}/all', 'phony',
+            [f'output/seminar/{scope}/{name}.pdf' for name in TYPST_ROUND_DOCUMENTS])
+    counts['edges'] += 1
     w.newline()
 
     counts['problems'] = len(problems)
@@ -1059,7 +1206,8 @@ def _fragment(build, source: str, stem: str, lang: str, meta: pathlib.Path,
 #: What a template is called in the line the build prints. The jinja step serves four formats,
 #: and the Makefile's single `jinja` macro called every one of them a "Markdown template" --
 #: true of the 161 fragments in a volume and not of its 30 pictures.
-TEMPLATE_KINDS = {'md': 'Markdown', 'gp': 'gnuplot', 'svg': 'SVG', 'tikz': 'TikZ'}
+TEMPLATE_KINDS = {'md': 'Markdown', 'typ': 'Typst', 'gp': 'gnuplot', 'svg': 'SVG',
+                  'tikz': 'TikZ'}
 
 
 def _rendered(build, target: str, source: str, **kwargs):
@@ -1201,6 +1349,29 @@ def _venue_language(meta: pathlib.Path) -> str | None:
                 and (language := value.split('#')[0].strip().strip('\'"'))):
             return language
     return None
+
+
+def _flavour(meta: pathlib.Path) -> str:
+    """
+    Which markup a content repository is written in, as its own meta declares.
+
+    The second thing this generator reads out of a file rather than off a directory listing, and
+    the same line scan as `_venue_language` for the same reason: this module imports nothing
+    outside the standard library, because `tools/ninja/bootstrap.py` may run it under a bare
+    `python3` where the project's packages are not importable.
+
+    **Declared, not inferred.** The alternative -- look at whether the problems hold `.md` or
+    `.typ` -- would let a half-converted repository build half a round and say nothing, and a
+    repository is wholly one flavour or the other. Absent means `markdown`, which is every
+    repository that exists today.
+    """
+    if not meta.is_file():
+        return 'markdown'
+    for line in meta.read_text(encoding='utf-8').splitlines():
+        key, separator, value = line.partition(':')
+        if separator and key.strip() == 'format':
+            return value.split('#')[0].strip().strip('\'"') or 'markdown'
+    return 'markdown'
 
 
 def _standalone(build, module: str, rel: str, inputs: list, templates: list, lang: str) -> str:

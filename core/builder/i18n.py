@@ -20,7 +20,11 @@ class BuilderI18n(BaseBuilder):
     _root_context_class = BuildableContextCoreI18n
     _renderer_class = StaticRenderer
 
-    templates = ['override.jtex', 'crossref.jyaml']
+    #: One invocation, three consumers: the `.tex` the booklet inputs, the `.yaml` every
+    #: pandoc run reads as `crossrefYaml`, and the `.typ` a Typst document imports. A language
+    #: is decided once -- with the citation that decided it in `core/i18n/<lang>.yaml` -- and
+    #: nothing is transcribed into a second place.
+    templates = ['override.jtex', 'crossref.jyaml', 'i18n.jtyp']
 
 
     def add_arguments(self):

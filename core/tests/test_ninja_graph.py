@@ -20,6 +20,7 @@ import pytest
 
 from tools.ninja.generate import (
     _beside,
+    _flavour,
     _fragment,
     _instagram,
     _page,
@@ -218,3 +219,43 @@ class TestTheInstagramPages:
         """`-singlefile` writes `<prefix>.png`, so the prefix is the output without its suffix."""
         _instagram(writer.build, self.PREFIX, self.COUNTED, 1)
         assert f'\n  prefix = {self.PREFIX}-01\n' in written(writer)
+
+
+class TestWhichMarkupARepositoryIsWrittenIn:
+    """
+    `format:` in a competition's own meta, and the graph a scope gets follows it.
+
+    **Declared, never inferred.** Looking at whether the problems hold `.md` or `.typ` would let
+    a half-converted repository build half a round and say nothing; a repository is wholly one
+    flavour or the other, and the one line that says so lives with the content rather than here.
+
+    Read by a line scan, like `_venue_language` and for the same reason: `tools/ninja/bootstrap.py`
+    may run this generator under a bare `python3` where the project's packages are not
+    importable, so the module imports nothing outside the standard library.
+    """
+
+    def test_a_meta_that_says_typst_is_typst(self, tmp_path):
+        meta = tmp_path / 'meta.yaml'
+        meta.write_text('id: "typst"\nformat:             typst\nlanguage: sk\n')
+        assert _flavour(meta) == 'typst'
+
+    def test_a_meta_that_says_nothing_is_markdown(self, tmp_path):
+        """Which is every content repository that exists today, and must stay that way."""
+        meta = tmp_path / 'meta.yaml'
+        meta.write_text('id: "FKS"\nlanguage: sk\n')
+        assert _flavour(meta) == 'markdown'
+
+    def test_a_meta_that_is_not_there_is_markdown(self, tmp_path):
+        """A scope with no competition meta is somebody else's error to report, not this one's."""
+        assert _flavour(tmp_path / 'absent.yaml') == 'markdown'
+
+    def test_the_value_may_be_quoted_or_commented(self, tmp_path):
+        meta = tmp_path / 'meta.yaml'
+        meta.write_text('format: "typst"   # the scratch repository\n')
+        assert _flavour(meta) == 'typst'
+
+    def test_a_key_that_merely_ends_in_format_is_not_it(self, tmp_path):
+        """`page_format:` is not `format:`, and a line scan has to say so."""
+        meta = tmp_path / 'meta.yaml'
+        meta.write_text('page_format: typst\n')
+        assert _flavour(meta) == 'markdown'
