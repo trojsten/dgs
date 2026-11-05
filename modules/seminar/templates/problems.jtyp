@@ -2,3 +2,18 @@
 (@§ extends 'round-base.jtyp' §@)
 (@§ set kind = 'problem' §@)
 (@§ set kind_verbose = 'Zadania' §@)
+
+(#§ `problems.jtex`'s own subtitle block: the deadline under the title, and nothing else. §#)
+(@§ block subtitle §@)
+  subtitle: [Termín odoslania (* round.deadline.strftime('%d. %m. %Y') *)],
+(@§ endblock §@)
+
+(#§ `credits.worth`, which is Typst's `*…*` rather than `\textbf{…}`. §#)
+(@§ block heading_inner §@)
+(@§- if problem.points is defined and problem.points.description is defined -§@)
+*(* problem.points.description *) bod(* problem.points.description|plural("","y","ov") *)*
+(@§- endif -§@)
+(@§- if problem.categories -§@)
+, kategóri(* plural(problem.categories|length, "a", "e", "e") *) *(* problem.categories|join('*, *') *)*
+(@§- endif -§@)
+(@§ endblock §@)

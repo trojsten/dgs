@@ -5,8 +5,16 @@
 // document is calls into this file carrying values it computed -- `#qty("148", $upright("mm")$)`
 // -- and nothing about how they look.
 //
-// This is a prototype and says so: the page is A4 with seminar's margins, the type is the
-// booklet's own, and no attempt is made to reproduce `dgs.cls`'s geometry, heads or tear-offs.
+// **The page is the booklet's page, and that was measured rather than approximated.** Every
+// length in "The page" below was read off a built FKS round with `pdftotext -bbox` and a scan
+// for the two rules, and a Typst round now puts its masthead, its head rule, its title, its
+// first problem heading, its first baseline and its foot rule within a point of where the
+// LaTeX one puts them. That is a check anybody can repeat, and it is the reason to write the
+// numbers down as `dgs.cls`'s own names instead of tuning by eye.
+//
+// What is still a prototype is what is *missing* rather than what is wrong: the tear-offs, the
+// rules page, the semester booklet's imposition and the credits block have no Typst counterpart
+// yet, and `document()` therefore takes a round's four pieces and no more.
 
 // ===========================================================================================
 // The faces
@@ -196,9 +204,56 @@
   )
 }
 
+
 // ===========================================================================================
-// The page
+// The page: `dgs.cls`'s own geometry, measured off the booklet rather than guessed
 // ===========================================================================================
+//
+// Every length below was read out of a built FKS booklet with `pdftotext -bbox` and a scan for
+// the two rules, and the names are `dgs.cls`'s and `base.jtex`'s. The point of writing them as
+// named constants is that the next person can check them the same way: a page of this flavour
+// and a page of the Markdown one should put their rules and their first baseline in the same
+// place, and if they do not, one of these numbers is wrong.
+
+//: `\RequirePackage[left, right, top, bottom = 15mm]{geometry}`, and `includeheadfoot`, so the
+//: header and the footer live *inside* that 15 mm rather than outside it.
+#let MARGIN = 15mm
+#let HEAD-HEIGHT = 20pt                                 // geometry's `headheight`
+#let HEAD-SEP = 16pt                                    // geometry's `headsep`
+#let FOOT-SKIP = 32pt                                   // geometry's `footskip`
+#let TEXT-WIDTH = 210mm - 2 * MARGIN                    // 180 mm, which is what the booklet sets
+
+//: `\renewcommand{\headrulewidth}{0.4pt}`, and the same for the foot.
+#let RULE = 0.4pt
+
+//: `colour-url` and `colour-link` in `dgs.cls`, which are the same teal.
+#let LINK-COLOUR = rgb(0, 137, 162)
+
+//: extarticle's 12 pt size table, as fractions of the body size, so that `1.2em` here and
+//: `\large` there mean the same thing: 14.4, 17.28, 20.74 and 10 pt.
+#let LARGE = 1.2em
+#let XLARGE = 1.44em
+#let XXLARGE = 1.728em
+#let FOOTNOTESIZE = 0.833em
+
+//: `\baselineskip` at 12 pt is 14.5 pt and `\parskip` is `1em plus 0.1em`. Typst counts the
+//: first as a gap between two lines' edges rather than between their baselines, so the number
+//: is not 14.5; it is what makes the measured baselines 14.5 pt apart in Minion Pro.
+#let LEADING = 0.55em
+#let PARSKIP = 1em
+
+// Which problem we are inside, so that an equation and a figure can be numbered within it the
+// way `\numberwithin{equation}{subsection}` numbers them in the booklet -- `(1.1.2)` is the
+// second numbered equation of problem 1.1. `problem()` sets it and resets both counters.
+#let dgs-problem = state("dgs-problem", none)
+
+//: How many problems have been set, which is only ever asked one question: is this the first?
+#let dgs-problems = counter("dgs-problems")
+
+#let _within-problem(n) = context {
+  let problem = dgs-problem.get()
+  if problem == none { str(n) } else { problem + "." + str(n) }
+}
 
 // A fragment that is not there. `\protectedInput`'s red box, which exists because one missing
 // problem must not take the other thirty-nine down with it -- volume 19 printed one for years.
@@ -213,34 +268,181 @@
   text(fill: white, weight: "bold")[Missing file: #raw(path)],
 )
 
-// One problem's heading: the title on the left, what it is worth on the right.
+// One problem's heading, which is `base-booklets.jtex`'s `\subsection`: the number set bold and
+// 6 pt clear of the title, the title bold beside it, and whatever the booklet puts on the right
+// of that line -- what the problem is worth, or who wrote and marked it -- pushed out to the
+// margin at body size by a `\hfill`.
+//
+// It also opens the problem for the numbering above, which is why it resets both counters.
 #let problem(title, number: none, worth: none) = {
-  block(above: 1.2em, below: 0.6em)[
-    #set text(size: 1.1em, weight: "bold")
-    #if number != none [#number. ]#title
-    #if worth != none [#h(1fr) #text(size: 0.85em, weight: "regular")[#worth]]
-  ]
+  dgs-problem.update(number)
+  counter(math.equation).update(0)
+  counter(figure.where(kind: image)).update(0)
+
+  context {
+    // **The first problem sits closer to what is above it**, and that is the booklet's own
+    // shape rather than a tweak: every other heading is preceded by a paragraph and therefore
+    // by `\parskip`, while the first is preceded by the title block, which `problems.jtex`
+    // ends with a `\\[2pt]` and not a `\par`. Typst collapses two spacings to the larger of
+    // them instead of adding them, so the distinction has to be made here.
+    let above = if dgs-problems.get().first() == 0 { 17pt } else { 29.5pt }
+    block(above: above, below: 18.7pt, width: 100%)[
+      #set text(size: LARGE, weight: "bold")
+      #if number != none [#number#h(6pt)]#title
+      #if worth != none [#h(1fr)#text(size: 1em / 1.2, weight: "regular")[#worth]]
+    ]
+  }
+  dgs-problems.step()
 }
+
+// The first page's masthead, which is `seminar-booklet-first`'s header: Trojsten on the left,
+// the competition's own logo on the right, and between them the competition, the volume and
+// the address. It is laid out here rather than in a `page.header` because the LaTeX one is
+// taller than `headheight` and pushes the body down the page -- a Typst header never does, so
+// the honest way to say the same thing is to put it at the top of the body and pull it up into
+// the margin, which is what `document()` does with the `v(-…)` below.
+#let masthead(
+  competition: none,
+  volume: none,
+  address: none,
+  logo: none,
+) = {
+  grid(
+    columns: (1fr, auto, 1fr),
+    align: (left + top, center + top, right + top),
+    image("/assets/logo/trojsten/logo.pdf", height: 20mm),
+    // Narrower than `base.jtex`'s `0.7\textwidth`, and for a reason that is Typst's: a grid
+    // cell clips what overflows it, and the Trojsten logo at 20 mm high is 108 pt wide, which
+    // is wider than the 77 pt the LaTeX proportions leave for it. LaTeX merely reports an
+    // overfull box and prints the logo anyway. Nothing wraps at either width.
+    block(width: 0.55 * TEXT-WIDTH)[
+      #set align(center)
+      #set par(leading: LEADING, spacing: 0pt)
+      #v(5pt)
+      #text(size: XLARGE)[#competition]
+      #v(10.3pt, weak: true)
+      #text(size: LARGE)[#volume]
+      #v(15.9pt, weak: true)
+      #text(size: FOOTNOTESIZE)[#address]
+    ],
+    // The competition's logo lives in its own repository, under `.static/`, so a scope that has
+    // not got one simply has none -- the template answers that with `path_exists`, the same way
+    // it answers a missing fragment.
+    if logo == none { none } else { image(logo, width: 30mm) },
+  )
+}
+
+#let _rule = line(length: 100%, stroke: RULE)
 
 #let document(
   language: none,
   title: none,
   subtitle: none,
+  running-head: none,
+  masthead: none,
+  logo: none,
+  email: none,
+  web: none,
   body,
 ) = {
   dgs-language.update(language)
 
-  set page(paper: "a4", margin: 15mm, numbering: "1")
+  // `\fancyhead[LO,RE]{logo}` and `\fancyhead[LE,RO]{\textit{competition}}`: the booklet is
+  // two-sided -- it is imposed with `pdfbook --short-edge` -- so the logo and the running head
+  // swap sides on an even page, and so do the two halves of the footer.
+  let outer-inner(outer, inner) = context {
+    if calc.odd(here().page()) { (outer, inner) } else { (inner, outer) }
+  }
+
+  set page(
+    paper: "a4",
+    margin: (
+      left: MARGIN, right: MARGIN,
+      top: MARGIN + HEAD-HEIGHT + HEAD-SEP,
+      bottom: MARGIN + FOOT-SKIP,
+    ),
+    header-ascent: HEAD-SEP,
+    // Measured: the foot rule sits 17 pt below the last line of the body.
+    footer-descent: 17pt,
+    header: context {
+      // The first page carries the masthead instead, in the body.
+      if here().page() == 1 { return }
+      let mark = if logo == none { none } else { image(logo, height: 6mm) }
+      let name = text(style: "italic")[#running-head]
+      let (left-slot, right-slot) = if calc.odd(here().page()) { (mark, name) } else { (name, mark) }
+      grid(
+        columns: (1fr, 1fr),
+        align: (left + bottom, right + bottom),
+        left-slot, right-slot,
+      )
+      v(4.4pt, weak: true)
+      _rule
+    },
+    footer: {
+      // `\href{mailto:…}{\texttt{…}}` and `\URL`, both in `colour-url`.
+      let typewriter(target, label) = link(target, text(fill: LINK-COLOUR, font: MONO-FONT, label))
+      let address = typewriter("mailto:" + email, email)
+      let site = typewriter(web, web)
+      _rule
+      v(6.7pt, weak: true)
+      context {
+        let (left-slot, right-slot) = if calc.odd(here().page()) { (address, site) } else { (site, address) }
+        grid(
+          columns: (1fr, auto, 1fr),
+          align: (left, center, right),
+          left-slot, counter(page).display(), right-slot,
+        )
+      }
+    },
+  )
+
   set text(font: BODY-FONT, size: 12pt, lang: language.code)
-  set par(justify: true, leading: 0.65em)
+  // `\setlength{\parindent}{0cm}` and `\setlength{\parskip}{1em plus 0.1em}`: the booklet
+  // separates paragraphs with space and never indents one.
+  set par(justify: true, leading: LEADING, spacing: PARSKIP, first-line-indent: 0pt)
   // The maths, and the listings. `core/latex/fonts.tex` sets the monospace face to Ubuntu Mono
   // and this follows it; the maths cannot follow the booklet and `MATH-FONT` says why at
   // length.
   show math.equation: set text(font: MATH-FONT)
   show raw: set text(font: MONO-FONT, size: 0.9em)
+  // `\setDisplaySkips` in `dgs.cls`: 10 pt above and below a display, and `\jot` at 10 pt.
+  show math.equation.where(block: true): set block(above: 10pt, below: 10pt)
+
+  // **A display is numbered only where it carries a label**, which is pandoc-crossref's rule on
+  // the Markdown side and has to be built by hand here: Typst numbers every block equation it is
+  // told to number. So an unlabelled one is rebuilt without a number and the counter is put
+  // back, leaving the numbers running over the labelled displays alone. The `numbering != none`
+  // test is what stops the rule recursing into its own replacement.
+  set math.equation(numbering: n => [(#_within-problem(n))])
+  show math.equation.where(block: true): it => {
+    if it.at("label", default: none) == none and it.numbering != none {
+      math.equation(block: true, numbering: none, it.body)
+      counter(math.equation).update(n => n - 1)
+    } else {
+      it
+    }
+  }
+
+  // `\numberwithin{figure}{subsection}`, and `caption`'s `format = hang, width = 0.9\textwidth,
+  // textfont = it`: the word and the number upright, the caption itself italic, and the whole
+  // thing in a nine-tenths measure that hangs under its own label.
+  set figure(numbering: _within-problem, gap: 10pt)
+  show figure: set block(above: 12pt, below: 12pt)
+  show figure.caption: it => context {
+    let head = [#it.supplement #it.counter.display(it.numbering)#it.separator]
+    let whole = head + emph(it.body)
+    let measure-width = 0.9 * TEXT-WIDTH
+    // `caption`'s `singlelinecheck`: a caption that fits on one line is centred, and only a
+    // caption that wraps is set as a hanging block.
+    if measure(whole).width <= measure-width {
+      align(center, whole)
+    } else {
+      block(width: measure-width, par(justify: true, hanging-indent: measure(head).width, whole))
+    }
+  }
+
   // Typst numbers an equation only when it is told to, and a reference refuses to exist without
   // a numbering -- which is the opposite default from pandoc-crossref and a better one.
-  set math.equation(numbering: "(1)")
   // The words a reference uses are the booklet's own, not Typst's: `rovnica 1`, lower case,
   // because that is how the sentence around it reads in these sources.
   set ref(supplement: it => {
@@ -251,12 +453,34 @@
   set smartquote(quotes: (single: ("'", "'"), double: (language.quotes.open, language.quotes.close)))
   show heading: set block(above: 1.4em, below: 0.8em)
 
+  // **Vertical space is carried on the blocks, never by a weak `v()` beside one.** A weak
+  // `v()` immediately before a block does not collapse with that block's own `above` to the
+  // larger of the two -- it replaces it, so a 2 pt strut written for tidiness silently ate the
+  // 20 pt a heading had asked for and set the first problem title into the subtitle above it.
+  if masthead != none {
+    // Up into the margin: the body starts `HEAD-HEIGHT + HEAD-SEP` below the 15 mm margin, and
+    // the masthead belongs at the margin itself, exactly where a header would be.
+    v(-(HEAD-HEIGHT + HEAD-SEP), weak: false)
+    masthead
+    // Spacing collapses to the larger of two adjacent values rather than adding them, so the
+    // gap under the rule is the only place that can say how far down the title starts.
+    block(above: 10.6pt, below: if subtitle == none { 26.2pt } else { 22.7pt }, width: 100%, _rule)
+  }
+
   if title != none {
-    align(center)[
-      #text(size: 1.6em, weight: "bold")[#title]
-      #if subtitle != none [\ #text(size: 1em, weight: "regular")[#subtitle]]
-    ]
-    v(0.5em)
+    // `\titleformat{\section}[hang]{\centering\LARGE}` -- centred and large, and *not* bold.
+    block(
+      above: 0pt,
+      // With no subtitle under it the title carries the whole gap down to the first problem,
+      // which is what the solutions booklet does: `problems.jtex` is the only one that fills
+      // the subtitle block.
+      below: if subtitle == none { 36pt } else { 12pt },
+      width: 100%,
+      align(center, text(size: XXLARGE)[#title]),
+    )
+    if subtitle != none {
+      block(above: 12pt, below: 0pt, width: 100%, align(center, text(size: 1em)[#subtitle]))
+    }
   }
 
   show: typography

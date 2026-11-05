@@ -472,12 +472,58 @@ spec in Python where the tests are; the **magnitude** arrives as a string, becau
 comma and the exponent follow the language, and only the document knows which language it is in.
 siunitx options (`per-mode` and friends) raise rather than being ignored.
 
+### The page is the booklet's page, to within a point
+
+`core/typst/dgs.typ`'s geometry is not a reimplementation from the same intentions, it is
+`dgs.cls`'s own numbers: 15 mm margins with `includeheadfoot`, `headheight` 20 pt, `headsep`
+16 pt, `footskip` 32 pt, a 0.4 pt head and foot rule, `\parskip` of 1 em and a 14.5 pt
+baseline. They are written as named constants under their LaTeX names so the next person can
+check them the way they were got: build a Typst round and an FKS round, read both with
+`pdftotext -bbox`, and scan the rendered page for the two rules. The masthead's three lines,
+the head rule, the title, the subtitle, the first problem heading, the first body baseline and
+the foot rule all land within about a point of the booklet's.
+
+Three things came out of that comparison and none of them is cosmetic:
+
+- **The first page's masthead is in the body, not in `page.header`.** fancyhdr's head box is
+  taller than `headheight` and *pushes the body down* -- which is the warning every DGS build
+  prints -- while a Typst header never moves the text. So the masthead is the first block of
+  the body, pulled up into the margin by `headheight + headsep`, which puts it where the LaTeX
+  one is and leaves the body starting below it.
+- **Vertical space is carried on blocks, never by a weak `v()` beside one.** Typst collapses
+  two adjacent spacings to the larger, but a weak `v()` written immediately before a block
+  *replaces* that block's own `above` instead of maxing with it. A 2 pt strut written for
+  tidiness silently ate the 20 pt the first problem heading had asked for and set its title
+  into the subtitle above it.
+- **Collapsing is not adding, so the first heading is a special case.** In the booklet every
+  heading but the first is preceded by a paragraph and therefore by `\parskip`, and the first
+  is preceded by a title block that `problems.jtex` ends with a `\\[2pt]`. LaTeX adds the two
+  spacings and Typst takes the larger, so `problem()` asks a counter whether it is the first
+  and sets 17 pt against 29.5 pt.
+
+**A display is numbered only where it carries a label**, which is pandoc-crossref's rule and
+had to be built by hand: Typst numbers every block equation it is told to number. An unlabelled
+one is rebuilt with `numbering: none` and the counter is put back, so the numbers run over the
+labelled displays alone. Equations and figures are numbered *within the problem* --
+`\numberwithin{equation}{subsection}` -- which is what `problem()`'s counter resets are for, and
+a caption is `caption`'s `format = hang, width = 0.9\textwidth, textfont = it`, centred when it
+fits on one line and hanging under its own label when it does not.
+
+The booklet is **two-sided** -- `semester-print` imposes it with `pdfbook --short-edge` -- so
+the running head and the logo swap sides on an even page, and so do the two halves of the
+footer. The competition's own logo lives in the content repository under `.static/`, so
+`path_exists` decides whether there is one, the same way it decides whether a fragment is there.
+
 ### What is not there yet
 
 The prototype sets a seminar round's **problems and solutions**. `solutions-full`, the instagram
 squares, the editor's standalone preview, Náboj's language dimension, `.tikz` and `.gp` drawings
 (both of which are a program writing a PDF, which is the chain this flavour does without) and the
 audit's checks -- which are all Markdown-shaped, over `RE_INLINE` and siunitx -- are not written.
+The booklet's other furniture is the same kind of gap: the tear-offs, the rules page, the
+semester imposition and the closing credits block have no Typst counterpart, so `document()`
+takes a round's four pieces -- the masthead, the title, the running head and the footer -- and
+nothing else.
 **HTML is deliberately deferred**, and it is the most promising of them: Typst 0.15 exports
 equations as **MathML**, inlines images as `data:` URIs and localises a reference by itself, which
 would replace `core/html/texmath.py`, dvisvgm, Ghostscript and MathJax for a Typst scope -- behind

@@ -1,4 +1,18 @@
-(#§ The round's solutions, which differ from its problems in two words and one file name. §#)
+(#§ The round's solutions, which differ from its problems in two words, one file name and the
+   line that follows each title: who wrote the solution and who marked it, where the problems
+   booklet says what the problem is worth. §#)
 (@§ extends 'round-base.jtyp' §@)
 (@§ set kind = 'solution' §@)
-(@§ set kind_verbose = 'Vzorové riešenia' §@)
+(@§ set kind_verbose = 'Riešenia' §@)
+
+(#§ `credits.credits`. The names go bold as one span rather than one each: `format_people`
+   emits the joined list and `textbf` is LaTeX, so wrapping each name would mean a Typst
+   `strong` in `StaticRenderer`'s vocabulary, which is documented and tested per name. §#)
+(@§ block heading_inner §@)
+(@§- if problem.solution -§@)
+vzorák *(* problem.solution|format_people *)*
+(@§- endif -§@)
+(@§- if problem.evaluation -§@)
+, opravoval(* problem.evaluation|format_gender_suffix *) *(* problem.evaluation|format_people *)*
+(@§- endif -§@)
+(@§ endblock §@)

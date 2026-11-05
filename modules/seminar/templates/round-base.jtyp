@@ -4,12 +4,22 @@
   Everything that decides how the page looks is in `core/typst/dgs.typ`, which is hand-written
   and imported rather than generated: a layout decision belongs where it can be compiled on its
   own. What this file carries is what only Python knows -- which problems there are, in which
-  order, what they are called, what they are worth, and where their rendered fragments landed.
+  order, what they are called, what they are worth, who wrote them, and where their rendered
+  fragments landed.
+
+  It is `base.jtex` and `base-booklets.jtex` said in three dozen lines rather than two hundred,
+  and the correspondence is deliberate: the masthead, the running head, the footer and the
+  problem headings are the same four things, carrying the same values, so that the two flavours
+  can be held up against each other page by page.
 
   **The include decision is made here, not in Typst.** `#include` of a file that is not there is
   a hard error in Typst, and there is no way to test for one or to catch it; so `path_exists`
   answers the question and a missing fragment becomes a red box, which is what
   `\protectedInput` does on the LaTeX side and what volume 19's `onion` taught us to want.
+
+  The competition's logo is answered the same way: it lives in the content repository under
+  `.static/`, and a repository that has not got one gets a masthead without it rather than a
+  failed build.
 
   The block and comment tags are moved out of the way of Typst's own punctuation -- `#` opens
   code and `@` is a reference. See `StaticTypstRenderer`.
@@ -17,18 +27,35 @@
 #import "/core/typst/dgs.typ" as dgs
 #import "/build/core/i18n/(* competition.language *).typ": language
 
+(@§ set logo = 'build/' ~ module.id ~ '/' ~ competition.id ~ '/.static/logo/logo.pdf' §@)
+(@§ set title = kind_verbose ~ ' ' ~ round.number ~ '. kola ' ~ semester.feminine.genitive ~ ' časti' §@)
+
 #show: dgs.document.with(
   language: language,
-  title: [(* kind_verbose *) (* round.number *). kola (* semester.feminine.genitive *) časti],
-  subtitle: [(* competition.full.nominative *), termín (* round.deadline.strftime('%d. %m. %Y') *)],
+  title: [(* title *)],
+  (@§ block subtitle §@)(@§ endblock §@)
+  running-head: [(* title *) – termín (* round.deadline.strftime('%d. %m. %Y') *)],
+  email: "(* competition.email *)",
+  web: "(* competition.urls.web *)",
+(@§ if path_exists(logo) §@)
+  logo: "/(* logo *)",
+(@§ endif §@)
+  masthead: dgs.masthead(
+    competition: [(* competition.full.nominative *)],
+    volume: [(* volume.number|roman *). ročník, (* volume.number + competition.founded - 1 *)/(* volume.number + competition.founded *)],
+    address: [(* competition.short *), (* competition.organisation.department.short *) (* competition.organisation.faculty.short *), (* competition.organisation.address *)],
+(@§ if path_exists(logo) §@)
+    logo: "/(* logo *)",
+(@§ endif §@)
+  ),
 )
 
 (@§ for problem in round.problems §@)
 (@§ set directory = 'render/' ~ module.id ~ '/' ~ competition.id ~ '/' ~ volume.id ~ '/' ~ semester.id ~ '/' ~ round.id ~ '/' ~ problem.id §@)
 #dgs.problem(
   [(* problem.title *)],
-  number: [(* round.number *).(* problem.number *)],
-  worth: [(* problem.points.description *) bod(* '%s'|format(plural(problem.points.description, "", "y", "ov")) *)(@§ if problem.categories §@), kategórie (* problem.categories|join(', ') *)(@§ endif §@)],
+  number: "(* round.number *).(* problem.number *)",
+  worth: [(@§ block heading_inner scoped §@)(@§ endblock §@)],
 )
 
 (@§ if path_exists(directory ~ '/' ~ kind ~ '.typ') §@)
