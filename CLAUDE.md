@@ -847,6 +847,35 @@ and none failed, and `TestTheProblemSchema` in `core/tests/test_renderer.py` pin
 nine cases fail against the old spelling, and the other three are the quiet half that must keep
 passing, because an empty list and an absent role are how a problem says *unrecorded*.
 
+## A venue says where it is; the volume says when it begins
+
+`start:` in a volume's `meta.yaml` is **the instant the envelopes are opened, in UTC**, and it
+is the only place that instant is written. A venue declares `timezone:` -- a real IANA zone,
+checked against the tz database this machine has rather than against a list of ours -- and what
+its instructions print is that instant on its own clock. One `11:30 CET` becomes 11:30 in
+Bratislava, 10:30 in Lisbon and 12:30 in Uzhhorod with nobody writing it three times.
+
+**The conversion needs the volume's `date:`, and that is not pedantry.** An offset belongs to an
+instant, not to a place: Náboj runs in November under CET and chem in April under CEST, and
+Moscow was UTC+4 from 2011 to 2014, so volumes 21 and 22 convert differently from the same
+zone. `local_minutes` in `modules/naboj/builder/contexts/hierarchy.py` is the whole of it, and
+`BuildableContextVenue.populate` hands the result to the templates as `venue.start` -- already
+local, because every language's `instructions-inner.jtex` prints
+`(* venue.start // 60 *):(* venue.start % 60 *)` and a contestant reads the wall.
+
+**A venue's own `start:` is an exception, not a restatement**, and it is UTC too -- `26/bratislava`
+begins at 12:15 local and says `start: 11:15`. 102 of the 117 venue metas used to repeat the
+volume's local time for no reason, and the 15 that meant something else by it were **discarded**:
+`populate` overwrote every venue's start with the volume's, so `28/lisboa` printed 11:30 for the
+four years its meta said 10:30, and the `if 'start' not in ...` fallback below that line could
+never run. Both are gone.
+
+**Write the clock unquoted and without a leading zero.** `11:30` is YAML 1.1 sexagesimal and
+loads as the integer 690, which is what the schema wants; `'11:30'` is a string and is refused,
+and `09:30` is *also* a string -- sexagesimal needs a non-zero first digit -- which is refused
+with it. Write `9:30`. That one bit the migration: ten metas came back as strings and every
+volume they belonged to stopped validating.
+
 ## Reusable text: `blocks:`
 
 A meta's four content keys each do something to what they hold, and until recently there was

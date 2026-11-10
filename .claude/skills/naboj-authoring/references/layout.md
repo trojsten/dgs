@@ -35,7 +35,7 @@ Fields observed in `source/naboj/phys/28/meta.yaml`:
 
 ```yaml
 date:   2025-11-07
-start:  '11:30'
+start:  10:30                               # UTC, minutes past midnight -- see below
 problems: [gravity-sudoku, train-mirror, balance-me, ...]    # ordered!
 workshop: 'chata Alexa, Oravská Lesná'
 authors:
@@ -57,6 +57,36 @@ constants:                                  # constants that appear in the print
 
 `problems:` fixes the **order** in which problems appear (numbering follows this list).
 Every id listed must exist as `problems/<id>/`.
+
+`start:` is **the instant the envelopes are opened, in UTC**, and it is required. `11:30` is
+YAML 1.1 sexagesimal and loads as the integer 690, so write the clock and never quote it --
+`'11:30'` is a string and the schema refuses it, and a leading zero does the same thing
+silently, since `09:30` is not sexagesimal either. Write `9:30`.
+
+## Venue `meta.yaml`
+
+```yaml
+id: 138
+code: HUBUJ                                 # five capitals, and the barcode's prefix
+name: Budapest
+language: hu                                # the venue's own, need not be one of the volume's
+evaluators: 5
+timezone: Europe/Budapest                   # required: an IANA zone, not an offset
+orgs:
+  - "Ágnes Kis-Tóth"
+start: 9:30                                 # optional, UTC, and only where this venue differs
+```
+
+**A venue says where it is; the volume says when it begins.** What the instructions print is
+the volume's UTC start on the venue's own clock, so one `start:` in the volume is 11:30 in
+Bratislava, 10:30 in Lisbon and 12:30 in Uzhhorod without anybody writing three times. The
+conversion uses the volume's `date:`, because an offset belongs to an instant and not to a
+place -- November is CET and April is CEST, and Moscow was UTC+4 between 2011 and 2014.
+
+`start:` in a venue is the exception: a venue that genuinely begins at another moment, like
+`26/bratislava`'s 12:15. It is UTC too, so it is not a way of writing the local time you want.
+Before this it was ignored outright -- `populate` overwrote it with the volume's -- which is
+why `28/lisboa` printed 11:30 for four years while its meta said 10:30.
 
 ## Problem `meta.yaml`
 

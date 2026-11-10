@@ -701,11 +701,25 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         counts['read'].add(venue_meta)
         outdir = f'build/naboj/{scope}/venues/{venue}'
         documents = [f'{outdir}/{name}.tex' for name in VENUE_DOCUMENTS]
+        # **`instructions-inner.tex` is an output too, where its source exists.** `venue.py`
+        # renders it from the venue's *language* directory and skips it with a warning when
+        # that file is absent, so leaving it undeclared made it invisible to Ninja in both
+        # directions: a venue whose language gained an `instructions-inner.jtex` was not
+        # rebuilt, because the edge's declared outputs were all up to date, and the booklet
+        # then stopped at `! LaTeX Error: File ... not found` -- `instructions.jtex` inputs it
+        # unconditionally. That is exactly what `29/budapest-junior` did the moment
+        # `29/languages/hu/` was written. Declared, the source is a prerequisite and the file
+        # is an output, so writing or changing it rebuilds the venue.
+        inner = f'source/naboj/{scope}/languages/{venue_language}/instructions-inner.jtex'
+        has_inner = venue_language is not None and (repo / inner).is_file()
+        if has_inner:
+            documents.append(f'{outdir}/instructions-inner.tex')
         build(documents, 'venue', None,
               implicit=[*templates, static,
                         venue_meta,
                         f'source/naboj/{scope}/meta.yaml',
                         f'source/naboj/{competition}/meta.yaml',
+                        *([inner] if has_inner else []),
                         *sorted(str((p / 'meta.yaml').relative_to(repo)) for p in problems)],
               variables={'competition': competition, 'volume': volume_id, 'venue': venue,
                          'outdir': outdir})

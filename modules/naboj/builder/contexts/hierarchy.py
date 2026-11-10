@@ -1,12 +1,13 @@
 import datetime
 import itertools
+import zoneinfo
 
 from enschema import And, Optional, Regex, Schema
 
 from core import i18n
 from core.builder.validator import String
 from core.utilities import lists
-from core.utilities.schema import valid_language, valid_language_name
+from core.utilities.schema import valid_language, valid_language_name, valid_timezone
 
 from .base import ContextNaboj
 
@@ -68,6 +69,25 @@ class ContextLanguage(ContextNaboj):
             )
 
 
+def local_minutes(utc_minutes: int, date: datetime.date, zone: str) -> int:
+    """
+    The volume's UTC start as a wall clock in `zone`, in minutes past midnight.
+
+    The date is the volume's, and it is not decoration: an offset is a function of the instant,
+    not of the place. Náboj runs in November under CET and chem in April under CEST, and Moscow
+    was UTC+4 from 2011 to 2014, so volumes 21 and 22 convert differently from the same zone.
+    Reading the zone's *current* offset instead would quietly re-time the archive.
+
+    Only the clock is returned. A conversion can cross midnight -- it does not for any venue
+    this competition has ever had, where the extremes are Lisbon and Moscow -- and the printed
+    sentence says a time, not a date, so the day is the venue's own business.
+    """
+    moment = datetime.datetime.combine(
+        date, datetime.time(utc_minutes // 60, utc_minutes % 60),
+        tzinfo=datetime.UTC).astimezone(zoneinfo.ZoneInfo(zone))
+    return moment.hour * 60 + moment.minute
+
+
 class ContextVenue(ContextNaboj):
     _target = 'venue'
     _subdir = 'venues'
@@ -79,7 +99,15 @@ class ContextVenue(ContextNaboj):
         'problems_modulo': [[ContextNaboj.problem]],
         Optional('orgs'): [And(str, len)],
         'evaluators': int,
-        'start': And(int, lambda x: 0 <= x < 1440),
+        # **The zone, and only the zone, is the venue's own business.** A venue sits where it
+        # sits; when the competition begins is the volume's decision, and `start` here is the
+        # exception a venue is allowed rather than the rule it has to restate -- 102 of the 117
+        # venue metas repeated the volume's time, and the one venue that did mean something
+        # else by it, `28/lisboa` at 10:30, was overwritten with the volume's 11:30 before it
+        # ever reached the page.
+        'timezone': And(str, valid_timezone),
+        # **UTC, like the volume's**, and in minutes past midnight. See `ContextVolume`.
+        Optional('start'): And(int, lambda x: 0 <= x < 1440),
     })
 
     def populate(self, competition, volume, venue):
@@ -121,6 +149,11 @@ class ContextVolume(ContextNaboj):
         'problems': [ContextNaboj.problem],
         'constants': dict,
         'table': int,
+        # **Minutes past midnight, UTC** -- the instant the envelopes are opened, which is one
+        # instant however many countries the volume runs in. What each venue prints is this
+        # moment on its own clock, computed by `BuildableContextVenue` from its `timezone`, so
+        # a volume in Lisbon and Uzhhorod says one thing here and prints two different times.
+        # `11:30` is YAML 1.1 sexagesimal and loads as 690, which is why the key is an int.
         'start': And(int, lambda x: 0 <= x < 1440),
     })
 
