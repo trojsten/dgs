@@ -213,6 +213,12 @@ def probe_advisories():
     missing from this list, which is how a machine with no `pdftk` -- this one -- could report
     the PDF tier green and then fail one edge out of 59 355 with nothing having said why.
 
+    **`pdfcrop` has left and `pdftoppm` has taken its place**, which makes the latter rather
+    more than a seminar document's business: `tools/ninja/crop.py` measures every SVG drawing's
+    ink on a raster poppler renders, because the Ghostscript bbox device `pdfcrop` drove either
+    reported a gradient's whole canvas or ran for minutes on a blur. Nothing invokes `pdfcrop`
+    any more, in either build.
+
     **`mutool` is dvisvgm's, not ours.** Ghostscript dropped the PDF interpreter dvisvgm drove
     in 10.01.0, so from Debian 13 onwards `dvisvgm --pdf` refuses the file outright -- `To
     process PDF files, either Ghostscript < 10.01.0 or mutool is required` -- and that is the
@@ -222,7 +228,7 @@ def probe_advisories():
     makes a machine without it safe to upgrade.
     """
     return [Tool(name, bool(_which(name)), _which(name))
-            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'mutool', 'pdfcrop',
+            for name in ('gnuplot', 'rsvg-convert', 'dvisvgm', 'mutool',
                          'pdftk', 'pdftoppm', 'pdfjam')]
 
 

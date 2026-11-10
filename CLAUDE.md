@@ -573,6 +573,43 @@ the corner. Both are right out of `pdftocairo`. `core/tests/test_picture_svg.py`
 whose widths are known and compares in both directions: no width the PDF never asked for, and a
 deliberately thick line still thick, so a conversion cannot pass by flattening everything.
 
+### A drawing is cropped to its ink, and the crop is measured on a raster
+
+`build/%.pdf` from `render/%.svg` is `rsvg-convert` and then **`tools/ninja/crop.py`**, which
+replaced `pdfcrop` outright -- nothing invokes `pdfcrop` any more, in either build.
+
+`pdfcrop` asks `gs -sDEVICE=bbox` where the marks are, and that walks the page's *marking
+operations*. librsvg cannot express a gradient, an opacity or a Gaussian blur in PDF and writes
+each one as a **full-page image behind a soft mask** instead, which that device counts as a mark
+across the whole canvas however transparent the mask is. So the two things anyone drawing in
+Inkscape reaches for were each unusable in their own way:
+
+- **a gradient was never cropped at all** -- the box came back as the canvas. 211 of phys's 620
+  drawings, and 70 of them were carrying more than 2 % of their area as white margin;
+  `28/northern-sun` was 46 %, printing at 211x222 pt for a drawing that is 164x154;
+- **a blur cost minutes.** `29/sinking` has 86 of them and its `pdfcrop` ran for **224.7 s**
+  against rsvg-convert's 0.25; its solution drawing had not finished after 216 s. Volume 29's
+  29 drawings now build from cold in **3.0 s**.
+
+The box is measured on a **raster** instead: poppler renders the page once and the ink is the
+pixels that are not white, which is the question a drawing's size was always asking. Rendering
+is what a blur is cheap in, so the pathological file costs 0.78 s and an ordinary one about
+40 ms -- faster than `pdfcrop` was even on the flat drawings it could handle.
+
+Three things worth knowing before changing it:
+
+- **One pixel per point.** `pdfcrop` rounded its box outward to whole points unless asked for
+  `--hires`, so a 72 dpi raster is exactly as precise as what it replaced, and the raster's own
+  quantisation does the outward rounding for free. Cost grows with the square of the resolution
+  and precision does not: 300 dpi costs 10 s on the file this exists for.
+- **The page is re-converted from the source, not rewritten.** Editing a `/MediaBox` in place
+  needs a PDF library and this repository has none; re-rendering the same SVG onto a smaller
+  page is the same drawing at the same scale with a different page box. That is why the tool
+  takes the pair -- the `.svg` and the `.pdf` that came out of it.
+- **A gradient's edge really is a fraction of a point wider than its path**, because the mask is
+  an image and resampling spreads it: 40.32 pt at 300 dpi for a nominal 40. The raster finds
+  that; the marks found the whole canvas.
+
 **A gnuplot plot skips the conversion and is drawn twice by gnuplot**, once per terminal. One
 step shorter, and it takes the PDF parser out of the chain for the files that provoked the bug
 above. What it costs is that **the terminal cannot live in the script any more**, because the

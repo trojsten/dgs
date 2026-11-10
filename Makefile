@@ -214,8 +214,7 @@ build/%.pdf: render/%.svg
 	@echo -e '$(c_action)[rsvg-convert] Converting $(c_filename)$<$(c_action) to $(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	rsvg-convert --format pdf --keep-aspect-ratio --output $@ $<
-	pdfcrop $@ $@-crop
-	mv $@-crop $@
+	python -m tools.ninja.crop $< $@
 
 build/%.pdf: build/%.tikz.tex
 	@echo -e '$(c_action)[xelatex] Rendering $(c_filename)$<$(c_action) to' \

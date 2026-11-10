@@ -25,6 +25,7 @@ from tools.ninja.generate import (
     _page,
     _picture_svg,
     _standalone,
+    write_graph,
 )
 from tools.ninja.writer import Writer
 
@@ -218,3 +219,73 @@ class TestTheInstagramPages:
         """`-singlefile` writes `<prefix>.png`, so the prefix is the output without its suffix."""
         _instagram(writer.build, self.PREFIX, self.COUNTED, 1)
         assert f'\n  prefix = {self.PREFIX}-01\n' in written(writer)
+
+
+class TestTheGraphIsReplacedAndNeverTruncated:
+    """
+    `write_graph` writes beside the graph and renames, so a run that does not finish leaves the
+    previous graph alone. Written in place it truncated first and filled for two seconds, and
+    both ways out of that are a build nobody can run: Ninja deletes an in-flight edge's outputs
+    on Ctrl-C when their mtime has moved, so an interrupt deleted `build.ninja`, and a generator
+    that raised left a prefix of one -- which `bootstrap.ensure_graph` will not repair, because
+    it fixes absence and a partial graph is present.
+
+    `generate` is patched out, so none of this needs a source tree.
+    """
+
+    @staticmethod
+    def write(monkeypatch, output, body):
+        def fake_generate(repo, scopes, out):
+            return body(out)
+
+        monkeypatch.setattr('tools.ninja.generate.generate', fake_generate)
+        return write_graph(output, pathlib.Path('/repo'), ['phys/29'])
+
+    def test_a_complete_graph_lands(self, monkeypatch, tmp_path):
+        graph = tmp_path / 'build.ninja'
+        counts = self.write(monkeypatch, graph,
+                            lambda out: (out.write('rule r\n'), {'edges': 1})[1])
+        assert graph.read_text() == 'rule r\n'
+        assert counts == {'edges': 1}
+
+    def test_a_failed_run_leaves_the_old_graph(self, monkeypatch, tmp_path):
+        graph = tmp_path / 'build.ninja'
+        graph.write_text('the previous graph\n')
+
+        def half_then_fail(out):
+            out.write('half a rule')
+            raise RuntimeError('a meta the generator could not read')
+
+        with pytest.raises(RuntimeError):
+            self.write(monkeypatch, graph, half_then_fail)
+        assert graph.read_text() == 'the previous graph\n'
+
+    def test_an_interrupted_run_leaves_the_old_graph(self, monkeypatch, tmp_path):
+        """Ctrl-C is a `BaseException`, which is why the cleanup catches one."""
+        graph = tmp_path / 'build.ninja'
+        graph.write_text('the previous graph\n')
+
+        def interrupted(out):
+            out.write('half a rule')
+            raise KeyboardInterrupt
+
+        with pytest.raises(KeyboardInterrupt):
+            self.write(monkeypatch, graph, interrupted)
+        assert graph.read_text() == 'the previous graph\n'
+
+    def test_nothing_is_left_beside_it_either_way(self, monkeypatch, tmp_path):
+        """A temporary left behind would accumulate one per failed run, and they are hidden."""
+        graph = tmp_path / 'build.ninja'
+
+        def fail(out):
+            raise RuntimeError('no')
+
+        with pytest.raises(RuntimeError):
+            self.write(monkeypatch, graph, fail)
+        self.write(monkeypatch, graph, lambda out: (out.write('rule r\n'), {})[1])
+        assert sorted(path.name for path in tmp_path.iterdir()) == ['build.ninja']
+
+    def test_the_graph_is_readable_rather_than_mkstemps_0600(self, monkeypatch, tmp_path):
+        graph = tmp_path / 'build.ninja'
+        self.write(monkeypatch, graph, lambda out: (out.write('rule r\n'), {})[1])
+        assert graph.stat().st_mode & 0o777 == 0o644

@@ -22,8 +22,10 @@ Nothing in `Makefile` or `modules/*/module.mk` is touched; the two drive the sam
 point of the exercise is to diff their output.
 """
 import argparse
+import os
 import pathlib
 import sys
+import tempfile
 
 from tools.ninja.ink import described
 from tools.ninja.writer import Writer
@@ -184,13 +186,16 @@ def rules(w: Writer) -> None:
            'mkdir -p $$(dirname $out) && $run standalone.py $lang $in $out',
            description=described('{a}[standalone] Rendering {x}picture template{a} {f}$in{a} '
                                  'to {x}TeX{a} file {f}$out'))
+    # **The crop is ours, and `pdfcrop` is gone.** `pdfcrop` asks `gs -sDEVICE=bbox` for the
+    # ink, and librsvg writes a gradient, an opacity or a blur as a full-page image behind a
+    # soft mask -- so that device either costs minutes (`29/sinking`: 224.7 s against
+    # rsvg-convert's 0.25) or reports the whole canvas and crops nothing at all, which is what
+    # 366 of phys's 620 drawings got. Both halves say the same thing: a drawing that uses the
+    # parts of SVG people actually draw with could not be cropped. `tools/ninja/crop.py`
+    # measures a raster instead and re-renders onto the box it finds.
     w.rule('svg_pdf',
-           # `${out}-crop`, not `$out-crop`: a Ninja variable name may contain a hyphen, so the
-           # bare form is read as a variable called `out-crop`, expands to nothing, and `mv` is
-           # left with one operand. The error says `missing destination file operand`, which
-           # names neither the rule nor the variable.
            'mkdir -p $$(dirname $out) && rsvg-convert --format pdf --keep-aspect-ratio '
-           '--output $out $in && pdfcrop $out ${out}-crop && mv ${out}-crop $out',
+           '--output $out $in && $run -m tools.ninja.crop $in $out',
            description=described('{a}[rsvg-convert] Converting {f}$in{a} '
                                  'to {x}PDF{a} file {f}$out'))
     w.rule('tikz_pdf',
@@ -1264,6 +1269,40 @@ def _beside(drawings: list, rel: str) -> list:
     return [picture for picture in drawings if picture.rsplit('/', 1)[0] == f'build/{rel}']
 
 
+def write_graph(output: pathlib.Path, repo: pathlib.Path, scopes: list[str]) -> dict:
+    """
+    Generate into a temporary file beside `output` and `os.replace` it into place.
+
+    **Writing the graph in place destroys it on any failure, and Ninja then destroys what is
+    left.** `open('w')` truncates in the first millisecond and the generation takes about two
+    seconds, so an interrupted or failed run left either nothing or a prefix of a graph --
+    and Ninja's cleanup removes an in-flight edge's outputs when their mtime moved after the
+    command started, which is a guard written for exactly this file and which truncate-then-fill
+    defeats. A Ctrl-C during regeneration therefore deleted `build.ninja` outright; a generator
+    that exited nonzero left a partial one, which is worse, because `bootstrap.ensure_graph`
+    fixes only absence and a half-written graph is present.
+
+    Written this way, neither can happen: the real file is untouched until a complete graph
+    exists, and what fails leaves the previous graph exactly where it was. The window Ninja
+    could still delete in is the instant between the rename and this process exiting -- and
+    what it would delete there is a complete graph, which `./dgs-build` regenerates on sight.
+
+    The mode is set explicitly because `mkstemp` creates at `0600`, which the file inherits
+    through the rename; the graph is ordinary generated output and is read as such.
+    """
+    handle, temporary = tempfile.mkstemp(dir=output.parent, prefix=f'.{output.name}.',
+                                         suffix='.tmp')
+    try:
+        with os.fdopen(handle, 'w') as out:
+            counts = generate(repo, scopes, out)
+        os.chmod(temporary, 0o644)
+        os.replace(temporary, output)
+    except BaseException:
+        pathlib.Path(temporary).unlink(missing_ok=True)
+        raise
+    return counts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument('--scope', required=True, nargs='+',
@@ -1301,8 +1340,7 @@ def main() -> int:
         scopes += sorted(f'scholar:{relative}'
                          for path, relative in named(repo / 'source/scholar', '*/*')
                          if ((path / 'handouts').is_dir() or (path / 'homework').is_dir()))
-    with args.output.open('w') as out:
-        counts = generate(repo, scopes, out)
+    counts = write_graph(args.output, repo, scopes)
     print(f"{args.output}: {counts['edges']} edges, {len(scopes)} scopes, "
           f"{counts['problems']} problems, {counts['pictures']} pictures, "
           f"{len(counts['languages'])} scope-languages")
