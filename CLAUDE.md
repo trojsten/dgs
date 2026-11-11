@@ -851,8 +851,16 @@ passing, because an empty list and an absent role are how a problem says *unreco
 
 `start:` in a volume's `meta.yaml` is **the instant the envelopes are opened, in UTC**, and it
 is the only place that instant is written. A venue declares `timezone:` -- a real IANA zone,
-checked against the tz database this machine has rather than against a list of ours -- and what
-its instructions print is that instant on its own clock. One `11:30 CET` becomes 11:30 in
+checked against the tz database rather than against a list of ours -- and what
+its instructions print is that instant on its own clock.
+
+**Which database is pinned, not inherited**: `tzdata` is a dependency for this one reason.
+Debian 13 moved the backward-compatibility links into a separate `tzdata-legacy` package, so
+`/usr/share/zoneinfo/CET` and `Europe/Uzhgorod` stopped existing and `available_timezones()` fell
+from 599 names to 486 -- which would mean a venue meta validating for one developer and being
+refused for another. All 111 venues name a canonical zone, so it surfaced as two failing tests
+rather than a broken build; `test_a_deprecated_link_is_still_a_zone` is the canary and goes red if
+the dependency is dropped. One `11:30 CET` becomes 11:30 in
 Bratislava, 10:30 in Lisbon and 12:30 in Uzhhorod with nobody writing it three times.
 
 **The conversion needs the volume's `date:`, and that is not pedantry.** An offset belongs to an

@@ -42,10 +42,25 @@ class TestTheZoneIsTheSystemsToKnow:
             assert valid_timezone(zone), zone
 
     def test_a_deprecated_link_is_still_a_zone(self):
-        """`Europe/Uzhgorod` is a link to `Europe/Kyiv` and is still in the database."""
+        """
+        `Europe/Uzhgorod` is a link to `Europe/Kyiv` and is still in the database.
+
+        This is also the canary for the `tzdata` dependency, and it has already caught it once:
+        Debian 13 moved the backward-compatibility links into a separate `tzdata-legacy` package,
+        so on a machine relying on the system database this name vanished along with `CET` and
+        `available_timezones()` fell from 599 to 486. Drop `tzdata` from `pyproject.toml` and this
+        goes red -- which is the point, because the alternative is a venue meta that validates for
+        one developer and is refused for another.
+        """
         assert valid_timezone('Europe/Uzhgorod')
 
     def test_something_that_is_not_a_zone_is_refused(self):
+        """
+        The first line is the contrast with the test above and only means something beside it:
+        `Uzhgorod` is a zone and `Uzhhorod` is not, one letter apart. Without the `tzdata`
+        dependency both were refused and this passed for the wrong reason, which is the quiet
+        way a pair like this stops testing anything.
+        """
         assert not valid_timezone('Europe/Uzhhorod')     # the venue's spelling, not tz's
         assert not valid_timezone('Europe/Bratislava ')   # a stray space is not a zone either
         assert not valid_timezone('')
@@ -56,6 +71,9 @@ class TestTheZoneIsTheSystemsToKnow:
         name. They are a poor thing to write in a meta -- `CET` does not follow a country that
         moves its clocks -- but refusing them would mean keeping a list of our own, which is
         the thing this validator exists not to do.
+
+        Both live among the backward-compatibility names, so this is the second canary for the
+        `tzdata` dependency.
         """
         assert valid_timezone('CET')
 
