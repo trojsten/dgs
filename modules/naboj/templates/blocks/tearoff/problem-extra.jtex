@@ -9,12 +9,18 @@
         \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.86\linewidth}%
             \subsection{\texorpdfstring{(* problem.number *)*}{(* language.id *): (* problem.number *)*. (* problem.id *)-extra}}
             ~
-            \vfill
+            \vspace{\stretch{1}}%
             (# As in `problem.jtex`: the tear-off is the one document that honours a figure's
-               `tearoff_height`, and the minipage scopes it. #)
+               `tearoff_height`, and the minipage scopes it.
+
+               An extra is centred as a block, and its own glue has to be the same order as the
+               glue `\tearoffPictures` puts around a drawing -- a `\vfill` here is a first-order
+               `fil` and would lose the whole leftover to the drawing's `fill`, so an extra with
+               a figure in it would stop being centred at all. No `\tearoffTail` for the same
+               reason: the glue below is already here. #)
             \tearoffPictures%
             \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
-            \vfill
+            \vspace{\stretch{1}}%
             ~
         \end{minipage}%
     \end{minipage}%

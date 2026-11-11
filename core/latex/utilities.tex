@@ -106,11 +106,72 @@
 % has never heard of, so a no-op definition is what lets the other eight documents ignore it.
 % \setkeys is right rather than \Gin@esetsize because `height` is already in the same option
 % list, ahead of this one, and keyval honours the last assignment it is given.
+%
+% \tearoffPregap is the same bargain for the space *above* a figure. Vertical space is the
+% binding constraint on a tear-off -- each problem has 94mm (phys) or 143mm (chem) and no more --
+% and the gap `center` opens above a drawing is 7.3mm of it, of which 4.6mm is \topsep and
+% \partopsep and 2.1mm is \parskip. Where a particular drawing needs some of that back, the
+% figure says so once and the tear-off is the only document that acts on it: a negative \vspace
+% tuned for a 94mm box would be wrong in a free-flowing booklet column, which is the defect the
+% eleven hand-tuned negative \vspace in `answer.md` files were.
+%
+% No-op by default and redefined by \tearoffPictures, so it is one switch and not two -- and
+% \RenewDocumentCommand is group-local, which is what the minipage around each problem relies on.
 \makeatletter
 \define@key{Gin}{tearoffheight}{}
+\NewDocumentCommand{\tearoffPregap}{m}{}
 \NewDocumentCommand{\tearoffPictures}{}{%
     \define@key{Gin}{tearoffheight}{\setkeys{Gin}{height=##1}}%
+    \RenewDocumentCommand{\tearoffPregap}{m}{\vspace{##1}}%
+    % A drawing is centred in whatever vertical space the text leaves it.
+    %
+    % The tear-off is the one document where that question has an answer: a problem sits in a box
+    % of a fixed 94mm (phys) or 143mm (chem), so there *is* a leftover, and leaving all of it under
+    % the drawing is a choice rather than the absence of one. Everywhere else the column is
+    % free-flowing and there is no remaining space to centre anything in.
+    %
+    % \stretch, which is a second-order `fill`, and not \vfill, which is a first-order `fil`.
+    % The minipage holding the problem is `[t][94mm][t]`, and that `t` puts a \vss at the foot of
+    % the box -- a `fil`. Glue of the same order shares the slack, so three \vfill would each take
+    % a third and the drawing would land a third of the way down instead of in the middle; a
+    % `fill` outranks the \vss outright and leaves it nothing.
+    %
+    % The `center` stays. Its two \topsep are symmetric, so they do not shift the drawing, and
+    % they keep it off the text in a box that is nearly full and has no slack to give.
+    %
+    % **2 above, 1 below, and 1 more at the foot of the problem**, which \tearoffTail lays down.
+    % Equal glue above and below would be right only for a drawing that ends its problem, and
+    % nine of volume 29's statements and a good many of chem's put a question after the figure;
+    % with nothing to balance it the closing glue stretched and that question landed on the very
+    % bottom edge of the box, a whole leftover away from the drawing it belongs to -- `chem/03`'s
+    % reaction scheme is the worked example. Weighted 2:1:1 the leftover splits in half above the
+    % drawing and a quarter each below it and at the foot, so a drawing that *does* end its
+    % problem still sits at the middle of the white (half above, a quarter plus a quarter below),
+    % and one that does not keeps its trailing line near it.
+    \RenewDocumentCommand{\insertPicture}{O{} m}{%
+        \par
+        \vspace{\stretch{2}}%
+        \begin{center}
+            \makebox[\linewidth]{%
+                \IfFileExists{\activeDirectory/##2}{%
+                    \includegraphics[##1]{\activeDirectory/##2}%
+                }{%
+                    \includegraphics[##1]{example-image}%
+                }%
+            }%
+        \end{center}
+        \vspace{\stretch{1}}%
+    }%
 }
+
+% The fourth share of a tear-off problem's leftover space, laid down after its last line.
+%
+% It is what keeps \insertPicture's 2:1:1 weighting honest: without a stretchable glue at the
+% foot, the minipage's own \vss is the only thing left to take up the slack, and a \vss is a
+% first-order `fil` against the drawing's second-order `fill`, so it would take none of it.
+% A problem with no drawing has no competing glue and is unaffected -- this glue then takes
+% the whole leftover, which is exactly what the \vss it stands in for was doing.
+\NewDocumentCommand{\tearoffTail}{}{\par\vspace{\stretch{1}}}
 \makeatother
 
 % The join between the answer and an `answer-extra`, `answer-interval` or `answer-also`.

@@ -20,6 +20,7 @@
                `core/latex/utilities.tex`. #)
             \tearoffPictures%
             \protectedInput{\activeDirectory/(* language.id *)/problem.tex}%
+            \tearoffTail%
         \end{minipage}%
     (@ endblock main @)
 \end{minipage}

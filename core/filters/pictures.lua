@@ -22,6 +22,29 @@ What it emits is `\includegraphics`, not `\insertPicture`: `convertor.py`'s `pos
 rewrite the one into the other and swap `.svg`/`.gp`/`.tikz` for `.pdf`, passing the option list
 through verbatim as `\g<options>`. Emitting the final macro here would mean copying that
 extension table into a second place for it to go stale in.
+
+**Rebuilding the option list means owning everything pandoc's writer did with it**, and that is
+the whole of the risk here. Two things follow, and neither is optional:
+
+- a dimension is *translated*, not copied. `height=50%` is pandoc's notation for half the text
+  height and its writer emits `0.5\textheight`; copied verbatim, the `%` is TeX's comment
+  character and swallows the rest of the option list, the closing bracket and the file name with
+  it, so the figure fails somewhere else entirely with nothing pointing back here;
+- every other attribute is **passed through**, because an author who wrote one meant it. pandoc's
+  own writer keeps `page`, `trim`, `clip` and `alt` and silently discards the rest of graphicx's
+  keys -- `angle`, `scale`, `origin`, `draft`, `viewport` -- and a filter that reproduced that
+  whitelist would be a second copy of pandoc's taste, going stale on pandoc's own schedule.
+  Here an unknown key reaches graphicx, which either honours it or stops the build naming it.
+  That is the loud half of the same bargain.
+
+`tearoff_pregap` rides along the same way and for the same reason, except that it is not a
+graphicx key at all: a vertical skip has to be laid down *before* the drawing, so the filter
+writes `\tearoffPregap{…}` ahead of the include. That macro is a no-op everywhere but the
+tear-off, so a gap tuned for a 94mm box cannot leak into a booklet column.
+
+Only a figure that declares one of the two goes through any of this. Every other image returns
+pandoc's *unchanged*, which is what keeps a corpus with none in it -- all 2003 of today's figures
+-- byte-identical with the filter in place.
 --]]
 
 --- Whether the writer we are feeding sets TeX.
@@ -33,6 +56,24 @@ local function writing_latex()
     return FORMAT:match('latex') ~= nil
 end
 
+--- The two attributes this filter spells itself; everything else is passed through as written.
+local OWN = {width = true, height = true}
+
+--- A pandoc dimension in the spelling graphicx reads.
+---
+--- `%` is pandoc's, not graphicx's: a percentage is a fraction of `\linewidth` for a width and of
+--- `\textheight` for a height, and pandoc's writer resolves it before the value ever reaches TeX.
+--- `%.14g` is what reproduces that spelling -- `60%` is `0.6`, `100%` is `1`, `33.5%` is `0.335`,
+--- none of them with a trailing zero pandoc does not write. A sign is allowed because
+--- `tearoff_pregap` goes through here too, and a gap is usually negative.
+local function dimension(value, relative)
+    local percent = value:match('^%s*(%-?[%d%.]+)%s*%%%s*$')
+    if percent then
+        return string.format('%.14g', tonumber(percent) / 100) .. relative
+    end
+    return value
+end
+
 --- An image carrying a tear-off height, rewritten so the height survives the writer.
 ---
 --- Returns `nil` -- pandoc's "unchanged" -- for every image without one, which is all 2003 of
@@ -40,24 +81,55 @@ end
 --- converts byte-identically with the filter in place.
 function Image(image)
     local tearoff = image.attributes['tearoff_height']
-    if not tearoff then
+    local pregap = image.attributes['tearoff_pregap']
+    if not tearoff and not pregap then
         return nil
     end
     image.attributes['tearoff_height'] = nil
+    image.attributes['tearoff_pregap'] = nil
     if not writing_latex() then
         return image
     end
-    -- `width=\linewidth` and `keepaspectratio` are what the LaTeX writer itself adds around a
-    -- stated height, and they are what `\insertPicture` is documented against; writing them here
-    -- keeps the option list the same shape as every other figure's.
+    local width = image.attributes['width']
     local height = image.attributes['height']
-    local options = {'width=\\linewidth'}
-    if height then
-        table.insert(options, 'height=' .. height)
+    if not width and not height then
+        -- A figure with neither dimension is an authoring error, and it already has an owner:
+        -- pandoc wraps an unsized image in `\pandocbounded`, which `convertor.py` refuses by
+        -- name. Handing it back unchanged keeps that one message rather than inventing a second
+        -- -- the build fails either way, so the tear-off's own keys are lost to a failed
+        -- build and not to a page.
+        return image
     end
-    -- After `height`, because keyval honours the last assignment and this one has to win.
-    table.insert(options, 'tearoffheight=' .. tearoff)
-    table.insert(options, 'keepaspectratio')
+    -- `width=\linewidth` and `height=\textheight` are what the LaTeX writer itself supplies for
+    -- whichever dimension is missing, with `keepaspectratio` to make the stated one the real
+    -- constraint; with both stated it supplies neither, because the author has given a box.
+    local options = {
+        'width=' .. (width and dimension(width, '\\linewidth') or '\\linewidth'),
+        'height=' .. (height and dimension(height, '\\textheight') or '\\textheight'),
+    }
+    if tearoff then
+        -- After `height`, because keyval honours the last assignment and this one has to win.
+        table.insert(options, 'tearoffheight=' .. dimension(tearoff, '\\textheight'))
+    end
+    if not (width and height) then
+        table.insert(options, 'keepaspectratio')
+    end
+    -- Braced, because a value holding a comma -- `trim` takes four lengths and pandoc writes them
+    -- bare -- would otherwise split into options of its own. keyval strips one level, so this is
+    -- the same value to every key that already worked. Last, so that an author restating one of
+    -- ours, `keepaspectratio=false` on a figure that must be squashed, wins by position.
+    for _, attribute in ipairs(image.attributes) do
+        if not OWN[attribute[1]] then
+            table.insert(options, attribute[1] .. '={' .. attribute[2] .. '}')
+        end
+    end
+    -- Before the include, because the skip belongs above the drawing and `\insertPicture` --
+    -- which `convertor.py` rewrites this into -- opens a `center` of its own.
+    local prefix = ''
+    if pregap then
+        prefix = '\\tearoffPregap{' .. dimension(pregap, '\\textheight') .. '}'
+    end
     return pandoc.RawInline(
-        'tex', '\\includegraphics[' .. table.concat(options, ',') .. ']{' .. image.src .. '}')
+        'tex',
+        prefix .. '\\includegraphics[' .. table.concat(options, ',') .. ']{' .. image.src .. '}')
 end

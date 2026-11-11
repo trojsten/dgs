@@ -954,7 +954,7 @@ _META: tuple[Entry, ...] = (
                'preamble can write `tcold = (§ tcold.mag §)` and stay in step.'),
     Entry('pictures', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='pictures: {name: {file: <file>, height: <size>, '
-                    'tearoff_height: <size>, caption: {lang: text}}}',
+                    'tearoff_height: <size>, tearoff_pregap: <length>, caption: {lang: text}}}',
           summary='A figure, hoisted out of the per-language files the way `eq:` is. Reached as '
                   '`(§ pictures.name §)`; **the key becomes the label**, `{#fig:<pid>:<key>}`, '
                   'and nobody types one.',
@@ -972,7 +972,11 @@ _META: tuple[Entry, ...] = (
                'than a free-flowing column. It cannot be settled when the figure is rendered, since '
                'one `problem.tex` is built and every document inputs that same file, so both sizes '
                'are carried into the TeX and `\\tearoffPictures` chooses there; a figure declaring '
-               'none prints its `height` everywhere. Whether a '
+               'none prints its `height` everywhere. **`tearoff_pregap` is the space above it**, '
+               'a TeX length and almost always negative -- `tearoff_pregap: -5mm` -- for the '
+               'same document and the same reason: `center` opens 7.3mm above a drawing, which '
+               'is a lot of a 94mm box. It is honoured only in the tear-off, so a gap tuned for '
+               'that box cannot leak into a free-flowing booklet column. Whether a '
                'figure is captioned -- and so numbered, and so referenceable -- is decided by the '
                'file being rendered, not at the call site: a statement never captions its '
                'figures and a solution always does, including where the caption is empty.'),

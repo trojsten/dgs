@@ -1140,6 +1140,78 @@ calls that inside the minipage which already groups each problem, so it rolls ba
 is the same bargain as `\tightPictures`: the *including* context decides and the fragment stays the
 same for everybody.
 
+**Rebuilding the option list means owning everything pandoc's writer did with it**, which is where
+the two rules in the filter come from. A dimension is **translated, not copied**: `height=50%` is
+pandoc's notation for half the text height and its writer emits `0.5\textheight`, while a copied
+`%` is TeX's comment character and swallows the rest of the option list, the closing bracket and
+the file name with it -- a figure that fails on the next line with nothing pointing back at it.
+And **every other attribute is passed through**, braced so that a value holding a comma stays one
+option, and after ours so that an author restating `keepaspectratio` wins by position. pandoc's
+own writer keeps `page`, `trim`, `clip` and `alt` and silently discards the rest of graphicx's
+keys -- `angle`, `scale`, `origin`, `draft`, `viewport` -- and reproducing that whitelist here
+would be a second copy of pandoc's taste going stale on pandoc's schedule. An unknown key now
+reaches graphicx, which either honours it or stops the build naming it. The one shape left to
+pandoc is a figure with **neither** dimension: that is already refused by name as a
+`\pandocbounded`, so the filter hands it back untouched rather than inventing a second message
+for the same mistake.
+
+**`tearoff_pregap:` is the other half of the same problem, the space *above* the drawing.**
+Measured on volume 29's Slovak tear-off, the gap between the last line of a statement and the top
+of its figure is **7.3mm** out of the 94mm the problem has: 4.6mm of `\topsep` and `\partopsep`
+from the `center` that `\insertPicture` opens, 2.1mm of `\parskip`, and 0.6mm of leading that
+is not anybody's to take. Writing `tearoff_pregap: -5mm` takes five of them back, and the gap
+measures 2.3mm instead -- the `\vspace` is honoured in full and nothing else on the page moves.
+
+**Taking that 4.6mm from every drawing at once was tried and rejected**, and it is worth knowing
+why so it is not tried twice. Zeroing `\topsep` and `\partopsep` inside `\tearoffPictures`
+works and is cheap -- two `\setlength`, scoped by the minipage, leaving a 2.7mm gap -- but it
+moved **178 tear-off pages**: every problem with a drawing in each of volume 29's nine languages,
+and 43 more across chem `01`-`04`. The breathing room is right in most of them, so the default
+stays and the knob is per figure. (It also moved two pages *downward*: a `problem-extra` sits
+between two `\vfill` rather than at the top of its box, so a shorter block recentres instead of
+rising and gives half its gain back above.)
+
+**What the leftover space is for, instead, is centring the drawing in it.** `\tearoffPictures`
+redefines `\insertPicture` so a figure floats in the white its problem leaves rather than hugging
+the text with all of it underneath. The tear-off is the only document where that question even
+has an answer -- a problem sits in a box of a fixed 94mm or 143mm, so there *is* a leftover; a
+booklet column is free-flowing and has none. It moved **97 pages**, 5 to 9 per language in volume
+29 and 36 across chem, by 0.3mm where the box is nearly full to 72mm where a short problem carries
+a small drawing.
+
+Three things decide it, and each was got wrong first:
+
+- **`\stretch`, which is a second-order `fill`, not `\vfill`, which is a `fil`.** The minipage is
+  `[t][94mm][t]` and that `t` puts a `\vss` at the foot of the box. Glue of the same order shares
+  the slack, so against a `\vfill` the `\vss` would take a third of it and the drawing would land
+  a third of the way down instead of halfway. (`\addvspace{\topsep}` from the `center` is *not* a
+  problem, which is worth knowing because it looks like one: it treats a glue whose natural size
+  is 0pt as no glue at all and appends rather than replacing.)
+- **2 above, 1 below, and 1 more at the foot**, which `\tearoffTail` lays down after the problem's
+  last line. Equal glue above and below is right only for a drawing that *ends* its problem; nine
+  of volume 29's statements and a good many of chem's put a question after the figure, and with
+  nothing to balance it that question was flung onto the bottom edge of the box, a whole leftover
+  away from the drawing it belongs to. `chem/03`'s reaction scheme is the worked example. At 2:1:1
+  a drawing that ends its problem is still at the middle of the white, and one that does not keeps
+  its trailing line near it.
+- **A `problem-extra` is centred as a block, so its own two `\vfill` had to become `\stretch` too**
+  -- otherwise a figure inside one would outrank them and the block would stop being centred.
+  It gets no `\tearoffTail`, because the glue below it is already there. Those pages are now
+  centred exactly, where three competing `fil` used to put them a third of the way down.
+
+The booklet and `problems.pdf` are untouched, every page but the colophon's timestamp.
+
+It is **not** a `Gin` key and cannot be: an option list is read inside the `\makebox` that holds
+the drawing, which is far too late to put glue above it. So the filter writes `\tearoffPregap{…}`
+ahead of the include, and `core/latex/utilities.tex` defines that as a no-op which
+`\tearoffPictures` turns into a `\vspace` -- one switch for both keys, group-local, rolled back
+by the minipage. Honoured in the tear-off and nowhere else, which is the point: volume 29's
+Slovak booklet and `problems.pdf` are page-for-page identical with the key set and without it,
+every page but the colophon's timestamp. A negative skip tuned for a fixed-height box has no
+business in a free-flowing column, and that is not hypothetical -- the eleven `answer.md` files
+that carried hand-tuned negative `\vspace` went stale every time a drawing was resized, which is
+why `\tightPictures` exists.
+
 ### A statement never captions its figures; a solution always does
 
 `figure_captions` in `modules/naboj/builder/renderer.py`, stated in both directions exactly as

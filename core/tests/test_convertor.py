@@ -774,3 +774,143 @@ class TestATearoffHeightSurvivesThePandocHop:
         out = convert('html', 'sk', '![cap](f.png){#fig:x height=40mm tearoff_height=30mm}')
         assert 'tearoff' not in out
         assert 'height:40mm' in out.replace(' ', '')
+
+
+class TestTheRebuiltOptionListIsPandocsOwn:
+    r"""
+    The filter does not edit pandoc's option list, it writes its own -- so it inherits everything
+    the writer was doing with a figure's attributes, and each of those is a way to get it wrong.
+
+    Two rules, and the second is the one that decides what the first may not do. A **dimension is
+    translated**: `50%` is pandoc's notation, not graphicx's, and the writer resolves it against
+    `\linewidth` or `\textheight` before TeX ever sees it. And **every other attribute is passed
+    through**, because an author who wrote one meant it -- pandoc's writer keeps four of
+    graphicx's keys and silently drops the rest, which is a taste this filter deliberately does
+    not reproduce.
+    """
+
+    @staticmethod
+    def options(out):
+        """The option list as it reached `\\insertPicture`, which is what TeX will read."""
+        return re.search(r'\\insertPicture\[(.*?)]\{', out).group(1)
+
+    def test_a_percentage_height_is_resolved_not_copied(self, convert):
+        r"""
+        The defect this class exists for. `%` is TeX's comment character, so a copied `height=50%`
+        swallows the rest of the option list, the closing bracket and the file name -- and the
+        build then fails on the *next* line with nothing pointing back at the figure.
+        """
+        out = convert('latex', 'sk', '![](f.svg){height=50% tearoff_height=30%}')
+        assert self.options(out) == \
+            r'width=\linewidth,height=0.5\textheight,tearoffheight=0.3\textheight,keepaspectratio'
+
+    def test_the_fraction_is_spelled_the_way_pandoc_spells_it(self, convert):
+        """No trailing zero pandoc does not write: `100%` is `1` and `33.5%` is `0.335`."""
+        out = convert('latex', 'sk', '![](f.svg){height=100% tearoff_height=33.5%}')
+        assert r'height=1\textheight,tearoffheight=0.335\textheight' in self.options(out)
+
+    def test_no_bare_percent_reaches_the_tex(self, convert):
+        out = convert('latex', 'sk', '![](f.svg){height=50% tearoff_height=30%}')
+        assert '%' not in self.options(out)
+
+    def test_every_other_attribute_is_passed_through(self, convert):
+        r"""
+        `page`, `trim` and `clip` pandoc would have kept; `angle` it would have dropped. Both go
+        to graphicx, which honours them -- or stops the build naming the key, which is the loud
+        half of the bargain and better than a silent discard.
+        """
+        out = convert('latex', 'sk',
+                      '![](f.svg){height=40mm tearoff_height=30mm page=3 trim="1 2 3 4" '
+                      'clip=true angle=45}')
+        assert self.options(out) == (r'width=\linewidth,height=40mm,tearoffheight=30mm,'
+                                     r'keepaspectratio,page={3},trim={1 2 3 4},clip={true},'
+                                     r'angle={45}')
+
+    def test_a_value_holding_a_comma_stays_one_option(self, convert):
+        """Braced, or `viewport`'s four numbers would split into options of their own."""
+        out = convert('latex', 'sk',
+                      '![](f.svg){height=40mm tearoff_height=30mm viewport="0,0,10,10"}')
+        assert 'viewport={0,0,10,10}' in self.options(out)
+
+    def test_the_author_has_the_last_word(self, convert):
+        """Passed through *after* ours, so keyval's last assignment is theirs."""
+        out = convert('latex', 'sk',
+                      '![](f.svg){height=40mm tearoff_height=30mm keepaspectratio=false}')
+        assert self.options(out).endswith('keepaspectratio={false}')
+
+    def test_two_stated_dimensions_are_left_as_a_box(self, convert):
+        """
+        Exactly what pandoc does: with both given the author has stated a box, so the writer adds
+        no `keepaspectratio` -- and neither do we.
+        """
+        out = convert('latex', 'sk', '![](f.svg){width=60mm height=40mm tearoff_height=30mm}')
+        assert self.options(out) == 'width=60mm,height=40mm,tearoffheight=30mm'
+
+    def test_a_width_alone_gets_the_writers_own_height(self, convert):
+        out = convert('latex', 'sk', '![](f.svg){width=60mm tearoff_height=30mm}')
+        assert self.options(out) == \
+            r'width=60mm,height=\textheight,tearoffheight=30mm,keepaspectratio'
+
+    def test_an_unsized_figure_keeps_its_own_error(self, convert):
+        r"""
+        A figure with neither dimension already has an owner -- pandoc's `\pandocbounded`, which
+        the convertor refuses by name with a message telling the author to give it a size. The
+        filter hands it back untouched rather than inventing a second message for the same
+        mistake; the build fails either way, so nothing reaches a page.
+        """
+        with pytest.raises(Exception, match=r'pandocbounded'):
+            convert('latex', 'sk', '![](f.svg){tearoff_height=30mm}')
+
+
+class TestATearoffPregapRidesAlongToo:
+    r"""
+    The space *above* a figure, taken out where the tear-off cannot afford it.
+
+    Measured on volume 29's Slovak tear-off, the gap between the last line of a statement and the
+    top of its drawing is **7.3mm** -- 4.6mm of `\topsep` and `\partopsep`, 2.1mm of `\parskip`
+    and 0.6mm of leading -- out of the 94mm a phys problem has in total.
+
+    It is not a graphicx key and cannot be: a vertical skip has to be laid down before the
+    drawing, while an option list is read inside the `\makebox` that holds it. So the filter
+    writes `\tearoffPregap` ahead of the include, and that macro is a no-op in every document but
+    the tear-off -- a negative skip tuned for a fixed-height box would be wrong in a free-flowing
+    booklet column, which is what the eleven hand-tuned negative `\vspace` in `answer.md` files
+    were before `\tightPictures` replaced them.
+    """
+
+    def test_the_gap_is_written_before_the_picture(self, convert):
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
+        assert r'\tearoffPregap{-5mm}\insertPicture[width=\linewidth,height=40mm,' \
+               r'keepaspectratio]{f.pdf}' in out
+
+    def test_it_does_not_need_a_tearoff_height(self, convert):
+        """The two keys are independent: a figure may want the space back at its stated size."""
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
+        assert 'tearoffheight' not in out
+
+    def test_both_keys_together(self, convert):
+        out = convert('latex', 'sk',
+                      '![](f.svg){height=40mm tearoff_height=30mm tearoff_pregap=-5mm}')
+        assert r'\tearoffPregap{-5mm}\insertPicture[width=\linewidth,height=40mm,' \
+               r'tearoffheight=30mm,keepaspectratio]{f.pdf}' in out
+
+    def test_a_signed_percentage_is_resolved_like_any_other_dimension(self, convert):
+        """Signed, because a gap is usually negative and `-5%` must not reach TeX as a comment."""
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-4%}')
+        assert r'\tearoffPregap{-0.04\textheight}' in out
+
+    def test_it_is_not_passed_through_as_an_option(self, convert):
+        """It is consumed, not propagated -- graphicx has never heard of it."""
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
+        assert 'tearoff_pregap' not in out
+
+    def test_html_drops_it(self, convert):
+        """A web page has no tear-off, and the HTML writer would put it on the `<img>`."""
+        out = convert('html', 'sk', '![](f.png){height=40mm tearoff_pregap=-5mm}')
+        assert 'tearoff' not in out and 'pregap' not in out
+
+    def test_a_figure_declaring_neither_key_is_untouched(self, convert):
+        """The quiet half, and the reason every one of today's 2003 figures is unaffected."""
+        out = convert('latex', 'sk', '![](f.svg){height=40mm}')
+        assert 'tearoff' not in out
+        assert r'\insertPicture[width=\linewidth,height=40mm,keepaspectratio]{f.pdf}' in out
