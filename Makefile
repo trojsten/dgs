@@ -82,11 +82,17 @@ endef
 # TeX wraps its log at 79 columns, which chops error messages mid-word -- "File ended while sc /
 # anning use of \frac". Widening the line keeps each error readable, and quotable, in one piece.
 # Affects only what is printed, never what is typeset.
+# xelatex_cmd(module, texfot_args)
+# The command alone, on one line, so that it can also sit inside a shell conditional. One copy:
+# `double_xelatex` runs the second pass only when the first asks for it, and a second spelling of
+# this line is how the two passes would start to differ without anyone noticing.
+define xelatex_cmd
+max_print_line=1000 error_line=254 half_error_line=238 texfot $(2) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) -halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
+endef
+
 define xelatex
 	@echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): $(2) run$(c_default)'
-	@max_print_line=1000 error_line=254 half_error_line=238 \
-		texfot $(3) xelatex -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) \
-		-halt-on-error -synctex=1 -interaction=nonstopmode build/$(1)/$*/$(basename $(notdir $@)).tex
+	@$(call xelatex_cmd,$(1),$(3))
 endef
 
 # _pandoc(language, format, pretty_format)
@@ -122,10 +128,19 @@ endef
 
 # double_xelatex(module)
 # Compiles a selected target twice (to ensure references are correct)
+# The second pass happens only when the first asks for it. xelatex is 71% of the build -- 127
+# edges against 585 of 819 edge-seconds -- and every document ran twice whether or not it had
+# anything left to settle. A cold pass requests a rerun in every document kind and a warm one in
+# none, so a cold build is unchanged and the authoring loop loses a pass. `tools/ninja/rerun.py`
+# is the test; an unreadable log counts as a request. `if` returns the branch's status, so a
+# failing second pass still fails the rule.
 define double_xelatex
 	mkdir -p $(dir $@)
 	$(call xelatex,$(1),primary,${TEXFOT_ARGS_FIRST})
-	$(call xelatex,$(1),secondary,${TEXFOT_ARGS})
+	@if python -m tools.ninja.rerun $(subst .pdf,,$@).log; then \
+		echo -e '$(c_action)[XeLaTeX] Compiling PDF file $(c_filename)$@$(c_action): secondary run$(c_default)'; \
+		$(call xelatex_cmd,$(1),${TEXFOT_ARGS}); \
+	fi
 endef
 
 # copy(extension)
@@ -221,7 +236,7 @@ build/%.pdf: build/%.tikz.tex
 			 '$(c_extension)PDF$(c_action) file $(c_filename)$@$(c_action):$(c_default)'
 	@mkdir -p $(dir $@)
 	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
-	max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<
+	@if python -m tools.ninja.rerun $(subst .pdf,,$@).log; then max_print_line=1000 error_line=254 half_error_line=238 texfot xelatex -interaction=nonstopmode -halt-on-error -file-line-error -shell-escape -jobname=$(subst .pdf,,$@) $<; fi
 
 # A hand-drawn picture, for the web: copied, not round-tripped. It is already an SVG; sending it
 # through a PDF and back would cost two conversions to arrive where it started.
