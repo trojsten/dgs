@@ -290,9 +290,21 @@ def rules(w: Writer) -> None:
            description=described('{a}[XeLaTeX] Compiling {x}PDF{a} file {f}$out'),
            depfile='$out.d', deps='gcc')
     # `pdfbook2` names its own output and the recipe renames it; `pdfjam` takes `--outfile`.
+    #
+    # It runs in a directory of its own because its scratch file is `.crop-tmp.pdf`,
+    # hardcoded and relative to the working directory -- so two of these 98 edges
+    # running at once in the repository root share it, and the one that loses the race
+    # finds its `-book.pdf` already renamed away: `FileNotFoundError: '.crop-tmp.pdf'`.
+    # The input is resolved first, since `cd` changes what a relative path means, and the
+    # directory is made beside the output rather than in `/tmp`: `pdfbook2` finishes with
+    # an `os.rename`, which cannot cross a filesystem -- `OSError: [Errno 18] Invalid
+    # cross-device link`. Same device, so the rename stays a rename.
     w.rule('pdfbook',
-           'mkdir -p $$(dirname $out) && pdfbook2 --paper a4paper --outer-margin=30 '
-           '--inner-margin=50 --top-margin=30 --bottom-margin=30 $in && '
+           'mkdir -p $$(dirname $out) && p=$$(realpath $in) && '
+           't=$$(mktemp -d -p $$(dirname $out)) && '
+           '( cd $$t && pdfbook2 --paper a4paper --outer-margin=30 '
+           '--inner-margin=50 --top-margin=30 --bottom-margin=30 "$$p" ) && '
+           'rm -rf $$t && '
            'mv $$(dirname $in)/$$(basename $in .pdf)-book.pdf $out',
            description=described('{a}[pdfbook2] Imposing {f}$in{a} into {f}$out'))
     w.rule('pdfjam_nup',

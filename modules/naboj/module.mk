@@ -486,9 +486,19 @@ output/naboj/%/solutions.pdf: \
 
 # Full booklet folded for printing
 # % <competition>/<volume>/languages/<language>
+#
+# `pdfbook2` runs in a directory of its own because its scratch file is
+# `.crop-tmp.pdf`, hardcoded and relative to the working directory. Two of these
+# running at once under `make -j` share it, and whichever loses the race finds its
+# `-book.pdf` already renamed away: `FileNotFoundError: '.crop-tmp.pdf'`. The input
+# is resolved first, since `cd` changes what a relative path means, and the directory is
+# made beside the output rather than in `/tmp`: `pdfbook2` finishes with an `os.rename`,
+# which cannot cross a filesystem -- `OSError: [Errno 18] Invalid cross-device link`.
 output/naboj/%/booklet-print.pdf: \
 	output/naboj/%/booklet.pdf ;
-	pdfbook2 --paper a4paper --outer-margin=30 --inner-margin=50 --top-margin=30 --bottom-margin=30 $<
+	p=$$(realpath $<) && t=$$(mktemp -d -p $$(dirname $@)) && \
+	( cd $$t && pdfbook2 --paper a4paper --outer-margin=30 --inner-margin=50 --top-margin=30 --bottom-margin=30 "$$p" ) && \
+	rm -rf $$t
 	mv output/naboj/$*/booklet-book.pdf $@
 
 output/naboj/%/answers.pdf: \
