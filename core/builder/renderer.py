@@ -426,15 +426,21 @@ class ConstantsContext(FileContext):
 #: which entry of which file was wrong.
 #: What one `pictures:` entry may hold.
 #:
-#: Both keys are required and there are no others, because both are written by every one of the
-#: repository's 2003 includes and nothing else ever is -- `height` is the only pandoc attribute
-#: any of them uses. A figure wanting `width` instead is a deliberate addition here rather than
-#: something an author can invent at a call site, which is the point: a typo in an attribute name
-#: is silent, and an unsized figure is refused much later by `convertor.py` with a message about
-#: `\pandocbounded`.
+#: `file` and `height` are required and the other two are the only additions, because `height` is
+#: the only pandoc attribute any of the repository's 2003 includes uses. A figure wanting `width`
+#: instead is a deliberate addition here rather than something an author can invent at a call site,
+#: which is the point: a typo in an attribute name is silent, and an unsized figure is refused much
+#: later by `convertor.py` with a message about `\pandocbounded`.
 PICTURE_ENTRY = {
     'file': str,
     'height': str,
+    # The height this figure takes in the tear-off, where a problem sits in a fixed-height minipage
+    # rather than a free-flowing column. It cannot be a second `height` at the call site, because
+    # one `problem.tex` is built and *every* document inputs that same file -- so the choice is not
+    # the renderer's to make and is carried into TeX instead, where `\tearoffPictures` makes the
+    # tear-off honour this key and every other document ignore it. Absent, the plain `height`
+    # stands everywhere, which is what all 2003 of them do today.
+    Opt('tearoff_height'): str,
     # A caption that cannot be written at the call site, because it interpolates: a `(§ … §)`
     # inside a string argument ends the enclosing tag at its first `§)`. Spelled per language, or
     # as a bare string where every language shares it, exactly as a `words:` term is -- and

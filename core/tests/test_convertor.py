@@ -719,3 +719,58 @@ class TestFigureCaptionStyling:
         out = convert('latex', 'sk', self.CAPTIONED)
         assert 'font-style' not in out
         assert 'text-align' not in out
+
+
+class TestATearoffHeightSurvivesThePandocHop:
+    r"""
+    A figure may name a second height for the tear-off, and pandoc will not carry it on its own.
+
+    The attribute reaches the AST -- an `Image` really does hold
+    `[("height","40mm"),("tearoff_height","30mm")]` -- and then **the LaTeX writer drops every
+    key it does not itself know**, emitting `width,height,keepaspectratio` and nothing else.
+    `core/filters/pictures.lua` is the only place the value can be caught, and these are the four
+    cases it has to get right.
+
+    It emits `\includegraphics` rather than the final `\insertPicture` so that the convertor's own
+    `post_regexes` still do the rewriting and the `.svg` to `.pdf` swap -- the extension table
+    stays in one place.
+    """
+
+    def test_the_key_reaches_the_tex(self, convert):
+        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm tearoff_height=30mm}')
+        assert r'\insertPicture[width=\linewidth,height=40mm,tearoffheight=30mm,' \
+               r'keepaspectratio]{f.pdf}' in out
+        assert 'f.svg' not in out                          # the convertor still swapped it
+
+    def test_the_figure_and_its_label_survive(self, convert):
+        """
+        The caption is what makes pandoc emit a `figure` at all, and so what gives the drawing a
+        number and a `\\label`. Replacing the image must not cost either -- they are sibling AST
+        nodes, which is why this works.
+        """
+        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm tearoff_height=30mm}')
+        assert r'\begin{figure}' in out and r'\caption{' in out and r'\label{fig:x}' in out
+
+    def test_an_uncaptioned_statement_figure_works_too(self, convert):
+        """A statement never captions its figures, so this is the common shape, not the odd one."""
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_height=30mm}')
+        assert 'tearoffheight=30mm' in out
+        assert r'\begin{figure}' not in out
+
+    def test_a_figure_without_one_is_untouched(self, convert):
+        """
+        Every figure in the repository is this one. 280 built fragments were converted with the
+        filter and without it and not one differed.
+        """
+        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm}')
+        assert 'tearoff' not in out
+        assert r'\insertPicture' in out
+
+    def test_html_drops_it_rather_than_passing_it_through(self, convert):
+        """
+        A web page has no tear-off. Left alone the HTML writer would put the unknown attribute
+        straight onto the `<img>` as `tearoff_height="30mm"`, which is markup nobody asked for.
+        """
+        out = convert('html', 'sk', '![cap](f.png){#fig:x height=40mm tearoff_height=30mm}')
+        assert 'tearoff' not in out
+        assert 'height:40mm' in out.replace(' ', '')

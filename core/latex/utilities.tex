@@ -90,6 +90,29 @@
     }%
 }
 
+% A figure's height in the tear-off, where it differs from its height everywhere else.
+%
+% One `problem.tex` is built and every document inputs that same file, so a figure cannot be
+% given two sizes by the renderer -- the booklet and the tear-off would be asking one fragment
+% for both. The second size rides into the TeX as an ordinary `Gin` key instead, written by
+% `core/filters/pictures.lua` because pandoc's writer drops any attribute it does not know.
+%
+% Ignored by default, so every document prints the plain `height` and a figure without the key
+% is unaffected. The tear-off turns it on, inside the minipage that already groups each problem
+% -- the same bargain as \tightPictures above, where the *including* context decides and the
+% fragment it reads stays the same for everybody.
+%
+% The key is defined rather than merely tolerated: graphicx raises `Unknown key` on an option it
+% has never heard of, so a no-op definition is what lets the other eight documents ignore it.
+% \setkeys is right rather than \Gin@esetsize because `height` is already in the same option
+% list, ahead of this one, and keyval honours the last assignment it is given.
+\makeatletter
+\define@key{Gin}{tearoffheight}{}
+\NewDocumentCommand{\tearoffPictures}{}{%
+    \define@key{Gin}{tearoffheight}{\setkeys{Gin}{height=##1}}%
+}
+\makeatother
+
 % The join between the answer and an `answer-extra`, `answer-interval` or `answer-also`.
 %
 % Every part is a separate pandoc file and so ends in a newline, which TeX turns into a

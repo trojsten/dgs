@@ -888,7 +888,7 @@ _NAMESPACES: tuple[Entry, ...] = (
                'render then exits nonzero.'),
     Entry('pictures', 'namespace', section='Namespaces the context adds',
           signature="pictures.<name>  ·  pictures.<name>('caption')  ·  "
-                    "pictures.<name>(height='55mm')",
+                    "pictures.<name>(height='55mm', tearoff_height='30mm')",
           summary='The figures declared in this problem\'s `pictures:`. Emits the whole Markdown '
                   'include -- file, size and label -- so the only thing left at the call site is '
                   'the caption and where the figure sits.',
@@ -953,20 +953,26 @@ _META: tuple[Entry, ...] = (
                'one directive per line. Tags inside a block are expanded by the second pass, so a '
                'preamble can write `tcold = (§ tcold.mag §)` and stay in step.'),
     Entry('pictures', 'meta-key', env=META, section='`meta.yaml`: a problem',
-          signature='pictures: {name: {file: <file>, height: <size>, caption: {lang: text}}}',
+          signature='pictures: {name: {file: <file>, height: <size>, '
+                    'tearoff_height: <size>, caption: {lang: text}}}',
           summary='A figure, hoisted out of the per-language files the way `eq:` is. Reached as '
                   '`(§ pictures.name §)`; **the key becomes the label**, `{#fig:<pid>:<key>}`, '
                   'and nobody types one.',
-          note='Both keys are required and there are no others. The caption is **not** here: it '
+          note='`file` and `height` are required. The caption is **not** here: it '
                'is prose, it is translated, and it goes at the call site -- '
                "`(§ pictures.name('Lano cez kladku') §)` -- except where it *interpolates*, "
                'which a string argument cannot express at all, since a `(§ … §)` inside one ends '
                'the enclosing tag at its first `§)`. That caption goes under `caption:`, per '
                'language or as a bare string, and is emitted as written for the next pass to '
                "expand. The size is a default rather than a "
-               'rule, because a tear-off has a fixed height and translations do not have equal '
-               "line counts, so a language that needs the room writes "
-               "`(§ pictures.name(height='55mm') §)` and says so in one visible place. Whether a "
+               'rule: translations do not have equal line counts, so a language that needs the '
+               "room writes `(§ pictures.name(height='55mm') §)` and says so in one visible "
+               'place. **`tearoff_height` is the other axis** -- per *document* rather than per '
+               'language, for the tear-off, where a problem sits in a fixed-height minipage rather '
+               'than a free-flowing column. It cannot be settled when the figure is rendered, since '
+               'one `problem.tex` is built and every document inputs that same file, so both sizes '
+               'are carried into the TeX and `\\tearoffPictures` chooses there; a figure declaring '
+               'none prints its `height` everywhere. Whether a '
                'figure is captioned -- and so numbered, and so referenceable -- is decided by the '
                'file being rendered, not at the call site: a statement never captions its '
                'figures and a solution always does, including where the caption is empty.'),

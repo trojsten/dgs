@@ -10,6 +10,9 @@
             \subsection{\texorpdfstring{(* problem.number *)*}{(* language.id *): (* problem.number *)*. (* problem.id *)-extra}}
             ~
             \vfill
+            (# As in `problem.jtex`: the tear-off is the one document that honours a figure's
+               `tearoff_height`, and the minipage scopes it. #)
+            \tearoffPictures%
             \protectedInput{\activeDirectory/(* language.id *)/problem-extra.tex}%
             \vfill
             ~

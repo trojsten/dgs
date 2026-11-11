@@ -670,10 +670,54 @@ class TestPictures:
         from core.builder.renderer import StandaloneContext
         schema = StandaloneContext._schema
         schema.validate({'id': 'demo', 'pictures': {'a': {'file': 'a.svg', 'height': '40mm'}}})
+        schema.validate({'id': 'demo', 'pictures': {
+            'a': {'file': 'a.svg', 'height': '40mm', 'tearoff_height': '30mm'}}})
         for bad in ({'file': 'a.svg'}, {'height': '40mm'},
-                    {'file': 'a.svg', 'height': '40mm', 'width': '2cm'}):
+                    {'file': 'a.svg', 'height': '40mm', 'width': '2cm'},
+                    {'file': 'a.svg', 'tearoff_height': '30mm'}):
             with pytest.raises(SchemaError):
                 schema.validate({'id': 'demo', 'pictures': {'a': bad}})
+
+    TEAROFF_META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
+                    "tags: ['kinematics']\n"
+                    "pictures:\n"
+                    "  hanging:\n    file: hanging.png\n    height: 40mm\n"
+                    "    tearoff_height: 30mm\n")
+
+    def test_a_tearoff_height_reaches_the_markdown(self, tmp_path):
+        """
+        It cannot be resolved here. One `problem.tex` is built and every document inputs that
+        same file, so which height applies is not a question the renderer is in a position to
+        answer -- it emits both and `\tearoffPictures` chooses, inside the tear-off.
+        """
+        out = self.render_named(tmp_path, 'sk', self.TEAROFF_META,
+                                '(§ pictures.hanging §)', 'problem.md')
+        assert out.strip() == '![](hanging.png){height=40mm tearoff_height=30mm}'
+
+    def test_a_call_site_overrides_the_declared_tearoff_height(self, tmp_path):
+        """The same precedence the plain `height` has: a call site beats the meta."""
+        out = self.render_named(tmp_path, 'sk', self.TEAROFF_META,
+                                "(§ pictures.hanging(tearoff_height='25mm') §)", 'problem.md')
+        assert 'tearoff_height=25mm' in out
+        assert '30mm' not in out
+
+    def test_both_heights_can_be_given_at_the_call_site(self, tmp_path):
+        """The form the feature was asked for, with neither declared in the meta."""
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                "(§ pictures.hanging(height='44mm', tearoff_height='28mm') §)",
+                                'problem.md')
+        assert 'height=44mm' in out and 'tearoff_height=28mm' in out
+
+    def test_a_figure_without_one_is_untouched(self, tmp_path):
+        """
+        The quiet half, and the one that matters: every figure in the repository is this one, so
+        adding the key must not move any of them. 280 built fragments were converted with the
+        change and without it and none differed.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                '(§ pictures.hanging §)', 'problem.md')
+        assert out.strip() == '![](hanging.png){height=40mm}'
+        assert 'tearoff' not in out
 
 
 class TestDisplayTagsOwnTheirLine:

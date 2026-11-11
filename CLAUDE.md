@@ -1096,6 +1096,42 @@ What the default buys is therefore not uniformity. It is that the common size is
 that a language which needed different room says so in one visible place instead of being one of
 six numbers nobody can compare.
 
+### `tearoff_height:` is the other axis, and it is per *document*
+
+`height=` is per language. The tear-off needs the other one: a problem sits there in a fixed-height
+minipage -- 94mm for phys, 143mm for chem -- where a booklet column is free-flowing, so a drawing
+sized for the booklet can push a tear-off problem out of its box. Write the second size and nothing
+else changes:
+
+```yaml
+pictures:
+  rollercoaster:
+    file: rollercoaster.svg
+    height: 48mm
+    tearoff_height: 30mm
+```
+
+or `(§ pictures.rollercoaster(height='48mm', tearoff_height='30mm') §)`. A figure that declares none
+prints its `height` in every document, which is what all 2003 of them do.
+
+**It cannot be settled when the figure is rendered, and that is the whole reason it works the way it
+does.** One `problem.tex` is built and *every* document inputs that same file -- `blocks/problem.jtex`
+for the booklet and `problems.pdf`, `blocks/tearoff/problem.jtex` for the tear-off, character for
+character the same `\protectedInput` path, and Ninja would refuse a second rule for the same output
+anyway. So the renderer is not in a position to choose, and both sizes are carried into the TeX
+instead.
+
+Three steps, each in one place. `core/filters/pictures.lua` catches the attribute, **because pandoc
+will not**: it reaches the AST and the LaTeX writer then drops every key it does not itself know.
+The filter emits `\includegraphics`, not the final macro, so `convertor.py`'s existing
+`post_regexes` still do the rewrite and the `.svg`-to-`.pdf` swap and the extension table stays in
+one place. Then `tearoffheight` is an ordinary `Gin` key, defined as a no-op in
+`core/latex/utilities.tex` -- defined rather than merely tolerated, since graphicx raises on an
+option it has never heard of -- and `\tearoffPictures` redefines it to set the height. The tear-off
+calls that inside the minipage which already groups each problem, so it rolls back on its own. That
+is the same bargain as `\tightPictures`: the *including* context decides and the fragment stays the
+same for everybody.
+
 ### A statement never captions its figures; a solution always does
 
 `figure_captions` in `modules/naboj/builder/renderer.py`, stated in both directions exactly as
