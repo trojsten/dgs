@@ -11,7 +11,7 @@
             ~
             \vspace{\stretch{1}}%
             (# As in `problem.jtex`: the tear-off is the one document that honours a figure's
-               `tearoff_height`, and the minipage scopes it.
+               tear-off height `th`, and the minipage scopes it.
 
                An extra is centred as a block, and its own glue has to be the same order as the
                glue `\tearoffPictures` puts around a drawing -- a `\vfill` here is a first-order

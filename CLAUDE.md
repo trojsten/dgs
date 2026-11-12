@@ -1104,7 +1104,7 @@ What the default buys is therefore not uniformity. It is that the common size is
 that a language which needed different room says so in one visible place instead of being one of
 six numbers nobody can compare.
 
-### `tearoff_height:` is the other axis, and it is per *document*
+### `th:` is the other axis, and it is per *document*
 
 `height=` is per language. The tear-off needs the other one: a problem sits there in a fixed-height
 minipage -- 94mm for phys, 143mm for chem -- where a booklet column is free-flowing, so a drawing
@@ -1116,11 +1116,26 @@ pictures:
   rollercoaster:
     file: rollercoaster.svg
     height: 48mm
-    tearoff_height: 30mm
+    th: 30mm
 ```
 
-or `(§ pictures.rollercoaster(height='48mm', tearoff_height='30mm') §)`. A figure that declares none
-prints its `height` in every document, which is what all 2003 of them do.
+or `(§ pictures.rollercoaster(height='48mm', th='30mm') §)`. A figure that declares none prints
+its `height` in every document, which is what all 2003 of them do.
+
+**The two tear-off keys are spelled short, `th` and `tp`**, because they are written at a call
+site beside a `height=` and a long name there buries the number it carries. They are the only
+abbreviated keys in a meta, and they are abbreviated once -- there is no long alias, since two
+spellings of one key is how a corpus comes to hold both.
+
+**A call site may set `height`, `th` and `tp`, and a keyword it does not know is refused by
+name.** The meta has always been validated -- `PICTURE_ENTRY` names every key an entry may
+hold -- and the call site was the one place nothing looked: `Picture.__call__` merged any
+keyword into the attribute block as written, pandoc's writer dropped the attribute it had
+never heard of, and only the two tear-off keys make the Lua filter rebuild the option list at
+all. Measured: `(§ pictures.x(tearof_height='30mm') §)` converted to
+`\insertPicture[width=\linewidth,height=40mm,keepaspectratio]`, so the drawing printed its
+booklet height in a 94mm box with no message anywhere. `Picture.OVERRIDABLE` is pinned against
+`PICTURE_ENTRY` in both directions, so a key added to one and not the other fails the suite.
 
 **It cannot be settled when the figure is rendered, and that is the whole reason it works the way it
 does.** One `problem.tex` is built and *every* document inputs that same file -- `blocks/problem.jtex`
@@ -1155,11 +1170,12 @@ pandoc is a figure with **neither** dimension: that is already refused by name a
 `\pandocbounded`, so the filter hands it back untouched rather than inventing a second message
 for the same mistake.
 
-**`tearoff_pregap:` is the other half of the same problem, the space *above* the drawing.**
+**`tp:`, the tear-off pregap, is the other half of the same problem -- the space *above* the
+drawing.**
 Measured on volume 29's Slovak tear-off, the gap between the last line of a statement and the top
 of its figure is **7.3mm** out of the 94mm the problem has: 4.6mm of `\topsep` and `\partopsep`
 from the `center` that `\insertPicture` opens, 2.1mm of `\parskip`, and 0.6mm of leading that
-is not anybody's to take. Writing `tearoff_pregap: -5mm` takes five of them back, and the gap
+is not anybody's to take. Writing `tp: -5mm` takes five of them back, and the gap
 measures 2.3mm instead -- the `\vspace` is honoured in full and nothing else on the page moves.
 
 **Taking that 4.6mm from every drawing at once was tried and rejected**, and it is worth knowing

@@ -467,7 +467,8 @@ class Convertor:
             "-M", f"repeat-hyphen={'true' if self.repeat_hyphen else 'false'}",
             "-M", ("repeat-hyphen-not-before-capital="
                   f"{'true' if self.repeat_hyphen_not_before_capital else 'false'}"),
-            # A figure's `tearoff_height`, which pandoc's own writers would drop -- the attribute
+            # A figure's tear-off height `th`, which pandoc's own writers would drop -- the
+            # attribute
             # reaches the AST and no further. Both formats, because the attribute has to be
             # stripped either way: the HTML writer passes an unknown one straight onto the `<img>`.
             # Only `Image` nodes, so its order against the typography filters is immaterial.

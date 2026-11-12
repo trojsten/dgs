@@ -726,8 +726,8 @@ class TestATearoffHeightSurvivesThePandocHop:
     A figure may name a second height for the tear-off, and pandoc will not carry it on its own.
 
     The attribute reaches the AST -- an `Image` really does hold
-    `[("height","40mm"),("tearoff_height","30mm")]` -- and then **the LaTeX writer drops every
-    key it does not itself know**, emitting `width,height,keepaspectratio` and nothing else.
+    `[("height","40mm"),("th","30mm")]` -- and then **the LaTeX writer drops every key it
+    does not itself know**, emitting `width,height,keepaspectratio` and nothing else.
     `core/filters/pictures.lua` is the only place the value can be caught, and these are the four
     cases it has to get right.
 
@@ -737,7 +737,7 @@ class TestATearoffHeightSurvivesThePandocHop:
     """
 
     def test_the_key_reaches_the_tex(self, convert):
-        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm tearoff_height=30mm}')
+        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm th=30mm}')
         assert r'\insertPicture[width=\linewidth,height=40mm,tearoffheight=30mm,' \
                r'keepaspectratio]{f.pdf}' in out
         assert 'f.svg' not in out                          # the convertor still swapped it
@@ -748,12 +748,12 @@ class TestATearoffHeightSurvivesThePandocHop:
         number and a `\\label`. Replacing the image must not cost either -- they are sibling AST
         nodes, which is why this works.
         """
-        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm tearoff_height=30mm}')
+        out = convert('latex', 'sk', '![cap](f.svg){#fig:x height=40mm th=30mm}')
         assert r'\begin{figure}' in out and r'\caption{' in out and r'\label{fig:x}' in out
 
     def test_an_uncaptioned_statement_figure_works_too(self, convert):
         """A statement never captions its figures, so this is the common shape, not the odd one."""
-        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_height=30mm}')
+        out = convert('latex', 'sk', '![](f.svg){height=40mm th=30mm}')
         assert 'tearoffheight=30mm' in out
         assert r'\begin{figure}' not in out
 
@@ -769,9 +769,9 @@ class TestATearoffHeightSurvivesThePandocHop:
     def test_html_drops_it_rather_than_passing_it_through(self, convert):
         """
         A web page has no tear-off. Left alone the HTML writer would put the unknown attribute
-        straight onto the `<img>` as `tearoff_height="30mm"`, which is markup nobody asked for.
+        straight onto the `<img>` as `th="30mm"`, which is markup nobody asked for.
         """
-        out = convert('html', 'sk', '![cap](f.png){#fig:x height=40mm tearoff_height=30mm}')
+        out = convert('html', 'sk', '![cap](f.png){#fig:x height=40mm th=30mm}')
         assert 'tearoff' not in out
         assert 'height:40mm' in out.replace(' ', '')
 
@@ -800,17 +800,17 @@ class TestTheRebuiltOptionListIsPandocsOwn:
         swallows the rest of the option list, the closing bracket and the file name -- and the
         build then fails on the *next* line with nothing pointing back at the figure.
         """
-        out = convert('latex', 'sk', '![](f.svg){height=50% tearoff_height=30%}')
+        out = convert('latex', 'sk', '![](f.svg){height=50% th=30%}')
         assert self.options(out) == \
             r'width=\linewidth,height=0.5\textheight,tearoffheight=0.3\textheight,keepaspectratio'
 
     def test_the_fraction_is_spelled_the_way_pandoc_spells_it(self, convert):
         """No trailing zero pandoc does not write: `100%` is `1` and `33.5%` is `0.335`."""
-        out = convert('latex', 'sk', '![](f.svg){height=100% tearoff_height=33.5%}')
+        out = convert('latex', 'sk', '![](f.svg){height=100% th=33.5%}')
         assert r'height=1\textheight,tearoffheight=0.335\textheight' in self.options(out)
 
     def test_no_bare_percent_reaches_the_tex(self, convert):
-        out = convert('latex', 'sk', '![](f.svg){height=50% tearoff_height=30%}')
+        out = convert('latex', 'sk', '![](f.svg){height=50% th=30%}')
         assert '%' not in self.options(out)
 
     def test_every_other_attribute_is_passed_through(self, convert):
@@ -820,7 +820,7 @@ class TestTheRebuiltOptionListIsPandocsOwn:
         half of the bargain and better than a silent discard.
         """
         out = convert('latex', 'sk',
-                      '![](f.svg){height=40mm tearoff_height=30mm page=3 trim="1 2 3 4" '
+                      '![](f.svg){height=40mm th=30mm page=3 trim="1 2 3 4" '
                       'clip=true angle=45}')
         assert self.options(out) == (r'width=\linewidth,height=40mm,tearoffheight=30mm,'
                                      r'keepaspectratio,page={3},trim={1 2 3 4},clip={true},'
@@ -829,13 +829,13 @@ class TestTheRebuiltOptionListIsPandocsOwn:
     def test_a_value_holding_a_comma_stays_one_option(self, convert):
         """Braced, or `viewport`'s four numbers would split into options of their own."""
         out = convert('latex', 'sk',
-                      '![](f.svg){height=40mm tearoff_height=30mm viewport="0,0,10,10"}')
+                      '![](f.svg){height=40mm th=30mm viewport="0,0,10,10"}')
         assert 'viewport={0,0,10,10}' in self.options(out)
 
     def test_the_author_has_the_last_word(self, convert):
         """Passed through *after* ours, so keyval's last assignment is theirs."""
         out = convert('latex', 'sk',
-                      '![](f.svg){height=40mm tearoff_height=30mm keepaspectratio=false}')
+                      '![](f.svg){height=40mm th=30mm keepaspectratio=false}')
         assert self.options(out).endswith('keepaspectratio={false}')
 
     def test_two_stated_dimensions_are_left_as_a_box(self, convert):
@@ -843,11 +843,11 @@ class TestTheRebuiltOptionListIsPandocsOwn:
         Exactly what pandoc does: with both given the author has stated a box, so the writer adds
         no `keepaspectratio` -- and neither do we.
         """
-        out = convert('latex', 'sk', '![](f.svg){width=60mm height=40mm tearoff_height=30mm}')
+        out = convert('latex', 'sk', '![](f.svg){width=60mm height=40mm th=30mm}')
         assert self.options(out) == 'width=60mm,height=40mm,tearoffheight=30mm'
 
     def test_a_width_alone_gets_the_writers_own_height(self, convert):
-        out = convert('latex', 'sk', '![](f.svg){width=60mm tearoff_height=30mm}')
+        out = convert('latex', 'sk', '![](f.svg){width=60mm th=30mm}')
         assert self.options(out) == \
             r'width=60mm,height=\textheight,tearoffheight=30mm,keepaspectratio'
 
@@ -859,7 +859,7 @@ class TestTheRebuiltOptionListIsPandocsOwn:
         mistake; the build fails either way, so nothing reaches a page.
         """
         with pytest.raises(Exception, match=r'pandocbounded'):
-            convert('latex', 'sk', '![](f.svg){tearoff_height=30mm}')
+            convert('latex', 'sk', '![](f.svg){th=30mm}')
 
 
 class TestATearoffPregapRidesAlongToo:
@@ -879,35 +879,35 @@ class TestATearoffPregapRidesAlongToo:
     """
 
     def test_the_gap_is_written_before_the_picture(self, convert):
-        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tp=-5mm}')
         assert r'\tearoffPregap{-5mm}\insertPicture[width=\linewidth,height=40mm,' \
                r'keepaspectratio]{f.pdf}' in out
 
     def test_it_does_not_need_a_tearoff_height(self, convert):
         """The two keys are independent: a figure may want the space back at its stated size."""
-        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tp=-5mm}')
         assert 'tearoffheight' not in out
 
     def test_both_keys_together(self, convert):
         out = convert('latex', 'sk',
-                      '![](f.svg){height=40mm tearoff_height=30mm tearoff_pregap=-5mm}')
+                      '![](f.svg){height=40mm th=30mm tp=-5mm}')
         assert r'\tearoffPregap{-5mm}\insertPicture[width=\linewidth,height=40mm,' \
                r'tearoffheight=30mm,keepaspectratio]{f.pdf}' in out
 
     def test_a_signed_percentage_is_resolved_like_any_other_dimension(self, convert):
         """Signed, because a gap is usually negative and `-5%` must not reach TeX as a comment."""
-        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-4%}')
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tp=-4%}')
         assert r'\tearoffPregap{-0.04\textheight}' in out
 
     def test_it_is_not_passed_through_as_an_option(self, convert):
         """It is consumed, not propagated -- graphicx has never heard of it."""
-        out = convert('latex', 'sk', '![](f.svg){height=40mm tearoff_pregap=-5mm}')
-        assert 'tearoff_pregap' not in out
+        out = convert('latex', 'sk', '![](f.svg){height=40mm tp=-5mm}')
+        assert 'tp=' not in out
 
     def test_html_drops_it(self, convert):
         """A web page has no tear-off, and the HTML writer would put it on the `<img>`."""
-        out = convert('html', 'sk', '![](f.png){height=40mm tearoff_pregap=-5mm}')
-        assert 'tearoff' not in out and 'pregap' not in out
+        out = convert('html', 'sk', '![](f.png){height=40mm tp=-5mm}')
+        assert 'tp' not in out and '-5mm' not in out
 
     def test_a_figure_declaring_neither_key_is_untouched(self, convert):
         """The quiet half, and the reason every one of today's 2003 figures is unaffected."""

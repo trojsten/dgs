@@ -1,5 +1,6 @@
 import pytest
 
+from core.builder.context.quantities.picture import UnknownPictureAttributeError
 from core.builder.renderer import (
     JinjaConvertor,
     NameCollisionError,
@@ -671,10 +672,10 @@ class TestPictures:
         schema = StandaloneContext._schema
         schema.validate({'id': 'demo', 'pictures': {'a': {'file': 'a.svg', 'height': '40mm'}}})
         schema.validate({'id': 'demo', 'pictures': {
-            'a': {'file': 'a.svg', 'height': '40mm', 'tearoff_height': '30mm'}}})
+            'a': {'file': 'a.svg', 'height': '40mm', 'th': '30mm'}}})
         for bad in ({'file': 'a.svg'}, {'height': '40mm'},
                     {'file': 'a.svg', 'height': '40mm', 'width': '2cm'},
-                    {'file': 'a.svg', 'tearoff_height': '30mm'}):
+                    {'file': 'a.svg', 'th': '30mm'}):
             with pytest.raises(SchemaError):
                 schema.validate({'id': 'demo', 'pictures': {'a': bad}})
 
@@ -682,7 +683,7 @@ class TestPictures:
                     "tags: ['kinematics']\n"
                     "pictures:\n"
                     "  hanging:\n    file: hanging.png\n    height: 40mm\n"
-                    "    tearoff_height: 30mm\n")
+                    "    th: 30mm\n")
 
     def test_a_tearoff_height_reaches_the_markdown(self, tmp_path):
         """
@@ -692,21 +693,21 @@ class TestPictures:
         """
         out = self.render_named(tmp_path, 'sk', self.TEAROFF_META,
                                 '(§ pictures.hanging §)', 'problem.md')
-        assert out.strip() == '![](hanging.png){height=40mm tearoff_height=30mm}'
+        assert out.strip() == '![](hanging.png){height=40mm th=30mm}'
 
     def test_a_call_site_overrides_the_declared_tearoff_height(self, tmp_path):
         """The same precedence the plain `height` has: a call site beats the meta."""
         out = self.render_named(tmp_path, 'sk', self.TEAROFF_META,
-                                "(§ pictures.hanging(tearoff_height='25mm') §)", 'problem.md')
-        assert 'tearoff_height=25mm' in out
+                                "(§ pictures.hanging(th='25mm') §)", 'problem.md')
+        assert 'th=25mm' in out
         assert '30mm' not in out
 
     def test_both_heights_can_be_given_at_the_call_site(self, tmp_path):
         """The form the feature was asked for, with neither declared in the meta."""
         out = self.render_named(tmp_path, 'sk', self.META,
-                                "(§ pictures.hanging(height='44mm', tearoff_height='28mm') §)",
+                                "(§ pictures.hanging(height='44mm', th='28mm') §)",
                                 'problem.md')
-        assert 'height=44mm' in out and 'tearoff_height=28mm' in out
+        assert 'height=44mm' in out and 'th=28mm' in out
 
     def test_a_figure_without_one_is_untouched(self, tmp_path):
         """
@@ -718,6 +719,58 @@ class TestPictures:
                                 '(§ pictures.hanging §)', 'problem.md')
         assert out.strip() == '![](hanging.png){height=40mm}'
         assert 'tearoff' not in out
+
+    # ------------------------------- a call site is checked, the way the meta always was
+
+    def test_an_attribute_the_figure_does_not_take_is_refused_by_name(self, tmp_path):
+        r"""
+        Nothing downstream can catch this one, which is why it is caught here.
+
+        `Picture.__call__` used to merge any keyword into the attribute block as written; pandoc's
+        writer then dropped the attribute it had never heard of, and only the two tear-off keys
+        make `core/filters/pictures.lua` rebuild the option list at all. Measured before the
+        check existed: `(§ pictures.x(tearof_height='30mm') §)` converted to
+        `\insertPicture[width=\linewidth,height=40mm,keepaspectratio]`, so the drawing printed its
+        booklet height in a 94mm box and no message was emitted anywhere.
+        """
+        with pytest.raises(UnknownPictureAttributeError, match='tearof_height'):
+            self.render_named(tmp_path, 'sk', self.TEAROFF_META,
+                              "(§ pictures.hanging(tearof_height='30mm') §)", 'problem.md')
+
+    def test_the_message_names_what_a_call_site_may_set(self, tmp_path):
+        """A rejection that does not say what to write instead costs a grep through `jinja.py`."""
+        with pytest.raises(UnknownPictureAttributeError, match='height, th, tp'):
+            self.render_named(tmp_path, 'sk', self.TEAROFF_META,
+                              "(§ pictures.hanging(tp2='-5mm') §)", 'problem.md')
+
+    def test_every_attribute_a_figure_does_take_still_passes(self, tmp_path):
+        """
+        The quiet half. All three are legitimate at a call site -- `height` per language, `th` and
+        `tp` per document -- and a caption is an argument rather than an attribute, so passing one
+        by keyword must not look like a misspelt key either.
+        """
+        out = self.render_named(tmp_path, 'sk', self.META,
+                                "(§ pictures.hanging(height='44mm', th='28mm', tp='-5mm') §)",
+                                'problem.md')
+        assert out.strip() == '![](hanging.png){height=44mm th=28mm tp=-5mm}'
+        captioned = self.render_named(tmp_path, 'sk', self.META,
+                                      "(§ pictures.hanging(caption='Lano') §)", 'solution.md')
+        assert '![Lano](hanging.png)' in captioned
+
+    def test_the_overridable_set_is_the_meta_schema(self):
+        """
+        Both directions, the way `figure_captions` is pinned against the module's files: a key
+        added to `PICTURE_ENTRY` and not to `OVERRIDABLE` would be declarable and not settable,
+        and one added the other way round would be settable and refused by the schema.
+
+        `file` and `caption` are the two deliberate omissions -- a different file is a different
+        figure, and a caption is the first positional argument.
+        """
+        from core.builder.context.quantities.picture import Picture
+        from core.builder.renderer import PICTURE_ENTRY
+        # An `Opt('th')` holds its own name as `.schema`; a required key is the string itself.
+        declared = {getattr(key, 'schema', key) for key in PICTURE_ENTRY}
+        assert Picture.OVERRIDABLE == declared - {'file', 'caption'}
 
 
 class TestDisplayTagsOwnTheirLine:

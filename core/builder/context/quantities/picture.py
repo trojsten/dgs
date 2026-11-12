@@ -1,6 +1,32 @@
 import re
 
 
+class UnknownPictureAttributeError(Exception):
+    r"""
+    An attribute passed at a call site that a figure does not take.
+
+    The meta is validated -- `PICTURE_ENTRY` in `core/builder/renderer.py` names every key a
+    `pictures:` entry may hold -- and the call site was the one place nothing looked. A misspelt
+    keyword was merged into the attribute block as written, pandoc's writer dropped the attribute
+    it had never heard of, and nothing downstream could tell the difference: measured,
+    `(§ pictures.x(tearof_height='30mm') §)` emitted
+    `\insertPicture[width=\linewidth,height=40mm,keepaspectratio]` and the drawing printed its
+    booklet height in a 94mm tear-off box, silently.
+
+    Loud here rather than in graphicx, because an unknown attribute never reaches graphicx: only
+    the two tear-off keys make `core/filters/pictures.lua` rebuild the option list at all, so a
+    typo in one of them is exactly the case that leaves no trace.
+    """
+    def __init__(self, ident: str, key: str, allowed):
+        super().__init__(
+            f"Figure `{ident}` was given `{key}`, which is not an attribute a call site may set "
+            f"(those are: {', '.join(sorted(allowed))}). A caption is the first positional "
+            f"argument, and everything else about the drawing belongs in `pictures:`."
+        )
+        self.id = ident
+        self.key = key
+
+
 class Picture:
     r"""
     A figure declared once in `pictures:` and included as `(§ pictures.<key> §)`.
@@ -68,6 +94,15 @@ class Picture:
     #: caption prints empty.
     EMPTY_CAPTION = '<!-- -->'
 
+    #: What a call site may override: every `pictures:` key that is a fact about the *size* of the
+    #: drawing -- `height`, which is per language, and `th` and `tp`, which are per document.
+    #:
+    #: `file` is not here, because a different file is a different figure and the key is the
+    #: label; neither is `caption`, which is the first positional argument. Pinned against
+    #: `PICTURE_ENTRY` in both directions by `core/tests/test_renderer.py`, so a key added to the
+    #: meta schema and not here -- or here and not there -- fails the suite rather than shipping.
+    OVERRIDABLE = frozenset({'height', 'th', 'tp'})
+
     def __call__(self, caption: str | None = None, **attributes) -> Picture:
         """
         The same picture with a caption, or with an attribute overridden at this call site.
@@ -78,7 +113,15 @@ class Picture:
         tear-off has a fixed height and translations do not have equal line counts. So the meta
         carries what the languages agree on and `(§ pictures.x(height='55mm') §)` says, in one
         place a reader can see, that this one is different on purpose.
+
+        **A keyword it does not know is refused by name**, which the meta's own schema has always
+        done and the call site never did. There is nothing downstream to catch it: pandoc drops an
+        attribute it has not heard of, so a misspelt `th` costs the tear-off its height and says
+        nothing at all.
         """
+        for key in attributes:
+            if key not in self.OVERRIDABLE:
+                raise UnknownPictureAttributeError(self.id, key, self.OVERRIDABLE)
         return Picture(self.id, self.file,
                        captioned=self.captioned,
                        caption=self.caption if caption is None else caption,

@@ -14,8 +14,8 @@
         \subsection{\texorpdfstring{(* problem.number *)}{(* language.id *): (* problem.number *). (* problem.id *)}}%
         \begin{minipage}[t][(* competition.tearoff.inner *)mm][t]{0.86\linewidth}%
             \setlength{\parskip}{6pt}
-            (# `\tearoffPictures` makes a figure's `tearoff_height` the one that counts, where it
-               declares one; every other document ignores the key and prints the plain `height`.
+            (# `\tearoffPictures` makes a figure's tear-off height `th` the one that counts,
+               where it declares one; every other document ignores the key and prints the plain `height`.
                The minipage is already a group, so it rolls back on its own -- see
                `core/latex/utilities.tex`. #)
             \tearoffPictures%

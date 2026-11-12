@@ -440,15 +440,15 @@ PICTURE_ENTRY = {
     # the renderer's to make and is carried into TeX instead, where `\tearoffPictures` makes the
     # tear-off honour this key and every other document ignore it. Absent, the plain `height`
     # stands everywhere, which is what all 2003 of them do today.
-    Opt('tearoff_height'): str,
-    # Vertical space taken out above this figure in the tear-off, written as a TeX length and
-    # almost always negative -- `tearoff_pregap: -5mm`. The same reasoning as `tearoff_height`
-    # one key up, and the same mechanism: `core/filters/pictures.lua` writes `\tearoffPregap`
+    Opt('th'): str,
+    # Vertical space taken out above this figure in the tear-off -- the tear-off pregap --
+    # written as a TeX length and almost always negative, `tp: -5mm`. The same reasoning as
+    # `th` one key up, and the same mechanism: `core/filters/pictures.lua` writes `\tearoffPregap`
     # ahead of the include and `\tearoffPictures` is what turns it from a no-op into a
     # `\vspace`, so a gap tuned for a 94mm box cannot leak into a free-flowing booklet column.
     # That leak is not hypothetical -- eleven `answer.md` files carried hand-tuned negative
     # `\vspace` for exactly this reason and went stale every time a drawing was resized.
-    Opt('tearoff_pregap'): str,
+    Opt('tp'): str,
     # A caption that cannot be written at the call site, because it interpolates: a `(§ … §)`
     # inside a string argument ends the enclosing tag at its first `§)`. Spelled per language, or
     # as a bare string where every language shares it, exactly as a `words:` term is -- and

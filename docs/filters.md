@@ -1476,7 +1476,7 @@ the end of the render, and the render then exits nonzero.
 
 ### `pictures.`
 
-`pictures.<name>  ·  pictures.<name>('caption')  ·  pictures.<name>(height='55mm', tearoff_height='30mm')`
+`pictures.<name>  ·  pictures.<name>('caption')  ·  pictures.<name>(height='55mm', th='30mm')`
 
 The figures declared in this problem's `pictures:`. Emits the whole Markdown include -- file, size
 and label -- so the only thing left at the call site is the caption and where the figure sits.
@@ -1557,7 +1557,7 @@ are expanded by the second pass, so a preamble can write `tcold = (§ tcold.mag 
 
 ### `pictures:`
 
-`pictures: {name: {file: <file>, height: <size>, tearoff_height: <size>, tearoff_pregap: <length>, caption: {lang: text}}}`
+`pictures: {name: {file: <file>, height: <size>, th: <size>, tp: <length>, caption: {lang: text}}}`
 
 A figure, hoisted out of the per-language files the way `eq:` is. Reached as `(§ pictures.name §)`;
 **the key becomes the label**, `{#fig:<pid>:<key>}`, and nobody types one.
@@ -1568,18 +1568,20 @@ which a string argument cannot express at all, since a `(§ … §)` inside one 
 at its first `§)`. That caption goes under `caption:`, per language or as a bare string, and is
 emitted as written for the next pass to expand. The size is a default rather than a rule:
 translations do not have equal line counts, so a language that needs the room writes `(§
-pictures.name(height='55mm') §)` and says so in one visible place. **`tearoff_height` is the other
-axis** -- per *document* rather than per language, for the tear-off, where a problem sits in a
-fixed-height minipage rather than a free-flowing column. It cannot be settled when the figure is
-rendered, since one `problem.tex` is built and every document inputs that same file, so both sizes
-are carried into the TeX and `\tearoffPictures` chooses there; a figure declaring none prints its
-`height` everywhere. **`tearoff_pregap` is the space above it**, a TeX length and almost always
-negative -- `tearoff_pregap: -5mm` -- for the same document and the same reason: `center` opens
-7.3mm above a drawing, which is a lot of a 94mm box. It is honoured only in the tear-off, so a gap
-tuned for that box cannot leak into a free-flowing booklet column. Whether a figure is captioned --
-and so numbered, and so referenceable -- is decided by the file being rendered, not at the call
-site: a statement never captions its figures and a solution always does, including where the caption
-is empty.
+pictures.name(height='55mm') §)` and says so in one visible place. **`th`, the tear-off height, is
+the other axis** -- per *document* rather than per language, where a problem sits in a fixed-height
+minipage rather than a free-flowing column. It cannot be settled when the figure is rendered, since
+one `problem.tex` is built and every document inputs that same file, so both sizes are carried into
+the TeX and `\tearoffPictures` chooses there; a figure declaring none prints its `height`
+everywhere. **`tp`, the tear-off pregap, is the space above it**, a TeX length and almost always
+negative -- `tp: -5mm` -- for the same document and the same reason: `center` opens 7.3mm above a
+drawing, which is a lot of a 94mm box. It is honoured only in the tear-off, so a gap tuned for that
+box cannot leak into a free-flowing booklet column. Whether a figure is captioned -- and so
+numbered, and so referenceable -- is decided by the file being rendered, not at the call site: a
+statement never captions its figures and a solution always does, including where the caption is
+empty. A call site may set `height`, `th` and `tp` and nothing else: an attribute a figure does not
+take is **refused by name**, because pandoc drops an attribute it has never heard of and a misspelt
+key would otherwise cost the tear-off its height in silence.
 
 ### `authors:`
 

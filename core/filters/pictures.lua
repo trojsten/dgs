@@ -14,8 +14,8 @@ ignored by default and redefined by `\tearoffPictures` inside the tear-off's min
 shape as `\tightPictures`, where the *including* context decides and the fragment is untouched.
 
 **pandoc will not carry it for us.** The attribute survives into the AST -- an `Image` really does
-hold `[("height","40mm"),("tearoff_height","30mm")]` -- and then the LaTeX writer drops every key
-it does not itself know, emitting `width,height,keepaspectratio` and nothing else. Hence this
+hold `[("height","40mm"),("th","30mm")]` -- and then the LaTeX writer drops every key it does
+not itself know, emitting `width,height,keepaspectratio` and nothing else. Hence this
 filter, which is the only place the value can be caught.
 
 What it emits is `\includegraphics`, not `\insertPicture`: `convertor.py`'s `post_regexes` already
@@ -37,8 +37,8 @@ the whole of the risk here. Two things follow, and neither is optional:
   Here an unknown key reaches graphicx, which either honours it or stops the build naming it.
   That is the loud half of the same bargain.
 
-`tearoff_pregap` rides along the same way and for the same reason, except that it is not a
-graphicx key at all: a vertical skip has to be laid down *before* the drawing, so the filter
+`tp`, the tear-off pregap, rides along the same way and for the same reason, except that it is
+not a graphicx key at all: a vertical skip has to be laid down *before* the drawing, so the filter
 writes `\tearoffPregap{…}` ahead of the include. That macro is a no-op everywhere but the
 tear-off, so a gap tuned for a 94mm box cannot leak into a booklet column.
 
@@ -49,8 +49,8 @@ pandoc's *unchanged*, which is what keeps a corpus with none in it -- all 2003 o
 
 --- Whether the writer we are feeding sets TeX.
 ---
---- The HTML writer *would* pass an unknown attribute through, as a stray `tearoff_height="30mm"`
---- on the `<img>`. A web page has no tear-off, so the attribute is dropped there rather than
+--- The HTML writer *would* pass an unknown attribute through, as a stray `th="30mm"` on the
+--- `<img>`. A web page has no tear-off, so the attribute is dropped there rather than
 --- emitted: stripping it is unconditional below and only the raw TeX is guarded.
 local function writing_latex()
     return FORMAT:match('latex') ~= nil
@@ -65,7 +65,7 @@ local OWN = {width = true, height = true}
 --- `\textheight` for a height, and pandoc's writer resolves it before the value ever reaches TeX.
 --- `%.14g` is what reproduces that spelling -- `60%` is `0.6`, `100%` is `1`, `33.5%` is `0.335`,
 --- none of them with a trailing zero pandoc does not write. A sign is allowed because
---- `tearoff_pregap` goes through here too, and a gap is usually negative.
+--- the pregap `tp` goes through here too, and a gap is usually negative.
 local function dimension(value, relative)
     local percent = value:match('^%s*(%-?[%d%.]+)%s*%%%s*$')
     if percent then
@@ -77,16 +77,16 @@ end
 --- An image carrying a tear-off height, rewritten so the height survives the writer.
 ---
 --- Returns `nil` -- pandoc's "unchanged" -- for every image without one, which is all 2003 of
---- them today. That is what makes this filter additive: a corpus with no `tearoff_height` in it
---- converts byte-identically with the filter in place.
+--- them today. That is what makes this filter additive: a corpus with no `th` in it converts
+--- byte-identically with the filter in place.
 function Image(image)
-    local tearoff = image.attributes['tearoff_height']
-    local pregap = image.attributes['tearoff_pregap']
+    local tearoff = image.attributes['th']
+    local pregap = image.attributes['tp']
     if not tearoff and not pregap then
         return nil
     end
-    image.attributes['tearoff_height'] = nil
-    image.attributes['tearoff_pregap'] = nil
+    image.attributes['th'] = nil
+    image.attributes['tp'] = nil
     if not writing_latex() then
         return image
     end
