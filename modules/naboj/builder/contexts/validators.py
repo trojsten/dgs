@@ -18,6 +18,15 @@ class NabojValidator(FileSystemValidator):
                     Optional('problem-extra.md'): FileOrLink,
                     Optional('solution.md'): FileOrLink,
                     Optional('answer-extra.md'): FileOrLink,
+                    # This language's translated words, flat `term: text`. Named rather than
+                    # swept up by a `\.yaml` pattern, because it is the only YAML that belongs
+                    # inside a language directory and a pattern there would admit a meta.yaml
+                    # one level too deep -- which is a real mistake, and one nothing else
+                    # catches: the renderer reads the meta beside the *problem*, so a stray one
+                    # here is simply never read. `File`, not `FileOrLink`: a mirrored
+                    # translation points its prose at another language and must still spell its
+                    # own words, which is the whole reason they are not in the `.md`.
+                    Optional('words.yaml'): File,
                     Optional(Regex(r'[\w-]+\.(png|jpg|svg|gp|py|dat|tikz|tex)')): File,
                     Forbidden(Regex(r'\s')): File,  # Reject anything containing whitespace
                 },

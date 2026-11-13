@@ -1467,12 +1467,32 @@ produces
 `i18n.<word>  ·  i18n.words['and']`
 
 The recurring translated words, from `core/i18n/<lang>.yaml`. For a word belonging to one problem,
-use `words:` in its meta instead.
+use its `<lang>/words.yaml` instead.
 
 `and` and `or` are Jinja keywords, so they are spelled `i18n.andw` and `i18n.orw`; everything else
 is spelled as written. `(§ i18n.words['and'] §)` is the older form and still works. **There is no
 fallback to English and never was** -- a word a language has not got is boxed in red, reported at
 the end of the render, and the render then exits nonzero.
+
+### `words.`
+
+`words.<term>`
+
+A word that appears **inside maths** and has to change with the language, declared in this problem's
+`<lang>/words.yaml` as a flat `term: text`.
+
+The alternative is a copy of the equation per language, which is how the copies drift apart. One
+file per language, beside that language's prose, and the directory carries the language so no entry
+repeats it; a recurring word -- `and`, `or` -- belongs in `core/i18n/<lang>.yaml` instead. It cannot
+live in the `.md` itself: 84 translations are symlinks, so one file serves two languages and eight
+of them need a different word on each side. **There is no fallback** -- a missing word is boxed in
+red, every miss is reported at the end of the render, and the render then exits nonzero.
+
+    $\rho_{\text{(§ words.air §)}}$
+
+produces
+
+    $\rho_{\text{vzduch}}$
 
 ### `pictures.`
 
@@ -1531,18 +1551,6 @@ a minus sign in one of them, so that one booklet told its readers the opposite o
 did, and nothing reported it. A troll answer, an argument only prose carries, or a derivation that
 genuinely differs per language is worth leaving alone. Long entries wrap as a `|` block scalar --
 write `|2` if the first row is indented deeper than the rest.
-
-### `words:`
-
-`words: {term: {lang: text}}`
-
-A word that appears **inside maths** and has to change with the language. Namespaced: `(§ words.air
-§)`.
-
-The alternative is a copy of the equation per language, which is how the copies drift apart. A word
-belonging to one problem is the common case; a recurring one -- `and`, `or` -- belongs in
-`core/i18n/<lang>.yaml` instead. **There is no fallback**: a missing word is boxed in red, every
-miss is reported at the end of the render, and the render then exits nonzero.
 
 ### `blocks:`
 

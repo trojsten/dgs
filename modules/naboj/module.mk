@@ -15,12 +15,28 @@ source/naboj/%/i18n: \
 # skipped Jinja entirely and could only ever be Slovak. A fragment lands in `build/` exactly as
 # a `.tex` does; assembling fragments into a page is the `output/` step, as it is for a PDF.
 
+# Both families take the same two lines for `<language>/words.yaml`, the problem's translated
+# words, and they can: `$*` ends in the language in both, because the *target* is always inside
+# `<language>/` however the source is laid out. The renderer finds the file itself from the meta's
+# directory and the locale, so neither recipe changes -- these are dependency edges and nothing
+# more.
+#
+# Two lines, because one of them cannot do it. The `wildcard` catches an edit, and only an edit:
+# a pattern that matches nothing cannot notice a file being *created*, and a prerequisite that
+# disappears leaves the target newer than everything left, so a deletion goes unnoticed too. The
+# directory's mtime moves on exactly those two events -- the same reasoning `naboj_problem_dirs`
+# is built on below, and the same reason a file list would not do there either. Both are
+# wildcarded so that a language with no directory at all yields nothing rather than a missing
+# prerequisite with no rule to make it.
+
 # Rules for files that are always translated
 # <competition>/<volume>/problems/<problem>/<language>
 define NABOJ_TRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(wildcard source/naboj/$$$$*/words.yaml) \
+	$$$$(patsubst %/,%,$$$$(wildcard source/naboj/$$$$*/)) \
 	$$$$(wildcard source/naboj/$$$$*/../*.py) \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))
@@ -49,6 +65,8 @@ define NABOJ_NONTRANSLATABLE
 render/naboj/%/$(1).md: \
 	$$$$(call truepath, source/naboj/$$$$*/../$(1).md) \
 	$$$$(call truepath, source/naboj/$$$$*/../meta.yaml) \
+	$$$$(wildcard source/naboj/$$$$*/words.yaml) \
+	$$$$(patsubst %/,%,$$$$(wildcard source/naboj/$$$$*/)) \
 	$$$$(wildcard source/naboj/$$$$*/../*.py) \
 	$$(PIPELINE_STAMP)
 	$$(eval language := $$(word 5,$$(subst /, ,$$*)))

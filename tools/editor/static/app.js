@@ -9,6 +9,15 @@ const state = {
   baseline: {},       // target -> last-written text (for dirty tracking)
   meta: "",
   metaBaseline: "",
+  metaExists: false,   // an empty meta and no meta are different things to say in a tab
+  // The context pane holds two documents and one textarea. `words` is the active language's
+  // `words.yaml`; `wordsExists` separates "empty on purpose" from "no file yet", which is what
+  // decides whether saving an empty one deletes it.
+  contextTab: "meta",
+  words: "",
+  wordsBaseline: "",
+  wordsExists: false,
+  wordRows: {},       // term -> language -> text, every language at once
   activeOutput: "pdf",
   pdfUrl: null,       // currently displayed PDF, or null when nothing is compiled
   log: "",
@@ -36,12 +45,16 @@ function isDirty(target) {
   return (state.buffers[target] ?? "") !== (state.baseline[target] ?? "");
 }
 
+function wordsDirty() {
+  return state.words !== state.wordsBaseline;
+}
+
 function metaDirty() {
   return state.meta !== state.metaBaseline;
 }
 
 function anyDirty() {
-  return metaDirty() || state.targets.some(isDirty);
+  return metaDirty() || wordsDirty() || state.targets.some(isDirty);
 }
 
 // --- syntax highlighting overlay -------------------------------------------
@@ -244,14 +257,16 @@ function ensureEvaluations(textareaId, lang) {
 }
 
 async function fetchEvaluations(textareaId, lang) {
-  captureEditors();                               // so `state.meta` is what is on screen
+  captureEditors();                   // so the meta and words buffers are what is on screen
   const sources = evaluableSources(el(textareaId).value, lang);
   const generation = evaluations.generation;
   if (!sources.length) { evaluations.fetched.add(textareaId); return; }
 
   let body;
   try {
-    body = await post("/api/evaluate", { target: state.activeTarget, meta_yaml: state.meta,
+    body = await post("/api/evaluate", { target: state.activeTarget,
+                                         meta_yaml: state.meta,
+                                         words_yaml: state.words,
                                          fragments: sources });
   } catch (e) {
     return;                                       // not marked fetched, so a later hover retries
@@ -598,6 +613,96 @@ function renderSourceTabs() {
   }
 }
 
+/**
+ * The context pane's two tabs: the problem's `meta.yaml` and the active language's `words.yaml`.
+ *
+ * One textarea serves both, exactly as `#pane-source` serves every target, so the highlighter,
+ * the indent rule and the reference hover are wired once and apply to whichever is showing.
+ * Both are YAML, which is what makes that work without a mode switch.
+ */
+function renderContextTabs() {
+  const bar = el("context-tabs");
+  bar.innerHTML = "";
+  const tabs = [
+    { key: "meta", label: state.metaExists ? "meta.yaml" : "meta.yaml (does not exist yet)",
+      dirty: metaDirty() },
+  ];
+  // Words are per language, so the tab is offered only where there is a language to own them.
+  if (state.lang) {
+    tabs.push({ key: "words",
+                label: state.wordsExists ? `${state.lang}/words.yaml`
+                                         : `${state.lang}/words.yaml (new)`,
+                dirty: wordsDirty() });
+  }
+  for (const tab of tabs) {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (tab.key === state.contextTab ? " active" : "");
+    if (tab.dirty) btn.classList.add("dirty");
+    btn.textContent = tab.label;
+    btn.addEventListener("click", () => switchContextTab(tab.key));
+    bar.appendChild(btn);
+  }
+}
+
+function switchContextTab(tab) {
+  if (tab === state.contextTab) return;
+  // Keep what is in the textarea before swapping, or the edits on the tab being left go.
+  if (state.contextTab === "words") state.words = el("meta-editor").value;
+  else state.meta = el("meta-editor").value;
+  state.contextTab = tab;
+  setEditorValue("meta-editor", "meta-highlight", "dgs-yaml",
+                 tab === "words" ? state.words : state.meta);
+  renderContextTabs();
+  renderWordRows();
+}
+
+/**
+ * Every term of this problem against every language that spells it.
+ *
+ * This is the one thing the per-language files cost, and the reason it is rebuilt here rather
+ * than left to a grep: `21/pool-jump` wrote the twin's density as `\rho_s` in Slovak and Czech
+ * and `\rho_t` in English and Hungarian, while the shared `eq:` entry all four rendered printed
+ * `\rho_s` -- so the English booklet introduced one symbol and then solved with another. Four
+ * values on one line is what makes that visible. Shown beside `words.yaml` only, since beside
+ * the meta it would be a table about a file that is not open.
+ */
+function renderWordRows() {
+  const host = el("word-rows");
+  const terms = Object.keys(state.wordRows);
+  host.hidden = state.contextTab !== "words" || terms.length === 0;
+  host.innerHTML = "";
+  if (host.hidden) return;
+
+  const langs = [...new Set(terms.flatMap((t) => Object.keys(state.wordRows[t])))].sort();
+  const table = document.createElement("table");
+  table.className = "word-rows";
+  const head = table.createTHead().insertRow();
+  head.appendChild(document.createElement("th"));
+  for (const lang of langs) {
+    const th = document.createElement("th");
+    th.textContent = lang;
+    if (lang === state.lang) th.className = "here";
+    head.appendChild(th);
+  }
+  const body = table.createTBody();
+  for (const term of terms) {
+    const row = body.insertRow();
+    const name = document.createElement("th");
+    name.textContent = term;
+    row.appendChild(name);
+    for (const lang of langs) {
+      const cell = row.insertCell();
+      const text = state.wordRows[term][lang];
+      // A blank cell is a language that does not spell this term, which `word-missing` reports
+      // if anything asks for it. Marked rather than left empty, so a gap reads as a gap.
+      cell.textContent = text === undefined ? "\u2014" : text;
+      if (text === undefined) cell.className = "absent";
+      else if (lang === state.lang) cell.className = "here";
+    }
+  }
+  host.appendChild(table);
+}
+
 function switchTarget(target) {
   // Keep whatever is in the textarea before swapping it out, or edits to the tab being
   // left behind would be lost.
@@ -877,6 +982,14 @@ async function openUnit(moduleName, unit, lang, target) {
 
   state.meta = data.meta_yaml ?? "";
   state.metaBaseline = state.meta;
+  state.metaExists = data.meta_yaml !== null;
+  state.words = data.words_yaml ?? "";
+  state.wordsBaseline = state.words;
+  state.wordsExists = data.words_yaml !== null;
+  state.wordRows = data.words_rows ?? {};
+  // A language switch reopens the unit, so landing back on `words.yaml` would be right -- but
+  // the meta is what the pane is for most of the time, so it is where a fresh unit opens.
+  state.contextTab = "meta";
   state.buffers = {};
   for (const t of state.targets) state.buffers[t] = data.files[t] ?? "";
   state.baseline = { ...state.buffers };
@@ -889,8 +1002,8 @@ async function openUnit(moduleName, unit, lang, target) {
   if (data.lang) langSelect.value = data.lang;
 
   setEditorValue("meta-editor", "meta-highlight", "dgs-yaml", state.meta);
-  el("meta-label").textContent =
-    data.meta_yaml === null ? "meta.yaml (does not exist yet)" : "meta.yaml";
+  renderContextTabs();
+  renderWordRows();
   switchTarget(state.targets.includes(target) ? target : (state.targets[0] ?? null));
   setStatus("Loaded", "ok");
 
@@ -907,7 +1020,8 @@ async function openUnit(moduleName, unit, lang, target) {
 
 function captureEditors() {
   if (state.activeTarget) state.buffers[state.activeTarget] = el("source-editor").value;
-  state.meta = el("meta-editor").value;
+  if (state.contextTab === "words") state.words = el("meta-editor").value;
+  else state.meta = el("meta-editor").value;
 }
 
 /**
@@ -918,6 +1032,7 @@ function captureEditors() {
 function dirtyFiles() {
   const files = {};
   if (metaDirty()) files.meta_yaml = state.meta;
+  if (wordsDirty()) files.words_yaml = state.words;
   const targets = {};
   for (const target of state.targets) {
     if (isDirty(target)) targets[target] = state.buffers[target];
@@ -929,7 +1044,11 @@ function dirtyFiles() {
 function markSaved() {
   state.baseline = { ...state.buffers };
   state.metaBaseline = state.meta;
+  state.metaExists = true;
+  state.wordsBaseline = state.words;
+  state.wordsExists = state.words.trim() !== "";
   renderSourceTabs();
+  renderContextTabs();
 }
 
 async function post(url, extra) {
@@ -1371,9 +1490,12 @@ function init() {
     scheduleAutocompile();
   });
   wireCodeEditor("meta-editor", "meta-highlight", "dgs-yaml", () => {
-    state.meta = el("meta-editor").value;
-    // Everything either pane evaluates goes through this buffer, so a keystroke here is the one
-    // edit that invalidates both.
+    // One textarea, two documents: which one a keystroke lands in is the active tab's business.
+    if (state.contextTab === "words") state.words = el("meta-editor").value;
+    else state.meta = el("meta-editor").value;
+    renderContextTabs();                    // so the dirty marker follows the keystroke
+    // Everything either pane evaluates goes through these buffers, and a word reaches the page
+    // through `eq:` as readily as through the prose, so a keystroke here invalidates both.
     invalidateEvaluations();
     scheduleAutocompile();
   });

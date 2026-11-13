@@ -22,6 +22,7 @@ from collections import Counter, defaultdict
 
 from core.audit import stale
 from core.audit.model import Finding, check
+from core.builder import words
 
 # --- shared patterns --------------------------------------------------------
 
@@ -474,9 +475,17 @@ def word_missing(sources):
     This check is the half that does not need a render. It reads the sources, so it finds the gap
     before a build is attempted and in every language at once, which is what an editor wants; the
     render's own failure is what stops a gap reaching a PDF.
+
+    A problem's own words live in `<lang>/words.yaml` and the recurring ones in
+    `core/i18n/<lang>.yaml`, so the two halves below name different files to fix. A words file
+    that exists and does not parse is reported too, and separately: unreadable and absent look
+    identical from the render -- every term boxed -- and want opposite fixes.
     """
     for unit in sources.unit_list:
-        unit_words = (unit.meta or {}).get('words') or {}
+        for lang, problem in sorted(unit.word_errors.items()):
+            yield Finding('word-missing', 'error',
+                          f"`{lang}/{words.WORDS_FILE}` could not be read: {problem}",
+                          unit.path, f"{lang}/{words.WORDS_FILE}", None)
         for lang, name, text in unit.files():
             if not lang:
                 continue                    # shared file: no one language to resolve against
@@ -495,11 +504,35 @@ def word_missing(sources):
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
             for m in RE_UNIT_WORD.finditer(text):
                 term = m.group('term')
-                per_language = unit_words.get(term)
-                if per_language is None or lang not in per_language:
+                if term not in unit.words.get(lang, {}):
                     yield Finding('word-missing', 'error',
-                                  f"`{term}` has no {lang} translation in the problem's meta.yaml",
+                                  f"`{term}` is not in {lang}/{words.WORDS_FILE}",
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
+
+
+@check('words-in-meta', 'error', 'A `words:` block left in a meta')
+def words_in_meta(sources):
+    """
+    A meta still carrying the `words:` key, which now lives in `<lang>/words.yaml`.
+
+    The schema already refuses it -- `StandaloneContext._schema` does not list the key, and it is
+    strict -- so this never reaches a render. It is here because the schema's message names the
+    key and not the cure, and because `meta-invalid` reports the whole meta as broken when the
+    only thing wrong with it is a block in the wrong file.
+
+    The term list comes along in the message, since the fix is mechanical: one line per term in
+    each language's file, and the language key drops out because the directory carries it.
+    """
+    for unit in sources.unit_list:
+        block = (unit.meta or {}).get('words')
+        if not isinstance(block, dict) or not block:
+            continue
+        terms = ', '.join(f"`{term}`" for term in sorted(block))
+        yield Finding('words-in-meta', 'error',
+                      f"{terms} belong in `<lang>/{words.WORDS_FILE}`, one flat `term: text` "
+                      f"per language, not in `words:` here",
+                      unit.path, 'meta.yaml',
+                      line_of(unit.meta_raw or '', (unit.meta_raw or '').find('\nwords:') + 1))
 
 
 # --- maths ------------------------------------------------------------------

@@ -27,6 +27,7 @@ import pathlib
 import sys
 import tempfile
 
+from core.builder import words
 from tools.ninja.ink import described
 from tools.ninja.writer import Writer
 
@@ -1091,9 +1092,18 @@ def _fragment(build, source: str, stem: str, lang: str, meta: pathlib.Path,
     goes into a page, and both are made from the same rendered Markdown -- which is the whole
     point of the arrangement, since a second route to the web would be a second chance for the
     two to disagree about what the problem says.
+
+    The language's `words.yaml` is an input where there is one. It is derived here rather than
+    passed in because both halves are already to hand -- `meta.parent` is the unit directory and
+    `lang` is the locale -- and deriving it once is what keeps the three modules' call sites from
+    each having their own spelling of the same path. A module with no language directories, which
+    is seminar and scholar, finds nothing and gains no input. Creating or deleting one is caught
+    by `listed()` on the language directory, which regenerates this graph.
     """
+    unit_words = meta.parent / lang / words.WORDS_FILE
     _rendered(build, f'render/{stem}.md', source,
-              implicit=[str(meta.relative_to(repo))],
+              implicit=[str(meta.relative_to(repo)),
+                        *([str(unit_words.relative_to(repo))] if unit_words.is_file() else [])],
               variables={'lang': lang, 'meta': str(meta),
                          'renderer': renderer or NABOJ_RENDERER})
     build(f'build/{stem}.tex', 'pandoc_tex', [f'render/{stem}.md'],

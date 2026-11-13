@@ -601,3 +601,39 @@ abbr[title] {
   border: none;
   background: #fff;
 }
+
+/* --- the words row view, under the context pane ------------------------------------------- */
+
+/* Every language of every term, beside the one language being edited. It is the single view the
+   per-language `words.yaml` files cost, and the whole reason it is here: a word that differs
+   between two languages where it should not is visible on a line and invisible across files. */
+#word-rows {
+  overflow: auto;
+  max-height: 11rem;
+  border-top: 1px solid #333;
+  padding: 0.35rem 0.5rem;
+  flex: 0 0 auto;
+}
+
+table.word-rows {
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+table.word-rows th {
+  text-align: left;
+  font-weight: 600;
+  color: #999;
+  padding: 0.1rem 0.55rem 0.1rem 0;
+  white-space: nowrap;
+}
+
+table.word-rows td {
+  padding: 0.1rem 0.55rem 0.1rem 0;
+  white-space: nowrap;
+}
+
+/* The language whose file is open. The point of the table is comparison, so the column you are
+   editing has to be findable without counting headers. */
+table.word-rows th.here, table.word-rows td.here { color: #e8e8e8; font-weight: 600; }
+table.word-rows td.absent { color: #555; }

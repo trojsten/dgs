@@ -11,6 +11,7 @@ from enschema import Optional as Opt
 from enschema import Or, Schema
 
 from core import cli, i18n
+from core.builder import words
 from core.builder.context.context import RESERVED_NAMES, Context, ValidIdentifier
 from core.builder.context.file import FileContext
 from core.builder.context.quantities import PhysicsConstant
@@ -516,10 +517,10 @@ class StandaloneContext(FileContext):
         # evaluates its value as a Jinja expression and `eq` wraps its fragment in a
         # `MathObject` carrying an `{#eq:…}` label; a preamble is neither of those.
         Opt('blocks'): {Opt(ValidIdentifier): str},
-        # A word that has to be translated but belongs to this problem alone: term -> language ->
-        # text, reached as `(§ words.air §)`. The recurring ones (`and`, `or`) live in `core/i18n`
-        # instead; these are the one-offs, which is the large majority of them.
-        Opt('words'): {Opt(ValidIdentifier): {Opt(str): str}},
+        # `words:` used to be here, term -> language -> text. It lives in `<lang>/words.yaml`
+        # beside that language's prose now -- see `core/builder/words.py` for why -- and the key
+        # is deliberately *not* listed, so a meta that still carries one fails validation naming
+        # it rather than being quietly ignored. The audit's `words-in-meta` says where to put it.
         # A figure: which file, how big, and -- through the key -- what it is called. Reached as
         # `(§ pictures.hanging §)`. The key becomes the `{#fig:<pid>:<key>}` label, so nobody
         # writes one, which is the same bargain `eq:` makes and matters more here: 440 of the 869
@@ -543,7 +544,8 @@ def _reject_name_collisions(block: dict, block_name: str, *, taken: set[str] = f
 
 def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bool = True,
                          captioned: bool = True, backend: str = 'latex',
-                         missing_words: MissingWordRegistry | None = None) -> Context:
+                         missing_words: MissingWordRegistry | None = None,
+                         unit_words: dict[str, str] | None = None) -> Context:
     """
     Everything a template may reach, built from one already-validated problem meta.
 
@@ -613,23 +615,38 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
     localised = i18n.languages[locale].as_dict()
     # wrapped so a word this language does not define stops the build with a message naming it,
     # rather than resolving to something plausible in the wrong language
-    words = LocalisedWords(localised.get('words') or {}, locale,
-                           f'core/i18n/{locale}.yaml', registry=missing_words)
+    # Named `i18n_words` rather than `words`, which would shadow the `core.builder.words` module
+    # this function calls a few lines down -- and shadow it silently, since both answer to a
+    # `.load`-shaped mistake only at runtime.
+    i18n_words = LocalisedWords(localised.get('words') or {}, locale,
+                                f'core/i18n/{locale}.yaml', registry=missing_words)
     # Reachable both ways: `i18n.words['and']` and, since a conjunction inside an equation is
     # read far more often than written, `i18n.andw` -- see `LocalisedI18n`.
-    localised = LocalisedI18n(localised, words)
-    localised['words'] = words
+    localised = LocalisedI18n(localised, i18n_words)
+    localised['words'] = i18n_words
     ctx.add(i18n=localised)
 
-    # This problem's own words, resolved when a template asks for one.
+    # This problem's own words, read from `<root>/<locale>/words.yaml` and resolved when a
+    # template asks for one.
+    #
+    # **Unconditional, even where the file is absent**, which is not tidiness. A locale with no
+    # words file must still reach `LocalisedWords`, so that asking for a word it has not got
+    # gives the red box, the collected report and the nonzero exit. Added only when the file
+    # exists, the same tag would raise a Jinja undefined instead -- and
+    # `test/00/problems/error-presentations` renders `missing-word.md` under `cs`, a locale with
+    # no directory at all, precisely to pin that behaviour.
     #
     # No collision check, unlike `values` and `derived`: those land in the top-level namespace
     # where a key called `const` would shadow the constants, while a word is reached as
     # `words.const` and shadows nothing. `22/ht-conundrum` wants exactly that name -- its
     # equations end in `= const` -- and refusing it would be a rule enforcing nothing.
-    if 'words' in meta.data:
-        ctx.add(words=LocalisedWords(meta.data['words'], locale,
-                                     "this problem's meta.yaml", registry=missing_words))
+    #
+    # `unit_words` is the buffer the editor holds, for the same reason the meta arrives as text
+    # rather than as a path: a popup that previews a tag has to answer for what is on screen, and
+    # reading the file would answer for the last save.
+    ctx.add(words=LocalisedWords(words.load(root, locale) if unit_words is None else unit_words,
+                                 locale, f'{locale}/{words.WORDS_FILE}',
+                                 registry=missing_words))
 
     # Process derived quantities: evaluate the expressions in document order, adding each result
     # to the context, so that a later expression may build on an earlier one. This is the only

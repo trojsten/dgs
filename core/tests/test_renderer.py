@@ -58,11 +58,26 @@ class TestTranslatedWords:
     """
 
     @staticmethod
-    def render(tmp_path, locale, meta, source):
+    def write_words(tmp_path, words):
+        """
+        Lay down `<lang>/words.yaml` for each language, which is where a problem's words live.
+
+        A language with no entry gets no file and no directory -- that is the case a test has to
+        be able to build, since a locale the problem says nothing about is the one that must come
+        back with a red box rather than a Jinja undefined.
+        """
+        for locale, terms in (words or {}).items():
+            (tmp_path / locale).mkdir(exist_ok=True)
+            (tmp_path / locale / 'words.yaml').write_text(
+                ''.join(f"{term}: '{text}'\n" for term, text in terms.items()))
+
+    @staticmethod
+    def render(tmp_path, locale, meta, source, words=None):
         import sys
 
         from modules.naboj.builder.renderer import CLIInterface
         (tmp_path / 'meta.yaml').write_text(meta)
+        TestTranslatedWords.write_words(tmp_path, words)
         src = tmp_path / 'solution.md'
         src.write_text(source)
         out = tmp_path / 'out.md'
@@ -75,12 +90,13 @@ class TestTranslatedWords:
             sys.argv = saved
 
     @staticmethod
-    def render_collecting(tmp_path, locale, meta, source):
+    def render_collecting(tmp_path, locale, meta, source, words=None):
         """As `render`, but hands back the interface so a test can read what it collected."""
         import sys
 
         from modules.naboj.builder.renderer import CLIInterface
         (tmp_path / 'meta.yaml').write_text(meta)
+        TestTranslatedWords.write_words(tmp_path, words)
         src = tmp_path / 'solution.md'
         src.write_text(source)
         out = tmp_path / 'out.md'
@@ -95,18 +111,16 @@ class TestTranslatedWords:
     META = (
         "authors:\n  idea: []\n  problem: []\n  solution: []\n"
         "tags: ['kinematics']\n"
-        "words:\n"
-        "  air:\n"
-        "    sk: 'vzduch'\n"
-        "    en: 'air'\n"
-        "    de: 'Luft'\n"
     )
+
+    #: The same three words the meta used to carry, now one file per language.
+    AIR = {'sk': {'air': 'vzduch'}, 'en': {'air': 'air'}, 'de': {'air': 'Luft'}}
 
     def test_a_problem_word_follows_the_language(self, tmp_path):
         source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
-        assert 'vzduch' in self.render(tmp_path, 'sk', self.META, source)
-        assert 'air' in self.render(tmp_path, 'en', self.META, source)
-        assert 'Luft' in self.render(tmp_path, 'de', self.META, source)
+        assert 'vzduch' in self.render(tmp_path, 'sk', self.META, source, self.AIR)
+        assert 'air' in self.render(tmp_path, 'en', self.META, source, self.AIR)
+        assert 'Luft' in self.render(tmp_path, 'de', self.META, source, self.AIR)
 
     def test_a_global_word_follows_the_language(self, tmp_path):
         source = "$a \\QQText{(§ i18n.words['and'] §)} b$\n"
@@ -133,7 +147,7 @@ class TestTranslatedWords:
     def test_a_missing_problem_word_is_boxed_and_recorded(self, tmp_path):
         """A problem's own word has no English to fall back on, so silence would ship a hole."""
         source = 'density $\\rho_{\\text{(§ words.air §)}}$\n'
-        out, cli = self.render_collecting(tmp_path, 'hu', self.META, source)
+        out, cli = self.render_collecting(tmp_path, 'hu', self.META, source, self.AIR)
         assert r'\errorMessage{air:hu}' in out
         assert [t for t, _, _ in cli.missing_words.missing] == ['air']
 
@@ -300,12 +314,10 @@ class TestTranslatedWords:
         `values` key called `const` would hide the constants. `22/ht-conundrum` ends its equations
         with `= const` and needs the name.
         """
-        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
-                "tags: ['kinematics']\n"
-                "words:\n  const:\n    sk: 'konšt'\n    en: 'const'\n")
+        words = {'sk': {'const': 'konšt'}, 'en': {'const': 'const'}}
         source = 'the law $pV = \\text{(§ words.const §)}$\n'
-        assert 'konšt' in self.render(tmp_path, 'sk', meta, source)
-        assert 'const' in self.render(tmp_path, 'en', meta, source)
+        assert 'konšt' in self.render(tmp_path, 'sk', self.META, source, words)
+        assert 'const' in self.render(tmp_path, 'en', self.META, source, words)
 
     def test_values_still_may_not_be_called_const(self, tmp_path):
         """The top-level reservation stands: there `const` really would shadow the constants."""
@@ -320,7 +332,7 @@ class TestTranslatedWords:
         meta = self.META + "eq:\n  drag: '\\rho_{\\text{(§ words.air §)}} v^2 = ma'\n"
         source = "(§ eq.drag|disp('.') §)\n"
         for locale, word in (('sk', 'vzduch'), ('en', 'air'), ('de', 'Luft')):
-            out = self.render(tmp_path, locale, meta, source)
+            out = self.render(tmp_path, locale, meta, source, self.AIR)
             assert f'\\rho_{{\\text{{{word}}}}} v^2 = ma.' in out
             assert '{#eq:' in out
 
@@ -997,17 +1009,23 @@ class TestTheContentSchema:
         for key, value in [('values', 5), ('derived', 'h'), ('eq', 'a=b'), ('blocks', 'text')]:
             assert "'1bad'" in self.rejects({key: {'1bad': value}})
 
-    def test_a_word_needs_its_languages(self):
-        """`words:` is term -> language -> text; a bare string is a word with no language."""
-        self.rejects({'words': {'air': 'vzduch'}})
-        self.accepts({'words': {'air': {'sk': 'vzduch', 'en': 'air'}}})
+    def test_words_are_no_longer_a_meta_key(self):
+        """
+        They live in `<lang>/words.yaml` now, and the schema is strict, so a meta that still
+        carries the block fails validation naming the key rather than having it ignored.
+
+        Not listing the key is the whole mechanism -- there is no `Forbidden` and no custom
+        message here. `core/audit`'s `words-in-meta` is what says where to move it.
+        """
+        self.rejects({'words': {'air': {'sk': 'vzduch', 'en': 'air'}}})
+        self.rejects({'words': {}})
 
     def test_an_empty_block_is_legal(self):
         """
         No source has one, but a block emptied while it is being written is not a defect, and the
         audit validates every meta on every pass -- it should not go red for that.
         """
-        for key in ('values', 'derived', 'eq', 'blocks', 'words'):
+        for key in ('values', 'derived', 'eq', 'blocks'):
             self.accepts({key: {}})
 
 
@@ -1111,26 +1129,29 @@ class TestRenderSettles:
     META = (
         "authors:\n  idea: []\n  problem: []\n  solution: []\n"
         "tags: ['kinematics']\n"
-        "words:\n  twin:\n    sk: 's'\n    en: 't'\n"
         "values:\n"
         "  rho:\n    magnitude: 200\n    unit: 'kg / m**3'\n"
         "    symbol: '\\rho_{(§ words.twin §)}'\n"
         "eq:\n  E: 'E = V g x (§ rho.s §)'\n"
     )
 
+    #: `21/pool-jump`'s own pair: the twin's index abbreviates a prose word, so it follows the
+    #: language, and the symbol that carries it is declared once on the quantity.
+    TWIN = {'sk': {'twin': 's'}, 'en': {'twin': 't'}}
+
     # ------------------------------------------------- it settles where two passes did not
 
     @pytest.mark.parametrize('locale, letter', [('sk', 's'), ('en', 't')])
     def test_a_symbol_reached_through_an_eq_entry(self, tmp_path, locale, letter):
         """Three deep: the entry, then `.s`, then the word inside the symbol."""
-        out = self.render(tmp_path, locale, self.META, "teda (§ eq.E|disp('.') §)\n")
+        out = self.render(tmp_path, locale, self.META, "teda (§ eq.E|disp('.') §)\n", self.TWIN)
         assert f'\\rho_{{{letter}}}' in out
         assert '(§' not in out
 
     @pytest.mark.parametrize('locale, letter', [('sk', 's'), ('en', 't')])
     def test_the_same_symbol_written_straight_into_the_prose(self, tmp_path, locale, letter):
         """Two deep, which always worked, and must keep working."""
-        out = self.render(tmp_path, locale, self.META, 'hustota $(§ rho.s §)$\n')
+        out = self.render(tmp_path, locale, self.META, 'hustota $(§ rho.s §)$\n', self.TWIN)
         assert f'$\\rho_{{{letter}}}$' in out
 
     # ------------------------------------------------- and it does not spin

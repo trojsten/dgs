@@ -323,7 +323,74 @@ function renderDetail() {
   renderMacroState(d.macros);
   body.appendChild(statsPanels(d.stats));
   body.appendChild(problemTable(d));
+  body.appendChild(wordTable(d));
   body.appendChild(findingList());
+}
+
+/* Every translated word in the scope, one row per term, one column per language.
+
+   A problem's words live one file per language, in `<problem>/<lang>/words.yaml`, which is
+   where the prose they belong to lives. What that costs is the single view the old `words:`
+   block gave for free, and this is it put back -- `21/pool-jump` wrote the twin's density as
+   `\rho_s` in Slovak and Czech and `\rho_t` in English and Hungarian, while the shared `eq:`
+   entry all four rendered printed `\rho_s`, so the English booklet introduced one symbol and
+   then solved with another. Four values on one line is what makes that visible. */
+function wordTable(d) {
+  const units = d.units.filter((u) => Object.keys(u.words ?? {}).length
+                                      || Object.keys(u.word_errors ?? {}).length);
+  const terms = units.reduce((n, u) => n + Object.keys(u.words).length, 0);
+  const p = panel("Translated words",
+                  units.length
+                    ? `${terms} term${terms === 1 ? "" : "s"} in ${units.length} problem`
+                      + `${units.length === 1 ? "" : "s"}`
+                    : "none in this volume");
+  if (!units.length) return p;
+
+  /* The scope's languages, not each problem's: a column that stops halfway down the table reads
+     as a gap in the data rather than in the problem, and a language missing a word is exactly
+     what this is for. */
+  const langs = [...new Set(units.flatMap(
+    (u) => Object.values(u.words).flatMap((row) => Object.keys(row))))].sort();
+
+  const table = node("table", "words");
+  const head = table.createTHead().insertRow();
+  head.appendChild(node("th", "", "problem"));
+  head.appendChild(node("th", "", "term"));
+  for (const lang of langs) head.appendChild(node("th", "", lang));
+
+  const tbody = table.createTBody();
+  for (const unit of units) {
+    const names = Object.keys(unit.words);
+    names.forEach((term, i) => {
+      const row = tbody.insertRow();
+      if (i === 0) row.classList.add("first");
+      const where = node("td", "unit");
+      if (i === 0) {
+        const link = node("a", "", unit.problem);
+        link.href = `/#${d.module}/${unit.unit}`;
+        where.appendChild(link);
+      }
+      row.appendChild(where);
+      row.appendChild(node("td", "term", term));
+      for (const lang of langs) {
+        const text = unit.words[term][lang];
+        /* An em dash rather than an empty cell: a gap has to read as a gap. Whether it is a
+           defect is `word-missing`'s call -- a language that never asks for the word does not
+           need it, which is `21/troll-science`, translated in four of its six languages. */
+        row.appendChild(node("td", text === undefined ? "absent" : "",
+                             text === undefined ? "\u2014" : text));
+      }
+    });
+    for (const [lang, problem] of Object.entries(unit.word_errors ?? {})) {
+      const row = tbody.insertRow();
+      row.appendChild(node("td", "unit", names.length ? "" : unit.problem));
+      const cell = node("td", "broken", `${lang}/words.yaml: ${problem}`);
+      cell.colSpan = langs.length + 1;
+      row.appendChild(cell);
+    }
+  }
+  p.appendChild(table);
+  return p;
 }
 
 function renderBuildState(build) {

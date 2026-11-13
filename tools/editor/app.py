@@ -44,7 +44,8 @@ from core.audit.status import (
     TRANSLATION_STATES,
     shared_file_states,
 )
-from core.builder import reference
+from core.builder import reference, words
+from core.builder.context.context import DuplicateKeyError
 from core.builder.jinja import MarkdownJinjaRenderer
 from core.builder.renderer import build_render_context, render_to_fixpoint
 from tools.ninja import bootstrap
@@ -186,6 +187,21 @@ class Unit:
     def meta_path(self):
         return self.path / "meta.yaml"
 
+    @property
+    def words_path(self):
+        """
+        This language's `words.yaml`, which may not exist yet.
+
+        `core.builder.words.path_for` is the one rule -- keyed off the locale rather than off any
+        file's own directory, because a shared `answer.md` sits at the unit root and is still
+        rendered once per language.
+        """
+        return words.path_for(self.path, self.lang or "")
+
+    def words_rows(self):
+        """Every term against every language, for the view the single `words:` block used to be."""
+        return words.rows(self.path) if self.path.is_dir() else {}
+
     # -- build targets -------------------------------------------------------
 
     def _format(self, template):
@@ -270,7 +286,10 @@ def read_if_exists(path):
 # --- reading ----------------------------------------------------------------
 
 #: The editor's own front-end files. Their newest mtime is the version the page asks for.
-_ASSETS = ("style.css", "highlight.js", "app.js")
+#: `audit.html` links its two unversioned, which is how a change to the audit page could reach a
+#: browser that keeps showing the old one. Both pages are versioned off the newest of the set, so
+#: one list serves both.
+_ASSETS = ("style.css", "highlight.js", "app.js", "audit.css", "audit.js")
 
 
 def asset_version() -> str:
@@ -380,6 +399,12 @@ def api_unit(module, unit):
         # per-file question the front end answers with `isAux`.
         "has_tex": bool(resolved.kind.tex),
         "meta_yaml": read_if_exists(resolved.meta_path),
+        # The active language's words, and every language's at once. The first is editable and
+        # the second is the thing the per-language files cost: `21/pool-jump` wrote one subscript
+        # in two languages and another in the other two while the shared equation printed the
+        # first, and four values on one line is what makes that visible.
+        "words_yaml": read_if_exists(resolved.words_path),
+        "words_rows": resolved.words_rows(),
         "files": {t: read_if_exists(resolved.source_path(t)) for t in targets},
     })
 
@@ -536,6 +561,20 @@ def write_files(unit, files):
     if files.get("meta_yaml") is not None:
         unit.meta_path.write_text(files["meta_yaml"])
 
+    # On the same unconditional footing as the meta, and for the same reason: a problem that has
+    # no words yet is exactly the one somebody is adding words to, so refusing to create the file
+    # would mean the editor could only edit words that already existed. Emptied, it is removed --
+    # an empty `words.yaml` and no `words.yaml` mean the same thing to every reader, and leaving
+    # one behind would make `languages()` claim a language that declares nothing.
+    if (content := files.get("words_yaml")) is not None:
+        if not unit.lang:
+            raise BadRequest("Words are per language, and no language is selected.")
+        if content.strip():
+            unit.words_path.parent.mkdir(parents=True, exist_ok=True)
+            unit.words_path.write_text(content)
+        elif unit.words_path.is_file():
+            unit.words_path.unlink()
+
     for target, content in (files.get("targets") or {}).items():
         source_path = unit.source_path(target)
         if not source_path.is_file():
@@ -575,18 +614,22 @@ def module_cli(module):
         raise BadRequest(f"{module.label} has no standalone renderer to evaluate against: {e}")
 
 
-def evaluation_context(unit, target, meta_text):
+def evaluation_context(unit, target, meta_text, words_text=None):
     """
     The context a tag in this file would be rendered against, built from the buffer as it stands.
 
     `build_render_context` is the renderer's own, so what the popup shows and what the build
     writes come out of one definition. The meta is parsed from `meta_text` rather than read from
-    disk because the whole point is to answer for the text on screen, which is usually unsaved.
+    disk because the whole point is to answer for the text on screen, which is usually unsaved --
+    and `words_text` is the same bargain for the words pane, which a tag reaches as readily
+    through an `eq:` entry as through the prose. A words buffer that does not parse yet falls
+    back to the file: half-typed YAML is the normal state of a pane being edited, and a popup
+    that goes blank on every keystroke is worse than one a save behind.
     """
     cli = module_cli(unit.module)
     language = unit.lang or DEFAULT_LANGUAGE
     filename = unit.source_path(target).name if target else ""
-    key = (unit.module.name, unit.name, language, filename, meta_text)
+    key = (unit.module.name, unit.name, language, filename, meta_text, words_text)
     if key in CONTEXT_CACHE:
         CONTEXT_CACHE.move_to_end(key)
         return CONTEXT_CACHE[key]
@@ -594,10 +637,17 @@ def evaluation_context(unit, target, meta_text):
     meta = cli.context_cls(str(unit.meta_path), unit.meta_path, text=meta_text)
     meta.add(id=unit.meta_path.parent.name)
     meta.validate()
+    unit_words = None
+    if words_text is not None:
+        try:
+            unit_words = words.load_string(words_text, where=unit.words_path)
+        except (words.WordsFileError, DuplicateKeyError):
+            unit_words = None
     context = build_render_context(
         meta, language, root=unit.path,
         labelled=cli.equation_numbering.get(filename, True),
-        captioned=cli.figure_captions.get(filename, True))
+        captioned=cli.figure_captions.get(filename, True),
+        unit_words=unit_words)
 
     CONTEXT_CACHE[key] = context
     while len(CONTEXT_CACHE) > CONTEXT_CACHE_SIZE:
@@ -652,7 +702,7 @@ def api_evaluate():
         meta_text = unit.meta_path.read_text()
 
     try:
-        context = evaluation_context(unit, target, meta_text)
+        context = evaluation_context(unit, target, meta_text, body.get("words_yaml"))
     except Exception as e:
         return jsonify({"ok": False, "error": one_line(e)})
 
@@ -1015,7 +1065,7 @@ def stats_json(stats):
 
 @app.get("/audit")
 def audit_index():
-    return render_template("audit.html")
+    return render_template("audit.html", assets=asset_version())
 
 
 @app.get("/api/audit/checks")
@@ -1082,6 +1132,13 @@ def api_audit_scope(module, scope):
                 "templating": {block: len((unit.meta or {}).get(block) or {})
                                for block in ("values", "derived", "eq")},
                 "files": {lang: sorted(files) for lang, files in unit.translated.items()},
+                # term -> language -> text, assembled back out of the per-language `words.yaml`
+                # files. This is the one thing splitting the old `words:` block cost, and the
+                # reason to rebuild it: `21/pool-jump` named one subscript in two languages and
+                # another in the other two while the shared equation printed the first, and the
+                # mismatch is visible on a line and invisible across four files.
+                "words": words.invert(unit.words),
+                "word_errors": unit.word_errors,
                 "shared": sorted(unit.shared),
                 # per shared file, what state it is in -- these have no verdict, see status.py
                 "shared_state": shared_file_states(unit, report.sources.shared_files),

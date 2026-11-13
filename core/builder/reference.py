@@ -880,12 +880,26 @@ _NAMESPACES: tuple[Entry, ...] = (
     Entry('i18n', 'namespace', section='Namespaces the context adds',
           signature="i18n.<word>  ·  i18n.words['and']",
           summary='The recurring translated words, from `core/i18n/<lang>.yaml`. For a word '
-                  'belonging to one problem, use `words:` in its meta instead.',
+                  'belonging to one problem, use its `<lang>/words.yaml` instead.',
           note='`and` and `or` are Jinja keywords, so they are spelled `i18n.andw` and `i18n.orw`; '
                'everything else is spelled as written. `(§ i18n.words[\'and\'] §)` is the older '
                'form and still works. **There is no fallback to English and never was** -- a word '
                'a language has not got is boxed in red, reported at the end of the render, and the '
                'render then exits nonzero.'),
+    Entry('words', 'namespace', section='Namespaces the context adds',
+          signature='words.<term>',
+          summary='A word that appears **inside maths** and has to change with the language, '
+                  'declared in this problem\'s `<lang>/words.yaml` as a flat `term: text`.',
+          note='The alternative is a copy of the equation per language, which is how the copies '
+               'drift apart. One file per language, beside that language\'s prose, and the '
+               'directory carries the language so no entry repeats it; a recurring word -- '
+               '`and`, `or` -- belongs in `core/i18n/<lang>.yaml` instead. It cannot live in the '
+               '`.md` itself: 84 translations are symlinks, so one file serves two languages and '
+               'eight of them need a different word on each side. **There is no fallback** -- a '
+               'missing word is boxed in red, every miss is reported at the end of the render, '
+               'and the render then exits nonzero.',
+          example='$\\rho_{\\text{(§ words.air §)}}$',
+          expect='$\\rho_{\\text{vzduch}}$'),
     Entry('pictures', 'namespace', section='Namespaces the context adds',
           signature="pictures.<name>  ·  pictures.<name>('caption')  ·  "
                     "pictures.<name>(height='55mm', th='30mm')",
@@ -935,15 +949,6 @@ _META: tuple[Entry, ...] = (
                'troll answer, an argument only prose carries, or a derivation that genuinely differs '
                'per language is worth leaving alone. Long entries wrap as a `|` block scalar -- '
                'write `|2` if the first row is indented deeper than the rest.'),
-    Entry('words', 'meta-key', env=META, section='`meta.yaml`: a problem',
-          signature='words: {term: {lang: text}}',
-          summary='A word that appears **inside maths** and has to change with the language. '
-                  'Namespaced: `(§ words.air §)`.',
-          note='The alternative is a copy of the equation per language, which is how the copies '
-               'drift apart. A word belonging to one problem is the common case; a recurring one -- '
-               '`and`, `or` -- belongs in `core/i18n/<lang>.yaml` instead. **There is no fallback**: '
-               'a missing word is boxed in red, every miss is reported at the end of the render, and '
-               'the render then exits nonzero.'),
     Entry('blocks', 'meta-key', env=META, section='`meta.yaml`: a problem',
           signature='blocks: {name: |\\n  <text>}',
           summary='Text that comes back **verbatim**, namespaced as `(§ blocks.name §)`. The '

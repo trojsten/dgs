@@ -252,3 +252,43 @@ th.state-ok, th.state-partial, th.state-missing, th.state-broken, th.state-none 
 .status-strip { white-space: nowrap; letter-spacing: 0.15em; }
 /* The spacing is there to separate four marks in a cell; the word in the header does not want it. */
 th.status-strip { letter-spacing: normal; }
+
+/* --- the translated words table ---------------------------------------------------------- */
+
+/* One row per term, one column per language. Deliberately not `table.grid`: that one is a
+   per-problem matrix with a sticky head and a column per file, and this is a different shape --
+   a term is the row, and what matters is reading four or nine words across in one movement. */
+table.words {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: auto;
+}
+
+table.words th {
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid #444;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #bbb;
+}
+
+table.words td {
+  padding: 0.2rem 0.6rem;
+  border-bottom: 1px solid #2f2f2f;
+  white-space: nowrap;
+}
+
+/* A rule above each problem's first term, so a problem with three words reads as one block
+   rather than as three unrelated rows. */
+table.words tr.first td { border-top: 1px solid #3a3a3a; }
+
+table.words td.unit a { color: #9ab; text-decoration: none; }
+table.words td.unit a:hover { text-decoration: underline; }
+table.words td.term { color: #c9a; font-family: var(--mono, monospace); }
+
+/* A language that does not spell this term. Whether that is a defect is `word-missing`'s call,
+   so this is grey rather than red -- `21/troll-science` is translated in four of its six
+   languages on purpose. */
+table.words td.absent { color: #555; }
+table.words td.broken { color: #d78; font-style: italic; white-space: normal; }

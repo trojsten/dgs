@@ -1513,17 +1513,48 @@ class TestTranslatedWords:
         files = {'sk': {'solution.md': "language: (§ i18n.full §)\n"}}
         assert 'word-missing' not in ids(run(tmp_path, files=files))
 
+    #: The tag every test below resolves, and the file that has to answer it.
+    ASKS = "$V_{\\text{(§ words.air §)}}$\n"
+
     def test_problem_word_missing_for_this_language(self, tmp_path):
-        meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: []\n"
-                "words:\n  air:\n    sk: vzduch\n")
-        files = {'en': {'solution.md': "$V_{\\text{(§ words.air §)}}$\n"}}
-        assert 'word-missing' in ids(run(tmp_path, meta=meta, files=files))
+        """Slovak declares it and English does not, which is a gap in English's own file."""
+        files = {'sk': {'solution.md': self.ASKS, 'words.yaml': "air: 'vzduch'\n"},
+                 'en': {'solution.md': self.ASKS}}
+        assert 'word-missing' in ids(run(tmp_path, files=files))
 
     def test_problem_word_present_for_this_language_is_quiet(self, tmp_path):
+        """The quiet half: each language asks for the word and each language's file has it."""
+        files = {'sk': {'solution.md': self.ASKS, 'words.yaml': "air: 'vzduch'\n"},
+                 'en': {'solution.md': self.ASKS, 'words.yaml': "air: 'air'\n"}}
+        assert 'word-missing' not in ids(run(tmp_path, files=files))
+
+    def test_a_words_file_that_does_not_parse_is_reported(self, tmp_path):
+        """
+        Unreadable is not absent, although the render cannot tell them apart -- both box every
+        term in red. They want opposite fixes, so the audit keeps the difference.
+        """
+        files = {'en': {'solution.md': self.ASKS, 'words.yaml': "air: 'air\n  bad: [\n"}}
+        report = run(tmp_path, files=files)
+        assert 'word-missing' in ids(report)
+        assert any('could not be read' in f.message for f in report.findings)
+
+    def test_a_words_block_left_in_the_meta_is_reported(self, tmp_path):
+        """
+        The schema refuses the key outright, so this never reaches a render. It is a finding
+        because the schema names the key and not the cure, and because `meta-invalid` would
+        call the whole meta broken over a block that is merely in the wrong file.
+        """
         meta = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: []\n"
                 "words:\n  air:\n    sk: vzduch\n    en: air\n")
-        files = {'en': {'solution.md': "$V_{\\text{(§ words.air §)}}$\n"}}
-        assert 'word-missing' not in ids(run(tmp_path, meta=meta, files=files))
+        files = {'en': {'solution.md': self.ASKS, 'words.yaml': "air: 'air'\n"}}
+        report = run(tmp_path, meta=meta, files=files)
+        assert 'words-in-meta' in ids(report)
+        assert any('`air`' in f.message for f in report.findings if f.check == 'words-in-meta')
+
+    def test_a_meta_without_one_is_quiet(self, tmp_path):
+        """The quiet half, which is every migrated problem in the repository."""
+        files = {'en': {'solution.md': self.ASKS, 'words.yaml': "air: 'air'\n"}}
+        assert 'words-in-meta' not in ids(run(tmp_path, files=files))
 
     def test_a_non_keyword_ending_in_w_is_not_stripped(self, tmp_path):
         """`i18n.nw` must not be read as the word `n`; only Jinja keywords carry the suffix."""

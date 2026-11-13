@@ -1315,10 +1315,54 @@ drift apart. Two tiers, because the vocabulary splits cleanly:
 - **Recurring words** live in `core/i18n/<lang>.yaml` under `words:` and are reached as
   `(§ i18n.words['and'] §)`. `and` and `or` cannot be written `i18n.words.and` — they are
   Jinja keywords, hence the subscript form.
-- **A word belonging to one problem** goes in its `meta.yaml` under `words:`, term →
-  language → text, one language per line, and is reached as `(§ words.air §)`. Of the 190 words
+- **A word belonging to one problem** goes in `<problem>/<lang>/words.yaml`, flat `term: text`,
+  beside that language's prose, and is reached as `(§ words.air §)`. Of the 190 words
   found inside `\text{}` across phys, 167 appear in exactly one problem, so this is the
   common case.
+
+```yaml
+# 21/pool-jump/sk/words.yaml          # 21/pool-jump/en/words.yaml
+twin: 's'                             twin: 't'
+```
+
+**The directory is the language, so nothing inside the file repeats it.** `core/builder/words.py`
+is the whole of the mechanism — the file name, the schema (`{ValidIdentifier: str}`), the loader
+and the row view — and `LocalisedWords` needed no change to read it, because `core/i18n/<lang>.yaml`
+was already one language per file.
+
+**The lookup is keyed off the locale, never off the directory of the file being rendered**:
+`<problem>/<locale>/words.yaml`, from the problem directory and the language being built. That is
+not pedantry. `18/bathmobile/answer.md` sits at the *problem root*, because an answer in volumes
+`14`–`18` is a value and needs no translated copy, and it is still rendered once per language; a
+rule of "beside the file" finds nothing for it in any language.
+
+**A locale with no file is not an error and still gets the box.** `words` is added to the context
+unconditionally, so asking for a word a language has not got gives `\errorMessage{gap:cs}`, the
+collected report and the nonzero exit — rather than a Jinja undefined, which is what a conditional
+add would give and which says nothing about what is wrong.
+`test/00/problems/error-presentations` renders `missing-word.md` under `cs`, a locale with no
+directory at all, and exists to pin exactly that.
+
+**It used to be a `words:` key in `meta.yaml`**, term → language → text. The key is no longer in
+the schema, and the schema is strict, so a meta that still carries one fails validation naming it;
+the audit's `words-in-meta` is what says where to move it.
+
+Two placements were rejected and should not be re-proposed:
+
+- **in the `.md` itself.** 84 translations under `source/` are symlinks, so
+  `28/john-doe/pl/solution.md` *is* `en/solution.md`, and **eight live cases need a different word
+  on either side of the link** — `vol` is `gulp` in English and `łyk` in Polish, `29/starlight`'s
+  `emission` is `emisia` in Slovak and `emise` in Czech. One file cannot hold both. It also
+  duplicates per file: five terms are needed by two or three files of their problem, and
+  `21/pool-jump`'s `twin` is needed by `problem.md` and `solution.md`, which is the drift below.
+- **a `<lang>/preamble.md`.** Fixes both and brings back a mechanism that was deleted, with no
+  schema on it. If it is YAML it is not a `.md`, and then it is this.
+
+**What the split costs is the one view where every language of a term sat together**, which is
+where `21/pool-jump` was found. That is rebuilt rather than given up: `words.rows()` assembles
+`term → language → text` back out of the files, and it is shown on the `/audit` page per volume
+and in the editor beside the `words.yaml` being edited. `words.invert()` is the same turn for a
+caller that has already read the files, which is what keeps `core/audit/sources.py` to one read.
 
 A word is reached as `(§ i18n.andw §)` — the `w` because `and` is a Jinja keyword and
 `i18n.and` will not parse. Only the keywords take it; `(§ i18n.therefore §)` is spelled as
@@ -1346,7 +1390,7 @@ failure, and that was the whole of the `onion` problem. `core/audit`'s `word-mis
 fourth, and the only one that works without a build: it reads the sources, so it finds the gap in
 every language at once before anyone renders anything. Fix the word; do not ship the box.
 
-**A `symbol:` may itself carry a `words:` tag, at any depth.**
+**A `symbol:` may itself carry a word's tag, at any depth.**
 `symbol: '\rho_{(§ words.twin §)}'` resolves wherever the prose writes `(§ x.s §)`, and also
 through an `eq:` entry that writes `(§ x.s §)` — which is three deep, since the entry arrives
 in the first pass's output, `.s` resolves in the second and leaves the word's tag behind. That
@@ -1361,7 +1405,9 @@ renders exactly twice, and only the files that need a third pay for one.
 word (Slovak's *Špagetka*, English's *twin*), so sk and cs wrote `\rho_s` while en and hu wrote
 `\rho_t` — but the shared `eq:` entry all four rendered printed `\rho_s`, so **the English
 booklet introduced the twin's density as ρ_t and then solved with ρ_s**, never saying they were
-the same thing. One `words:` entry and each language is single again.
+the same thing. One term in each language's `words.yaml` and each language is single again --
+and it is the problem this whole arrangement is named after, which is why the row view exists:
+the mismatch is one glance across a line and invisible across four files.
 
 Resolution is lazy, so a language that never asks for a word does not need it —
 `21/troll-science` writes the equation with translated subscripts in four of its six

@@ -12,6 +12,8 @@ from pathlib import Path
 
 import yaml
 
+from core.builder import words
+
 #: Files beside the unit rather than inside a language directory.
 LANGUAGE_RE_LEN = 2
 
@@ -37,6 +39,14 @@ class Unit:
     meta_error: str | None = None
     shared: dict = field(default_factory=dict)      # name -> text, for .md beside the unit
     translated: dict = field(default_factory=dict)  # lang -> {name -> text}
+    #: lang -> {term -> text}, from each `<lang>/words.yaml`. Parsed here rather than left in
+    #: `assets` for the same reason the unit's own `meta.yaml` is: a check that wants a word
+    #: wants it parsed, and every check works from this one read.
+    words: dict = field(default_factory=dict)
+    #: lang -> why that language's `words.yaml` could not be read. A file that does not parse
+    #: behaves exactly like one that is not there -- every term boxed in red -- and the two want
+    #: opposite fixes, so the difference is kept rather than flattened.
+    word_errors: dict = field(default_factory=dict)
     assets: set = field(default_factory=set)        # every non-markdown file name
     #: name -> what the symlink points at, verbatim. A translation nobody has written yet mirrors
     #: its master this way, so the target names the language it is waiting on.
@@ -203,6 +213,13 @@ def read_unit(module_root: Path, unit_path: str) -> Unit:
                     unit.links[f"{child.name}/{f.name}"] = os.readlink(f)
                 if f.is_file() and f.suffix == '.md':
                     files[f.name] = f.read_text()
+                elif f.is_file() and f.name == words.WORDS_FILE:
+                    # Parsed, not an asset. Left in `assets` it would be a file name nothing
+                    # looks inside, and `word-missing` would have nothing to read.
+                    try:
+                        unit.words[child.name] = words.load_string(f.read_text(), where=f)
+                    except words.WordsFileError as e:
+                        unit.word_errors[child.name] = str(e).split(': ', 1)[-1]
                 elif f.is_file():
                     unit.assets.add(f"{child.name}/{f.name}")
             unit.translated[child.name] = files

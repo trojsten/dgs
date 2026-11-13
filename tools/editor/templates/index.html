@@ -33,11 +33,15 @@
     <div id="row-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize meta.yaml panel"></div>
 
     <section id="pane-context" class="pane">
-      <div class="pane-label" id="meta-label">meta.yaml</div>
+      <!-- Two documents, one textarea, the way `#pane-source` serves every target. `words.yaml`
+           is the active language's; the table under it is every language at once, which is what
+           the per-language files cost and the only reason it is here. -->
+      <div class="tabbar" id="context-tabs"></div>
       <div class="code-editor">
         <pre class="code-highlight" aria-hidden="true"><code id="meta-highlight"></code></pre>
         <textarea id="meta-editor" class="code-input" spellcheck="false"></textarea>
       </div>
+      <div id="word-rows" hidden></div>
     </section>
 
     <div id="col-resizer" role="separator" aria-orientation="vertical" aria-label="Resize source/output columns"></div>
