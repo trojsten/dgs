@@ -1934,6 +1934,22 @@ and after. Reading through a symlink is safe; writing is not.
 
   phys and chem are clean. The 35 in `seminar` and 32 in `fks-naboj` are not ours to touch.
 
+- **A year is `\year` and prints `yr`, not ISO's `a`.** SI has no year at all -- the brochure's
+  accepted non-SI times stop at the day -- so nothing is being broken: the choice is ISO 80000-3's
+  `a` (the Julian year, 365.25 d, which is also what pint means by it) against astronomy's `yr`.
+  `a` is also the are, which is why `ha` is a hectare and why a prefixed year cannot be read; and
+  in a formula it collides with the commonest variable name there is. `FKS/38/2/3/07` sets
+  `a = 1 au a P = 1 a` -- the semi-major axis, the Slovak conjunction and the unit, two of them
+  adjacent.
+
+  **The symbol lives in two places and they must agree.** `core/latex/siunitx.tex` is what the
+  booklet prints; `core/builder/jinja.py` reorders pint's aliases, because a unit's symbol is
+  simply the first one and `~P` is what `|txt` writes into an SVG label or a gnuplot axis. Change
+  one alone and the booklet says `yr` while the drawing beside it says `a`. Writing `'a'` as a
+  unit in a meta still parses and is still a year, so nothing had to be respelled: all 172 renders
+  of the twelve problems that carry one came back byte-identical, and the only thing that moved in
+  volume 29 was the two printed symbols in `disappearth`.
+
 > **Which way round a compound unit's denominators go is unresolved, and deliberately parked.**
 > pint normalises `kJ/(kg·K)` to `kJ·K⁻¹·kg⁻¹`, so it prints **`kJ/(K kg)`** where an author
 > writing the unit by hand prints `kJ/(kg K)`. Unlike `\kilogram` above this is *not* cosmetic:

@@ -24,6 +24,11 @@ log = logger.setupLog('dgs')
 
 ureg = pint.UnitRegistry(preprocessors=[lambda s: s.replace("€", "EUR")])
 ureg.define("eur = [currency] = € = EUR")
+# pint ships `year = 365.25 * day = a = yr = julian_year`, and a unit's *symbol* -- what `~P`
+# prints, and therefore what `|txt` writes into an SVG label or a gnuplot axis -- is simply the
+# first alias. Reordering it is the whole of the change. `a` still parses as input, so no source
+# moves; see `core/latex/siunitx.tex` for why the booklet says `yr`, and change neither alone.
+ureg.define("year = 365.25 * day = yr = a = julian_year")
 pint.set_application_registry(ureg)
 
 

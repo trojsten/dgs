@@ -22,7 +22,16 @@
 
 \DeclareSIUnit{\gforce}{\textit{g}}
 \DeclareSIUnit{\galileo}{Gal}                                % gravimetry's cm/s^2
-\DeclareSIUnit{\year}{a}
+% `yr` rather than ISO 80000-3's `a`, deliberately. SI has no year at all -- the brochure's
+% accepted non-SI times stop at the day -- so there is no standard here to break, only ISO's
+% `a` (the Julian year, 365.25 d) against astronomy's `yr`, and `a` loses twice over. It is
+% also the are, which is why `ha` is a hectare and why a prefixed year is unreadable; and in
+% a formula it collides with the commonest variable name there is. `FKS/38/2/3/07` sets
+% `a = 1 au a P = 1 a` -- the semi-major axis, the Slovak conjunction and the unit, two of
+% them adjacent. The symbol must match what `|txt` writes into an SVG label or a gnuplot
+% axis, so `core/builder/jinja.py` reorders pint's aliases to print `yr` as well; change
+% neither alone.
+\DeclareSIUnit{\year}{yr}
 
 \DeclareSIUnit{\inch}{in}
 \DeclareSIUnit[number-unit-product={}]{\inchp}{{}^{\prime\prime}}
