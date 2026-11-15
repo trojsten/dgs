@@ -194,6 +194,16 @@ a constant that does not move at all, and it is the opposite direction from `|sn
 for a band that must be *coarser* than the place it prints. The precision decides: the same pair
 is one value at `|f0` and a range at `|f4`.
 
+**Choose that precision for the number a competitor writes, not for the one the computation
+affords.** This is the half that `29/bolognese` cost a marking round to learn. Outward rounding
+guarantees the band is never narrower than its own chain, and says nothing about the precision
+the answer sheet in the marker's hand is written at -- a marker compares strings. `bolognese`
+spanned 4.506 to 4.586 h and printed it at `|f2` as `4,50 – 4,59`; the competitor who computed
+with the constants sheet got 4.586 and wrote **`4,6`**, which is outside that band and is the
+right answer. At `|f1` the same pair prints `4,5 – 4,6` and takes both. So the spec follows the
+coarser of the two chains, and a band computed and printed to three figures can still turn away
+the person who wrote two.
+
 Landing it moved **11 renders in 7 problems**, every one a grid artefact: `13/daybreak`'s
 `0.68 – 0.69` is now `0.68`, `16/geopotential`'s `6378 – 6379` is `6378`, and `21/bubble`'s
 `93 – 95` is `94` in all six languages. The **27 problems that carry no `answer-interval.md`**
