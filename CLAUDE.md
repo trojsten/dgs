@@ -335,6 +335,25 @@ red instead of accumulating. Three carve-outs, each of which the sweep met:
   name to take: `21/ski-jump`'s inclined plane is `d` long and its arc `l`, `22/seychelles` writes
   both `X` and `x_S`, `24/crane`'s statement says `F` where its solution says `F_M`.
 
+**The check cannot see the shape where the symbol is not declared**, because declaring it is the
+first half of the fix: it asks whether the meta names that symbol, and where the answer is no the
+site reads as prose. Eight were left that way and are now done -- `05/mirror-lens`,
+`11/two-sources` twice, `13/cucumbers`, `13/florist`, `20/equinox` in three languages,
+`25/options` twice and `chem/04/abnormálny-pacient`. Every render came back byte-identical bar
+`20/equinox`, which is the one that had something to say: its `R` is `const.radius_earth.approx`,
+so `.eq` writes `R \approx \qty{6371}{\kilo\metre}` where the source had been asserting an
+equality the sheet's rounding does not support. That is the whole reason to prefer the tag over a
+hand-written `=` -- the relation is the quantity's to decide, and a human writing it out has no
+way to know.
+
+**One symbol may name two quantities, and the alias is not what introduces it.** `11/two-sources`
+redefines `U` and `R` as the loop's totals in its second paragraph, beside the `values:` entries
+that already carry those symbols for a single source and a single resistor; `25/options` calls
+both roots of its quadratic `R_2`, which is what they both are. Declaring it only moves a
+spelling the prose had already chosen into the meta, where the two places that print it cannot
+drift. It is the mirror of *two symbols for one value* above and is decided the same way: by what
+the sentence says, not by what is tidy.
+
 A symbol *inside* a longer span is deliberately left alone. The span is usually a relation, and a
 tag inside a literal copy of one makes three spellings out of two; `hoistable-inline` is the
 check for those, and the fix is to hoist the whole span.
@@ -1539,6 +1558,16 @@ every language at once before anyone renders anything. Fix the word; do not ship
 through an `eq:` entry that writes `(§ x.s §)` — which is three deep, since the entry arrives
 in the first pass's output, `.s` resolves in the second and leaves the word's tag behind. That
 used to reach the page as a literal `(§ words.twin §)`, because a render was exactly two passes.
+
+**It is what a symbol wants whenever its index abbreviates a word**, and `27/antifreeze` is the
+case that shows the cost of not doing it. Its ice was declared `m_\text{i}` and its antifreeze
+`T_\text{a}`, the English letters, so `en`, `de` and `hu` could write `(§ m_ice.eq §)` and
+`(§ Tz.s §)` while Slovak -- where the words are *ľad* and *zmes* -- had to spell
+`$m_\text{ľ} = (§ m_ice §)$` and `$T_\text{z}$` out by hand. One language out of step is one
+copy to drift, which is the whole argument. The three symbols carry `(§ words.ice §)` and
+`(§ words.antifreeze §)` now, the Slovak file writes the same two tags the others do, and all
+seven languages render byte-identically -- `cs` among them, which reads the Slovak file through
+a symlink and needed its own `ľ` from `cs/words.yaml` to do so.
 
 **`render_to_fixpoint` keeps passing until the output stops changing**, at least twice and at
 most `MAX_RENDER_PASSES`, after which it raises rather than spinning. It costs nothing where
