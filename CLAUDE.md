@@ -2042,6 +2042,25 @@ Each `typography:` block cites its source, because the lists are transcribed, no
   szavakat."* The seven `egy\ ` in the Hungarian sources are an author's preference.
 - `я` was in the Russian and Ukrainian lists and is a pronoun; no rule covers it, so it is gone.
 
+### Raw TeX font switches are banned too, and for a worse reason
+
+`{\it …}`, `{\bf …}`, `{\em …}` -- the pre-LaTeX2e switches -- do not survive Markdown.
+**Pandoc escapes the braces**, so `{\it x}` reaches the TeX as `\{\it x\}`: the braces print
+as literal characters and the switch is left **unguarded**, changing the font for everything
+after it to the end of the document.
+
+`17/necklace`'s statement carried one, and it was the only one in the corpus. It printed
+`{Trojuholníky s nulovým obsahom neuvažujte.}` with the braces showing on page 2, and set the
+remaining 34 pages of the Slovak booklet in italic -- every statement after it, every solution,
+the `Výsledky` title and every answer. Nobody had noticed in eleven years, because italic text
+reads as a deliberate choice and nothing in the build complains.
+
+Write `_…_` and `**…**`, which become `\emph{}` and `\textbf{}` and are scoped. And note the
+trap in the other direction, which is what made this hard to see: **`\emph` toggles**, so inside
+the leaked italic an `_…_` came out *upright*, and the two answer notes that used it looked
+deliberately un-emphasised. The way to tell a leak from a choice is to set the same text with no
+markup at all -- if plain prose comes out italic, something upstream is leaking.
+
 ### `\,` is still banned in the source
 
 `\,` looks like the obvious spelling of a thin space and **does not work**. A backslash before
