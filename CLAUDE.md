@@ -962,9 +962,10 @@ at once** — the key lives in the meta, the call sites do not, so renaming `sk`
 calling a key that is gone and the build says so immediately.
 
 One thing it deliberately did not touch: `fig:puzzle:puzzle_solution` in `chem/01` and
-`fig:ht-conundrum:diagram` in `phys/22` are each defined twice in one document, because one
-`pictures:` key is used by both a solution and an answer. That was true under the old names and is
-LaTeX's `multiply defined` warning, not a naming defect.
+`fig:ht-conundrum:diagram` in `phys/22` were each defined twice in one document, because one
+`pictures:` key was used by both a solution and an answer. That was true under the old names and
+was LaTeX's `multiply defined` warning rather than a naming defect -- see *One key is one label*
+below, which is where it was settled.
 
 ## A venue says where it is; the volume says when it begins
 
@@ -1372,16 +1373,27 @@ of an image that is a paragraph to itself; one sitting on the line above or belo
 there is no error anywhere: the author wrote a caption, the renderer emitted it, pandoc read it as
 the alt text of an inline image and the writer dropped it.
 
-**225 picture tags in the corpus are not alone in their block**, and what that costs depends on
-what the tag asked for. **Five were pointing somewhere a crossref had to resolve** --
-`17/wall-bars`, `17/coconut`, `17/rhombus-prism` and `17/laser-target`'s two -- so volume `17`
-printed `viď obrázok ??`; those are fixed, and `17/laser-target`'s answer, which was printing the
-same drawing under its own caption through the same key, has a key of its own now, since one key
-is one label and two captions are two figures. **41 more in 23 problems drop a caption nobody is
-pointing at**, most of volume `18` in three languages; those are *not* fixed, because a figure
-that gains a caption gains a number and renumbers the booklet after it, which is a decision and
-a gate of its own. And 35 in statements pass a caption that `figure_captions` discards by design,
-where the fix is to delete the argument rather than to add the blank line.
+**A tag may span several lines**, because a long caption is wrapped with real newlines, so the
+blank lines are wanted around the *whole* span. A detector that looks at the line after the
+opening reports every wrapped caption as inline and is wrong about all of them -- `27/rio`,
+`29/banked-turn`, `28/alphabet` and nine more were each a false positive of exactly that shape.
+
+**198 picture tags in the corpus were not alone in their block**, and what that cost depended on
+what the tag asked for. **42 of them, in 23 problems, passed a caption from inside a solution**
+and lost it; all 42 are fixed, 5 because a crossref had to resolve to them -- `17/wall-bars`,
+`17/coconut`, `17/rhombus-prism` and `17/laser-target`'s two, where volume `17` was printing
+`viď obrázok ??` -- and the other 37 because the caption was written to be read. That one moves
+the page by design: 37 new `figure` environments, 37 new labels, and every figure after each one
+renumbers. The gate is therefore not byte-identity but that *nothing else* moved -- normalise the
+`figure` wrapper away on both sides of the conversion and the TeX must be equal, which it was for
+all 29 files.
+
+**156 are left and none of them is losing anything a reader wanted.** 35 pass a caption from
+inside a *statement*, where `figure_captions` discards it whether or not the image is a block,
+so the fix there is to delete the argument rather than add the blank line. 119 pass no caption:
+58 in statements, which print identically either way, and 56 in solutions plus 5 in answers,
+which would each gain an empty `\caption{}` and a number if they were blocked -- 61 new figure
+numbers for nothing anybody asked to reference.
 
 `18/firework-bee` was the first of these found and reads as the worked example: its English
 booklet printed `??` for a figure that `sk` and `cs` numbered, and the cause was not the missing
@@ -1396,6 +1408,39 @@ HTML comment is content to the parser and nothing on the page. Nobody types it; 
 and labels". That rule is gone. It put every such figure straight back to unnumbered, and it was
 dead code until this made it live -- no source writes an empty alt and nothing under `build/`
 carried a `\caption{}`.
+
+### One key is one label, so two figures need two keys
+
+A `pictures:` key becomes `{#fig:<pid>:<key>}`, and a problem's statement, solution and answer
+are *one document* in the booklet -- so a key used by two of them defines its label twice, LaTeX
+says `multiply defined`, and a crossref to it lands on whichever copy was written last. 16
+problems did it, always the same shape: the answer *is* a drawing, and it is the drawing the
+solution already showed. Each answer takes an `answer:` entry of its own now, naming the same
+file: `chem/01/puzzle`, `chem/03/eschenmoser`, `chem/03/sudoku`, `02/focal-square`,
+`02/redraw`, `13/tv-diagram`, `15/mixing-water`, `15/vt-diagram`, `16/lasers`,
+`17/laser-target`, `18/three-lasers`, `19/pv-to-vt`, `20/thermodynamic-cycle`,
+`21/pv-to-vt-2`, `22/ht-conundrum`, `23/rusty-mirrors`.
+
+**Declaring one drawing twice is the answer and not a workaround.** The two are different
+figures -- different captions, different pages, different numbers -- and they only looked like
+one because they share a `file:`. The alternative, one key printed twice, is the thing nothing
+can reference.
+
+**A statement never collides**, which is worth knowing before hunting for more: `figure_captions`
+drops a statement's caption, so pandoc emits a bare `\includegraphics` with no `figure` and no
+label at all. Only solution-against-answer can duplicate.
+
+**The same rule holds for `eq:`, and `02/hilltop-gun` is the case.** Its solution solves the
+problem twice, by two routes, and prints the same `eq.range` at the end of each to say the
+answers agree -- two displays, two numbers, one label. The second call takes a `range_rotated:`
+entry whose whole body is `(§ eq.range §)`, which splices the first rather than copying it: a
+bare `eq:` reference is the raw LaTeX, so there is one equation, two labels, and no way for the
+two to drift into disagreeing about the answer.
+
+**A stale `.aux` reports this long after it is fixed.** The `\newlabel` entries LaTeX checks
+against are the ones read from the *previous* run's `.aux`, so the first pass after the fix still
+warns, and the log keeps that warning when no second pass is needed. Delete the `.aux` before
+believing a `multiply defined` -- all 17 of these came back clean that way and only that way.
 
 ### A crossref is `[-@fig:…]`, because the sentence already has its noun
 
