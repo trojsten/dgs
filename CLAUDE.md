@@ -864,6 +864,89 @@ and none failed, and `TestTheProblemSchema` in `core/tests/test_renderer.py` pin
 nine cases fail against the old spelling, and the other three are the quiet half that must keep
 passing, because an empty list and an absent role are how a problem says *unrecorded*.
 
+### A content key is named `symbol_subscript`, never camelCase
+
+`values:`, `derived:`, `eq:`, `blocks:` and `pictures:` are the five mappings whose keys an author
+types once in the meta and then writes again at every call site. They are spelled in snake_case
+with a physics symbol at the head wherever the quantity has one: `m_person`, not `mPerson`;
+`T_air`, not `tempAir`; `v_fast`, not `speedFast`; `rho_Al`, not `densityAl`. Where there is no
+symbol, the words stay words: `gain_from_power`, `inertia_factor`, `belt_solution`.
+
+**It is a naming rule and it is also a label rule.** An `eq:` key becomes `{#eq:<pid>:<key>}` and a
+`pictures:` key becomes `{#fig:<pid>:<key>}`, so the spelling is read by whoever writes a crossref,
+not only by whoever reads the meta.
+
+**993 keys were swept on 2026-11-15** — 272 `values`, 275 `derived`, 246 `eq`, 145 `pictures` in
+`phys`, `chem` and `test`, plus three terms in a `words.yaml`. 4464 of the 4920 rendered files came
+back byte-identical and the other 456 differed only in a label; converted to TeX, those 456 differ
+only inside `\label{}`, which carries no ink. The audit was 2396 findings before and 2327 after,
+and the whole of that −69 is the trailing-whitespace sweep in the same tree.
+
+`camelcase-key` reports the next one. Four shapes look like camelCase and are not, and each is
+quiet **by name** rather than by accident, because every one of them is in the sources:
+
+- **a chemical formula after its symbol** — `m_NaCl`, `n_KMnO4`, `V_H2O`, `M_CaOH2`, `M_KClO3`. The
+  capital belongs to the element and lowercasing it spells a different substance. Only a segment
+  that reads as two or more element symbols is exempt, so `mNaCl` — the same name with the
+  underscore missing — is still reported, and the underscore is the fix.
+- **a quantity whose own name carries the capital** — `pH`, `pOH`, `pKa`, `pKs`.
+- **a differential, which keeps its symbol attached** — `dT`, `dL`, `dU`, `dx`, `dEp1`. `d` is an
+  operator, not a symbol with an index, so `d_T` would be claiming the quantity is called *d*
+  with an index *T*. The underscore is left to do the other job, separating a numerator from a
+  denominator: `dB_dt` is dB/dt and `dW_dF` is two differentials in one relation.
+
+- **a symbol carrying a short index** — `v0`, `R1`, `Tv`, `MH`, `tA`, `pV`, `deltaT`, `etaJ`. See
+  below: a key is a variable name, and an index of one character rides on its symbol.
+
+A digit before a capital is not a hump at all, so `M_M2O` (an unknown metal's oxide) and `rel_2I`
+(a coefficient) never reach the test.
+
+#### A short index rides on its symbol; a word index keeps the underscore
+
+`v_0` is written **`v0`**, `T_v` is **`Tv`**, `t_A` is **`tA`**, `\Delta T` is **`deltaT`** — a key
+is a variable name, and an index of one character belongs to the symbol it indexes, the way the
+subscript does on the page. The underscore is kept for an index that is a *word*: `m_person`,
+`T_air`, `centroid_x`, `board_v`, `rate_A`. A **word base** is the test, not the index's own shape.
+
+**163 keys were joined on 2026-11-16** — 43 `values`, 71 `derived`, 49 `eq` across `phys` and
+`chem` — and 789 of the 859 rendered files came back byte-identical, the other 70 differing only
+in a label; converted to TeX all 70 differ only inside `\label{}` and `\ref{}`. No crossref was
+left pointing at an old label. It partly **reverses** the 2026-11-15 sweep, which had split `tA`
+into `t_A` on the hump rule; `RE_HUMP` now needs a character after the capital, so `deltaT` is
+quiet and `tempAir`, which runs on past its capital, is not.
+
+Three things the join settled, each of which cost a render:
+
+- **The underscore was carrying the symbol.** A `values:` entry with no `symbol:` prints its *key*,
+  so `c_0` printed `c_0` and the joined `c0` printed `c0` — a wrong symbol on the page, in
+  `chem/04/zinkový-plech`. 28 entries now declare the symbol they were spelling implicitly, which
+  is where it belonged: a symbol is declared on the quantity.
+- **Two names that differed only by the underscore were two names.** `25/emergency` had
+  `values.v0`, the given in km/h, beside `derived.v_0`, the same speed in m/s feeding the table;
+  joining made them collide and the renderer said so. The given is `v_init` now and the series
+  keeps `v0`…`v5`.
+- **A differential is not a symbol with an index**, so `dT_h` was left alone. `d` is an operator and
+  `dTh` would read as d(Th) — the same reason the differentials keep their `d` attached above.
+
+**That last one cost a correction.** The first pass split every differential — `dT` to `d_T`,
+`FDiffW` to `d_W` — and seven problems had been writing `dT`, `dL` and `dU` all along, three of
+them declaring `symbol: '\FDiff{T}'` outright. They were never camelCase, and splitting them
+asserted something false about what the symbol is. They are back, and everything the sweep
+renamed out of the `\FDiff`/`\UDiff` family joined them: `dW`, `dV`, `dx`, `dy`, `dp`, `dh`,
+`dT2`, `dT_h`, `dW_dF`.
+
+Two things the sweep settled that a regex could not. **A symbol-soup `eq:` key is not worth
+transliterating**: `GMmRh`, `MgL2cosalpha` and `existscinabFc` were mnemonics made of the
+equation's own characters, and `G_mm_Rh` would have been the same mnemonic with underscores in it.
+They became `grav_force`, `torque_balance` and `bolzano`. And **a key is renamed in every language
+at once** — the key lives in the meta, the call sites do not, so renaming `sk` alone leaves `en`
+calling a key that is gone and the build says so immediately.
+
+One thing it deliberately did not touch: `fig:puzzle:puzzle_solution` in `chem/01` and
+`fig:ht-conundrum:diagram` in `phys/22` are each defined twice in one document, because one
+`pictures:` key is used by both a solution and an answer. That was true under the old names and is
+LaTeX's `multiply defined` warning, not a naming defect.
+
 ## A venue says where it is; the volume says when it begins
 
 `start:` in a volume's `meta.yaml` is **the instant the envelopes are opened, in UTC**, and it

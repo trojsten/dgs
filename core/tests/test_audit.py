@@ -1562,6 +1562,98 @@ class TestTranslatedWords:
         assert 'word-missing' in ids(run(tmp_path, files=files))
 
 
+class TestCamelCaseKey:
+    """
+    A content key is named `symbol_subscript`, never camelCase. The quiet half is the whole of the
+    difficulty: a chemical formula, a standard quantity name and a differential all carry a capital
+    in the middle and all of them are right.
+    """
+
+    BASE = ("authors:\n  idea: []\n  problem: []\n  solution: []\ntags: ['kinematics']\n")
+
+    def meta(self, block):
+        return self.BASE + block
+
+    def test_a_camelcase_value_is_reported(self, tmp_path):
+        meta = self.meta("values:\n  tempAir:\n    magnitude: 20\n    unit: 'celsius'\n")
+        report = run(tmp_path, meta=meta, files={'sk': {'problem.md': 'x\n'}})
+        assert 'camelcase-key' in ids(report)
+        assert any('values.tempAir' in f.message
+                   for f in report.findings if f.check == 'camelcase-key')
+
+    def test_every_named_mapping_is_looked_at(self, tmp_path):
+        meta = self.meta("values:\n  mPerson:\n    magnitude: 1\n    unit: 'kg'\n"
+                         "derived:\n  mTotal: 'mPerson'\n"
+                         "eq:\n  gasLaw: 'pV = nRT'\n"
+                         "pictures:\n  beltSolution:\n    file: 'belt.svg'\n")
+        report = run(tmp_path, meta=meta, files={'sk': {'problem.md': 'x\n'}}, assets=('belt.svg',))
+        reported = {f.message.split('`')[1] for f in report.findings if f.check == 'camelcase-key'}
+        assert reported == {'values.mPerson', 'derived.mTotal', 'eq.gasLaw', 'pictures.beltSolution'}
+
+    def test_a_single_letter_head_counts(self, tmp_path):
+        """`KApprox` has no lowercase to run into a capital and is camelCase all the same."""
+        meta = self.meta("derived:\n  KApprox: '1'\n")
+        assert 'camelcase-key' in ids(run(tmp_path, meta=meta, files={'sk': {'problem.md': 'x\n'}}))
+
+    @pytest.mark.parametrize('key', [
+        'm_person', 'T_air', 'result_approx', 'belt_solution', 'v_A', 'FS_max', 'Ek_Ep',
+        'm_NaCl', 'n_KMnO4', 'V_H2O', 'M_CaOH2', 'M_KClO3',        # symbol and formula
+        'pH', 'pOH', 'pKa', 'pKs', 'pH_buffer',                     # the name carries the capital
+        'dT', 'dL', 'dU', 'dx', 'dEp1', 'dT_h', 'dB_dt', 'dW_dF',  # Leibniz notation
+        'M_M2O', 'rel_2I',                                          # a digit before a capital
+        'v0', 'R1', 'Tv', 'MH', 'tA', 'pV', 'deltaT', 'etaJ', 'Cd', 'ke', 'mv0',  # a short index
+    ])
+    def test_the_quiet_half(self, tmp_path, key):
+        """Every one of these is in the sources and every one of them must stay as it is."""
+        meta = self.meta(f"derived:\n  {key}: '1'\n")
+        assert 'camelcase-key' not in ids(run(tmp_path, meta=meta,
+                                              files={'sk': {'problem.md': 'x\n'}}))
+
+    def test_a_differential_keeps_its_symbol_attached(self, tmp_path):
+        """
+        `d` is an operator, not a symbol with an index, so the `d` and what it differentiates stay
+        together and the underscore is left to separate a numerator from a denominator: `dT`, and
+        `dB_dt` for dB/dt. Seven problems were already written that way -- three of them declaring
+        `symbol: '\\FDiff{T}'` -- and a sweep that split them to `d_T` would have been claiming
+        the quantity is called *d* with an index *T*.
+        """
+        meta = self.meta("values:\n  dT:\n    magnitude: 2\n    unit: 'kelvin'\n"
+                         "    symbol: '\\FDiff{T}'\n")
+        assert 'camelcase-key' not in ids(run(tmp_path, meta=meta,
+                                              files={'sk': {'problem.md': 'x\n'}}))
+
+    def test_a_short_index_rides_on_its_symbol(self, tmp_path):
+        """
+        A key is a variable name, so an index of one character joins the symbol it belongs to --
+        `v0`, `Tv`, `tA`, `deltaT` -- exactly as the subscript sits on the symbol in print. 163
+        keys were joined on 2026-11-16 and the hump rule had to learn the difference, which is
+        the final capital: `deltaT` ends on its index where `tempAir` runs on past it.
+        """
+        meta = self.meta("derived:\n  deltaT: '1'\n  tA: '1'\n  v0: '1'\n  tempAir: '1'\n")
+        report = run(tmp_path, meta=meta, files={'sk': {'problem.md': 'x\n'}})
+        reported = {f.message.split('`')[1] for f in report.findings if f.check == 'camelcase-key'}
+        assert reported == {'derived.tempAir'}
+
+    def test_a_word_index_keeps_its_underscore(self, tmp_path):
+        """
+        The other half of the same rule: `centroid_x` is a word and an index, not a symbol and an
+        index, so joining it would spell the word without its separator. Nothing reports it, and
+        nothing should report `centroidx` either -- the check has no opinion on a name with no
+        capital in it. What it must not do is report the underscored form.
+        """
+        meta = self.meta("derived:\n  centroid_x: '1'\n  m_person: '1'\n  T_air: '1'\n")
+        assert 'camelcase-key' not in ids(run(tmp_path, meta=meta,
+                                              files={'sk': {'problem.md': 'x\n'}}))
+
+    def test_a_formula_without_its_underscore_is_still_reported(self, tmp_path):
+        """
+        `mNaCl` is `m_NaCl` with the underscore missing, and the formula exemption must not swallow
+        it -- only a segment that reads as a formula on its own is exempt, and `mNaCl` does not.
+        """
+        meta = self.meta("eq:\n  mNaCl: 'm = n M'\n")
+        assert 'camelcase-key' in ids(run(tmp_path, meta=meta, files={'sk': {'problem.md': 'x\n'}}))
+
+
 class TestTheAuditCanSeeEveryShapeOfMaths:
     r"""
     Two shapes used to fall outside `RE_BLOCK` and `RE_INLINE`, and a file containing either had

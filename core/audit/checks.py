@@ -562,6 +562,113 @@ def words_in_meta(sources):
                       line_of(unit.meta_raw or '', (unit.meta_raw or '').find('\nwords:') + 1))
 
 
+#: The elements, so that a chemical formula can be told from a camelCase word. `m_NaCl` and
+#: `n_KMnO4` are symbol-and-formula and must stay spelled that way; `mNaCl` is the same name with
+#: the underscore missing, and is the thing this check is for.
+ELEMENTS = frozenset("""
+H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr
+Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm
+Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No
+Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og""".split())
+
+#: Quantities whose own name carries a capital in the middle. Not symbols with an index -- these
+#: are how the quantity is written, in every textbook and on every page of `chem`.
+STANDARD_NAMES = frozenset({'pH', 'pOH', 'pKa', 'pKs'})
+
+#: One element and its count, used to read a formula segment left to right.
+RE_FORMULA_TOKEN = re.compile(r'[A-Z][a-z]?\d*')
+
+#: Leibniz notation: `dB`, `dT2`, the `d` of a differential followed by the symbol it differentiates.
+RE_DIFFERENTIAL = re.compile(r'^d[A-Z][a-z]?\d*$')
+
+#: A lowercase letter running straight into a capital -- `tempAir`, `mPerson` -- and the one shape
+#: that has no lowercase to run into one: a single-letter symbol followed by a capitalised word,
+#: `KApprox`. A digit before a capital is *not* a hump: `M2O` and `2I` are notation.
+#:
+#: **Nor is a capital that ends the segment**, which is why the hump needs a character after it.
+#: A key is a variable name, so a short index rides on its symbol rather than being separated
+#: from it -- `v0`, `Tv`, `tA`, `deltaT`, the same way `v_0` is set as a subscript -- and the
+#: underscore is kept for an index that is a *word*: `m_person`, `T_air`, `centroid_x`. The two
+#: are told apart by where the capital falls: `deltaT` ends on its index and `tempAir` does not.
+RE_HUMP = re.compile(r'[a-z][A-Z](?=.)')
+RE_CAP_HEAD = re.compile(r'^[A-Z](?=[A-Z][a-z]{2})')
+
+
+def is_formula(segment):
+    """`NaCl`, `KMnO4`, `CaOH2`, `H2O` -- two or more element symbols with optional counts."""
+    if not segment or not segment[0].isupper():
+        return False
+    tokens, i = [], 0
+    while i < len(segment):
+        m = RE_FORMULA_TOKEN.match(segment, i)
+        if not m:
+            return False
+        tokens.append(m.group())
+        i = m.end()
+    return len(tokens) >= 2 and all(t.rstrip('0123456789') in ELEMENTS for t in tokens)
+
+
+def is_camel_case(name):
+    """
+    Whether a content key is camelCase rather than this repository's `symbol_subscript`.
+
+    Each underscore-separated segment is judged on its own, because the cure for `mNaCl` is
+    `m_NaCl` -- the formula is not the defect, the missing underscore is.
+    """
+    for segment in name.split('_'):
+        if segment in STANDARD_NAMES or RE_DIFFERENTIAL.match(segment) or is_formula(segment):
+            continue
+        if RE_HUMP.search(segment) or RE_CAP_HEAD.match(segment):
+            return True
+    return False
+
+
+#: The mappings whose keys an author types and then writes again at every call site.
+NAMED_MAPPINGS = ('values', 'derived', 'eq', 'blocks', 'pictures')
+
+
+@check('camelcase-key', 'warning', 'A camelCase key in a meta')
+def camelcase_key(sources):
+    r"""
+    `values:`, `derived:`, `eq:`, `blocks:` and `pictures:` are named in `symbol_subscript`, never
+    in camelCase: `m_person`, not `mPerson`; `T_air`, not `tempAir`; `belt_solution`, not
+    `beltSolution`. A key is also a label -- `eq:` and `pictures:` keys become `{#eq:<pid>:<key>}`
+    and `{#fig:<pid>:<key>}` -- so the spelling is read by whoever writes a crossref too.
+
+    Four shapes look like this and are not, and each is quiet by name rather than by accident:
+
+    - **a chemical formula after its symbol.** `m_NaCl`, `n_KMnO4`, `V_H2O`, `M_CaOH2`. The capital
+      is the element's, and lowercasing it would spell a different substance. Only a segment that
+      reads as two or more element symbols is exempt, so `mNaCl` -- the same name with the
+      underscore missing -- is still reported, and the fix is the underscore.
+    - **a quantity whose name carries the capital**: `pH`, `pOH`, `pKa`, `pKs`.
+    - **a differential**: `dB_dt` is dB/dt and `d_W_dF` is two of them.
+    - **a symbol carrying a short index**, which is the whole of `RE_HUMP`'s trailing `(?=.)`:
+      `v0`, `Tv`, `tA`, `pV`, `deltaT`, `etaJ`. A key is a variable name and an index of one
+      character rides on its symbol, the way the subscript does on the page. An index that is a
+      *word* keeps the underscore -- `m_person`, `T_air`, `centroid_x` -- and the capital's
+      position is what tells them apart: `deltaT` ends on its index, `tempAir` carries on past it.
+
+    A digit before a capital is not a hump at all -- `M_M2O` is an unknown metal's oxide and
+    `rel_2I` a coefficient -- so neither reaches the test.
+    """
+    for unit in sources.unit_list:
+        meta, raw = unit.meta or {}, unit.meta_raw or ''
+        for mapping in NAMED_MAPPINGS:
+            block = meta.get(mapping)
+            if not isinstance(block, dict):
+                continue
+            for key in block:
+                if not isinstance(key, str) or not is_camel_case(key):
+                    continue
+                offset = raw.find(f'\n  {key}:')
+                yield Finding('camelcase-key', 'warning',
+                              f"`{mapping}.{key}` is camelCase; this repository names a key "
+                              f"`symbol_subscript`",
+                              unit.path, 'meta.yaml',
+                              line_of(raw, offset + 1) if offset >= 0 else None)
+
+
 # --- maths ------------------------------------------------------------------
 
 #: What a flattened booklet leaves behind. The decode of `NN.pdf` recovers characters but loses
