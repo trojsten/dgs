@@ -1562,6 +1562,88 @@ class TestTranslatedWords:
         assert 'word-missing' in ids(run(tmp_path, files=files))
 
 
+class TestTheAuditCanSeeEveryShapeOfMaths:
+    r"""
+    Two shapes used to fall outside `RE_BLOCK` and `RE_INLINE`, and a file containing either had
+    every block- and inline-level check blinded on it: an inline span wrapped across a source
+    line, and a display delimiter indented by four -- the repository's own idiom for an equation
+    inside a list item, which sat between `^\$\$` and `RE_DELIMITER_INDENTED`'s one-to-three.
+    Closing them took 78 invented `siunitx-in-prose` findings out of phys and let eight other
+    checks reach the files they had been reporting nothing about.
+    """
+
+    @staticmethod
+    def prose(tmp_path, text, check, name='widget'):
+        report = run(tmp_path, name=name, files={'sk': {'solution.md': text}})
+        return [f for f in report.findings if f.check == check]
+
+    def test_a_wrapped_inline_span_is_maths(self, tmp_path):
+        r"""`--wrap=preserve` keeps the authored break, so authors wrap. `$R =\n\qty{…}{…}$`."""
+        text = 'Odpor je $R =\n\\qty{9.73}{\\ohm}$ a~nič viac.\n'
+        assert self.prose(tmp_path, text, 'siunitx-in-prose') == []
+
+    def test_a_blank_line_still_ends_a_span(self, tmp_path):
+        """
+        The quiet half of the quiet half: letting a span cross a newline must not let it cross a
+        paragraph, or one stray `$` swallows the rest of the file and the check goes silent.
+        """
+        text = 'Cena je $5 za kus.\n\nFuňo váži \\qty{30}{\\gram} aj s~chvostom.\n'
+        assert len(self.prose(tmp_path, text, 'siunitx-in-prose')) == 1
+
+    def test_a_display_indented_by_four_is_a_block(self, tmp_path):
+        """`(§ eq.x|disp('.')|indent(4) §)` is how a list item carries an equation."""
+        text = "-   prvá\n    $$\n        R = \\qty{9.73}{\\ohm}\n    $$ {#eq:t:a}\n-   druhá\n"
+        assert self.prose(tmp_path, text, 'siunitx-in-prose') == []
+
+    def test_an_indented_block_is_measured_against_its_own_delimiter(self, tmp_path):
+        """Eight is right inside a list item -- four for the list, four for `disp`."""
+        good = "-   prvá\n    $$\n        z = 1\n    $$ {#eq:t:a}\n"
+        assert self.prose(tmp_path, good, 'block-indent', name='good') == []
+
+    def test_an_indented_block_a_space_out_is_reported(self, tmp_path):
+        bad = "-   prvá\n    $$\n      z = 1\n    $$ {#eq:t:a}\n"
+        found = self.prose(tmp_path, bad, 'block-indent')
+        assert len(found) == 1 and 'asks for 8' in found[0].message
+
+    def test_a_one_line_display_is_a_block(self, tmp_path):
+        r"""`$$L - \sqrt{…} = ….$$` -- `RE_BLOCK` used to require a newline after the `$$`."""
+        text = 'Preto\n\n$$R = \\qty{9.73}{\\ohm}.$$\n\nA~tak.\n'
+        assert self.prose(tmp_path, text, 'siunitx-in-prose') == []
+
+    def test_a_one_line_display_is_not_asked_about_its_indentation(self, tmp_path):
+        """
+        It has no body line to indent, so `indented by 0` would be an answer to a question nobody
+        asked -- and 55 of the 57 blocks this reached when the regex learnt to see them were this
+        shape, `20/flea` and `20/rappel` above all.
+        """
+        assert self.prose(tmp_path, 'Preto\n\n$$z = 1.$$\n\nA~tak.\n', 'block-indent') == []
+
+    def test_a_commented_out_line_is_not_prose(self, tmp_path):
+        r"""`convertor.py` deletes a line opening with `%`, so nothing in it reaches a reader."""
+        text = '%Naposledy našiel tri rezistory \\qtylist{20;30;60}{\\ohm}.\nPrvá veta.\n'
+        assert self.prose(tmp_path, text, 'siunitx-in-prose') == []
+
+    def test_a_percent_inside_a_line_still_leaves_it_prose(self, tmp_path):
+        """Only a line *opening* with `%` is deleted; one in the middle is a per cent sign."""
+        text = 'Účinnosť 50 % a~hmotnosť \\qty{30}{\\gram} navyše.\n'
+        assert len(self.prose(tmp_path, text, 'siunitx-in-prose')) == 1
+
+    def test_a_plain_block_is_unchanged(self, tmp_path):
+        """The shapes that always worked must go on working, byte for byte."""
+        from core.audit.checks import RE_BLOCK
+        text = "text\n$$\n    x = y\n$$ {#eq:a:b}\nmore\n"
+        m, = RE_BLOCK.finditer(text)
+        assert (m['indent'], m['open'], m['body'], m['close'], m['tail']) == \
+               ('', '', '    x = y\n', '', '{#eq:a:b}')
+
+    def test_the_shorthand_is_unchanged(self, tmp_path):
+        from core.audit.checks import RE_BLOCK
+        text = "$${\n    a &= b\n}$$ {#eq:a:b}\n"
+        m, = RE_BLOCK.finditer(text)
+        assert (m['open'], m['body'], m['close'], m['tail']) == \
+               ('{', '    a &= b\n', '}', '{#eq:a:b}')
+
+
 class TestDisplayParagraph:
     """
     A display ending in a full stop ends the sentence, so a blank line follows it. One ending in a

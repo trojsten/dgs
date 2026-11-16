@@ -794,10 +794,17 @@ four shapes that are already correct -- inline maths, a `$$` block, a code span 
 and a Jinja tag. `\ce` is deliberately not in the set: mhchem in running text is right, and
 `rawtex.lua` is what carries it to the page.
 
-**369 of them in naboj across 68 problems** -- 281 in phys, 88 in chem -- `\qty` 147, `\unit`
-68, `\num` 63, `\ang` 56, `\qtylist` 26, the rest in ones and sixes. Nothing has been swept
-yet; `seminar` and `scholar` are not counted here and `scholar/TA1` alone writes 787 `\num` in
-prose.
+**naboj is at zero**, phys and chem both, and the old count here -- *369 across 68 problems* --
+was mostly the check reporting on itself. `only_prose` could not see an inline span wrapped
+across a source line, nor a display delimiter indented by four, so the maths inside those read
+as prose: of phys's 81, **78 were invented** and three were real. Both gaps are closed (see
+*The audit cannot see two shapes of maths* in `phys/errors/sweep-2026-11.md`), the three real
+ones are `$\unit{\milli\metre\per\hour}$` in `18/bathmobile`, and what is left in the
+repository is **1008 outside naboj** -- `scholar/TA1` 872, `seminar/FKS` 131, `scholar/STA` 5.
+
+**A count in this file that comes from a check is only as good as the check's masking**, which
+is what that one cost. Closing the two gaps moved eight checks at once: it took 81 findings away
+and revealed 118 that had been hidden, `solution-unlabelled` 0 → 61 above all.
 
 ## Style checker
 

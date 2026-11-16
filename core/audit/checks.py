@@ -26,10 +26,23 @@ from core.builder import words
 
 # --- shared patterns --------------------------------------------------------
 
-#: A display block: `$$` or `$${` on its own line, body, `$$` or `}$$`, optionally then a label.
-#: Anchored at the line start, which is why `delimiter-indented` has to run first -- see below.
+#: A display block: `$$` or `$${` opening a line, body, `$$` or `}$$`, optionally then a label.
+#:
+#: **Two shapes used to fall outside it, and both of them hid every block- and inline-level check
+#: on the file they were in.** A delimiter indented by four is this repository's own documented
+#: idiom for an equation inside a list item -- `(§ eq.x|disp('.')|indent(4) §)`, which
+#: `28/tetristor` writes six times -- and `^\$\$` did not match it, while `RE_DELIMITER_INDENTED`
+#: bails out at *one to three* spaces, so four fell between the two and the whole block read as
+#: prose. And `RE_BLOCK` required a newline after the opening `$$`, so a display written on one
+#: line, `$$L - \sqrt{…} = ….$$`, was prose too; `pool/star-grenade` and `20/rappel` are made of
+#: those. Closing the pair cost `siunitx-in-prose` 71 findings it had invented out of maths and
+#: revealed rather more that had been hidden -- see `errors/sweep-2026-11.md` for the table.
+#:
+#: `indent` is captured because `block-indent` needs it: `disp` re-indents by four *relative to
+#: its own delimiter*, so a display inside a list item is correct at eight.
 RE_BLOCK = re.compile(
-    r'^\$\$(?P<open>\{?)[ \t]*\n(?P<body>.*?)^(?P<close>\}?)\$\$[ \t]*(?P<tail>[^\n]*)',
+    r'^(?P<indent>[ \t]*)\$\$(?P<open>\{?)[ \t]*(?P<break>\n)?'
+    r'(?P<body>.*?)(?:^[ \t]*)?(?P<close>\}?)\$\$[ \t]*(?P<tail>[^\n]*)',
     re.DOTALL | re.MULTILINE)
 
 #: `\left` and `\right` only when a delimiter follows. Two traps in one line: `\rightarrow`
@@ -216,6 +229,12 @@ def blocks_of(text):
 #: prose between them as maths. Found in `21/split-capacitor/hu` and `27/pendula/hu`, where it had
 #: silently kept the latter unhoistable; a first attempt at re-indenting turned two Hungarian
 #: paragraphs into a verbatim block because of it.
+#:
+#: `RE_BLOCK` tolerates the indentation now and pairs such a file correctly, so this is no longer
+#: about *this* audit. It stays an error, and `blocks_of` still refuses the file, because the
+#: line-oriented `$${` rewrite in `convertor.py:pre_regexes` is downstream and does anchor -- and
+#: because a file whose delimiters are a space out wants fixing rather than auditing around. One
+#: file in the repository has it, `pool/star-grenade/answer.md`, and `pool` is its own project.
 RE_DELIMITER_INDENTED = re.compile(r'^[ ]{1,3}\}?\$\$', re.MULTILINE)
 
 
@@ -358,7 +377,11 @@ RE_ENVIRONMENT_CLOSE = re.compile(r'^[ \t]*\\end\{[A-Za-z*]+\}[ \t]*$')
 
 def display_blocks(text):
     """
-    Every display block, as (index of its last line, terminal punctuation).
+    Every display block, as (index of its last line, terminal punctuation, indented?).
+
+    `indented` is what keeps the paragraph rule off a block inside a list item, where the next
+    bullet is the break. It used to come for free from `RE_BLOCK` being blind to an indented
+    delimiter; now that the regex sees one, the exemption has to be stated.
 
     Both spellings: a literal `$$ … $$`, whose punctuation is the last character of its body,
     and a `(§ eq.x|disp('.') §)` reference, whose punctuation is in the filter.
@@ -375,7 +398,8 @@ def display_blocks(text):
             body.pop()
         last = body[-1].rstrip() if body else ''
         punct = last[-1] if last and last[-1] in ',.;?!' else ''
-        yield line_of(text, m.end()) - 1, punct
+        yield line_of(text, m.end()) - 1, punct, bool(m['indent'])
+    # a *reference* is anchored at column 0 by `RE_DISPLAY_REF`, so it is never the indented case
     for m in RE_DISPLAY_REF.finditer(text):
         if m.group('aarg') is not None:
             # `arr('rclcl')` or `arr('rclcl', '.')` -- the columns come first, never the stop.
@@ -385,7 +409,7 @@ def display_blocks(text):
         else:
             punct = (_PUNCT_SUFFIX[m.group('suf')] if m.group('suf')
                      else (m.group('arg') or '').strip().strip("'\""))
-        yield line_of(text, m.start()) - 1, punct
+        yield line_of(text, m.start()) - 1, punct, False
 
 
 @check('display-paragraph', 'warning',
@@ -401,7 +425,8 @@ def display_paragraph(sources):
     comma. The message says what it sees and leaves the choice to whoever knows the sentence.
 
     End of file exempts the rule -- nothing can follow -- as does a next line Markdown would
-    demand a blank before anyway: a list item, a figure, a heading or another display.
+    demand a blank before anyway: a list item, a figure, a heading or another display, and so
+    does a block indented inside a list item, where the next bullet is the break.
     """
     for unit in sources.unit_list:
         # A mirrored translation is one set of bytes reached by two names; reporting the same line
@@ -413,7 +438,9 @@ def display_paragraph(sources):
                 continue
             seen.add(place)
             lines = text.splitlines()
-            for end, punct in display_blocks(text):
+            for end, punct, indented in display_blocks(text):
+                if indented:
+                    continue                                    # inside a list item
                 if end + 1 >= len(lines) or not any(l.strip() for l in lines[end + 1:]):
                     continue                                    # nothing follows
                 blank = not lines[end + 1].strip()
@@ -618,11 +645,26 @@ def block_indent(sources):
                 lines = [l for l in m['body'].split('\n') if l.strip()]
                 if not lines:
                     continue
+                # A display written on one line -- `$$L - \sqrt{…} = ….$$` -- has no body line
+                # to indent, so the question does not apply to it. It cannot be hoisted
+                # byte-neutrally either, but saying `indented by 0` about a block with no body
+                # of its own is an answer to a question nobody asked: 55 of the 57 this check
+                # found when `RE_BLOCK` learnt to see them were this shape, `20/flea` and
+                # `20/rappel` above all. `break` is the newline after the opening `$$`, which is
+                # what tells the two apart -- a block whose body happens to be a single line of
+                # maths still has one, and is still measured.
+                if m['break'] is None:
+                    continue
                 least = min(len(l) - len(l.lstrip(' ')) for l in lines)
-                if least != 4:
+                # `disp` indents by four from wherever its own tag sits, so a display inside a
+                # list item is right at eight -- four for the list, four for `disp`. Measured
+                # against a literal four this reported every one of them.
+                want = len(m['indent'].expandtabs(4)) + 4
+                if least != want:
                     yield Finding('block-indent', 'warning',
-                                  f"indented by {least}; `MathObject.disp` re-indents by exactly "
-                                  f"four, so this block cannot be hoisted byte-neutrally",
+                                  f"indented by {least} where its delimiter asks for {want}; "
+                                  f"`MathObject.disp` re-indents by exactly four from its own "
+                                  f"tag, so this block cannot be hoisted byte-neutrally",
                                   unit.path, unit.label(lang, name), line_of(text, m.start()))
 
 
@@ -1393,7 +1435,11 @@ SOLUTION_FILE = 'solution.md'
 
 #: Inline maths, and only inline: a lone `$` not doubled, up to the next one on the same line.
 #: Display blocks are masked out before this runs, so `$$` cannot be mistaken for two spans.
-RE_INLINE = re.compile(r'(?<!\$)\$(?!\$)((?:[^$\n]|\\\$)+)\$(?!\$)')
+#: An inline span. It may be **wrapped across a source line**: `--wrap=preserve` keeps the
+#: authored break, so there is every reason for an author to wrap one, and `[^$\n]` alone made
+#: `$R =\n(§ R §)$` invisible -- which is how `siunitx-in-prose` came to report the maths inside
+#: it as prose. A blank line still ends the span, because a paragraph break ends everything.
+RE_INLINE = re.compile(r'(?<!\$)\$(?!\$)((?:[^$\n]|\\\$|\n(?![ \t]*\n))+)\$(?!\$)')
 
 #: An inline span longer than this is "non-trivially long". The population says where the line
 #: belongs: of 20532 spans in phys the median is 7 characters, the 99th percentile 71 and the
@@ -1891,15 +1937,21 @@ RE_FENCE = re.compile(r'^[ \t]{0,3}(?P<fence>`{3,}|~{3,}).*?^[ \t]{0,3}(?P=fence
                       re.DOTALL | re.MULTILINE)
 RE_CODE_SPAN = re.compile(r'`+[^`\n]*`+')
 
+#: A line opening with `%`. `convertor.py`'s `pre_regexes` deletes it before the page, so it is
+#: not prose and nothing in it reaches a reader -- `22/heater/cs` carries a commented-out sentence
+#: with a `\qtylist` in it, which was read as a siunitx macro in running text.
+RE_COMMENT_LINE = re.compile(r'^%[^\n]*$', re.MULTILINE)
+
+
 def only_prose(text):
     """
     The text with everything that is not prose blanked, newlines kept so line numbers survive.
 
-    Display maths, inline maths, fenced blocks, code spans and Jinja tags, in that order: a
-    display has to go before an inline so that a `$$` is never read as two `$`.
+    Display maths, inline maths, fenced blocks, code spans, commented-out lines and Jinja tags,
+    in that order: a display has to go before an inline so that a `$$` is never read as two `$`.
     """
     text = without_blocks(text)
-    for pattern in (RE_FENCE, RE_CODE_SPAN, RE_INLINE, RE_TAG):
+    for pattern in (RE_FENCE, RE_CODE_SPAN, RE_INLINE, RE_COMMENT_LINE, RE_TAG):
         text = pattern.sub(lambda m: '\n' * m[0].count('\n'), text)
     return text
 

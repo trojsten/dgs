@@ -597,7 +597,7 @@ class TestArrayIsVisibleToTheAudit:
     @staticmethod
     def punct(source):
         from core.audit.checks import display_blocks
-        return [p for _, p in display_blocks(source)]
+        return [p for _, p, _indented in display_blocks(source)]
 
     def test_columns_are_not_mistaken_for_punctuation(self):
         assert self.punct("(§ eq.sys|arr('rclcl') §)\n") == ['']
