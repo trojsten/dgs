@@ -1348,11 +1348,20 @@ business in a free-flowing column, and that is not hypothetical -- the eleven `a
 that carried hand-tuned negative `\vspace` went stale every time a drawing was resized, which is
 why `\tightPictures` exists.
 
-### A statement never captions its figures; a solution always does
+### Only a solution captions its figures
 
 `figure_captions` in `modules/naboj/builder/renderer.py`, stated in both directions exactly as
 `equation_numbering` is and for the same reason -- which of a module's files is a statement is the
 module's own taxonomy. `core`'s is empty, and a file it does not mention keeps what it had.
+
+**A statement does not**, because the number would point at something the contestant has not got.
+**Nor does an answer**, and that is the same argument as `answer-literal`'s: an answer is a value,
+not a step in a derivation, and a drawing there *is* the answer rather than an illustration of it.
+Captioning one bought a number nothing references and, since 56 of the 57 answer figures passed no
+caption, an `Obrázok N.M:` with nothing after the colon -- and because the counter is per problem,
+a problem that drew in both its solution and its answer printed two different figures as
+`Obrázok 23.1`. Turning it off unnumbers all 57, across 16 volumes, and the only printed words
+lost in the whole corpus are `17/laser-target`'s one real answer caption.
 
 **A caption is what makes pandoc emit a `figure`**, so it decides the number and the label
 together. They are one decision, not two, and that is why the rule is worth stating:
@@ -1388,12 +1397,16 @@ renumbers. The gate is therefore not byte-identity but that *nothing else* moved
 `figure` wrapper away on both sides of the conversion and the TeX must be equal, which it was for
 all 29 files.
 
-**156 are left and none of them is losing anything a reader wanted.** 35 pass a caption from
-inside a *statement*, where `figure_captions` discards it whether or not the image is a block,
-so the fix there is to delete the argument rather than add the blank line. 119 pass no caption:
-58 in statements, which print identically either way, and 56 in solutions plus 5 in answers,
-which would each gain an empty `\caption{}` and a number if they were blocked -- 61 new figure
-numbers for nothing anybody asked to reference.
+**154 are left and not one of them loses anything that could print.** All of them are in a
+statement or an answer, neither of which captions, so a blank line would change nothing: 93 in
+statements and 56 in solutions that pass no caption -- those 56 would each gain an empty
+`\caption{}` and a number nobody asked to reference -- and 5 in answers.
+
+**A caption written where nothing captions is dead text, and 42 of them were deleted**: 41 in
+statements, 35 inline and 6 correctly blocked, and the one real answer caption above. The gate
+is the strict one, because the renderer was already dropping every one: all 3807 rendered
+statements came back byte-identical, and of 4505 rendered answers 4448 did, the other 57
+differing only by the empty-caption marker and the label leaving.
 
 `18/firework-bee` was the first of these found and reads as the worked example: its English
 booklet printed `??` for a figure that `sk` and `cs` numbered, and the cause was not the missing
@@ -1409,38 +1422,30 @@ and labels". That rule is gone. It put every such figure straight back to unnumb
 dead code until this made it live -- no source writes an empty alt and nothing under `build/`
 carried a `\caption{}`.
 
-### One key is one label, so two figures need two keys
+### One key is one label
 
-A `pictures:` key becomes `{#fig:<pid>:<key>}`, and a problem's statement, solution and answer
-are *one document* in the booklet -- so a key used by two of them defines its label twice, LaTeX
-says `multiply defined`, and a crossref to it lands on whichever copy was written last. 16
-problems did it, always the same shape: the answer *is* a drawing, and it is the drawing the
-solution already showed. Each answer takes an `answer:` entry of its own now, naming the same
-file: `chem/01/puzzle`, `chem/03/eschenmoser`, `chem/03/sudoku`, `02/focal-square`,
-`02/redraw`, `13/tv-diagram`, `15/mixing-water`, `15/vt-diagram`, `16/lasers`,
-`17/laser-target`, `18/three-lasers`, `19/pv-to-vt`, `20/thermodynamic-cycle`,
-`21/pv-to-vt-2`, `22/ht-conundrum`, `23/rusty-mirrors`.
+A `pictures:` key becomes `{#fig:<pid>:<key>}` and an `eq:` key `{#eq:<pid>:<key>}`, so a key
+printed twice in one document defines its label twice: LaTeX says `multiply defined` and a
+crossref lands on whichever copy was written last.
 
-**Declaring one drawing twice is the answer and not a workaround.** The two are different
-figures -- different captions, different pages, different numbers -- and they only looked like
-one because they share a `file:`. The alternative, one key printed twice, is the thing nothing
-can reference.
+**For figures this is now structural rather than a thing to watch.** Only a solution captions,
+so only a solution can define a figure label, and a key would have to be printed twice *in one
+solution* to collide. 16 problems used to collide because their answer printed the drawing their
+solution had shown; the fix was briefly a second `pictures:` entry per answer, and
+`figure_captions` made all 16 of those entries unnecessary at once. They are gone again. Nothing
+in the corpus duplicates a figure label today.
 
-**A statement never collides**, which is worth knowing before hunting for more: `figure_captions`
-drops a statement's caption, so pandoc emits a bare `\includegraphics` with no `figure` and no
-label at all. Only solution-against-answer can duplicate.
-
-**The same rule holds for `eq:`, and `02/hilltop-gun` is the case.** Its solution solves the
-problem twice, by two routes, and prints the same `eq.range` at the end of each to say the
-answers agree -- two displays, two numbers, one label. The second call takes a `range_rotated:`
-entry whose whole body is `(§ eq.range §)`, which splices the first rather than copying it: a
-bare `eq:` reference is the raw LaTeX, so there is one equation, two labels, and no way for the
-two to drift into disagreeing about the answer.
+**For equations it is live, and `02/hilltop-gun` is the case.** Its solution solves the problem
+twice, by two routes, and prints the same `eq.range` at the end of each to say the answers agree
+-- two displays, two numbers, one label. The second call takes a `range_rotated:` entry whose
+whole body is `(§ eq.range §)`, which splices the first rather than copying it: a bare `eq:`
+reference is the raw LaTeX, so there is one equation, two labels, and no way for the two to
+drift into disagreeing about the answer.
 
 **A stale `.aux` reports this long after it is fixed.** The `\newlabel` entries LaTeX checks
 against are the ones read from the *previous* run's `.aux`, so the first pass after the fix still
 warns, and the log keeps that warning when no second pass is needed. Delete the `.aux` before
-believing a `multiply defined` -- all 17 of these came back clean that way and only that way.
+believing a `multiply defined` -- every one of these came back clean that way and only that way.
 
 ### A crossref is `[-@fig:…]`, because the sentence already has its noun
 

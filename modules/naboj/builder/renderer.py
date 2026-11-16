@@ -254,11 +254,21 @@ class CLIInterface(renderer.CLIInterface, ABC):
 
     #: Every file a Náboj problem may hold, and whether its figures carry a caption.
     #:
-    #: The same taxonomy and the same rule, because a caption is to a figure what a label is to an
-    #: equation: it is what makes pandoc emit a `figure`, and so what gives the drawing a number
-    #: that a `[-@fig:…]` can reach. **A statement never captions its figures**, so they are never
-    #: numbered -- and nobody wanted them to be, since of the 169 figure labels written in
-    #: statements across the repository not one is referenced from anywhere.
+    #: The same taxonomy, because a caption is to a figure what a label is to an equation: it is
+    #: what makes pandoc emit a `figure`, and so what gives the drawing a number that a
+    #: `[-@fig:…]` can reach. **Only a solution captions**, and the other two say no for two
+    #: different reasons.
+    #:
+    #: **A statement never captions its figures**, so they are never numbered -- and nobody
+    #: wanted them to be, since of the 169 figure labels written in statements across the
+    #: repository not one is referenced from anywhere.
+    #:
+    #: **Nor does an answer**, which is the same argument as `answer-literal`'s: an answer is a
+    #: value, not a step in a derivation, and a drawing there *is* the answer rather than an
+    #: illustration of it. Captioning it bought a number nothing references and an `Obrázok N.M:`
+    #: with nothing after the colon, because 47 of the 49 answer figures pass no caption at all;
+    #: and because the counter is per problem, a problem whose solution and answer both drew got
+    #: two different figures both printed as `Obrázok 23.1`.
     #:
     #: **A solution always does**, including where the caption is empty. That is the half that
     #: buys something: a figure captioned in one language and not another is numbered in one
@@ -268,10 +278,10 @@ class CLIInterface(renderer.CLIInterface, ABC):
         'problem.md': False,
         'problem-extra.md': False,
         'solution.md': True,
-        'answer.md': True,
-        'answer-extra.md': True,
-        'answer-also.md': True,
-        'answer-interval.md': True,
+        'answer.md': False,
+        'answer-extra.md': False,
+        'answer-also.md': False,
+        'answer-interval.md': False,
     }
 
 
