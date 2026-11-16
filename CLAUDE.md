@@ -1346,6 +1346,28 @@ together. They are one decision, not two, and that is why the rule is worth stat
 Nothing is lost by dropping a statement's labels: of the 169 defined in statements, **not one is
 referenced** from anywhere. All 46 figure crossrefs live in solutions and point at solutions.
 
+**And the caption only happens if the image is alone in its block.** pandoc makes a `figure` out
+of an image that is a paragraph to itself; one sitting on the line above or below some prose is
+*inline*, and then the caption, the number and the label are all silently gone -- a bare
+`\includegraphics` where a `\begin{figure}` was meant. A blank line is the whole of the fix, and
+there is no error anywhere: the author wrote a caption, the renderer emitted it, pandoc read it as
+the alt text of an inline image and the writer dropped it.
+
+**225 picture tags in the corpus are not alone in their block**, and what that costs depends on
+what the tag asked for. **Five were pointing somewhere a crossref had to resolve** --
+`17/wall-bars`, `17/coconut`, `17/rhombus-prism` and `17/laser-target`'s two -- so volume `17`
+printed `viď obrázok ??`; those are fixed, and `17/laser-target`'s answer, which was printing the
+same drawing under its own caption through the same key, has a key of its own now, since one key
+is one label and two captions are two figures. **41 more in 23 problems drop a caption nobody is
+pointing at**, most of volume `18` in three languages; those are *not* fixed, because a figure
+that gains a caption gains a number and renumbers the booklet after it, which is a decision and
+a gate of its own. And 35 in statements pass a caption that `figure_captions` discards by design,
+where the fix is to delete the argument rather than to add the blank line.
+
+`18/firework-bee` was the first of these found and reads as the worked example: its English
+booklet printed `??` for a figure that `sk` and `cs` numbered, and the cause was not the missing
+caption the symptom suggested but the newline that was not there.
+
 **An empty caption is written `![<!-- -->]`.** Not `![]` and not `![ ]` -- pandoc needs the alt
 text to have content before it makes a `figure`, so both of those come out as a bare
 `\includegraphics` with no number and no label, which is the state this rule exists to end. An
@@ -1355,6 +1377,28 @@ HTML comment is content to the parser and nothing on the page. Nobody types it; 
 and labels". That rule is gone. It put every such figure straight back to unnumbered, and it was
 dead code until this made it live -- no source writes an empty alt and nothing under `build/`
 carried a `\caption{}`.
+
+### A crossref is `[-@fig:…]`, because the sentence already has its noun
+
+`[@fig:x]` prints the i18n prefix with the number -- `obrázok 1`, `figure 1`, `Abbildung 1` --
+and `[-@fig:x]` prints the bare `1`. Write the prefix form **only where the prefix is the
+sentence's only noun**: `wie in [@fig:x] gezeigt`, `(pozri [@fig:x])`. Everywhere else the
+author has already written the noun, and the prefix form then prints it twice.
+
+Nine sites did: `viď obrázok obrázok~1`, `na obrázku obrázok~2`, `z obrázka obrázok~1` --
+`17/laser-target` three times, `17/wall-bars` and `13/daybreak` twice each, `17/coconut` and
+`17/rhombus-prism` once. They are all the bare form now, against 96 that already were.
+
+**In an inflected language the bare form is the only correct one**, which is the real argument
+and not a matter of taste: the prefix is always nominative, so `na obrázku obrázok 2` is wrong
+twice over, and only the author's own noun can take the case the sentence needs. Write the plain
+space, not `\ ` -- 43 of the 46 Slovak sites do, and `spacing.lua` is not in this business.
+
+**Nothing checks it.** The label resolves, the number is right, and the duplication is visible
+only on the page -- which is how nine of them survived a sweep that counted every dangling
+crossref in the corpus. `28/ice-ice-baby/hu` is the one left: `az alábbi ábrán: [@fig:…]` doubles
+the noun *and* puts the number after it, where Hungarian writes `1. ábra`. That one needs the
+sentence rewritten, so it is the author's.
 
 ### Converting one
 
