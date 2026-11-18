@@ -25,6 +25,7 @@ from tools.ninja.generate import (
     _page,
     _picture_svg,
     _standalone,
+    scholar_edges,
     write_graph,
 )
 from tools.ninja.writer import Writer
@@ -289,3 +290,64 @@ class TestTheGraphIsReplacedAndNeverTruncated:
         graph = tmp_path / 'build.ninja'
         self.write(monkeypatch, graph, lambda out: (out.write('rule r\n'), {})[1])
         assert graph.stat().st_mode & 0o777 == 0o644
+
+
+class TestHowDeepAScholarIssueGoes:
+    r"""
+    A scholar problem may hold subproblems, and the graph has to go down to them.
+
+    This is the one module where a fragment lives two levels below the unit the builder is
+    invoked for. `add_subdirs` finds a subproblem by listing the directory, so
+    `homework-students.jtex` writes `\protectedInput{…/a-sub/problem.tex}` whatever the graph
+    knows -- and while the graph stopped at the problem, that file was never built and the
+    document printed a red `Missing file …!` box in its place. `STA/2023/homework/01` had four
+    of them, and 42 subproblem directories across 8 issues were in the same state.
+
+    The bound is the other half: `ContextIssueSubSub` declares no `_subcontext_key` and the
+    templates have no heading below `\subsubsection`, so a fourth level is not something any
+    document can input and rendering it would build fragments for nobody.
+    """
+
+    @pytest.fixture
+    def repo(self, tmp_path):
+        issue = tmp_path / 'source/scholar/XX/2025/homework/01'
+        for rel in ('', '1-problem', '1-problem/a-sub', '1-problem/a-sub/deeper'):
+            place = issue / rel
+            place.mkdir(parents=True)
+            (place / 'meta.yaml').write_text('title: x\n')
+            (place / ('text.md' if rel == '' else 'problem.md')).write_text('text\n')
+        return tmp_path
+
+    def edges(self, repo, writer) -> str:
+        scholar_edges(repo, 'XX/2025', writer)
+        return written(writer)
+
+    def test_a_subproblem_fragment_is_built(self, repo, writer):
+        assert ('build/scholar/XX/2025/homework/01/1-problem/a-sub/problem.tex'
+                in self.edges(repo, writer))
+
+    def test_the_document_names_it_as_a_prerequisite(self, repo, writer):
+        """Built and not named is the same page: ninja would not build it before the xelatex."""
+        pdf = [line for line in self.edges(repo, writer).splitlines()
+               if line.startswith('build output/scholar/XX/2025/homework/01/homework-students.pdf')]
+        assert len(pdf) == 1
+        assert 'build/scholar/XX/2025/homework/01/1-problem/a-sub/problem.tex' in pdf[0]
+
+    def test_the_issue_and_the_problem_are_still_there(self, repo, writer):
+        """The quiet half above: adding a level must not cost either of the two that worked."""
+        out = self.edges(repo, writer)
+        assert 'build/scholar/XX/2025/homework/01/text.tex' in out
+        assert 'build/scholar/XX/2025/homework/01/1-problem/problem.tex' in out
+
+    def test_it_stops_there_and_does_not_recurse_for_ever(self, repo, writer):
+        """The quiet half below: nothing can input a fragment a level deeper than a subproblem."""
+        assert 'deeper' not in self.edges(repo, writer)
+
+    def test_a_subproblem_directory_is_watched(self, repo, writer):
+        """
+        A directory the generator read is one whose change has to regenerate the graph. Without
+        this, creating the first subproblem of a problem would leave the graph as it was and the
+        new statement would come out as the box this test exists for.
+        """
+        counts = scholar_edges(repo, 'XX/2025', writer)
+        assert 'source/scholar/XX/2025/homework/01/1-problem' in counts['listed']

@@ -73,6 +73,21 @@ SCHOLAR_KINDS = {
     'handouts': ('handout', ('handout-students', 'handout-solutions', 'handout-solved')),
     'homework': ('homework', ('homework-students', 'homework-solutions')),
 }
+#: How far below an issue a fragment can live: a problem, and a subproblem inside it.
+#:
+#: **Two, and the bound is the module's own.** `ContextHomeworkProblem` declares
+#: `_subcontext_key = 'subproblems'` and `ContextIssueSubSub` declares none, so the context
+#: cannot hold a fourth level; `homework-students.jtex` writes `\subsection` for a problem and
+#: `\subsubsection` for a subproblem and has no heading below that. Rendering deeper would
+#: build fragments no document is able to `\protectedInput`.
+#:
+#: It was one until now, and that is what put four red `Missing file …!` boxes into
+#: `STA/2023/homework/01`: `add_subdirs` finds a subproblem on disk whatever the graph does, so
+#: the template duly wrote `\protectedInput{…/a-meanvar/problem.tex}` for a file nothing had
+#: been told to build. 42 subproblem directories across 8 issues were in that state. The make
+#: rules never were -- `build/scholar/%/homework` wildcards `$*/*/*/*.md` -- so this arrived
+#: with the graph rather than with the sources.
+SCHOLAR_SUBLEVELS = 2
 #: `content` is in neither `modules/scholar/module.mk`'s `RULE_TEMPLATE_SCHOLAR` (which names
 #: `text problem solution`) nor `modules/scholar/editor.yaml` (`targets: [text]`), and 28 files
 #: are called that -- which is why `make output/scholar/…/handout-students.pdf` dies on the
@@ -931,9 +946,13 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     """
     One scholar year: `TA1/2018`.
 
-    The shape neither other module has: **two editable levels**. An issue (`handouts/02`) holds
-    its own `text.md` *and* a directory per problem, each with `problem.md` and `solution.md`,
-    and one builder invocation turns the lot into three documents (or two, for homework).
+    The shape neither other module has: **three levels of fragment**. An issue (`handouts/02`)
+    holds its own `text.md` *and* a directory per problem, each with `problem.md` and
+    `solution.md` and possibly a directory per subproblem below that (`SCHOLAR_SUBLEVELS`), and
+    one builder invocation turns the lot into three documents (or two, for homework).
+
+    `modules/scholar/editor.yaml` still declares two editable levels and not three, so the
+    subproblems build and are not yet units the editor can open.
     """
     counts = {'edges': 0, 'languages': [], 'listed': set()}
 
@@ -988,9 +1007,13 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             units += 1
             issue_rel = issue.relative_to(repo / 'source').as_posix()
             drawn = []
-            # the issue's own text, then one directory per problem below it
-            places = [issue, *sorted(c for c in listed(issue).iterdir()
-                                     if c.is_dir() and _visible(c))]
+            # The issue's own text, then one directory per problem, then one per subproblem.
+            places, frontier = [issue], [issue]
+            for _ in range(SCHOLAR_SUBLEVELS):
+                frontier = sorted(child for parent in frontier
+                                  for child in listed(parent).iterdir()
+                                  if child.is_dir() and _visible(child))
+                places += frontier
             fragments = []
             for place in places:
                 rel = place.relative_to(repo / 'source').as_posix()
