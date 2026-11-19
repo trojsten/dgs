@@ -5,7 +5,7 @@ from pathlib import Path
 
 from enschema import And, Optional, Or, Regex, Schema
 
-from core.builder.builder import get_branch, get_last_commit_hash
+from core.builder.builder import get_branch, get_describe, get_last_commit_hash
 from core.builder.context.tree import FileSystemTreeContext
 from core.builder.validator import CommitHash
 from core.utilities.schema import valid_language
@@ -89,10 +89,12 @@ class ContextNaboj(FileSystemTreeContext):
             'dgs': {
                 'hash': CommitHash,
                 'branch': str,
+                'describe': And(str, len),
             },
             'repo': {
                 'hash': CommitHash,
                 'branch': str,
+                'describe': And(str, len),
             },
             'timestamp': datetime.datetime,
         }
@@ -102,8 +104,13 @@ class ContextNaboj(FileSystemTreeContext):
         """
         Add the build info to the context. This is useful for impressum and diagnostics
         -   username of whoever built the current context
-        -   dgs branch and git hash
-        -   repo branch and git hash
+        -   dgs branch, git hash and `git describe`
+        -   repo branch, git hash and `git describe`
+
+        The hash and the description are both kept because they answer different questions.
+        The hash is what a machine matches on and is what the PDF's metadata carries; the
+        description is what a person quotes, and on a tagged commit it is a name rather than
+        a number -- `29-final` instead of `30504fc2`.
         """
         self.add(
             build={
@@ -111,10 +118,12 @@ class ContextNaboj(FileSystemTreeContext):
                 'dgs': {
                     'hash': get_last_commit_hash(),
                     'branch': get_branch(),
+                    'describe': get_describe(),
                 },
                 'repo': {
                     'hash': get_last_commit_hash(self.node_path(repo_root)),
                     'branch': get_branch(self.node_path(repo_root)),
+                    'describe': get_describe(self.node_path(repo_root)),
                 },
                 'timestamp': datetime.datetime.now(datetime.UTC),
             },

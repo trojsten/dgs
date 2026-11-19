@@ -34,6 +34,23 @@ def get_branch(cwd=None) -> str:
     return check_output(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"], cwd=cwd)
 
 
+def get_describe(cwd=None) -> str:
+    """
+    The version a human would quote: the tag if there is one, and the commit if there is not.
+
+    `--tags` so that a lightweight tag counts -- `29-final` is one and `git describe` would
+    otherwise ignore it; `--always` so a repository that has never been tagged still answers,
+    with the short hash, which is what every one of these printed before there were tags;
+    `--dirty` because a hash taken from a tree with uncommitted changes names a tree that was
+    not built, and silence about that is the one thing a build stamp must not do.
+
+    So `v5.0-458-gf948a98-dirty` reads as *458 commits past v5.0, at f948a98, and edited*, and
+    `29-final` as *exactly that tag*, which is the one case where the hash is worth dropping:
+    a reader can check the tag out by name.
+    """
+    return check_output(["git", "describe", "--tags", "--always", "--dirty"], cwd=cwd)
+
+
 class BaseBuilder(metaclass=ABCMeta):
     """
     The abstract base class for all Builders. A Builder provides an abstraction for

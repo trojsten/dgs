@@ -1,0 +1,21 @@
+(# What the PDF says about itself when nobody is looking at the page.
+
+    The colophon prints the same provenance for whoever is holding the paper; this is for
+    whoever has the file, and `pdfinfo` shows it in one command. The two are deliberately the
+    same facts -- a file whose metadata disagreed with its own last page would be worse than
+    one carrying neither.
+
+    `pdfkeywords` is written as `key=value` tokens rather than prose because that is the field
+    something will eventually grep: `dgs=` names the build system's version, `source=` the
+    content repository's, and both carry the exact hash after the `#` even where the
+    description is a tag and does not. #)
+\hypersetup{
+    pdftitle    = {(* volume.number *). (* i18n[language.id].competition.name.nominative *), (* volume.date.strftime('%Y') *) ((* language.id *))},
+    pdfauthor   = {(* competition.rights_holder *)},
+    pdfsubject  = {CC BY-NC-SA 4.0},
+    pdfcreator  = {dgs (* build.dgs.describe *)},
+    pdfkeywords = {dgs=(* build.dgs.branch *)/(* build.dgs.describe *)\#(* build.dgs.hash *)
+                   source=(* build.repo.branch *)/(* build.repo.describe *)\#(* build.repo.hash *)
+                   built-by=(* build.user *)
+                   built-at=(* build.timestamp.strftime('%Y-%m-%dT%H:%M:%SZ') *)},
+}

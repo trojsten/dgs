@@ -18,15 +18,21 @@
     (@ endif @)
 (@ endmacro @)
 
-\begin{footerBlock}
+\begin{footerBlock}[\dgsColophonRise]
     (* list(i18n[language.id].people.authors, volume.authors.problems) *)
     (* list(i18n[language.id].people.pictures, volume.authors.pictures) *)
     (* list(i18n[language.id].people.editors, volume.authors.editors) *)
     (@ if language.id != 'sk' and language.translators|length > 0 @)%
     (* list(i18n[language.id].people.translators, language.translators) *)
-    (@ endif @)
-
-    (@ with colocolor='lightgray' @)
-        (@ include 'blocks/colophon.jtex' @)
-    (@ endwith @)
+    (@ endif @)%
 \end{footerBlock}
+(# The colophon used to close this block, under a rule of its own. It is the last page's
+    footer now -- see `\fancypagestyle{colophon}` in `base-booklet.jtex` -- so the credits end
+    the page and the small print belongs to the footer that was always underneath it.
+
+    The room it takes is the block's own optional argument, `\dgsColophonRise`, which is the
+    colophon box's height and the millimetre above it. The block spends it on the page's
+    geometry -- a shorter text block and a longer `\footskip` -- rather than on a skip after
+    the credits, so the footer really is taller on this page and fancyhdr is measuring against
+    the room it has. #)
+\thispagestyle{colophon}

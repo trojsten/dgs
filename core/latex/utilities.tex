@@ -221,20 +221,51 @@
 % It follows that a block taller than a whole page cannot be placed: it would overrun the
 % bottom margin and say so, loudly, as an Overfull \vbox. At four author lists it is nowhere
 % near, and splitting it would be the wrong answer anyway.
+%
+% The optional argument is **how much taller the page footer is on this page than on any
+% other**, which for a booklet is the colophon: `blocks/booklet/footer.jtex` passes the height
+% of the box the `colophon` page style puts above the page number. A footer is laid down
+% \footskip below the bottom of the text block and grows upward from there, and this block is
+% seated flush with that bottom -- so without the reservation a taller footer walks into the
+% credits, and the footrule lands on the last line of names.
+%
+% It is page *geometry* and not a \vspace, which would leave the same white space while
+% telling LaTeX nothing: \enlargethispage takes the room out of the text block, \footskip
+% puts it back under the block so the footer stays where it is on the paper, and fancyhdr's
+% own check -- `\footskip is too small` -- then has the room it was asking about. Both come
+% *after* the page decision above, because if the block takes a new page it is that page whose
+% footer is taller, and the one left behind must keep the geometry every other page has.
+%
+% The block holds headed lists, and `\addvspace` -- which is how `titlesec` and `multicol`
+% space them -- does nothing at all while `@minipage` is true. LaTeX sets that flag at the top
+% of a minipage to suppress space there and clears it at the first `\everypar`, and a heading
+% does not fire one: so the *first* heading lost the \multicolsep under it and `Autori úloh`
+% sat 14pt from its names where `Obrázky` and `Technická úprava` sat 26pt from theirs. The
+% flag is cleared here rather than the spacing written out at each call site, which would be a
+% tuned length standing in for a package's own. `\csname` because this file is \input from a
+% class, where `@` is a letter, and from two document preambles, where it is not.
+%
+% \footskip is advanced \global because an environment's end code still runs inside the
+% environment's group: assigned locally it was undone before the page was shipped, and the
+% warning it was meant to answer arrived anyway. \enlargethispage is already global, which is
+% why it needs no such help.
 \newsavebox{\dgsFooterBox}
-\NewDocumentEnvironment{footerBlock}{}{%
+\NewDocumentEnvironment{footerBlock}{O{0pt}}{%
     \par
     \begin{lrbox}{\dgsFooterBox}%
     \begin{minipage}{\linewidth}%
+    \csname @minipagefalse\endcsname
 }{%
     \end{minipage}%
     \end{lrbox}%
     \par\penalty-100
     \ifdim\pagegoal<\maxdimen
-        \ifdim\dimexpr\pagegoal-\pagetotal\relax<\dimexpr\ht\dgsFooterBox+\dp\dgsFooterBox\relax
+        \ifdim\dimexpr\pagegoal-\pagetotal\relax<\dimexpr\ht\dgsFooterBox+\dp\dgsFooterBox+#1\relax
             \newpage
         \fi
     \fi
+    \enlargethispage{-#1}%
+    \global\advance\footskip #1\relax
     \vspace*{\fill}%
     \usebox{\dgsFooterBox}%
 }

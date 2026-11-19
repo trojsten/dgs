@@ -89,8 +89,59 @@
         \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
     }
 
+    (# The last page carries the credits, and the colophon is that page's footer rather than a
+        block of body text above it -- `blocks/colophon.jtex` says what is in it, and
+        `blocks/booklet/footer.jtex` asks for the style once the credits are laid down.
+
+        **It is boxed here and used there**, which is what keeps the two halves of the
+        arrangement in step. A footer grows *upward* from its baseline, so the colophon rises
+        into the gap between the credits and the footrule -- and the credits are seated flush
+        with the bottom of the text block, so without a reservation the rule cut through the
+        last name on the page. The reservation is this box's own height rather than a length
+        somebody measured off a proof: resize the type or add a row and the gap follows.
+        `\thepage` stays outside the box, because a page number frozen in the preamble would
+        print whatever page the box was built on.
+
+        Only the centre field changes, so the style inherits the one the booklet ends in: the
+        running head on that page still belongs to the last section, and a `colophon` built on
+        `naboj` would drop the `Výsledky` beside the logo. fancyhdr 4's optional base argument
+        is what makes that one line rather than a copy of the section style. #)
+    \newsavebox{\dgsColophonBox}
+    \newlength{\dgsColophonRise}
+    (# The colophon sits closer to its own second row than to the footer line below it, or the
+        three read as one block of small print rather than as a colophon over a footer. One
+        length, used by the style and by the reservation, so the two cannot disagree. #)
+    \newlength{\dgsColophonGap}
+    \setlength{\dgsColophonGap}{3mm}
+    \AtBeginDocument{%
+        \sbox{\dgsColophonBox}{%
+            \parbox{\textwidth}{\centering (@ include 'blocks/colophon.jtex' @)}%
+        }%
+        \setlength{\dgsColophonRise}{%
+            \dimexpr\ht\dgsColophonBox + \dp\dgsColophonBox + \dgsColophonGap\relax
+        }%
+    }
+    (@ set colophon_base = 'answers' if language.booklet.contents.answers
+        else 'solutions' if language.booklet.contents.solutions
+        else 'problems' if language.booklet.contents.problems
+        else 'naboj' @)
+    \fancypagestyle{colophon}[(* colophon_base *)]{%
+        \fancyfoot[C]{%
+            \makebox[0pt]{%
+                \parbox[b]{\textwidth}{%
+                    \centering
+                    \usebox{\dgsColophonBox}\par
+                    \vspace{\dgsColophonGap}%
+                    \small \thepage
+                }%
+            }%
+        }%
+    }
+
     \setcounter{secnumdepth}{3}
     \input{build/core/i18n/(* language.id *).tex}
 
     \pagestyle{naboj}
 (@ endblock @)
+
+(@ block metadata @)(@ include 'blocks/metadata.jtex' @)(@ endblock @)

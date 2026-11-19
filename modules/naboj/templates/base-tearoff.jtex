@@ -12,3 +12,5 @@
         \renewcommand{\footrulewidth}{0pt}
     }
 (@ endblock @)
+
+(@ block metadata @)(@ include 'blocks/metadata.jtex' @)(@ endblock @)

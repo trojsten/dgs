@@ -1,16 +1,45 @@
-\vspace*{3mm}
-\hrule
-\vspace*{3mm}
-\color{(* colocolor or 'white' *)} \fontsize{8}{5} \selectfont \hfill
-(* i18n[language.id].competition.name.nominative *) (* volume.number *),
-(* language.id *) ((* language.name *)):
-booklet built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.hash *)}
-at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)
-from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.hash *)}
-{
-    \color{black}
-    \begin{center}
-        \copyright (* competition.rights_holder *), (* volume.date.strftime('%Y') *).
-        \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}
-    \end{center}
-}
+(# The two rows of small print that close a booklet: who built it, from what, and whose it is.
+
+    They are the content of the last page's **footer** -- `base-booklet.jtex` boxes this once
+    into `\dgsColophonBox`, the `colophon` page style puts that box above the page number, and
+    `blocks/booklet/footer.jtex` reserves the box's own height under the credits. So this file
+    is rows and nothing else: no rule, because the footrule is now the rule it used to draw for
+    itself, and no page number, because that has to stay dynamic and cannot be frozen into a
+    box built once in the preamble.
+
+    The version of each repository is `git describe`, not the bare hash: on a tagged commit it
+    is a name a reader can check out -- `29-final` -- and anywhere else it is the hash with the
+    distance from the last tag in front of it, and `-dirty` behind it where the tree the build
+    came from was not the tree the hash names. `blocks/metadata.jtex` carries the same facts
+    into the file itself, with the exact hash alongside, for whoever has the PDF rather than
+    the paper.
+
+    The logo is the competition's own, the one the running head carries, and it is already a
+    prerequisite of the document for that reason. `\raisebox` because a wordmark sits on its
+    own baseline and the line it joins is 8pt: dropped by 0.8mm it reads as part of the
+    sentence rather than as something floating above it.
+
+    **Two lines of one paragraph, not two paragraphs.** A `\par` anywhere inside the argument
+    of a macro that is not `\long` ends the scan, and the box is built inside `\sbox` within
+    `\AtBeginDocument`, neither of which is long -- so the rows are separated by `\\`, which
+    carries no such restriction, and the size is set once for both so that the `[1mm]` is
+    measured against the type it separates.
+
+    **The file must not end in `%`.** Jinja drops the trailing newline of an include, so a
+    comment character on the last line would swallow whatever the including template writes
+    next -- which is the brace that closes the box, and the error for that arrives pages away
+    as `File ended while scanning use of \AddToHook`. #)
+\fontsize{8}{10}\selectfont
+{%
+    (* i18n[language.id].competition.name.nominative *) (* volume.number *),
+    (* language.id *) ((* language.name *)):
+    booklet built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.describe *)}
+    at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)
+    from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.describe *)}%
+}\\[1mm]
+\raisebox{-0.8mm}{%
+    \includegraphics[keepaspectratio = true, height = 3mm]%
+        {build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
+}\hspace{1mm}%
+\copyright{} (* competition.rights_holder *), (* volume.date.strftime('%Y') *).
+\href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}

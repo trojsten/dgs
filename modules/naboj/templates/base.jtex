@@ -12,6 +12,12 @@
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\arabic{subsection}}
 
+(# Filled by the documents that are built from a volume and therefore know what they are and
+    what built them. It is a block rather than an unconditional include because
+    `standalone.jtex` extends this file as well, and its context is five strings taken from a
+    path -- no `build`, no `volume`, nothing to put in a metadata field. #)
+(@ block metadata @)(@ endblock @)
+
 \begin{document}
     (@ block content @)(@ endblock @)
 \end{document}
