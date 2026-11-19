@@ -95,6 +95,12 @@ SCHOLAR_SUBLEVELS = 2
 #: either declaration.
 SCHOLAR_TARGETS = ('text', 'content', 'problem', 'solution')
 
+#: The language a scope's documents are set in when its own meta does not say. Slovak, because
+#: every scope that existed when this was written is Slovak and the two builders already default
+#: to it -- `modules/{seminar,scholar}/builder/standalone.py` read `meta.get('language', 'sk')`.
+SCOPE_LANGUAGE = 'sk'
+
+
 NABOJ_RENDERER = 'modules.naboj.builder.renderer'
 SEMINAR_RENDERER = 'modules.seminar.builder.renderer'
 SCHOLAR_RENDERER = 'modules.scholar.builder.renderer'
@@ -289,7 +295,7 @@ def rules(w: Writer) -> None:
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     w.rule('scholar_issue',
            "mkdir -p $outdir && $run -m modules.scholar.builder.$builder 'source/scholar/' "
-           "'modules/scholar/templates/' $course $year $issue -o '$outdir'",
+           "'modules/scholar/templates/' $course $issue -o '$outdir'",
            description=described('{a}Building {x}$builder{a} for {f}$outdir'))
     w.rule('round',
            "mkdir -p $outdir && $run -m modules.seminar.builder.round 'source/seminar/' "
@@ -505,8 +511,13 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
               'is refusing to run. A phony whose output does not exist is simply dirty, so the '
               'generator reruns and the directory leaves the graph. Deleting a language cost a '
               'hand-run generator until this was here.')
-    for directory in sorted(totals['listed']):
-        w.build(directory, 'phony', None)
+    w.comment('The files are in there for the same reason and it is not hypothetical: '
+              'collapsing scholar\'s year level removed `source/scholar/STA/2023/meta.yaml`, '
+              'which the previous graph had read for its language, and Ninja refused to '
+              'regenerate until `build.ninja` was deleted by hand. A venue meta would do the '
+              'same the day a venue is dropped.')
+    for path in sorted(totals['listed'] | totals['read']):
+        w.build(path, 'phony', None)
         totals['edges'] += 1
 
     w.newline()
@@ -815,7 +826,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     sitting beside the solution, and `module.mk` copies the same file into `output/` for the
     reader to download.
     """
-    counts = {'edges': 0, 'languages': [], 'listed': set()}
+    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
 
     def listed(directory: pathlib.Path) -> pathlib.Path:
         if directory.is_dir():
@@ -832,7 +843,11 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
 
     w.comment(f'==== seminar/{scope} ' + '=' * 50)
 
-    counts['needs'] = {'languages': {'sk'}, 'competitions': set()}
+    # One competition, one language -- `source/seminar/<competition>/meta.yaml` says which.
+    competition_meta = f'source/seminar/{competition}/meta.yaml'
+    lang = _scope_language(repo / competition_meta)
+    counts['read'].add(competition_meta)
+    counts['needs'] = {'languages': {lang}, 'competitions': set()}
     templates = sorted(str(p.relative_to(repo))
                        for p in (repo / 'modules/seminar/templates').rglob('*.jtex'))
 
@@ -863,9 +878,9 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                 stem = f'{rel}/{picture.stem}'
                 _rendered(build, f'render/{stem}.{extension}', f'source/{stem}.{extension}',
                           implicit=[str(meta.relative_to(repo))],
-                          variables={'lang': 'sk', 'meta': str(meta),
+                          variables={'lang': lang, 'meta': str(meta),
                                      'renderer': SEMINAR_RENDERER})
-                printed, shown = _picture(build, w, stem, extension, problem, repo)
+                printed, shown = _picture(build, w, stem, extension, problem, repo, lang)
                 pictures.append(printed)
                 drawings.append(shown)
         for extension in PICTURE_COPIES:
@@ -881,7 +896,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         for name in SEMINAR_TARGETS:
             if (problem / f'{name}.md').is_file():
                 tex, fragment = _fragment(build, f'source/{rel}/{name}.md',
-                                          f'{rel}/{name}', 'sk', meta, repo,
+                                          f'{rel}/{name}', lang, meta, repo,
                                           SEMINAR_RENDERER)
                 fragments[name].append(tex)
                 web_fragments[name].append(fragment)
@@ -893,12 +908,12 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         # nothing else. It was missing while naboj's was there, so the editor could render and
         # convert a seminar problem and then not show it, which reads as a broken button.
         _standalone(build, 'seminar', rel, [*mine, *_beside(pictures, rel), *static],
-                    templates, 'sk')
+                    templates, lang)
         # A seminar page sits in the problem directory, not in a language directory under it:
         # seminar is monolingual, which `modules/seminar/editor.yaml` says by carrying no
         # `languages:` key and which `page.py` reads from there.
         if web:
-            pages.append(_page(build, rel, 'sk', 'seminar', fragments=web,
+            pages.append(_page(build, rel, lang, 'seminar', fragments=web,
                                pictures=_beside(drawings, rel), nested=False))
 
     outdir = f'build/seminar/{scope}'
@@ -914,7 +929,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         included = [f for kind in SEMINAR_DOCUMENT_GROUPS[name] for f in fragments[kind]]
         build(pdf, 'document_pdf', None,
               implicit=[f'{outdir}/{name}.tex', *included, *pictures, *static,
-                        'build/core/i18n/sk.tex', 'core/latex/dgs.cls'],
+                        f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
               implicit_outputs=[pdf.replace('.pdf', e)
                                 for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
               variables={'tex': f'{outdir}/{name}.tex'})
@@ -944,17 +959,25 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
 
 def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     """
-    One scholar year: `TA1/2018`.
+    One scholar course: `TA1`.
 
     The shape neither other module has: **three levels of fragment**. An issue (`handouts/02`)
     holds its own `text.md` *and* a directory per problem, each with `problem.md` and
     `solution.md` and possibly a directory per subproblem below that (`SCHOLAR_SUBLEVELS`), and
     one builder invocation turns the lot into three documents (or two, for homework).
 
+    **A course is not split by year.** It used to be -- `TA1/2018`, `2019`, `2022`, `2024`,
+    `2025`, each a whole copy of the handouts and the homework, and the scope was
+    `<course>/<year>`. They were editions of one course rather than five courses: a problem
+    written in 2018 was still being set in 2025 under a different number, and five copies of it
+    are five places for it to drift. There is one tree now, `TA1/handouts` and `TA1/homework`,
+    and the year survives only where it is a fact about an issue -- a handout's `date:` and a
+    homework's `deadline:`.
+
     `modules/scholar/editor.yaml` still declares two editable levels and not three, so the
     subproblems build and are not yet units the editor can open.
     """
-    counts = {'edges': 0, 'languages': [], 'listed': set()}
+    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
 
     def listed(directory: pathlib.Path) -> pathlib.Path:
         if directory.is_dir():
@@ -965,11 +988,16 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         counts['edges'] += 1
         return w.build(*args, **kwargs)
 
-    course, year = scope.split('/')
-    root = repo / 'source' / 'scholar' / scope
+    course = scope
+    root = repo / 'source' / 'scholar' / course
     w.comment(f'==== scholar/{scope} ' + '=' * 50)
 
-    counts['needs'] = {'languages': {'sk'}, 'competitions': set()}
+    # One course, one language -- `source/scholar/<course>/meta.yaml` says which, and `STA` is
+    # the one that is not Slovak.
+    course_meta = f'source/scholar/{course}/meta.yaml'
+    lang = _scope_language(repo / course_meta)
+    counts['read'].add(course_meta)
+    counts['needs'] = {'languages': {lang}, 'competitions': set()}
     templates = sorted(str(p.relative_to(repo))
                        for p in (repo / 'modules/scholar/templates').rglob('*.jtex'))
 
@@ -1026,12 +1054,12 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                         _rendered(build, f'render/{stem}.{extension}',
                                   f'source/{stem}.{extension}',
                                   implicit=[f'source/{rel}/meta.yaml'],
-                                  variables={'lang': 'sk', 'meta': str(meta.resolve()),
+                                  variables={'lang': lang, 'meta': str(meta.resolve()),
                                              'renderer': SCHOLAR_RENDERER})
                         # The `.svg` the second half of this emits is unreferenced here and
                         # is still worth having: `build/<x>.svg` is a target anyone may ask
                         # for, and it is the same picture the booklet prints.
-                        printed, _ = _picture(build, w, stem, extension, place, repo)
+                        printed, _ = _picture(build, w, stem, extension, place, repo, lang)
                         drawn.append(printed)
                 for extension in PICTURE_COPIES:
                     for picture in sorted(place.glob(f'*.{extension}')):
@@ -1046,7 +1074,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                 for name in SCHOLAR_TARGETS:
                     if (place / f'{name}.md').is_file():
                         tex, _ = _fragment(build, f'source/{rel}/{name}.md',
-                                           f'{rel}/{name}', 'sk', meta.resolve(), repo,
+                                           f'{rel}/{name}', lang, meta.resolve(), repo,
                                            SCHOLAR_RENDERER)
                         fragments.append(tex)
                         mine.append(tex)
@@ -1055,18 +1083,18 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                 # itself, which holds `text.md`, and a problem below it. `editor.yaml` names
                 # the same target for all four of its unit kinds.
                 _standalone(build, 'scholar', rel, [*mine, *_beside(drawn, rel), *static],
-                            templates, 'sk')
+                            templates, lang)
 
             outdir = f'build/{issue_rel}'
             build([f'{outdir}/{name}.tex' for name in documents], 'scholar_issue', None,
                   implicit=[*templates, f'source/{issue_rel}/meta.yaml'],
-                  variables={'builder': builder, 'course': course, 'year': year,
+                  variables={'builder': builder, 'course': course,
                              'issue': issue.name, 'outdir': outdir})
             for name in documents:
                 pdf = f'output/{issue_rel}/{name}.pdf'
                 build(pdf, 'document_pdf', None,
                       implicit=[f'{outdir}/{name}.tex', *fragments, *drawn, *static,
-                                'build/core/i18n/sk.tex', 'core/latex/dgs.cls'],
+                                f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
                       implicit_outputs=[pdf.replace('.pdf', e)
                                         for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
                       variables={'tex': f'{outdir}/{name}.tex'})
@@ -1164,7 +1192,7 @@ def _copied(build, target: str, source: str, **kwargs):
 
 
 def _picture(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
-             repo: pathlib.Path) -> tuple[str, str]:
+             repo: pathlib.Path, lang: str = SCOPE_LANGUAGE) -> tuple[str, str]:
     """
     The routes a drawing takes to the two formats it is wanted in.
 
@@ -1175,7 +1203,7 @@ def _picture(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
         build(f'build/{stem}.pdf', 'svg_pdf', [f'render/{stem}.svg'])
     elif extension == 'tikz':
         build(f'build/{stem}.tikz.tex', 'picture_tex', [f'render/{stem}.tikz'],
-              implicit=['core/templates/standalone.jtex'], variables={'lang': 'sk'})
+              implicit=['core/templates/standalone.jtex'], variables={'lang': lang})
         build(f'build/{stem}.pdf', 'tikz_pdf', [f'build/{stem}.tikz.tex'])
     else:
         data = sorted(str(p.relative_to(repo / 'source')) for p in problem.glob('*.dat'))
@@ -1283,6 +1311,28 @@ def _venue_language(meta: pathlib.Path) -> str | None:
                 and (language := value.split('#')[0].strip().strip('\'"'))):
             return language
     return None
+
+
+def _scope_language(meta: pathlib.Path) -> str:
+    """
+    The language a seminar competition or a scholar course declares, read the same way a venue's
+    is and used for the same thing -- which i18n table its documents want.
+
+    It used to be the literal `'sk'` at every call site in `seminar_edges` and `scholar_edges`,
+    on the grounds that both modules are monolingual. They are: each is *one* language, and
+    nothing said it had to be Slovak. `source/scholar/STA/meta.yaml` says `language: en`, and the
+    document template has always honoured it -- `modules/scholar/builder/standalone.py:48` reads
+    the same key -- so only the per-fragment half of the graph was Slovak, and the two halves
+    met on the page: an English statistics sheet came out with `a~strong` glued by Slovak's
+    one-letter-word rule and `low\rephyphen{}luminosity` repeating its hyphen across a line
+    break, which is a rule English does not have. `spacing.lua` and `hyphens.lua` read
+    `core/i18n/<lang>.yaml`, so they were simply handed the wrong file.
+
+    The meta goes into the generator edge's inputs through `counts['read']`, as a venue's does,
+    so changing `language:` regenerates the graph rather than leaving it pointing at the locale
+    the scope used to be in.
+    """
+    return (_venue_language(meta) if meta.is_file() else None) or SCOPE_LANGUAGE
 
 
 def _standalone(build, module: str, rel: str, inputs: list, templates: list, lang: str) -> str:
@@ -1415,7 +1465,7 @@ def main() -> int:
         # `A and (B or C)`. Written without the brackets this was `(A and B) or C`, so a
         # `homework/` directory got in whether or not its parent was a directory at all.
         scopes += sorted(f'scholar:{relative}'
-                         for path, relative in named(repo / 'source/scholar', '*/*')
+                         for path, relative in named(repo / 'source/scholar', '*')
                          if ((path / 'handouts').is_dir() or (path / 'homework').is_dir()))
     counts = write_graph(args.output, repo, scopes)
     print(f"{args.output}: {counts['edges']} edges, {len(scopes)} scopes, "

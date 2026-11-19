@@ -648,28 +648,31 @@ terminal counts in, and a script that wants its own canvas writes
 
     set terminal @gpterm size 432*gppt, 108*gppt
 
-A script that wants the default writes nothing at all, which is 30 of the 42. Of the 12 that do
-not, nine are scholar's and were written this way; the other three are naboj's and were not --
+A script that wants the default writes nothing at all, which is 24 of the 29. Of the five that
+do not, two are scholar's and were written this way; the other three are naboj's and were not --
 they still opened `set terminal pdf size 6, 1.5` when the web path was added, and so did
-`FKS/42/1/1/03`'s `blocks:` preamble, which is a thirteenth script that no `.gp` on disk carries.
-All four say `@gpterm` now.
+`FKS/42/1/1/03`'s `blocks:` preamble, which is a sixth script that no `.gp` on disk carries.
+All four say `@gpterm` now. (It was 42 scripts and twelve before scholar stopped being split by
+year: TA1 carried five copies of every drawing, one per course year.)
 
-> **Open: scholar's nine say `@gpterm` and then set a font of their own, and none of them
-> draws.** Every one of them -- the `monte-carlo.gp` of `TA1/2018`, `2019`, `2022`, `2024` and
-> `2025`, the `voigt.gp` of `2018`, `2019` and `2022`, plus the copy inside `TA1/2025/2025/` --
-> opens
+> **Open: `TA1/homework/03/monte-carlo.gp` says `@gpterm` and then sets a font of its own, and
+> it does not draw.** It opens
 >
 >     set terminal @gpterm size 510.236*gppt, 311.811*gppt font "Minion Pro, 10"
 >
 > and `@gpterm` already carries the font, so pdfcairo refuses the line outright: *Duplicated or
-> contradicting arguments in cairo terminal options*. They have been broken since `@gpterm`
+> contradicting arguments in cairo terminal options*. It has been broken since `@gpterm`
 > landed and nothing said so, because nothing built scholar until the Ninja graph did. It is
-> one failing edge today, `build/scholar/TA1/2025/homework/03/monte-carlo.pdf`, and it is the
-> only thing between `TA1/2025` and a clean build.
+> one failing edge, `build/scholar/TA1/homework/03/monte-carlo.pdf`, and it is the only thing
+> between TA1 and a clean build.
+>
+> There were nine of these -- the `monte-carlo.gp` and `voigt.gp` of five course years, plus a
+> stray nested copy -- and collapsing the year level left this one and a `voigt.gp` in
+> `TA1/.attic`, which nothing builds.
 >
 > **Deliberately not fixed, and the reason is that the fix is a choice.** Deleting the trailing
-> `font` makes all nine build at once, at the 6pt the build supplies rather than the 10pt their
-> authors asked for on a 510pt canvas -- visibly smaller labels on somebody else's drawings.
+> `font` makes it build, at the 6pt the build supplies rather than the 10pt its author asked
+> for on a 510pt canvas -- visibly smaller labels on somebody else's drawing.
 > Letting `@gpterm` take a size instead is a change here rather than in the content, and it is
 > the only way a script can ask for larger type without re-specifying the face. Neither is
 > urgent: scholar is not being run, and Náboj is.
@@ -2095,7 +2098,10 @@ shreds it.
     source/naboj/phys/27   78   cs/solution.md -> ../sk/solution.md, es -> ../en
     source/naboj/phys/26    4   truth-or-dare-elmag, four languages
     source/naboj/phys/00    2
-    source/scholar          3   a shared picture
+
+(Those four counts are from the sweep that wrote this section and have not been refreshed;
+scholar's three were a shared picture in `TA1/2018`, `2019` and `2022` and went when the course
+stopped being split by year. The rule is what matters, not the tally.)
 
 They are deliberate: a translation nobody has written yet mirrors its master
 rather than keeping a stale copy, which is how `28/turntable` came to hold

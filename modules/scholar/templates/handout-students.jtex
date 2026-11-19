@@ -5,7 +5,7 @@
         \subsection{(* i18n.captions.problem.plural|capitalize *)}
         (@ for problem in issue.problems @)
             \subsubsection{(* i18n.captions.problem.singular|capitalize *) (* loop.index *)}
-            \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
+            \setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* self.typedir() *)/(* issue.id *)/(* problem.id *)}%
             \protectedInput{\activeDirectory/problem.tex}
             (@ block solution scoped @)(@ endblock solution @)
         (@ endfor @)

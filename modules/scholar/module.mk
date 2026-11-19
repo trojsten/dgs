@@ -26,9 +26,9 @@ render/scholar/%.gp:\
 # A picture is a Jinja template, exactly as the gnuplot file above is: the meta beside it is the
 # context, so a figure prints the number the meta computes instead of one typed in by hand.
 # The meta must be *beside* the picture -- there is no search upwards, and a picture that has no
-# meta next to it fails here rather than silently rendering against nothing. Nothing builds
-# `scholar` today; when something does, `TA1/2022/handouts/07/1-lines/fraunhofer.svg` is the one
-# picture whose meta is a directory up and it wants moving beside it.
+# meta next to it fails here rather than silently rendering against nothing. The one picture
+# whose meta was a directory up, `TA1/2022/handouts/07/1-lines/fraunhofer.svg`, left the course
+# with the rest of 2022 and sits in `TA1/.attic`, which nothing builds.
 #
 # `pathlang` rather than the `$(lang)` the `.gp` rule above passes; that rule wants the same
 # treatment and does not get it here, because it is a separate defect.
@@ -48,7 +48,7 @@ render/scholar/%.svg:\
 # One unit -- a sheet's text, or one problem with its solution -- as its own PDF. Everything else
 # here builds a whole handout, which is no use while authoring.
 
-# % <course>/<year>/<kind>/<issue>[/<problem>]
+# % <course>/<kind>/<issue>[/<problem>]
 build/scholar/%/build-standalone: \
 	modules/scholar/templates/base.jtex \
 	modules/scholar/templates/standalone.jtex
@@ -89,7 +89,7 @@ build/scholar/%/build-handout: \
 	@echo -e '$(c_action)Building handout $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python -m modules.scholar.builder.handout 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python -m modules.scholar.builder.handout 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 build/scholar/%/build-homework: \
 	modules/scholar/templates/base.jtex \
@@ -98,7 +98,7 @@ build/scholar/%/build-homework: \
 	@echo -e '$(c_action)Building homework $(c_filename)$*$(c_action):$(c_default)'
 	$(eval words := $(subst /, ,$*))
 	@mkdir -p $(dir $@)
-	python -m modules.scholar.builder.homework 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 2,$(words)) $(word 4,$(words)) -o '$(dir $@)'
+	python -m modules.scholar.builder.homework 'source/scholar/' 'modules/scholar/templates/' $(word 1,$(words)) $(word 3,$(words)) -o '$(dir $@)'
 
 build/scholar/%/problem.tex: \
 	render/scholar/$$*/problem.md \
@@ -118,7 +118,7 @@ build/scholar/%/text.tex: \
 	$$(PIPELINE_STAMP)
 	$(call pandoctex,$(lang))
 
-# <subject>/<year>/<target>/<issue>
+# <subject>/<target>/<issue>
 build/scholar/%/handout-students.tex: \
 	build/scholar/$$*/build-handout ;
 
@@ -134,7 +134,7 @@ build/scholar/%/homework-students.tex: \
 build/scholar/%/homework-solutions.tex: \
 	build/scholar/$$*/build-homework ;
 
-# <subject>/<year>/<target>/<issue>
+# <subject>/<target>/<issue>
 build/scholar/%/pdf-prerequisites: \
 	$$(subst $$(cdir),,$$(abspath build/scholar/$$(word 1,$$(subst /, ,$$*))/copy-static)) \
 	$$(subst source/,build/,$$(wildcard source/scholar/$$*/*.jpg)) \

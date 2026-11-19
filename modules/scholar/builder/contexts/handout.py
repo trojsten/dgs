@@ -17,7 +17,7 @@ class ContextHandoutProblem(HandoutMixin, ContextIssueSub):
         'id': And(str, len),
     })
 
-    def populate(self, course, year, issue, problem):
+    def populate(self, course, issue, problem):
         self.add_id(problem)
 
 

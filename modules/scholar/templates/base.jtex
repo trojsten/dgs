@@ -1,6 +1,6 @@
 \documentclass[12pt, twoside]{dgs}
 
-\setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* year.id *)/(* self.typedir() *)/(* issue.id *)/}%
+\setActive{\rootDirectory/(* module.id *)/(* course.id *)/(* self.typedir() *)/(* issue.id *)/}%
 \input{build/scholar/(* course.id *)/.static/format-override.tex}
 
 \setcounter{secnumdepth}{3}

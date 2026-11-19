@@ -22,8 +22,8 @@ from core.builder.jinja import StaticRenderer
 
 TEMPLATE = 'standalone.jtex'
 
-# `<course>/<year>/<kind>/<issue>` is the sheet itself; a fifth segment is a problem inside it.
-SHEET_DEPTH = 4
+# `<course>/<kind>/<issue>` is the sheet itself; a fourth segment is a problem inside it.
+SHEET_DEPTH = 3
 
 
 def read_yaml(path: Path) -> dict:

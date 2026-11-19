@@ -34,7 +34,7 @@ def schema_for(path: Path) -> Schema:
     """
     Which front matter this file may carry, from where it sits.
 
-    `<course>/<year>/<kind>/<issue>/meta.yaml` is a sheet and `<...>/<issue>/<problem>/meta.yaml`
+    `<course>/<kind>/<issue>/meta.yaml` is a sheet and `<...>/<issue>/<problem>/meta.yaml`
     is a problem inside one, and the two want different things -- so a single schema for all of
     scholar could only ever be the union of both, which is what it used to be, and which let a
     handout go undated.

@@ -20,12 +20,14 @@ import pytest
 
 from tools.ninja.generate import (
     _beside,
+    generate,
     _fragment,
     _instagram,
     _page,
     _picture_svg,
     _standalone,
     scholar_edges,
+    seminar_edges,
     write_graph,
 )
 from tools.ninja.writer import Writer
@@ -146,10 +148,10 @@ class TestWhichPicturesAPageNames:
         An exact directory match, not a prefix. Scholar's issue directory *contains* its
         problems, so a prefix would hand an issue's page every drawing below it.
         """
-        drawings = ['build/scholar/TA1/2018/handouts/02/cylinder.svg',
-                    'build/scholar/TA1/2018/handouts/02/01/graph.svg']
-        assert _beside(drawings, 'scholar/TA1/2018/handouts/02') == [drawings[0]]
-        assert _beside(drawings, 'scholar/TA1/2018/handouts/02/01') == [drawings[1]]
+        drawings = ['build/scholar/TA1/handouts/02/cylinder.svg',
+                    'build/scholar/TA1/handouts/02/01/graph.svg']
+        assert _beside(drawings, 'scholar/TA1/handouts/02') == [drawings[0]]
+        assert _beside(drawings, 'scholar/TA1/handouts/02/01') == [drawings[1]]
 
 
 class TestTheEditorsPreview:
@@ -174,7 +176,7 @@ class TestTheEditorsPreview:
 
     def test_a_scholar_sheet_and_a_problem_below_it_each_get_one(self, writer):
         """Both shapes `editor.yaml` declares: the issue holding `text.md`, and a problem."""
-        for rel in ('scholar/TA1/2025/handouts/01', 'scholar/TA1/2025/handouts/01/1-wien'):
+        for rel in ('scholar/TA1/handouts/01', 'scholar/TA1/handouts/01/1-wien'):
             assert _standalone(writer.build, 'scholar', rel, [], [], 'sk') \
                 == f'output/{rel}/standalone.pdf'
 
@@ -310,7 +312,7 @@ class TestHowDeepAScholarIssueGoes:
 
     @pytest.fixture
     def repo(self, tmp_path):
-        issue = tmp_path / 'source/scholar/XX/2025/homework/01'
+        issue = tmp_path / 'source/scholar/XX/homework/01'
         for rel in ('', '1-problem', '1-problem/a-sub', '1-problem/a-sub/deeper'):
             place = issue / rel
             place.mkdir(parents=True)
@@ -319,25 +321,25 @@ class TestHowDeepAScholarIssueGoes:
         return tmp_path
 
     def edges(self, repo, writer) -> str:
-        scholar_edges(repo, 'XX/2025', writer)
+        scholar_edges(repo, 'XX', writer)
         return written(writer)
 
     def test_a_subproblem_fragment_is_built(self, repo, writer):
-        assert ('build/scholar/XX/2025/homework/01/1-problem/a-sub/problem.tex'
+        assert ('build/scholar/XX/homework/01/1-problem/a-sub/problem.tex'
                 in self.edges(repo, writer))
 
     def test_the_document_names_it_as_a_prerequisite(self, repo, writer):
         """Built and not named is the same page: ninja would not build it before the xelatex."""
         pdf = [line for line in self.edges(repo, writer).splitlines()
-               if line.startswith('build output/scholar/XX/2025/homework/01/homework-students.pdf')]
+               if line.startswith('build output/scholar/XX/homework/01/homework-students.pdf')]
         assert len(pdf) == 1
-        assert 'build/scholar/XX/2025/homework/01/1-problem/a-sub/problem.tex' in pdf[0]
+        assert 'build/scholar/XX/homework/01/1-problem/a-sub/problem.tex' in pdf[0]
 
     def test_the_issue_and_the_problem_are_still_there(self, repo, writer):
         """The quiet half above: adding a level must not cost either of the two that worked."""
         out = self.edges(repo, writer)
-        assert 'build/scholar/XX/2025/homework/01/text.tex' in out
-        assert 'build/scholar/XX/2025/homework/01/1-problem/problem.tex' in out
+        assert 'build/scholar/XX/homework/01/text.tex' in out
+        assert 'build/scholar/XX/homework/01/1-problem/problem.tex' in out
 
     def test_it_stops_there_and_does_not_recurse_for_ever(self, repo, writer):
         """The quiet half below: nothing can input a fragment a level deeper than a subproblem."""
@@ -349,5 +351,128 @@ class TestHowDeepAScholarIssueGoes:
         this, creating the first subproblem of a problem would leave the graph as it was and the
         new statement would come out as the box this test exists for.
         """
-        counts = scholar_edges(repo, 'XX/2025', writer)
-        assert 'source/scholar/XX/2025/homework/01/1-problem' in counts['listed']
+        counts = scholar_edges(repo, 'XX', writer)
+        assert 'source/scholar/XX/homework/01/1-problem' in counts['listed']
+
+
+class TestWhichLanguageAScopeIsSetIn:
+    r"""
+    A seminar competition and a scholar course each declare their language, and the graph has to
+    read it rather than assume Slovak.
+
+    Both modules are monolingual, which is why this was the literal `'sk'` at every call site --
+    but monolingual means *one* language, not Slovak. `source/scholar/STA/meta.yaml` says
+    `language: en`, and `modules/scholar/builder/standalone.py` has always honoured it, so the
+    document was set in English while the fragments inside it went through pandoc with
+    `core/i18n/sk.yaml`: `spacing.lua` glued `a~strong` by Slovak's one-letter-word rule and
+    `hyphens.lua` broke `low-luminosity` as `low-` / `-luminosity`, repeating a hyphen in a
+    language that does not. The two halves only meet on the page, which is why nothing failed.
+
+    The fallback stays `sk` and is the quiet half of each pair below: a scope that declares
+    nothing must keep the graph it had, which is every seminar round in the repository.
+    """
+
+    @pytest.fixture
+    def scholar(self, tmp_path):
+        def make(meta: str):
+            issue = tmp_path / 'source/scholar/XX/homework/01'
+            issue.mkdir(parents=True)
+            (issue / 'meta.yaml').write_text('title: x\n')
+            (issue / 'text.md').write_text('text\n')
+            (tmp_path / 'source/scholar/XX/meta.yaml').write_text(meta)
+            return tmp_path
+        return make
+
+    @pytest.fixture
+    def seminar(self, tmp_path):
+        def make(meta: str):
+            problem = tmp_path / 'source/seminar/YY/42/1/1/01'
+            problem.mkdir(parents=True)
+            (problem / 'meta.yaml').write_text('title: x\n')
+            (problem / 'problem.md').write_text('text\n')
+            (tmp_path / 'source/seminar/YY/meta.yaml').write_text(meta)
+            return tmp_path
+        return make
+
+    def test_a_scholar_course_is_rendered_in_the_language_it_declares(self, scholar, writer):
+        counts = scholar_edges(scholar('title: x\nlanguage: en\n'), 'XX', writer)
+        assert 'lang = en' in written(writer)
+        assert 'lang = sk' not in written(writer)
+        assert counts['needs']['languages'] == {'en'}
+
+    def test_its_document_asks_for_that_i18n_table(self, scholar, writer):
+        """The `\\input` the template writes and the prerequisite the graph declares are one."""
+        scholar_edges(scholar('title: x\nlanguage: en\n'), 'XX', writer)
+        pdf = [line for line in written(writer).splitlines()
+               if line.startswith('build output/scholar/XX/homework/01/homework-students.pdf')]
+        assert len(pdf) == 1
+        assert 'build/core/i18n/en.tex' in pdf[0]
+        assert 'build/core/i18n/sk.tex' not in pdf[0]
+
+    def test_the_course_meta_is_watched(self, scholar, writer):
+        """Changing `language:` must regenerate the graph, as changing a venue's does."""
+        counts = scholar_edges(scholar('title: x\nlanguage: en\n'), 'XX', writer)
+        assert 'source/scholar/XX/meta.yaml' in counts['read']
+
+    def test_a_scholar_course_that_declares_nothing_is_still_slovak(self, scholar, writer):
+        counts = scholar_edges(scholar('title: x\n'), 'XX', writer)
+        assert 'lang = sk' in written(writer)
+        assert 'lang = en' not in written(writer)
+        assert counts['needs']['languages'] == {'sk'}
+
+    def test_a_seminar_competition_is_read_the_same_way(self, seminar, writer):
+        counts = seminar_edges(seminar('id: YY\nlanguage: en\n'), 'YY/42/1/1', writer)
+        assert 'lang = en' in written(writer)
+        assert 'lang = sk' not in written(writer)
+        assert counts['needs']['languages'] == {'en'}
+        assert 'source/seminar/YY/meta.yaml' in counts['read']
+
+    def test_a_seminar_competition_that_declares_nothing_is_still_slovak(self, seminar, writer):
+        counts = seminar_edges(seminar('id: YY\n'), 'YY/42/1/1', writer)
+        assert 'lang = sk' in written(writer)
+        assert counts['needs']['languages'] == {'sk'}
+
+
+class TestWhatMakesTheGraphRegenerate:
+    """
+    Everything the generator looked at is both an input of the regenerate edge and a `phony`.
+
+    The input is what notices a change; the phony is what makes a *removal* recoverable. An
+    input with no rule that has gone missing is a hard error -- `needed by 'build.ninja',
+    missing and no known rule to make it` -- and it is unrecoverable, because the edge that
+    would notice the removal is the one Ninja is refusing to run. It was written for the
+    directories and the files were left out, which cost a hand-deleted `build.ninja` the moment
+    scholar's year level went and `source/scholar/STA/2023/meta.yaml` with it.
+
+    A phony does not mask the file: Ninja still takes an existing target's mtime, so editing
+    the meta still regenerates. That is what the directory half has always relied on.
+    """
+
+    @pytest.fixture
+    def repo(self, tmp_path):
+        issue = tmp_path / 'source/scholar/XX/homework/01'
+        issue.mkdir(parents=True)
+        (issue / 'meta.yaml').write_text('title: x\n')
+        (issue / 'text.md').write_text('text\n')
+        (tmp_path / 'source/scholar/XX/meta.yaml').write_text('title: x\nlanguage: en\n')
+        return tmp_path
+
+    def graph(self, repo) -> str:
+        out = io.StringIO()
+        generate(repo, ['scholar:XX'], out)
+        return out.getvalue()
+
+    def regenerate_edge(self, repo) -> str:
+        return next(line for line in self.graph(repo).splitlines()
+                    if line.startswith('build build.ninja:'))
+
+    def test_a_file_the_generator_read_is_an_input(self, repo):
+        assert 'source/scholar/XX/meta.yaml' in self.regenerate_edge(repo)
+
+    def test_and_it_has_a_phony_so_deleting_it_is_recoverable(self, repo):
+        assert 'build source/scholar/XX/meta.yaml: phony' in self.graph(repo)
+
+    def test_a_directory_it_listed_still_has_both(self, repo):
+        """The half that already worked, which generalising the loop must not drop."""
+        assert 'source/scholar/XX/homework/01' in self.regenerate_edge(repo)
+        assert 'build source/scholar/XX/homework/01: phony' in self.graph(repo)
