@@ -8,6 +8,11 @@
 *.out
 *.aux
 *.synctex
+# xelatex's `-recorder` log, which belongs with the three above it: the build's own land in
+# `output/`, which is ignored anyway, and the ones that turn up in the working directory are
+# droppings of a run that was not this build -- five of them sat in the root for a week
+# because this family had every TeX suffix but that one.
+*.fls
 *.pyc
 *__pycache__*
 *.dblite
