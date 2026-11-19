@@ -649,33 +649,30 @@ terminal counts in, and a script that wants its own canvas writes
     set terminal @gpterm size 432*gppt, 108*gppt
 
 A script that wants the default writes nothing at all, which is 24 of the 29. Of the five that
-do not, two are scholar's and were written this way; the other three are naboj's and were not --
-they still opened `set terminal pdf size 6, 1.5` when the web path was added, and so did
+do not, one is scholar's STA and was written this way; three are naboj's and were not -- they
+still opened `set terminal pdf size 6, 1.5` when the web path was added, and so did
 `FKS/42/1/1/03`'s `blocks:` preamble, which is a sixth script that no `.gp` on disk carries.
 All four say `@gpterm` now. (It was 42 scripts and twelve before scholar stopped being split by
-year: TA1 carried five copies of every drawing, one per course year.)
+year: TA1 carried six copies of every drawing, one per course year.)
 
-> **Open: `TA1/homework/03/monte-carlo.gp` says `@gpterm` and then sets a font of its own, and
-> it does not draw.** It opens
+> **The fifth is `TA1/homework/03/monte-carlo.gp`, which still opens
+> `set terminal pdf size 18cm,11cm font "Minion Pro, 20"`** -- the web defect described below
+> and not a print one, so TA1 builds clean today and would fail only on a `.svg` nobody asks
+> for. The `@gpterm` rewrite of it exists, on an unpushed branch of that repository, and is the
+> one that does *not* build: `@gpterm` already carries the font, so pdfcairo refuses
 >
 >     set terminal @gpterm size 510.236*gppt, 311.811*gppt font "Minion Pro, 10"
 >
-> and `@gpterm` already carries the font, so pdfcairo refuses the line outright: *Duplicated or
-> contradicting arguments in cairo terminal options*. It has been broken since `@gpterm`
-> landed and nothing said so, because nothing built scholar until the Ninja graph did. It is
-> one failing edge, `build/scholar/TA1/homework/03/monte-carlo.pdf`, and it is the only thing
-> between TA1 and a clean build.
+> outright -- *Duplicated or contradicting arguments in cairo terminal options*. There were
+> nine of those, the `monte-carlo.gp` and `voigt.gp` of each course year, and collapsing the
+> year level left one of each: this script, and a `voigt.gp` in `TA1/.attic` that nothing
+> builds.
 >
-> There were nine of these -- the `monte-carlo.gp` and `voigt.gp` of five course years, plus a
-> stray nested copy -- and collapsing the year level left this one and a `voigt.gp` in
-> `TA1/.attic`, which nothing builds.
->
-> **Deliberately not fixed, and the reason is that the fix is a choice.** Deleting the trailing
-> `font` makes it build, at the 6pt the build supplies rather than the 10pt its author asked
-> for on a 510pt canvas -- visibly smaller labels on somebody else's drawing.
-> Letting `@gpterm` take a size instead is a change here rather than in the content, and it is
-> the only way a script can ask for larger type without re-specifying the face. Neither is
-> urgent: scholar is not being run, and Náboj is.
+> **Which way it should go is a choice, and that is why it is still open.** Deleting the
+> trailing `font` makes the `@gpterm` version build, at the 6pt the build supplies rather than
+> the 10pt its author asked for on a 510pt canvas -- visibly smaller labels on somebody else's
+> drawing. Letting `@gpterm` take a size instead is a change here rather than in the content,
+> and it is the only way a script can ask for larger type without re-specifying the face.
 
 **`set terminal pdf` left in a script is not a print defect and is a web one**, which is what
 made it survive. Re-issued over a `pdfcairo` that is already current it keeps the font *and* the
