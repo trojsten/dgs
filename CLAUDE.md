@@ -1004,6 +1004,41 @@ and `09:30` is *also* a string -- sexagesimal needs a non-zero first digit -- wh
 with it. Write `9:30`. That one bit the migration: ten metas came back as strings and every
 volume they belonged to stopped validating.
 
+### The ancient volumes' venues are reconstructed, and say so
+
+`02`-`19` carry a `bratislava-junior` and a `bratislava-senior` apiece, written from `29`'s
+pair. Nothing records where those years ran or who ran them, so each meta opens with a comment
+saying it is a reconstruction, and **`orgs:` is left off** -- it is optional, and two living
+people's names under a year they were not at is the same mistake as an invented author.
+
+**`evaluators:` is 5, not `29`'s 8.** Eight is the current number and nothing before it; five is
+what the two volumes that record one say outright, `19` and `20` both telling the teams *vydeľte
+číslom 5*. The rule behind that is worth stating, because the next volume will meet it -- **a
+venue's number has to agree with the instructions printed from the same directory.**
+`answers-modulo.pdf` splits the problems `evaluators` ways and `instructions.pdf` tells the teams
+which divisor to use; the two are handed to the same room. `02`'s instructions take the divisor
+from the meta and do the arithmetic from it, so they now read *vydeľte číslom 5* and
+*17 = 2 + 5 · 3*.
+
+**`20`-`25` are deliberately not done.** Their 39 venue metas are stubs of the same unbuildable
+shape -- missing `id`, `code`, `language` and `evaluators`, and mostly carrying a `number:` the
+schema does not admit -- but those years ran in six to nine real cities, so they are a reading job
+and not a copying one: the volumes' own `instructions-inner.jtex` state the evaluator count, and
+`26` onward hold the `id` and `code` for most of the same venues. Writing Bratislava over them
+would be inventing history rather than filling a hole. **41 phys venues cannot be built today**,
+those 39 and `26`'s own `bratislava-junior` and `-senior`, which are complete but for a
+`min_extra_teams: 1` that nothing else in the corpus writes and the schema refuses by name; chem
+has five more and `test/00` one, each missing only `timezone`.
+
+**`instructions.jtex` uses `\protectedInput`, not `\input`.** The content half of that document
+is per *language*: `venue.py` renders `languages/<lang>/instructions-inner.jtex` and skips it with
+a warning where the venue's language has none, so the template was asking for a file nobody had
+written -- an `Emergency stop` and a red build, with nothing anywhere saying what was missing.
+Sixteen of the eighteen volumes have no instructions in any language, because nothing records what
+the rules of Náboj were in 2000. The red `Missing file` box is the right answer for a hole that
+cannot be filled, and the swap is a no-op where the file is there: all 23 of `29`'s instructions
+PDFs are textually identical across it.
+
 ## Reusable text: `blocks:`
 
 A meta's four content keys each do something to what they hold, and until recently there was

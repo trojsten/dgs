@@ -9,5 +9,14 @@
     \pagestyle{instructions}
 
     \section{(* i18n[language.id].instructions.title *)}
-    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/instructions-inner.tex}
+    (# `\protectedInput`, not `\input`. The content half of this document is per *language*
+       and may simply not exist: `venue.py` skips `instructions-inner.jtex` with a warning
+       where the venue's language directory has none, and this line then asked for a file
+       nobody had written -- a hard `Emergency stop` rather than a message about the gap. It
+       is why adding a venue to one of the ancient volumes turned its build red: 16 of them
+       have no instructions in any language, because nothing records what the rules of Náboj
+       were in 2000. The red `Missing file` box is the house answer for exactly this, and the
+       right one here -- the hole is unrecoverable rather than unwritten, and the venue's
+       other document, `answers-modulo.pdf`, is what those years are wanted for. #)
+    \protectedInput{build/(* module.id *)/(* competition.id *)/(* volume.id *)/venues/(* venue.id *)/instructions-inner.tex}
 (@ endblock @)
