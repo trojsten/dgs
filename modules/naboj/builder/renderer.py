@@ -253,8 +253,8 @@ class CLIInterface(renderer.CLIInterface, ABC):
     #:
     #: The answer files are listed although none of them carries a display today: they are part
     #: of the taxonomy, so the decision is recorded rather than left to the default, and
-    #: `test_renderer` pins these keys to the two file lists in `module.mk` so that a file added
-    #: to the module cannot slip through without one.
+    #: `test_renderer` pins these keys to the module descriptor's two file lists so that a file
+    #: added to the module cannot slip through without one.
     #:
     #: This is Náboj's rule and it is declared here rather than in core, for the reason
     #: `editor.yaml` and the audit's `audit: true` are per module: another module's files mean

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import copy
 import numbers
 import pprint
 import re
@@ -566,6 +567,18 @@ def build_render_context(meta: Context, locale: str, *, root: Path, labelled: bo
     quantity_backend.set_current(backend)
     missing_words = MissingWordRegistry() if missing_words is None else missing_words
 
+    # **A copy, because this function rewrites what it is given.** `values` entries become
+    # `PhysicsConstant`s in place, `symbol` is `pop`ped off them and each `eq:` fragment is
+    # replaced by a `MathObject`. Run twice over one `Context` and the second pass meets a
+    # constructed constant where it expects a mapping and raises `TypeError: Unsupported type
+    # <class 'PhysicsConstant'>` -- from inside the values loop, naming nothing useful.
+    #
+    # Not reachable today: a builder builds one context per process and the editor rebuilds the
+    # meta on every cache miss. But the whole point of this function is to be callable from both
+    # of those, and "do not call it twice" is not an invariant anything states or checks. A
+    # `deepcopy` of the content keys costs microseconds on a mapping this size.
+    meta = copy.deepcopy(meta)
+
     constants = ConstantsContext('constants', Path('core/data/constants.yaml'))
     constants.validate()
 
@@ -826,8 +839,8 @@ class CLIInterface(cli.CLIInterface, ABC):
         # sensible default: a template without its context renders every `(§ … §)` to nothing.
         # Omitting it used to raise `AttributeError: 'NoneType' object has no attribute 'name'`
         # from the middle of `build_context`, which says neither what was missing nor that it
-        # was an argument. Every invocation already passes one -- the `jinja` macro in the root
-        # Makefile writes `--context $(3)` for all four modules -- so this only changes what a
+        # was an argument. Every invocation already passes one -- the graph's `jinja` rule
+        # writes `--context $meta` for all four modules -- so this only changes what a
         # hand-run command prints.
         self.parser.add_argument('-C', '--context', type=Path, required=True,
                                  metavar='META',

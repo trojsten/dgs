@@ -285,9 +285,10 @@ class TestTranslatedWords:
 
     def test_naboj_declares_every_file_it_may_hold(self):
         """
-        Both directions, and no gaps. Pinned to the two rule families in `modules/naboj/module.mk`
-        the way `test_audit` pins `TRANSLATED_FILES`, so a file added to the module cannot slip
-        through without a decision -- it would otherwise inherit the default silently.
+        Both directions, and no gaps. Pinned to the module's two file families the way
+        `test_audit` pins `TRANSLATED_FILES` -- against `modules/naboj/editor.yaml`, which is the
+        descriptor the graph and the audit both read -- so a file added to the module cannot slip
+        through without a decision; it would otherwise inherit the default silently.
         """
         from core.audit.sources import SHARED_FILES, TRANSLATED_FILES
         from modules.naboj.builder.renderer import CLIInterface as NabojCLI
