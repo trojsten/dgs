@@ -31,7 +31,18 @@ pytestmark = pytest.mark.skipif(not (REPO / '.git').exists(),
 
 
 def dirty(cwd: pathlib.Path) -> bool:
-    return bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=cwd).strip())
+    """
+    What `git describe --dirty` means by dirty, which is **not** what a bare `git status
+    --porcelain` reports.
+
+    `--dirty` compares the working tree against the index for *tracked* files; `--porcelain`
+    also lists untracked ones with a `??`. So a checkout whose only change is a new directory
+    nobody has added yet is clean to `describe` and dirty to this helper, and
+    `test_it_admits_an_edited_tree` then fails over a file that has nothing to do with the build
+    stamp. `--untracked-files=no` is the one that matches.
+    """
+    return bool(subprocess.check_output(
+        ['git', 'status', '--porcelain', '--untracked-files=no'], cwd=cwd).strip())
 
 
 class TestTheVersionADocumentPrints:
