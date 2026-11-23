@@ -1550,6 +1550,22 @@ What the default buys is therefore not uniformity. It is that the common size is
 that a language which needed different room says so in one visible place instead of being one of
 six numbers nobody can compare.
 
+**A drawing's file name describes what it draws, and is not the problem's name.** `fragmentácia`,
+`mechanizmus`, `produkt`, `reakcia`, `distances` -- `chem/03/eschenmoser` carries five drawings and
+the names are the index. The problem's own name is the one word that cannot distinguish two of
+them, which is why `phys/19/capacitors` ended up with `capacitors.svg`, `capacitors1.svg` and
+`capacitors2.svg`, three files of which only the first says anything and it says the obvious.
+
+Most of the corpus already does this -- 109 of the 488 problems that carry a drawing name one
+after the problem, and 49 of those hold more than one. **That is not a sweep to run.** A name is
+worth changing when somebody is in the file for another reason; renaming 49 drawings to tidy them
+moves every `pictures:` entry that names them for nothing.
+
+It matters more under `pictures:` than it did before it, because the meta key and the file name
+are now two separate chances to say what a drawing is. `29/sinking` spends neither:
+`sinking: {file: sinking.svg}` and `sinking_solution: {file: sinking-solution.svg}` repeat the
+problem's name three times over. A described file makes the key's job obvious.
+
 ### `th:` is the other axis, and it is per *document*
 
 `height=` is per language. The tear-off needs the other one: a problem sits there in a fixed-height

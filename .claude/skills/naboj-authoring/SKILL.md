@@ -66,9 +66,10 @@ style linter (`core/mdcheck`) runs, and pandoc converts to TeX using DGS's custo
 - Style linter: `python -m core.mdcheck` runs `core/mdcheck/check.py` rules per line.
 - Templates that assemble PDFs: `modules/naboj/templates/*.jtex` (these use `(* … *)` for
   variables, unlike `.md` files which use `(§ … §)`).
-- Build orchestration: root `Makefile` + `modules/naboj/module.mk` (rules
-  `NABOJ_TRANSLATABLE` for problem/solution, `NABOJ_NONTRANSLATABLE` for
-  answer/answer-also/answer-interval).
+- Build orchestration: `tools/ninja/generate.py`, which writes the whole graph;
+  `./dgs-build <target>` generates it and runs Ninja. A problem's files split into
+  `TRANSLATED` (problem/problem-extra/solution/answer-extra, inside `<language>/`) and
+  `SHARED` (answer/answer-also/answer-interval, beside the unit).
 
 ## Volume differences to be aware of
 
@@ -90,5 +91,5 @@ uv run python -m modules.naboj.builder.renderer \
     /tmp/out.md
 ```
 
-Or via Make targets defined in `modules/naboj/module.mk`. Do not commit the `_minted-output`
+Or via `./dgs-build <target>`. Do not commit the `_minted-output`
 directory (`.gitignore`d).

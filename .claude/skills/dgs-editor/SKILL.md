@@ -1,6 +1,6 @@
 ---
 name: dgs-editor
-description: Run and extend DGS's Flask editor and auditor (tools/editor/app.py) — how to start it, why it must run from the repository root, how a module declares its units through modules/<module>/editor.yaml, and how that descriptor mirrors module.mk's file rules. Use when starting the editor or the /audit page, adding a module descriptor, or changing which files a unit may hold.
+description: Run and extend DGS's Flask editor and auditor (tools/editor/app.py) — how to start it, why it must run from the repository root, how a module declares its units through modules/<module>/editor.yaml, and how that descriptor mirrors the build graph's file families. Use when starting the editor or the /audit page, adding a module descriptor, or changing which files a unit may hold.
 ---
 
 # The editor and the auditor
@@ -70,11 +70,11 @@ Both pages learn what a module contains from `modules/<module>/editor.yaml` — 
 units live, what files they hold, and which level (`scope:`) the audit aggregates at. A
 fourth module needs a descriptor and no code.
 
-What files a unit may hold comes from `module.mk`'s two rule families —
-`NABOJ_TRANSLATABLE` inside `<language>/`, `NABOJ_NONTRANSLATABLE` beside the unit — by
-way of the descriptor's `targets`/`translated`, which mirror them. `core/tests/test_audit.py`
-fails if the mirror stops matching, so adding a file to module.mk cannot silently cost it a
-column. The audit narrows that vocabulary to what a volume actually has, and gives each
+What files a unit may hold comes from the graph's two file families —
+`TRANSLATED` inside `<language>/`, `SHARED` beside the unit — by way of the descriptor's
+`targets`/`translated`, which mirror them. `core/tests/test_audit.py` pins the descriptor
+against `tools.ninja.generate`'s own lists and fails if the mirror stops matching, so adding a
+file to the build cannot silently cost it a column. The audit narrows that vocabulary to what a volume actually has, and gives each
 remaining file a column of its own, grouped under its language.
 
 **The audit covers `naboj` only**, by `audit: true` in its descriptor. The checks and the
