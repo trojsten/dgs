@@ -72,7 +72,8 @@ def collect(source: pathlib.Path, competition: str):
         for position, pid in enumerate(listed, 1):
             unit = read(directory / 'problems' / pid / 'meta.yaml')
             rows.append({'n': position, 'id': pid, 'exists': pid in on_disk,
-                         'meta': unit, 'tags': list((unit or {}).get('tags') or [])})
+                         'meta': unit, 'tags': list((unit or {}).get('tags') or []),
+                         'idea': list(((unit or {}).get('authors') or {}).get('idea') or [])})
         volumes.append({'id': directory.name, 'date': meta.get('date'), 'rows': rows,
                         'unlisted': sorted(on_disk - set(listed))})
         problems[directory.name] = rows
@@ -110,6 +111,7 @@ def chip(tag: str, count: int | None = None) -> str:
 
 def render(volumes, warnings, counts, competition: str) -> str:
     total = sum(len(v['rows']) for v in volumes)
+    credited = sum(1 for v in volumes for r in v['rows'] if r['idea'])
     stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
 
     if warnings:
@@ -135,7 +137,11 @@ def render(volumes, warnings, counts, competition: str) -> str:
             f'<tr{"" if row["tags"] else " class=\"untagged\""}>'
             f'<td class="n">{row["n"]}</td>'
             f'<td class="pid"><code>{html.escape(row["id"])}</code></td>'
-            f'<td class="tags">'
+            f'<td class="idea">'
+            + (html.escape(', '.join(row['idea'])) if row['idea']
+               else '<span class="unknown">&mdash;</span>')
+            + '</td>'
+            '<td class="tags">'
             + (''.join(chip(t) for t in row['tags'])
                or '<span class="none">no tags</span>')
             + '</td></tr>'
@@ -144,7 +150,7 @@ def render(volumes, warnings, counts, competition: str) -> str:
             f'<section class="volume"><h2 id="v{volume["id"]}">'
             f'<span class="vol">{html.escape(volume["id"])}</span>'
             f'<span class="meta">{html.escape(date)} · {len(volume["rows"])} problems</span></h2>'
-            f'<table><thead><tr><th class="n">#</th><th>problem</th><th>tags</th></tr></thead>'
+            f'<table><thead><tr><th class="n">#</th><th>problem</th><th>idea</th>'f'<th>tags</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></section>')
 
     nav = ''.join(f'<a href="#v{v["id"]}">{html.escape(v["id"])}</a>' for v in volumes)
@@ -218,6 +224,11 @@ td.n, th.n {{ width: 2.5rem; text-align: right; color: var(--dim);
   font-variant-numeric: tabular-nums; }}
 td.pid {{ width: 15rem; }}
 td code, .warn code {{ font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }}
+td.idea {{ width: 11rem; color: var(--ink); font-size: .85rem; }}
+/* 247 of 1109 problems record an idea author, so most of this column is blank. The marker is
+   muted on purpose -- a loud one would read as 878 defects rather than as unrecorded, which is
+   what `authors-empty` in `core/audit` is for and what an archive honestly looks like. */
+td.idea .unknown {{ color: var(--line); }}
 tr.untagged {{ background: var(--warn-bg); }}
 .none {{ color: var(--warn-ink); font-size: .8rem; font-style: italic; }}
 .tag {{ display: inline-block; margin: 1px 2px 1px 0; padding: .1rem .45rem;
@@ -239,7 +250,7 @@ tr.untagged {{ background: var(--warn-bg); }}
 :root[data-theme="dark"] .tag.t2 {{ --chip-bg: hsl(var(--h) 58% 17%);
   --chip-line: hsl(var(--h) 48% 29%); }}
 @media (max-width: 640px) {{
-  td.pid {{ width: auto; }}
+  td.pid, td.idea {{ width: auto; }}
   .counts {{ gap: .75rem 1.25rem; }}
 }}
 </style>
@@ -252,6 +263,7 @@ tr.untagged {{ background: var(--warn-bg); }}
 <div class="counts">
   <div><b>{len(volumes)}</b><span>volumes</span></div>
   <div><b>{total}</b><span>problems</span></div>
+  <div><b>{credited}</b><span>idea recorded</span></div>
   <div><b>{len(counts)}</b><span>distinct tags</span></div>
   <div><b>{sum(counts.values())}</b><span>tag assignments</span></div>
   <div><b>{sum(counts.values()) / total:.1f}</b><span>tags per problem</span></div>
