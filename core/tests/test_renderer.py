@@ -1112,6 +1112,30 @@ class TestTheProblemSchema:
         self.accepts({'similar': ['half-g']})
         self.accepts({'similar': []})
 
+    # --- `requires:`, which is a dependency rather than a suggestion -------
+
+    def test_requires_is_a_list_of_problem_ids(self):
+        """
+        Same shape as `similar:` and a different meaning: a `requires` is what the solution
+        leans on, so a document holding this problem and not that one prints `??`. Written as
+        an id and never a path -- the dependency crosses volumes, which is the whole reason
+        position could not express it.
+        """
+        self.accepts({'requires': ['napkin1']})
+        self.accepts({'requires': ['thief', 'snow-thirst']})
+
+    def test_one_id_written_without_its_list_is_rejected(self):
+        """`requires: 'napkin1'` is the plausible typo, and `Or(list[str], [])` would take it."""
+        self.rejects({'requires': 'napkin1'})
+        self.rejects({'requires': [None]})
+        self.rejects({'requires': [7]})
+
+    def test_absent_and_empty_both_mean_it_stands_alone(self):
+        """The quiet half: all but a handful of problems depend on nothing, and must not have
+        to say so."""
+        self.accepts({'requires': []})
+        self.accepts({})
+
 
 class TestRenderSettles:
     r"""

@@ -17,6 +17,7 @@ tested in `core/tests/test_audit.py`.
 `core` importing `modules` is backwards, so the two naboj-specific checks import their vocabulary
 lazily and declare `modules=('naboj',)`; nothing here needs `modules` to be importable otherwise.
 """
+import pathlib
 import re
 from collections import Counter, defaultdict
 
@@ -982,6 +983,84 @@ def listed_missing(sources):
         yield Finding('listed-missing', 'error',
                       f"`{name}` is listed in {sources.scope}/meta.yaml but no such directory "
                       f"exists; the page will carry a `Missing file` box in its place")
+
+
+def _competition_units(module_root, competition):
+    """
+    Every problem directory of one competition, as `{id: [path, …]}`.
+
+    **The one check that has to look past its own scope**, because a duplicate id is by
+    construction in another volume and a scope cannot see one. `core/audit/stale.py` already
+    reads outside what it was handed, for the same reason and at the same cost -- a directory
+    listing, no file opened. Scoped to the competition and not to the module, because `phys`,
+    `chem` and `test` are separate namespaces and `schnitzel` legitimately names a physics
+    problem and a chemistry one.
+
+    Dotted directories are skipped at every level, which is what keeps `chem/.pool` out of this
+    while it was still dotted and keeps any future scaffolding out of it too.
+    """
+    found = {}
+    for path in (module_root / competition).glob('*/problems/*'):
+        relative = path.relative_to(module_root)
+        if not path.is_dir() or any(part.startswith('.') for part in relative.parts):
+            continue
+        found.setdefault(path.name, []).append(relative.as_posix())
+    return found
+
+
+@check('unit-id-duplicate', 'warning',
+       'An id that names more than one problem in the competition', modules=('naboj',))
+def unit_id_duplicate(sources):
+    """
+    Two problems with the same directory name, in two volumes of one competition.
+
+    **Nothing is broken today, which is why this is a warning and not an error.** Both problems
+    build, each booklet prints its own, and the labels they define -- `{#eq:<pid>:<key>}` and
+    `{#fig:<pid>:<key>}` -- are per document, so even those do not collide. What a duplicate
+    costs is the ability to *refer* to a problem by a short name, and that is what a document
+    which is not a volume has to do: a selection names the problems it contains, and
+    `takeoff` is not an answer to which one.
+
+    Five exist. Two are genuine clashes -- `phys/takeoff` in volumes 18 and 27, `chem/spektrofoto`
+    in 01 and 03 -- where the older of the pair is the one to rename, since nothing in the corpus
+    references either id and a rename is the directory plus one line in the volume's `problems:`.
+
+    The other three are a different thing wearing the same hat, which is why they get their own
+    message: `starlight` and `sinking` sit in both `phys/pool` and volume 29, `czechoslovak` in
+    both the pool and volume 25. Those are **stale copies left behind when the problem was
+    picked** -- the volume copy has languages the pool copy lacks and the texts have drifted
+    apart -- and the fix is to remove the pool copy, not to rename anything. A problem picked
+    into a volume leaves no copy behind; reuse is by reference.
+    """
+    competition = pathlib.PurePath(sources.scope).parts[0]
+    everywhere = _competition_units(sources.module_root, competition)
+    for unit in sources.unit_list:
+        name = pathlib.PurePath(unit.path).name
+        others = [p for p in everywhere.get(name, []) if p != unit.path]
+        if not others:
+            continue
+        pooled = [p for p in others if 'pool' in pathlib.PurePath(p).parts]
+        set_elsewhere = [p for p in others if 'pool' not in pathlib.PurePath(p).parts]
+        if sources.is_pool and set_elsewhere:
+            # Read from the pool's own page, where the advice is the opposite one: this copy is
+            # the stale half, and the one that has shipped stays.
+            yield Finding('unit-id-duplicate', 'warning',
+                          f"`{name}` has been set as {', '.join(set_elsewhere)}; this pooled copy "
+                          f"was left behind when it was picked -- check the two are the same "
+                          f"problem and remove this one",
+                          unit.path)
+        elif pooled and not sources.is_pool:
+            yield Finding('unit-id-duplicate', 'warning',
+                          f"`{name}` is also {', '.join(pooled)}; a problem picked into a volume "
+                          f"leaves no copy in the pool -- check the two are the same problem and "
+                          f"remove the pooled one",
+                          unit.path)
+        else:
+            yield Finding('unit-id-duplicate', 'warning',
+                          f"`{name}` also names {', '.join(others)}; an id must name one problem "
+                          f"across the whole competition, or nothing outside a volume can refer "
+                          f"to it -- rename the older of the two",
+                          unit.path)
 
 
 @check('build-orphan', 'warning',
@@ -2049,16 +2128,28 @@ RE_CODE_SPAN = re.compile(r'`+[^`\n]*`+')
 #: with a `\qtylist` in it, which was read as a siunitx macro in running text.
 RE_COMMENT_LINE = re.compile(r'^%[^\n]*$', re.MULTILINE)
 
+#: An HTML comment, which pandoc drops and which 37 files use to park the Slovak original above
+#: the translation -- `23/thief-pro/ru` keeps the whole source statement that way, so a rule
+#: reading it would report the Slovak twice and the Russian never. The sources write `<!--- … --->`
+#: and the extra dashes are inside the ordinary delimiters, so one pattern takes both.
+#:
+#: **Adding it here moved nothing**, which is the only reason it is here rather than in the one
+#: check that needed it: all 24 checks over all 33 naboj scopes report the same 2326 findings with
+#: it and without. Two spellings of *what prose is* is how this file drifts, and the last time
+#: this function gained a case it moved eight checks at once.
+RE_HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
+
 
 def only_prose(text):
     """
     The text with everything that is not prose blanked, newlines kept so line numbers survive.
 
-    Display maths, inline maths, fenced blocks, code spans, commented-out lines and Jinja tags,
-    in that order: a display has to go before an inline so that a `$$` is never read as two `$`.
+    Display maths, inline maths, fenced blocks, code spans, commented-out lines, HTML comments
+    and Jinja tags, in that order: a display has to go before an inline so that a `$$` is never
+    read as two `$`.
     """
     text = without_blocks(text)
-    for pattern in (RE_FENCE, RE_CODE_SPAN, RE_INLINE, RE_COMMENT_LINE, RE_TAG):
+    for pattern in (RE_FENCE, RE_CODE_SPAN, RE_INLINE, RE_COMMENT_LINE, RE_HTML_COMMENT, RE_TAG):
         text = pattern.sub(lambda m: '\n' * m[0].count('\n'), text)
     return text
 
@@ -2102,3 +2193,121 @@ def siunitx_in_prose(sources):
                               rf'`\{m["macro"]}` is in running text; wrap it in `$…$`, or '
                               rf'declare the quantity in `values:` and write the tag',
                               unit.path, label, line_of(prose, m.start()))
+
+
+# --- a reference to another problem -----------------------------------------
+
+#: A word meaning *problem*, *task* or *example* in the eleven languages the sources are written
+#: in. Spelled out per language rather than as one loose `problem\w*`, because two of the quiet
+#: cases are adjectives built on the same stem: `28/alphabet` writes "one last **problematic**
+#: solitaire" in English and "posledný **problémový** solitér" in Slovak, and a trailing `\w*`
+#: reports both. Hence `problems?` and an explicit list of `problém`'s case endings, neither of
+#: which can reach `problémový`.
+#:
+#: **Farsi is deliberately absent.** Its forty problems are not covered and are not pretended to
+#: be: the words would have to be transcribed from a language nobody here reads, and a list that
+#: is wrong is worse than a list that says it stops.
+RE_PROBLEM_NOUN = (
+    r'(?:úloh\w+|uloh\w+|príklad\w*|příklad\w*'
+    r'|problem(?:s|u|ie|em|y|ów|ach)?|problém(?:u|e|y|om|och|ami)?'
+    r'|zadani\w*|zadań'
+    r'|feladat\w*|Aufgaben?'
+    r'|problemas?|ejercicios?|exercícios?'
+    r'|задач\w+|задани\w+|завданн\w+|приклад\w*)'
+)
+
+#: A word placing that problem relative to this one. Slavic, Germanic and Finno-Ugric put the
+#: modifier first; Romance puts it after, which is why there are two patterns below rather than
+#: one that accepts either order. Accepting either order everywhere is what reported
+#: `23/dissolve`'s Hungarian "solve the problem with the **following** data" and
+#: `28/circle-squared`'s "the **first** iteration of the problem" -- in a head-final language a
+#: word after the noun modifies whatever comes next, not the noun.
+RE_POSITION_BEFORE = (
+    r'(?:predchádzajúc\w+|predošl\w+|predch\w+|minul\w+|nasleduj\w+|prv\w+|posledn\w+'
+    r'|předchoz\w*|předcházej\w+|předeš\w+|následuj\w+|prvn\w+'
+    r'|previous|preceding|prior|next|following|earlier|above|first|last'
+    r'|poprzedni\w*|następn\w*|pierwsz\w*|ostatni\w*'
+    r'|előző|következő|első|utolsó|fenti'
+    r'|vorherig\w*|vorig\w*|vorherge\w+|nächst\w*|erste\w*|letzte\w*|obige\w*'
+    r'|primer\w*|últim\w*|primeir\w*'
+    r'|предыдущ\w+|следующ\w+|перв\w+|последн\w+|попередн\w+|наступн\w+|перш\w+|останн\w+)'
+)
+RE_POSITION_AFTER = r'(?:anterior|siguiente|seguinte|posterior|previa|prévio)'
+
+#: *This* problem, which is not a reference to another one. `19/onion-capacity` writes
+#: "elektrické pole medzi nejakými dvomi šupkami (napr. 2 a 3) je určené len nábojmi, ktoré ležia
+#: na menších šupkách (v **tomto príklade** 1 a 2)" -- the digits are shell numbers and the
+#: example is the one you are reading, so without this the numbered pattern below reports it.
+RE_THIS = (
+    r'(?:tomto|tomhle|tejto|této|tom|tým|tym|tej|naš\w+|this|our|the same'
+    r'|ebben|ezen|diesem|dieser|este|esta|esse|essa|neste|nesta'
+    r'|этом|нашем|данном|цьому|нашому|даному)'
+)
+
+RE_POSITIONAL_BEFORE = re.compile(rf'\b{RE_POSITION_BEFORE}\s+{RE_PROBLEM_NOUN}\b', re.I)
+RE_POSITIONAL_AFTER = re.compile(rf'\b{RE_PROBLEM_NOUN}\s+{RE_POSITION_AFTER}\b', re.I)
+RE_POSITIONAL_NUMBER = re.compile(
+    rf'(?P<this>\b{RE_THIS}\s+)?\b{RE_PROBLEM_NOUN}\s*(?:č\.|no\.|nr\.?|#)?\s*\d+\b', re.I)
+
+
+@check('positional-reference', 'warning',
+       "Prose pointing at another problem by position", modules=('naboj',))
+def positional_reference(sources):
+    """
+    A problem's prose may not refer to another problem by where it sits.
+
+    "the previous problem", "problem 21", "the first example of this collection" -- each is a
+    fact about **one document**, and a problem is not the property of one document. It is
+    reused: picked out of a pool into a volume, and from this year into a selection grouped by
+    tag or chosen by hand. Position is the one thing that does not survive that, and it is also
+    the one kind of reference nothing can check -- a dangling `[-@sec:…]` is caught by
+    `reference-dangling`, while "the previous problem" has no referent to dangle.
+
+    **Two of the eight sites in the corpus were already wrong before any of this**, which is the
+    argument for the rule in one line. `24/napkin2` is problem 25 and calls `napkin1`, problem
+    14, "the previous problem"; `24/broken-cart` is problem 24 and says "Just like in previous
+    problem", where problem 23 is a crane and the crossref beside it points at `broken-cart`'s
+    own statement. Both have shipped. `19/onion-capacity` is the furthest gone, sending its
+    reader to "the solution of problem 36 of the 2015 Náboj" -- another volume, by number.
+
+    **The fix is `requires:` and a crossref, or no reference at all.** Where a solution genuinely
+    builds on another problem, name it in the meta and point at its label, so a selection that
+    omits it can say so; where it borrows a sentence or two, repeat them and let the problem
+    stand alone. The ids already carry the relation in every case here --
+    `deflected-speed`/`deflected-ratio`, `napkin1`/`napkin2`, `snow-thirst`/`snow-rate` -- so
+    position was never the information, only a shorthand for it.
+
+    The quiet half is four shapes that look like this and are not, each of which a looser version
+    of this check reported: an adjective off the same stem (`problematic`, `problémový`), a
+    modifier that in a head-final language belongs to the next word and not to the noun
+    ("the problem with the following data"), "in **this** example 1 and 2" where the digits are
+    not a problem number, and the whole of an HTML comment, where `23/thief-pro/ru` parks the
+    Slovak original above its Russian translation.
+
+    `23/worldbuilder` is reported and is narrative -- the exam *in the story* has a first problem
+    -- so it is the `audit: {ignore: [...]}` case rather than a pattern to carve out: there is
+    nothing in the sentence that distinguishes it from a real one.
+    """
+    for unit in sources.unit_list:
+        seen = set()
+        for lang, name, text in unit.files():
+            label = unit.real_label(lang, name)
+            if label in seen:
+                continue
+            seen.add(label)
+            prose = only_prose(text)
+            for pattern in (RE_POSITIONAL_BEFORE, RE_POSITIONAL_AFTER, RE_POSITIONAL_NUMBER):
+                for m in pattern.finditer(prose):
+                    if m.groupdict().get('this'):
+                        continue
+                    # A reference may be wrapped across a source line -- `23/thief-pro` writes
+                    # "predošlej\núlohe" -- which is why this matches over the whole text and
+                    # not line by line, and why the quoted fragment is re-joined before it is
+                    # shown. A line-based version of this check missed three of the twenty-three.
+                    quoted = ' '.join(m[0].split())
+                    yield Finding(
+                        'positional-reference', 'warning',
+                        f'{quoted!r} places another problem rather than naming it; '
+                        f'declare it in `requires:` and cross-reference its label, or make the '
+                        f'solution stand alone',
+                        unit.path, label, line_of(prose, m.start()))

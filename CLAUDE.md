@@ -184,6 +184,37 @@ nothing is cached — except the two checks that cannot be answered by reading f
 `build/.audit/` with a fingerprint of the sources: the build checks, which shell out to the build, and
 the macro sweep.
 
+### An id names one problem in the whole competition
+
+`unit-id-duplicate` says so, and it is the **only** thing that does: the filesystem enforces
+uniqueness inside a volume and nothing enforces it between two. So it is the one check that
+deliberately reads past its own scope -- a duplicate is by construction in another volume --
+the way `core/audit/stale.py` already does, and at the same cost, a directory listing with no
+file opened. Scoped to the *competition*, not the module: `schnitzel` names a physics problem
+and a chemistry one and that is not a collision.
+
+**Nothing is broken today, which is why it is a warning.** Both problems build, each booklet
+prints its own, and the labels they define -- `{#eq:<pid>:<key>}`, `{#fig:<pid>:<key>}` -- are
+per document and cannot collide. What a duplicate costs is the ability to *refer* to a problem
+by its short name, which is what any document that is not a volume has to do.
+
+Five exist, and they are two different things wearing one hat, so they get two messages:
+
+- **A clash.** `phys/takeoff` in volumes 18 and 27, `chem/spektrofoto` in 01 and 03 -- two
+  different problems. **Rename the older of the pair.** Nothing in the corpus references either
+  id, so that is the directory plus one line in the volume's `problems:`; the labels follow the
+  directory name on their own. The gate is the key-sweeps' one: rendered output byte-identical
+  except inside `\label{}`, and no dangling crossref.
+- **A copy left behind.** `starlight` and `sinking` in both `phys/pool` and volume 29,
+  `czechoslovak` in the pool and 25 -- the volume copy has languages the pooled one lacks and
+  the two have drifted. **A problem picked into a volume leaves no copy in the pool**; remove
+  the pooled one, after checking the two really are the same problem. Read from the pool's own
+  page the message says the opposite thing, because the advice is opposite: getting that round
+  the wrong way would tell an author to rename something that has already shipped.
+
+The rule behind both: **reuse is by reference, never by copy.** A second document naming
+`25/czechoslovak` is right; a second directory holding it is this finding.
+
 **There is a third direction, and it is the one make cannot fix: `build-orphan`.** Rename a
 problem and its `render/` and `build/` copies stay where they are for ever — a target whose
 prerequisite has vanished has no rule left to remove it, and `.SECONDARY:` keeps every
@@ -1813,6 +1844,62 @@ and `Picture` emits the caption on one line, so where the break falls is free: a
 the break as a `\n` escape instead gets it exactly backwards -- the break lands where it does
 nothing and the long line where it hurts. That was done for one commit, and it put 21 call sites
 over 120 characters, the longest at 249.
+
+## A problem never says where another problem is
+
+`$X$ follows from the previous problem` is a fact about **one document**, and a problem is not
+the property of one document. It is picked out of a pool into a volume, and out of a volume into
+a selection grouped by tag or chosen by hand -- and position is the one thing that does not
+survive any of that. So: **no "the previous problem", no "problem 21", no "the first example of
+this collection".**
+
+**It is also the one reference nothing can check.** A crossref with no target is caught by
+`reference-dangling`; "the previous problem" has no target to miss, which is why two of the
+corpus's ten sites were printing something false and had shipped that way. `24/napkin2` is
+problem 25 and calls `napkin1`, problem 14, *the previous problem*; `24/broken-cart` is problem
+24 and opens *"Just like in previous problem `[-@sec:broken-cart:problem]`"*, where problem 23 is
+a crane and the crossref points at `broken-cart`'s own statement. `19/onion-capacity` is the
+furthest gone, sending its reader to *"the solution of problem 36 of the 2015 Náboj"* -- another
+volume, by number, unresolvable by anyone holding the booklet.
+
+Two ways to write it instead, and the second is the default:
+
+- **`requires:` in the meta, plus a crossref to the required problem's own label.** A list of
+  ids, beside `similar:` and meaning something stronger: `similar` is a suggestion that costs
+  nothing if ignored, a `requires` is a dependency, so a document holding this problem and not
+  that one prints `??`. An **id and never a path**, because the dependency crosses volumes --
+  writing the volume in would be the same mistake one level up. Nothing reads it yet; its
+  consumer is the selection build, which is what will refuse a selection whose `requires:` are
+  not all in it.
+- **Make the solution stand alone.** Where what is borrowed is a sentence or two -- which is most
+  of these -- repeat them. It costs a line and the problem becomes reusable anywhere.
+
+The ids already carry the relation in every case in the corpus: `deflected-speed` /
+`deflected-ratio`, `napkin1` / `napkin2`, `thief` / `thief-pro`, `snow-thirst` / `snow-rate`. The
+position was never the information.
+
+`positional-reference` reports the shape, over eleven languages. Four things make it quiet, and
+every one of them is live in the sources rather than invented for the test: an adjective off the
+same stem (`problematic`, `problémový`, which is why the pattern is `problems?` and an explicit
+list of `problém`'s endings rather than `problem\w*`); a modifier that in a head-final language
+belongs to the word after it and not to the noun (Hungarian's *"solve the problem with the
+**following** data"*, *"the **first** iteration of the problem"*), which is why the post-posed
+order is accepted only for Spanish and Portuguese; *"in **this** example 1 and 2"*, where the
+digits are shell numbers; and an **HTML comment**, where 37 files park the original above the
+translation -- `23/thief-pro/ru` keeps the whole Slovak statement that way. That last one went
+into `only_prose` rather than into the check, and **it moved nothing**: all 24 other checks over
+all 33 naboj scopes report the same 2326 findings with it and without.
+
+It matches over the whole text and not line by line, because a reference wraps -- `23/thief-pro`
+writes `predošlej\núlohe`, and a line-based version missed that one and two Russian ones.
+
+**Farsi is not covered and does not pretend to be.** Its forty problems would need the words
+transcribed from a language nobody here reads, and a list that is wrong is worse than one that
+says where it stops.
+
+`23/worldbuilder` is reported four times and is narrative -- the exam *in the story* has a first
+problem -- so it is the `audit: {ignore: ['positional-reference']}` case rather than a shape to
+carve out: nothing in the sentence distinguishes it from a real one.
 
 ## Translated words inside maths
 
