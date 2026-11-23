@@ -35,7 +35,7 @@ def i18n_built():
     broken regex and is a missing file.
 
     Session-scoped and idempotent: a language already built is left alone, so this costs nothing
-    after the first run and nothing at all after a `make`.
+    after the first run and nothing at all after a build.
     """
     I18N.mkdir(parents=True, exist_ok=True)      # the builder wants an existing output directory
     for language in sorted(i18n.languages):

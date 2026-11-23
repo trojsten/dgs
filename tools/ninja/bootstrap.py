@@ -36,9 +36,12 @@ def ensure_graph(root=ROOT, *, env=None, python=None):
     """
     Generate `build.ninja` if it is not there. `None` when nothing was wrong, else the failure.
 
-    `python` is the interpreter to generate with, and defaults to the one running this. The
-    generator imports nothing outside the standard library, but the project asks for 3.14 and a
-    system `python3` may be older, so the caller that knows better passes it.
+    `python` is the interpreter to generate with, and defaults to the one running this. **It has
+    to be the project's own**, and that is a correction rather than a preference: this used to
+    say the generator imported nothing outside the standard library, which stopped being true
+    when it grew an import of `core.builder`, and `python3 -m tools.ninja.generate` outside the
+    venv now fails with `ModuleNotFoundError: No module named 'enschema'`. A caller that knows
+    better passes one; the two that exist both do.
     """
     root = pathlib.Path(root)
     graph = root / 'build.ninja'

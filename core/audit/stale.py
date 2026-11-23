@@ -1,10 +1,11 @@
 r"""
-Built artefacts whose source is gone -- the one failure make says it cannot cure itself.
+Built artefacts whose source is gone -- the one failure a build system cannot cure itself.
 
-`Makefile:55-61` states it outright: *deleting* a source leaves its built counterpart behind,
-because a target whose prerequisite has vanished has no rule left to remove it. `.SECONDARY:`
-with no prerequisites (`Makefile:45`) then keeps every intermediate for ever, so nothing clears
-up after a rename either.
+*Deleting* a source leaves its built counterpart behind, because a target whose prerequisite has
+vanished has no rule left to remove it, and nothing clears up after a rename either. The Makefile
+this repository used to carry said so outright and kept every intermediate besides; the generated
+Ninja graph has the same hole for the same reason, since a graph computed from the source tree
+simply stops mentioning what the tree no longer holds.
 
 Most of the time an orphan is only dead weight. It is a **wrong page** when the scope meta still
 names the unit: `\protectedInput` finds the stale `.tex` and includes it, so the booklet prints
@@ -100,13 +101,13 @@ def language_orphans(sources) -> list[Orphan]:
     beside its scope has no notion of a language directory and yields nothing, which is how
     seminar and scholar pass through -- monolingual, one language and not one of several.
 
-    This is the half that lets a deleted translation keep building. The language documents in
-    `modules/naboj/module.mk` are pattern rules, so `%` matches any string; a stale `build/`
-    language directory supplies everything they ask for, and `make …/languages/uk/booklet.pdf`
-    for a volume with no Ukrainian produces a booklet out of files whose sources are gone.
-    Volume 29 did exactly that -- a 40-page Ukrainian problems booklet, in a volume that has
-    `en`, `es` and `sk`. The `source/naboj/$*/meta.yaml` prerequisite added there is the other
-    half: it refuses a cold build, and this finds the warm one.
+    This is the half that lets a deleted translation keep building. It was found under make,
+    whose language documents were pattern rules -- `%` matches any string, so a stale `build/`
+    language directory supplied everything they asked for and `…/languages/uk/booklet.pdf` for a
+    volume with no Ukrainian produced a booklet out of files whose sources were gone. Volume 29
+    did exactly that: a 40-page Ukrainian problems booklet, in a volume that has `en`, `es` and
+    `sk`. Naming the scope meta as an input is the other half -- it refuses a cold build -- and
+    this finds the warm one.
     """
     languages = sources.module_root / sources.scope / 'languages'
     if not languages.is_dir():
@@ -131,7 +132,16 @@ def remove(orphan: Orphan) -> int:
     symlink -- `rglob` lists them and `unlink` removes the link rather than its target -- which
     matters because `source/` holds 84 of them and a careless prune would follow one out of the
     build tree.
+
+    **Except for the orphan itself**, which is the one symlink `rglob` would follow rather than
+    list: the sweep accepts a child on `is_dir()`, and that is true of a link to a directory, so
+    a symlinked orphan would have its *target's* contents deleted. Nothing in `build/` is a
+    symlink today -- the copy rules dereference -- so this guards an invariant rather than a bug,
+    and it guards the one whose failure is unrecoverable. One `cp -a` in a future rule is all it
+    would take.
     """
+    if orphan.path.is_symlink():
+        return 0
     gone = 0
     for path in sorted(orphan.path.rglob('*'), key=lambda p: len(p.parts), reverse=True):
         if path.is_symlink() or path.is_file():

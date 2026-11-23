@@ -69,6 +69,15 @@
 \RequirePackage{fvextra}                                    % ... and the line breaking fancyvrb has not got
 \RequirePackage{framed}
 
+% **`english` last, because babel takes the last option as the main language.** The standalone
+% templates carry a list of their own and used to end in `spanish`, so a document that did not
+% `\selectlanguage` would have been set in a different language depending on which preamble
+% built it. Nothing showed it -- `build/core/i18n/<lang>.tex` opens with `\selectlanguage` and
+% every document inputs it -- and it was still two answers to one question.
+%
+% `core/templates/standalone-preamble.jtex` deliberately does **not** share this list: it loads
+% `chemformula`, which this class does not, and chemformula and `russian` both define `\ch`.
+% That is the same conflict `\chemsetup{formula=mhchem}` below is annotated for.
 \RequirePackage[
     shorthands=off,
     slovak,

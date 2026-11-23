@@ -36,8 +36,10 @@ class UnitKind:
         The build target that converts this file to TeX.
 
         Derived from `render` rather than written out per module, because the relation is the
-        build system's own: every `.tex` rule in every `module.mk` reads
-        `build/<module>/%/<name>.tex: render/<module>/%/<name>.md`. Deriving it cannot drift,
+        build system's own: `tools/ninja/generate.py`'s `_fragment` is the single funnel every
+        `.md` edge goes through, and it emits `build/<stem>.tex` from `render/<stem>.md` for every
+        module. `core/tests/test_editor_capabilities.py` pins the two against each other by
+        running the real emitter. Deriving it cannot drift,
         whereas six hand-written keys across three descriptors -- scholar alone has four unit
         kinds -- can. `tex_override` exists for a module that ever stops following the rule.
         """

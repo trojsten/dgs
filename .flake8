@@ -1,3 +1,18 @@
+# **ruff is the gate; this is for anyone who runs flake8 by hand.**
+#
+# `pyproject.toml`'s `[tool.ruff.lint]` is what CI enforces and what the reasoning lives beside.
+# This file used to say `select = E, W, F, D` with no `exclude`, which was wrong three ways:
+#
+# - `D` is pydocstyle and arrives with `flake8-docstrings`, which is not a dependency, so a
+#   whole rule family was selected and could never fire;
+# - naming `select` discards flake8's own default ignore list, which turned on **W503 and W504
+#   together** -- they contradict each other, so 68 of the 357 findings were unfixable by
+#   construction, as were 35 more from the continuation-line family;
+# - with no `exclude` it walked `.venv/` and reported 21 981.
+#
+# `max-line-length` is 120, which is what CLAUDE.md says the limit is. It said 160 here, and ten
+# lines exceeded even that.
 [flake8]
-select = E, W, F, D
-max-line-length = 160
+extend-ignore = E241, W503, W504, E121, E123, E126, E127, E128, E226, E24, E704
+max-line-length = 120
+exclude = .venv,.git,__pycache__,source,build,render,output,install,assets,.ruff_cache,.pytest_cache

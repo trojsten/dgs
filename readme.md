@@ -8,7 +8,7 @@ It also includes basic internationalization.
 
 The same content can be repeatedly rendered to various templates or output formats,
 for instance XeLaTeX for printable documents and HTML for the web.
-DGS is built with Makefile, Python, Markdown and XeLaTeX, and it uses
+DGS is built with Ninja, Python, Markdown and XeLaTeX, and it uses
 `pandoc`, `jinja2`, `rsvg-convert`, and `dvisvgm` to process content.
 
 The authors would like to express gratitude to

@@ -696,7 +696,7 @@ class TestInclude:
     `(§ include('x.py') §)` pastes a file from beside the template.
 
     This is what a fenced code block holds: the Python a solution walks through lives in its own
-    runnable `.py`, which `module.mk` also copies to `output/` for the reader to download, so the
+    runnable `.py`, which the build also copies to `output/` for the reader to download, so the
     listing has to be that same file rather than a second copy that goes stale. Pandoc used to do
     it with `pandoc-include`'s `!include`; the filter was dropped and nothing replaced it, so
     three solutions printed the literal directive where the code belonged.

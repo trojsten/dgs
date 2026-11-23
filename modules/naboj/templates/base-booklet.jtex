@@ -89,54 +89,22 @@
         \fancyhead[LE,RO]{\textit{(* i18n[language.id].section.answers *)}}
     }
 
-    (# The last page carries the credits, and the colophon is that page's footer rather than a
-        block of body text above it -- `blocks/colophon.jtex` says what is in it, and
-        `blocks/booklet/footer.jtex` asks for the style once the credits are laid down.
+    (# **Only a booklet has a colophon**, so the whole apparatus lives in `booklet.jtex` and
+        this is the seam it fills. It used to stand here, which made it every document's --
+        and this base is not the booklet's alone. `instructions.jtex` and `answers-modulo.jtex`
+        extend it too, for the geometry, the logo header and the footer, and a venue document
+        has no contents list to end on, no credits page, and never asks for `\pagestyle{colophon}`:
+        `blocks/booklet/footer.jtex` is what does, and only `booklet.jtex` includes it. So they
+        were defining a style, a savebox and an `\AtBeginDocument` hook they could not use.
 
-        **It is boxed here and used there**, which is what keeps the two halves of the
-        arrangement in step. A footer grows *upward* from its baseline, so the colophon rises
-        into the gap between the credits and the footrule -- and the credits are seated flush
-        with the bottom of the text block, so without a reservation the rule cut through the
-        last name on the page. The reservation is this box's own height rather than a length
-        somebody measured off a proof: resize the type or add a row and the gap follows.
-        `\thepage` stays outside the box, because a page number frozen in the preamble would
-        print whatever page the box was built on.
-
-        Only the centre field changes, so the style inherits the one the booklet ends in: the
-        running head on that page still belongs to the last section, and a `colophon` built on
-        `naboj` would drop the `Výsledky` beside the logo. fancyhdr 4's optional base argument
-        is what makes that one line rather than a copy of the section style. #)
-    \newsavebox{\dgsColophonBox}
-    \newlength{\dgsColophonRise}
-    (# The colophon sits closer to its own second row than to the footer line below it, or the
-        three read as one block of small print rather than as a colophon over a footer. One
-        length, used by the style and by the reservation, so the two cannot disagree. #)
-    \newlength{\dgsColophonGap}
-    \setlength{\dgsColophonGap}{3mm}
-    \AtBeginDocument{%
-        \sbox{\dgsColophonBox}{%
-            \parbox{\textwidth}{\centering (@ include 'blocks/colophon.jtex' @)}%
-        }%
-        \setlength{\dgsColophonRise}{%
-            \dimexpr\ht\dgsColophonBox + \dp\dgsColophonBox + \dgsColophonGap\relax
-        }%
-    }
-    (@ set colophon_base = 'answers' if language.booklet.contents.answers
-        else 'solutions' if language.booklet.contents.solutions
-        else 'problems' if language.booklet.contents.problems
-        else 'naboj' @)
-    \fancypagestyle{colophon}[(* colophon_base *)]{%
-        \fancyfoot[C]{%
-            \makebox[0pt]{%
-                \parbox[b]{\textwidth}{%
-                    \centering
-                    \usebox{\dgsColophonBox}\par
-                    \vspace{\dgsColophonGap}%
-                    \small \thepage
-                }%
-            }%
-        }%
-    }
+        It was also fatal rather than merely wasteful, because `language` is not one thing here.
+        In a language build it is the language *meta* -- `booklet`, `name`, `translators`; in a
+        venue build it is the i18n descriptor -- `cref`, `quotes`, `siunitx`, `typography` --
+        and the two share only `id` and `rtl`. The colophon reached for `language.booklet` and
+        `language.name`, so every venue document in the repository stopped building the day it
+        was added. Anything in this shared base that touches `language` beyond those two keys
+        has the same fault waiting in it. #)
+(@ block colophon @)(@ endblock @)
 
     \setcounter{secnumdepth}{3}
     \input{build/core/i18n/(* language.id *).tex}

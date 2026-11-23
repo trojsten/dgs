@@ -31,16 +31,78 @@ import functools
 import re
 from pathlib import Path
 
-#: `core/latex/siunitx.tex`'s `\sisetup`, which is the booklet's own.
-PER = '/'
-EXPONENT_PRODUCT = r'\cdot'
-NUMBER_UNIT_PRODUCT = r'\ '
-GROUP_SEPARATOR = r'\,'
-GROUP_MINIMUM_DIGITS = 5
-# An en dash outright, not TeX's `--` ligature: `\text{ -- }` is what `\sisetup` writes and
-# what LaTeX turns into one, but MathJax has no such ligature and would set two hyphens.
+SETUP_FILE = 'core/latex/siunitx.tex'
+
+#: `key = value` inside `\sisetup{…}`, with one level of braces taken off the value. The block
+#: is one per file and every entry is on its own line, which is what lets a line scan do.
+_SETUP = re.compile(r'^\s*([a-z-]+)\s*=\s*(.*?),?\s*(?:%.*)?$')
+
+
+def _setup(path: str = SETUP_FILE) -> dict[str, str]:
+    r"""
+    `core/latex/siunitx.tex`'s `\sisetup` block, parsed.
+
+    The `\DeclareSIUnit` half of that file has been read rather than copied since this module
+    existed, "so a unit added there reaches the web without anybody remembering a second table".
+    The `\sisetup` half was copied anyway -- seven constants, thirty lines above the parser that
+    could have read them. Change `group-minimum-digits` for the booklet and the web started
+    grouping at a different width, in every fragment, with nothing to say so.
+    """
+    source = Path(path)
+    if not source.is_file():
+        return {}
+    text = source.read_text()
+    try:
+        body = text.split(r'\sisetup{', 1)[1].split('}\n', 1)[0]
+    except IndexError:
+        return {}
+    found = {}
+    for line in body.splitlines():
+        if (m := _SETUP.match(line)) and m.group(2):
+            value = m.group(2).strip()
+            if value.startswith('{') and value.endswith('}'):
+                value = value[1:-1]
+            found[m.group(1)] = value
+    return found
+
+
+#: `per-mode` names a *behaviour*; this is what that behaviour prints. The other direction,
+#: `reciprocal`, would be `m\,s^{-1}` and needs the whole unit string rather than a separator,
+#: so only the mode this document actually sets is implemented -- and anything else is refused
+#: by name at import, below, rather than reaching the page as a wrong separator.
+_PER_MODE = {'symbol': '/'}
+
+_SISETUP = _setup()
+
+#: Read off `\sisetup`, every one of them. The booklet and the page agree by construction now.
+_PER_MODE_SET = _SISETUP.get('per-mode', 'symbol')
+if _PER_MODE_SET not in _PER_MODE:
+    # Named, rather than a bare `KeyError: 'reciprocal'` out of an import that takes the build
+    # and the editor down with it. Only the mode this document sets is implemented -- the other
+    # one needs the whole unit string rather than a separator -- and this is where to start if
+    # it ever changes.
+    raise NotImplementedError(
+        f"core/latex/siunitx.tex sets per-mode = {_PER_MODE_SET}, which core/filters/siunitx.py "
+        f"does not implement (it knows: {', '.join(sorted(_PER_MODE))}). The web expansion would "
+        f"silently disagree with the booklet, so it refuses to start instead.")
+PER = _PER_MODE[_PER_MODE_SET]
+EXPONENT_PRODUCT = _SISETUP.get('exponent-product', r'\cdot')
+NUMBER_UNIT_PRODUCT = _SISETUP.get('number-unit-product', r'\ ')
+GROUP_SEPARATOR = _SISETUP.get('group-separator', r'\,')
+GROUP_MINIMUM_DIGITS = int(_SISETUP.get('group-minimum-digits', 5))
+
+#: **The two deliberate divergences**, named as such so that they are distinguishable from the
+#: five above by reading rather than by remembering. Both are MathJax's doing:
+#:
+#: - `\sisetup` writes `\text{ -- }` and LaTeX turns the ligature into an en dash. MathJax has no
+#:   such ligature and would set two hyphens, so the character goes in outright.
+#: - `\allowbreak` is a TeX line-breaking hint with no meaning to a browser, which reflows by
+#:   itself; MathJax leaves it as an unknown macro.
 RANGE_PHRASE = '\\text{ \u2013 }'
 LIST_SEPARATOR = r'\text{,}\ '
+
+#: Not a `\sisetup` key at all -- `\qtyproduct` takes its separator from `product-units`, which
+#: this document does not set, so this is siunitx's own default spelled out.
 PRODUCT_SEPARATOR = r'\times'
 
 #: Units siunitx defines itself and neither the locale nor `siunitx.tex` re-declares, so nothing
@@ -73,17 +135,32 @@ _COMMAND = re.compile(r'\\(' + '|'.join(sorted(ARITY, key=len, reverse=True)) + 
 
 
 @functools.cache
-def declared_units(path: str = 'core/latex/siunitx.tex') -> dict[str, str]:
+def _declared_at(path: str, _key) -> dict[str, str]:
+    source = Path(path)
+    if not source.is_file():
+        return {}
+    return {m.group(1): m.group(2) for m in _DECLARED.finditer(source.read_text())}
+
+
+def declared_units(path: str = SETUP_FILE) -> dict[str, str]:
     """
     The repository's own `\\DeclareSIUnit`s, read rather than copied.
 
     Parsed from the file the booklet loads, so a unit added there reaches the web without anybody
     remembering a second table.
+
+    **Keyed on the file's mtime, not cached once.** `@functools.cache` on the path alone meant
+    that in the editor -- which serves for hours -- a unit added to `siunitx.tex` went on being
+    reported by `unit-unknown` and went on reaching the page unexpanded until somebody restarted
+    the server. The same trap `core/html/preamble.py` describes, one file over: a cache whose key
+    cannot move is a cache that answers for the tree as it was when the process started.
     """
-    source = Path(path)
-    if not source.is_file():
-        return {}
-    return {m.group(1): m.group(2) for m in _DECLARED.finditer(source.read_text())}
+    try:
+        stat = Path(path).stat()
+        key = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        key = None
+    return _declared_at(path, key)
 
 
 def _merge(text: str) -> str:

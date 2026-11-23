@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-import core.utilities.colour as c
-from core.builder import jinja
+from core.builder.products import Root
+from modules.naboj import declaration
 from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextVenue
 
@@ -14,13 +14,7 @@ class BuilderNabojVenue(BuilderNaboj):
     _subdir = 'venues'
 
     _root_context_class = BuildableContextVenue
-    templates = [
-        'instructions.jtex',
-        'answers-modulo.jtex',
-    ]
-    language_templates = [
-        'instructions-inner.jtex'
-    ]
+    _node = declaration.VENUE
 
     def add_arguments(self):
         super().add_arguments()
@@ -35,31 +29,22 @@ class BuilderNabojVenue(BuilderNaboj):
     def language_path(self) -> tuple:
         return self.args.competition, f'{self.args.volume:02d}', 'languages', self.context.data['language']['id']
 
-    def build_templates(self, *, new_name: str | None = None) -> None:
-        super().build_templates(new_name=new_name)
-        # `launch_directory`, not a path with this machine's home in it. The absolute
-        # `/home/kvik/dgs/source/naboj` that used to be here meant the venue builder could only
-        # ever run on one computer, and the `-l/--launch` option it ignored is exactly the knob
-        # for this.
-        source_root = Path(self.launch_directory, *self.language_path())
-        language_renderer = jinja.StaticRenderer(source_root)
+    def roots(self):
+        """
+        Adds the venue's *language* directory, which is a sibling node rather than a child.
 
-        for template in self.language_templates:
-            # The renderer **returns** the rendered string; it takes no `outfile`. Passing one
-            # raised `TypeError: render() got an unexpected keyword argument 'outfile'`, so no
-            # venue of any competition had ever been built -- `instructions.pdf` and
-            # `answers-modulo.pdf` failed the moment anything asked for them.
-            #
-            # The name is resolved against `source_root` and so is passed bare, and the render
-            # happens before the target is opened, because `open(..., 'w')` truncates at once and
-            # a template that raises would otherwise leave a 0-byte `.tex` that make calls fresh.
-            if not (source_root / template).exists():
-                log.warning(f"No {c.path(template)} for "
-                            f"{c.name('/'.join(str(p) for p in self.language_path()))}, skipping it")
-                continue
-            rendered = language_renderer.render(Path(template), self.context.data)
-            with open(self.output_directory / Path(template).with_suffix('.tex'), 'w') as outfile:
-                print(rendered, file=outfile)
+        It is the one root in the repository a context computes: the language comes from the
+        venue's own validated meta, so it is not knowable from the path alone. The graph cannot
+        call this -- it builds no contexts -- and reads the key itself through
+        `modules.naboj.declaration.venue_language`, which `core/tests/test_declarations.py` pins
+        against this.
+
+        `launch_directory`, not a path with this machine's home in it: the absolute
+        `/home/kvik/dgs/source/naboj` that used to be here meant the venue builder could only
+        ever run on one computer, and `-l/--launch` is exactly the knob for it.
+        """
+        return super().roots() | {Root.LANGUAGE: Path(self.launch_directory, *self.language_path())}
 
 
-BuilderNabojVenue().build_templates()
+if __name__ == '__main__':
+    BuilderNabojVenue().build_templates()

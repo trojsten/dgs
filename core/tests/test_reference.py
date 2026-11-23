@@ -20,6 +20,7 @@ import subprocess
 import sys
 
 import jinja2
+import jinja2.sandbox
 import pytest
 
 from core.builder import reference
@@ -29,8 +30,18 @@ from core.builder.reference import MARKDOWN, META, STATIC, Entry
 
 @pytest.fixture(scope='module')
 def builtin():
-    """Jinja's own tables, which everything below is measured against."""
-    return jinja2.Environment()
+    """
+    Jinja's own tables, which everything below is measured against.
+
+    **Sandboxed, because that is what the renderers are.** `registered()` compares by identity,
+    and `SandboxedEnvironment` installs its own `range` -- `sandbox.safe_range`, which refuses an
+    argument over 100 000 so that a template cannot exhaust memory. Against a plain `Environment`
+    that reads as a global *we* added, and the table would have to document a name that is
+    Jinja's and behaves identically at every size this repository loops over. The question the
+    test asks is "what do our renderers add to stock Jinja", and stock Jinja for a renderer that
+    sandboxes is the sandboxed one.
+    """
+    return jinja2.sandbox.SandboxedEnvironment()
 
 
 @pytest.fixture(scope='module')

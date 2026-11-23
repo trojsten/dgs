@@ -6,6 +6,140 @@ See `.claude/skills/naboj-authoring` for the authoring format.
 Note `source/naboj/phys`, `source/naboj/chem` etc. are git submodules — problem
 edits are committed there, not in the parent repo.
 
+## The build is one generated graph, and `make` is gone
+
+`./dgs-build <target>` is the whole interface. It generates `build.ninja` if there is none and
+hands over to Ninja, so a fresh clone needs no other step:
+
+```
+./dgs-build output/naboj/phys/29/languages/sk/booklet.pdf
+./dgs-build stale          # list built artefacts whose source is gone
+./dgs-build prune          # and remove them
+```
+
+The graph itself is `tools/ninja/generate.py`, and it is a **pure function of the source tree** —
+which is what makes a change to it cheap to check: generate before and after and diff the two
+graphs, about a second each. For a narrower graph than `--scope all`, run the generator yourself:
+
+```
+uv run python -m tools.ninja.generate --scope phys/29 -o build.ninja
+uv run --with ninja ninja -f build.ninja output/naboj/phys/29/languages/sk/booklet.pdf
+```
+
+**The `Makefile` and the three `modules/*/module.mk` were deleted** — 1684 lines that were a
+second, independent implementation of the same graph. Nothing had run them for some time: every
+entry point (`./dgs-build`, the editor's `run_build`, CI) went through Ninja, and
+`tools/editor/capabilities.py` had stopped probing for make at all. What they cost was double
+entry on every change, and they had already drifted — make's language aggregate was
+`languages/<lang>` where the graph's is `languages/<lang>/all`, and `evaluation.pdf` named
+`evaluators.tex` as its prerequisite while compiling `evaluation.tex`. GNU make is still
+installed in the container, because building the one C extension wants it.
+
+Two things the removal surfaced, both pre-existing and neither caused by it:
+
+- **`instructions-online.pdf` is built by nothing, in either system.** Make's rule read
+  `source/naboj/<v>/languages/<lang>/_extras/instructions-online-inner.md`, and no `_extras/`
+  directory exists anywhere in the repository; the nine real files are at
+  `languages/<lang>/online/instructions-online-inner.md`, in volumes `24` and `25`. Make's own
+  comment said the target "has never been reachable". The content is still there; nothing prints it.
+- **`scholar` produces no edges at all**, because the source tree is still split by year —
+  `TA1/2018/handouts/…` — while `modules/scholar/editor.yaml`'s glob (`*/handouts/*`) and
+  `BuilderScholar.path()` both expect one tree per course. 43 issues on disk, 0 discoverable.
+  Either the tree moves or the descriptor and the builder do.
+
+### A builder declares what it writes; the graph declares what it depends on
+
+That is the seam, and the test for which side a fact belongs on is: **if you could learn it by
+running the builder and listing `<outdir>`, it is the builder's; if you could only learn it by
+reading a template or a recipe, it is the graph's.**
+
+A builder's outputs live in `modules/<module>/declaration.py` (and `core/builder/declaration.py`
+for core's own), as a `Node` of `Product`s — the output's name, the template it comes from, which
+`Root` that template is resolved against, and whether its absence is legal. `core/builder/products.py`
+holds the vocabulary and the single predicate:
+
+```python
+def written(node, roots):
+    return [p for p in node.products
+            if not p.optional or (roots[p.root] / p.template).is_file()]
+```
+
+**Both sides call it.** `BaseBuilder.build_templates` loops over `written(...)` with the roots it
+is standing in; `tools/ninja/generate.py` calls the same function with the roots it would stand in,
+to decide which outputs to declare. The rule *"this output exists only when its source does"* is
+one statement instead of two that have to agree.
+
+It used to be three, and the third is where the bugs were. `LANGUAGE_DOCUMENTS`, `VENUE_DOCUMENTS`,
+`ROUND_DOCUMENTS` and `SCHOLAR_KINDS`'s document half restated the builders' lists, five of them
+with a comment naming the builder as the authority they were copying. The builder skipped an absent
+optional template with a warning, the generator probed the filesystem for the same thing, and a
+template then `\input`ed it regardless — **two documents died that way**: `instructions.jtex` on
+`instructions-inner.tex`, and `evaluation.jtex` on `evaluators.tex`, which only `sk` has in volume
+25 and only `en` and `sk` in 26, so eight of those twelve `evaluation.pdf` were an `Emergency stop`
+with nothing naming the missing file. Both are `\protectedInput` now, and
+`core/tests/test_declarations.py` reports an unguarded `\input` of an optional product rather than
+leaving it to whoever writes the next template.
+
+**The three roots are why one loop replaced three.** `TEMPLATES` is the module's own templates,
+`UNIT` the node's source directory (Náboj's `intro` and `evaluators`), `LANGUAGE` a *sibling*
+node's directory — the venue's `instructions-inner.jtex`, which lives in the language the venue
+declares. The three loops that existed differed in that and in nothing else.
+
+**What stays in the graph** is what no builder has: `LANGUAGE_PDFS`, `VENUE_PDFS` and `ROUND_PDFS`
+— which of the written `.tex` go on to XeLaTeX, which `build/` cannot tell you and which is partly
+policy (`instagram.pdf` is excluded on purpose) — and every `implicit=` list. Each is asserted to
+be a **subset** of its node's products, so a document added to a builder cannot silently fail to
+get a PDF rule.
+
+Two things fell out of landing it. Driving the inputs off `written()` made an optional product's
+*source* an input as well as the reason for an output, so **editing an `intro.jtex` now rebuilds
+it** — 134 inputs the hand-written lists had omitted, 98 `intro.jtex` and 36 `evaluators.jtex`.
+And the venue's language, the one root a context computes, is read by the graph through
+`modules.naboj.declaration.venue_language`, whose guess is pinned against the context by a test
+over every venue meta in the checkout — which is what the old hand-rolled scanner never was, and
+which caught it reading a `language:` nested inside a `teams:` list as if it were the venue's own.
+
+**The gate for a change here is the graph diff, not a build.** The generator is a pure function of
+the source tree: generate before and after, compare the output sets, the rules and the inputs. That
+is a second, and it is how this landed with 62,868 output sets unchanged, no rule changed and
+nothing removed.
+
+**Adding a module is `docs/modules.md`** — what the nine files are, in the order to write them,
+and the dozen things that bite. The short of it: the editor and the audit are descriptor-driven
+and need no code, and `tools/ninja/generate.py` is the one file that still names modules by hand.
+
+### Content is input, and the build treats it as such
+
+`source/` is cloned from repositories several people push to, so a problem directory is an
+input like any other. Three things used to take it on trust, and each gave whoever could write
+one code execution on every machine that ran `./dgs-build`:
+
+- **`-shell-escape` was on every xelatex edge**, so any `.tikz`, `.jtex` or rendered `.md` could
+  `\immediate\write18{…}`. It is gone, and nothing wanted it: `minted` is loaded by no file in
+  `core/latex`, `core/templates` or any module's templates. If a document ever does need to
+  shell out, give *that* rule the flag and say why.
+- **Ninja substitutes every variable but `$in` and `$out` verbatim** into the command `/bin/sh`
+  runs, and the graph binds source-derived paths to a dozen of them. A problem directory named
+  `x;curl u|sh;y` was a command. `tools/ninja/writer.py`'s `shell_value` quotes them --
+  `shlex.quote` then `$` → `$$`, in that order, because Ninja reads a `$` inside our quotes
+  first. It is also the *careless* case: a venue called `Fyzika & chémia` used to break the
+  build somewhere deep in a shell with nothing pointing back at the name.
+- **`derived:` was evaluated by a plain `jinja2.Environment`**, which is to say as Python:
+  `''.__class__.__mro__[1].__subclasses__()` is the first step of the textbook chain and it ran
+  in the builder's process. `core/builder/jinja.py` uses `SandboxedEnvironment` now. Nothing a
+  legitimate `derived:` does needs what that takes away; the only visible consequence is that
+  Jinja's `range` becomes the capped `safe_range`, which no template here uses.
+
+**The editor is not an exception to any of this.** It has no authentication -- every route acts
+with the authority of whoever started it -- so the browser's own rules are the whole defence,
+and the code stays out of their way: bodies are read with a plain `get_json()`, which requires
+`application/json` and so cannot arrive without a preflight, and a request carrying a foreign
+`Origin` is refused. It used to be `get_json(force=True)`, which parses a `text/plain` body --
+a *simple* content type, no preflight -- so any page open in the same browser could reach
+`/api/evaluate` or `/api/save`. The container images default to `--host 127.0.0.1` for the same
+reason: `dgs-container editor` passes `0.0.0.0` itself with the publish pinned to the host's
+loopback, and a bare `podman run -p 5000:5000` now serves nothing rather than everything.
+
 ## Checking a problem
 
 Render a single file (two passes; the second expands tags that came from `eq:`):
@@ -50,6 +184,37 @@ nothing is cached — except the two checks that cannot be answered by reading f
 `build/.audit/` with a fingerprint of the sources: the build checks, which shell out to the build, and
 the macro sweep.
 
+### An id names one problem in the whole competition
+
+`unit-id-duplicate` says so, and it is the **only** thing that does: the filesystem enforces
+uniqueness inside a volume and nothing enforces it between two. So it is the one check that
+deliberately reads past its own scope -- a duplicate is by construction in another volume --
+the way `core/audit/stale.py` already does, and at the same cost, a directory listing with no
+file opened. Scoped to the *competition*, not the module: `schnitzel` names a physics problem
+and a chemistry one and that is not a collision.
+
+**Nothing is broken today, which is why it is a warning.** Both problems build, each booklet
+prints its own, and the labels they define -- `{#eq:<pid>:<key>}`, `{#fig:<pid>:<key>}` -- are
+per document and cannot collide. What a duplicate costs is the ability to *refer* to a problem
+by its short name, which is what any document that is not a volume has to do.
+
+Five exist, and they are two different things wearing one hat, so they get two messages:
+
+- **A clash.** `phys/takeoff` in volumes 18 and 27, `chem/spektrofoto` in 01 and 03 -- two
+  different problems. **Rename the older of the pair.** Nothing in the corpus references either
+  id, so that is the directory plus one line in the volume's `problems:`; the labels follow the
+  directory name on their own. The gate is the key-sweeps' one: rendered output byte-identical
+  except inside `\label{}`, and no dangling crossref.
+- **A copy left behind.** `starlight` and `sinking` in both `phys/pool` and volume 29,
+  `czechoslovak` in the pool and 25 -- the volume copy has languages the pooled one lacks and
+  the two have drifted. **A problem picked into a volume leaves no copy in the pool**; remove
+  the pooled one, after checking the two really are the same problem. Read from the pool's own
+  page the message says the opposite thing, because the advice is opposite: getting that round
+  the wrong way would tell an author to rename something that has already shipped.
+
+The rule behind both: **reuse is by reference, never by copy.** A second document naming
+`25/czechoslovak` is right; a second directory holding it is this finding.
+
 **There is a third direction, and it is the one make cannot fix: `build-orphan`.** Rename a
 problem and its `render/` and `build/` copies stay where they are for ever — a target whose
 prerequisite has vanished has no rule left to remove it, and `.SECONDARY:` keeps every
@@ -58,8 +223,8 @@ because `\protectedInput` finds the stale `.tex` and the booklet goes on printin
 problem instead of the red box it is owed; volume 19's `onion` was exactly that. So
 `listed-missing` is the error and this is the warning, and together they say what happened.
 
-`./dgs-build stale` lists them and **`./dgs-build prune` removes them** (`make stale` and
-`make prune` are the same two targets) — two targets on purpose, since one
+`./dgs-build stale` lists them and **`./dgs-build prune` removes them** — two targets on
+purpose, since one
 word between asking and deleting is not a safe thing to offer. `core/audit/stale.py` is the whole
 of it, and it is the one check that reads outside `source/`: a directory listing, no file opened,
 and a tree that has never been built reports nothing.
@@ -71,10 +236,10 @@ rule about Náboj: a module with no `source/<scope>/languages/` has no notion of
 nothing, which is how seminar and scholar pass through.
 
 It is worth having for the same reason as the first half, only louder. The language documents in
-`modules/naboj/module.mk` are pattern rules, so `%` matches any string and the rest of each
-prerequisite list is `$(wildcard …)`, which yields *nothing* for a language that is not there
-rather than failing. A stale `build/<volume>/languages/<lang>/` therefore supplies everything
-they ask for: `make output/naboj/phys/29/languages/uk/booklet.pdf` built a **40-page Ukrainian
+the Makefile were pattern rules, so `%` matched any string and the rest of each prerequisite
+list was `$(wildcard …)`, which yields *nothing* for a language that is not there rather than
+failing. A stale `build/<volume>/languages/<lang>/` therefore supplied everything they asked
+for: `output/naboj/phys/29/languages/uk/booklet.pdf` built a **40-page Ukrainian
 problems booklet** out of intermediates whose sources had been removed, for a volume that has
 `en`, `es` and `sk`. Clearing `build/` was the only thing that turned it back into an error.
 
@@ -134,6 +299,38 @@ Adding a check means one function and two tests: one that it fires, one that it 
 quiet on a case that looks like it and is not. That second half is not optional. Every
 one of those quiet cases in `core/tests/test_audit.py` is a false positive that a
 hand-written version of the same sweep actually produced.
+
+## A pool is problems, not a competition
+
+`phys/pool` and `chem/pool` hold problems nobody has set yet -- picked from and moved into a
+volume when they are. Everything that reads a *problem* applies to them and should; they are
+the problems somebody is writing. Everything that assumes a volume around the problems does
+not: no running order, no language set, no venues, no booklet.
+
+So there are two schemas in `modules/naboj/builder/contexts/validators.py`, `VOLUME` and `POOL`,
+chosen by the directory's name -- which is also what moving a problem out of a pool changes. A
+volume that happens to have no translations yet is still a volume. The audit runs its problem
+checks over a pool unchanged; the one check that goes quiet is `translation-set`, which asks
+whether a problem has the same languages as its neighbours. That is a question about a booklet,
+and a Slovak-only draft beside a six-language one is what a reservoir looks like rather than a
+defect. It was 31 of the pool's 182 findings.
+
+A pool builds nothing, and does so by construction rather than by exclusion: it has no
+`languages/`, so `--scope all` never names it and no booklet edge exists.
+
+**`phys/pool` was the one scope of thirty-four that would not validate**, and the error led with
+the missing `languages/`, which was the least of it. Two real causes hid behind that: a problem
+sharing a drawing by **symlink** -- which the schema refused with `File`, although sharing a
+drawing that way is what this file recommends -- and `stuck-rover`, which is a `rover.py` and
+nothing else. Both are legal now, the second only in a pool.
+
+**Both are spelled `pool` and both hold a `problems/` level**, which is what makes them visible.
+chem's was `.pool/<pid>` -- dotted, so every sweep in the repository skipped it, and one level
+short of the unit glob `*/*/problems/*`, so even undotted nothing would have found it. Its seven
+problems moved to `chem/pool/problems/<pid>` with their contents untouched; the audit has
+something to say about them now, starting with the fact that none has a `meta.yaml`.
+
+A pool is where `seminar/FKS/.pool` still is, too, and that one has not been looked at.
 
 ## An answer interval is a span, not a tolerance
 
@@ -436,8 +633,24 @@ anything in `core/` — it covers quantities, formatting, filters, the Jinja
 environments and `MathObject` in detail. New filters or quantity behaviour are
 expected to come with tests in the matching `core/tests/test_*.py`.
 
-**`core/tests/` must pass in a checkout with no content repositories and no
-`build/`**, and that is a rule, not an observation. Nothing under `source/` is
+**`core/tests/` must pass in a checkout with no content repositories, no
+`build/` and no `.git`**, and that is a rule, not an observation.
+
+The third clause is the one the container found. `.containerignore` excludes `.git/` -- and
+`.github/` with it -- so the image is a tree that was **copied rather than cloned**, and
+`pytest -q` runs inside it. `core/tests/test_build_stamp.py` reads `git describe` and
+`test_containerfile.py`'s CI check reads `.github/workflows/python-app.yml`; both are right to,
+and both are five failures in the image that say nothing about dgs. Each carries a skip now --
+`pytestmark` on the first, an `is_file()` guard on the second -- and the way to check before
+pushing an image is to build the tree the image sees and run the suite in it:
+
+```
+git archive HEAD | tar -x -C /tmp/image && rm -rf /tmp/image/.github
+cd /tmp/image && PYTHONPATH=. <repo>/.venv/bin/python3 -m pytest -q
+```
+
+That reproduces the failure exactly -- five failed before the skips, 0 after -- and is a second
+rather than a container build. Nothing under `source/` is
 tracked -- `.gitmodules` says so outright, each module names its own
 repositories in `modules/<module>/editor.yaml` under `sources:` -- so cloning
 them is optional and a core test that needs one fails for everybody who has not.
@@ -457,7 +670,7 @@ is the one that bites: pandoc-crossref reads it for `figureTitle`, so without it
 every figure word silently falls back to English and `Obrázok 1:` arrives as
 `Figure 1:` -- a failure that reads like a broken regex and is a missing file.
 `core/tests/conftest.py`'s session-scoped `i18n_built` builds it from
-`core/i18n/*.yaml`, all of it core's own, so a suite run before any `make` behaves
+`core/i18n/*.yaml`, all of it core's own, so a suite run before any build behaves
 the same as one run after.
 
 The seam that keeps the rest of `core/html/page.py` testable is `repo_root`, on
@@ -535,10 +748,10 @@ nothing typesets its `\(…\)`, and its `<img>` point at files that are not besi
 used to be written into `output/` and that is exactly how one came to be opened and reported as
 broken maths. Everything under `output/` is now a thing you can open:
 
-    make output/seminar/FKS/42/1/1/01/index.html      one page
-    make output/seminar/FKS/42/1/1/pages              every page of a round
-    make output/naboj/phys/29/problems/chopper/sk/index.html
-    make output/naboj/phys/29/languages/sk/pages      every page of a volume, in one language
+    ./dgs-build output/seminar/FKS/42/1/1/01/index.html      one page
+    ./dgs-build output/seminar/FKS/42/1/1/pages              every page of a round
+    ./dgs-build output/naboj/phys/29/problems/chopper/sk/index.html
+    ./dgs-build output/naboj/phys/29/languages/sk/pages      every page of a volume, in one language
 
 **A missing picture is boxed, and does not fail the build.** `page.py` puts a red
 `Missing picture: …` where the drawing belongs, collects every one, writes the page, names
@@ -565,10 +778,23 @@ language and a fragment is `<problem>/<lang>/solution.html`; seminar's descripto
 such key, because **seminar is monolingual** -- one language, not one of several that happens to
 be checked out -- and its fragments sit in `<problem>/` directly. `page.py` reads that rather
 than looking in both places: a rule of "wherever it is" would make a Náboj problem with a
-missing language directory assemble quietly from whatever lay beside it. The same descriptor
-gives the file order, so `files=` is an override and not a list to keep in step. `lang` is
-wanted either way -- it picks the i18n and the babel the maths is set with, which a
-one-language module has as much as a six-language one.
+missing language directory assemble quietly from whatever lay beside it. `lang` is wanted
+either way -- it picks the i18n and the babel the maths is set with, which a one-language module
+has as much as a six-language one.
+
+**And the graph tells it, rather than letting it go and look.** `_page` passes `--files` (the
+section order) and `--nested`, because the graph has already decided both -- it computes the
+fragment list it declares as inputs, and it knows which module nests. `page.py` used to load
+`modules/<module>/editor.yaml` itself, at run time, to decide them again; that file appeared
+**nowhere** in the generated graph, so reordering `targets:` reordered every page's sections
+with nothing rebuilt, and flipping `languages:` pointed every page edge at the wrong directory
+on whatever rebuilt next. The descriptor is now an implicit input of all 4399 page edges, and
+asking it is the fallback for a hand-run `python -m core.html.page`.
+
+The order is the **descriptor's**, not the order the fragments were collected in. Those differ:
+the walk emits `TRANSLATED` then `SHARED`, so it has `answer-extra` before `answer` where
+`editor.yaml` has them the other way round, and taking the walk's order would have silently
+reordered every Náboj page.
 
 **The maths is typeset at build time, and there are two engines.**
 `page.py --maths latex|mathjax` chooses; `core/html/__init__.py`'s `ENGINE` is only the default.
@@ -726,8 +952,23 @@ Four things make it practical, and the middle two were each got wrong first:
 
 - **One xelatex run per page.** `standalone`'s `multi=dgsmath` puts each formula on its own page,
   so a hundred formulas cost one compile and one `dvisvgm`, about two seconds. Cached under
-  `build/.html-math/` by the hash of the formula, the language and `VERSION` -- which is in the
-  hash so that changing the wrapper or the conversion invalidates what it produced.
+  `build/.html-math/` by the hash of the formula, the language, and **the preamble that sets
+  it** -- `core/html/preamble.py` reads `core/templates/mathpage.jtex` and everything it
+  `\input`s, and hashes the contents.
+
+  That last part was missing and it was the one defect here where a **correct rebuild produced
+  wrong output**. `tools/ninja/generate.py` has always declared `math.tex` and its neighbours as
+  implicit inputs of every page edge, so editing one rebuilt all fifteen thousand pages -- and
+  every one of them was reassembled out of SVGs typeset by the *previous* macros. The key was a
+  hand-bumped `VERSION = '3'`, and nobody remembers a constant at the moment they are thinking
+  about a macro. Green build, wrong maths, invisible in both directions, because a stale cache
+  entry and a fresh one are the same bytes on disk.
+
+  `VERSION` survives for what no file's contents can say -- a change to how *this module* sizes
+  or recolours the SVG. The preamble list is **read off the template**, following the Jinja
+  include into `standalone-preamble.jtex`, and keyed on the inputs' mtimes rather than cached
+  once per process: the editor serves for hours, and somebody editing `math.tex` with it open
+  should not have to restart it.
 - **The baseline is measured, not guessed.** An image does not know where its baseline sits,
   which is what dropped every inline formula onto a line of its own the first time this was
   tried in a browser. The `dgsmath` environment boxes the formula and `\typeout`s
@@ -743,9 +984,41 @@ Four things make it practical, and the middle two were each got wrong first:
 - **`--no-fonts`** leaves bare paths, which is what lets the ink be the page's at all. No second
   rendering, no second cache, no font to ship.
 
-**`mathpage.jtex`'s package list is `standalone.jtex`'s, line for line, and a test says so.**
-A package added to one and not the other is how the web and the print maths start to differ, and
-the difference is exactly the kind nobody notices until a reader compares them.
+**`mathpage.jtex` and `standalone.jtex` share one preamble**, `core/templates/standalone-preamble.jtex`,
+which each takes with a Jinja `(@ include @)`. A package added to one and not the other is how
+the web and the print maths start to differ, and the difference is exactly the kind nobody
+notices until a reader compares them -- so they were 73 identical lines held together by a
+comment in each saying *"a package added there belongs here too"*, and a comment cannot fail a
+build.
+
+**A Jinja include, not a LaTeX `\input`**, because of one line in it: the i18n table is
+`build/core/i18n/(* lang *).tex`, and that tag has to be resolved before TeX sees the file. The
+include splices the text in, so the rendered `.tex` is byte-for-byte what it was before the file
+existed -- which is also the gate the extraction was checked against. A test now asserts that
+neither template has started keeping packages of its own again.
+
+**Unifying them found a divergence that had been live.** The booklet loads `chemmacros`, then
+`mhchem`, then `\chemsetup{formula=mhchem}`; the standalone templates loaded `mhchem`,
+`chemformula` and `chemmacros` and no `\chemsetup` -- so a chemistry drawing compiled on its own
+was set by a different chemistry stack from the same drawing inside a booklet. It had never
+failed, because the conflict needs `russian` in the babel list and the standalone templates
+carried seven languages where the booklet carries nine. Giving them the booklet's nine turned it
+into `Command \ch already defined` at `\begin{document}`, which is the right way to find out.
+They load the class's arrangement now, `chemformula` included; no source writes `\ch{}` and 201
+write `\ce{}`.
+
+It stayed hidden for a second reason worth knowing: the picture `.tex` edge named only
+`standalone.jtex`, so moving the preamble out of that file meant **no drawing was rebuilt** when
+it changed. The missing dependency was masking the regression. `core/html/preamble.py`'s
+`templates()` is what the edge names now, and the two were found together.
+
+The babel call went the same way, into `core/latex/babel.tex`, and that one found something:
+babel takes the **last** option as the document's main language, and it was `english` in
+`dgs.cls` and `spanish` in the standalone templates. Invisible only because
+`build/core/i18n/<lang>.tex` opens with `\selectlanguage` and every document inputs it within a
+few lines. The shared file is `dgs.cls`'s list extracted unchanged, so the booklet is identical
+by construction -- verified anyway: volume 29's Slovak booklet is 44 pages before and after with
+byte-identical `pdftotext` output. Adding a language means one list, before `english`.
 
 ### `mathjax`: selectable text, and what it costs
 
@@ -1004,6 +1277,40 @@ and `09:30` is *also* a string -- sexagesimal needs a non-zero first digit -- wh
 with it. Write `9:30`. That one bit the migration: ten metas came back as strings and every
 volume they belonged to stopped validating.
 
+### `language` is two different objects, and `base-booklet.jtex` is shared
+
+A venue document and a language document both extend `modules/naboj/templates/base-booklet.jtex`,
+and **`language` does not mean the same thing in the two**:
+
+| built by | `language` is | keys |
+|---|---|---|
+| `language.py` | the language *meta* | `booklet`, `id`, `name`, `rtl`, `translators` |
+| `venue.py` | the i18n *descriptor* | `cref`, `full`, `id`, `latex`, `locale`, `native`, `quotes`, `rtl`, `siunitx`, `typography`, `words` |
+
+They overlap on `id` and `rtl` and nowhere else. So any line in the shared base that reaches past
+those two works in one document family and raises `MissingVariablesError` in the other — and only
+when somebody builds a venue, which is rarely.
+
+**That is not hypothetical; it cost every venue in the repository.** The colophon was added to
+`base-booklet.jtex` on 2026-11-19 and reached for `language.booklet.contents` and `language.name`,
+so all 152 venue `.tex` edges — `instructions` and `answers-modulo`, every volume — died on
+`Missing variables in instructions.jtex: ['name', 'booklet']` the same day. Nothing noticed,
+because the tests do not build and nobody built a venue for a day.
+
+**Only a booklet has a colophon**, so the fix is where the apparatus lives rather than a guard on
+the expression: the savebox, the `\AtBeginDocument` hook, `colophon_base` and
+`\fancypagestyle{colophon}` are a `(@ block colophon @)` that `booklet.jtex` fills and
+`base-booklet.jtex` leaves empty. A venue document never asked for the style anyway —
+`\thispagestyle{colophon}` is in `blocks/booklet/footer.jtex`, which only `booklet.jtex` includes,
+so the venues were defining a style they could not use. Volume 29's `booklet.tex` is byte-identical
+across the move apart from the build timestamp.
+
+`colophon_base` itself is worth knowing when touching this: it is the *page style the colophon
+inherits from*, through fancyhdr 4's optional base argument, picked as the last section the
+booklet actually contains — answers, else solutions, else problems, else `naboj`. The colophon is
+the last page's footer, and that page's running head belongs to the section it ends in; built on
+`naboj` it would drop the `Výsledky` beside the logo.
+
 ### The ancient volumes' venues are reconstructed, and say so
 
 `02`-`19` carry a `bratislava-junior` and a `bratislava-senior` apiece, written from `29`'s
@@ -1069,7 +1376,7 @@ broke eight problems, which is why that check is not optional.
 ## A code listing: `include()`
 
 A solution that walks through a program shows the program, and the program is a real file —
-`module.mk` copies every `source/seminar/<round>/<problem>/*.py` into `output/` for the reader to
+the build copies every `source/seminar/<round>/<problem>/*.py` into `output/` for the reader to
 download. So the listing must *be* that file, not a second copy of it that goes stale. Write the
 fence and include it:
 
@@ -1121,7 +1428,7 @@ search upwards, and a picture with no meta next to it fails rather than renderin
 
 It also means a picture no longer needs to live in a translation directory, because it can ask for
 `(§ words.x §)` itself. `johan-august/sk/puzzle.tikz` was the only one in the repository that did
-and has been moved up beside its meta; the Makefile's `pathlang` keeps the case and it should stay
+and has been moved up beside its meta; the build's `pathlang` keeps the case and it should stay
 empty.
 
 **The block and comment tags move, because the defaults are the formats' own punctuation.**
@@ -1258,6 +1565,22 @@ looks like and not what drift looks like.
 What the default buys is therefore not uniformity. It is that the common size is written once, and
 that a language which needed different room says so in one visible place instead of being one of
 six numbers nobody can compare.
+
+**A drawing's file name describes what it draws, and is not the problem's name.** `fragmentácia`,
+`mechanizmus`, `produkt`, `reakcia`, `distances` -- `chem/03/eschenmoser` carries five drawings and
+the names are the index. The problem's own name is the one word that cannot distinguish two of
+them, which is why `phys/19/capacitors` ended up with `capacitors.svg`, `capacitors1.svg` and
+`capacitors2.svg`, three files of which only the first says anything and it says the obvious.
+
+Most of the corpus already does this -- 109 of the 488 problems that carry a drawing name one
+after the problem, and 49 of those hold more than one. **That is not a sweep to run.** A name is
+worth changing when somebody is in the file for another reason; renaming 49 drawings to tidy them
+moves every `pictures:` entry that names them for nothing.
+
+It matters more under `pictures:` than it did before it, because the meta key and the file name
+are now two separate chances to say what a drawing is. `29/sinking` spends neither:
+`sinking: {file: sinking.svg}` and `sinking_solution: {file: sinking-solution.svg}` repeat the
+problem's name three times over. A described file makes the key's job obvious.
 
 ### `th:` is the other axis, and it is per *document*
 
@@ -1554,6 +1877,62 @@ the break as a `\n` escape instead gets it exactly backwards -- the break lands 
 nothing and the long line where it hurts. That was done for one commit, and it put 21 call sites
 over 120 characters, the longest at 249.
 
+## A problem never says where another problem is
+
+`$X$ follows from the previous problem` is a fact about **one document**, and a problem is not
+the property of one document. It is picked out of a pool into a volume, and out of a volume into
+a selection grouped by tag or chosen by hand -- and position is the one thing that does not
+survive any of that. So: **no "the previous problem", no "problem 21", no "the first example of
+this collection".**
+
+**It is also the one reference nothing can check.** A crossref with no target is caught by
+`reference-dangling`; "the previous problem" has no target to miss, which is why two of the
+corpus's ten sites were printing something false and had shipped that way. `24/napkin2` is
+problem 25 and calls `napkin1`, problem 14, *the previous problem*; `24/broken-cart` is problem
+24 and opens *"Just like in previous problem `[-@sec:broken-cart:problem]`"*, where problem 23 is
+a crane and the crossref points at `broken-cart`'s own statement. `19/onion-capacity` is the
+furthest gone, sending its reader to *"the solution of problem 36 of the 2015 Náboj"* -- another
+volume, by number, unresolvable by anyone holding the booklet.
+
+Two ways to write it instead, and the second is the default:
+
+- **`requires:` in the meta, plus a crossref to the required problem's own label.** A list of
+  ids, beside `similar:` and meaning something stronger: `similar` is a suggestion that costs
+  nothing if ignored, a `requires` is a dependency, so a document holding this problem and not
+  that one prints `??`. An **id and never a path**, because the dependency crosses volumes --
+  writing the volume in would be the same mistake one level up. Nothing reads it yet; its
+  consumer is the selection build, which is what will refuse a selection whose `requires:` are
+  not all in it.
+- **Make the solution stand alone.** Where what is borrowed is a sentence or two -- which is most
+  of these -- repeat them. It costs a line and the problem becomes reusable anywhere.
+
+The ids already carry the relation in every case in the corpus: `deflected-speed` /
+`deflected-ratio`, `napkin1` / `napkin2`, `thief` / `thief-pro`, `snow-thirst` / `snow-rate`. The
+position was never the information.
+
+`positional-reference` reports the shape, over eleven languages. Four things make it quiet, and
+every one of them is live in the sources rather than invented for the test: an adjective off the
+same stem (`problematic`, `problémový`, which is why the pattern is `problems?` and an explicit
+list of `problém`'s endings rather than `problem\w*`); a modifier that in a head-final language
+belongs to the word after it and not to the noun (Hungarian's *"solve the problem with the
+**following** data"*, *"the **first** iteration of the problem"*), which is why the post-posed
+order is accepted only for Spanish and Portuguese; *"in **this** example 1 and 2"*, where the
+digits are shell numbers; and an **HTML comment**, where 37 files park the original above the
+translation -- `23/thief-pro/ru` keeps the whole Slovak statement that way. That last one went
+into `only_prose` rather than into the check, and **it moved nothing**: all 24 other checks over
+all 33 naboj scopes report the same 2326 findings with it and without.
+
+It matches over the whole text and not line by line, because a reference wraps -- `23/thief-pro`
+writes `predošlej\núlohe`, and a line-based version missed that one and two Russian ones.
+
+**Farsi is not covered and does not pretend to be.** Its forty problems would need the words
+transcribed from a language nobody here reads, and a list that is wrong is worse than one that
+says where it stops.
+
+`23/worldbuilder` is reported four times and is narrative -- the exam *in the story* has a first
+problem -- so it is the `audit: {ignore: ['positional-reference']}` case rather than a shape to
+carve out: nothing in the sentence distinguishes it from a real one.
+
 ## Translated words inside maths
 
 A word that appears inside maths has to change with the language, and writing it out per
@@ -1626,12 +2005,12 @@ A word the language has not got is **boxed, not guessed**: the renderer emits
 carries on to the end of the render. That is `\protectedInput`'s call for a missing file, for the
 same reason — one absent word should not cost you the other 39 problems, and a translator wants
 the whole booklet with the holes marked. **Then it fails**: the output is written, every gap is
-reported at once, and the render exits nonzero, so `make` goes red. There is no fallback to
+reported at once, and the render exits nonzero, so the build goes red. There is no fallback to
 English anywhere and never was — eight `core/i18n/*.yaml` said there was, which was a note
 describing code that did not exist.
 
 **The box is not the safety net.** Volume 19 printed `Missing file …onion…!` on page 42 in
-every language for years while `make` stayed green, and the output already carries some 1500
+every language for years while the build stayed green, and the output already carries some 1500
 of these boxes, so one more does not stand out. The net is three things: every miss is collected,
 reported once at the end of the render, and **the render then exits nonzero** — a warning is not a
 failure, and that was the whole of the `onion` problem. `core/audit`'s `word-missing` check is the
@@ -1980,6 +2359,32 @@ Line length does not matter in these files -- they are a registration export, no
 
 What is left in the metas is 3 real `\ `, each a `number\ unit` inside an `eq:`.
 
+### The quotation marks are the language's, in both formats
+
+`"dačo"` becomes a `Quoted` node and each writer renders it, by a **different mechanism**, and
+only one of the two was ever finished:
+
+- **LaTeX** gets `\enquote{}` and csquotes sets the marks at typeset time, configured by the
+  `\setquotestyle` that `build/core/i18n/<lang>.tex` opens with. The booklet has always been
+  right, and this is also what gives nesting -- a quote inside a quote takes the inner pair --
+  for free.
+- **HTML** has no csquotes to ask, so pandoc's writer emitted **its own** marks, which are
+  English: `“dačo”` on every page of every language but English, where Slovak and German set
+  `„dačo“`, French `« dačo »` and Spanish `«dačo»`.
+
+`core/filters/quotes.lua` does the HTML half now, from the same `quotes:` block in
+`core/i18n/<lang>.yaml` that `override.jtex` configures csquotes from -- one statement of what a
+language's marks are, two formats reading it. French is why the strings are taken as written
+rather than assembled: its marks carry their own spacing.
+
+It had been noticed. `core/tests/test_convertor.py`'s `TestQuotes` asserted `„dačo“` for both
+formats and was skipped on **2023-12-11** with the note *"We have switched to \enquote for
+LaTeX, HTML port underway"*. Three years is a long time for ten tests to assert nothing while
+looking as though they do: the class was right about the intent, wrong about the mechanism for
+LaTeX, and the HTML half it was waiting for had never landed. Both halves are live again, and
+all 171 of volume 29's built `.tex` are byte-identical across the change -- this is a web fix
+and touches nothing in print.
+
 ### A hyphen that repeats itself
 
 Five of the twelve languages repeat the hyphen when a word breaks at one: `anti-inflamatório`
@@ -2179,6 +2584,14 @@ This has bitten once and nearly twice. Hoisting equations in volume 27 corrupted
 perfectly happy both times — it was caught by diffing pandoc's output before
 and after. Reading through a symlink is safe; writing is not.
 
+**And the editor was doing it with one keystroke.** `/api/save` wrote with `Path.write_text`,
+which follows, so opening `pl/solution.md` -- a link to `en/solution.md` -- and saving rewrote
+the English source under a filename that said Polish. `write_through` in `tools/editor/app.py`
+refuses by name now and says what the link points at, for all three write sites (`meta.yaml`,
+`words.yaml` and every target). Breaking the link to write a real file would silently undo a
+deliberate mirror, which is worse than saying so. The same guard is what stops a `meta.yaml`
+that arrives from a content repository as a link to something in `$HOME`.
+
 ## Editing problem text
 
 - Problem and solution prose is authored deliberately. Fix mechanical/style
@@ -2301,7 +2714,7 @@ and after. Reading through a symlink is safe; writing is not.
   Three things earn an `=`, and they have one thing in common -- the left side carries
   information the right side cannot:
 
-  - **Several quantities at once.** `chem/.pool/trojroztok` answers
+  - **Several quantities at once.** `chem/pool/trojroztok` answers
     `V_A = \qty{910}{\micro\litre}, V_B = …`, and without the names the three numbers are a
     puzzle of their own. Seven answers are of this shape.
   - **A ratio whose members are not named by the statement.** `04/energy-ratio` answers
@@ -2374,6 +2787,33 @@ and after. Reading through a symlink is safe; writing is not.
   foot evaporates -- hence the box, the explicit `\newpage`, and `\vspace*{\fill}`
   rather than `\vfill`. Adding a name costs nothing; a block taller than a page would
   overrun the margin and say so as an Overfull `\vbox`.
+
+  **The colophon is that page's footer, and the last page has to look like the one before it.**
+  Same footer line, same air beneath it; the extra material goes *above*, and the band grows
+  upward. Three things are load-bearing and each was got wrong once:
+
+  - **The `[C]` field keeps the height it has everywhere**, `\small\thepage`, and the colophon
+    hangs above it in a `\raisebox{...}[0pt][0pt]`. LaTeX sets the footer with
+    `\baselineskip\footskip`, so its baseline lands
+    `max(\footskip, prevdepth + height + \lineskip)` below the text block -- once the field is
+    taller than `\footskip` (32pt here, ~52pt with a colophon in it) the height term wins and
+    the whole line is pushed **20pt** into the bottom margin.
+  - **The style draws its own rule**, because fancyhdr would draw the real one at the normal
+    height, straight through a colophon that it has been told is weightless.
+    `\renewcommand{\footrulewidth}{0pt}` and a `\rule` at the top of the raised box.
+  - **`footerBlock`'s reservation is what keeps the rule off the credits.** Nothing above the
+    footer is measured by anybody now, so `\enlargethispage{-\dgsColophonRise}` is the only
+    thing stopping the names running into it. Take it out and the rule lands on
+    `Technická úprava`'s line.
+
+  It used to advance `\footskip` as well, on the reasoning that a shorter text block pulls the
+  footer up. It does not -- and the advance moved the footer down by the whole reservation, so
+  volume 29's last page carried its URL, page number and e-mail 39pt below every other page's
+  with 0.3pt of margin under them.
+
+  **Measure it, and look at it.** `pdftotext -bbox` on the last page and on any other: the
+  lowest ink must be at the same height on both. That catches the position and says nothing
+  about the rule, which is a line and not a word -- render the two pages and compare them.
 - **A problem statement never numbers its equations, and never labels them.** The number would
   be a cross-reference to something the contestant does not have in front of them during the
   competition, and a label nobody may point at is a number in the margin for nothing.
@@ -2398,7 +2838,7 @@ and after. Reading through a symlink is safe; writing is not.
   purpose: a module that declares nothing is unaffected, and a file type added later is numbered
   until somebody decides otherwise rather than silently losing its labels. The answer files are
   listed although none carries a display today — they are part of the taxonomy, and
-  `test_renderer` pins the keys to the two rule families in `module.mk`, so a file added to the
+  `test_renderer` pins the keys to the module descriptor's two file families, so a file added to the
   module cannot inherit the default without someone noticing.
 
   **The mapping is the module's, not core's**, for the reason `editor.yaml` and the audit's

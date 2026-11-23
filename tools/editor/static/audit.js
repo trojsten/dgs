@@ -613,7 +613,7 @@ function translationHeader(t, d) {
   }
   if (shared.length) {
     top.appendChild(groupHead("common", shared.length,
-                              "module.mk's non-translatable family: one file per problem, shared by "
+                              "The non-translatable family -- `targets` minus `translated`: one file per problem, shared by "
                               + "every language, so there is nothing to translate and nothing "
                               + `missing when a problem has none. ${TRANSLATION_LEGEND}.`));
     for (const f of shared) {

@@ -23,7 +23,6 @@ from core import html, i18n
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
 from core.html import mathjax, texmath
-from tools.editor import descriptors
 
 TEMPLATE_ROOT = pathlib.Path('core/templates')
 TEMPLATE = 'page.jhtml'
@@ -177,8 +176,42 @@ def collect(fragment: pathlib.Path, *, sources: list[pathlib.Path],
 
     def repoint(match):
         src = pathlib.Path(match['src'])
-        for root in (*sources, pathlib.Path('.')):
+        # **A picture may not come from outside the checkout.** `root / src` with an absolute
+        # `src` throws `root` away -- that is what `pathlib` means by joining an absolute path
+        # -- so `![](/etc/passwd)` resolved, and `../../../..` reached the same place through
+        # the `.` fallback root below. `src.name` then stripped the directories off, so the
+        # file landed beside the page under a short, innocent name, in the directory whose
+        # whole point is that it can be handed to somebody.
+        #
+        # The test is **where it resolves to, not whether the string holds `..`**, and that is
+        # a distinction with two live cases behind it:
+        # `scholar/TA1/{2024,2025}/handouts/09/2-growth-curve/problem.md` writes
+        # `![](../growth.png)` for a drawing shared between the problems of one issue. One level
+        # up is the documented way to share a drawing, the LaTeX path resolves it, and refusing
+        # it would make print and web disagree about the same source.
+        #
+        # So: one level up from a *unit* is in bounds, and anything past that is not. A picture
+        # belongs to a unit or to the unit's neighbours; nothing a fragment names should reach a
+        # directory that holds neither.
+        #
+        # **The bound is not the same for every root**, which is the part that is easy to get
+        # wrong -- and was. `sources` are the unit's own directories, and one level up from
+        # those is the issue or the problem set, which is where a shared drawing lives. The
+        # last root is the checkout itself, and one level up from *that* is whatever happens to
+        # contain the repository -- `$HOME`, usually. A single rule of "root's parent" therefore
+        # let `![](../secret.svg)` reach a file beside the checkout and copy it into published
+        # output, which is the very thing this guard exists to stop.
+        if src.is_absolute():
+            missing.append(str(src))
+            return (f'<span class="dgs-missing">Missing picture: '
+                    f'{escape(str(src))}</span>')
+        checkout = pathlib.Path('.')
+        bounded = [(root, root.resolve().parent) for root in sources]
+        bounded.append((checkout, checkout.resolve()))
+        for root, bound in bounded:
             candidate = root / src
+            if not candidate.resolve().is_relative_to(bound):
+                continue
             if candidate.is_file():
                 target = destination / src.name
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -216,6 +249,12 @@ def describe(module: str, repo_root: pathlib.Path | None = None):
     holding one descriptor; the tests that assert what a *real* module says live with that
     module, under `modules/<module>/tests/`.
     """
+    # Imported here rather than at the top: this is the fallback path for a hand-run page,
+    # and it is the only thing in `core/` that reaches into `tools/`. At module level it made
+    # every page edge, and every importer of this module, pull the editor's descriptor loader
+    # and PyYAML in for a question the build has already answered.
+    from tools.editor import descriptors
+
     modules = descriptors.load_modules(repo_root or pathlib.Path('.'))
     if module not in modules:
         raise ValueError(
@@ -233,7 +272,8 @@ def describe(module: str, repo_root: pathlib.Path | None = None):
 
 def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
           title: str | None = None, files=None, engine: str | None = None,
-          module: str | None = None, repo_root: pathlib.Path | None = None) -> pathlib.Path:
+          module: str | None = None, nested: bool | None = None,
+          repo_root: pathlib.Path | None = None) -> pathlib.Path:
     """
     Assemble one unit's fragments into `<destination>/index.html`.
 
@@ -242,6 +282,18 @@ def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
     monolingual and its fragments sit in `<problem>/` directly. `lang` is still wanted either
     way -- it picks the i18n and the babel the maths is set with, which a one-language module
     has as much as a six-language one.
+
+    **`files` and `nested` are told to us by whoever asked for the page**, and the build always
+    tells us. That is not an optimisation; it is which copy of the fact is authoritative.
+    `tools/ninja/generate.py` decides both when it writes the edge -- it passes `nested=True`
+    for Náboj and `False` for seminar, and it computes the fragment list to declare as inputs --
+    and this used to go and read `modules/<module>/editor.yaml` to decide them *again* at run
+    time. Two answers, agreeing by accident, and the descriptor appeared nowhere in the graph:
+    reordering `targets:` reordered every page's sections with nothing rebuilt, and flipping
+    `languages:` sent every page edge looking in the wrong directory on whatever rebuilt next.
+
+    Asking the descriptor is now the fallback for a hand-run `python -m core.html.page`, where
+    there is no graph to have decided anything.
     """
     engine = engine or html.ENGINE
     if engine not in ENGINES:
@@ -249,14 +301,17 @@ def build(problem: pathlib.Path, lang: str, destination: pathlib.Path, *,
 
     # `build/<module>/…`, the same rule `core/markdown-check.py` infers a module by
     module = module or (problem.parts[1] if len(problem.parts) > 1 else '')
-    languages, targets = describe(module, repo_root)
-    directory = problem / lang if languages else problem
+    if files is None or nested is None:
+        languages, targets = describe(module, repo_root)
+        files = targets if files is None else files
+        nested = languages if nested is None else nested
+    directory = problem / lang if nested else problem
 
     sources = [directory, problem]
     destination.mkdir(parents=True, exist_ok=True)
 
     bodies, names, missing = [], [], []
-    for name in files if files is not None else targets:
+    for name in files:
         fragment = directory / f'{name}.html'
         if not fragment.is_file():
             continue
@@ -297,6 +352,16 @@ def main() -> int:
     parser.add_argument('--title')
     parser.add_argument('--module', help='which module this unit belongs to; inferred from the '
                                          'path (`build/<module>/…`) when not given')
+    # Both of these are what the build knows and this process would otherwise go and work out
+    # again from `modules/<module>/editor.yaml` -- a file the graph does not declare, so a
+    # change to it moved the page and rebuilt nothing. Given, they are the answer; absent, the
+    # descriptor is asked, which is what a hand-run invocation wants.
+    parser.add_argument('--files', nargs='+', metavar='NAME',
+                        help='the fragment stems to assemble, in the order they appear on the '
+                             'page (default: every target the module declares)')
+    parser.add_argument('--nested', action=argparse.BooleanOptionalAction, default=None,
+                        help='whether the fragments sit in <unit>/<lang>/ rather than in '
+                             '<unit>/ (default: what the module descriptor says)')
     parser.add_argument('--maths', choices=sorted(ENGINES), default=html.ENGINE,
                         help='how to set the maths: `latex` makes a picture of each formula with '
                              'the xelatex that sets the booklet, exact and in MinionPro; '
@@ -304,7 +369,8 @@ def main() -> int:
     args = parser.parse_args()
     try:
         print(build(args.problem, args.lang, args.destination,
-                    title=args.title, engine=args.maths, module=args.module))
+                    title=args.title, engine=args.maths, module=args.module,
+                    files=args.files, nested=args.nested))
     except MissingPictures as gap:
         # The page is written and carries a box per hole, and the build does **not** go red.
         # Unlike a missing word, which makes a sentence say the wrong thing in one language and

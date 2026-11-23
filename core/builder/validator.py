@@ -3,6 +3,7 @@ import logging
 import pprint
 from pathlib import Path
 
+import functools
 import regex as re
 from enschema import And, Or, Regex, Schema, SchemaError
 
@@ -30,12 +31,40 @@ class FileSystemValidator(metaclass=abc.ABCMeta):
         self.root = Path(root)
         self.tree = self.scan(self.root)
 
+    #: Compiled once **per pattern set**, not once per class hierarchy. The expressions used to
+    #: be rebuilt on every path in the tree -- a fresh `re.compile` per directory entry of every
+    #: volume -- and the obvious fix, caching onto `cls`, is worse in a quiet way: the first
+    #: subclass to ask writes the attribute, and MRO lookup then hands *its* patterns to every
+    #: other subclass. One validator exists today, so it would have been a trap rather than a
+    #: bug; keyed on the tuple it compiles, it cannot be either.
+    @staticmethod
+    @functools.cache
+    def _compiled(patterns: tuple) -> tuple:
+        return tuple(re.compile(pattern) for pattern in patterns)
+
+    @classmethod
+    def _ignored(cls, name: str) -> bool:
+        return any(pattern.match(name) for pattern in cls._compiled(tuple(cls.IGNORED)))
+
     def scan(self, path) -> str | dict | None:
-        if any(ignored.match(path.name) for ignored in [re.compile(r) for r in self.IGNORED]):
+        """
+        The tree as a mapping, with the ignored entries **left out** rather than nulled.
+
+        Two things were wrong here and they hid each other. The directory comprehension filtered
+        on `child.name[0] not in self.IGNORED` -- one *character* against a list holding the
+        four-character string `\\.git` -- so it was always true and had never excluded anything.
+        What did the excluding was the `match` above, which returns `None`; and a `None` is still
+        a key, so `.git` arrived in the validated tree as an entry every schema then had to
+        tolerate. Skipping is what was meant, and it is what lets a schema be exact.
+        """
+        if self._ignored(path.name):
             return None
         if path.is_dir():
             return {
-                child.name: self.scan(Path(child)) for child in path.iterdir() if child.name[0] not in self.IGNORED
+                child.name: scanned
+                for child in path.iterdir()
+                if not self._ignored(child.name)
+                and (scanned := self.scan(Path(child))) is not None
             }
         else:
             if path.is_symlink():

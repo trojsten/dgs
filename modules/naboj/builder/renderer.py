@@ -217,6 +217,23 @@ class NabojStandaloneContext(renderer.StandaloneContext):
         Opt('physics'): int,
         Opt('math'): int,
         Opt('similar'): [str],
+        # The problems this one's solution actually leans on, by id -- `napkin2` requires
+        # `napkin1`, `thief-pro` requires `thief`. Not the same thing as `similar`, which is a
+        # reader's suggestion and costs nothing if ignored: a `requires` is a dependency, so a
+        # document holding this problem and not that one prints `??` where the crossref was.
+        #
+        # **It exists because position does not survive reuse.** The prose used to say "the
+        # previous problem", which is a fact about one booklet and is false the moment the
+        # problem is picked into a selection, a themed booklet or another volume -- and false
+        # already in two places, since `napkin2` is problem 25 and calls problem 14 "previous".
+        # `core/audit`'s `positional-reference` reports the shape; this is where the fix lands,
+        # with the crossref pointing at the required problem's own label.
+        #
+        # An id and not a path, deliberately: a problem may be required across volumes, and
+        # writing the volume in would be the same mistake one level up. That makes it the first
+        # key in the corpus to assume ids are unique across a competition, which they are not
+        # quite today -- `phys/takeoff` and `chem/spektrofoto` each name two different problems.
+        Opt('requires'): [str],
     })
 
 
@@ -236,8 +253,8 @@ class CLIInterface(renderer.CLIInterface, ABC):
     #:
     #: The answer files are listed although none of them carries a display today: they are part
     #: of the taxonomy, so the decision is recorded rather than left to the default, and
-    #: `test_renderer` pins these keys to the two file lists in `module.mk` so that a file added
-    #: to the module cannot slip through without one.
+    #: `test_renderer` pins these keys to the module descriptor's two file lists so that a file
+    #: added to the module cannot slip through without one.
     #:
     #: This is Náboj's rule and it is declared here rather than in core, for the reason
     #: `editor.yaml` and the audit's `audit: true` are per module: another module's files mean

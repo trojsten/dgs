@@ -34,7 +34,6 @@ from enschema import Optional as Opt
 from enschema import Schema, SchemaError
 
 from core.builder.context.context import UniqueKeyLoader, ValidIdentifier
-from core.utilities import colour as c
 
 log = logging.getLogger('dgs')
 

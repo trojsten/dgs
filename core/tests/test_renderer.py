@@ -285,9 +285,10 @@ class TestTranslatedWords:
 
     def test_naboj_declares_every_file_it_may_hold(self):
         """
-        Both directions, and no gaps. Pinned to the two rule families in `modules/naboj/module.mk`
-        the way `test_audit` pins `TRANSLATED_FILES`, so a file added to the module cannot slip
-        through without a decision -- it would otherwise inherit the default silently.
+        Both directions, and no gaps. Pinned to the module's two file families the way
+        `test_audit` pins `TRANSLATED_FILES` -- against `modules/naboj/editor.yaml`, which is the
+        descriptor the graph and the audit both read -- so a file added to the module cannot slip
+        through without a decision; it would otherwise inherit the default silently.
         """
         from core.audit.sources import SHARED_FILES, TRANSLATED_FILES
         from modules.naboj.builder.renderer import CLIInterface as NabojCLI
@@ -1111,6 +1112,30 @@ class TestTheProblemSchema:
         self.rejects({'similar': [None]})
         self.accepts({'similar': ['half-g']})
         self.accepts({'similar': []})
+
+    # --- `requires:`, which is a dependency rather than a suggestion -------
+
+    def test_requires_is_a_list_of_problem_ids(self):
+        """
+        Same shape as `similar:` and a different meaning: a `requires` is what the solution
+        leans on, so a document holding this problem and not that one prints `??`. Written as
+        an id and never a path -- the dependency crosses volumes, which is the whole reason
+        position could not express it.
+        """
+        self.accepts({'requires': ['napkin1']})
+        self.accepts({'requires': ['thief', 'snow-thirst']})
+
+    def test_one_id_written_without_its_list_is_rejected(self):
+        """`requires: 'napkin1'` is the plausible typo, and `Or(list[str], [])` would take it."""
+        self.rejects({'requires': 'napkin1'})
+        self.rejects({'requires': [None]})
+        self.rejects({'requires': [7]})
+
+    def test_absent_and_empty_both_mean_it_stands_alone(self):
+        """The quiet half: all but a handful of problems depend on nothing, and must not have
+        to say so."""
+        self.accepts({'requires': []})
+        self.accepts({})
 
 
 class TestRenderSettles:

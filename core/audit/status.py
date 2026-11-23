@@ -36,10 +36,10 @@ from core.audit.sources import link_language
 #: Worst first. A scope's column is as bad as its worst problem, so the order is the ranking.
 STATES = ('broken', 'missing', 'partial', 'ok', 'none')
 
-#: The two files whose absence means "not translated". The other translatable files that
-#: `module.mk` defines -- `problem-extra.md`, `answer-extra.md` -- are extra content only some
-#: problems carry, so a language lacking one is a gap to show, not a translation that is missing.
-#: Which files exist at all is `module.mk`'s business, carried on `Sources`; which of them a
+#: The two files whose absence means "not translated". The other translatable files the module
+#: defines -- `problem-extra.md`, `answer-extra.md` -- are extra content only some problems carry,
+#: so a language lacking one is a gap to show, not a translation that is missing. Which files
+#: exist at all is the module descriptor's business, carried on `Sources`; which of them a
 #: translation is judged on is this decision.
 TRANSLATED = ('problem.md', 'solution.md')
 
@@ -133,7 +133,7 @@ def translation_status(unit, expected_languages, translated_files=TRANSLATED):
 def shared_file_states(unit, shared_files):
     """
     The files that sit beside the unit rather than in a language directory -- `answer.md` and the
-    rest of `module.mk`'s `NABOJ_NONTRANSLATABLE` family. One per problem, not one per language, so
+    rest of the module's shared family. One per problem, not one per language, so
     there is no verdict here: most problems carry `answer.md` and nothing else, and an absent
     `answer-interval.md` is the normal case rather than a gap.
     """

@@ -68,13 +68,15 @@ READY = b'\x01'
 
 #: Imported at startup so that the first job is as fast as the second.
 #:
-#: **Libraries only.** Eight of the builders -- `core/builder/i18n.py`, naboj's `language.py`
-#: and `venue.py`, seminar's `round.py`, scholar's three -- end with a bare
-#: `BuilderX().build_templates()` at module level rather than under an `if __name__`, so
-#: importing one *runs* it: the first draft of this list printed an argparse usage message and
-#: took the daemon down with it. What they cost is in the modules underneath, which is what is
-#: named here. A module that is not there -- scholar and seminar are optional checkouts -- is
-#: skipped, and the job that wants it imports it itself, once.
+#: **Libraries only**, and the reason has changed while the list has not. The builders --
+#: `core/builder/i18n.py`, naboj's `language.py` and `venue.py`, seminar's `round.py`, scholar's
+#: two -- used to end with a bare `BuilderX().build_templates()` at module level, so importing
+#: one *ran* it: the first draft of this list printed an argparse usage message and took the
+#: daemon down with it. They are under `if __name__` now and importing one is harmless, but
+#: preloading them would still buy nothing: what they cost is in the modules underneath, which
+#: is what is named here, and the entry module itself is a handful of class statements. A module
+#: that is not there -- scholar and seminar are optional checkouts -- is skipped, and the job
+#: that wants it imports it itself, once.
 #:
 #: **Nor the modules the build runs as `__main__`**, the three `builder.renderer` among them.
 #: `runpy` warns when asked to execute a module already in `sys.modules`, and it is right to:
@@ -101,7 +103,14 @@ SOURCES = ('core', 'modules', 'tools')
 SCRIPTS = ('pandoc.py', 'standalone.py')
 #: Directories whose contents say nothing about what was imported.
 SKIPPED = {'__pycache__', 'tests', 'node_modules'}
-SUFFIXES = ('.py', '.yaml', '.lua')
+#: `.tex` is in the list because **a module can bake one into itself at import**:
+#: `core/filters/siunitx.py` parses `core/latex/siunitx.tex`'s `\sisetup` block into module-level
+#: constants, so a daemon that imported it before an edit goes on expanding units for the web
+#: with the settings the booklet has stopped using. The daemon is long-lived by design and
+#: `core.builder.convertor` is in `PRELOAD`, so without this the drift lasts until somebody
+#: restarts it -- which is exactly the trap `declared_units` was keyed on mtimes to escape, and
+#: it would have been silly to escape it in one function and not in the process around it.
+SUFFIXES = ('.py', '.yaml', '.lua', '.tex')
 
 
 def watched():
@@ -241,10 +250,37 @@ class Request:
         return 0
 
 
+def peer_is_us(connection) -> bool:
+    """
+    Whether the process at the other end runs as the same user we do.
+
+    The socket's mode is the first lock and this is the second, because the two fail
+    differently: a mode is one `chmod` or one inherited umask away from being wrong, and this
+    does not depend on the filesystem at all. `SO_PEERCRED` is the kernel's own answer -- the
+    pid, uid and gid it recorded when the peer connected, which no client can spoof.
+
+    Worth the eight lines because of what a request *is*: `Request.execute` runs the module or
+    the file the client names, under the environment the client sends, in the directory the
+    client chose. A peer that is not us asking for that is not a build step, whatever it claims.
+
+    Unsupported platforms answer with an `OSError` or an `AttributeError`, and there the mode is
+    the whole of it again; Linux, which is what this daemon exists for, always answers.
+    """
+    try:
+        credentials = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED,
+                                            struct.calcsize('3i'))
+    except (OSError, AttributeError):
+        return True
+    _pid, uid, _gid = struct.unpack('3i', credentials)
+    return uid == os.getuid()
+
+
 def serve(connection) -> None:
     """The child, which never returns from here."""
     code = 70
     try:
+        if not peer_is_us(connection):
+            return
         request = Request.read(connection)
         if request is not None:
             request.become()
@@ -273,8 +309,18 @@ def listen() -> tuple[socket.socket, int] | None:
     is how a duplicate from a spawn race retires itself; or the path cannot be bound at all,
     a Unix socket name being capped near 108 bytes.
     """
-    os.makedirs(os.path.dirname(SOCKET) or '.', exist_ok=True)
+    # **The mode is set here rather than left to the umask, and that is the whole of the
+    # access control.** A request names the module or the file to run, the environment to run it
+    # under and the directory to run it in, so anyone who can connect to this socket can execute
+    # anything as the user owning the daemon. There is no authentication in the protocol and
+    # there should not be one -- the filesystem is the right place for it -- but the default
+    # umask is 002 on a great many systems, which made the socket group-writable. Harmless under
+    # a user-private group and not harmless anywhere else; the container used to make `build/`
+    # mode 1777, where a second uid could even bind the name first and collect every client's
+    # descriptors and environment.
+    os.makedirs(os.path.dirname(SOCKET) or '.', mode=0o700, exist_ok=True)
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    previous = os.umask(0o077)
     try:
         listener.bind(SOCKET)
     except OSError:
@@ -293,6 +339,11 @@ def listen() -> tuple[socket.socket, int] | None:
             listener.bind(SOCKET)
         except OSError:
             return None
+    finally:
+        os.umask(previous)
+    # Explicitly as well as through the umask: a umask only subtracts, and an inherited one
+    # that already cleared these bits would leave nothing to assert against.
+    os.chmod(SOCKET, 0o600)
     listener.listen(64)
     # The inode of the **path**, not of the socket: `fstat` on a bound socket descriptor
     # reports its node in the socket filesystem, which says nothing about the path at all.

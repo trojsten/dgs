@@ -33,7 +33,7 @@ set ylabel "f / Hz"
 plot x with lines linewidth 6, -x with lines linewidth 0.5
 """
 
-#: What `Makefile`'s `GNUPLOT_PDF` and `GNUPLOT_SVG` say, which is the thing under test.
+#: What the graph's `gnuplot_pdf` and `gnuplot_svg` rules say, which is the thing under test.
 TERMINALS = {
     'pdf': ("set macros; gppt = 1.0 / 72; gpterm = 'pdfcairo fontscale 1 font \"Minion Pro, 6\"'",
             'set terminal @gpterm size 5, 3'),
@@ -46,7 +46,7 @@ PX = 0.75
 
 
 def draw(directory: pathlib.Path, kind: str) -> pathlib.Path:
-    """One plot through one terminal, exactly as the Makefile invokes it."""
+    """One plot through one terminal, exactly as the build invokes it."""
     out = directory / f'plot.{kind}'
     script = directory / 'plot.gp'
     script.write_text(PLOT)

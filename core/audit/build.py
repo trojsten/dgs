@@ -18,6 +18,12 @@ RE_TEX_ERROR = re.compile(r'^(?P<file>\./[^:]+):(?P<line>\d+): (?P<message>.+)$'
 
 #: What a naboj volume builds. Every module's targets differ, so this is a naboj fact; a module
 #: that wants build checks says so by appearing here.
+#:
+#: **A deliberate subset, not the whole list.** `tools/ninja/generate.py`'s `LANGUAGE_PDFS` has
+#: nine; these five are the ones worth minutes of somebody's afternoon. The subset is asserted
+#: in `core/tests/test_declarations.py`, because the failure of an unpinned one is silent in the
+#: wrong direction: a target removed from the graph would leave this asking for something that
+#: cannot be built, and the row would fail for a reason that has nothing to do with the volume.
 TARGETS = {'naboj': ('booklet', 'problems', 'solutions', 'answers', 'tearoff')}
 
 CACHE_DIR = Path('build') / '.audit'
@@ -44,11 +50,24 @@ def write_cache(repo_root: Path, module: str, scope: str, payload):
 
 
 def languages_of(module_root: Path, scope: str):
-    """The languages a scope publishes in, from its `languages/` directory."""
+    """
+    The languages a scope publishes in, from its `languages/` directory.
+
+    **A dot-directory is not a language**, which is the one thing this and
+    `tools/ninja/generate.py`'s function of the same name had come to disagree about. The graph
+    filters them -- `_visible`, added after `.template` and `.priors` were built as real scopes
+    -- and this did not, so a hidden directory under `languages/` would be handed to
+    `run_targets`, which would ask Ninja for `output/<module>/<scope>/languages/.foo/booklet.pdf`
+    and get `unknown target`, failing the whole build-check row rather than that one language.
+
+    Latent today: nothing under any `languages/` begins with a dot. The filter exists because
+    this exact class of mistake has already been made one level up.
+    """
     root = module_root / scope / 'languages'
     if not root.is_dir():
         return []
-    return sorted(child.name for child in root.iterdir() if child.is_dir())
+    return sorted(child.name for child in root.iterdir()
+                  if child.is_dir() and not child.name.startswith('.'))
 
 
 def run_targets(repo_root: Path, module: str, scope: str, languages, targets, *,

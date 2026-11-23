@@ -9,32 +9,18 @@ from core.builder.builder import get_branch, get_describe, get_last_commit_hash
 from core.builder.context.tree import FileSystemTreeContext
 from core.builder.validator import CommitHash
 from core.utilities.schema import valid_language
+from modules.naboj import declaration
+from modules.naboj.builder.renderer import valid_tag
 
 
-def valid_tag(tag: str):
-    return tag in [
-        'elegant',        # short but interesting problem
-        'troll',          # a problem with a trivial solution
-        'trick',          # has a trick or twist in the intended solution
-        'silly',          # a silly or joke problem
-        'unreal',         # a physically unrealistic setup played for humor
-        'creative',       # requires out-of-the-box thinking
-        'circuit',        # resistor network / circuit analysis
-        'resistance',     # problems focused on electrical resistance
-        'rlc',            # resonant RLC circuit
-        'elmag',          # general electromagnetism (induction, EM fields)
-        'kinematics',     # kinematics
-        'uam',            # uniformly accelerated motion
-        'paaa',           # projectile at an angle (inferred from usage; not documented at origin)
-        'cog',            # centre of gravity
-        'calorimetry',    # calorimetry / heat exchange
-        'thermo-process', # a specific thermodynamic process or cycle
-        'optics',         # optics
-        'blackbody',      # blackbody radiation
-        'nuclear',        # nuclear physics
-    ]
-
-
+#: **`valid_tag` lives in `modules/naboj/builder/renderer.py`**, and there is one of it.
+#:
+#: A second copy used to sit here, naming nineteen tags against the authority's ninety-seven --
+#: and blessing three spellings the authority records as merged away: `paaa` (now
+#: `oblique-throw`), `cog` (now `com`) and `rlc`. It was live code, wired into `ContextNaboj`'s
+#: problem schema, and quiet only because `lists.add_numbers` reduces a volume meta's
+#: `problems:` to `{id, number}` before a tag ever reaches it. The day somebody wrote a tag in a
+#: volume meta, nineteen would have been legal and the other seventy-eight refused.
 def building_user():
     """
     Who built this, for the impressum -- and never None.
@@ -55,7 +41,9 @@ def building_user():
 class ContextNaboj(FileSystemTreeContext):
     _target = None
     _subdir = None
-    competitions = ['phys', 'chem', 'test']
+    #: `modules/naboj/declaration.py` is the one list; this used to be a third, narrower
+    #: than the two the command lines accept.
+    competitions = declaration.COMPETITIONS
     team = Schema({
         'id': And(int, lambda x: 0 <= x <= 9999),
         'code': str,
@@ -130,7 +118,13 @@ class ContextNaboj(FileSystemTreeContext):
         )
 
     def as_tuple(self, competition: str | None = None, volume: int | None = None, sub: str | None = None, issue: str | None = None):
-        assert competition in ContextNaboj.competitions
+        # Named rather than asserted. A bare `assert` here carried no message, so an
+        # unknown competition surfaced as `AssertionError` from inside a constructor; and
+        # `python -O` strips it, which would have built the tree for a competition that does
+        # not exist. `None` is legal and always was -- the body below is written for it.
+        if competition is not None and competition not in self.competitions:
+            raise ValueError(f"no such competition: {competition!r} "
+                             f"(known: {', '.join(self.competitions)})")
 
         result = []
         if competition is not None:

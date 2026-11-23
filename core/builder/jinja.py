@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import jinja2
+import jinja2.sandbox
 import numpy as np
 import pint
 
@@ -99,13 +100,26 @@ class JinjaRenderer:
     """
     A wrapper class for rendering Jinja2 templates.
     Supports custom tag delimiters and emits strict warnings everywhere.
+
+    **The environment is sandboxed, and that is load-bearing rather than belt-and-braces.** What
+    goes through it is content: every `derived:` expression in a `meta.yaml`, every `(* … *)` in a
+    `problem.md`, a `.tikz` or a `.jtex`. `source/` is cloned from repositories several people
+    write to, and a plain `jinja2.Environment` evaluates what they write as *Python* -- 
+    `''.__class__.__mro__[1].__subclasses__()` is the textbook first step, and from a `derived:`
+    entry it runs in the builder's own process. The editor made it worse: `/api/evaluate` renders
+    a fragment straight out of the request body, so the same expression arrives over HTTP.
+
+    `SandboxedEnvironment` costs nothing here. It blocks attribute access to dunders and mutation
+    of the objects passed in; the filters, the globals and pint's quantities are untouched, which
+    is why the whole suite passes across the change. Nothing a legitimate `derived:` does needs
+    what it takes away.
     """
     def __init__(self,
                  *,
                  loader: jinja2.BaseLoader = jinja2.BaseLoader(),
                  **kwargs):
         self._undefined_cls = make_collect_undefined()
-        self.env = jinja2.Environment(
+        self.env = jinja2.sandbox.SandboxedEnvironment(
             block_start_string=kwargs.pop('block_start_string', '(@'),
             block_end_string=kwargs.pop('block_end_string', '@)'),
             variable_start_string=kwargs.pop('variable_start_string', '(*'),
@@ -359,7 +373,7 @@ class MarkdownJinjaRenderer(JinjaRenderer):
         The contents of a file next to the template, verbatim: `(§ include(\'vetranie.py\') §)`.
 
         This is what a fenced code block is for -- the Python a solution walks through lives in
-        its own runnable `.py`, which `module.mk` also copies to `output/` for the reader to
+        its own runnable `.py`, which the build also copies to `output/` for the reader to
         download, and the listing has to be that same file rather than a second copy of it that
         goes stale. Pandoc used to do this through `pandoc-include`\'s `!include` directive; the
         filter was dropped for the warnings it emitted, and nothing replaced it, so three

@@ -43,17 +43,20 @@ ARG FONTPRO_COMMIT=165b4a7d11ad34b64d7457ee6d51af4875e0bf14
 # === common ==================================================================
 FROM docker.io/library/debian:${DEBIAN_TAG} AS common
 
-# TERM: Makefile:41-46 calls `$(shell tput ...)` at parse time whether or not
-#   there is a tty; with no TERM that writes "tput: No value for $TERM" to stderr
-#   on every single make invocation.
+# TERM: vestigial, and kept only because a tty-less `tput` is cheap to satisfy.
+#   It was here because the Makefile called `$(shell tput ...)` at parse time
+#   whether or not there was a tty, writing "tput: No value for $TERM" to stderr
+#   on every invocation. The Makefile is gone and nothing calls tput now --
+#   `tools/ninja/ink.py` bakes its SGR markers into the graph at generation time.
 # LANG: not cosmetic. Real venues are gdańsk-senior, toruń-senior, wrocław-junior,
-#   košice-junior; under the default POSIX locale zip (module.mk:429), rsync
-#   (:504), tar and make mangle or refuse those paths. C.UTF-8 lives inside glibc,
-#   so this needs no `locales` package and no locale-gen.
+#   košice-junior; under the default POSIX locale zip, rsync and tar mangle or
+#   refuse those paths. C.UTF-8 lives inside glibc, so this needs no `locales`
+#   package and no locale-gen.
 # HOME: writable by any uid, so a forced `--user` still works.
-# PATH: the venv first. Makefile:112 and :140 call a bare `python` and Debian has
-#   no /usr/bin/python; this is what satisfies them, and it is also what makes
-#   capabilities.py's probe_python_launcher take its `via: python` branch.
+# PATH: the venv first. The generated rules call a bare `python` -- exactly as the
+#   Makefile's recipes did before them -- and Debian has no /usr/bin/python; this
+#   is what satisfies them, and it is also what makes capabilities.py's
+#   probe_python_launcher take its `via: python` branch.
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     TERM=xterm \
@@ -110,7 +113,9 @@ RUN BIN_DIR=/usr/local/bin /tmp/install-pandoc.sh && rm /tmp/install-pandoc.sh
 FROM common AS tex
 
 # --no-install-recommends silently drops dvisvgm and ghostscript, which is why
-# both are named: Makefile:208 runs pdfcrop (ghostscript) and :226 dvisvgm.
+# both are named. dvisvgm sets the web maths (`core/html/`); ghostscript is no
+# longer reached by a crop -- `tools/ninja/crop.py` measures the box on a poppler
+# raster -- and is kept for the TeX distribution's own use.
 #
 # mupdf-tools is mutool, which is dvisvgm's PDF reader now: Ghostscript dropped
 # the interpreter dvisvgm drove in 10.01.0 and trixie ships 10.05, so without it
@@ -137,7 +142,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # FontPro fails deep inside a TeX run when a tool is absent, twenty minutes in.
 # Fail here instead, by name. The first eleven are python-app.yml:61-71 verbatim;
-# the rest is what the makefiles reach for beyond the obvious.
+# the rest is what the graph's rules reach for beyond the obvious.
 RUN missing=""; \
     for tool in tex fontinst vptovf pltotf otfinfo otftotfm cfftot1 kpsewhich \
                 mktexlsr updmap-sys perl \
@@ -153,8 +158,8 @@ RUN missing=""; \
 COPY assets/fonts/MinionPro/*.otf /tmp/fontpro/otf/
 
 ARG FONTPRO_COMMIT
-# The last three lines are a second, easily-missed font install. Makefile:232,274
-# pass gnuplot `font 'Minion Pro, 12'` -- a family name, resolved through
+# The last three lines are a second, easily-missed font install. The build passes
+# gnuplot `font 'Minion Pro, 6'` through `@gpterm` -- a family name, resolved through
 # fontconfig, not kpathsea. FontPro installs nothing fontconfig reads, so without
 # them every gnuplot figure silently comes out in DejaVu. Verified on the host:
 # `fc-match 'Minion Pro'` answers there only because somebody once copied the OTFs
@@ -213,7 +218,7 @@ COPY . .
 # uv is locked down only now: everything above needed the network.
 ENV UV_NO_SYNC=1 UV_FROZEN=1 UV_OFFLINE=1 UV_PYTHON_DOWNLOADS=never
 
-# make writes here. Sticky-writable rather than chowned to a uid the image
+# The build writes here. Sticky-writable rather than chowned to a uid the image
 # cannot know, so a forced `--user` still works.
 RUN install -d -m 1777 build render output
 
@@ -224,8 +229,19 @@ RUN install -d -m 1777 build render output
 RUN python tools/editor/expect-tiers.py markdown tex
 
 EXPOSE 5000
-# No ENTRYPOINT, so `podman run dgs:light make <target>` works as typed.
-CMD ["python", "tools/editor/app.py", "--host", "0.0.0.0", "--port", "5000"]
+# No ENTRYPOINT, so `podman run dgs:light ./dgs-build <target>` works as typed.
+#
+# **The default bind is loopback, so the image fails closed.** The editor has no
+# authentication of any kind: every route acts with the authority of whoever
+# started it, and `/api/save` writes into the source tree. An image whose CMD
+# said `0.0.0.0` put that on the network for anyone who typed the obvious
+# `podman run -p 5000:5000`, which is exactly what EXPOSE invites.
+#
+# Bound to loopback the port forward reaches nothing, which is a visible failure
+# rather than a silent exposure. `dgs-container editor` is unaffected: it passes
+# the whole command itself, with `--host 0.0.0.0` and a `-p` pinned to the host's
+# own 127.0.0.1, and that is the supported way in.
+CMD ["python", "tools/editor/app.py", "--host", "127.0.0.1", "--port", "5000"]
 
 
 # === full ====================================================================
@@ -259,12 +275,13 @@ RUN install -d "$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex" \
 
 ENV UV_NO_SYNC=1 UV_FROZEN=1 UV_OFFLINE=1 UV_PYTHON_DOWNLOADS=never
 
-# `_minted/` because -shell-escape is unconditional (Makefile:84, 217-222) even
-# though nothing in core/latex loads minted today.
-RUN install -d -m 1777 build render output _minted
+# `_minted/` is gone with `-shell-escape`: nothing in core/latex loads minted,
+# and the flag that made a scratch directory necessary is off every xelatex rule.
+RUN install -d -m 1777 build render output
 
 RUN python tools/editor/expect-tiers.py markdown tex latex pdf
 
 LABEL org.opencontainers.image.source="https://github.com/TrojstenSK/dgs"
 EXPOSE 5000
-CMD ["python", "tools/editor/app.py", "--host", "0.0.0.0", "--port", "5000"]
+# Loopback by default, for the reason given on `light`'s CMD above.
+CMD ["python", "tools/editor/app.py", "--host", "127.0.0.1", "--port", "5000"]

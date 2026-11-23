@@ -4,8 +4,8 @@ Turn xelatex's `.fls` recorder log into a Ninja depfile.
 **Why this is the right source.** Every other way of knowing what a document includes is a
 guess. `\protectedInput` resolves its path against `\activeDirectory`, a macro set at run time by
 `\setActive`, and then asks `\IfFileExists`; `\insertPicture` does the same. Nothing upstream can
-predict the answer, which is why `modules/naboj/module.mk` falls back to depending on *directories*
-(`naboj_problem_dirs`, `:114-132`) and on every `.jtex` in the tree at once. With `-recorder`,
+predict the answer, which is why make fell back to depending on *directories* and on every
+`.jtex` in the tree at once. With `-recorder`,
 TeX writes down what it actually opened, and the next build is told exactly that.
 
 What is filtered out, and why:

@@ -1,8 +1,8 @@
 r"""
-Remove what `make` cannot: built directories whose source has been renamed or deleted.
+Remove built directories whose source has been renamed or deleted.
 
-`Makefile:55-61` explains why this has to be a separate pass -- a target whose prerequisite has
-vanished has no rule left to remove it, and `.SECONDARY:` keeps every intermediate -- so a
+This has to be a separate pass, because a target whose prerequisite has vanished has no rule
+left to remove it, and every intermediate is kept -- so a
 renamed problem leaves its `render/` and `build/` copies behind for ever. Usually that is dead
 weight; it is a wrong page when the volume meta still names the unit, because `\protectedInput`
 finds the stale `.tex` and prints the deleted problem.

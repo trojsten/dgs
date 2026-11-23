@@ -28,6 +28,7 @@ import subprocess
 
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
+from core.html import preamble
 
 #: The two binaries `compile_page` shells out to, named here so that a test guard asks the
 #: module what it needs instead of guessing. `xelatex` alone is not the question: CI had TeX
@@ -39,7 +40,11 @@ TEMPLATE = 'mathpage.jtex'
 CACHE = pathlib.Path('build/.html-math')
 
 #: In the hash, so that changing the wrapper or the conversion invalidates what it produced.
-VERSION = '3'
+#: **This says the wrapper and the conversion, not the macros**, which is why it is no longer
+#: the whole of the key: `core/html/preamble.py` hashes the template and everything it inputs,
+#: and `digest` folds both in. Bump this when *this module* changes what it does with the SVG
+#: -- the metric, the `currentColor` rewriting, the sizing -- since no file's contents say that.
+VERSION = '4'
 
 #: What pandoc writes with `--math-method=mathjax`.
 RE_MATH = re.compile(r'<span class="math (?P<kind>inline|display)">(?P<body>.*?)</span>',
@@ -56,8 +61,19 @@ class RenderError(RuntimeError):
 
 
 def digest(latex: str, lang: str, display: bool) -> str:
+    r"""
+    The cache key for one formula.
+
+    `preamble.digest()` is the half that was missing and the half that mattered. The formula,
+    the language and display-ness say what is being set; the preamble says what it is being set
+    *with* -- MinionPro, `math.tex`'s 212 macros, the `\sisetup` block -- and a cache keyed only
+    on the first three answered a rebuild with SVGs typeset by the previous version of the
+    second. `tools/ninja/generate.py` had always declared those files as inputs of every page
+    edge, so Ninja rebuilt; what came back was the old maths, and nothing anywhere said so.
+    """
     return hashlib.sha1(
-        f'{VERSION}\0{lang}\0{int(display)}\0{latex}'.encode()).hexdigest()[:32]
+        f'{VERSION}\0{preamble.digest()}\0{lang}\0{int(display)}\0{latex}'
+        .encode()).hexdigest()[:32]
 
 
 def strip(body: str) -> str:
@@ -114,7 +130,15 @@ def compile_page(formulas: list[tuple[str, bool]], lang: str) -> list[tuple[str,
     subprocess.run(
         # no `-halt-on-error`: loading chemfig provokes a recoverable error inside MinionPro's
         # own `.fd`, and whether a PDF came out is the question that matters
-        ['xelatex', '-interaction=nonstopmode', '-file-line-error', '-shell-escape',
+        #
+        # **And no `-shell-escape`**, which is the important half. What is being typeset here is
+        # one formula taken verbatim out of a rendered `source/**/*.md`, so this is the shortest
+        # path there is from a content repository to TeX -- shorter than the document rules,
+        # which at least go through a template. `\immediate\write18{...}` inside a `$...$` ran
+        # as whoever asked for a page. Nothing in `core/latex` or `core/templates` loads minted
+        # or shells out, so the flag bought nothing anywhere; it was taken off the graph's rules
+        # and left on this one, which is the one that needed it off most.
+        ['xelatex', '-interaction=nonstopmode', '-file-line-error',
          f'-output-directory={CACHE}', str(tex)],
         capture_output=True, text=True, check=False)
 

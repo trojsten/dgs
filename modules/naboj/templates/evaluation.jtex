@@ -9,5 +9,16 @@
     \pagestyle{instructions}
 
     \section{(* i18n[language.id].instructions.title *)}
-    \input{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/evaluators.tex}
+    (# `\protectedInput`, not `\input`, and for the reason `instructions.jtex` carries the same
+       note: `evaluators` is an **optional** product -- `modules/naboj/declaration.py` says so,
+       and `written()` is what both the builder and the graph read it from -- so this file is
+       simply absent wherever a language has not written one. Volume 25 has it in `sk` alone and
+       volume 26 in `en` and `sk`, so eight of those twelve `evaluation.pdf` were an
+       `Emergency stop` with nothing anywhere naming the missing file.
+
+       Its sibling `answers-modulo.jtex` already reached the same file with `\protectedInput`,
+       which is how two templates in one module came to disagree about whether it may be absent.
+       `core/tests/test_declarations.py` now checks the rule rather than leaving it to whoever
+       writes the next template: a bare `\input` of an optional product is reported. #)
+    \protectedInput{build/(* module.id *)/(* competition.id *)/(* volume.id *)/languages/(* language.id *)/evaluators.tex}
 (@ endblock @)

@@ -13,6 +13,11 @@
 # droppings of a run that was not this build -- five of them sat in the root for a week
 # because this family had every TeX suffix but that one.
 *.fls
+# dvisvgm's extracted glyph outlines. It writes `font-XXXX.cff` into the *working directory*
+# rather than beside its output, so a run of `core/html/mathimage.py` from the root leaves them
+# there -- seven of them sat in the root for two days. `--no-fonts` is passed and is why the
+# SVGs carry paths rather than font references; it does not stop the extraction itself.
+font-*.cff
 *.pyc
 *__pycache__*
 *.dblite

@@ -257,6 +257,82 @@ class TestAMissingPictureIsBoxed:
         assert (tmp_path / 'out' / 'tam.svg').is_file()
         assert 'src="tam.svg"' in body(out)
 
+    @needs_latex
+    def test_a_picture_may_not_be_named_from_outside_its_unit(self, repo, tmp_path):
+        """
+        A `src` is relative to the unit, and a page directory is a thing you hand to somebody.
+
+        Both spellings used to resolve. `root / src` with an absolute `src` discards `root`
+        outright -- that is what joining an absolute path means in `pathlib` -- and `..` walked
+        out through the `.` fallback root; `src.name` then stripped the directories, so the file
+        arrived beside the page under a short, innocent name. An author cannot have meant either,
+        so both take the red box the absent case already had.
+        """
+        secret = tmp_path / 'secret.svg'
+        secret.write_text("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'></svg>")
+        problem = tmp_path / 'holder' / 'unit'
+        problem.mkdir(parents=True)
+        (problem / 'problem.html').write_text(
+            f'<p><img src="{secret}" alt="" /> <img src="../../secret.svg" alt="" /></p>')
+
+        with pytest.raises(page.MissingPictures) as raised:
+            page.build(problem, 'sk', tmp_path / 'out', engine='latex',
+                       module='flat', repo_root=repo)
+
+        assert raised.value.missing == [str(secret), '../../secret.svg']
+        assert not (tmp_path / 'out' / 'secret.svg').exists()
+        assert body(raised.value.page).count('dgs-missing') == 2
+
+    @needs_latex
+    def test_one_level_up_from_the_checkout_is_still_out_of_bounds(self, repo, tmp_path,
+                                                                   monkeypatch):
+        """
+        The case a single containment rule got wrong, and which `../../` does not reach.
+
+        `collect` tries the unit's directories and then the checkout itself. One level up from a
+        unit is a sibling directory and legitimate; one level up from the *checkout* is whatever
+        contains it, which on this machine is `$HOME`. A rule of "the root's parent", applied to
+        every root alike, therefore let a single `..` resolve beside the repository and copy
+        what it found into published output.
+        """
+        outside = tmp_path / 'outside.svg'
+        outside.write_text("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'></svg>")
+        checkout = tmp_path / 'checkout'
+        problem = checkout / 'unit'
+        problem.mkdir(parents=True)
+        # `build()` reads `core/html/page.css` relative to the working directory, as `main()`
+        # does for everything, so a stand-in checkout has to carry one -- the same reason the
+        # `repo` fixture symlinks it.
+        (checkout / 'core').symlink_to(pathlib.Path('core').resolve(), target_is_directory=True)
+        (problem / 'problem.html').write_text('<p><img src="../outside.svg" alt="" /></p>')
+        monkeypatch.chdir(checkout)
+
+        with pytest.raises(page.MissingPictures) as raised:
+            page.build(problem, 'sk', tmp_path / 'out', engine='latex',
+                       module='flat', repo_root=repo)
+
+        assert raised.value.missing == ['../outside.svg']
+        assert not (tmp_path / 'out' / 'outside.svg').exists()
+
+    @needs_latex
+    def test_a_drawing_one_level_up_is_shared_not_stolen(self, repo, tmp_path):
+        """
+        The quiet case, and a live one: `scholar/TA1/.../2-growth-curve/problem.md` writes
+        `![](../growth.png)` for a drawing two problems of one issue share. A guard that refused
+        any `..` boxed it, which would have made the web disagree with the booklet about a
+        source neither had a problem with.
+        """
+        issue = tmp_path / 'issue'
+        (issue / 'unit').mkdir(parents=True)
+        (issue / 'growth.svg').write_text(
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'></svg>")
+        (issue / 'unit' / 'problem.html').write_text('<p><img src="../growth.svg" alt="" /></p>')
+
+        out = page.build(issue / 'unit', 'sk', tmp_path / 'out', engine='latex',
+                         module='flat', repo_root=repo)
+        assert 'dgs-missing' not in body(out)
+        assert (tmp_path / 'out' / 'growth.svg').is_file()
+
 
 class TestTheBuildStaysGreen:
     """

@@ -3,8 +3,8 @@ The tearoff archive: one PDF per language, each named after its language.
 
 `output/…/languages/<lang>/tearoff.pdf` is what the build produces, and what a venue wants is an
 archive of those under the names `sk.pdf`, `en.pdf` and so on. The Makefile did it by laying a
-symlink beside each PDF and running `zip --junk-paths` over the links
-(`modules/naboj/module.mk:548-551`), which leaves the links behind permanently -- `core/audit/stale.py`
+symlink beside each PDF and running `zip --junk-paths` over the links, which leaves the links
+behind permanently -- `core/audit/stale.py`
 carries a note about having to `unlink` rather than follow them -- and which **appends**, so a
 language removed from the volume stayed in the archive for ever.
 

@@ -271,7 +271,7 @@ The linter forbids `\frac` here — use `\dfrac` because answer cells are typese
 - `problem-extra.md` — rarely used, gets appended in the booklet after the problem.
 - `answer-extra.md` — rarely used, gets appended after the answer.
 
-Supported language codes (see `Makefile`): `sk en cs hu pl es de fr ru fa uk pt`.
+Supported language codes (`core/i18n/`): `sk en cs hu pl es de fr ru fa uk pt`.
 
 ## Figures
 

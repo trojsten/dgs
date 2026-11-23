@@ -1,42 +1,48 @@
 r"""
-Generate `build.ninja` for one Náboj volume, as a spike against the Makefile.
+Generate `build.ninja` -- the build graph for every module, and the only one there is.
 
-**Why this exists.** The make build decides what to do with pattern rules whose prerequisites come
-from `$(wildcard …)`, and a wildcard that matches nothing yields *nothing* rather than failing. A
-rule then either silently does not apply -- and an existing target is declared current -- or applies
-against whatever is left in `build/`. That has hidden three defects on record: `Makefile:20-23`
-(`$(lang)` unset, every picture rule dying on `invalid choice`), `Makefile:146`, and a 40-page
-Ukrainian booklet built for a volume that has no Ukrainian. Ninja has no pattern rules and no
-implicit search: a target either has an edge here or it is `ninja: error: unknown target`.
+**Why this exists.** It began as a spike against a Makefile, which is gone now; the argument that
+retired it is still the reason this is shaped the way it is. Make decided what to do with pattern
+rules whose prerequisites came from `$(wildcard …)`, and a wildcard that matches nothing yields
+*nothing* rather than failing. A rule then either silently did not apply -- and an existing target
+was declared current -- or applied against whatever was left in `build/`. That hid three defects on
+record: an unset `$(lang)` with every picture rule dying on `invalid choice`, a stale language
+directory, and a 40-page Ukrainian booklet built for a volume that has no Ukrainian. Ninja has no
+pattern rules and no implicit search: a target either has an edge here or it is
+`ninja: error: unknown target`.
 
-**Why it is possible.** No `$(wildcard …)` in any of the four makefiles reads `build/` -- every
-`build/` prerequisite is `$(subst source/,build/,…)` of a `source/` glob. The dependency graph is a
-pure function of the source tree, so it can be computed up front.
+**Why it is possible.** No prerequisite anywhere was ever read out of `build/` -- every `build/`
+path is a rewrite of a `source/` glob. The dependency graph is a pure function of the source tree,
+so it can be computed up front, which is also what makes a change here cheap to check: generate
+before and after and diff the two graphs.
 
 Run:
 
     uv run python -m tools.ninja.generate --scope phys/29 -o build.ninja
     uv run --with ninja ninja -f build.ninja output/naboj/phys/29/languages/sk/booklet.pdf
 
-Nothing in `Makefile` or `modules/*/module.mk` is touched; the two drive the same trees and the
-point of the exercise is to diff their output.
+`./dgs-build` does both for you, over every scope; see `tools/ninja/bootstrap.py`.
 """
 import argparse
+import functools
 import os
 import pathlib
 import sys
 import tempfile
 
 from core.builder import words
+from core.builder.products import Root, read_scalar, written
+from core.html.preamble import inputs as mathpage_inputs
+from core.html.preamble import templates as standalone_templates
+from modules.naboj import declaration
+from modules.scholar import declaration as scholar_declaration
+from modules.seminar import declaration as seminar_declaration
 from tools.ninja.ink import described
 from tools.ninja.writer import Writer
 
-#: Files a problem holds inside its language directory, and beside it. The split is
-#: `modules/naboj/editor.yaml`'s `targets` / `translated`; it is repeated here rather than read
-#: because the spike must not depend on the descriptor being right about a module it is testing.
-#: Which fragments each document actually includes. Make expresses this with the three
-#: per-language stamps `problems/<l>`, `solutions/<l>` and `answers/<l>`
-#: (`modules/naboj/module.mk:321-343`); the sets are the same, named rather than stamped.
+#: Which fragments each document actually includes. Make expressed this with three per-language
+#: stamps, `problems/<l>`, `solutions/<l>` and `answers/<l>`; the sets are the same, named here
+#: rather than stamped.
 #:
 #: Getting it wrong is not merely wasteful. Declaring every fragment on every document made
 #: `problems.pdf` wait for a `solution.md` it never includes -- and in `FKS/42/1/1` that is a
@@ -57,7 +63,7 @@ NABOJ_DOCUMENT_GROUPS = {
     'cover': (),
     'evaluation': (),
 }
-#: The same, for seminar, from `modules/seminar/module.mk:171-199`.
+#: The same, for seminar.
 SEMINAR_DOCUMENT_GROUPS = {
     'problems': ('problem',),
     'solutions': ('solution',),
@@ -65,14 +71,11 @@ SEMINAR_DOCUMENT_GROUPS = {
     'instagram': ('problem',),
 }
 
-#: Scholar has two kinds of issue and each has its own builder, writing three documents and two
-#: respectively (`modules/scholar/builder/{handout,homework}.py`). A unit here is an *issue*,
-#: which holds a `text.md` of its own and a directory per problem -- two editable levels, which
-#: `modules/scholar/editor.yaml` declares as two `units:` entries.
-SCHOLAR_KINDS = {
-    'handouts': ('handout', ('handout-students', 'handout-solutions', 'handout-solved')),
-    'homework': ('homework', ('homework-students', 'homework-solutions')),
-}
+#: Scholar has two kinds of issue and each has its own builder. A unit here is an *issue*, which
+#: holds a `text.md` of its own and a directory per problem -- two editable levels, which
+#: `modules/scholar/editor.yaml` declares as two `units:` entries. Which documents each builder
+#: writes comes from `modules/scholar/declaration.py`; what is left here is the directory the
+#: issues sit in, and that is this graph's business because it is what the walk below reads.
 #: How far below an issue a fragment can live: a problem, and a subproblem inside it.
 #:
 #: **Two, and the bound is the module's own.** `ContextHomeworkProblem` declares
@@ -88,10 +91,9 @@ SCHOLAR_KINDS = {
 #: rules never were -- `build/scholar/%/homework` wildcards `$*/*/*/*.md` -- so this arrived
 #: with the graph rather than with the sources.
 SCHOLAR_SUBLEVELS = 2
-#: `content` is in neither `modules/scholar/module.mk`'s `RULE_TEMPLATE_SCHOLAR` (which names
-#: `text problem solution`) nor `modules/scholar/editor.yaml` (`targets: [text]`), and 28 files
-#: are called that -- which is why `make output/scholar/…/handout-students.pdf` dies on the
-#: XFAIL fall-through at `Makefile:186` rather than building. Taken from the tree, not from
+#: `content` is in neither the scholar rules that make carried (`text problem solution`) nor
+#: `modules/scholar/editor.yaml` (`targets: [text]`), and 28 files are called that -- which is
+#: why a scholar document could not be built at all under make. Taken from the tree, not from
 #: either declaration.
 SCHOLAR_TARGETS = ('text', 'content', 'problem', 'solution')
 
@@ -105,31 +107,41 @@ NABOJ_RENDERER = 'modules.naboj.builder.renderer'
 SEMINAR_RENDERER = 'modules.seminar.builder.renderer'
 SCHOLAR_RENDERER = 'modules.scholar.builder.renderer'
 
-TRANSLATED = ('problem', 'problem-extra', 'solution', 'answer-extra')
-SHARED = ('answer', 'answer-also', 'answer-interval')
+#: Re-exported from `modules/naboj/declaration.py`, which is where the module says what its
+#: problems hold. Named here because this file is where the edges are written and a reader
+#: looking for the taxonomy looks here first; the values are the module's, not ours.
+TRANSLATED = declaration.TRANSLATED
+SHARED = declaration.SHARED
 
-#: What `build/%.pdf` can be made from, in the order the Makefile tries them -- which matters,
-#: because a hand-drawn `.svg` matches two rules and must be copied rather than round-tripped
-#: (`Makefile:227-235`). Here the choice is made once, by extension, and written down.
+#: What `build/%.pdf` can be made from, in the order make used to try them -- which mattered,
+#: because a hand-drawn `.svg` matched two rules and must be copied rather than round-tripped.
+#: Here the choice is made once, by extension, and written down.
 PICTURE_SOURCES = ('svg', 'tikz', 'gp')
 PICTURE_COPIES = ('png', 'jpg', 'pdf')
+#: These two are asserted to be a subset of `declaration.ASSET_EXTENSIONS` in
+#: `core/tests/test_declarations.py`, so what the graph can draw and what the validator admits
+#: beside a problem cannot drift apart again.
 
-#: The documents one language directory holds. `modules/naboj/builder/language.py:templates`
-#: is the authority; `intro` and `evaluators` come from `i18n_templates` and are skipped when
-#: their source is absent, which is the one place this generator has to guess.
-LANGUAGE_DOCUMENTS = ('booklet', 'answers', 'constants', 'cover', 'online',
-                      'evaluation', 'tearoff', 'problems', 'solutions')
-#: Of those, the ones with a `double_xelatex` rule to a PDF in `output/`.
+#: **Which documents each builder writes is the builder's to say, and is no longer restated
+#: here.** `modules/naboj/declaration.py`, `modules/seminar/declaration.py` and
+#: `modules/scholar/declaration.py` carry it; `core.builder.products.written` is the predicate
+#: both sides call, so the builder's skip of an absent optional source and this graph's decision
+#: not to declare that output are one statement rather than two that have to agree.
+#:
+#: What stays is the half no builder has: which of the documents it writes go on to XeLaTeX.
+#: `build/` cannot tell you that -- `tearoff.tex` and `intro.tex` look alike on disk -- and it
+#: is partly policy rather than fact. Each list is asserted to be a subset of its node's
+#: products in `core/tests/test_declarations.py`, so a document added to a builder cannot
+#: silently fail to get a PDF rule, and one removed cannot leave a rule pointing at a `.tex`
+#: nobody writes.
 LANGUAGE_PDFS = ('booklet', 'problems', 'solutions', 'answers', 'constants', 'cover',
                  'evaluation', 'tearoff', 'online')
-
-#: What `modules/seminar/builder/round.py` writes, and which of those reach `output/` as a PDF.
-#: `instagram` is built but its `output/` rule is commented out in `modules/seminar/module.mk:270`;
-#: it is kept here as a `.tex` so nothing is lost, and not as a PDF so nothing new appears.
-ROUND_DOCUMENTS = ('problems', 'solutions', 'solutions-full', 'instagram')
-#: What `all` is. `instagram.pdf` is built on request and is deliberately not in it, which is
-#: `modules/seminar/module.mk:270`'s reading too -- its line in the round aggregate is commented
-#: out, and what a round is run for is its problems and its solutions.
+#: The venue's two. `instructions-inner` is deliberately absent: it is a fragment the other two
+#: `\input`, not a document anybody prints.
+VENUE_PDFS = ('instructions', 'answers-modulo')
+#: What a round's `all` is. `instagram.pdf` is built on request and is deliberately not in it,
+#: which is how make read it too -- its line in the round aggregate was commented out, and what
+#: a round is run for is its problems and its solutions.
 ROUND_PDFS = ('problems', 'solutions', 'solutions-full')
 
 #: A seminar problem's two fragments. Seminar is monolingual -- one language, not one of several
@@ -137,18 +149,14 @@ ROUND_PDFS = ('problems', 'solutions', 'solutions-full')
 #: split to make.
 SEMINAR_TARGETS = ('problem', 'solution')
 
-#: What `modules/naboj/builder/venue.py` writes: two from the template root, and
-#: `instructions-inner.tex` per language, which it skips when the source is absent.
-VENUE_DOCUMENTS = ('instructions', 'answers-modulo')
-
 
 def rules(w: Writer) -> None:
-    """Every command shape the volume needs, taken verbatim from the Makefile's recipes."""
+    """Every command shape the build needs."""
     # The interpreter that generated this file, by absolute path, rather than a bare `python`
-    # the way the Makefile's recipes spelled it. Bare, every invocation has to go through
+    # the way the Makefile's recipes used to spell it. Bare, every invocation has to go through
     # `uv run` to put one on PATH -- which costs about 55 ms each time and fails outright if
     # you type `ninja` directly, including the generator rule rebuilding this very file.
-    w.comment('Commands are the Makefile\'s, unchanged, so the two builds can be diffed.')
+    w.comment('One rule per command shape; the edges below bind their variables.')
     w.variable('python', sys.executable)
     # Every Python step goes through the warm runner rather than starting an interpreter of
     # its own: 92 % of what one of these costs is the import of `core.builder.jinja` and the
@@ -164,10 +172,10 @@ def rules(w: Writer) -> None:
     w.variable('run', f'{sys.executable} -S tools/runner/client.py')
     w.newline()
 
-    # **No pool for xelatex.** One was here as a precaution -- two runs in a directory, and
-    # `-shell-escape` lets a document write anything -- and it was wrong: `-jobname` is the full
-    # output path, so no two runs ever share an output name, and nothing else is written to a
-    # shared name. What the precaution cost was every scrap of parallelism on the one expensive
+    # **No pool for xelatex.** One was here as a precaution, back when `-shell-escape` let a
+    # document write anything -- and it was wrong even then: `-jobname` is the full output path,
+    # so no two runs ever share an output name, and nothing else is written to a shared
+    # name. What the precaution cost was every scrap of parallelism on the one expensive
     # step: a depth-1 pool put all 1549 xelatex edges in single file, so `-j8` bought nothing at
     # all and a picture-heavy volume ran slower than it had under make.
     w.rule('jinja',
@@ -201,7 +209,7 @@ def rules(w: Writer) -> None:
            description=described('{a}Copying {x}static{a} files for {f}$src'))
     w.rule('language',
            "mkdir -p $outdir && $run -m modules.naboj.builder.language 'source/naboj/' "
-           "'modules/naboj/templates/' $competition $volume $lang -o '$outdir'",
+           "'modules/naboj/templates/' $competition $volume $lang -o $outdir",
            description=described('{a}Building {x}language{a} documents for '
                                  '{f}$competition/$volume/$lang'))
     w.rule('picture_tex',
@@ -228,7 +236,7 @@ def rules(w: Writer) -> None:
            description=described('{a}[xelatex] Rendering {f}$in{a} '
                                  'to {x}PDF{a} file {f}$out'),
            depfile='$out.d', deps='gcc')
-    # `Makefile:350-354`, written out rather than referenced. `gpterm` carries the terminal *and*
+    # `gpterm` carries the terminal *and*
     # its font because re-issuing `set terminal` resets the font, and the two `-e` options cannot
     # be one: gnuplot expands a macro while parsing the line it is on.
     w.rule('gnuplot_pdf',
@@ -249,8 +257,9 @@ def rules(w: Writer) -> None:
     # A picture in the one format a browser wants, converted from **the PDF the LaTeX path
     # already built** -- so the web picture and the printed one cannot drift. `pdftocairo` and
     # not `dvisvgm --pdf`: dvisvgm reads line widths and embedded rasters wrongly, which is a
-    # hairline turned into a heavy frame and a bitmap smeared into the corner (`Makefile:276-299`
-    # has the whole account). A hand-drawn `.svg` short-circuits this and is copied instead.
+    # hairline turned into a heavy frame and a bitmap smeared into the corner; CLAUDE.md's
+    # *A picture is the booklet's picture* has the whole account. A hand-drawn `.svg`
+    # short-circuits this and is copied instead.
     w.rule('pdf_svg',
            'mkdir -p $$(dirname $out) && pdftocairo -svg $in $out',
            description=described('{a}[pdftocairo] Rendering {f}$in{a} '
@@ -280,50 +289,34 @@ def rules(w: Writer) -> None:
     # present. The pictures it copies are not declared: which ones they are is decided by
     # reading the fragments, and they are a copy of files this graph already builds.
     w.rule('page',
-           'mkdir -p $outdir && $run -m core.html.page $unit $lang $outdir --module $module',
+           'mkdir -p $outdir && $run -m core.html.page $unit $lang $outdir --module $module '
+           '$nested --files $files',
            description=described('{a}[page] Assembling {f}$unit{a} into {x}HTML{a} page '
                                  '{f}$outdir/index.html'))
     w.rule('standalone_tex',
            "mkdir -p $outdir && $run -m modules.naboj.builder.standalone "
-           "$competition $volume $problem $lang -o '$outdir'",
+           "$competition $volume $problem $lang -o $outdir",
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     # Seminar's and scholar's standalone builders take the unit as one path and find their own
     # templates, where naboj's takes the competition, volume, problem and language apart. Two
     # rules rather than one contorted one.
     w.rule('unit_standalone_tex',
-           "mkdir -p $outdir && $run -m modules.$module.builder.standalone $unit -o '$outdir'",
+           "mkdir -p $outdir && $run -m modules.$module.builder.standalone $unit -o $outdir",
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     w.rule('scholar_issue',
            "mkdir -p $outdir && $run -m modules.scholar.builder.$builder 'source/scholar/' "
-           "'modules/scholar/templates/' $course $issue -o '$outdir'",
+           "'modules/scholar/templates/' $course $issue -o $outdir",
            description=described('{a}Building {x}$builder{a} for {f}$outdir'))
     w.rule('round',
            "mkdir -p $outdir && $run -m modules.seminar.builder.round 'source/seminar/' "
            "'modules/seminar/templates/' -c $competition -v $volume -s $semester -r $round "
-           "-o '$outdir'",
+           "-o $outdir",
            description=described('{a}Building {x}round{a} documents for {f}$outdir'))
     w.rule('venue',
            "mkdir -p $outdir && $run -m modules.naboj.builder.venue 'source/naboj/' "
-           "'modules/naboj/templates/' $competition $volume $venue -o '$outdir'",
+           "'modules/naboj/templates/' $competition $volume $venue -o $outdir",
            description=described('{a}Building {x}venue{a} documents for '
                                  '{f}$competition/$volume/$venue'))
-    w.rule('standalone_pdf',
-           'mkdir -p $$(dirname $out) && ' + _xelatex('$tex', '$out', first=True)
-           + ' && if ' + _needs_rerun('$out')
-           + '; then ' + _xelatex('$tex', '$out', first=False) + '; fi'
-           + ' && ' + _depfile('$out'),
-           description=described('{a}[XeLaTeX] Compiling {x}PDF{a} file {f}$out'),
-           depfile='$out.d', deps='gcc')
-    # `pdfbook2` names its own output and the recipe renames it; `pdfjam` takes `--outfile`.
-    #
-    # It runs in a directory of its own because its scratch file is `.crop-tmp.pdf`,
-    # hardcoded and relative to the working directory -- so two of these 98 edges
-    # running at once in the repository root share it, and the one that loses the race
-    # finds its `-book.pdf` already renamed away: `FileNotFoundError: '.crop-tmp.pdf'`.
-    # The input is resolved first, since `cd` changes what a relative path means, and the
-    # directory is made beside the output rather than in `/tmp`: `pdfbook2` finishes with
-    # an `os.rename`, which cannot cross a filesystem -- `OSError: [Errno 18] Invalid
-    # cross-device link`. Same device, so the rename stays a rename.
     w.rule('pdfbook',
            'mkdir -p $$(dirname $out) && p=$$(realpath $in) && '
            't=$$(mktemp -d -p $$(dirname $out)) && '
@@ -379,7 +372,7 @@ def rules(w: Writer) -> None:
     w.newline()
 
 
-#: `Makefile:68-72`. The first pass is allowed wrong cross-references, the second is not.
+#: The first pass is allowed wrong cross-references, the second is not.
 TEXFOT_FIRST = ("--no-interactive --ignore 'Underfull.*' "
                 "--ignore 'LaTeX Warning: Hyper reference.*' "
                 "--ignore 'LaTeX Warning: Reference.*' --ignore 'LaTeX Warning: Citation.*'")
@@ -388,15 +381,25 @@ TEXFOT = "--no-interactive --ignore 'Underfull.*'"
 
 def _xelatex(source: str, target: str, *, first: bool) -> str:
     r"""
-    One xelatex pass, spelled as `Makefile:85-90` spells it, plus `-recorder`.
+    One xelatex pass, plus `-recorder`.
 
     `-recorder` is the whole of the dependency story for a document. It costs nothing -- TeX
     writes a `.fls` listing every file it opened -- and it is the only honest answer to
     `\protectedInput`, whose path is built from a macro at run time and then tested with
     `\IfFileExists`. `tools/ninja/fls.py` turns the log into a depfile.
+
+    **`-shell-escape` is gone, and nothing wanted it.** It was on every xelatex edge the graph
+    emitted, which means any `.tikz`, `.jtex` or rendered `.md` under `source/` could
+    `\immediate\write18{…}` and run a command as whoever typed `./dgs-build`. The content
+    repositories are cloned from GitHub and several people write to them, so that was a real
+    path and not a theoretical one. What it bought: nothing. `minted` is loaded by no file in
+    `core/latex`, `core/templates` or any module's templates -- the `_minted/` directory and the
+    `pandoc-minted` dependency were both left over from a package this repository does not use.
+    Volume 29 builds identically without it. If a document ever does need to shell out, give
+    *that* rule the flag and say why, rather than giving it to every document in the repository.
     """
     return ('max_print_line=1000 error_line=254 half_error_line=238 texfot '
-            f'{TEXFOT_FIRST if first else TEXFOT} xelatex -file-line-error -shell-escape '
+            f'{TEXFOT_FIRST if first else TEXFOT} xelatex -file-line-error '
             f'-recorder -jobname=$$(echo {target} | sed s/\\.pdf$$//) -halt-on-error -synctex=1 '
             f'-interaction=nonstopmode {source}')
 
@@ -439,7 +442,7 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
     """Rules once, then the edges of every scope, then the edge that rebuilds this file."""
     w = Writer(out)
     w.comment('GENERATED by `python -m tools.ninja.generate`. Do not edit.')
-    w.comment('A spike. The Makefile still builds the same trees; see tools/ninja/generate.py.')
+    w.comment('Regenerated whenever a source directory changes; see tools/ninja/generate.py.')
     w.newline()
     rules(w)
 
@@ -450,7 +453,7 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
     # Two passes over the scopes: the first writes their edges into a buffer and collects what
     # they share, the second puts the shared edges in front. Ninja does not care about order --
     # it reads the whole file before deciding anything -- but a person reading `build.ninja`
-    # does, and the core comes first in the Makefile too.
+    # does, and what everything else depends on belongs at the top.
     import io
     body = io.StringIO()
     inner = Writer(body)
@@ -489,9 +492,9 @@ def generate(repo: pathlib.Path, scopes: list[str], out) -> dict:
               'given the `generator` rule and something to notice the change by.')
     w.comment('**The directories, not their contents.** A file edited inside one does not change '
               'this graph; a problem or a translation added or removed does, and a directory\'s '
-              'mtime moves on exactly that event and no other. `naboj_problem_dirs` in '
-              'modules/naboj/module.mk:114-132 is the same trick for the same reason -- the '
-              'difference is that here it is needed in one place instead of on every document.')
+              'mtime moves on exactly that event and no other. Make needed the same trick for '
+              'the same reason -- the difference is that here it is needed in one place instead '
+              'of on every document.')
     w.comment('A handful of *files* are in there too. A venue meta names the language its '
               'documents are set in, which decides which i18n table they need, and that is a '
               'fact no directory listing holds -- so the file itself is watched, or changing '
@@ -538,8 +541,8 @@ def core_edges(repo: pathlib.Path, w: Writer, needs: dict) -> int:
 
     The i18n tables, and each competition's `.static/` tree. One `core.builder.i18n` invocation
     writes both the `.tex` the booklet `\input`s and the `.yaml` every pandoc run reads as
-    `crossrefYaml` -- two outputs on one edge, where `Makefile:165` declares only the first and
-    leaves `core/templates/crossref.jyaml` a prerequisite of nothing at all.
+    `crossrefYaml` -- two outputs on one edge, where make declared only the first and left
+    `core/templates/crossref.jyaml` a prerequisite of nothing at all.
     """
     w.comment('==== core ' + '=' * 60)
     edges = 0
@@ -561,17 +564,7 @@ def core_edges(repo: pathlib.Path, w: Writer, needs: dict) -> int:
 
 
 def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
-    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
-
-    def listed(directory: pathlib.Path) -> pathlib.Path:
-        """Record a directory whose *listing* this graph depends on, and return it."""
-        if directory.is_dir():
-            counts['listed'].add(str(directory.relative_to(repo)))
-        return directory
-
-    def build(*args, **kwargs):
-        counts['edges'] += 1
-        return w.build(*args, **kwargs)
+    counts, listed, build = _walk(repo, w)
 
     competition, volume_id = scope.split('/')
     volume = repo / 'source' / 'naboj' / scope
@@ -654,7 +647,8 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             # declared edge with no fragments would be an edge that cannot run.
             if web:
                 pages[lang].append(_page(build, rel, lang, 'naboj', fragments=web,
-                                         pictures=_beside(drawings, rel), nested=True))
+                                         pictures=_beside(drawings, rel), nested=True,
+                                         repo=repo))
 
             # The standalone: one problem, one language, one PDF. **This is the editor's
             # preview** -- `modules/naboj/editor.yaml`'s `preview:` names it and `/api/compile`
@@ -669,13 +663,10 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                              'problem': problem.name, 'lang': lang,
                              'outdir': f'build/naboj/{unit}'})
             pdf = f'output/naboj/{unit}/standalone.pdf'
-            build(pdf, 'document_pdf', None,
-                  implicit=[f'build/naboj/{unit}/standalone.tex', *mine,
-                            *[p for p in pictures if p.startswith(f'build/{rel}/')],
-                            f'build/core/i18n/{lang}.tex', static, 'core/latex/dgs.cls'],
-                  implicit_outputs=[pdf.replace('.pdf', e)
-                                    for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-                  variables={'tex': f'build/naboj/{unit}/standalone.tex'})
+            _document_pdf(build, pdf, f'build/naboj/{unit}/standalone.tex',
+                          [*mine,
+                           *[p for p in pictures if p.startswith(f'build/{rel}/')],
+                           f'build/core/i18n/{lang}.tex', static, 'core/latex/dgs.cls'])
     w.newline()
 
     # -- documents -------------------------------------------------------------------------------
@@ -685,11 +676,30 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
               'date, runs nothing, and leaves the stale file in place.')
     for lang in languages:
         outdir = f'build/naboj/{scope}/languages/{lang}'
-        documents = [f'{outdir}/{name}.tex' for name in LANGUAGE_DOCUMENTS]
-        extra = [f'{outdir}/{name}.tex' for name in ('intro', 'evaluators')
-                 if (volume / 'languages' / lang / f'{name}.jtex').is_file()]
-        build(documents + extra, 'language', None,
-              implicit=[*templates, static,
+        # `written()` is the builder's own predicate, called with the roots the builder would
+        # stand in. The optional half -- `intro` and `evaluators`, which exist only where that
+        # language has written them -- used to be probed here in a second spelling of the rule
+        # `modules/naboj/builder/builder.py` applies at run time. One statement now, in
+        # `modules/naboj/declaration.py`, and the source of an optional product is an input as
+        # well as the reason for an output: editing an `intro.jtex` rebuilds it, which under
+        # the previous list it did not.
+        # **The directory is watched, not just the file.** `written()` decides whether `intro`
+        # and `evaluators` are products by asking whether their source is there, so the *set of
+        # files in this directory* is an input to the graph itself. Watching only
+        # `languages/` -- which is what happened before -- meant a translator writing a new
+        # `intro.jtex` into an existing language moved no mtime the generator was looking at:
+        # the graph was never regenerated, the product was never declared, and the booklet went
+        # on being built without it. Removing one had the mirror of that, an edge for ever
+        # promising an output nothing writes. It appeared to work only because the case that
+        # was tried, `29/budapest-junior`, arrived with a whole new `languages/hu/`.
+        roots = {Root.TEMPLATES: repo / 'modules/naboj/templates',
+                 Root.UNIT: listed(volume / 'languages' / lang)}
+        products = written(declaration.LANGUAGE, roots)
+        documents = [f'{outdir}/{product.filename()}' for product in products]
+        sources = [str((roots[product.root] / product.template).relative_to(repo))
+                   for product in products if product.root is not Root.TEMPLATES]
+        build(documents, 'language', None,
+              implicit=[*templates, static, *sources,
                         f'source/naboj/{scope}/meta.yaml',
                         f'source/naboj/{competition}/meta.yaml',
                         f'source/naboj/{scope}/languages/{lang}/meta.yaml',
@@ -703,13 +713,10 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             pdf = f'output/naboj/{scope}/languages/{lang}/{name}.pdf'
             included = [f for group in NABOJ_DOCUMENT_GROUPS[name]
                         for f in fragments[lang][group]]
-            build(pdf, 'document_pdf', None,
-                  implicit=[tex, *included, *pictures,
-                            f'build/core/i18n/{lang}.tex', static,
-                            'core/latex/dgs.cls'],
-                  implicit_outputs=[pdf.replace('.pdf', e)
-                                    for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-                  variables={'tex': tex})
+            _document_pdf(build, pdf, tex,
+                          [*included, *pictures,
+                           f'build/core/i18n/{lang}.tex', static,
+                           'core/latex/dgs.cls'])
         # Folded for printing, and the cover two-up. Both take a finished PDF and rename it.
         build(f'output/naboj/{scope}/languages/{lang}/booklet-print.pdf', 'pdfbook',
               [f'output/naboj/{scope}/languages/{lang}/booklet.pdf'])
@@ -721,14 +728,14 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         build(f'build/naboj/{scope}/languages/{lang}/online.burst', 'burst',
               [f'output/naboj/{scope}/languages/{lang}/online.pdf'])
 
-        # Everything this language has, as one name to ask for -- `output/naboj/%/languages/<l>`
-        # in the Makefile, which had to be spelled out per language there to beat make's
-        # pattern-tie rules against the venue aggregate. Here it is just a phony edge.
+        # Everything this language has, as one name to ask for. Make spelled this out per
+        # language to beat its own pattern-tie rules against the venue aggregate; here it is
+        # just a phony edge.
         w.build(f'output/naboj/{scope}/languages/{lang}/all', 'phony',
                 [f'output/naboj/{scope}/languages/{lang}/{name}.pdf'
                  for name in (*LANGUAGE_PDFS, 'booklet-print', 'cover-print')])
-        # Every page of this volume in this language. Not folded into `all`, which is the
-        # Makefile's reading too: the documents are what a volume is run from, and the pages
+        # Every page of this volume in this language. Not folded into `all`, which was make's
+        # reading too: the documents are what a volume is run from, and the pages
         # are a second output of the same sources rather than part of the first.
         w.build(f'output/naboj/{scope}/languages/{lang}/pages', 'phony', pages[lang])
         counts['edges'] += 2
@@ -753,11 +760,10 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         # taking the *volume's* languages. The whole of `all` failed on it, 34 documents at
         # once, and it was invisible under make, whose `i18n.stamp` built every locale whether
         # anything wanted it or not.
-        venue_language = _venue_language(repo / venue_meta)
+        venue_language = declaration.venue_language(repo / venue_meta)
         counts['needs']['languages'] |= {venue_language} - {None}
         counts['read'].add(venue_meta)
         outdir = f'build/naboj/{scope}/venues/{venue}'
-        documents = [f'{outdir}/{name}.tex' for name in VENUE_DOCUMENTS]
         # **`instructions-inner.tex` is an output too, where its source exists.** `venue.py`
         # renders it from the venue's *language* directory and skips it with a warning when
         # that file is absent, so leaving it undeclared made it invisible to Ninja in both
@@ -767,30 +773,33 @@ def scope_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         # unconditionally. That is exactly what `29/budapest-junior` did the moment
         # `29/languages/hu/` was written. Declared, the source is a prerequisite and the file
         # is an output, so writing or changing it rebuilds the venue.
-        inner = f'source/naboj/{scope}/languages/{venue_language}/instructions-inner.jtex'
-        has_inner = venue_language is not None and (repo / inner).is_file()
-        if has_inner:
-            documents.append(f'{outdir}/instructions-inner.tex')
+        roots = {Root.TEMPLATES: repo / 'modules/naboj/templates'}
+        if venue_language is not None:
+            # Watched for the same reason as the language loop above: whether
+            # `instructions-inner.jtex` is a product of this venue is a fact about that
+            # directory's contents.
+            roots[Root.LANGUAGE] = listed(volume / 'languages' / venue_language)
+        products = written(declaration.VENUE, roots)
+        documents = [f'{outdir}/{product.filename()}' for product in products]
+        sources = [str((roots[product.root] / product.template).relative_to(repo))
+                   for product in products if product.root is not Root.TEMPLATES]
         build(documents, 'venue', None,
               implicit=[*templates, static,
                         venue_meta,
                         f'source/naboj/{scope}/meta.yaml',
                         f'source/naboj/{competition}/meta.yaml',
-                        *([inner] if has_inner else []),
+                        *sources,
                         *sorted(str((p / 'meta.yaml').relative_to(repo)) for p in problems)],
               variables={'competition': competition, 'volume': volume_id, 'venue': venue,
                          'outdir': outdir})
-        for name in VENUE_DOCUMENTS:
+        for name in VENUE_PDFS:
             pdf = f'output/naboj/{scope}/venues/{venue}/{name}.pdf'
-            build(pdf, 'document_pdf', None,
-                  implicit=[f'{outdir}/{name}.tex', *pictures, static, 'core/latex/dgs.cls',
-                            *([f'build/core/i18n/{venue_language}.tex']
-                              if venue_language else [])],
-                  implicit_outputs=[pdf.replace('.pdf', e)
-                                    for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-                  variables={'tex': f'{outdir}/{name}.tex'})
+            _document_pdf(build, pdf, f'{outdir}/{name}.tex',
+                          [*pictures, static, 'core/latex/dgs.cls',
+                           *([f'build/core/i18n/{venue_language}.tex']
+                             if venue_language else [])])
         w.build(f'output/naboj/{scope}/venues/{venue}/all', 'phony',
-                [f'output/naboj/{scope}/venues/{venue}/{name}.pdf' for name in VENUE_DOCUMENTS])
+                [f'output/naboj/{scope}/venues/{venue}/{name}.pdf' for name in VENUE_PDFS])
         counts['edges'] += 1
     w.newline()
 
@@ -823,19 +832,10 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     Much the smaller half of the build, and the shape is simpler in one way that matters --
     seminar is monolingual, so there is no language dimension at all and `pathlang` resolves to
     `sk` everywhere. What it adds is `.py` listings: `(§ include('x.py') §)` inlines a program
-    sitting beside the solution, and `module.mk` copies the same file into `output/` for the
+    sitting beside the solution, and the build copies the same file into `output/` for the
     reader to download.
     """
-    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
-
-    def listed(directory: pathlib.Path) -> pathlib.Path:
-        if directory.is_dir():
-            counts['listed'].add(str(directory.relative_to(repo)))
-        return directory
-
-    def build(*args, **kwargs):
-        counts['edges'] += 1
-        return w.build(*args, **kwargs)
+    counts, listed, build = _walk(repo, w)
 
     competition, volume_id, semester, round_id = scope.split('/')
     root = repo / 'source' / 'seminar' / scope
@@ -855,14 +855,7 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     # the format override, the logo, and the intro and rules templates. `module.mk` copied the
     # whole tree with one `cp -r` whose own target it never touched, so it depended on nothing
     # and ran on every build; here each file is an edge and the documents name what they read.
-    static = []
-    for path in sorted(p for p in listed(repo / 'source/seminar' / competition / '.static')
-                       .rglob('*') if p.is_file()):
-        listed(path.parent)
-        source = path.relative_to(repo).as_posix()
-        target = source.replace('source/', 'build/', 1)
-        _copied(build, target, source)
-        static.append(target)
+    static = _static_tree(build, listed, repo / 'source/seminar' / competition / '.static', repo)
 
     fragments = {name: [] for name in SEMINAR_TARGETS}
     web_fragments = {name: [] for name in SEMINAR_TARGETS}
@@ -914,32 +907,30 @@ def seminar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
         # `languages:` key and which `page.py` reads from there.
         if web:
             pages.append(_page(build, rel, lang, 'seminar', fragments=web,
-                               pictures=_beside(drawings, rel), nested=False))
+                               pictures=_beside(drawings, rel), nested=False, repo=repo))
 
     outdir = f'build/seminar/{scope}'
-    build([f'{outdir}/{name}.tex' for name in ROUND_DOCUMENTS], 'round', None,
+    products = written(seminar_declaration.ROUND, {Root.TEMPLATES: repo / 'modules/seminar/templates'})
+    build([f'{outdir}/{product.filename()}' for product in products], 'round', None,
           implicit=[*templates,
                     f'source/seminar/{scope}/meta.yaml',
                     *sorted(str((p / 'meta.yaml').relative_to(repo)) for p in problems)],
           variables={'competition': competition, 'volume': volume_id, 'semester': semester,
                      'round': round_id, 'outdir': outdir})
 
-    for name in ROUND_DOCUMENTS:
+    for name in seminar_declaration.ROUND.names():
         pdf = f'output/seminar/{scope}/{name}.pdf'
         included = [f for kind in SEMINAR_DOCUMENT_GROUPS[name] for f in fragments[kind]]
-        build(pdf, 'document_pdf', None,
-              implicit=[f'{outdir}/{name}.tex', *included, *pictures, *static,
-                        f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
-              implicit_outputs=[pdf.replace('.pdf', e)
-                                for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-              variables={'tex': f'{outdir}/{name}.tex'})
+        _document_pdf(build, pdf, f'{outdir}/{name}.tex',
+                      [*included, *pictures, *static,
+                       f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'])
 
     images = _instagram(build, f'output/seminar/{scope}/instagram',
                         f'{outdir}/instagram.pages', len(problems))
 
     # The names make offered, kept. `all` and `pages` are this generator's; `pdf`, `problems`
-    # and `solutions` are `modules/seminar/module.mk:258-270`, and the last two reach the HTML
-    # fragments as well, exactly as `html-problems` and `html-solutions` did there.
+    # and `solutions` were make's round aggregates, and the last two reach the HTML fragments as
+    # well, exactly as its `html-problems` and `html-solutions` did.
     w.build(f'output/seminar/{scope}/all', 'phony',
             [f'output/seminar/{scope}/{name}.pdf' for name in ROUND_PDFS])
     w.build(f'output/seminar/{scope}/pdf', 'phony',
@@ -977,16 +968,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     `modules/scholar/editor.yaml` still declares two editable levels and not three, so the
     subproblems build and are not yet units the editor can open.
     """
-    counts = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
-
-    def listed(directory: pathlib.Path) -> pathlib.Path:
-        if directory.is_dir():
-            counts['listed'].add(str(directory.relative_to(repo)))
-        return directory
-
-    def build(*args, **kwargs):
-        counts['edges'] += 1
-        return w.build(*args, **kwargs)
+    counts, listed, build = _walk(repo, w)
 
     course = scope
     root = repo / 'source' / 'scholar' / course
@@ -1006,14 +988,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     # all, on the grounds that scholar built under neither system so a fix could not be checked;
     # it builds now, and the first thing it did was stop at `File
     # 'build/scholar/STA/.static/format-override.tex' not found`.
-    static = []
-    for path in sorted(p for p in listed(repo / 'source/scholar' / course / '.static')
-                       .rglob('*') if p.is_file()):
-        listed(path.parent)
-        source = path.relative_to(repo).as_posix()
-        target = source.replace('source/', 'build/', 1)
-        _copied(build, target, source)
-        static.append(target)
+    static = _static_tree(build, listed, repo / 'source/scholar' / course / '.static', repo)
 
     # **Fragments but no pages**, which is the one asymmetry with the other two modules.
     # `page.py` collects the targets `modules/scholar/editor.yaml` declares, and that descriptor
@@ -1027,7 +1002,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
     # well: `2025/homework/03/monte-carlo.gp` took `04` down with it although `04` names no
     # drawing of 03's. An issue is a document; what it reads is what is under it.
     units, pictures = 0, []
-    for kind, (builder, documents) in SCHOLAR_KINDS.items():
+    for kind, builder in scholar_declaration.BUILDERS.items():
         if not (root / kind).is_dir():
             continue
         for issue in sorted(i for i in listed(root / kind).iterdir()
@@ -1036,6 +1011,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
             issue_rel = issue.relative_to(repo / 'source').as_posix()
             drawn = []
             # The issue's own text, then one directory per problem, then one per subproblem.
+            metas = []
             places, frontier = [issue], [issue]
             for _ in range(SCHOLAR_SUBLEVELS):
                 frontier = sorted(child for parent in frontier
@@ -1048,6 +1024,7 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                 meta = place / 'meta.yaml'
                 if not meta.is_file():
                     continue
+                metas.append(str(meta.relative_to(repo)))
                 for extension in PICTURE_SOURCES:
                     for picture in sorted(place.glob(f'*.{extension}')):
                         stem = f'{rel}/{picture.stem}'
@@ -1086,20 +1063,25 @@ def scholar_edges(repo: pathlib.Path, scope: str, w: Writer) -> dict:
                             templates, lang)
 
             outdir = f'build/{issue_rel}'
-            build([f'{outdir}/{name}.tex' for name in documents], 'scholar_issue', None,
-                  implicit=[*templates, f'source/{issue_rel}/meta.yaml'],
+            node = scholar_declaration.NODES[kind]
+            products = written(node, {Root.TEMPLATES: repo / 'modules/scholar/templates'})
+            build([f'{outdir}/{product.filename()}' for product in products],
+                  'scholar_issue', None,
+                  # **Every meta under the issue, not just the issue's own.** The naboj and
+                  # seminar edges have always named each problem's meta, because a document is
+                  # built from the problems it contains and editing one has to rebuild it; this
+                  # edge named only the issue's, so changing a scholar problem's `meta.yaml`
+                  # left the handout stale with nothing saying so.
+                  implicit=[*templates, *metas],
                   variables={'builder': builder, 'course': course,
                              'issue': issue.name, 'outdir': outdir})
-            for name in documents:
+            for name in node.names():
                 pdf = f'output/{issue_rel}/{name}.pdf'
-                build(pdf, 'document_pdf', None,
-                      implicit=[f'{outdir}/{name}.tex', *fragments, *drawn, *static,
-                                f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
-                      implicit_outputs=[pdf.replace('.pdf', e)
-                                        for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-                      variables={'tex': f'{outdir}/{name}.tex'})
+                _document_pdf(build, pdf, f'{outdir}/{name}.tex',
+                              [*fragments, *drawn, *static,
+                               f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'])
             w.build(f'output/{issue_rel}/all', 'phony',
-                    [f'output/{issue_rel}/{name}.pdf' for name in documents])
+                    [f'output/{issue_rel}/{name}.pdf' for name in node.names()])
             counts['edges'] += 1
             pictures += drawn
 
@@ -1120,9 +1102,9 @@ def _already_drawn(w: Writer, stem: str, extension: str) -> bool:
     Whether a drawing already produces this path, so the copy beside it must not.
 
     `seminar/FKS/35/1/2/02` holds both `svah.svg` and `svah.pdf`, and both want to become
-    `build/…/svah.pdf`. Make picked the SVG, silently, by rule order -- `build/%.pdf: render/%.svg`
-    at `Makefile:213` is tried before the `.pdf` copy at `:350`, and make takes the first rule
-    whose prerequisites can be made. Keep that answer, and say so rather than relying on the
+    `build/…/svah.pdf`. Make picked the SVG, silently, by rule order: `build/%.pdf: render/%.svg`
+    came before the `.pdf` copy, and make takes the first rule whose prerequisites can be made.
+    Keep that answer, and say so rather than relying on the
     order two loops happen to run in; Ninja would otherwise refuse the graph outright, which is
     how this was found.
     """
@@ -1203,7 +1185,8 @@ def _picture(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
         build(f'build/{stem}.pdf', 'svg_pdf', [f'render/{stem}.svg'])
     elif extension == 'tikz':
         build(f'build/{stem}.tikz.tex', 'picture_tex', [f'render/{stem}.tikz'],
-              implicit=['core/templates/standalone.jtex'], variables={'lang': lang})
+              implicit=list(standalone_templates('standalone.jtex')),
+              variables={'lang': lang})
         build(f'build/{stem}.pdf', 'tikz_pdf', [f'build/{stem}.tikz.tex'])
     else:
         data = sorted(str(p.relative_to(repo / 'source')) for p in problem.glob('*.dat'))
@@ -1244,28 +1227,139 @@ def _picture_svg(build, w: Writer, stem: str, extension: str) -> str:
 #: What a page's maths is set with when the engine is `latex`, which is the default: the
 #: `\input`s of `core/templates/mathpage.jtex`. Every document edge gets these from xelatex's
 #: own `-recorder`; a page runs its xelatex inside `core.html.texmath`, where there is no
-#: recorder to read, so they are named here instead.
-MATHPAGE_INPUTS = ('core/templates/mathpage.jtex', 'core/latex/fonts.tex',
-                   'core/latex/utilities.tex', 'core/latex/math.tex',
-                   'core/latex/symbols.tex', 'core/latex/siunitx.tex')
+#: recorder to read, so they have to be named rather than observed.
+#:
+#: **Read off the template rather than written out here.** This used to be a hand-kept tuple
+#: mirroring six `\input` lines in another file, and `core/html/texmath.py` kept a second
+#: answer to the same question as a hand-bumped `VERSION`. They disagreed: the graph rebuilt
+#: every page when `math.tex` moved and the formula cache handed back the maths from before the
+#: edit. One list now, in `core/html/preamble.py`, which both this and that hash read.
+
+
+@functools.cache
+def page_sections(module: str, repo: pathlib.Path) -> tuple[str, ...]:
+    """
+    The order a page's sections appear in, which is the module descriptor's `targets:` order.
+
+    **Read here rather than in `core/html/page.py`, and declared as an input.** The page step
+    used to load `modules/<module>/editor.yaml` itself, at run time, to answer this and to
+    decide whether fragments sit under a language directory. That file appeared **nowhere** in
+    the generated graph -- `grep -c editor.yaml build.ninja` was 0 -- so reordering `targets:`
+    reordered every page's sections with nothing rebuilt, and flipping `languages:` pointed
+    every page edge at the wrong directory on whatever happened to rebuild next.
+
+    It is not the same order the fragments are *collected* in, which is why this is read rather
+    than taken from the list of built fragments: the walk emits `TRANSLATED` then `SHARED`, so
+    it has `answer-extra` before `answer`, where the descriptor has them the other way round.
+    The page is what the descriptor says; the collection order is an artefact of the walk.
+    """
+    from tools.editor.descriptors import load_modules
+
+    described = load_modules(repo).get(module)
+    if described is None:                               # no content checked out for it
+        return ()
+    return tuple(dict.fromkeys(target for kind in described.kinds for target in kind.targets))
+
+
+#: What xelatex drops beside the PDF it is asked for. Declared so that `clean` and
+#: `ninja -t clean` take them too, and so Ninja knows a half-finished run left them behind.
+#:
+#: **One tuple, where there were six copies of it.** Adding `.xdv`, or dropping `.synctex.gz`,
+#: used to mean finding all six; missing one left a file the build would not clear up, which is
+#: the failure `.SECONDARY` already cost this repository once.
+XELATEX_SIDE_OUTPUTS = ('.aux', '.log', '.out', '.synctex.gz', '.fls')
+
+
+def _document_pdf(build, pdf: str, tex: str, inputs: list) -> str:
+    """
+    One xelatex document: the PDF, what it reads, and what it leaves lying about.
+
+    Six call sites wrote this out -- a standalone problem, a language document, a venue
+    document, a seminar round, a scholar issue and the shared standalone -- and they differed
+    only in which files go in. The `.tex` is both the first input and the rule's `$tex`, in all
+    six, so it is named once here rather than twice at each site.
+    """
+    build(pdf, 'document_pdf', None,
+          implicit=[tex, *inputs],
+          implicit_outputs=[pdf.replace('.pdf', suffix) for suffix in XELATEX_SIDE_OUTPUTS],
+          variables={'tex': tex})
+    return pdf
+
+
+def _static_tree(build, listed, root: pathlib.Path, repo: pathlib.Path) -> list[str]:
+    """
+    A competition's or course's `.static/` tree, one file to one copy edge.
+
+    What every document of that scope `\\input`s: the format override, the logo, the intro and
+    rules templates. Make copied the whole tree with one `cp -r` whose own target it never
+    touched, so it depended on nothing and ran on every build; here each file is an edge and
+    the documents name what they read.
+
+    Náboj does not use this -- its `.static/` is per *competition* and shared across volumes, so
+    it is one `copy_static` edge in `core_edges` rather than one per scope. Seminar's and
+    scholar's were the same ten lines twice.
+    """
+    static = []
+    for path in sorted(p for p in listed(root).rglob('*') if p.is_file()):
+        listed(path.parent)
+        source = path.relative_to(repo).as_posix()
+        target = source.replace('source/', 'build/', 1)
+        _copied(build, target, source)
+        static.append(target)
+    return static
+
+
+def _walk(repo: pathlib.Path, w) -> tuple[dict, object, object]:
+    """
+    The three things every scope walk opens with: its tallies, and two closures over them.
+
+    `listed` records a directory whose **listing** this graph depends on and returns it, so it
+    can be wrapped round a path in the middle of an expression. That record is what makes
+    `build.ninja` regenerate when a problem or a translation is added or removed -- see
+    `generate()`, which turns each one into an implicit input and a `phony`.
+
+    `build` is `w.build` plus a count. Counting here rather than at the end is what lets a scope
+    report how much of the graph is its own.
+
+    Ten identical lines opened each of the three walks. They are one statement now, which also
+    means the explanation above is written once rather than on whichever copy somebody happened
+    to annotate -- `scope_edges` carried it and the other two did not.
+    """
+    tallies = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
+
+    def listed(directory: pathlib.Path) -> pathlib.Path:
+        if directory.is_dir():
+            tallies['listed'].add(str(directory.relative_to(repo)))
+        return directory
+
+    def build(*args, **kwargs):
+        tallies['edges'] += 1
+        return w.build(*args, **kwargs)
+
+    return tallies, listed, build
 
 
 def _page(build, rel: str, lang: str, module: str, *, fragments: list, pictures: list,
-          nested: bool) -> str:
+          nested: bool, repo: pathlib.Path) -> str:
     """
     One unit's fragments assembled into a page, which is what goes in `output/`.
 
     `nested` is the module's own answer to where a fragment lives: Náboj holds a directory per
     language inside a problem, so its page is `<problem>/<lang>/index.html`; seminar and scholar
-    are monolingual and theirs sits in the unit directory. `page.py` reads the same fact out of
-    `modules/<module>/editor.yaml`, which is why the module is passed rather than guessed from
-    the path.
+    are monolingual and theirs sits in the unit directory. It is **passed to the page step**
+    rather than worked out again there, along with the section order, so that one decision is
+    made once and in the place that declares the edge.
     """
     outdir = f'output/{rel}/{lang}' if nested else f'output/{rel}'
+    descriptor = f'modules/{module}/editor.yaml'
+    sections = page_sections(module, repo)
     build(f'{outdir}/index.html', 'page', None,
           implicit=[*fragments, *pictures, f'build/core/i18n/{lang}.tex',
-                    'core/templates/page.jhtml', 'core/html/page.css', *MATHPAGE_INPUTS],
-          variables={'unit': f'build/{rel}', 'lang': lang, 'module': module, 'outdir': outdir})
+                    'core/templates/page.jhtml', 'core/html/page.css', descriptor,
+                    *mathpage_inputs()],
+          variables={'unit': f'build/{rel}', 'lang': lang, 'module': module, 'outdir': outdir,
+                     'files': ' '.join(sections),
+                     'nested': '--nested' if nested else '--no-nested'})
     return f'{outdir}/index.html'
 
 
@@ -1283,56 +1377,16 @@ def _visible(path: pathlib.Path) -> bool:
     return not path.name.startswith('.')
 
 
-def _venue_language(meta: pathlib.Path) -> str | None:
-    """
-    The one thing in this generator read out of a file rather than off a directory listing.
-
-    A venue's documents are set in the venue's language, which decides the i18n table they
-    `\\input`, and no listing anywhere holds that fact -- so it is read here, and the meta goes
-    into the generator edge's inputs so that changing `language:` regenerates the graph.
-
-    A line scan rather than `yaml.safe_load`, because this module imports nothing outside the
-    standard library and `tools/ninja/bootstrap.py` leans on that: its last-resort path runs the
-    generator under whatever `python3` is on PATH, where the project's packages are not
-    importable. `language:` is a plain scalar in every venue meta that has one, and the schema
-    requires it to be one, so there is no YAML here to get wrong.
-
-    **`None` where there is no key, and no guess.** 69 of the 144 venue metas have none -- all
-    of `phys/02` and `20`-`25`, several of them empty files -- and those venues cannot build
-    today for a reason that has nothing to do with this graph: `contexts/buildable.py:66`
-    subscripts `i18n.languages[venue.language]` outright, so the builder raises before anything
-    reads an i18n table. Falling back to the volume's language would paper over that with the
-    wrong locale; raising here would be worse still, because one incomplete venue in a volume
-    nobody builds would stop the generator emitting *any* scope's edges.
-    """
-    for line in meta.read_text(encoding='utf-8').splitlines():
-        key, separator, value = line.partition(':')
-        if (separator and key.strip() == 'language'
-                and (language := value.split('#')[0].strip().strip('\'"'))):
-            return language
-    return None
-
-
 def _scope_language(meta: pathlib.Path) -> str:
     """
-    The language a seminar competition or a scholar course declares, read the same way a venue's
-    is and used for the same thing -- which i18n table its documents want.
+    The language a monolingual scope is written in, from its own meta, else `SCOPE_LANGUAGE`.
 
-    It used to be the literal `'sk'` at every call site in `seminar_edges` and `scholar_edges`,
-    on the grounds that both modules are monolingual. They are: each is *one* language, and
-    nothing said it had to be Slovak. `source/scholar/STA/meta.yaml` says `language: en`, and the
-    document template has always honoured it -- `modules/scholar/builder/standalone.py:48` reads
-    the same key -- so only the per-fragment half of the graph was Slovak, and the two halves
-    met on the page: an English statistics sheet came out with `a~strong` glued by Slovak's
-    one-letter-word rule and `low\rephyphen{}luminosity` repeating its hyphen across a line
-    break, which is a rule English does not have. `spacing.lua` and `hyphens.lua` read
-    `core/i18n/<lang>.yaml`, so they were simply handed the wrong file.
-
-    The meta goes into the generator edge's inputs through `counts['read']`, as a venue's does,
-    so changing `language:` regenerates the graph rather than leaving it pointing at the locale
-    the scope used to be in.
+    Seminar and scholar have one language rather than one of several, so there is no directory
+    to read it off and the competition's or the course's meta is the only place it is said.
+    `core.builder.products.read_scalar` is the same line scan the venue's language goes through,
+    and the reason it is not a YAML parse is there.
     """
-    return (_venue_language(meta) if meta.is_file() else None) or SCOPE_LANGUAGE
+    return (read_scalar(meta, 'language') if meta.is_file() else None) or SCOPE_LANGUAGE
 
 
 def _standalone(build, module: str, rel: str, inputs: list, templates: list, lang: str) -> str:
@@ -1356,12 +1410,8 @@ def _standalone(build, module: str, rel: str, inputs: list, templates: list, lan
           implicit=[*templates, f'source/{rel}/meta.yaml'],
           variables={'module': module, 'unit': unit, 'outdir': outdir})
     pdf = f'output/{rel}/standalone.pdf'
-    build(pdf, 'document_pdf', None,
-          implicit=[f'{outdir}/standalone.tex', *inputs,
-                    f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'],
-          implicit_outputs=[pdf.replace('.pdf', e)
-                            for e in ('.aux', '.log', '.out', '.synctex.gz', '.fls')],
-          variables={'tex': f'{outdir}/standalone.tex'})
+    _document_pdf(build, pdf, f'{outdir}/standalone.tex',
+                  [*inputs, f'build/core/i18n/{lang}.tex', 'core/latex/dgs.cls'])
     return pdf
 
 

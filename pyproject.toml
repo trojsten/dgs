@@ -29,3 +29,32 @@ dev = [
     "pytest (>=9.0.1,<10.0.0)",
     "ruff>=0.16.0",
 ]
+
+[tool.ruff]
+line-length = 120
+# `source/` is content, `build/`, `render/` and `output/` are products, `install/` is a vendored
+# tree. None of them is ours to lint and all of them are large.
+extend-exclude = ["source", "build", "render", "output", "install", "assets"]
+
+[tool.ruff.lint]
+# **`F` is the gate, and it is in CI.** pyflakes finds the mistakes that are mistakes whatever
+# anybody's taste: a name that is not defined, an import that does nothing, a function or class
+# redefined by a later one. That last is not hypothetical here -- `F811` is what found
+# `TestPictureStatus` defined twice in `core/tests/test_audit.py`, which had been quietly
+# dropping three tests.
+#
+# `E9` is the syntax and indentation half of pycodestyle: a file that will not parse.
+#
+# The wider families are deliberately **not** on yet, and each for a reason rather than for
+# taste: `RUF012` would report 26 class-level schemas and tables that are mutable on purpose;
+# `SIM115` the ten `SpooledTemporaryFile` stages of the convertor pipeline, which are handed to
+# the next stage rather than leaked; `BLE001` eight broad excepts that were each read and are
+# each justified (one already carries a `# noqa` with its argument); `PLW1510` fourteen
+# `subprocess.run` calls that inspect `returncode` themselves. Turning any of them on is a
+# separate piece of work with its own reading, not a flag flip.
+select = ["F", "E9"]
+
+[tool.ruff.lint.per-file-ignores]
+# A package's `__init__.py` re-exports: the import *is* the point, and 21 of the repository's
+# 22 unused imports are these.
+"__init__.py" = ["F401"]

@@ -26,7 +26,7 @@ mount=(-v "$PWD:/dgs")
 usage() {
     sed -n '2,9p' "$0"
     echo
-    echo "usage: $0 {build|editor|ninja|make|test|check|shell} [args...]"
+    echo "usage: $0 {build|editor|ninja|test|check|shell} [args...]"
     echo "  DGS_TARGET=light|full (default full)   DGS_PORT (default 5001)"
 }
 
@@ -76,18 +76,13 @@ ninja)
     #
     # `ninja` itself needs no apt package here -- it is a project dependency, so `uv sync`
     # already put it in /opt/venv/bin, which is first on PATH.
-    exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" ./dgs-build "$@"
-    ;;
-
-make)
-    shift
-    mkdir -p build render output
-    # The Makefile still builds every tree the Ninja graph does; it is kept while the graph is
-    # new, and this is how you reach it. See `ninja` above for the one that is being moved to.
     #
     # --network=none: nothing in a build needs the network, UV_OFFLINE is already set, and
     # -shell-escape is unconditional, so this costs nothing and closes the one real hole.
-    exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" make "$@"
+    #
+    # There was a `make` case beside this one while the graph was new and the Makefile still
+    # built the same trees. The Makefile is gone; this is the only way in.
+    exec podman run --rm -it --network=none "${mount[@]}" "$image:$target" ./dgs-build "$@"
     ;;
 
 test)

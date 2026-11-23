@@ -21,9 +21,28 @@ from core.builder.builder import get_describe, get_last_commit_hash
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
+#: **The container image is a checkout with no `.git`**, because `.containerignore` excludes it --
+#: along with `.github/`, which is why `test_containerfile.py` skips its CI check there too. The
+#: rule that `core/tests/` must pass without the content repositories and without `build/` has a
+#: third clause, and this is it: a tree that was copied rather than cloned. `pytest -q` runs inside
+#: the image, so without this the four tests below are four failures that say nothing about dgs.
+pytestmark = pytest.mark.skipif(not (REPO / '.git').exists(),
+                                reason='not a checkout; there is no stamp to read')
+
 
 def dirty(cwd: pathlib.Path) -> bool:
-    return bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=cwd).strip())
+    """
+    What `git describe --dirty` means by dirty, which is **not** what a bare `git status
+    --porcelain` reports.
+
+    `--dirty` compares the working tree against the index for *tracked* files; `--porcelain`
+    also lists untracked ones with a `??`. So a checkout whose only change is a new directory
+    nobody has added yet is clean to `describe` and dirty to this helper, and
+    `test_it_admits_an_edited_tree` then fails over a file that has nothing to do with the build
+    stamp. `--untracked-files=no` is the one that matches.
+    """
+    return bool(subprocess.check_output(
+        ['git', 'status', '--porcelain', '--untracked-files=no'], cwd=cwd).strip())
 
 
 class TestTheVersionADocumentPrints:

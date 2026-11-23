@@ -7,15 +7,15 @@ cases is a false positive that a hand-written version of the same sweep actually
 volumes 19 to 29 were being audited, and every one of them cost time to chase down.
 """
 import pathlib
-import re
 
 import pytest
 import yaml
 
-from core.audit import audit, stale
+from core.audit import audit, checks, stale
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
 from core.audit.sources import SHARED_FILES, TRANSLATED_FILES, read_scope
 from core.audit.status import translation_status
+from tools.ninja import generate
 
 
 def make_problem(tmp_path, name='widget', meta='authors:\n  idea: []\n  problem: []\n'
@@ -676,10 +676,19 @@ class TestTranslationStatus:
         assert 'mirrors sk' in entry['note']
 
 
-class TestPictureStatus:
+class TestPictureStatusForDeclaredPictures:
     """
-    The verdict shown on the `/audit` page, which nothing exercised until `pictures:` existed --
-    which is how the missing import that would have raised here went unnoticed for a whole commit.
+    The verdict shown on the `/audit` page for a figure declared in `pictures:`.
+
+    **Named apart from `TestPictureStatus` below, which used to shadow it.** Two
+    classes in one module may share a name and Python keeps the second; these three
+    tests were therefore never collected, and they are the only coverage of a
+    declared figure in the status layer. The class they hid behind covers the older
+    shape, a literal `![](...)` include, which is a different question about the same
+    verdict -- hence two classes, now with two names.
+
+    Nothing exercised this verdict at all until `pictures:` existed, which is how a missing
+    import that would have raised here went unnoticed for a whole commit.
     """
 
     META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
@@ -1156,20 +1165,20 @@ class TestTranslationDetail:
 
 class TestFileFamiliesMatchTheBuild:
     """
-    `modules/naboj/editor.yaml` mirrors module.mk's two rule families, and the audit page reads the
-    mirror. If module.mk gains a file and the descriptor does not, the page silently stops having a
+    `modules/naboj/editor.yaml` mirrors the build's two file families, and the audit page reads the
+    mirror. If the build gains a file and the descriptor does not, the page silently stops having a
     column for it -- so the mirror is pinned here rather than trusted.
+
+    **The authority is the graph generator, because it is what builds.** This used to regex
+    `modules/naboj/module.mk` for the `$(foreach filename,…)` driving each rule family, which was
+    right when make was the build and wrong afterwards: every entry point has gone through
+    `tools.ninja.generate` since it replaced the Makefile, so the pin was anchoring the living
+    descriptor to a layer nothing ran. Make is gone and this reads the constants the graph is
+    actually emitted from.
     """
 
-    def families_from_make(self):
-        text = pathlib.Path('modules/naboj/module.mk').read_text()
-        out = {}
-        for macro, key in (('NABOJ_TRANSLATABLE', 'translated'),
-                           ('NABOJ_NONTRANSLATABLE', 'shared')):
-            m = re.search(r'\$\(foreach filename,([^,]+),\$\(eval \$\(call ' + macro, text)
-            assert m, f"no foreach driving {macro} in module.mk"
-            out[key] = m.group(1).split()
-        return out
+    def families_from_generator(self):
+        return {'translated': list(generate.TRANSLATED), 'shared': list(generate.SHARED)}
 
     def families_from_descriptor(self):
         spec = yaml.safe_load(pathlib.Path('modules/naboj/editor.yaml').read_text())
@@ -1178,11 +1187,11 @@ class TestFileFamiliesMatchTheBuild:
         shared = [t for t in kind['targets'] if t not in translated]
         return {'translated': translated, 'shared': shared}
 
-    def test_the_descriptor_lists_what_module_mk_builds(self):
-        make = self.families_from_make()
+    def test_the_descriptor_lists_what_the_graph_builds(self):
+        graph = self.families_from_generator()
         desc = self.families_from_descriptor()
-        assert sorted(desc['translated']) == sorted(make['translated'])
-        assert sorted(desc['shared']) == sorted(make['shared'])
+        assert sorted(desc['translated']) == sorted(graph['translated'])
+        assert sorted(desc['shared']) == sorted(graph['shared'])
 
     def test_the_audit_defaults_match_the_descriptor(self):
         """`core.audit` falls back to its own copy when no caller says; it must be the same copy."""
@@ -2189,3 +2198,228 @@ class TestSiunitxInProse:
     ])
     def test_it_stays_quiet(self, tmp_path, text):
         assert self.findings(tmp_path, text) == []
+
+
+class TestUnitIdDuplicate:
+    """
+    One id, one problem, across a whole competition.
+
+    It is the only guarantor of that, now that the tree stays volume-shaped: the filesystem
+    enforces uniqueness inside a volume and nothing enforces it between two. What a duplicate
+    costs is not a broken build -- both problems build, and their labels are per document -- but
+    the ability to *name* a problem from a document that is not a volume, which is what a
+    selection has to do.
+
+    Two shapes, deliberately given different messages, because the fix is opposite: two volumes
+    is a clash and the older one is renamed; a volume and the pool is a copy left behind when the
+    problem was picked, and the pooled one goes.
+    """
+
+    @staticmethod
+    def elsewhere(tmp_path, scope, name):
+        """A second problem directory of the same competition, outside the scope under audit."""
+        root = tmp_path / 'phys' / scope / 'problems' / name
+        root.mkdir(parents=True)
+        (root / 'meta.yaml').write_text("authors: {}\ntags: ['kinematics']\n")
+        return root
+
+    @staticmethod
+    def findings(report):
+        return [f for f in report.findings if f.check == 'unit-id-duplicate']
+
+    def test_two_volumes_sharing_an_id_are_reported(self, tmp_path):
+        self.elsewhere(tmp_path, '98', 'widget')
+        found = self.findings(run(tmp_path))
+        assert len(found) == 1
+        assert 'phys/98/problems/widget' in found[0].message
+        assert 'rename' in found[0].message
+
+    def test_a_pool_copy_is_a_different_message(self, tmp_path):
+        """From the volume's page: the volume copy stays, the pooled one goes."""
+        self.elsewhere(tmp_path, 'pool', 'widget')
+        found = self.findings(run(tmp_path))
+        assert len(found) == 1
+        assert 'leaves no copy in the pool' in found[0].message
+        assert 'rename' not in found[0].message
+
+    def test_from_the_pool_the_advice_is_the_other_way_round(self, tmp_path):
+        """
+        The same pair read from the pool's own page says to remove *this* copy. Getting this
+        backwards would have told an author to rename a problem that has already shipped.
+        """
+        make_problem(tmp_path, name='widget')
+        pooled = tmp_path / 'phys' / 'pool' / 'problems' / 'widget'
+        pooled.mkdir(parents=True)
+        (pooled / 'meta.yaml').write_text("authors: {}\ntags: ['kinematics']\n")
+        found = self.findings(
+            audit(tmp_path, 'naboj', 'phys/pool', ['phys/pool/problems/widget']))
+        assert len(found) == 1
+        assert 'remove this one' in found[0].message
+        assert 'phys/99/problems/widget' in found[0].message
+
+    def test_a_unique_id_is_quiet(self, tmp_path):
+        """The quiet half, and the ordinary case: 1372 of the corpus's 1377 problems."""
+        self.elsewhere(tmp_path, '98', 'gadget')
+        assert self.findings(run(tmp_path)) == []
+
+    def test_another_competition_is_a_separate_namespace(self, tmp_path):
+        """
+        `schnitzel` names a physics problem and a chemistry one, and that is not a collision:
+        a selection is a selection *of* a competition, so the id only has to be unique there.
+        """
+        root = tmp_path / 'chem' / '01' / 'problems' / 'widget'
+        root.mkdir(parents=True)
+        (root / 'meta.yaml').write_text("authors: {}\ntags: ['kinematics']\n")
+        assert self.findings(run(tmp_path)) == []
+
+    def test_a_dotted_directory_is_not_a_problem(self, tmp_path):
+        """
+        `chem/.pool` was dotted until recently and every sweep in the repository skipped it.
+        Scaffolding under a dot is not a second problem and must not be reported as one.
+        """
+        root = tmp_path / 'phys' / '.template' / 'problems' / 'widget'
+        root.mkdir(parents=True)
+        (root / 'meta.yaml').write_text("authors: {}\ntags: ['kinematics']\n")
+        assert self.findings(run(tmp_path)) == []
+
+
+class TestPositionalReference:
+    """
+    Prose that points at another problem by where it sits, which is a fact about one document.
+
+    The rule exists because a problem is reused -- picked out of a pool into a volume, and out
+    of a volume into a selection grouped by tag -- and position is the one thing that does not
+    travel. It is also unverifiable: `reference-dangling` catches a crossref with no target,
+    and "the previous problem" has no target to miss. Two of the corpus's sites were already
+    wrong when this was written, both in volume 24.
+
+    The quiet half is four shapes a looser version of this check reported, every one of them
+    live in the sources rather than invented for the test.
+    """
+
+    @staticmethod
+    def findings(tmp_path, text, name='solution.md'):
+        report = run(tmp_path, files={'sk': {name: text}})
+        return [f for f in report.findings if f.check == 'positional-reference']
+
+    def test_it_fires_on_the_previous_problem(self, tmp_path):
+        assert len(self.findings(tmp_path, 'Vyjdeme z riešenia predchádzajúcej úlohy.')) == 1
+
+    def test_it_fires_on_a_problem_number(self, tmp_path):
+        """`12/snow-rate` is problem 45 and sends its reader to problem 21."""
+        found = self.findings(tmp_path, "Ten sme určili v\\ úlohe 21 ako")
+        assert len(found) == 1 and 'úlohe 21' in found[0].message
+
+    def test_a_numbered_reference_may_spell_out_its_marker(self, tmp_path):
+        assert len(self.findings(tmp_path, 'ako sme čítali vo vzoráku úlohy č. 21, že')) == 1
+
+    @pytest.mark.parametrize('text', [
+        pytest.param('Let us build on the previous problem about filters.', id='en'),
+        pytest.param('Építkezzünk az előző feladat megoldására.', id='hu'),
+        pytest.param('Optimální řešení známe z předcházející úlohy.', id='cs'),
+        pytest.param('Квик уже с предыдущего задания знает, какую долю.', id='ru'),
+        pytest.param('Korzystamy z poprzedniego zadania.', id='pl'),
+        pytest.param('Wie in der vorherigen Aufgabe gezeigt.', id='de'),
+        pytest.param('Como en el problema anterior.', id='es-postposed'),
+    ])
+    def test_every_language_the_sources_use(self, tmp_path, text):
+        assert len(self.findings(tmp_path, text)) == 1
+
+    def test_a_reference_wrapped_across_a_source_line_still_counts(self, tmp_path):
+        """
+        `23/thief-pro` writes "predošlej\\núlohe", and a line-by-line version of this check
+        missed that one and two others -- the same gap `siunitx-in-prose` had.
+        """
+        found = self.findings(tmp_path, 'Kvík už vie z\\ predošlej\núlohe, ako na to.')
+        assert len(found) == 1
+        assert '\n' not in found[0].message
+
+    @pytest.mark.parametrize('text', [
+        pytest.param('There remains one last problematic solitaire.', id='problematic'),
+        pytest.param('Ešte zostáva posledný problémový solitér.', id='problemovy'),
+        pytest.param('Oldjátok meg a feladatot következő adatokkal.', id='head-final-modifier'),
+        pytest.param('Nézzük meg a feladat első iterációját.', id='its-own-first-iteration'),
+        pytest.param('pole je určené nábojmi na menších šupkách (v tomto príklade 1 a 2).',
+                     id='this-example-and-two-digits'),
+        pytest.param('<!---\nVyjdeme z predchádzajúcej úlohy.\n--->\nThe Russian text.\n',
+                     id='the-slovak-original-in-a-comment'),
+        pytest.param('Riešenie `predchádzajúcej úlohy` v~zdroji.', id='code-span'),
+        pytest.param('Teda $x_\\text{previous problem}$ je malé.', id='inline-maths'),
+    ])
+    def test_it_stays_quiet(self, tmp_path, text):
+        assert self.findings(tmp_path, text) == []
+
+
+class TestAScopeMetaThatDoesNotParse:
+    """
+    The firing case and the two quiet ones, because this check exists precisely because the
+    *absence* of a finding was the bug: a volume whose own meta would not parse read clean.
+    """
+
+    def scope(self, tmp_path, meta: str | None):
+        root = tmp_path / 'naboj'
+        (root / 'phys' / '29' / 'problems' / 'x').mkdir(parents=True)
+        if meta is not None:
+            (root / 'phys' / '29' / 'meta.yaml').write_text(meta)
+        return read_scope(root, 'naboj', 'phys/29', ['phys/29/problems/x'])
+
+    def test_a_broken_scope_meta_is_reported(self, tmp_path):
+        # A real parse error, not merely odd: `- a\n   - b` folds into one string and parses
+        # perfectly, which is its own trap and not the one this check is for.
+        src = self.scope(tmp_path, 'problems: [a, b\n')         # unclosed flow sequence
+        found = list(checks.scope_meta_unparseable(src))
+        assert len(found) == 1
+        assert found[0].severity == 'error'
+
+    def test_the_order_really_is_lost_when_it_breaks(self, tmp_path):
+        """
+        Why it is an error and not a warning: this is what the rest of the audit then believes.
+        With no `problems:` every unit is unordered, which is what made `unit-unlisted` and
+        `listed-missing` both go quiet and the volume read clean.
+        """
+        src = self.scope(tmp_path, 'problems: [a, b\n')
+        assert all(unit.order is None for unit in src.unit_list)
+        assert src.scope_meta is None
+
+    def test_a_scope_with_no_meta_at_all_is_quiet(self, tmp_path):
+        """
+        The quiet case that matters. Seminar and scholar scopes carry no meta, and a volume that
+        has not been given one yet is not a volume with a broken one.
+        """
+        src = self.scope(tmp_path, None)
+        assert src.scope_meta_error is None
+        assert not list(checks.scope_meta_unparseable(src))
+
+    def test_a_scope_whose_meta_parses_is_quiet(self, tmp_path):
+        src = self.scope(tmp_path, 'problems:\n  - x\n')
+        assert src.scope_meta_error is None
+        assert not list(checks.scope_meta_unparseable(src))
+        assert [unit.order for unit in src.unit_list] == [0]
+
+
+class TestChemistryIsTaggedLikeEverythingElse:
+    """
+    `tag-unknown` used to collapse a whole chemistry scope into one scope-level finding, because
+    `VALID_TAGS` was physics-only. It is not any more -- it carries `inorganic`, `organic`,
+    `acid-base`, `redox` and five more -- so the branch was asserting something false and
+    suppressing every per-problem finding for the competition. It was quiet only because no
+    chemistry problem is tagged yet.
+    """
+
+    def scope(self, tmp_path, scope_name, tags):
+        root = tmp_path / 'naboj'
+        unit = root / scope_name / 'problems' / 'x'
+        unit.mkdir(parents=True)
+        (unit / 'meta.yaml').write_text('tags:\n' + ''.join(f'  - {tag}\n' for tag in tags))
+        return read_scope(root, 'naboj', scope_name, [f'{scope_name}/problems/x'])
+
+    def test_an_unknown_chemistry_tag_is_reported_against_its_problem(self, tmp_path):
+        found = list(checks.tag_unknown(self.scope(tmp_path, 'chem/01', ['not-a-real-tag'])))
+        assert len(found) == 1
+        assert found[0].unit == 'chem/01/problems/x', 'reported at scope level, not at the problem'
+        assert 'not-a-real-tag' in found[0].message
+
+    def test_a_real_chemistry_tag_is_quiet(self, tmp_path):
+        """The quiet case, and the reason the old branch is wrong: these are in the vocabulary."""
+        src = self.scope(tmp_path, 'chem/01', ['acid-base', 'redox', 'stoichiometry'])
+        assert not list(checks.tag_unknown(src))
