@@ -289,50 +289,34 @@ def rules(w: Writer) -> None:
     # present. The pictures it copies are not declared: which ones they are is decided by
     # reading the fragments, and they are a copy of files this graph already builds.
     w.rule('page',
-           'mkdir -p $outdir && $run -m core.html.page $unit $lang $outdir --module $module',
+           'mkdir -p $outdir && $run -m core.html.page $unit $lang $outdir --module $module '
+           '$nested --files $files',
            description=described('{a}[page] Assembling {f}$unit{a} into {x}HTML{a} page '
                                  '{f}$outdir/index.html'))
     w.rule('standalone_tex',
            "mkdir -p $outdir && $run -m modules.naboj.builder.standalone "
-           "$competition $volume $problem $lang -o '$outdir'",
+           "$competition $volume $problem $lang -o $outdir",
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     # Seminar's and scholar's standalone builders take the unit as one path and find their own
     # templates, where naboj's takes the competition, volume, problem and language apart. Two
     # rules rather than one contorted one.
     w.rule('unit_standalone_tex',
-           "mkdir -p $outdir && $run -m modules.$module.builder.standalone $unit -o '$outdir'",
+           "mkdir -p $outdir && $run -m modules.$module.builder.standalone $unit -o $outdir",
            description=described('{a}Building {x}standalone{a} for {f}$outdir'))
     w.rule('scholar_issue',
            "mkdir -p $outdir && $run -m modules.scholar.builder.$builder 'source/scholar/' "
-           "'modules/scholar/templates/' $course $issue -o '$outdir'",
+           "'modules/scholar/templates/' $course $issue -o $outdir",
            description=described('{a}Building {x}$builder{a} for {f}$outdir'))
     w.rule('round',
            "mkdir -p $outdir && $run -m modules.seminar.builder.round 'source/seminar/' "
            "'modules/seminar/templates/' -c $competition -v $volume -s $semester -r $round "
-           "-o '$outdir'",
+           "-o $outdir",
            description=described('{a}Building {x}round{a} documents for {f}$outdir'))
     w.rule('venue',
            "mkdir -p $outdir && $run -m modules.naboj.builder.venue 'source/naboj/' "
-           "'modules/naboj/templates/' $competition $volume $venue -o '$outdir'",
+           "'modules/naboj/templates/' $competition $volume $venue -o $outdir",
            description=described('{a}Building {x}venue{a} documents for '
                                  '{f}$competition/$volume/$venue'))
-    w.rule('standalone_pdf',
-           'mkdir -p $$(dirname $out) && ' + _xelatex('$tex', '$out', first=True)
-           + ' && if ' + _needs_rerun('$out')
-           + '; then ' + _xelatex('$tex', '$out', first=False) + '; fi'
-           + ' && ' + _depfile('$out'),
-           description=described('{a}[XeLaTeX] Compiling {x}PDF{a} file {f}$out'),
-           depfile='$out.d', deps='gcc')
-    # `pdfbook2` names its own output and the recipe renames it; `pdfjam` takes `--outfile`.
-    #
-    # It runs in a directory of its own because its scratch file is `.crop-tmp.pdf`,
-    # hardcoded and relative to the working directory -- so two of these 98 edges
-    # running at once in the repository root share it, and the one that loses the race
-    # finds its `-book.pdf` already renamed away: `FileNotFoundError: '.crop-tmp.pdf'`.
-    # The input is resolved first, since `cd` changes what a relative path means, and the
-    # directory is made beside the output rather than in `/tmp`: `pdfbook2` finishes with
-    # an `os.rename`, which cannot cross a filesystem -- `OSError: [Errno 18] Invalid
-    # cross-device link`. Same device, so the rename stays a rename.
     w.rule('pdfbook',
            'mkdir -p $$(dirname $out) && p=$$(realpath $in) && '
            't=$$(mktemp -d -p $$(dirname $out)) && '

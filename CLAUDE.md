@@ -699,10 +699,23 @@ language and a fragment is `<problem>/<lang>/solution.html`; seminar's descripto
 such key, because **seminar is monolingual** -- one language, not one of several that happens to
 be checked out -- and its fragments sit in `<problem>/` directly. `page.py` reads that rather
 than looking in both places: a rule of "wherever it is" would make a Náboj problem with a
-missing language directory assemble quietly from whatever lay beside it. The same descriptor
-gives the file order, so `files=` is an override and not a list to keep in step. `lang` is
-wanted either way -- it picks the i18n and the babel the maths is set with, which a
-one-language module has as much as a six-language one.
+missing language directory assemble quietly from whatever lay beside it. `lang` is wanted
+either way -- it picks the i18n and the babel the maths is set with, which a one-language module
+has as much as a six-language one.
+
+**And the graph tells it, rather than letting it go and look.** `_page` passes `--files` (the
+section order) and `--nested`, because the graph has already decided both -- it computes the
+fragment list it declares as inputs, and it knows which module nests. `page.py` used to load
+`modules/<module>/editor.yaml` itself, at run time, to decide them again; that file appeared
+**nowhere** in the generated graph, so reordering `targets:` reordered every page's sections
+with nothing rebuilt, and flipping `languages:` pointed every page edge at the wrong directory
+on whatever rebuilt next. The descriptor is now an implicit input of all 4399 page edges, and
+asking it is the fallback for a hand-run `python -m core.html.page`.
+
+The order is the **descriptor's**, not the order the fragments were collected in. Those differ:
+the walk emits `TRANSLATED` then `SHARED`, so it has `answer-extra` before `answer` where
+`editor.yaml` has them the other way round, and taking the walk's order would have silently
+reordered every Náboj page.
 
 **The maths is typeset at build time, and there are two engines.**
 `page.py --maths latex|mathjax` chooses; `core/html/__init__.py`'s `ENGINE` is only the default.
