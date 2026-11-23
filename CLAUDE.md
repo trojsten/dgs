@@ -860,8 +860,23 @@ Four things make it practical, and the middle two were each got wrong first:
 
 - **One xelatex run per page.** `standalone`'s `multi=dgsmath` puts each formula on its own page,
   so a hundred formulas cost one compile and one `dvisvgm`, about two seconds. Cached under
-  `build/.html-math/` by the hash of the formula, the language and `VERSION` -- which is in the
-  hash so that changing the wrapper or the conversion invalidates what it produced.
+  `build/.html-math/` by the hash of the formula, the language, and **the preamble that sets
+  it** -- `core/html/preamble.py` reads `core/templates/mathpage.jtex` and everything it
+  `\input`s, and hashes the contents.
+
+  That last part was missing and it was the one defect here where a **correct rebuild produced
+  wrong output**. `tools/ninja/generate.py` has always declared `math.tex` and its neighbours as
+  implicit inputs of every page edge, so editing one rebuilt all fifteen thousand pages -- and
+  every one of them was reassembled out of SVGs typeset by the *previous* macros. The key was a
+  hand-bumped `VERSION = '3'`, and nobody remembers a constant at the moment they are thinking
+  about a macro. Green build, wrong maths, invisible in both directions, because a stale cache
+  entry and a fresh one are the same bytes on disk.
+
+  `VERSION` survives for what no file's contents can say -- a change to how *this module* sizes
+  or recolours the SVG. The preamble list is **read off the template**, following the Jinja
+  include into `standalone-preamble.jtex`, and keyed on the inputs' mtimes rather than cached
+  once per process: the editor serves for hours, and somebody editing `math.tex` with it open
+  should not have to restart it.
 - **The baseline is measured, not guessed.** An image does not know where its baseline sits,
   which is what dropped every inline formula onto a line of its own the first time this was
   tried in a browser. The `dgsmath` environment boxes the formula and `\typeout`s

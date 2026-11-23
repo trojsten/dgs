@@ -76,8 +76,10 @@ def render(latex: str, lang: str, *, cache: pathlib.Path = CACHE) -> pathlib.Pat
         # which `nonstopmode` steps over and which halting turns into a failed build for a
         # fragment that otherwise compiles perfectly. Whether a PDF came out is the better
         # question, and it is the one asked below.
+        # No `-shell-escape`: what reaches this is a chemfig drawing out of a problem's own
+        # Markdown, which is content. See `core/html/texmath.py` for the whole argument.
         ['xelatex', '-interaction=nonstopmode', '-file-line-error',
-         '-shell-escape', f'-output-directory={cache}', str(tex)],
+         f'-output-directory={cache}', str(tex)],
         capture_output=True, text=True, check=False,
     )
     # Whether a PDF came out, and not what xelatex returned: in `nonstopmode` it exits nonzero
