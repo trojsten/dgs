@@ -175,3 +175,93 @@ class TestTheFingerprint:
         before = server.fingerprint()
         monkeypatch.chdir(tmp_path)
         assert server.fingerprint() == before
+
+
+class TestWhoMayTalkToTheDaemon:
+    """
+    The socket carries the job's three descriptors, the whole environment and the working
+    directory, and `Request.execute` then runs whatever module or file the request names. So
+    "who is at the other end" is not a detail of the transport, it is the authorisation.
+
+    Two locks, checked here one each, because they fail differently: the **mode** on the socket,
+    which one inherited umask can get wrong, and the **credentials**, which come from the kernel
+    and cannot be spoofed. The client has its own half -- it refuses a socket somebody else owns
+    rather than handing them the job.
+    """
+
+    def test_the_socket_is_private_to_its_owner(self, tmp_path, monkeypatch):
+        """
+        Mode 0600 whatever the umask is. It used to be `0777 & ~umask`, and a umask of 002 --
+        the default on Debian and Ubuntu for a user in their own group -- made it
+        group-writable: a bare `bind` under that umask gives 0775, measured.
+
+        **What this covers is the pair, not each half.** `listen()` both narrows the umask round
+        the `bind` and `chmod`s afterwards, and from outside only the end state is visible, so
+        this would still pass with the umask handling removed. The umask is what closes the
+        window *between* the two, which no test here can observe; it is cheap, it is the
+        belt to the chmod's braces, and the reason it is there is written at the call site.
+        """
+        import importlib
+        import stat
+
+        monkeypatch.setenv('DGS_RUNNER_SOCKET', str(tmp_path / 'dgsd' / 'sock'))
+        server = importlib.reload(importlib.import_module('tools.runner.server'))
+        # The **real** umask, not a monkeypatched one: a stub `os.umask` would leave the process
+        # umask alone and the assertion would then pass on the `chmod` alone, which is to say it
+        # would pass with `listen()`'s umask handling deleted. 002 is the default on Debian and
+        # Ubuntu for a user in their own group, and is what made the socket group-writable.
+        previous = os.umask(0o002)
+        try:
+            listener, _inode = server.listen()
+            assert stat.S_IMODE(os.stat(server.SOCKET).st_mode) == 0o600
+            listener.close()
+        finally:
+            os.umask(previous)
+            importlib.reload(server)
+
+    def test_a_peer_running_as_somebody_else_is_refused(self, monkeypatch):
+        """
+        The firing case for the second lock, with the uid moved rather than the peer -- a test
+        cannot become another user, and what is being checked is the comparison.
+        """
+        import socket as socketlib
+
+        from tools.runner import server
+
+        ours, theirs = socketlib.socketpair()
+        try:
+            assert server.peer_is_us(ours)                  # the quiet case: it really is us
+            # The real uid first: a lambda calling `os.getuid()` would be calling itself.
+            elsewhere = os.getuid() + 1
+            monkeypatch.setattr(os, 'getuid', lambda: elsewhere)
+            assert not server.peer_is_us(ours)
+        finally:
+            ours.close()
+            theirs.close()
+
+    def test_the_client_refuses_a_socket_somebody_else_owns(self, tmp_path, monkeypatch):
+        """
+        The client's half. In the image `build/` is mode 1777 so that a forced `--user` works,
+        which is also where another uid could bind this name first; handing it the job would
+        hand over the descriptors and the environment with it. `OSError` is the right shape,
+        because every `connect()` call site already falls back to running the job in-process.
+        """
+        import importlib
+
+        sock_path = tmp_path / 'dgsd' / 'sock'
+        sock_path.parent.mkdir(parents=True)
+        listener = __import__('socket').socket(__import__('socket').AF_UNIX,
+                                               __import__('socket').SOCK_STREAM)
+        listener.bind(str(sock_path))
+        listener.listen(1)
+        monkeypatch.setenv('DGS_RUNNER_SOCKET', str(sock_path))
+        client = importlib.reload(importlib.import_module('tools.runner.client'))
+        try:
+            assert client.connect()                         # quiet: we own it
+            elsewhere = os.getuid() + 1
+            monkeypatch.setattr(os, 'getuid', lambda: elsewhere)
+            with pytest.raises(OSError, match='not owned by us'):
+                client.connect()
+        finally:
+            listener.close()
+            importlib.reload(client)

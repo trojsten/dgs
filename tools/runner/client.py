@@ -51,6 +51,22 @@ def direct(argv):
 
 
 def connect():
+    """
+    A connection to the daemon, once we have established that it *is* the daemon.
+
+    The ownership check is the client's half of the same question the server answers with
+    `SO_PEERCRED`, and it matters because of what this connection carries: the job's three file
+    descriptors, the whole environment and the working directory, handed over before any reply.
+    A socket at this path belonging to somebody else is not a daemon that failed, it is a daemon
+    that is not ours, and the honest response is to run the job in this process instead.
+
+    It is reachable wherever `build/` is writable by more than one uid -- the container image
+    makes it mode 1777 so that a forced `--user` still works -- where another uid could create
+    `build/.dgsd/` and bind the name before we do. `os.lstat`, not `stat`: a symlink pointing at
+    somebody else's socket is the same attack with one more step.
+    """
+    if os.lstat(SOCKET).st_uid != os.getuid():
+        raise OSError(f'{SOCKET} is not owned by us; refusing to hand it this job')
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.settimeout(READY_TIMEOUT)
     sock.connect(SOCKET)
@@ -70,7 +86,11 @@ def spawn():
     import subprocess
     import time
 
-    os.makedirs(os.path.dirname(SOCKET) or '.', exist_ok=True)
+    # 0700, matching `server.listen()`. Whichever of the two gets there first decides, and in
+    # the normal flow it is this one -- so a mode set only on the server's call was never
+    # applied. The socket's own `chmod 0600` is what actually protects it either way; this is
+    # the directory, and it should not be the looser of two answers to one question.
+    os.makedirs(os.path.dirname(SOCKET) or '.', mode=0o700, exist_ok=True)
     with open(LOCK, 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         try:

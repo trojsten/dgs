@@ -27,8 +27,8 @@ class TestTheFontProPinDoesNotDrift:
     """
     `.containerignore` excludes `.git/`, so `git submodule update --init` cannot run inside a
     build and the commit has to be written into the Containerfile by hand. This is the check
-    that keeps that copy honest -- the same shape as `test_audit.py`'s descriptor/module.mk
-    mirror, and for the same reason.
+    that keeps that copy honest -- the same shape as `test_audit.py`'s descriptor/graph mirror,
+    and for the same reason.
     """
 
     def test_the_arg_is_a_full_commit(self, containerfile):
@@ -48,6 +48,34 @@ class TestTheFontProPinDoesNotDrift:
             pytest.skip('assets/fonts/FontPro is not a gitlink here')
         assert arg.group(1) == gitlink.stdout.strip(), (
             'Containerfile pins a different FontPro than the submodule does')
+
+    def test_ci_clones_the_same_one(self, containerfile):
+        """
+        The third copy of the pin, and the one that was not a pin at all.
+
+        `.github/workflows/python-app.yml` checks FontPro out and then runs `./scripts/makeall`,
+        `sudo ./scripts/install` and `sudo updmap-sys` from it. It named no `ref:`, so it took
+        whatever was on that repository's default branch and ran it as root -- while two files
+        in this one went to the trouble of pinning the same tool at a commit.
+        """
+        workflow = (ROOT / '.github/workflows/python-app.yml').read_text()
+        assert 'repository: sebschub/FontPro' in workflow
+        ref = re.search(r'repository: sebschub/FontPro\s*\n\s*ref: ([0-9a-f]{40})', workflow)
+        assert ref, 'CI clones FontPro without pinning a ref'
+        arg = re.search(r'^ARG FONTPRO_COMMIT=([0-9a-f]{40})\s*$', containerfile, re.MULTILINE)
+        assert ref.group(1) == arg.group(1), \
+            'CI and the Containerfile pin different FontPro commits'
+
+    def test_every_action_is_pinned(self):
+        """
+        `actions/checkout@master` three times. An official action and still a moving target:
+        whatever is on that branch runs in a job that has `sudo`. A tag is the least that can
+        be asked, and it costs nothing.
+        """
+        for workflow in sorted((ROOT / '.github/workflows').glob('*.yml')):
+            floating = re.findall(r'uses:\s*(\S+@(?:master|main|HEAD))', workflow.read_text())
+            assert not floating, f'{workflow.name} uses a floating ref: {floating}'
+
 
 
 @pytest.fixture(scope='module')
@@ -71,7 +99,7 @@ class TestNothingPrivateReachesTheImage:
     def test_the_build_still_gets_what_it_needs(self, ignored):
         """The mirror image: excluding too much is just as broken, and quieter."""
         needed = ['pyproject.toml', 'uv.lock', 'install-pandoc.sh', 'core', 'modules',
-                  'tools', 'Makefile', 'assets/fonts/MinionPro']
+                  'tools', 'assets/fonts/MinionPro']
         for path in needed:
             assert path not in ignored, f'{path} is needed by the build but excluded'
 
