@@ -18,13 +18,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
     - name: astral-sh/setup-uv
       uses: astral-sh/setup-uv@v9.0.0
       with:
         python-version: "3.14"
     - name: Install dependencies
       run: uv sync --dev
+    # Before the hour of TeX below, because a lint failure should cost seconds. The rule set and
+    # the argument for each family that is *not* in it are in `pyproject.toml`; what matters here
+    # is that there is a gate at all. This file's own header said "run tests and lint" from the
+    # day it was copied out of GitHub's template, and there has never been a lint step.
+    - name: Lint
+      run: uv run ruff check .
     # **`--no-install-recommends` silently drops `dvisvgm`**, which is why it is named here --
     # the Containerfile carries the same note for the same reason. Without it the HTML maths
     # tests do not skip, they die in `subprocess` with `No such file or directory: 'dvisvgm'`,
@@ -97,10 +103,16 @@ jobs:
           exit 1
         fi
         kpsewhich -var-value=TEXMFLOCAL
+    # **Pinned, like everywhere else it is named.** `.gitmodules` carries FontPro as a submodule
+    # precisely because it is "a third-party build tool pinned at a commit", and the Containerfile
+    # repeats that commit in `FONTPRO_COMMIT` with a test asserting the two agree. This step took
+    # the default branch instead -- and then ran `./scripts/makeall`, `sudo ./scripts/install` and
+    # `sudo updmap-sys` from it. A push to somebody else's repository executed as root here.
     - name: "Clone FontPro"
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
       with:
         repository: sebschub/FontPro
+        ref: 165b4a7d11ad34b64d7457ee6d51af4875e0bf14
         path: assets/fonts/FontPro
     # Split into three, so a failure is identified by the step name -- the log is not readable
     # without a token, and this one takes minutes before it dies.
@@ -147,7 +159,7 @@ jobs:
     # goes. It was cloned to `.../testing` while nothing read it; a scope is named after the
     # directory, so the two had to agree before anything could be built by name.
     - name: "Clone testing repository"
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
       with:
         repository: TrojstenSK/dgs-seminar-testing
         path: source/seminar/test

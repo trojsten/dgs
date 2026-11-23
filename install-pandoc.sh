@@ -29,6 +29,24 @@ set -euo pipefail
 PANDOC_CROSSREF_VERSION="${PANDOC_CROSSREF_VERSION:-v0.3.25a}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 
+# **The filter's tarball is checked against a digest**, because its version is pinned above and
+# so its bytes can be. `curl … | tar -x` over HTTPS authenticates github.com and nothing else:
+# a release asset can be replaced by whoever owns that account, and a truncated transfer is not
+# an error to `tar` either. Both end with an executable in `$BIN_DIR` that every build then runs.
+#
+# Update these when `PANDOC_CROSSREF_VERSION` moves:
+#   curl -fsSL <url> | sha256sum
+CROSSREF_SHA256_X64=7f8b7c5c91233db2dcb1145fa580a9ee8343695589bdb0ece8661490bc12a644
+CROSSREF_SHA256_ARM64=a5e06fe32cce7f8bccc182ff9d88cfe0c0fc5ff2ac784422388157714ccaaff7
+
+# **pandoc's is not pinned, and that is the design rather than an omission.** Its version is not
+# a constant here: the filter is asked which pandoc it was built with and exactly that one is
+# installed, so a digest would have to be stored per pandoc version and would turn every filter
+# bump into two edits that can disagree. What stands in for it is the check at the bottom, which
+# runs a real conversion through the pair and fails the install if they do not agree -- weaker
+# than a digest against a substituted binary, stronger than nothing, and it catches the case
+# that actually happens, which is a mismatched pair.
+
 case "$(uname -m)" in
     x86_64 | amd64)  crossref_arch=X64;   pandoc_arch=amd64 ;;
     aarch64 | arm64) crossref_arch=ARM64; pandoc_arch=arm64 ;;
@@ -40,9 +58,19 @@ trap 'rm -rf "$work"' EXIT
 mkdir -p "$BIN_DIR"
 
 echo "install-pandoc: pandoc-crossref ${PANDOC_CROSSREF_VERSION} (${crossref_arch})"
-curl -fsSL \
-    "https://github.com/lierdakil/pandoc-crossref/releases/download/${PANDOC_CROSSREF_VERSION}/pandoc-crossref-Linux-${crossref_arch}.tar.xz" \
-    | tar -xJ -C "$work"
+eval "expected=\$CROSSREF_SHA256_${crossref_arch}"
+# To a file first, not straight into `tar`: a digest cannot be checked on a stream that has
+# already been unpacked.
+curl -fsSL -o "$work/crossref.tar.xz" \
+    "https://github.com/lierdakil/pandoc-crossref/releases/download/${PANDOC_CROSSREF_VERSION}/pandoc-crossref-Linux-${crossref_arch}.tar.xz"
+actual=$(sha256sum "$work/crossref.tar.xz" | cut -d' ' -f1)
+if [ "$actual" != "$expected" ]; then
+    echo "install-pandoc: pandoc-crossref ${PANDOC_CROSSREF_VERSION} (${crossref_arch}) does not match its digest" >&2
+    echo "  expected $expected" >&2
+    echo "  got      $actual" >&2
+    exit 1
+fi
+tar -xJ -C "$work" -f "$work/crossref.tar.xz"
 
 # The extracted binary, not one already on PATH: what it reports has to be what we are about to
 # install, or we would install a pandoc to match somebody else's filter.
