@@ -12,6 +12,7 @@ so Slovak writes `83{,}5` and `1 m, 2 m a 3 m` while English writes `83.5` and `
 """
 import pytest
 
+from core.filters import siunitx
 from core.filters.siunitx import expand, format_number, format_unit, symbol
 from core.i18n import languages
 
@@ -172,3 +173,82 @@ class TestComputedPowers:
     def test_the_named_powers_still_work(self, en):
         assert format_unit(r'\metre\squared', en) == r'\text{m}^{2}'
         assert format_unit(r'\kilo\gram\per\metre\cubed', en) == r'\text{kg}/\text{m}^{3}'
+
+
+class TestTheSettingsComeFromTheDocument:
+    r"""
+    Half of `core/latex/siunitx.tex` was parsed and half transcribed, thirty lines apart in the
+    same module. The `\DeclareSIUnit` half had always been read "so a unit added there reaches
+    the web without anybody remembering a second table"; the `\sisetup` half was seven constants
+    typed out again, with nothing comparing them. Change `group-minimum-digits` for the booklet
+    and the web began grouping at a different width in every fragment, silently.
+    """
+
+    def sisetup(self):
+        return siunitx._setup()
+
+    @pytest.mark.parametrize(('key', 'name'), [
+        ('exponent-product', 'EXPONENT_PRODUCT'),
+        ('number-unit-product', 'NUMBER_UNIT_PRODUCT'),
+        ('group-separator', 'GROUP_SEPARATOR'),
+    ])
+    def test_a_separator_is_the_documents_own(self, key, name):
+        assert getattr(siunitx, name) == self.sisetup()[key]
+
+    def test_the_grouping_width_is_the_documents_own(self):
+        assert siunitx.GROUP_MINIMUM_DIGITS == int(self.sisetup()['group-minimum-digits'])
+
+    def test_per_mode_is_translated_rather_than_copied(self):
+        r"""
+        `per-mode` names a behaviour -- `symbol` means `m/s`, `reciprocal` would mean
+        `m\,s^{-1}` -- so this one is a mapping and not a value. Only the mode the document sets
+        is implemented, and this is what says so if that ever changes.
+        """
+        assert self.sisetup()['per-mode'] == 'symbol'
+        assert siunitx.PER == '/'
+
+    def test_the_two_divergences_are_deliberate_and_still_diverge(self):
+        r"""
+        The quiet case, and the reason this is not simply "read everything". MathJax has no
+        `--` ligature and no `\allowbreak`, so these two are *supposed* to differ from what
+        `\sisetup` says. A test asserting equality would be wrong; what is worth pinning is that
+        each still differs in exactly the one documented way.
+        """
+        setup = self.sisetup()
+        assert setup['range-phrase'] == r'\text{ -- }'
+        assert siunitx.RANGE_PHRASE == '\\text{ – }', 'an en dash outright, not the ligature'
+
+        assert r'\allowbreak' in setup['list-separator']
+        assert r'\allowbreak' not in siunitx.LIST_SEPARATOR
+        assert siunitx.LIST_SEPARATOR == setup['list-separator'].replace(r'\allowbreak', '')
+
+    def test_every_key_the_module_reads_is_in_the_file(self):
+        """A `\\sisetup` key renamed upstream would otherwise fall back to a default quietly."""
+        setup = self.sisetup()
+        for key in ('per-mode', 'exponent-product', 'number-unit-product',
+                    'group-separator', 'group-minimum-digits', 'range-phrase', 'list-separator'):
+            assert key in setup, f'{key} is no longer in the sisetup block'
+
+
+class TestTheUnitTableNoticesAnEdit:
+    def test_a_unit_added_to_the_file_is_seen_without_a_restart(self, tmp_path):
+        """
+        `declared_units` was `@functools.cache`d on a path, so the editor -- which serves for
+        hours -- went on reporting a newly declared unit as `unit-unknown`, and went on letting
+        it reach the page unexpanded, until somebody restarted the server.
+        """
+        declarations = tmp_path / 'siunitx.tex'
+        declarations.write_text('\\DeclareSIUnit{\\widget}{wd}\n')
+        assert siunitx.declared_units(str(declarations)) == {'widget': 'wd'}
+
+        declarations.write_text('\\DeclareSIUnit{\\widget}{wd}\n\\DeclareSIUnit{\\sprocket}{sp}\n')
+        assert set(siunitx.declared_units(str(declarations))) == {'widget', 'sprocket'}
+
+    def test_a_file_that_has_not_changed_is_not_reread(self, tmp_path, monkeypatch):
+        """The quiet half: the cache still is one, or every formula would re-read the file."""
+        declarations = tmp_path / 'siunitx.tex'
+        declarations.write_text('\\DeclareSIUnit{\\widget}{wd}\n')
+        siunitx.declared_units(str(declarations))
+        before = siunitx._declared_at.cache_info().hits
+        siunitx.declared_units(str(declarations))
+        assert siunitx._declared_at.cache_info().hits == before + 1
