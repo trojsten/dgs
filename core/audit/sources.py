@@ -17,10 +17,10 @@ from core.builder import words
 #: Files beside the unit rather than inside a language directory.
 LANGUAGE_RE_LEN = 2
 
-#: The two rule families in `modules/naboj/module.mk`: `NABOJ_TRANSLATABLE` puts a file inside
-#: `<language>/`, `NABOJ_NONTRANSLATABLE` beside the unit. These are the fallback for a caller that
-#: does not say -- `tools/editor` passes the module descriptor's lists, which
-#: `core/tests/test_audit.py` pins to module.mk so the two cannot drift apart.
+#: The module's two file families: a translated file lives inside `<language>/`, a shared one
+#: beside the unit. These are the fallback for a caller that does not say -- `tools/editor` passes
+#: the module descriptor's lists, which `core/tests/test_audit.py` pins against
+#: `tools.ninja.generate`'s own `TRANSLATED`/`SHARED` so the three cannot drift apart.
 TRANSLATED_FILES = ('problem.md', 'problem-extra.md', 'solution.md', 'answer-extra.md')
 SHARED_FILES = ('answer.md', 'answer-also.md', 'answer-interval.md')
 
@@ -98,10 +98,32 @@ class Sources:
     units: dict = field(default_factory=dict)   # path -> Unit, in the scope meta's order
     #: the scope's own meta.yaml -- the volume's, not a problem's -- or None if it has none
     scope_meta: dict | None = None
+    #: why `scope_meta` is None when the file is there: the parser's complaint, or a note that it
+    #: is not a mapping. `None` when the file parsed, or when there is no file at all -- a scope
+    #: with no meta is a different thing from a scope whose meta is broken, and only the second
+    #: is a defect. `scope_meta_unparseable` is what reports it.
+    scope_meta_error: str | None = None
     #: what a unit may hold, from the module's build rules rather than from what happens to be on
     #: disk: a file the rules define and no problem has is a column of blanks worth seeing
     translated_files: tuple = TRANSLATED_FILES
     shared_files: tuple = SHARED_FILES
+
+    @property
+    def is_pool(self) -> bool:
+        """
+        Whether this scope is a **pool** -- a reservoir of problems, not a competition.
+
+        `phys/pool` and `chem/pool` hold problems that have not been set yet. They are picked
+        from and moved into a volume when they are; until then there is no running order, no
+        language set, no venues and no booklet. Everything that reads a problem applies to them
+        and should: they are the problems somebody is writing. Everything that assumes a volume
+        around the problems does not.
+
+        Recognised by name rather than by the absence of `languages/`, because the name is what
+        an author types and what the move out of it changes. A volume that happens to have no
+        translations yet is still a volume.
+        """
+        return Path(self.scope).name == 'pool'
 
     @property
     def repo_root(self) -> Path:
@@ -235,13 +257,24 @@ def read_scope(module_root: Path, module_name: str, scope: str, unit_paths,
     to appear, or the audit would hide exactly the problem worth seeing. Those go last, sorted.
     """
     scope_meta = None
+    scope_meta_error = None
     meta_file = module_root / scope / 'meta.yaml'
     if meta_file.is_file():
         try:
             loaded = yaml.safe_load(meta_file.read_text())
             scope_meta = loaded if isinstance(loaded, dict) else None
-        except yaml.YAMLError:
+            if scope_meta is None:
+                scope_meta_error = 'it does not parse as a mapping'
+        except yaml.YAMLError as broken:
+            # **Recorded, not swallowed.** The consequence of losing this file is not that the
+            # audit knows less, it is that the audit is *wrong and quiet*: `problems:` is the
+            # running order, so without it `rank` is empty, `unit-unlisted` returns early
+            # because there is nothing to be unlisted against, `listed-missing` reports
+            # nothing, every `Unit.order` is `None` and the page silently falls back to
+            # alphabetical. A volume whose meta does not parse therefore read **clean**, which
+            # is the one answer it must never give. The build fails loudly on the same file.
             scope_meta = None
+            scope_meta_error = str(broken).replace('\n', ' ')
 
     units = {p: read_unit(module_root, p) for p in sorted(unit_paths)}
 
@@ -260,6 +293,7 @@ def read_scope(module_root: Path, module_name: str, scope: str, unit_paths,
         module_root=module_root,
         units={u.path: u for u in ordered},
         scope_meta=scope_meta,
+        scope_meta_error=scope_meta_error,
         translated_files=tuple(translated_files),
         shared_files=tuple(shared_files),
     )

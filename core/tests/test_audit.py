@@ -7,15 +7,15 @@ cases is a false positive that a hand-written version of the same sweep actually
 volumes 19 to 29 were being audited, and every one of them cost time to chase down.
 """
 import pathlib
-import re
 
 import pytest
 import yaml
 
-from core.audit import audit, stale
+from core.audit import audit, checks, stale
 from core.audit.checks import magnitudes, si_calls, strip_maths_whitespace
 from core.audit.sources import SHARED_FILES, TRANSLATED_FILES, read_scope
 from core.audit.status import translation_status
+from tools.ninja import generate
 
 
 def make_problem(tmp_path, name='widget', meta='authors:\n  idea: []\n  problem: []\n'
@@ -676,10 +676,19 @@ class TestTranslationStatus:
         assert 'mirrors sk' in entry['note']
 
 
-class TestPictureStatus:
+class TestPictureStatusForDeclaredPictures:
     """
-    The verdict shown on the `/audit` page, which nothing exercised until `pictures:` existed --
-    which is how the missing import that would have raised here went unnoticed for a whole commit.
+    The verdict shown on the `/audit` page for a figure declared in `pictures:`.
+
+    **Named apart from `TestPictureStatus` below, which used to shadow it.** Two
+    classes in one module may share a name and Python keeps the second; these three
+    tests were therefore never collected, and they are the only coverage of a
+    declared figure in the status layer. The class they hid behind covers the older
+    shape, a literal `![](...)` include, which is a different question about the same
+    verdict -- hence two classes, now with two names.
+
+    Nothing exercised this verdict at all until `pictures:` existed, which is how a missing
+    import that would have raised here went unnoticed for a whole commit.
     """
 
     META = ("authors:\n  idea: []\n  problem: []\n  solution: []\n"
@@ -1156,20 +1165,20 @@ class TestTranslationDetail:
 
 class TestFileFamiliesMatchTheBuild:
     """
-    `modules/naboj/editor.yaml` mirrors module.mk's two rule families, and the audit page reads the
-    mirror. If module.mk gains a file and the descriptor does not, the page silently stops having a
+    `modules/naboj/editor.yaml` mirrors the build's two file families, and the audit page reads the
+    mirror. If the build gains a file and the descriptor does not, the page silently stops having a
     column for it -- so the mirror is pinned here rather than trusted.
+
+    **The authority is the graph generator, because it is what builds.** This used to regex
+    `modules/naboj/module.mk` for the `$(foreach filename,…)` driving each rule family, which was
+    right when make was the build and wrong afterwards: every entry point has gone through
+    `tools.ninja.generate` since it replaced the Makefile, so the pin was anchoring the living
+    descriptor to a layer nothing ran. Make is gone and this reads the constants the graph is
+    actually emitted from.
     """
 
-    def families_from_make(self):
-        text = pathlib.Path('modules/naboj/module.mk').read_text()
-        out = {}
-        for macro, key in (('NABOJ_TRANSLATABLE', 'translated'),
-                           ('NABOJ_NONTRANSLATABLE', 'shared')):
-            m = re.search(r'\$\(foreach filename,([^,]+),\$\(eval \$\(call ' + macro, text)
-            assert m, f"no foreach driving {macro} in module.mk"
-            out[key] = m.group(1).split()
-        return out
+    def families_from_generator(self):
+        return {'translated': list(generate.TRANSLATED), 'shared': list(generate.SHARED)}
 
     def families_from_descriptor(self):
         spec = yaml.safe_load(pathlib.Path('modules/naboj/editor.yaml').read_text())
@@ -1178,11 +1187,11 @@ class TestFileFamiliesMatchTheBuild:
         shared = [t for t in kind['targets'] if t not in translated]
         return {'translated': translated, 'shared': shared}
 
-    def test_the_descriptor_lists_what_module_mk_builds(self):
-        make = self.families_from_make()
+    def test_the_descriptor_lists_what_the_graph_builds(self):
+        graph = self.families_from_generator()
         desc = self.families_from_descriptor()
-        assert sorted(desc['translated']) == sorted(make['translated'])
-        assert sorted(desc['shared']) == sorted(make['shared'])
+        assert sorted(desc['translated']) == sorted(graph['translated'])
+        assert sorted(desc['shared']) == sorted(graph['shared'])
 
     def test_the_audit_defaults_match_the_descriptor(self):
         """`core.audit` falls back to its own copy when no caller says; it must be the same copy."""

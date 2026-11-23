@@ -268,6 +268,27 @@ def meta_unparseable(sources):
             yield Finding('meta-unparseable', 'error', unit.meta_error, unit.path, 'meta.yaml')
 
 
+@check('scope-meta-unparseable', 'error', "the scope's own meta.yaml does not parse")
+def scope_meta_unparseable(sources):
+    """
+    The volume's meta, as against a problem's -- and the one whose loss is *silent*.
+
+    A unit's broken meta is reported by `meta-unparseable` above and shows up everywhere: no
+    values, no tags, no authors. The scope's does the opposite. `problems:` in it is the running
+    order, so losing it empties `rank`, which makes every `Unit.order` `None`, which makes
+    `unit-unlisted` return early ("nothing to be unlisted against"), `listed-missing` report
+    nothing and the page fall back to alphabetical without saying it has. The volume then reads
+    **clean** -- the one answer an auditor must never give for a file the build would refuse.
+
+    An *absent* scope meta is not this and is not reported: seminar and scholar scopes have
+    none, and a volume that has not got one yet is a different thing from one whose meta is
+    broken. `read_scope` tells the two apart and only fills `scope_meta_error` for the second.
+    """
+    if sources.scope_meta_error:
+        yield Finding('scope-meta-unparseable', 'error', sources.scope_meta_error,
+                      None, 'meta.yaml')
+
+
 @check('meta-invalid', 'error', 'meta.yaml fails its schema', modules=('naboj',))
 def meta_invalid(sources):
     # Lazily, because `core` importing `modules` is backwards and only this check needs it.
@@ -332,16 +353,17 @@ def tags_empty(sources):
 @check('tag-unknown', 'warning', 'A tag outside the vocabulary', modules=('naboj',))
 def tag_unknown(sources):
     from modules.naboj.builder.renderer import VALID_TAGS
-    # Chemistry has no vocabulary of its own -- `VALID_TAGS` is physics -- so every chemistry tag
-    # would be reported. Say it once at scope level instead of once per problem.
-    if sources.scope.startswith('chem'):
-        used = {t for u in sources.unit_list if u.meta for t in (u.meta.get('tags') or [])}
-        if used - set(VALID_TAGS):
-            yield Finding('tag-unknown', 'warning',
-                          f"chemistry has no tag vocabulary of its own, so all "
-                          f"{len(used - set(VALID_TAGS))} of its tags fall outside VALID_TAGS, "
-                          f"which is physics")
-        return
+    # **Chemistry is reported per problem like everything else.** There used to be a branch here
+    # that collapsed a whole chemistry scope into one scope-level finding, on the stated grounds
+    # that "`VALID_TAGS` is physics" and every chemistry tag would therefore be reported. That
+    # premise was removed when the vocabulary gained its chemistry half -- `inorganic`,
+    # `organic`, `physical-chemistry`, `biochemistry`, `stoichiometry`, `molar-mass`,
+    # `concentration`, `acid-base`, `redox` -- and the branch stayed. It was dormant only
+    # because no chemistry problem carries a tag yet; the first one to be tagged would have
+    # suppressed every per-problem finding for the competition and printed something false.
+    #
+    # A `core` check matching a Náboj competition by string prefix was the other half of why it
+    # was wrong, and that goes with it.
     for unit in sources.unit_list:
         for tag in (unit.meta or {}).get('tags') or []:
             if tag not in VALID_TAGS:
@@ -1070,9 +1092,9 @@ def build_orphan(sources):
     The third direction, and the only one that is not a question about the sources.
 
     `listed-missing` reports the meta naming a problem that is not there; this reports what is
-    left *under* `build/` and `render/` when the directory goes. Make cannot clean up after
-    itself here -- `Makefile:55-61` says so -- and `.SECONDARY:` keeps every intermediate, so a
-    rename leaves both mirrors behind for ever.
+    left *under* `build/` and `render/` when the directory goes. No build system can clean up
+    after itself here -- a target whose prerequisite has vanished has no rule left to remove it --
+    so a rename leaves both mirrors behind for ever.
 
     Usually that is only clutter. It is a wrong page when the meta still names the unit, because
     `\protectedInput` finds the stale `.tex` and includes it: the booklet goes on printing the
@@ -1102,6 +1124,14 @@ def build_orphan(sources):
 @check('translation-set', 'warning',
        'A problem with different languages from its neighbours', modules=('naboj',))
 def translation_set(sources):
+    # **Quiet in a pool**, and the only check that has to be. It asks whether a problem has the
+    # same languages as its neighbours, which is a question about a volume: everything in one
+    # booklet is translated into the same set, and a problem that is not is a gap somebody has
+    # to fill before it ships. A pool is the opposite by construction -- problems sit there at
+    # whatever stage their author left them, and a Slovak-only draft beside a six-language one
+    # is what a reservoir looks like, not a defect. It was 31 of the pool's 182 findings.
+    if sources.is_pool:
+        return
     sets = {u.path: frozenset(u.languages) for u in sources.unit_list if u.languages}
     if len(sets) < 2:
         return
