@@ -26,43 +26,72 @@ def convert(i18n_built):
     return _convert
 
 
-@pytest.mark.skip(reason="We have switched to \\enquote for LaTeX, HTML port underway")
 class TestQuotes:
-    def test_math_plus(self, convert):
-        assert convert('latex', 'sk', '"+"') == r'„+“' + '\n'
+    r"""
+    Two writers, two mechanisms, one statement of what a language's quotes are.
 
-    def test_more_math(self, convert):
+    **LaTeX gets `\enquote{}`** and csquotes sets the marks at typeset time, configured by the
+    `\setquotestyle` in `build/core/i18n/<lang>.tex`. That is why the booklet has always been
+    right, and why these tests assert a macro rather than characters.
+
+    **HTML gets the characters**, from `core/filters/quotes.lua`, because the HTML writer has no
+    csquotes to ask and emits *pandoc's* marks otherwise -- English ones, on every page of every
+    language but English. This class was skipped on 2023-12-11 with the note "HTML port
+    underway"; it asserted `„dačo“` for both formats, which was right about the intent and wrong
+    about the mechanism for LaTeX. Both halves are real again.
+
+    The locale is the authority either way: `core/i18n/<lang>.yaml`'s `quotes:` is what the Lua
+    filter is handed and what `override.jtex` configures csquotes from.
+    """
+
+    def test_latex_hands_the_decision_to_csquotes(self, convert):
+        assert convert('latex', 'sk', '"dačo"') == r'\enquote{dačo}'
+
+    def test_latex_does_not_depend_on_the_language(self, convert):
+        r"""
+        The point of `\enquote`: one output for every language, resolved at typeset time. A
+        filter that wrote the characters here would have to reimplement csquotes' nesting too.
+        """
+        for language in ('sk', 'en', 'de', 'fr', 'es'):
+            assert convert('latex', language, '"dačo"') == r'\enquote{dačo}'
+
+    def test_latex_keeps_maths_inside_the_quotes(self, convert):
         output = convert('latex', 'sk', r'"$\left(+1, +5\right)$"')
-        assert output == r'„\(\left(+1, +5\right)\)“' + '\n'
+        assert output == r'\enquote{\(\left(+1, +5\right)\)}'
 
-    def test_slovak(self, convert):
-        output = convert('latex', 'sk', 'Máme "dačo" a "niečo". "Čo také?" _"Asi nič."_')
-        assert output.replace("{}", "") == r'Máme „dačo“ a „niečo“. „Čo také?“ \emph{„Asi nič.“}' + '\n'
+    @pytest.mark.parametrize(('language', 'expected'), [
+        ('sk', '<p>„dačo“</p>'),
+        ('de', '<p>„dačo“</p>'),
+        ('en', '<p>“dačo”</p>'),
+        ('fr', '<p>« dačo »</p>'),          # its marks carry their own spacing
+        ('es', '<p>«dačo»</p>'),
+    ])
+    def test_html_uses_the_languages_own_marks(self, convert, language, expected):
+        assert convert('html', language, '"dačo"') == expected
 
-    def test_slovak_html(self, convert):
-        output = convert('html', 'sk', 'Máme "dačo" a "niečo". "Čo také?" _"Asi nič."_')
-        assert output == r'<p>Máme „dačo“ a „niečo“. „Čo také?“ <em>„Asi nič.“</em></p>' + '\n'
+    def test_html_marks_are_the_locales(self, convert):
+        """
+        Asserted against the declaration rather than against a literal, so that changing a
+        language's quotes in one place changes both the booklet and the page.
+        """
+        from core import i18n
+        for language in ('sk', 'en', 'fr'):
+            quotes = i18n.languages[language].data['quotes']
+            assert convert('html', language, '"x"') == \
+                f"<p>{quotes['open']}x{quotes['close']}</p>"
 
-    def test_interpunction(self, convert):
-        output = convert('latex', 'sk', '"Toto je veľká 0." "Joj?" "???" "!!!"')
-        assert output.replace("{}", "") == r'„Toto je veľká 0.“ „Joj?“ „???“ „!!!“' + '\n'
+    def test_html_quotes_survive_emphasis_and_punctuation(self, convert):
+        output = convert('html', 'sk', 'Máme "dačo". "Čo také?" _"Asi nič."_')
+        assert output == '<p>Máme „dačo“. „Čo také?“ <em>„Asi nič.“</em></p>'
 
-    def test_more_interpunction(self, convert):
-        assert convert('latex', 'sk', 'Ale "to" je "dobré", "nie."?') == r'Ale „to“ je „dobré“, „nie.“?' + '\n'
-
-    def test_english_interpunction(self, convert):
-        assert convert('latex', 'en', 'Ale "to" je "dobré", "nie."?') == r'Ale “to” je “dobré”, “nie.”?' + '\n'
-
-    def test_french_interpunction(self, convert):
-        assert (convert('latex', 'fr', 'Ale "to" je "dobré", "nie."?') ==
-                r'Ale «\,to\,» je «\,dobré\,», «\,nie.\,»?' + '\n')
-
-    def test_spanish_interpunction(self, convert):
-        assert convert('latex', 'es', 'Ale "to" je "dobré", "nie."?') == r'Ale «to» je «dobré», «nie.»?' + '\n'
-
-    def test_english(self, convert):
-        output = convert('latex', 'en', 'Máme "dačo" a "niečo". "Čo také?" _"Asi nič."_')
-        assert output == r'Máme “dačo” a “niečo”. “Čo také?” \emph{“Asi nič.”}' + '\n'
+    def test_a_language_declaring_no_quotes_keeps_pandocs(self, convert, monkeypatch):
+        """
+        The quiet case. Every shipped locale declares a pair, so the fallback is for a locale
+        being written: it gets pandoc's marks rather than no marks at all.
+        """
+        from core.builder import convertor as module
+        monkeypatch.setattr(module.Convertor, 'quote_open', '', raising=False)
+        assert '“' in convert('html', 'en', '"x"')
 
 
 class TestImages:

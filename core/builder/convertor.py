@@ -252,6 +252,14 @@ class Convertor:
         # Three forms, not two. For a one-letter word `upper()` and `capitalize()` agree, but
         # Ukrainian's list holds two-letter prepositions as well, and a sentence opens with `Із`,
         # not `ІЗ` -- deriving only the upper form left every sentence-initial one unglued.
+        # What `core/filters/quotes.lua` sets for HTML. `override.jtex` reads the same keys for
+        # csquotes, so the booklet and the page cannot disagree about a language's marks.
+        quotes = self.locale.data.get('quotes') or {}
+        self.quote_open = quotes.get('open', '')
+        self.quote_close = quotes.get('close', '')
+        self.quote_single_open = quotes.get('single_open', '')
+        self.quote_single_close = quotes.get('single_close', '')
+
         typography = self.locale.data.get('typography', {})
         self.nbsp_singles = sorted({
             case
@@ -456,6 +464,13 @@ class Convertor:
             "--filter", "pandoc-crossref",
             "-M", f"crossrefYaml=build/core/i18n/{self.locale_code}.yaml",
             "--lua-filter", "./core/filters/quotes.lua",
+            # The language's own marks, for the HTML writer, which has no csquotes to ask. The
+            # LaTeX writer emits `\enquote{}` and is configured by `override.jtex` from these
+            # same two keys, so there is one statement of what a language's quotes are.
+            "-M", f"quote-open={self.quote_open}",
+            "-M", f"quote-close={self.quote_close}",
+            "-M", f"quote-single-open={self.quote_single_open}",
+            "-M", f"quote-single-close={self.quote_single_close}",
             "--lua-filter", "./core/filters/spacing.lua",
             "-M", "nbsp-singles=" + ' '.join(self.nbsp_singles),
             "-M", "nbsp-pairs=" + ';'.join(self.nbsp_pairs),

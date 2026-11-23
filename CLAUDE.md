@@ -2174,6 +2174,32 @@ Line length does not matter in these files -- they are a registration export, no
 
 What is left in the metas is 3 real `\ `, each a `number\ unit` inside an `eq:`.
 
+### The quotation marks are the language's, in both formats
+
+`"dačo"` becomes a `Quoted` node and each writer renders it, by a **different mechanism**, and
+only one of the two was ever finished:
+
+- **LaTeX** gets `\enquote{}` and csquotes sets the marks at typeset time, configured by the
+  `\setquotestyle` that `build/core/i18n/<lang>.tex` opens with. The booklet has always been
+  right, and this is also what gives nesting -- a quote inside a quote takes the inner pair --
+  for free.
+- **HTML** has no csquotes to ask, so pandoc's writer emitted **its own** marks, which are
+  English: `“dačo”` on every page of every language but English, where Slovak and German set
+  `„dačo“`, French `« dačo »` and Spanish `«dačo»`.
+
+`core/filters/quotes.lua` does the HTML half now, from the same `quotes:` block in
+`core/i18n/<lang>.yaml` that `override.jtex` configures csquotes from -- one statement of what a
+language's marks are, two formats reading it. French is why the strings are taken as written
+rather than assembled: its marks carry their own spacing.
+
+It had been noticed. `core/tests/test_convertor.py`'s `TestQuotes` asserted `„dačo“` for both
+formats and was skipped on **2023-12-11** with the note *"We have switched to \enquote for
+LaTeX, HTML port underway"*. Three years is a long time for ten tests to assert nothing while
+looking as though they do: the class was right about the intent, wrong about the mechanism for
+LaTeX, and the HTML half it was waiting for had never landed. Both halves are live again, and
+all 171 of volume 29's built `.tex` are byte-identical across the change -- this is a web fix
+and touches nothing in print.
+
 ### A hyphen that repeats itself
 
 Five of the twelve languages repeat the hyphen when a word breaks at one: `anti-inflamatório`
