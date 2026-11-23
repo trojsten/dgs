@@ -24,6 +24,7 @@ from tools.ninja.generate import (
     _fragment,
     _instagram,
     _page,
+    page_sections,
     _picture_svg,
     _standalone,
     scholar_edges,
@@ -116,7 +117,7 @@ class TestWhereAPageLooksForItsFragments:
     def test_naboj_nests_the_language(self, writer):
         page = _page(writer.build, 'naboj/phys/29/problems/drenched', 'sk', 'naboj',
                      fragments=['build/naboj/phys/29/problems/drenched/sk/solution.html'],
-                     pictures=[], nested=True)
+                     pictures=[], nested=True, repo=REPO)
         assert page == 'output/naboj/phys/29/problems/drenched/sk/index.html'
         assert 'unit = build/naboj/phys/29/problems/drenched' in written(writer)
         assert 'module = naboj' in written(writer)
@@ -124,7 +125,7 @@ class TestWhereAPageLooksForItsFragments:
     def test_seminar_does_not(self, writer):
         page = _page(writer.build, 'seminar/FKS/42/1/1/01', 'sk', 'seminar',
                      fragments=['build/seminar/FKS/42/1/1/01/problem.html'],
-                     pictures=[], nested=False)
+                     pictures=[], nested=False, repo=REPO)
         assert page == 'output/seminar/FKS/42/1/1/01/index.html'
 
     def test_it_waits_for_the_maths_the_booklet_is_set_with(self, writer):
@@ -134,7 +135,7 @@ class TestWhereAPageLooksForItsFragments:
         `core.html.texmath`, where there is no recorder, so the edge has to name them.
         """
         _page(writer.build, 'naboj/x', 'sk', 'naboj', fragments=['build/naboj/x/sk/a.html'],
-              pictures=[], nested=True)
+              pictures=[], nested=True, repo=REPO)
         line = written(writer).splitlines()[0]
         for wanted in ('build/core/i18n/sk.tex', 'core/templates/mathpage.jtex',
                        'core/latex/math.tex', 'core/templates/page.jhtml',
@@ -476,3 +477,61 @@ class TestWhatMakesTheGraphRegenerate:
         """The half that already worked, which generalising the loop must not drop."""
         assert 'source/scholar/XX/homework/01' in self.regenerate_edge(repo)
         assert 'build source/scholar/XX/homework/01: phony' in self.graph(repo)
+
+
+class TestThePageIsToldWhatItAssembles:
+    """
+    The page step used to go and read `modules/<module>/editor.yaml` for itself, and the graph
+    had never heard of that file: `grep -c editor.yaml build.ninja` was 0. So reordering
+    `targets:` reordered every page's sections and rebuilt nothing, and flipping `languages:`
+    sent every page edge looking in the wrong directory on whatever rebuilt next. Both facts are
+    now decided once, where the edge is written, and the descriptor is an input like any other.
+
+    Two of these ask what a *real* module declares, which `load_modules` can only answer when
+    `source/<module>/` is populated -- so they are skipped without it, per the rule that
+    `core/tests/` passes in a checkout with no content repositories.
+    """
+
+    #: The **real** checkout, not `REPO`. The other tests in this file hand the walkers a fake
+    #: `/repo` because the tree is what they are faking; a page's section order comes from a
+    #: module descriptor, which only exists here.
+    CHECKOUT = pathlib.Path('.')
+
+    def page_edge(self, nested: bool):
+        out = io.StringIO()
+        writer = Writer(out)
+        _page(writer.build, 'naboj/phys/29/problems/x', 'sk', 'naboj',
+              fragments=['build/naboj/phys/29/problems/x/sk/problem.html'],
+              pictures=[], nested=nested, repo=self.CHECKOUT)
+        return out.getvalue()
+
+    def test_the_descriptor_is_an_input(self):
+        assert 'modules/naboj/editor.yaml' in self.page_edge(nested=True)
+
+    @pytest.mark.skipif(not pathlib.Path('source/naboj').is_dir(),
+                        reason='page_sections reads a module descriptor, which load_modules '
+                               'only knows when source/<module>/ is populated')
+    def test_the_section_order_is_passed(self):
+        """
+        And it is the *descriptor's* order, not the order the walk collected the fragments in.
+        Those differ -- the walk emits `TRANSLATED` then `SHARED`, so it has `answer-extra`
+        before `answer` -- and taking the walk's order would have reordered every Náboj page.
+        """
+        text = self.page_edge(nested=True)
+        files = next(line.split(' = ', 1)[1] for line in text.splitlines()
+                     if line.strip().startswith('files = '))
+        assert files.split() == list(page_sections('naboj', self.CHECKOUT))
+        assert files.split().index('answer') < files.split().index('answer-extra')
+
+    def test_the_nesting_is_passed_both_ways(self):
+        assert '--nested' in self.page_edge(nested=True)
+        assert '--no-nested' in self.page_edge(nested=False)
+
+    @pytest.mark.skipif(not pathlib.Path('source/naboj').is_dir(),
+                        reason='needs the naboj content checkout, as above')
+    def test_the_order_is_the_descriptors_own(self):
+        """The authority, stated once: whatever `editor.yaml` lists, in the order it lists it."""
+        import yaml
+        described = yaml.safe_load(pathlib.Path('modules/naboj/editor.yaml').read_text())
+        declared = [target for kind in described['units'] for target in kind['targets']]
+        assert list(page_sections('naboj', self.CHECKOUT)) == list(dict.fromkeys(declared))

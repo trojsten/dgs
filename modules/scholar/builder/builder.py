@@ -26,8 +26,3 @@ class BuilderScholar(BuilderScholarBase):
 
     def path(self):
         return self.args.course, self._subdir, f'{self.args.issue:02d}'
-
-
-class BuilderCourseBase(BuilderScholarBase, metaclass=abc.ABCMeta):
-    def path(self):
-        return self.ident()

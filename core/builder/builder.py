@@ -10,6 +10,7 @@ from typing import ClassVar
 import argparsedirs
 
 from core.builder.context import Context
+from core.builder.products import Root, written
 from core.builder.context.buildable import BuildableContext
 from core.builder.jinja import JinjaRenderer
 from core.utilities import colour as c
@@ -69,25 +70,25 @@ class BaseBuilder(metaclass=ABCMeta):
     >>>
 
     >>>
-    >>> Builder().build_templates()
+    >>> if __name__ == '__main__':
+    >>>     Builder().build_templates()
+
+    **Under `if __name__`, always.** Every builder here is run as `python -m <module>`, which
+    sets `__main__`, so the guard costs nothing at build time -- and without it, merely
+    *importing* a builder parses `sys.argv` and writes files. That is not hypothetical: the
+    graph generator and the tests both want to ask a builder what it produces without running
+    it, and the job runner's preload list had to be written around the old behaviour after an
+    import printed an argparse usage message and took the daemon down.
     """
     module = None
-    templates = []
+    #: What this builder writes, as a `core.builder.products.Node`. The authority: the graph
+    #: generator imports the same declaration instead of restating the list.
+    _node = None
     _target: str = None
     _root_context_class: ClassVar[type[Context]] = None
     _renderer_class: ClassVar[type[JinjaRenderer]]
-    default_suffix_map = {
-        '.jtex': '.tex',
-        '.jyaml': '.yaml',
-    }
 
-    def __init__(self,
-                 *,
-                 suffix_map: dict[str, str] | None = None):
-        """
-        suffix_map: translates template suffixes to rendered template suffixes
-                    and also provides defaults for dgs
-        """
+    def __init__(self):
         self.parser = argparse.ArgumentParser(description="Build a dgs LaTeX template set from repository")
         self.add_core_arguments()
         self.add_arguments()
@@ -98,7 +99,6 @@ class BaseBuilder(metaclass=ABCMeta):
         self.template_root = Path(self.args.template_root)
         self.output_directory = Path(self.args.output) if self.args.output else None
         self.context = self._root_context_class(self.launch_directory, *self.ident())
-        self.suffix_map = self.default_suffix_map if suffix_map is None else suffix_map
 
         self.renderer = self._renderer_class(Path(self.template_root))
 
@@ -151,26 +151,45 @@ class BaseBuilder(metaclass=ABCMeta):
         log.debug(f"{c.act('Directory structure:')}")
         crawler.Crawler(Path(self.launch_directory, *self.path())).print_path()
 
-    def output_path(self, template_name, *, override_name=None) -> Path:
-        """
-        Get the output path for a template. By default, just removes `.jinja`.
-        """
-        path = Path(template_name)
-        if path.suffix in self.suffix_map:
-            if override_name is None:
-                return path.with_suffix(self.suffix_map.get(path.suffix))
-            else:
-                return Path(override_name).with_suffix(self.suffix_map.get(path.suffix))
-        else:
-            raise ValueError(f"Unknown template suffix {path.suffix}, {self.__class__.__name__} "
-                             f"only supports {', '.join(self.suffix_map.keys())}")
+    # **No `output_path`.** It derived a `.tex` name from a `.jtex` one through a `suffix_map`,
+    # and `build_templates` stopped calling it when a product started stating its own `suffix`
+    # -- `core/builder/products.py` says why the two genuinely differ, `crossref.jyaml` being
+    # written out as `<language>.yaml`. It survived the refactor with no caller, which is the
+    # shape a helper rots in: present, plausible, and no longer the authority for anything.
 
-    def build_templates(self, *, new_name: str | None = None) -> None:
+    def roots(self) -> dict[Root, Path]:
         """
-        Build all templates for this builder.
+        Where each kind of product's template is resolved. One entry per `Root` the node uses.
+
+        This is the half of `written()` only the caller knows: the builder is standing in the
+        node, the graph generator is standing outside it, and the predicate they share is the
+        same. A subclass that declares a product rooted anywhere but `TEMPLATES` adds the entry
+        here.
+        """
+        return {Root.TEMPLATES: Path(self.template_root)}
+
+    def product_ident(self) -> str:
+        """What `{ident}` in a product name interpolates to. Only a renaming node needs it."""
+        return ''
+
+    def build_templates(self) -> None:
+        """
+        Write every product this node declares, in declaration order.
+
+        One loop, where there used to be one per root -- `BaseBuilder` rendered the module's
+        templates, `BuilderNaboj` added the node's own, `BuilderNabojVenue` a third from the
+        language directory -- and the three differed only in which directory they rendered from.
+        `core/builder/products.py` has the seam this draws.
+
+        **Rendered before the target is opened.** `open(..., 'w')` truncates at once, so a
+        template that raises used to leave a 0-byte `.tex` behind, which a build then treats as
+        up to date and never rebuilds. Two of the three loops had learned that and this one is
+        the merge of all three, so it keeps it.
         """
         assert isinstance(self.context, BuildableContext), \
             c.err(f"Builder's context class is {self.context.__class__.__name__}, which is not a buildable context!")
+        assert self._node is not None, \
+            c.err(f"{self.__class__.__name__} declares no node; see core/builder/products.py")
 
         self.print_build_info()
 
@@ -180,12 +199,20 @@ class BaseBuilder(metaclass=ABCMeta):
         if self.args.tree:
             self.print_dir_info()
 
-        for template in self.templates:
-            outfile = open(self.output_directory / self.output_path(template, override_name=new_name), 'w')
-            print(
-                self.renderer.render(Path(template), self.context.data),
-                file=outfile
-            )
+        roots = self.roots()
+        ident = self.product_ident()
+        due = written(self._node, roots)
+        for product in self._node.products:
+            if product not in due:
+                log.warning(f"No {c.path(product.template)} for "
+                            f"{c.name('/'.join(str(p) for p in self.path()))}, skipping it")
+        renderers = {}
+        for product in due:
+            if product.root not in renderers:
+                renderers[product.root] = self._renderer_class(roots[product.root])
+            rendered = renderers[product.root].render(Path(product.template), self.context.data)
+            with open(self.output_directory / product.filename(ident), 'w') as outfile:
+                print(rendered, file=outfile)
 
         log.debug(f"{c.ok('Template builder on')} {c.name(self._target)} "
                   f"{c.path(self.full_name())} {c.ok('successful')}")

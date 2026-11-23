@@ -1,3 +1,4 @@
+from modules.naboj import declaration
 from modules.naboj.builder.builder import BuilderNaboj
 from modules.naboj.builder.contexts import BuildableContextLanguage
 
@@ -7,18 +8,7 @@ class BuilderNabojLanguage(BuilderNaboj):
     _subdir = 'languages'
 
     _root_context_class = BuildableContextLanguage
-    templates = [
-        'booklet.jtex',
-        'answers.jtex',
-        'constants.jtex',
-        'cover.jtex',
-        'online.jtex',
-        'evaluation.jtex',
-        'tearoff.jtex',
-        'problems.jtex',
-        'solutions.jtex',
-    ]
-    i18n_templates = ['intro.jtex', 'evaluators.jtex']
+    _node = declaration.LANGUAGE
 
     def add_arguments(self):
         super().add_arguments()
@@ -31,4 +21,5 @@ class BuilderNabojLanguage(BuilderNaboj):
         return self.args.competition, f'{self.args.volume:02d}', self._subdir, self.args.language
 
 
-BuilderNabojLanguage().build_templates()
+if __name__ == '__main__':
+    BuilderNabojLanguage().build_templates()

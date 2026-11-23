@@ -1,6 +1,7 @@
 import logging
 
 from core.builder.jinja import StaticRenderer
+from modules.seminar import declaration
 from modules.seminar.builder import builder, context
 
 log = logging.getLogger('dgs')
@@ -11,13 +12,8 @@ class BuilderRound(builder.BuilderSeminar):
     _target = 'round'
 
     _renderer_class = StaticRenderer
-
-    templates = [
-        'problems.jtex',
-        'solutions.jtex',
-        'solutions-full.jtex',
-        'instagram.jtex',
-    ]
+    _node = declaration.ROUND
 
 
-BuilderRound().build_templates()
+if __name__ == '__main__':
+    BuilderRound().build_templates()

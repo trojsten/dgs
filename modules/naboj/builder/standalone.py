@@ -21,6 +21,7 @@ import yaml
 
 from core.builder.context import Context
 from core.builder.jinja import StaticRenderer
+from modules.naboj import declaration
 from modules.naboj.builder.contexts import ContextI18nGlobal
 
 #: Shown in the framed box when the problem's position cannot be established.
@@ -80,7 +81,7 @@ class BuilderNabojStandalone:
 
 def main():
     parser = argparse.ArgumentParser(description="Build a standalone one-problem Náboj document")
-    parser.add_argument('competition', choices=['phys', 'math', 'chem', 'junior', 'test'])
+    parser.add_argument('competition', choices=declaration.COMPETITIONS)
     # The directory name, taken as it is: `05` for a volume, and `pool` for the problems that
     # belong to none yet. Parsing it as a number used to re-pad it, and refused `pool` outright.
     parser.add_argument('volume', type=str)
