@@ -892,9 +892,41 @@ Four things make it practical, and the middle two were each got wrong first:
 - **`--no-fonts`** leaves bare paths, which is what lets the ink be the page's at all. No second
   rendering, no second cache, no font to ship.
 
-**`mathpage.jtex`'s package list is `standalone.jtex`'s, line for line, and a test says so.**
-A package added to one and not the other is how the web and the print maths start to differ, and
-the difference is exactly the kind nobody notices until a reader compares them.
+**`mathpage.jtex` and `standalone.jtex` share one preamble**, `core/templates/standalone-preamble.jtex`,
+which each takes with a Jinja `(@ include @)`. A package added to one and not the other is how
+the web and the print maths start to differ, and the difference is exactly the kind nobody
+notices until a reader compares them -- so they were 73 identical lines held together by a
+comment in each saying *"a package added there belongs here too"*, and a comment cannot fail a
+build.
+
+**A Jinja include, not a LaTeX `\input`**, because of one line in it: the i18n table is
+`build/core/i18n/(* lang *).tex`, and that tag has to be resolved before TeX sees the file. The
+include splices the text in, so the rendered `.tex` is byte-for-byte what it was before the file
+existed -- which is also the gate the extraction was checked against. A test now asserts that
+neither template has started keeping packages of its own again.
+
+**Unifying them found a divergence that had been live.** The booklet loads `chemmacros`, then
+`mhchem`, then `\chemsetup{formula=mhchem}`; the standalone templates loaded `mhchem`,
+`chemformula` and `chemmacros` and no `\chemsetup` -- so a chemistry drawing compiled on its own
+was set by a different chemistry stack from the same drawing inside a booklet. It had never
+failed, because the conflict needs `russian` in the babel list and the standalone templates
+carried seven languages where the booklet carries nine. Giving them the booklet's nine turned it
+into `Command \ch already defined` at `\begin{document}`, which is the right way to find out.
+They load the class's arrangement now, `chemformula` included; no source writes `\ch{}` and 201
+write `\ce{}`.
+
+It stayed hidden for a second reason worth knowing: the picture `.tex` edge named only
+`standalone.jtex`, so moving the preamble out of that file meant **no drawing was rebuilt** when
+it changed. The missing dependency was masking the regression. `core/html/preamble.py`'s
+`templates()` is what the edge names now, and the two were found together.
+
+The babel call went the same way, into `core/latex/babel.tex`, and that one found something:
+babel takes the **last** option as the document's main language, and it was `english` in
+`dgs.cls` and `spanish` in the standalone templates. Invisible only because
+`build/core/i18n/<lang>.tex` opens with `\selectlanguage` and every document inputs it within a
+few lines. The shared file is `dgs.cls`'s list extracted unchanged, so the booklet is identical
+by construction -- verified anyway: volume 29's Slovak booklet is 44 pages before and after with
+byte-identical `pdftotext` output. Adding a language means one list, before `english`.
 
 ### `mathjax`: selectable text, and what it costs
 

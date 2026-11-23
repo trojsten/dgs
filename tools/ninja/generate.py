@@ -1201,7 +1201,8 @@ def _picture(build, w: Writer, stem: str, extension: str, problem: pathlib.Path,
         build(f'build/{stem}.pdf', 'svg_pdf', [f'render/{stem}.svg'])
     elif extension == 'tikz':
         build(f'build/{stem}.tikz.tex', 'picture_tex', [f'render/{stem}.tikz'],
-              implicit=['core/templates/standalone.jtex'], variables={'lang': lang})
+              implicit=list(standalone_templates('standalone.jtex')),
+              variables={'lang': lang})
         build(f'build/{stem}.pdf', 'tikz_pdf', [f'build/{stem}.tikz.tex'])
     else:
         data = sorted(str(p.relative_to(repo / 'source')) for p in problem.glob('*.dat'))
@@ -1242,28 +1243,139 @@ def _picture_svg(build, w: Writer, stem: str, extension: str) -> str:
 #: What a page's maths is set with when the engine is `latex`, which is the default: the
 #: `\input`s of `core/templates/mathpage.jtex`. Every document edge gets these from xelatex's
 #: own `-recorder`; a page runs its xelatex inside `core.html.texmath`, where there is no
-#: recorder to read, so they are named here instead.
-MATHPAGE_INPUTS = ('core/templates/mathpage.jtex', 'core/latex/fonts.tex',
-                   'core/latex/utilities.tex', 'core/latex/math.tex',
-                   'core/latex/symbols.tex', 'core/latex/siunitx.tex')
+#: recorder to read, so they have to be named rather than observed.
+#:
+#: **Read off the template rather than written out here.** This used to be a hand-kept tuple
+#: mirroring six `\input` lines in another file, and `core/html/texmath.py` kept a second
+#: answer to the same question as a hand-bumped `VERSION`. They disagreed: the graph rebuilt
+#: every page when `math.tex` moved and the formula cache handed back the maths from before the
+#: edit. One list now, in `core/html/preamble.py`, which both this and that hash read.
+
+
+@functools.cache
+def page_sections(module: str, repo: pathlib.Path) -> tuple[str, ...]:
+    """
+    The order a page's sections appear in, which is the module descriptor's `targets:` order.
+
+    **Read here rather than in `core/html/page.py`, and declared as an input.** The page step
+    used to load `modules/<module>/editor.yaml` itself, at run time, to answer this and to
+    decide whether fragments sit under a language directory. That file appeared **nowhere** in
+    the generated graph -- `grep -c editor.yaml build.ninja` was 0 -- so reordering `targets:`
+    reordered every page's sections with nothing rebuilt, and flipping `languages:` pointed
+    every page edge at the wrong directory on whatever happened to rebuild next.
+
+    It is not the same order the fragments are *collected* in, which is why this is read rather
+    than taken from the list of built fragments: the walk emits `TRANSLATED` then `SHARED`, so
+    it has `answer-extra` before `answer`, where the descriptor has them the other way round.
+    The page is what the descriptor says; the collection order is an artefact of the walk.
+    """
+    from tools.editor.descriptors import load_modules
+
+    described = load_modules(repo).get(module)
+    if described is None:                               # no content checked out for it
+        return ()
+    return tuple(dict.fromkeys(target for kind in described.kinds for target in kind.targets))
+
+
+#: What xelatex drops beside the PDF it is asked for. Declared so that `clean` and
+#: `ninja -t clean` take them too, and so Ninja knows a half-finished run left them behind.
+#:
+#: **One tuple, where there were six copies of it.** Adding `.xdv`, or dropping `.synctex.gz`,
+#: used to mean finding all six; missing one left a file the build would not clear up, which is
+#: the failure `.SECONDARY` already cost this repository once.
+XELATEX_SIDE_OUTPUTS = ('.aux', '.log', '.out', '.synctex.gz', '.fls')
+
+
+def _document_pdf(build, pdf: str, tex: str, inputs: list) -> str:
+    """
+    One xelatex document: the PDF, what it reads, and what it leaves lying about.
+
+    Six call sites wrote this out -- a standalone problem, a language document, a venue
+    document, a seminar round, a scholar issue and the shared standalone -- and they differed
+    only in which files go in. The `.tex` is both the first input and the rule's `$tex`, in all
+    six, so it is named once here rather than twice at each site.
+    """
+    build(pdf, 'document_pdf', None,
+          implicit=[tex, *inputs],
+          implicit_outputs=[pdf.replace('.pdf', suffix) for suffix in XELATEX_SIDE_OUTPUTS],
+          variables={'tex': tex})
+    return pdf
+
+
+def _static_tree(build, listed, root: pathlib.Path, repo: pathlib.Path) -> list[str]:
+    """
+    A competition's or course's `.static/` tree, one file to one copy edge.
+
+    What every document of that scope `\\input`s: the format override, the logo, the intro and
+    rules templates. Make copied the whole tree with one `cp -r` whose own target it never
+    touched, so it depended on nothing and ran on every build; here each file is an edge and
+    the documents name what they read.
+
+    Náboj does not use this -- its `.static/` is per *competition* and shared across volumes, so
+    it is one `copy_static` edge in `core_edges` rather than one per scope. Seminar's and
+    scholar's were the same ten lines twice.
+    """
+    static = []
+    for path in sorted(p for p in listed(root).rglob('*') if p.is_file()):
+        listed(path.parent)
+        source = path.relative_to(repo).as_posix()
+        target = source.replace('source/', 'build/', 1)
+        _copied(build, target, source)
+        static.append(target)
+    return static
+
+
+def _walk(repo: pathlib.Path, w) -> tuple[dict, object, object]:
+    """
+    The three things every scope walk opens with: its tallies, and two closures over them.
+
+    `listed` records a directory whose **listing** this graph depends on and returns it, so it
+    can be wrapped round a path in the middle of an expression. That record is what makes
+    `build.ninja` regenerate when a problem or a translation is added or removed -- see
+    `generate()`, which turns each one into an implicit input and a `phony`.
+
+    `build` is `w.build` plus a count. Counting here rather than at the end is what lets a scope
+    report how much of the graph is its own.
+
+    Ten identical lines opened each of the three walks. They are one statement now, which also
+    means the explanation above is written once rather than on whichever copy somebody happened
+    to annotate -- `scope_edges` carried it and the other two did not.
+    """
+    tallies = {'edges': 0, 'languages': [], 'listed': set(), 'read': set()}
+
+    def listed(directory: pathlib.Path) -> pathlib.Path:
+        if directory.is_dir():
+            tallies['listed'].add(str(directory.relative_to(repo)))
+        return directory
+
+    def build(*args, **kwargs):
+        tallies['edges'] += 1
+        return w.build(*args, **kwargs)
+
+    return tallies, listed, build
 
 
 def _page(build, rel: str, lang: str, module: str, *, fragments: list, pictures: list,
-          nested: bool) -> str:
+          nested: bool, repo: pathlib.Path) -> str:
     """
     One unit's fragments assembled into a page, which is what goes in `output/`.
 
     `nested` is the module's own answer to where a fragment lives: Náboj holds a directory per
     language inside a problem, so its page is `<problem>/<lang>/index.html`; seminar and scholar
-    are monolingual and theirs sits in the unit directory. `page.py` reads the same fact out of
-    `modules/<module>/editor.yaml`, which is why the module is passed rather than guessed from
-    the path.
+    are monolingual and theirs sits in the unit directory. It is **passed to the page step**
+    rather than worked out again there, along with the section order, so that one decision is
+    made once and in the place that declares the edge.
     """
     outdir = f'output/{rel}/{lang}' if nested else f'output/{rel}'
+    descriptor = f'modules/{module}/editor.yaml'
+    sections = page_sections(module, repo)
     build(f'{outdir}/index.html', 'page', None,
           implicit=[*fragments, *pictures, f'build/core/i18n/{lang}.tex',
-                    'core/templates/page.jhtml', 'core/html/page.css', *MATHPAGE_INPUTS],
-          variables={'unit': f'build/{rel}', 'lang': lang, 'module': module, 'outdir': outdir})
+                    'core/templates/page.jhtml', 'core/html/page.css', descriptor,
+                    *mathpage_inputs()],
+          variables={'unit': f'build/{rel}', 'lang': lang, 'module': module, 'outdir': outdir,
+                     'files': ' '.join(sections),
+                     'nested': '--nested' if nested else '--no-nested'})
     return f'{outdir}/index.html'
 
 

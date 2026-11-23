@@ -1,0 +1,111 @@
+(# The preamble both standalone documents share, and the reason it is one file.
+
+`mathpage.jtex` sets every formula of an HTML page; `standalone.jtex` sets one drawing for a
+PDF or an SVG. They want the same 26 packages, the same babel options, the same five inputs and
+the same chemfig and TikZ setup, because what they produce has to match what the booklet
+produces -- the web maths beside the printed maths, the standalone drawing beside the one in the
+page.
+
+It was two copies of 73 identical lines, held together by a comment in each saying "a package
+added there belongs here too". That comment was the whole of what kept them equal, and a comment
+cannot fail a build.
+
+**Included by Jinja rather than \input by LaTeX**, because of one line: the i18n table below is
+named through a tag, and that tag has to be resolved before TeX ever sees the file. An \input
+would hand LaTeX the tag itself. A Jinja include splices the text in instead, which is why the
+rendered .tex is byte-for-byte what it was before this file existed -- and why this explanation
+is a Jinja comment: a LaTeX one would reach every rendered document and move exactly the bytes
+the extraction must not move. #)
+
+\RequirePackage[table]{xcolor}
+\RequirePackage{tikz}
+
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{mleftright}
+\RequirePackage{siunitx}
+\RequirePackage[weather]{ifsym}
+\RequirePackage{nicematrix}
+
+\RequirePackage{wasysym}                                    % extra symbols for planets, astrology, ...
+\RequirePackage{mathtools}
+\RequirePackage[version=4]{mhchem}                          % simple chemical formulae
+% **`chemformula` is loaded here and deliberately not in `dgs.cls`**, and the two are right to
+% differ. `chem/03/eschenmoser/mechanizmus.tikz` and `chem/03/fluoresceín/reakcia.tikz` write
+% `\fplus` and `\fminus`, which are chemformula's; they are drawn by *this* path and reach the
+% booklet as finished PDFs, so the class never needs it and never loads it.
+%
+% It is also why the babel list below is this document's own rather than the class's: chemformula
+% and babel's `russian` both define `\ch`, which is what `dgs.cls:85`'s `\chemsetup{formula=mhchem}`
+% exists to dodge and what these templates dodge by not loading Russian at all.
+\RequirePackage{chemformula}
+\RequirePackage{chemmacros}
+\RequirePackage{chemfig}                                    % complex chemical formulae
+
+\RequirePackage[all]{nowidow}                               % prevent widow and orphan lines
+\RequirePackage[minionint, mathlf]{MinionPro}
+\RequirePackage[MnSymbol]{mathspec}                         % includes fontspec
+\RequirePackage[f]{esvect}
+\RequirePackage{accents}
+\RequirePackage{caption}
+\RequirePackage{cleveref}
+
+% **Not `core/latex/babel.tex`, and not by oversight.** These documents load `chemformula`
+% (above) and the class does not; chemformula and babel's `russian` both define `\ch`, so
+% taking the class's nine languages here is `Command \ch already defined` at
+% `\begin{document}`. A standalone document sets one drawing or one formula and needs no
+% Russian hyphenation to do it.
+%
+% `english` is last on purpose: babel makes the **last** option the main language, and this list
+% used to end in `spanish` while the booklet's ended in `english`. Nothing has ever shown it,
+% because `build/core/i18n/<lang>.tex` opens with `\selectlanguage` and every document inputs it
+% a few lines below -- but a document that does not would have been set in Spanish.
+\RequirePackage[
+    shorthands=off,
+    slovak,
+    czech,
+    german,
+    french,
+    polish,
+    spanish,
+    english,
+]{babel}                                                    % multi-language support
+\RequirePackage[autostyle]{csquotes}                        % proper localized quotation marks
+
+\input{core/latex/fonts.tex}
+\input{core/latex/utilities.tex}
+\input{core/latex/math.tex}
+\input{core/latex/symbols.tex}
+\input{core/latex/siunitx.tex}
+
+\input{build/core/i18n/(* lang *).tex}
+
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{matrix, backgrounds, fit, positioning}
+
+\setchemfig{
+    atom sep=7mm,
+    bond style={line width=1pt},
+    bond join=true,
+    schemestart code=\chemnameinit{},
+}
+\tikzset{
+  over line/.style={
+    white,
+    double=black,
+    double distance=\the\pgflinewidth,
+    line width=1.5pt,
+  },
+  under line/.style={
+    decoration={
+      markings,
+      mark connection node=mid node,
+      mark=at position #1 with {}
+      {\node[transform shape,minimum size=3pt] (mid node) {};}
+    },
+    decorate
+  }
+}
+
+(# `trim_blocks` eats the newline after the include tag, so this file ends with the blank
+line the templates expect between the preamble and what follows it. Do not strip it. #)
