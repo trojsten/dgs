@@ -18,7 +18,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    # **Every action is pinned to an exact tag, not to a major.** A major tag is a name its owner
+    # moves, so `@v4` is "whatever that repository decides tomorrow, running as this job" -- which
+    # is the same argument that pinned FontPro's `ref:` below, one level up. `setup-uv` was
+    # already written this way and the three `actions/checkout` were not.
+    #
+    # The cost is that nothing bumps them: there is no Dependabot or Renovate configuration here,
+    # so an exact pin goes stale until somebody looks. What makes it visible is the runner's own
+    # deprecation annotation -- `v4` of both of these had been forced onto Node 24 for a while
+    # and said so on every run, which is how this bump got asked for.
+    - uses: actions/checkout@v7.0.1
     - name: astral-sh/setup-uv
       uses: astral-sh/setup-uv@v9.0.0
       with:
@@ -57,7 +66,7 @@ jobs:
     # `Cannot find module '@mathjax/mathjax-pagella-font/package.json'` from a test that should
     # have skipped; `mathjax.available()` now asks about both, and this step supplies them.
     - name: "Set up node"
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7.1.0
       with:
         node-version: "22"
         cache: npm
@@ -109,7 +118,7 @@ jobs:
     # the default branch instead -- and then ran `./scripts/makeall`, `sudo ./scripts/install` and
     # `sudo updmap-sys` from it. A push to somebody else's repository executed as root here.
     - name: "Clone FontPro"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
       with:
         repository: sebschub/FontPro
         ref: 165b4a7d11ad34b64d7457ee6d51af4875e0bf14
@@ -159,7 +168,7 @@ jobs:
     # goes. It was cloned to `.../testing` while nothing read it; a scope is named after the
     # directory, so the two had to agree before anything could be built by name.
     - name: "Clone testing repository"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
       with:
         repository: TrojstenSK/dgs-seminar-testing
         path: source/seminar/test

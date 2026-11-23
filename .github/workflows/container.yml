@@ -41,7 +41,7 @@ jobs:
             pytest: -q
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
       # texlive is ~2.4 GB and the layers roughly double it; a hosted runner has about 14 GB
       # free, and these three trees are the cheapest 20 GB available.
