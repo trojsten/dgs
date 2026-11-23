@@ -4,7 +4,7 @@
 #
 # `glob` is relative to `source/<module>/`. Paths matched by it are "units" -- a problem, a
 # handout, whatever the module's editable thing is. `{unit}` and `{parent}` interpolate into the
-# make targets; `{language}` and `{target}` too, where they apply.
+# build targets; `{language}` and `{target}` too, where they apply.
 
 label: Náboj
 
@@ -15,8 +15,8 @@ label: Náboj
 # either ever wants auditing it wants its own checks, not a flag here.
 audit: true
 
-# The only module whose text is translated: a unit holds a directory per language, and the two
-# rule families in module.mk put `translated` files inside it and `shared` files beside it.
+# The only module whose text is translated: a unit holds a directory per language, a `translated`
+# file lives inside it and every other target beside it.
 languages: true
 
 # The level the audit page aggregates at.

@@ -269,6 +269,38 @@ quiet on a case that looks like it and is not. That second half is not optional.
 one of those quiet cases in `core/tests/test_audit.py` is a false positive that a
 hand-written version of the same sweep actually produced.
 
+## A pool is problems, not a competition
+
+`phys/pool` and `chem/pool` hold problems nobody has set yet -- picked from and moved into a
+volume when they are. Everything that reads a *problem* applies to them and should; they are
+the problems somebody is writing. Everything that assumes a volume around the problems does
+not: no running order, no language set, no venues, no booklet.
+
+So there are two schemas in `modules/naboj/builder/contexts/validators.py`, `VOLUME` and `POOL`,
+chosen by the directory's name -- which is also what moving a problem out of a pool changes. A
+volume that happens to have no translations yet is still a volume. The audit runs its problem
+checks over a pool unchanged; the one check that goes quiet is `translation-set`, which asks
+whether a problem has the same languages as its neighbours. That is a question about a booklet,
+and a Slovak-only draft beside a six-language one is what a reservoir looks like rather than a
+defect. It was 31 of the pool's 182 findings.
+
+A pool builds nothing, and does so by construction rather than by exclusion: it has no
+`languages/`, so `--scope all` never names it and no booklet edge exists.
+
+**`phys/pool` was the one scope of thirty-four that would not validate**, and the error led with
+the missing `languages/`, which was the least of it. Two real causes hid behind that: a problem
+sharing a drawing by **symlink** -- which the schema refused with `File`, although sharing a
+drawing that way is what this file recommends -- and `stuck-rover`, which is a `rover.py` and
+nothing else. Both are legal now, the second only in a pool.
+
+**Both are spelled `pool` and both hold a `problems/` level**, which is what makes them visible.
+chem's was `.pool/<pid>` -- dotted, so every sweep in the repository skipped it, and one level
+short of the unit glob `*/*/problems/*`, so even undotted nothing would have found it. Its seven
+problems moved to `chem/pool/problems/<pid>` with their contents untouched; the audit has
+something to say about them now, starting with the fact that none has a `meta.yaml`.
+
+A pool is where `seminar/FKS/.pool` still is, too, and that one has not been looked at.
+
 ## An answer interval is a span, not a tolerance
 
 `answer-interval.md` is the set of answers a marker accepts, so it is **the span over every
@@ -2529,7 +2561,7 @@ that arrives from a content repository as a link to something in `$HOME`.
   Three things earn an `=`, and they have one thing in common -- the left side carries
   information the right side cannot:
 
-  - **Several quantities at once.** `chem/.pool/trojroztok` answers
+  - **Several quantities at once.** `chem/pool/trojroztok` answers
     `V_A = \qty{910}{\micro\litre}, V_B = …`, and without the names the three numbers are a
     puzzle of their own. Seven answers are of this shape.
   - **A ratio whose members are not named by the statement.** `04/energy-ratio` answers
