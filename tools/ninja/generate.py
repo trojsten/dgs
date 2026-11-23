@@ -172,10 +172,10 @@ def rules(w: Writer) -> None:
     w.variable('run', f'{sys.executable} -S tools/runner/client.py')
     w.newline()
 
-    # **No pool for xelatex.** One was here as a precaution -- two runs in a directory, and
-    # `-shell-escape` lets a document write anything -- and it was wrong: `-jobname` is the full
-    # output path, so no two runs ever share an output name, and nothing else is written to a
-    # shared name. What the precaution cost was every scrap of parallelism on the one expensive
+    # **No pool for xelatex.** One was here as a precaution, back when `-shell-escape` let a
+    # document write anything -- and it was wrong even then: `-jobname` is the full output path,
+    # so no two runs ever share an output name, and nothing else is written to a shared
+    # name. What the precaution cost was every scrap of parallelism on the one expensive
     # step: a depth-1 pool put all 1549 xelatex edges in single file, so `-j8` bought nothing at
     # all and a picture-heavy volume ran slower than it had under make.
     w.rule('jinja',
@@ -209,7 +209,7 @@ def rules(w: Writer) -> None:
            description=described('{a}Copying {x}static{a} files for {f}$src'))
     w.rule('language',
            "mkdir -p $outdir && $run -m modules.naboj.builder.language 'source/naboj/' "
-           "'modules/naboj/templates/' $competition $volume $lang -o '$outdir'",
+           "'modules/naboj/templates/' $competition $volume $lang -o $outdir",
            description=described('{a}Building {x}language{a} documents for '
                                  '{f}$competition/$volume/$lang'))
     w.rule('picture_tex',
@@ -397,15 +397,25 @@ TEXFOT = "--no-interactive --ignore 'Underfull.*'"
 
 def _xelatex(source: str, target: str, *, first: bool) -> str:
     r"""
-    One xelatex pass, spelled as `Makefile:85-90` spells it, plus `-recorder`.
+    One xelatex pass, plus `-recorder`.
 
     `-recorder` is the whole of the dependency story for a document. It costs nothing -- TeX
     writes a `.fls` listing every file it opened -- and it is the only honest answer to
     `\protectedInput`, whose path is built from a macro at run time and then tested with
     `\IfFileExists`. `tools/ninja/fls.py` turns the log into a depfile.
+
+    **`-shell-escape` is gone, and nothing wanted it.** It was on every xelatex edge the graph
+    emitted, which means any `.tikz`, `.jtex` or rendered `.md` under `source/` could
+    `\immediate\write18{…}` and run a command as whoever typed `./dgs-build`. The content
+    repositories are cloned from GitHub and several people write to them, so that was a real
+    path and not a theoretical one. What it bought: nothing. `minted` is loaded by no file in
+    `core/latex`, `core/templates` or any module's templates -- the `_minted/` directory and the
+    `pandoc-minted` dependency were both left over from a package this repository does not use.
+    Volume 29 builds identically without it. If a document ever does need to shell out, give
+    *that* rule the flag and say why, rather than giving it to every document in the repository.
     """
     return ('max_print_line=1000 error_line=254 half_error_line=238 texfot '
-            f'{TEXFOT_FIRST if first else TEXFOT} xelatex -file-line-error -shell-escape '
+            f'{TEXFOT_FIRST if first else TEXFOT} xelatex -file-line-error '
             f'-recorder -jobname=$$(echo {target} | sed s/\\.pdf$$//) -halt-on-error -synctex=1 '
             f'-interaction=nonstopmode {source}')
 
