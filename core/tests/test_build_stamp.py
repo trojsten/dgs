@@ -21,6 +21,14 @@ from core.builder.builder import get_describe, get_last_commit_hash
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
+#: **The container image is a checkout with no `.git`**, because `.containerignore` excludes it --
+#: along with `.github/`, which is why `test_containerfile.py` skips its CI check there too. The
+#: rule that `core/tests/` must pass without the content repositories and without `build/` has a
+#: third clause, and this is it: a tree that was copied rather than cloned. `pytest -q` runs inside
+#: the image, so without this the four tests below are four failures that say nothing about dgs.
+pytestmark = pytest.mark.skipif(not (REPO / '.git').exists(),
+                                reason='not a checkout; there is no stamp to read')
+
 
 def dirty(cwd: pathlib.Path) -> bool:
     return bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=cwd).strip())

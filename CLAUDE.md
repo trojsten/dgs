@@ -633,8 +633,24 @@ anything in `core/` — it covers quantities, formatting, filters, the Jinja
 environments and `MathObject` in detail. New filters or quantity behaviour are
 expected to come with tests in the matching `core/tests/test_*.py`.
 
-**`core/tests/` must pass in a checkout with no content repositories and no
-`build/`**, and that is a rule, not an observation. Nothing under `source/` is
+**`core/tests/` must pass in a checkout with no content repositories, no
+`build/` and no `.git`**, and that is a rule, not an observation.
+
+The third clause is the one the container found. `.containerignore` excludes `.git/` -- and
+`.github/` with it -- so the image is a tree that was **copied rather than cloned**, and
+`pytest -q` runs inside it. `core/tests/test_build_stamp.py` reads `git describe` and
+`test_containerfile.py`'s CI check reads `.github/workflows/python-app.yml`; both are right to,
+and both are five failures in the image that say nothing about dgs. Each carries a skip now --
+`pytestmark` on the first, an `is_file()` guard on the second -- and the way to check before
+pushing an image is to build the tree the image sees and run the suite in it:
+
+```
+git archive HEAD | tar -x -C /tmp/image && rm -rf /tmp/image/.github
+cd /tmp/image && PYTHONPATH=. <repo>/.venv/bin/python3 -m pytest -q
+```
+
+That reproduces the failure exactly -- five failed before the skips, 0 after -- and is a second
+rather than a container build. Nothing under `source/` is
 tracked -- `.gitmodules` says so outright, each module names its own
 repositories in `modules/<module>/editor.yaml` under `sources:` -- so cloning
 them is optional and a core test that needs one fails for everybody who has not.

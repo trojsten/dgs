@@ -58,7 +58,13 @@ class TestTheFontProPinDoesNotDrift:
         whatever was on that repository's default branch and ran it as root -- while two files
         in this one went to the trouble of pinning the same tool at a commit.
         """
-        workflow = (ROOT / '.github/workflows/python-app.yml').read_text()
+        # `.containerignore` excludes `.github/` along with `.git/`, so inside the image there
+        # is no workflow to read. Same skip as its sibling above and for the same reason: CI is
+        # where this check has to fire, and CI is a checkout.
+        path = ROOT / '.github/workflows/python-app.yml'
+        if not path.is_file():
+            pytest.skip('not a checkout; this is how it looks from inside the image')
+        workflow = path.read_text()
         assert 'repository: sebschub/FontPro' in workflow
         ref = re.search(r'repository: sebschub/FontPro\s*\n\s*ref: ([0-9a-f]{40})', workflow)
         assert ref, 'CI clones FontPro without pinning a ref'
