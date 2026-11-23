@@ -1230,6 +1230,40 @@ and `09:30` is *also* a string -- sexagesimal needs a non-zero first digit -- wh
 with it. Write `9:30`. That one bit the migration: ten metas came back as strings and every
 volume they belonged to stopped validating.
 
+### `language` is two different objects, and `base-booklet.jtex` is shared
+
+A venue document and a language document both extend `modules/naboj/templates/base-booklet.jtex`,
+and **`language` does not mean the same thing in the two**:
+
+| built by | `language` is | keys |
+|---|---|---|
+| `language.py` | the language *meta* | `booklet`, `id`, `name`, `rtl`, `translators` |
+| `venue.py` | the i18n *descriptor* | `cref`, `full`, `id`, `latex`, `locale`, `native`, `quotes`, `rtl`, `siunitx`, `typography`, `words` |
+
+They overlap on `id` and `rtl` and nowhere else. So any line in the shared base that reaches past
+those two works in one document family and raises `MissingVariablesError` in the other — and only
+when somebody builds a venue, which is rarely.
+
+**That is not hypothetical; it cost every venue in the repository.** The colophon was added to
+`base-booklet.jtex` on 2026-11-19 and reached for `language.booklet.contents` and `language.name`,
+so all 152 venue `.tex` edges — `instructions` and `answers-modulo`, every volume — died on
+`Missing variables in instructions.jtex: ['name', 'booklet']` the same day. Nothing noticed,
+because the tests do not build and nobody built a venue for a day.
+
+**Only a booklet has a colophon**, so the fix is where the apparatus lives rather than a guard on
+the expression: the savebox, the `\AtBeginDocument` hook, `colophon_base` and
+`\fancypagestyle{colophon}` are a `(@ block colophon @)` that `booklet.jtex` fills and
+`base-booklet.jtex` leaves empty. A venue document never asked for the style anyway —
+`\thispagestyle{colophon}` is in `blocks/booklet/footer.jtex`, which only `booklet.jtex` includes,
+so the venues were defining a style they could not use. Volume 29's `booklet.tex` is byte-identical
+across the move apart from the build timestamp.
+
+`colophon_base` itself is worth knowing when touching this: it is the *page style the colophon
+inherits from*, through fancyhdr 4's optional base argument, picked as the last section the
+booklet actually contains — answers, else solutions, else problems, else `naboj`. The colophon is
+the last page's footer, and that page's running head belongs to the section it ends in; built on
+`naboj` it would drop the `Výsledky` beside the logo.
+
 ### The ancient volumes' venues are reconstructed, and say so
 
 `02`-`19` carry a `bratislava-junior` and a `bratislava-senior` apiece, written from `29`'s
@@ -2634,6 +2668,33 @@ that arrives from a content repository as a link to something in `$HOME`.
   foot evaporates -- hence the box, the explicit `\newpage`, and `\vspace*{\fill}`
   rather than `\vfill`. Adding a name costs nothing; a block taller than a page would
   overrun the margin and say so as an Overfull `\vbox`.
+
+  **The colophon is that page's footer, and the last page has to look like the one before it.**
+  Same footer line, same air beneath it; the extra material goes *above*, and the band grows
+  upward. Three things are load-bearing and each was got wrong once:
+
+  - **The `[C]` field keeps the height it has everywhere**, `\small\thepage`, and the colophon
+    hangs above it in a `\raisebox{...}[0pt][0pt]`. LaTeX sets the footer with
+    `\baselineskip\footskip`, so its baseline lands
+    `max(\footskip, prevdepth + height + \lineskip)` below the text block -- once the field is
+    taller than `\footskip` (32pt here, ~52pt with a colophon in it) the height term wins and
+    the whole line is pushed **20pt** into the bottom margin.
+  - **The style draws its own rule**, because fancyhdr would draw the real one at the normal
+    height, straight through a colophon that it has been told is weightless.
+    `\renewcommand{\footrulewidth}{0pt}` and a `\rule` at the top of the raised box.
+  - **`footerBlock`'s reservation is what keeps the rule off the credits.** Nothing above the
+    footer is measured by anybody now, so `\enlargethispage{-\dgsColophonRise}` is the only
+    thing stopping the names running into it. Take it out and the rule lands on
+    `Technická úprava`'s line.
+
+  It used to advance `\footskip` as well, on the reasoning that a shorter text block pulls the
+  footer up. It does not -- and the advance moved the footer down by the whole reservation, so
+  volume 29's last page carried its URL, page number and e-mail 39pt below every other page's
+  with 0.3pt of margin under them.
+
+  **Measure it, and look at it.** `pdftotext -bbox` on the last page and on any other: the
+  lowest ink must be at the same height on both. That catches the position and says nothing
+  about the rule, which is a line and not a word -- render the two pages and compare them.
 - **A problem statement never numbers its equations, and never labels them.** The number would
   be a cross-reference to something the contestant does not have in front of them during the
   competition, and a label nobody may point at is a number in the margin for nothing.

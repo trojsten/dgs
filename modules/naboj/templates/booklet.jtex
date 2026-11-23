@@ -2,6 +2,105 @@
 
 (@ set target = 'booklet' @)
 
+(@ block colophon @)
+(# The last page carries the credits, and the colophon is that page's footer rather than a
+        block of body text above it -- `blocks/colophon.jtex` says what is in it, and
+        `blocks/booklet/footer.jtex` asks for the style once the credits are laid down.
+
+        **It is boxed here and used there**, which is what keeps the two halves of the
+        arrangement in step. A footer grows *upward* from its baseline, so the colophon rises
+        into the gap between the credits and the footrule -- and the credits are seated flush
+        with the bottom of the text block, so without a reservation the rule cut through the
+        last name on the page. The reservation is this box's own height rather than a length
+        somebody measured off a proof: resize the type or add a row and the gap follows.
+        `\thepage` stays outside the box, because a page number frozen in the preamble would
+        print whatever page the box was built on.
+
+        Only the centre field changes, so the style inherits the one the booklet ends in: the
+        running head on that page still belongs to the last section, and a `colophon` built on
+        `naboj` would drop the `Výsledky` beside the logo. fancyhdr 4's optional base argument
+        is what makes that one line rather than a copy of the section style. #)
+    \newsavebox{\dgsColophonBox}
+    \newlength{\dgsColophonRise}
+    (# How far the colophon is lifted above the page number's baseline, as against
+        `\dgsColophonRise`, which is how much room the credits must leave free. They are
+        different numbers and conflating them puts the colophon a box-height too high: the
+        reservation is the colophon's whole vertical extent plus the gap, while the lift only
+        has to clear the depth of its own last line and then the gap. #)
+    \newlength{\dgsColophonLift}
+    (# The gap **above** the colophon, between it and the rule. Deliberately the smaller of the
+        two: the colophon belongs to the rule over it, not to the footer line under it, or the
+        three read as one block of small print instead of as a colophon between a rule and a
+        footer. `\dgsColophonFootGap` below is the other one. #)
+    \newlength{\dgsColophonGap}
+    \setlength{\dgsColophonGap}{3mm}
+    (# The gap **below** the colophon, which is a different number from the one above it. The
+        rule, the colophon and the footer line are three things stacked in one band, and they
+        have to read as a colophon under a rule and over a footer rather than as one block of
+        small print -- so the colophon is tied more closely to the rule above it than to the
+        line below. 3mm alone left 0.3pt of clear air between the licence and the page number:
+        measured, not eyeballed, and they all but touched.
+
+        It is measured to the **bottom of the box**, which since the colophon became two
+        columns is the logo's lower edge rather than the last line of small print -- the text
+        is the shorter column and floats against the logo's middle, so the air under the last
+        line it sets is this gap plus whatever centring left over it. #)
+    \newlength{\dgsColophonFootGap}
+    \setlength{\dgsColophonFootGap}{\dimexpr\dgsColophonGap + 0.6em + 2mm\relax}
+    \AtBeginDocument{%
+        \sbox{\dgsColophonBox}{%
+            \parbox{\textwidth}{\centering (@ include 'blocks/colophon.jtex' @)}%
+        }%
+        \setlength{\dgsColophonRise}{%
+            \dimexpr\ht\dgsColophonBox + \dp\dgsColophonBox + \dgsColophonFootGap\relax
+        }%
+        \setlength{\dgsColophonLift}{%
+            \dimexpr\dp\dgsColophonBox + \dgsColophonFootGap\relax
+        }%
+    }
+    (@ set colophon_base = 'answers' if language.booklet.contents.answers
+        else 'solutions' if language.booklet.contents.solutions
+        else 'problems' if language.booklet.contents.problems
+        else 'naboj' @)
+    (# **The footer line does not move; the band grows upward.** That is the whole requirement:
+        this page should look like the one before it, which means the URL, the page number and
+        the e-mail sit exactly where they sit on every other page, with the same air beneath
+        them, and the colophon goes in above.
+
+        It cannot be done by making the field taller. LaTeX sets the footer with
+        `\baselineskip\footskip`, so its baseline lands `max(\footskip, prevdepth + height +
+        \lineskip)` below the text block -- and once the field is taller than `\footskip` (32pt
+        here, against about 52pt with a colophon in it) the height term wins and the whole line
+        is pushed **20pt** into the bottom margin. The page then has a deeper footer than any
+        other and reads as a different page.
+
+        So the field keeps the height it has everywhere -- `\small\thepage` -- and everything
+        else hangs above it in a box declared `[0pt][0pt]`, which fancyhdr measures as nothing
+        and TeX still draws. The price is that fancyhdr's own rule would then be drawn at the
+        *normal* height, straight through the colophon, so this style turns it off and the box
+        carries its own: same 0.4pt as `dgs.cls` sets, same `\dgsColophonGap` beneath it as
+        there is between the rule and the text on a normal page. Nothing above the footer is
+        measured by anyone, which is why `blocks/booklet/footer.jtex` must reserve the room
+        with `\dgsColophonRise` -- that reservation is now the only thing keeping the rule off
+        the last line of names. #)
+    \fancypagestyle{colophon}[(* colophon_base *)]{%
+        \renewcommand{\footrulewidth}{0pt}%
+        \fancyfoot[C]{%
+            \raisebox{\dgsColophonLift}[0pt][0pt]{%
+                \makebox[0pt]{%
+                    \parbox[b]{\textwidth}{%
+                        \centering
+                        \rule{\textwidth}{0.4pt}\par
+                        \vspace{\dgsColophonGap}%
+                        \usebox{\dgsColophonBox}%
+                    }%
+                }%
+            }%
+            \small \thepage
+        }%
+    }
+(@ endblock @)
+
 (@ block content @)
     \setcounter{volume}{(* volume.number *)}%
     \pagestyle{naboj}

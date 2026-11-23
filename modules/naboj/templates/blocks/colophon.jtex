@@ -1,11 +1,23 @@
-(# The two rows of small print that close a booklet: who built it, from what, and whose it is.
+(# What closes a booklet: the competition's logo beside the small print that says who built
+    this copy, from what, and whose it is.
 
-    They are the content of the last page's **footer** -- `base-booklet.jtex` boxes this once
-    into `\dgsColophonBox`, the `colophon` page style puts that box above the page number, and
+    It is the content of the last page's **footer** -- `base-booklet.jtex` boxes this once into
+    `\dgsColophonBox`, the `colophon` page style puts that box above the page number, and
     `blocks/booklet/footer.jtex` reserves the box's own height under the credits. So this file
-    is rows and nothing else: no rule, because the footrule is now the rule it used to draw for
-    itself, and no page number, because that has to stay dynamic and cannot be frozen into a
-    box built once in the preamble.
+    is the band and nothing else: no rule, because the footrule is now the rule it used to draw
+    for itself, and no page number, because that has to stay dynamic and cannot be frozen into
+    a box built once in the preamble.
+
+    **Two columns, one third and two thirds**, because the two halves want opposite things. The
+    logo is a wordmark and wants height; the small print wants a measure it can set three short
+    lines in. Side by side they are 20mm tall against about 11mm, so both boxes are `[c]` and
+    centre on each other -- the logo is the taller and the text sits against its middle. The
+    columns are `\textwidth/3` and the remainder, so they add to `\textwidth` exactly and the
+    only air between them is what centring a 36mm logo in a 60mm column leaves, which is where
+    a gutter would have gone anyway.
+
+    The logo is the competition's own, the one the running head carries, and it is already a
+    prerequisite of the document for that reason.
 
     The version of each repository is `git describe`, not the bare hash: on a tagged commit it
     is a name a reader can check out -- `29-final` -- and anywhere else it is the hash with the
@@ -14,32 +26,29 @@
     into the file itself, with the exact hash alongside, for whoever has the PDF rather than
     the paper.
 
-    The logo is the competition's own, the one the running head carries, and it is already a
-    prerequisite of the document for that reason. `\raisebox` because a wordmark sits on its
-    own baseline and the line it joins is 8pt: dropped by 0.8mm it reads as part of the
-    sentence rather than as something floating above it.
-
-    **Two lines of one paragraph, not two paragraphs.** A `\par` anywhere inside the argument
-    of a macro that is not `\long` ends the scan, and the box is built inside `\sbox` within
-    `\AtBeginDocument`, neither of which is long -- so the rows are separated by `\\`, which
-    carries no such restriction, and the size is set once for both so that the `[1mm]` is
-    measured against the type it separates.
+    **Three lines of one paragraph, not three paragraphs.** A `\par` anywhere inside the
+    argument of a macro that is not `\long` ends the scan, and the box is built inside `\sbox`
+    within `\AtBeginDocument`, neither of which is long -- so the rows are separated by `\\`,
+    which carries no such restriction. `\raggedright` for the same reason it is right anywhere
+    else: three lines of unequal length justified to one measure open rivers in 8pt type.
 
     **The file must not end in `%`.** Jinja drops the trailing newline of an include, so a
     comment character on the last line would swallow whatever the including template writes
     next -- which is the brace that closes the box, and the error for that arrives pages away
     as `File ended while scanning use of \AddToHook`. #)
 \fontsize{8}{10}\selectfont
-{%
-    (* i18n[language.id].competition.name.nominative *) (* volume.number *),
-    (* language.id *) ((* language.name *)):
-    booklet built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.describe *)}
-    at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)
-    from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.describe *)}%
-}\\[1mm]
-\raisebox{-0.8mm}{%
-    \includegraphics[keepaspectratio = true, height = 3mm]%
+\parbox[c]{\dimexpr\textwidth / 3\relax}{%
+    \centering
+    \includegraphics[keepaspectratio = true, height = 20mm]%
         {build/(* module.id *)/(* competition.id *)/.static/logo/logo.pdf}%
-}\hspace{1mm}%
-\copyright{} (* competition.rights_holder *), (* volume.date.strftime('%Y') *).
-\href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}
+}%
+\parbox[c]{\dimexpr\textwidth - \textwidth / 3\relax}{%
+    \raggedright
+    (* i18n[language.id].competition.name.nominative *) (* volume.number *),
+    (* language.id *) ((* language.name *)).
+    \copyright{} (* competition.rights_holder *), (* volume.date.strftime('%Y') *).
+    \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{CC BY-NC-SA 4.0}\\
+    booklet built by (* build.user *) with dgs \texttt{(* build.dgs.branch *)}: \texttt{(* build.dgs.describe *)}
+    at (* build.timestamp.strftime('%Y-%m-%d %H:%M:%S') *)\\
+    from branch \texttt{(* build.repo.branch *)}: \texttt{(* build.repo.describe *)}%
+}

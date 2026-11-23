@@ -27,12 +27,12 @@
     (@ endif @)%
 \end{footerBlock}
 (# The colophon used to close this block, under a rule of its own. It is the last page's
-    footer now -- see `\fancypagestyle{colophon}` in `base-booklet.jtex` -- so the credits end
-    the page and the small print belongs to the footer that was always underneath it.
+    footer now -- see `\fancypagestyle{colophon}` in `booklet.jtex` -- so the credits end the
+    page and the small print belongs to the footer that was always underneath it.
 
-    The room it takes is the block's own optional argument, `\dgsColophonRise`, which is the
-    colophon box's height and the millimetre above it. The block spends it on the page's
-    geometry -- a shorter text block and a longer `\footskip` -- rather than on a skip after
-    the credits, so the footer really is taller on this page and fancyhdr is measuring against
-    the room it has. #)
+    The room it takes is the block's own optional argument, `\dgsColophonRise`, the colophon
+    box's own height plus the gap above it. `footerBlock` spends it with `\enlargethispage`, so
+    the credits stop that much higher and the footer stays exactly where it is on every other
+    page -- which is the point, and which it did not do while the block also advanced
+    `\footskip`. #)
 \thispagestyle{colophon}

@@ -229,12 +229,26 @@
 % seated flush with that bottom -- so without the reservation a taller footer walks into the
 % credits, and the footrule lands on the last line of names.
 %
-% It is page *geometry* and not a \vspace, which would leave the same white space while
-% telling LaTeX nothing: \enlargethispage takes the room out of the text block, \footskip
-% puts it back under the block so the footer stays where it is on the paper, and fancyhdr's
-% own check -- `\footskip is too small` -- then has the room it was asking about. Both come
-% *after* the page decision above, because if the block takes a new page it is that page whose
-% footer is taller, and the one left behind must keep the geometry every other page has.
+% The argument does two things and **used to do a third that was wrong**. It is part of the
+% break decision above, so the credits do not start a page they cannot finish; and
+% `\enlargethispage` takes it out of the page, so the credits stop that much higher and the
+% footrule is not laid across the last line of names. Remove that call and the rule goes
+% straight through `Technická úprava`'s name -- which is how it was found.
+%
+% The third thing was `\global\advance\footskip #1`, on the reasoning that a shorter text
+% block pulls the footer up and `\footskip` has to put it back. It does not. LaTeX places the
+% footer with `\baselineskip\footskip`, so its baseline lands
+% `max(\footskip, prevdepth + height + \lineskip)` below the text block: once the footer is
+% taller than `\footskip` -- 32pt here, against about 52pt with a colophon in it -- the height
+% term wins and `\footskip` stops mattering at all. Advancing it did not hold the footer
+% still; it pushed it **down by the whole reservation**, so volume 29's last page carried its
+% URL, page number and e-mail 39pt below every other page's, with 0.3pt of margin under them
+% against 39.5pt elsewhere.
+%
+% What remains is a trade worth stating rather than hiding: **this page's footer is taller, so
+% its ink ends about 20pt lower than other pages'** -- the colophon's height less the slack in
+% `\footskip`. Nothing here can shorten the paper, and the alternative, hanging the colophon
+% above the footer in a box of no height, makes fancyhdr draw the rule through it.
 %
 % The block holds headed lists, and `\addvspace` -- which is how `titlesec` and `multicol`
 % space them -- does nothing at all while `@minipage` is true. LaTeX sets that flag at the top
@@ -245,10 +259,6 @@
 % tuned length standing in for a package's own. `\csname` because this file is \input from a
 % class, where `@` is a letter, and from two document preambles, where it is not.
 %
-% \footskip is advanced \global because an environment's end code still runs inside the
-% environment's group: assigned locally it was undone before the page was shipped, and the
-% warning it was meant to answer arrived anyway. \enlargethispage is already global, which is
-% why it needs no such help.
 \newsavebox{\dgsFooterBox}
 \NewDocumentEnvironment{footerBlock}{O{0pt}}{%
     \par
@@ -265,7 +275,6 @@
         \fi
     \fi
     \enlargethispage{-#1}%
-    \global\advance\footskip #1\relax
     \vspace*{\fill}%
     \usebox{\dgsFooterBox}%
 }
