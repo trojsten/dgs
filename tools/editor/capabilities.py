@@ -98,7 +98,7 @@ def _run(argv, *, stdin=None, timeout=30):
 
 def probe_ninja():
     """
-    Ninja, which the build runs through since `tools/ninja/generate.py` replaced the Makefile.
+    Ninja, which every entry point runs through: `tools/ninja/generate.py` is the build.
 
     Unlike make there is nothing to disambiguate -- there is one Ninja and no dialects -- so this
     only has to find it, and `_which` is what knows where to look.
@@ -118,7 +118,7 @@ def probe_python_launcher():
     How `run_build` should invoke ninja, and why `uv` is not required.
 
     `uv` is only there to put the project's interpreter on PATH, because the generated rules call
-    a bare `python` exactly as the Makefile's recipes did. This process *is* such an interpreter
+    a bare `python`, as the Makefile's recipes did before them. This process *is* such an interpreter
     -- it imported jinja2, yaml and all of core.audit to get here -- so when uv is absent we call
     ninja directly with our own interpreter's directory prepended to PATH. In a venv that
     directory holds both the `python` the rules call and the `ninja` that calls them.

@@ -18,6 +18,8 @@ sys.path.insert(0, str(EDITOR))
 import capabilities
 from descriptors import UnitKind, declared_sources, describe_source
 
+from tools.ninja import generate
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
@@ -32,7 +34,8 @@ def _clear_cache():
 class TestTheTexTargetIsDerived:
     """
     `tex` is not written out per descriptor -- it is `render` with the prefix and the extension
-    swapped, which is the relation every `module.mk` encodes. These pin that it stays true.
+    swapped, which is the relation `generate._fragment` emits for every module. These pin that it
+    stays true.
     """
 
     def test_it_swaps_the_prefix_and_the_extension(self):
@@ -50,12 +53,42 @@ class TestTheTexTargetIsDerived:
         """Better no TeX tab than a target the build graph has no edge for."""
         assert UnitKind(glob='*', render='output/naboj/{unit}.pdf').tex == ''
 
+    def test_the_derivation_is_the_one_the_graph_emits(self, tmp_path):
+        """
+        The descriptor's rule and the generator's must be the same rule.
+
+        `UnitKind.tex` and `.html` rewrite `render/<stem>.md` into `build/<stem>.{tex,html}`, and
+        `generate._fragment` is the single funnel every `.md` edge in the graph goes through. If
+        the two ever disagree the editor's tabs ask for targets nothing builds, which is exactly
+        what happened when the per-module `.html` rules moved into `build/` and the derivation did
+        not follow. So pin them against each other by running the real emitter.
+
+        This replaces an assertion that the derived target named a rule head in the module's
+        `module.mk`. That was the right pin against the wrong layer once ninja became the build,
+        and make has since been removed.
+        """
+        emitted = {}
+
+        def build(outputs, rule, inputs, **kwargs):
+            for output in ([outputs] if isinstance(outputs, str) else outputs):
+                emitted[output] = rule
+
+        meta = tmp_path / 'unit' / 'meta.yaml'
+        meta.parent.mkdir(parents=True)
+        meta.write_text('{}')
+        tex, html = generate._fragment(build, 'source/naboj/unit/sk/solution.md',
+                                       'naboj/unit/sk/solution', 'sk', meta, tmp_path)
+
+        kind = UnitKind(glob='*', render='render/naboj/{unit}/{language}/{target}.md')
+        filled = {'unit': 'unit', 'language': 'sk', 'target': 'solution'}
+        assert kind.tex.format(**filled) == tex == 'build/naboj/unit/sk/solution.tex'
+        assert kind.html.format(**filled) == html == 'build/naboj/unit/sk/solution.html'
+
     @pytest.mark.parametrize('descriptor', sorted(ROOT.glob('modules/*/editor.yaml')))
-    def test_every_real_descriptor_yields_a_rule_module_mk_has(self, descriptor):
-        """The derived target must name a rule that actually exists in the module's makefile."""
+    def test_every_real_descriptor_derives_a_target_of_the_right_shape(self, descriptor):
+        """Every shipped descriptor must yield a target under the module's own `build/` tree."""
         spec = yaml.safe_load(descriptor.read_text()) or {}
         module = descriptor.parent.name
-        makefile = (descriptor.parent / 'module.mk').read_text()
         for entry in spec.get('units') or []:
             kind = UnitKind(glob=entry['glob'], render=entry.get('render', ''),
                             tex_override=entry.get('tex', ''))
@@ -63,8 +96,6 @@ class TestTheTexTargetIsDerived:
                 continue
             assert kind.tex.startswith(f'build/{module}/')
             assert kind.tex.endswith('.tex')
-            # module.mk writes the rule head with `%` where the descriptor writes `{unit}`
-            assert f'build/{module}/%' in makefile
 
 
 class TestTiersDegradeInOrder:
