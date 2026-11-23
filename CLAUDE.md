@@ -2313,6 +2313,14 @@ This has bitten once and nearly twice. Hoisting equations in volume 27 corrupted
 perfectly happy both times — it was caught by diffing pandoc's output before
 and after. Reading through a symlink is safe; writing is not.
 
+**And the editor was doing it with one keystroke.** `/api/save` wrote with `Path.write_text`,
+which follows, so opening `pl/solution.md` -- a link to `en/solution.md` -- and saving rewrote
+the English source under a filename that said Polish. `write_through` in `tools/editor/app.py`
+refuses by name now and says what the link points at, for all three write sites (`meta.yaml`,
+`words.yaml` and every target). Breaking the link to write a real file would silently undo a
+deliberate mirror, which is worse than saying so. The same guard is what stops a `meta.yaml`
+that arrives from a content repository as a link to something in `$HOME`.
+
 ## Editing problem text
 
 - Problem and solution prose is authored deliberately. Fix mechanical/style

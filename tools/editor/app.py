@@ -30,7 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # The audit library lives in `core/`, which is not on the path when this file is the entry point.
 # And several `core` modules open their data by a repository-relative path -- `core/i18n` reads
 # `core/i18n/default.yaml` at import time -- so the process has to run from the root, which is the
-# convention everything else here follows: the Makefile, `core.mdcheck`, and every subprocess
+# convention everything else here follows: the build graph, `core.mdcheck`, and every subprocess
 # this app already launches with `cwd=REPO_ROOT`.
 sys.path.insert(0, str(REPO_ROOT))
 os.chdir(REPO_ROOT)
@@ -85,6 +85,45 @@ class BadRequest(Exception):
     def __init__(self, message):
         super().__init__(message)
         self.message = message
+
+
+@app.before_request
+def refuse_a_foreign_origin():
+    """
+    A request carrying somebody else's `Origin` is a cross-site request, and this app has no
+    session for one to ride on -- but it does not need one, because there is no login either:
+    every route acts with the full authority of whoever started the server.
+
+    So the browser's own rules are the whole of the defence, and they only work if we stay out
+    of the way of them. Two halves, and the first matters more:
+
+    - **Every route reads its body with a plain `get_json()`**, which requires
+      `Content-Type: application/json`. That content type is not one of the three a *simple*
+      request may carry, so a cross-origin POST of one is preflighted, and the preflight fails
+      because nothing here answers `OPTIONS` with CORS headers. This used to be
+      `get_json(force=True)`, which parses the body whatever the content type -- and `text/plain`
+      *is* simple, so any page open in the same browser could `fetch` its way to
+      `/api/evaluate` (which renders an attacker's string) or `/api/save` plus `/api/compile`
+      (which writes a source file and compiles it). No reply needed; the write is the payload.
+    - **This**, for what the first half cannot cover: a cross-site `<form>` post, which a
+      browser does send an `Origin` for, and any future route that reads something other than
+      JSON. A same-origin request from our own page sends no `Origin`, or sends ours.
+
+      It does **not** cover a drive-by `GET` -- a top-level navigation or an `<img src>` sends
+      no `Origin` at all, so it passes here. That is sound only as long as every `GET` route is
+      read-only, which today they all are; a mutating one would need `Sec-Fetch-Site` or a
+      token rather than this.
+
+    `/api/font` is exempt because it is deliberately readable from anywhere -- the sandboxed
+    preview iframe has an opaque origin -- and it only ever serves files out of `assets/fonts/`.
+    """
+    origin = request.headers.get("Origin")
+    if origin is None or request.path.startswith("/api/font/"):
+        return None
+    allowed = {f"http://{request.host}", f"https://{request.host}"}
+    if origin not in allowed:
+        return jsonify({"error": f"cross-origin request from {origin} refused"}), 403
+    return None
 
 
 @app.errorhandler(BadRequest)
@@ -552,6 +591,32 @@ def build(unit, build_target, *, timeout=60):
 
 # --- writing ----------------------------------------------------------------
 
+def write_through(path, content: str) -> None:
+    r"""
+    Write a file, refusing to follow a symlink.
+
+    Two different problems, one answer, and the second is the one that will actually be met.
+
+    **A translation is often a symlink**, deliberately: 84 files under `source/` are, so that
+    `28/john-doe/pl/solution.md` *is* `en/solution.md` and a translation nobody has written yet
+    mirrors its master rather than keeping a stale copy. `Path.write_text` follows, so opening
+    the Polish tab and saving silently rewrote the English source -- the exact failure CLAUDE.md
+    warns bulk scripts about, reachable here with one keystroke and no warning at all.
+
+    **And a path is content.** The repositories under `source/` are cloned from GitHub; a
+    `meta.yaml` that arrives as a symlink to `~/.ssh/authorized_keys` is a file this function
+    would otherwise fill with whatever the editor sent.
+
+    Refusing by name is the whole fix. Breaking the link to write a real file would silently
+    undo a deliberate mirror, which is worse than saying so.
+    """
+    if path.is_symlink():
+        raise BadRequest(
+            f"{path.name} is a symlink to {os.readlink(path)} -- refusing to write through it. "
+            f"A mirrored translation is edited at its source, not through the link.")
+    path.write_text(content)
+
+
 def write_files(unit, files):
     """
     Write back every buffer the editor sent. All of a unit's files are open at once, so a save or
@@ -559,7 +624,7 @@ def write_files(unit, files):
     preview a mixture of edited and stale text.
     """
     if files.get("meta_yaml") is not None:
-        unit.meta_path.write_text(files["meta_yaml"])
+        write_through(unit.meta_path, files["meta_yaml"])
 
     # On the same unconditional footing as the meta, and for the same reason: a problem that has
     # no words yet is exactly the one somebody is adding words to, so refusing to create the file
@@ -571,7 +636,7 @@ def write_files(unit, files):
             raise BadRequest("Words are per language, and no language is selected.")
         if content.strip():
             unit.words_path.parent.mkdir(parents=True, exist_ok=True)
-            unit.words_path.write_text(content)
+            write_through(unit.words_path, content)
         elif unit.words_path.is_file():
             unit.words_path.unlink()
 
@@ -579,14 +644,14 @@ def write_files(unit, files):
         source_path = unit.source_path(target)
         if not source_path.is_file():
             raise BadRequest(f"Refusing to create a new file: {target} does not exist")
-        source_path.write_text(content)
+        write_through(source_path, content)
 
 
 # --- evaluating a fragment --------------------------------------------------
 
-#: What to render in for a module that has no languages. The Makefile's `lang ?= sk` is the same
-#: decision made in the same place, and the two should not disagree about what a monolingual
-#: module is written in.
+#: What to render in for a module that has no languages. `tools/ninja/generate.py`'s
+#: `SCOPE_LANGUAGE` is the same decision made in the same place, and the two should not disagree
+#: about what a monolingual module is written in.
 DEFAULT_LANGUAGE = "sk"
 
 #: How long an evaluated fragment may be before the popup gets an ellipsis instead. A `|disp` of
@@ -686,7 +751,7 @@ def api_evaluate():
     built at all fails the request, because that is one answer for every fragment and it is the
     answer -- a broken `derived:` expression is exactly what somebody hovering wants told.
     """
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     target = body.get("target")
     if target:
@@ -730,7 +795,7 @@ def one_line(e):
 
 @app.post("/api/save")
 def api_save():
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     with BUILD_LOCK:
         write_files(unit, body.get("files") or {})
@@ -739,7 +804,7 @@ def api_save():
 
 @app.post("/api/render")
 def api_render():
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
@@ -769,7 +834,7 @@ def api_tex():
     exercises the Markdown stage in the same call -- and `build()` keeps the
     `missing_meta_result` answer for a unit that has no meta.yaml yet.
     """
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
@@ -806,7 +871,7 @@ def api_html():
     the Jinja stage too. It needs no `tex` tier: pandoc alone is enough, which is the whole point
     of the fragment and is why a machine with no TeX stack can still check the web output.
     """
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
@@ -838,7 +903,7 @@ def api_html():
 @app.post("/api/compile")
 def api_compile():
     """Write every buffer, then build whichever document previews this unit."""
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     build_target = unit.preview_target()
 
@@ -972,7 +1037,7 @@ def api_font(relative):
 
 @app.post("/api/lint")
 def api_lint():
-    body = request.get_json(force=True)
+    body = request.get_json()
     unit = unit_from_body(body)
     target = body.get("target")
     unit.source_path(target)        # validates
@@ -1005,8 +1070,8 @@ def api_lint():
 def module_files(module):
     """
     What a unit of this module may hold, split the way its build rules split it: translated files
-    live inside `<language>/`, shared ones beside the unit. The descriptor mirrors module.mk's two
-    rule families, and `core/tests/test_audit.py` fails if the mirror stops matching.
+    live inside `<language>/`, shared ones beside the unit. The descriptor mirrors the graph's two
+    file families, and `core/tests/test_audit.py` fails if the mirror stops matching.
     """
     translated, shared = [], []
     for kind in module.kinds:
@@ -1243,6 +1308,35 @@ def api_audit_macros():
         return jsonify(audit_macros.sweep(REPO_ROOT))
 
 
+def warn_if_not_loopback(host: str) -> None:
+    """
+    Say out loud what binding a non-loopback address means here.
+
+    There is no login, no token and no per-user anything: every route acts with the authority of
+    whoever started the server, `/api/save` writes into the source tree and `/api/compile` runs
+    the build. That is the right design for a single-person tool on its own machine and it is
+    not a thing to put on a network by accident.
+
+    It is not always a mistake, which is why this warns rather than refuses. Inside a container
+    the *only* address a published port can reach is the container's external one, so
+    `dgs-container editor` passes `--host 0.0.0.0` deliberately and pins the publish to the
+    host's own loopback with `-p 127.0.0.1:<port>:5000`. That is safe and supported. What this
+    catches is the other case -- somebody typing `--host 0.0.0.0` on a workstation, or running
+    the image with a port published to the world.
+    """
+    import ipaddress
+    try:
+        if ipaddress.ip_address(host).is_loopback:
+            return
+    except ValueError:
+        if host in ('localhost', ''):
+            return
+    print(f"dgs-editor: serving on {host} -- there is no authentication, so anyone who can reach "
+          f"this port can edit the sources and run builds.\n"
+          f"            Inside a container that is expected; publish the port to 127.0.0.1 only, "
+          f"as `dgs-container editor` does.", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Local DGS problem source/render editor")
     parser.add_argument("--host", default="127.0.0.1")
@@ -1261,6 +1355,7 @@ def main():
                         help="do not restart when the source changes (the server then serves "
                              "the code it was started with, including in /audit)")
     args = parser.parse_args()
+    warn_if_not_loopback(args.host)
     app.run(host=args.host, port=args.port, debug=args.debug,
             use_reloader=not args.no_reload)
 
