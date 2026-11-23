@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from enschema import SchemaError, SchemaMissingKeyError
+from enschema import Schema, SchemaError, SchemaMissingKeyError
 
 from core.utilities import colour as c
 from core.utilities import crawler
@@ -67,10 +67,22 @@ class FileSystemTreeContext(Context, ABC):
         """ Fill the context with data from the filesystem """
 
     def add_list(self, key, ctxs):
+        """
+        A list of subcontexts, and the schema entry that admits it.
+
+        **The schema is rebound on the instance, not written through to the class.** It used to
+        be `self.__class__._schema.schema[key] = …`, executed during `populate`, so the first
+        context built in a process edited the schema every later one of that class would be
+        validated against. Contained today by two accidents rather than by design: the warm
+        runner forks per job, so a build never reuses a process, and the editor builds
+        `FileContext`s rather than tree contexts. Neither is written down anywhere, and neither
+        is a reason.
+        """
         self.data[key] = [item.data for item in ctxs]
 
-        if self.__class__._schema is not None:
-            self.__class__._schema.schema[key] = [self._subcontext_class._schema]
+        if self._schema is not None:
+            self._schema = Schema({**self._schema.schema,
+                                   key: [self._subcontext_class._schema]})
 
         return self
 

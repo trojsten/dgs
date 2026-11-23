@@ -1,4 +1,5 @@
 from core import i18n
+from core.builder import declaration
 from core.builder.builder import BaseBuilder
 from core.builder.context.buildable import BuildableContext
 from core.builder.jinja import StaticRenderer
@@ -20,8 +21,7 @@ class BuilderI18n(BaseBuilder):
     _root_context_class = BuildableContextCoreI18n
     _renderer_class = StaticRenderer
 
-    templates = ['override.jtex', 'crossref.jyaml']
-
+    _node = declaration.I18N
 
     def add_arguments(self):
         super().add_arguments()
@@ -33,8 +33,10 @@ class BuilderI18n(BaseBuilder):
     def path(self) -> tuple:
         return self.ident()
 
-    def build_templates(self, *, new_name: str | None = None):
-        super().build_templates(new_name=self.args.language)
+    def product_ident(self) -> str:
+        """Both products are named after the language, not after their templates."""
+        return self.args.language
 
 
-BuilderI18n().build_templates()
+if __name__ == '__main__':
+    BuilderI18n().build_templates()

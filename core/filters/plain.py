@@ -55,6 +55,10 @@ KINDS = {'f': format_float, 'g': format_general}
 
 #: What `|txt` accepts beside a plain number. Named rather than inferred, so that passing a
 #: string or a `MathObject` still fails with a sentence instead of printing something odd.
+#:
+#: **And read, which it was not.** `_render` had the same two types written out again a few
+#: lines below, so adding a third here would have changed nothing and the comment above would
+#: have gone quietly false. The constant is now what the check consults.
 RENDERABLE = ('PhysicsQuantity', 'QuantityAggregate')
 
 __all__ = ['superscript_exponent', 'text', 'text_general']
@@ -64,8 +68,9 @@ def _render(x: Any, precision: int | None, kind: str) -> str:
     if isinstance(x, _numbers.Number):
         return superscript_exponent(KINDS[kind](x, precision))
 
-    from core.builder.context.quantities import PhysicsQuantity, QuantityAggregate
-    if not isinstance(x, (PhysicsQuantity, QuantityAggregate)):
+    from core.builder.context import quantities
+    accepted = tuple(getattr(quantities, name) for name in RENDERABLE)
+    if not isinstance(x, accepted):
         raise TypeError(f"`txt` renders a quantity, a range, a list, a product or a plain "
                         f"number, not {type(x).__name__}.")
 

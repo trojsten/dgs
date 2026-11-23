@@ -145,12 +145,23 @@ class Locale:
 
 
 
+#: Where the locale files are: **beside this module**, not beside the working directory.
+#:
+#: This used to be the literal string `'core/i18n'`, opened at import time, which made
+#: `import core.i18n` raise `FileNotFoundError` from anywhere but the repository root. That is
+#: why `tools/editor/app.py` has to `os.chdir(REPO_ROOT)` between its import blocks, and why
+#: "run it from the repository root" is a rule rather than a convenience. Anchoring it costs one
+#: line and takes the rule away from this module at least; the rest of the tree still resolves
+#: `core/latex/...` and `assets/fonts/...` against the working directory, so the rule stands for
+#: now -- but one fewer thing enforces it.
+ROOT = Path(__file__).resolve().parent
+
 languages = {}
 
-with open('core/i18n/default.yaml', 'r') as defaults_file:
+with open(ROOT / 'default.yaml', 'r') as defaults_file:
     defaults = yaml.safe_load(defaults_file)
 
-for filename in Path('core/i18n').glob('*.yaml'):
+for filename in sorted(ROOT.glob('*.yaml')):
     with open(filename, 'r') as file:
         if (locale := Locale.load_yaml(defaults, file)) is not None:
             languages[locale.id] = locale
